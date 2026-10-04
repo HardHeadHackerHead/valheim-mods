@@ -5,12 +5,17 @@ using UnityEngine;
 
 namespace BuildFromChests
 {
-    /// <summary>Keeps track of every loaded Container and finds the ones near the player while building.</summary>
+    /// <summary>
+    /// Keeps track of every loaded Container and finds the ones near the player while building.
+    ///
+    /// Speed matters here: the build menu asks "can you afford this piece?" for many pieces every frame, and every one of those
+    /// questions ends up here. So the expensive answers (are we building? which chests are in range? how many of an item do they
+    /// hold?) are worked out once and reused, not recomputed per question.
+    /// </summary>
     internal static class ChestScanner
     {
         private static readonly List<Container> AllContainers = new List<Container>();
         private static readonly List<Container> Nearby = new List<Container>();
-        private static int _cachedFrame = -1;
 
         private static readonly System.Reflection.MethodInfo CheckAccess = AccessTools.Method(typeof(Container), "CheckAccess");
         private static readonly System.Reflection.FieldInfo NView = AccessTools.Field(typeof(Container), "m_nview");
@@ -25,40 +30,63 @@ namespace BuildFromChests
             if (!AllContainers.Contains(c)) AllContainers.Add(c);
         }
 
+        // ---- are we building? (worked out once per frame) ---------------------------------------------
+
+        private static int _contextFrame = -1;
+        private static bool _contextActive;
+
         /// <summary>
-        /// Is this the local player's own inventory while they're building (a build tool equipped)?
-        /// Not while a crafting window is open: that's CraftFromChests' job, and counting both would double-count chests.
+        /// A build tool is equipped. Not while a crafting window is open: that's CraftFromChests' job, and counting both would
+        /// double-count chests. Decided once per frame.
         /// </summary>
+        private static bool BuildingNow()
+        {
+            if (_contextFrame == Time.frameCount) return _contextActive;
+            _contextFrame = Time.frameCount;
+            Player p = Player.m_localPlayer;
+            _contextActive = p != null && p.InPlaceMode() && p.GetCurrentCraftingStation() == null && !InventoryGui.IsVisible();
+            return _contextActive;
+        }
+
+        /// <summary>Is this the local player's own inventory while they're building?</summary>
         internal static bool Applies(Inventory inv)
         {
             if (Suspend || !Plugin.Enabled.Value) return false;
             Player p = Player.m_localPlayer;
-            return p != null
-                && inv == p.GetInventory()
-                && p.InPlaceMode()
-                && p.GetCurrentCraftingStation() == null
-                && !InventoryGui.IsVisible();
+            if (p == null || inv != p.GetInventory()) return false;
+            return BuildingNow();
         }
 
-        /// <summary>Chests near the player that we're allowed to use (cached per frame).</summary>
+        // ---- which chests are in range (refreshed a few times a second) -------------------------------
+
+        private static float _nearbyAt = -10f;
+        private static Vector3 _nearbyOrigin;
+
+        /// <summary>Chests near the player that we're allowed to use. Rebuilt at most four times a second, or when you move.</summary>
         internal static List<Container> GetNearby()
         {
-            if (_cachedFrame == Time.frameCount) return Nearby;
-            _cachedFrame = Time.frameCount;
-            Nearby.Clear();
-
             Player p = Player.m_localPlayer;
-            if (p == null) return Nearby;
+            if (p == null) { Nearby.Clear(); return Nearby; }
 
             Vector3 origin = p.transform.position;
+            if (Time.unscaledTime - _nearbyAt < 0.25f && (origin - _nearbyOrigin).sqrMagnitude < 0.04f)
+            {
+                Nearby.RemoveAll(c => c == null);
+                return Nearby;
+            }
+            _nearbyAt = Time.unscaledTime;
+            _nearbyOrigin = origin;
+            InvalidateCounts();
+            Nearby.Clear();
+
             float maxSqr = Plugin.Radius.Value * Plugin.Radius.Value;
             long playerId = Game.instance.GetPlayerProfile().GetPlayerID();
 
             AllContainers.RemoveAll(c => c == null); // destroyed chests
             foreach (Container c in AllContainers)
             {
+                if ((c.transform.position - origin).sqrMagnitude > maxSqr) continue; // cheapest test first
                 if (c.GetInventory() == null || c.IsInUse()) continue;
-                if ((c.transform.position - origin).sqrMagnitude > maxSqr) continue;
                 if (c.m_checkGuardStone && !PrivateArea.CheckAccess(c.transform.position, 0f, false)) continue;
                 if (!(bool)CheckAccess.Invoke(c, new object[] { playerId })) continue;
                 Nearby.Add(c);
@@ -66,10 +94,24 @@ namespace BuildFromChests
             return Nearby;
         }
 
+        // ---- how many of an item the chests hold (remembered within a frame) --------------------------
+
+        private static int _countFrame = -1;
+        private static readonly Dictionary<string, Dictionary<int, int>> Counts = new Dictionary<string, Dictionary<int, int>>();
+
+        private static void InvalidateCounts() { _countFrame = -1; }
+
         internal static int CountInChests(string name, int quality, bool matchWorldLevel)
         {
+            if (_countFrame != Time.frameCount) { Counts.Clear(); _countFrame = Time.frameCount; }
+
+            if (!Counts.TryGetValue(name, out Dictionary<int, int> byKind)) Counts[name] = byKind = new Dictionary<int, int>();
+            int kind = quality * 2 + (matchWorldLevel ? 1 : 0);
+            if (byKind.TryGetValue(kind, out int cached)) return cached; // the game asks the same question many times in a frame
+
             int total = 0;
             foreach (Container c in GetNearby()) total += c.GetInventory().CountItems(name, quality, matchWorldLevel);
+            byKind[kind] = total;
             return total;
         }
 
@@ -91,6 +133,7 @@ namespace BuildFromChests
                 inv.RemoveItem(name, take, quality, matchWorldLevel);
                 amount -= take;
             }
+            InvalidateCounts(); // the chests just changed: forget what we remembered
             return amount;
         }
     }

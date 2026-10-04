@@ -70,8 +70,25 @@ namespace ModUpdater
             }
         }
 
+        // Reading a DLL (and, for the hash, all of its bytes) is slow, and the same unchanged files get looked at every time the window
+        // opens, a refresh runs, or you join a world. So remember the answer per file, and only redo it if the file actually changed.
+        private class FileMemo { public long Length; public long Ticks; public LocalMod Mod; public string Sha; }
+        private static readonly Dictionary<string, FileMemo> Memo = new Dictionary<string, FileMemo>();
+
+        private static FileMemo MemoFor(string path)
+        {
+            var info = new FileInfo(path);
+            if (!Memo.TryGetValue(path, out FileMemo memo) || memo.Length != info.Length || memo.Ticks != info.LastWriteTimeUtc.Ticks)
+                Memo[path] = memo = new FileMemo { Length = info.Length, Ticks = info.LastWriteTimeUtc.Ticks };
+            return memo;
+        }
+
         private static LocalMod ReadPlugin(string path)
         {
+            FileMemo memo;
+            try { memo = MemoFor(path); } catch { return null; } // vanished or unreadable
+            if (memo.Mod != null) return memo.Mod;
+
             try
             {
                 // Read from memory with Cecil so we never lock or load the DLL.
@@ -81,7 +98,7 @@ namespace ModUpdater
                     foreach (TypeDefinition type in module.Types)
                         foreach (CustomAttribute attr in type.CustomAttributes)
                             if (attr.AttributeType.FullName == "BepInEx.BepInPlugin" && attr.ConstructorArguments.Count >= 3)
-                                return new LocalMod
+                                return memo.Mod = new LocalMod
                                 {
                                     Guid = (string)attr.ConstructorArguments[0].Value,
                                     Name = (string)attr.ConstructorArguments[1].Value,
@@ -92,6 +109,13 @@ namespace ModUpdater
             }
             catch { /* not a plugin DLL (a library, or unreadable): ignore */ }
             return null;
+        }
+
+        /// <summary>The Git hash of a local file, remembered until the file changes.</summary>
+        private static string LocalSha(string path)
+        {
+            FileMemo memo = MemoFor(path);
+            return memo.Sha ?? (memo.Sha = GitBlobSha(File.ReadAllBytes(path)));
         }
 
         // ---- what's on GitHub ------------------------------------------------------------------
@@ -245,7 +269,7 @@ namespace ModUpdater
             {
                 string path = Path.Combine(_scriptsDir, file);
                 if (!_remoteSha.TryGetValue(file, out string sha)) continue;
-                if (!File.Exists(path) || GitBlobSha(File.ReadAllBytes(path)) != sha) return false;
+                if (!File.Exists(path) || LocalSha(path) != sha) return false;
             }
             return true;
         }
@@ -290,7 +314,7 @@ namespace ModUpdater
                     {
                         string localPath = Path.Combine(_scriptsDir, file);
                         if (_remoteSha.TryGetValue(file, out string sha) && File.Exists(localPath) &&
-                            GitBlobSha(File.ReadAllBytes(localPath)) == sha) continue;
+                            LocalSha(localPath) == sha) continue;
 
                         byte[] data = null; string error = null;
                         yield return Get($"{ApiBase}/{file}?ref={_branch.Value}", "application/vnd.github.raw+json", (t, b, e) => { data = b; error = e; });

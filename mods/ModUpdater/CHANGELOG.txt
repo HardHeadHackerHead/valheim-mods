@@ -1,1 +1,1 @@
-Fix: the F7 hotkey now works while holding Shift (running). Local mods you're still building get their own card with Reload and Disable.
+Opening the window and joining a world are faster: each mod file is only read and checked again if it actually changed. F7 works while holding Shift (running). Local mods you're still building get their own card with Reload and Disable.

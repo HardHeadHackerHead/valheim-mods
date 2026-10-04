@@ -38,7 +38,7 @@ namespace CraftFromChests
 
         private void Update()
         {
-            EnsureButtons();
+            if (InventoryGui.IsVisible()) EnsureButtons(); // the buttons only matter (and only need looking after) while the inventory is open
 
             Player player = Player.m_localPlayer;
             CraftingStation station = player != null ? player.GetCurrentCraftingStation() : null;
@@ -67,6 +67,7 @@ namespace CraftFromChests
             if (!Alive(_linesButton) || !Alive(_rangeButton))
             {
                 DestroyButtons(); // clear out whichever half survived, then build both fresh
+                _layoutKey = null; // fresh buttons need placing
                 try
                 {
                     _linesButton = CreateButton(gui, "CFC_LineToggle", ToggleLines,
@@ -84,13 +85,32 @@ namespace CraftFromChests
             }
 
             // Lay out: [Craft][Upgrade][Chest lines][Range], left to right, each just right of the previous one.
+            // Changing a UI element's position makes the game recalculate its layout, so only do it when something actually changed.
             RectTransform tab = (RectTransform)gui.m_tabUpgrade.transform;
-            float right = tab.anchoredPosition.x - tab.pivot.x * tab.sizeDelta.x + tab.sizeDelta.x;
-            right = Place(_linesButton, tab, right, Plugin.ToggleWidth.Value);
-            Place(_rangeButton, tab, right, Plugin.RangeButtonWidth.Value);
+            float[] now =
+            {
+                tab.anchoredPosition.x, tab.anchoredPosition.y, tab.sizeDelta.x, tab.sizeDelta.y, tab.localScale.x,
+                Plugin.ToggleWidth.Value, Plugin.RangeButtonWidth.Value, Plugin.ToggleOffsetX.Value, Plugin.ToggleOffsetY.Value, Plugin.ToggleScale.Value,
+            };
+            if (!SameLayout(now, _layoutKey))
+            {
+                float right = tab.anchoredPosition.x - tab.pivot.x * tab.sizeDelta.x + tab.sizeDelta.x;
+                right = Place(_linesButton, tab, right, Plugin.ToggleWidth.Value);
+                Place(_rangeButton, tab, right, Plugin.RangeButtonWidth.Value);
+                _layoutKey = now;
+            }
 
-            _linesButton.Refresh(); // re-applied every frame in case the game rewrites the text
+            _linesButton.Refresh(); // re-applied each frame in case the game rewrites the text (only rewrites if it differs)
             _rangeButton.Refresh();
+        }
+
+        private float[] _layoutKey;
+
+        private static bool SameLayout(float[] a, float[] b)
+        {
+            if (b == null || a.Length != b.Length) return false;
+            for (int i = 0; i < a.Length; i++) if (a[i] != b[i]) return false;
+            return true;
         }
 
         /// <summary>Clone the Upgrade tab so the button matches the panel's look.</summary>
@@ -162,7 +182,11 @@ namespace CraftFromChests
             _linesButton = _rangeButton = null;
         }
 
-        private void OnDestroy() => DestroyButtons();
+        private void OnDestroy()
+        {
+            DestroyButtons();
+            if (_lineMaterial != null) Destroy(_lineMaterial); // we made it, so we free it
+        }
 
         // ---- lines -----------------------------------------------------------------------------
 

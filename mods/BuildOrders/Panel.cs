@@ -73,12 +73,14 @@ namespace BuildOrders
             EnsureStyles();
 
             float s = Mathf.Max(0.75f, Screen.height / 1080f);
+            Matrix4x4 previousMatrix = GUI.matrix;
             GUI.matrix = Matrix4x4.Scale(new Vector3(s, s, 1f));
             float sw = Screen.width / s, sh = Screen.height / s;
 
             if (PlanKeyHeld && player.InPlaceMode()) DrawBanner(sw);
             if (_orders.Count > 0) { RefreshNeeds(); DrawPanel(player); }
             if (Aimed != null) DrawAimLabel(sw, sh);
+            GUI.matrix = previousMatrix; // leave the drawing scale as we found it, for whatever draws after us
         }
 
         private void DrawBanner(float sw)

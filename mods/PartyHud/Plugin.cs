@@ -23,7 +23,7 @@ namespace PartyHud
     {
         public const string Guid = "com.dhack.partyhud";
         public const string Name = "PartyHud";
-        public const string Version = "1.2.2";
+        public const string Version = "1.2.3";
 
         private ConfigEntry<bool> _enabled, _showSelf, _showPortraits, _showDistance, _hideInMenus;
         private ConfigEntry<float> _offsetX, _offsetY, _scale, _opacity;

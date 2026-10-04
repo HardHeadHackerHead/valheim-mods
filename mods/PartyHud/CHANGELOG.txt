@@ -1,1 +1,1 @@
-The panel hides while the inventory, crafting window, build menu, trader or big map is open. Fix: the F8 hide/show key now works while holding Shift (running).
+The panel hides while the inventory, crafting window, build menu, trader or big map is open. Tidier drawing (no leftover scale change). The F8 hide/show key works while holding Shift (running).

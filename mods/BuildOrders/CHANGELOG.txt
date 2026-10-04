@@ -1,1 +1,1 @@
-Ghosts are now genuinely see-through (setting: GhostOpacity) instead of a solid glowing copy.
+Smoother: finished orders are found with a quick nearby check instead of scanning every piece in the world, ghosts appear a few at a time (closest first), removed ghosts free their memory, and clearing a cluster saves once. Ghosts are see-through (GhostOpacity).

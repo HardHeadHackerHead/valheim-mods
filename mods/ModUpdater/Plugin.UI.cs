@@ -174,6 +174,7 @@ namespace ModUpdater
 
             // Scale with the screen so text stays readable at 1440p/4K (UiScale in the config adjusts it further).
             float s = Mathf.Max(0.75f, Screen.height / 1080f) * Mathf.Clamp(_uiScale.Value, 0.5f, 2f);
+            Matrix4x4 previousMatrix = GUI.matrix;
             GUI.matrix = Matrix4x4.Scale(new Vector3(s, s, 1f));
             float sw = Screen.width / s, sh = Screen.height / s;
             float w = Mathf.Min(960f, sw - 30f), h = Mathf.Min(700f, sh - 30f);
@@ -189,6 +190,7 @@ namespace ModUpdater
             _window = GUI.Window(WindowId, _window, DrawWindow, GUIContent.none, _sWindow);
             _window.x = Mathf.Clamp(_window.x, 0f, Mathf.Max(0f, sw - w));
             _window.y = Mathf.Clamp(_window.y, 0f, Mathf.Max(0f, sh - h));
+            GUI.matrix = previousMatrix; // leave the drawing scale as we found it, for whatever draws after us
         }
 
         private void DrawWindow(int id)

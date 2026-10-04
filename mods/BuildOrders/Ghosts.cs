@@ -80,14 +80,22 @@ namespace BuildOrders
 
             foreach (string id in _ghosts.Keys.Where(id => !_orders.ContainsKey(id)).ToList()) DestroyGhost(id);
 
-            foreach (Order o in _orders.Values)
+            // Making a ghost is real work (a whole piece is created and stripped down), so only a few per pass: a big plan fades in
+            // over a second or two instead of costing one long frame. The closest ones come first.
+            int spawned = 0;
+            foreach (Order o in _orders.Values.OrderBy(o => (o.Pos - here).sqrMagnitude))
             {
                 bool near = (o.Pos - here).sqrMagnitude <= max;
                 bool has = _ghosts.ContainsKey(o.Id);
-                if (near && !has && _ghosts.Count < MaxGhosts) SpawnGhost(o);
+                if (near && !has && _ghosts.Count < MaxGhosts && spawned < MaxSpawnsPerPass) { SpawnGhost(o); spawned++; }
                 else if (!near && has) DestroyGhost(o.Id);
             }
         }
+
+        private const int MaxSpawnsPerPass = 3;
+
+        /// <summary>The materials we created for each ghost. They're ours, so we must free them ourselves or they pile up.</summary>
+        private readonly Dictionary<string, List<Material>> _ghostMaterials = new Dictionary<string, List<Material>>();
 
         private void SpawnGhost(Order o)
         {
@@ -121,7 +129,9 @@ namespace BuildOrders
 
             go.name = o.Prefab + "_order";
             Strip(go);
-            MakeTranslucent(go);
+            var materials = new List<Material>();
+            MakeTranslucent(go, materials);
+            _ghostMaterials[o.Id] = materials;
             _ghosts[o.Id] = go;
             Tint(go, aimed: false);
         }
@@ -157,7 +167,7 @@ namespace BuildOrders
         /// Swap every model's material for a plain transparent one (keeping its texture), so the ghost is genuinely see-through.
         /// If the game has no usable transparent shader, fall back to copies of its own material, like the game's placement ghost.
         /// </summary>
-        private void MakeTranslucent(GameObject go)
+        private void MakeTranslucent(GameObject go, List<Material> created)
         {
             Shader shader = GhostShader();
 
@@ -186,6 +196,7 @@ namespace BuildOrders
                         if (copy.HasProperty("_TriplanarLocalPos")) copy.SetFloat("_TriplanarLocalPos", 1f);
                         replacement[i] = copy;
                     }
+                    created.Add(replacement[i]);
                 }
                 r.sharedMaterials = replacement;
             }
@@ -225,12 +236,21 @@ namespace BuildOrders
         {
             if (_ghosts.TryGetValue(id, out GameObject go) && go != null) Destroy(go);
             _ghosts.Remove(id);
+            FreeMaterials(id);
         }
 
         private void DestroyAllGhosts()
         {
             foreach (GameObject go in _ghosts.Values) if (go != null) Destroy(go);
             _ghosts.Clear();
+            foreach (string id in _ghostMaterials.Keys.ToList()) FreeMaterials(id);
+        }
+
+        private void FreeMaterials(string id)
+        {
+            if (!_ghostMaterials.TryGetValue(id, out List<Material> list)) return;
+            foreach (Material m in list) if (m != null) Destroy(m);
+            _ghostMaterials.Remove(id);
         }
 
         // ---- placing onto an order --------------------------------------------------------------

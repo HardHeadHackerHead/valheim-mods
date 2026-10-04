@@ -73,6 +73,7 @@ namespace PartyHud
 
             // Scale with the screen so it stays the same relative size at 1440p/4K.
             float s = Mathf.Max(0.75f, Screen.height / 1080f) * Mathf.Clamp(_scale.Value, 0.5f, 2f);
+            Matrix4x4 previousMatrix = GUI.matrix;
             GUI.matrix = Matrix4x4.Scale(new Vector3(s, s, 1f));
 
             float x = Screen.width / s - PanelWidth - _offsetX.Value;
@@ -83,6 +84,7 @@ namespace PartyHud
             y += 18f;
 
             foreach (Member m in _members) y += DrawMember(m, x, y) + 7f;
+            GUI.matrix = previousMatrix; // leave the drawing scale as we found it, for whatever draws after us
         }
 
         /// <summary>

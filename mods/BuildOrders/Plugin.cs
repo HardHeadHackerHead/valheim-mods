@@ -20,7 +20,7 @@ namespace BuildOrders
     {
         public const string Guid = "com.dhack.buildorders";
         public const string Name = "BuildOrders";
-        public const string Version = "1.0.1";
+        public const string Version = "1.0.2";
 
         internal static Plugin Instance;
 
@@ -98,7 +98,7 @@ namespace BuildOrders
 
             if (Time.time >= _nextGhostUpdate)
             {
-                _nextGhostUpdate = Time.time + 0.5f;
+                _nextGhostUpdate = Time.time + 0.25f; // a few ghosts at a time (see UpdateGhosts), so a big plan appears gradually
                 UpdateGhosts(player);
                 if (!Mathf.Approximately(_lastOpacity, _ghostOpacity.Value)) { _lastOpacity = _ghostOpacity.Value; RetintAll(); } // setting changed
             }
@@ -151,7 +151,8 @@ namespace BuildOrders
                 {
                     Order center = Aimed;
                     List<Order> cluster = _orders.Values.Where(o => (o.Pos - center.Pos).sqrMagnitude <= 64f).ToList();
-                    foreach (Order o in cluster) RemoveOrder(o.Id, broadcast: true);
+                    foreach (Order o in cluster) RemoveOrder(o.Id, broadcast: true, save: false);
+                    SaveOrders(); // once, not once per order
                     player.Message(MessageHud.MessageType.TopLeft, $"Removed {cluster.Count} build order(s)");
                 }
                 else
@@ -176,19 +177,30 @@ namespace BuildOrders
         // ---- finishing orders -------------------------------------------------------------------
 
         /// <summary>An order is done when a real piece of the same kind (and about the same rotation) stands on it.</summary>
+        private int _completionCursor;
+        private readonly Collider[] _hits = new Collider[32];
+        private int _pieceMask = -1;
+
         private void CheckCompletion(Player player)
         {
             if (_orders.Count == 0) return;
-            var found = new List<Piece>();
-            foreach (Order o in _orders.Values.ToList())
+            if (_pieceMask == -1) _pieceMask = LayerMask.GetMask("piece", "piece_nonsolid", "Default", "static_solid", "Default_small");
+
+            // Ask the physics system what's standing at each order (it only looks nearby), instead of walking the game's list of
+            // every piece in the world. And look at a few orders per second, taking turns, so a big plan never costs a whole frame.
+            List<Order> all = _orders.Values.ToList();
+            int budget = Mathf.Min(8, all.Count);
+            for (int n = 0; n < budget; n++)
             {
+                Order o = all[_completionCursor++ % all.Count];
                 if ((o.Pos - player.transform.position).sqrMagnitude > 80f * 80f) continue; // pieces out there aren't loaded for us
 
-                found.Clear();
-                Piece.GetAllPiecesInRadius(o.Pos, 0.5f, found);
-                foreach (Piece p in found)
+                int count = Physics.OverlapSphereNonAlloc(o.Pos, 0.6f, _hits, _pieceMask, QueryTriggerInteraction.Ignore);
+                for (int i = 0; i < count; i++)
                 {
+                    Piece p = _hits[i] != null ? _hits[i].GetComponentInParent<Piece>() : null;
                     if (p == null) continue;
+                    if ((p.transform.position - o.Pos).sqrMagnitude > 0.5f * 0.5f) continue;     // standing on the order, not just near it
                     ZNetView view = p.GetComponent<ZNetView>();
                     if (view == null || !view.IsValid()) continue; // our own ghosts have no network object: not real pieces
                     if (Plain(p.gameObject.name) != o.Prefab) continue;

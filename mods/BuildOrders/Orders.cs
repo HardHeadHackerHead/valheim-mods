@@ -50,14 +50,17 @@ namespace BuildOrders
             return true;
         }
 
-        internal void RemoveOrder(string id, bool broadcast)
+        internal void RemoveOrder(string id, bool broadcast, bool save = true)
         {
             if (!_orders.Remove(id) && _removed.Contains(id)) return;
             _removed.Add(id);
             DestroyGhost(id);
-            Save();
+            if (save) Save();
             if (broadcast) Send("R|" + id);
         }
+
+        /// <summary>Save to disk now (for callers that removed several orders without saving each time).</summary>
+        internal void SaveOrders() => Save();
 
         private static string Guid_() => System.Guid.NewGuid().ToString("N").Substring(0, 10);
 

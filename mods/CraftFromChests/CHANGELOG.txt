@@ -1,1 +1,1 @@
-Hand-crafting from the inventory screen (no crafting station) now uses nearby chests too, measured from you. The window shows how many of each material you HAVE (inventory plus chests) next to how many you need, with the split on hover.
+Smoother: the crafting-screen buttons are only looked after while the inventory is open and aren't repositioned every frame, and the chest checks are worked out once and reused (no more stutter when opening the inventory). Hand-crafting from the inventory uses nearby chests, and the crafting window shows how many of each material you have.
