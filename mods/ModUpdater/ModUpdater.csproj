@@ -1,0 +1,8 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <AssemblyName>ModUpdater</AssemblyName>
+    <RootNamespace>ModUpdater</RootNamespace>
+    <!-- The updater lives in plugins (normal load), NOT scripts: it must survive the reloads it triggers. -->
+    <DeployDir>$(BepInExDir)\plugins\ModUpdater</DeployDir>
+  </PropertyGroup>
+</Project>
