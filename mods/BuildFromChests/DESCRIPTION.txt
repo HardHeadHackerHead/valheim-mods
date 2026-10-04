@@ -1,0 +1,1 @@
+Building with the hammer uses materials from chests near you (default 20 m), not just your inventory.

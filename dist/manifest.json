@@ -1,6 +1,17 @@
 {
     "mods":  [
                  {
+                     "guid":  "com.dhack.buildfromchests",
+                     "name":  "BuildFromChests",
+                     "version":  "1.0.0",
+                     "description":  "Building with the hammer uses materials from chests near you (default 20 m), not just your inventory.",
+                     "notes":  "First release: build pieces using materials from nearby chests.",
+                     "files":  [
+                                   "BuildFromChests.dll",
+                                   "BuildFromChests.pdb"
+                               ]
+                 },
+                 {
                      "guid":  "com.dhack.craftfromchests",
                      "name":  "CraftFromChests",
                      "version":  "1.1.0",
