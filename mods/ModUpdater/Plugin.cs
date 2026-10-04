@@ -24,7 +24,7 @@ namespace ModUpdater
     {
         public const string Guid = "com.dhack.modupdater";
         public const string Name = "ModUpdater";
-        public const string Version = "2.4.4";
+        public const string Version = "2.4.5";
 
         private const string ScriptEngineGuid = "com.bepis.bepinex.scriptengine";
 
@@ -269,11 +269,14 @@ namespace ModUpdater
     [HarmonyPatch(typeof(GameCamera), nameof(GameCamera.UpdateMouseCapture))]
     internal static class GameCamera_UpdateMouseCapture
     {
-        private static void Postfix()
+        // While our window is open, skip the game's own cursor handling entirely. If we let it run and then undo it, the game locks the
+        // cursor every frame, and on Linux locking physically snaps the pointer to the middle of the screen, so it looks stuck there.
+        private static bool Prefix()
         {
-            if (!Plugin.WindowOpen) return;
+            if (!Plugin.WindowOpen) return true;
             ZCursor.LockState = CursorLockMode.None;
             ZCursor.Show();
+            return false;
         }
     }
 }

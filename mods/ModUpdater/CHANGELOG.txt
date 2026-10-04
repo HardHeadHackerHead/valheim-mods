@@ -1,1 +1,1 @@
-Fix for Linux / Steam Deck / controller setups: the mouse cursor now moves freely when the mod manager window is open instead of staying stuck in the middle of the screen. Faster window opening and world joining. F7 works while holding Shift.
+Better fix for the mouse cursor sticking in the middle of the screen on Linux: while the mod manager window is open the game's own cursor-locking is skipped altogether. Faster window opening and world joining. F7 works while holding Shift.

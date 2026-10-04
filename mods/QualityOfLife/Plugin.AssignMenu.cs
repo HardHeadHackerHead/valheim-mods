@@ -490,11 +490,14 @@ namespace QualityOfLife
     [HarmonyPatch(typeof(GameCamera), nameof(GameCamera.UpdateMouseCapture))]
     internal static class GameCamera_UpdateMouseCapture
     {
-        private static void Postfix()
+        // While our window is open, skip the game's own cursor handling entirely. If we let it run and then undo it, the game locks the
+        // cursor every frame, and on Linux locking physically snaps the pointer to the middle of the screen, so it looks stuck there.
+        private static bool Prefix()
         {
-            if (!Plugin.RulesWindowOpen) return;
+            if (!Plugin.RulesWindowOpen) return true;
             ZCursor.LockState = CursorLockMode.None;
             ZCursor.Show();
+            return false;
         }
     }
 }
