@@ -1,1 +1,1 @@
-Fix: the Q and B keys now work while you're running (holding Shift). Extra held keys no longer cancel the shortcut.
+Menus open and run smoother: chests are tracked instead of searched for, the item list only draws the rows you can see, and chest tags and hover text are worked out once and reused. Items in the assign menu are listed from lesser to greater. Plus sounds, Undo, chest assignment (K), the stack button, item locking (L), and Q/B working while you run.

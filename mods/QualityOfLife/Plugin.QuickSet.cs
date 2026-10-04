@@ -26,10 +26,11 @@ namespace QualityOfLife
 
         // ---- assigning (inventory open) ---------------------------------------------------------
 
-        private void AssignHovered(Player player)
+        /// <summary>The item in YOUR inventory that the mouse (or gamepad cursor) is over, or null.</summary>
+        private static ItemDrop.ItemData HoveredItem(Player player)
         {
             InventoryGui gui = InventoryGui.instance;
-            if (gui == null || gui.m_playerGrid == null) return;
+            if (gui == null || gui.m_playerGrid == null) return null;
 
             ItemDrop.ItemData item = null;
             if (ZInput.IsGamepadActive()) item = gui.m_playerGrid.GetGamepadSelectedItem();
@@ -39,8 +40,14 @@ namespace QualityOfLife
                 item = gui.m_playerGrid.GetItem(new Vector2i((int)mouse.x, (int)mouse.y));
             }
 
-            // Only things you're carrying: items sitting in a chest can't be equipped.
-            if (item == null || !player.GetInventory().ContainsItem(item)) return;
+            // Only things you're carrying: items sitting in a chest don't count.
+            return item != null && player.GetInventory().ContainsItem(item) ? item : null;
+        }
+
+        private void AssignHovered(Player player)
+        {
+            ItemDrop.ItemData item = HoveredItem(player);
+            if (item == null) return;
 
             if (IsQuick(item))
             {
@@ -89,7 +96,7 @@ namespace QualityOfLife
 
         // ---- badges on assigned items -----------------------------------------------------------
 
-        private void OnGUI()
+        private void DrawQuickSetBadges()
         {
             if (!_quickSetEnabled.Value || !_showBadges.Value || Event.current.type != EventType.Repaint) return;
             Player player = Player.m_localPlayer;

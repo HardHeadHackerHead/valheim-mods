@@ -34,6 +34,17 @@
                                ]
                  },
                  {
+                     "guid":  "com.dhack.feedfromchests",
+                     "name":  "FeedFromChests",
+                     "version":  "1.2.1",
+                     "description":  "Smelters, kilns, cooking racks, fires and fermenters can use items from nearby chests. Press E at a station (it adds from a chest if you have none, or opens a menu if there\u0027s a choice), or look at one and press F for a menu of everything you can add.",
+                     "notes":  "Fixes filling adding more than you actually had. Fill is now smooth: it adds a couple per frame and takes from the chests once at the end. The menu opens and runs smoother, has Fill and Fill station, and lists items from lesser to greater (wood, fine wood, core wood...). Feeds smelters, kilns, cooking racks, fires and fermenters from nearby chests.",
+                     "files":  [
+                                   "FeedFromChests.dll",
+                                   "FeedFromChests.pdb"
+                               ]
+                 },
+                 {
                      "guid":  "com.dhack.modupdater",
                      "name":  "ModUpdater",
                      "version":  "2.4.2",
@@ -58,9 +69,9 @@
                  {
                      "guid":  "com.dhack.qualityoflife",
                      "name":  "QualityOfLife",
-                     "version":  "1.0.1",
-                     "description":  "Small controls: hover items and press Q to build a quick set, press Q in the world to swap to it and back; press B to jump into construction mode with your hammer and back. Keys are configurable.",
-                     "notes":  "Fix: the Q and B keys now work while you\u0027re running (holding Shift). Extra held keys no longer cancel the shortcut.",
+                     "version":  "1.3.3",
+                     "description":  "Small controls: Q builds a quick set and swaps to it and back; B jumps into construction mode with your hammer and back; a button under your inventory stacks items into nearby chests, and L locks items you want to keep. Keys are configurable.",
+                     "notes":  "Menus open and run smoother: chests are tracked instead of searched for, the item list only draws the rows you can see, and chest tags and hover text are worked out once and reused. Items in the assign menu are listed from lesser to greater. Plus sounds, Undo, chest assignment (K), the stack button, item locking (L), and Q/B working while you run.",
                      "files":  [
                                    "QualityOfLife.dll",
                                    "QualityOfLife.pdb"

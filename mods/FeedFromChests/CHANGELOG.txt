@@ -1,0 +1,1 @@
+Fixes filling adding more than you actually had. Fill is now smooth: it adds a couple per frame and takes from the chests once at the end. The menu opens and runs smoother, has Fill and Fill station, and lists items from lesser to greater (wood, fine wood, core wood...). Feeds smelters, kilns, cooking racks, fires and fermenters from nearby chests.

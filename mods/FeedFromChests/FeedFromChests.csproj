@@ -1,0 +1,6 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <AssemblyName>FeedFromChests</AssemblyName>
+    <RootNamespace>FeedFromChests</RootNamespace>
+  </PropertyGroup>
+</Project>

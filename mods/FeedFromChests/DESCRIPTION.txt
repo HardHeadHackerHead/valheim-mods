@@ -1,0 +1,1 @@
+Smelters, kilns, cooking racks, fires and fermenters can use items from nearby chests. Press E at a station (it adds from a chest if you have none, or opens a menu if there's a choice), or look at one and press F for a menu of everything you can add.
