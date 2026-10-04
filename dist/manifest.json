@@ -1,0 +1,24 @@
+{
+    "mods":  [
+                 {
+                     "guid":  "com.dhack.craftfromchests",
+                     "name":  "CraftFromChests",
+                     "version":  "1.1.0",
+                     "description":  "Crafting stations use materials from nearby chests. Buttons beside the crafting tabs show lines to the chests in use and cycle the range (5-30 m).",
+                     "files":  [
+                                   "CraftFromChests.dll",
+                                   "CraftFromChests.pdb"
+                               ]
+                 },
+                 {
+                     "guid":  "com.dhack.modupdater",
+                     "name":  "ModUpdater",
+                     "version":  "2.1.0",
+                     "description":  "This mod manager (F7). Updates itself like any other mod.",
+                     "files":  [
+                                   "ModUpdater.dll",
+                                   "ModUpdater.pdb"
+                               ]
+                 }
+             ]
+}

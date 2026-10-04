@@ -1,9 +1,6 @@
 using System;
 using System.Collections;
-using System.Collections.Generic;
 using System.IO;
-using System.Security.Cryptography;
-using System.Text;
 using BepInEx;
 using BepInEx.Bootstrap;
 using BepInEx.Configuration;
@@ -14,132 +11,147 @@ using UnityEngine.Networking;
 namespace ModUpdater
 {
     /// <summary>
-    /// Press a hotkey to pull the latest mod DLLs from a (private) GitHub repo into BepInEx\scripts,
-    /// then ask ScriptEngine to hot-reload them. Only files whose content changed are downloaded.
+    /// A small private mod manager. F7 opens a window listing installed mods, the versions on our private
+    /// GitHub repo, and what versions the other players in the world have. Updates are pulled from GitHub
+    /// into BepInEx\scripts and hot-reloaded through ScriptEngine.
+    ///
+    /// Split across files: Plugin.cs (setup/helpers), Plugin.Catalog.cs (what's installed / on GitHub / installing),
+    /// Plugin.Peers.cs (sharing versions with other players), Plugin.UI.cs (the window).
     /// </summary>
     [BepInPlugin(Guid, Name, Version)]
-    public class Plugin : BaseUnityPlugin
+    public partial class Plugin : BaseUnityPlugin
     {
         public const string Guid = "com.dhack.modupdater";
         public const string Name = "ModUpdater";
-        public const string Version = "1.0.0";
+        public const string Version = "2.1.0";
 
         private const string ScriptEngineGuid = "com.bepis.bepinex.scriptengine";
 
         private ConfigEntry<string> _owner, _repo, _branch, _folder, _token;
         private ConfigEntry<KeyboardShortcut> _hotkey;
-        private ConfigEntry<bool> _checkOnStart;
+        private ConfigEntry<bool> _checkOnStart, _developerMode;
 
-        private bool _busy;
-        private string _scriptsDir;
+        private string _scriptsDir, _pluginsDir;
 
-        [Serializable] private class Entry { public string name; public string sha; public string type; }
-        [Serializable] private class Listing { public Entry[] items; }
+        /// <summary>True while the manager window is open (used by the input patches).</summary>
+        internal static bool WindowOpen;
 
         private void Awake()
         {
-            _owner = Config.Bind("Repo", "Owner", "", "GitHub user or org that owns the repo, e.g. 'davidhacker'.");
+            _owner = Config.Bind("Repo", "Owner", "", "GitHub user or org that owns the repo.");
             _repo = Config.Bind("Repo", "Repo", "", "Repository name.");
             _branch = Config.Bind("Repo", "Branch", "main", "Branch to pull from.");
-            _folder = Config.Bind("Repo", "Folder", "dist", "Folder in the repo that holds the built mod .dll files.");
+            _folder = Config.Bind("Repo", "Folder", "dist", "Folder in the repo that holds the built mod .dll files and manifest.json.");
             _token = Config.Bind("Repo", "Token", "",
-                "GitHub fine-grained personal access token with READ-ONLY 'Contents' access to this one repo. Keep it private.");
-            _hotkey = Config.Bind("General", "Hotkey", new KeyboardShortcut(KeyCode.F7), "Press this in-game to check for mod updates.");
-            _checkOnStart = Config.Bind("General", "CheckOnStart", false, "Also check for updates automatically when the game starts.");
+                "GitHub fine-grained personal access token with READ-ONLY 'Contents' access to this one repo. Keep it private. " +
+                "Leave blank to use your GitHub CLI login instead (needs `gh auth login` done once).");
+            _hotkey = Config.Bind("General", "Hotkey", new KeyboardShortcut(KeyCode.F7), "Opens/closes the mod manager window.");
+            _checkOnStart = Config.Bind("General", "CheckOnStart", false,
+                "When the game starts, check GitHub and automatically install any updates.");
+            _developerMode = Config.Bind("General", "DeveloperMode", false,
+                "For the person who builds the mods: 'Update all' and auto-update never overwrite a build whose version is the same or newer than GitHub's.");
 
             _scriptsDir = Path.Combine(Paths.BepInExRootPath, "scripts");
-            Logger.LogInfo($"{Name} {Version} ready. Press {_hotkey.Value} in-game to update mods.");
+            _pluginsDir = Paths.PluginPath;
+            Directory.CreateDirectory(_scriptsDir);
 
-            if (_checkOnStart.Value) StartCoroutine(CheckForUpdates(silentIfCurrent: true));
+            _awakeFrame = Time.frameCount;
+            string warmUp = ActiveToken; // starts the background `gh auth token` lookup now, so it's ready by the time F7 is pressed
+            _harmony = new Harmony(Guid);
+            _harmony.PatchAll();
+            ScanLocal();
+            Logger.LogInfo($"{Name} {Version} ready. Press {_hotkey.Value} in-game to open the mod manager.");
+
+            if (_checkOnStart.Value) StartCoroutine(RefreshRoutine(autoInstall: true));
+        }
+
+        private Harmony _harmony;
+        private int _awakeFrame;
+        private bool _firstCheckStarted;
+
+        // ScriptEngine destroys this copy when mods reload (including when we update ourselves).
+        // Undo everything we hooked into the game so the fresh copy starts clean.
+        private void OnDestroy()
+        {
+            _harmony?.UnpatchSelf();
+            UnregisterRpc();
+            WindowOpen = false;
         }
 
         private void Update()
         {
-            if (_hotkey.Value.IsDown() && !_busy) StartCoroutine(CheckForUpdates(silentIfCurrent: false));
+            if (_hotkey.Value.IsDown()) ToggleWindow();
+
+            // If the window was opened before the GitHub CLI login arrived, do the first check as soon as it does.
+            if (WindowOpen && !_busy && !_firstCheckStarted && _lastRefresh == DateTime.MinValue && Configured)
+            {
+                _firstCheckStarted = true;
+                StartCoroutine(RefreshRoutine(autoInstall: false));
+            }
+            UpdatePeers();
         }
 
-        private IEnumerator CheckForUpdates(bool silentIfCurrent)
+        // ---- authentication: the Token from the config, or else the GitHub CLI's login ---------------
+
+        private volatile string _ghToken;
+        private bool _ghTried;
+
+        /// <summary>The token to use: the config's Token if set, otherwise whatever `gh auth token` gave us.</summary>
+        private string ActiveToken
         {
-            if (string.IsNullOrEmpty(_owner.Value) || string.IsNullOrEmpty(_repo.Value) || string.IsNullOrEmpty(_token.Value))
+            get
             {
-                Say("Not set up yet: fill in Owner, Repo and Token in BepInEx\\config\\" + Guid + ".cfg");
-                yield break;
-            }
-
-            _busy = true;
-            try
-            {
-                Directory.CreateDirectory(_scriptsDir);
-
-                // 1. List the repo folder.
-                string baseUrl = $"https://api.github.com/repos/{_owner.Value}/{_repo.Value}/contents/{_folder.Value}";
-                string listJson = null, error = null;
-                yield return Get($"{baseUrl}?ref={_branch.Value}", "application/vnd.github+json", (text, bytes, err) => { listJson = text; error = err; });
-                if (error != null) { Say("Update check failed: " + error); yield break; }
-
-                Listing listing = JsonUtility.FromJson<Listing>("{\"items\":" + listJson + "}");
-                var updated = new List<string>();
-
-                // 2. Download only files that differ from what's installed.
-                foreach (Entry entry in listing.items)
-                {
-                    if (entry.type != "file" || !IsModFile(entry.name)) continue;
-
-                    string localPath = Path.Combine(_scriptsDir, entry.name);
-                    if (File.Exists(localPath) && GitBlobSha(File.ReadAllBytes(localPath)) == entry.sha) continue;
-
-                    byte[] data = null;
-                    yield return Get($"{baseUrl}/{entry.name}?ref={_branch.Value}", "application/vnd.github.raw+json", (text, bytes, err) => { data = bytes; error = err; });
-                    if (error != null || data == null) { Say($"Download of {entry.name} failed: {error}"); yield break; }
-
-                    // Write to a temp file then move, so ScriptEngine never sees a half-written DLL.
-                    string tmp = localPath + ".part";
-                    File.WriteAllBytes(tmp, data);
-                    if (File.Exists(localPath)) File.Delete(localPath);
-                    File.Move(tmp, localPath);
-                    updated.Add(entry.name);
-                }
-
-                // 3. Report, and hot-reload if anything changed.
-                if (updated.Count == 0)
-                {
-                    if (!silentIfCurrent) Say("Mods are up to date.");
-                    yield break;
-                }
-
-                Say($"Updated {updated.Count} file(s): {string.Join(", ", updated)}");
-                if (!ReloadScripts()) Say("Press F6 to reload them (ScriptEngine not detected).");
-            }
-            finally
-            {
-                _busy = false;
+                if (!string.IsNullOrEmpty(_token.Value)) return _token.Value;
+                if (!_ghTried) { _ghTried = true; AskGitHubCli(); }
+                return _ghToken ?? "";
             }
         }
 
-        private static bool IsModFile(string name) =>
-            name.EndsWith(".dll", StringComparison.OrdinalIgnoreCase) || name.EndsWith(".pdb", StringComparison.OrdinalIgnoreCase);
+        private string AuthSource =>
+            !string.IsNullOrEmpty(_token.Value) ? "config token" : !string.IsNullOrEmpty(_ghToken) ? "GitHub CLI login" : "none";
 
-        /// <summary>Same hash Git uses for a file ("blob" SHA-1), so we can compare against GitHub's listing without downloading.</summary>
-        private static string GitBlobSha(byte[] content)
+        /// <summary>
+        /// Run `gh auth token` on a background thread (so the game never stalls). The token is held in memory only:
+        /// never written to disk, only sent to api.github.com.
+        /// </summary>
+        private void AskGitHubCli()
         {
-            byte[] header = Encoding.ASCII.GetBytes("blob " + content.Length + "\0");
-            var all = new byte[header.Length + content.Length];
-            Buffer.BlockCopy(header, 0, all, 0, header.Length);
-            Buffer.BlockCopy(content, 0, all, header.Length, content.Length);
-            using (SHA1 sha = SHA1.Create())
+            new System.Threading.Thread(() =>
             {
-                var sb = new StringBuilder();
-                foreach (byte b in sha.ComputeHash(all)) sb.Append(b.ToString("x2"));
-                return sb.ToString();
-            }
+                foreach (string exe in new[] { "gh", @"C:\Program Files\GitHub CLI\gh.exe" })
+                {
+                    try
+                    {
+                        var psi = new System.Diagnostics.ProcessStartInfo(exe, "auth token")
+                        {
+                            UseShellExecute = false,
+                            CreateNoWindow = true,
+                            RedirectStandardOutput = true,
+                            RedirectStandardError = true,
+                        };
+                        using (var p = System.Diagnostics.Process.Start(psi))
+                        {
+                            string output = p.StandardOutput.ReadToEnd().Trim();
+                            if (!p.WaitForExit(5000)) { try { p.Kill(); } catch { } continue; }
+                            if (p.ExitCode == 0 && output.Length > 0) { _ghToken = output; return; }
+                        }
+                    }
+                    catch { /* gh not installed at this path: try the next */ }
+                }
+            }) { IsBackground = true }.Start();
         }
+
+        private bool Configured =>
+            !string.IsNullOrEmpty(_owner.Value) && !string.IsNullOrEmpty(_repo.Value) && !string.IsNullOrEmpty(ActiveToken);
+
+        private string ApiBase => $"https://api.github.com/repos/{_owner.Value}/{_repo.Value}/contents/{_folder.Value}";
 
         /// <summary>One authenticated GET against the GitHub API.</summary>
         private IEnumerator Get(string url, string accept, Action<string, byte[], string> done)
         {
             using (UnityWebRequest req = UnityWebRequest.Get(url))
             {
-                req.SetRequestHeader("Authorization", "Bearer " + _token.Value);
+                req.SetRequestHeader("Authorization", "Bearer " + ActiveToken);
                 req.SetRequestHeader("Accept", accept);
                 req.SetRequestHeader("User-Agent", Name);
                 req.SetRequestHeader("X-GitHub-Api-Version", "2022-11-28");
@@ -170,7 +182,7 @@ namespace ModUpdater
             }
         }
 
-        /// <summary>Log it, and show it as a local chat line + top-left popup when in a world.</summary>
+        /// <summary>Log it, and show it as a local chat line when in a world.</summary>
         private void Say(string message)
         {
             Logger.LogInfo(message);
@@ -180,6 +192,30 @@ namespace ModUpdater
                 AccessTools.Field(typeof(Chat), "m_hideTimer").SetValue(Chat.instance, 0f);
                 Chat.instance.m_chatWindow.gameObject.SetActive(true);
             }
+        }
+    }
+
+    // While the window is open: don't let clicks/keys reach the game, and free the mouse cursor.
+    [HarmonyPatch(typeof(PlayerController), "TakeInput")]
+    internal static class PlayerController_TakeInput
+    {
+        private static void Postfix(ref bool __result) { if (Plugin.WindowOpen) __result = false; }
+    }
+
+    [HarmonyPatch(typeof(Player), "TakeInput")]
+    internal static class Player_TakeInput
+    {
+        private static void Postfix(ref bool __result) { if (Plugin.WindowOpen) __result = false; }
+    }
+
+    [HarmonyPatch(typeof(GameCamera), nameof(GameCamera.UpdateMouseCapture))]
+    internal static class GameCamera_UpdateMouseCapture
+    {
+        private static void Postfix()
+        {
+            if (!Plugin.WindowOpen) return;
+            ZCursor.LockState = CursorLockMode.None;
+            ZCursor.Show();
         }
     }
 }

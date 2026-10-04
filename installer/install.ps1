@@ -5,9 +5,8 @@
 .DESCRIPTION
   1. Finds the Valheim install.
   2. Installs BepInEx (the mod loader) and ScriptEngine (lets mods reload while the game runs).
-  3. Installs ModUpdater and points it at the private mods repo.
-  4. Downloads the current mods.
-  After this, pressing F7 in-game pulls updates and reloads them. No restart needed.
+  3. Downloads the current mods, including the ModUpdater mod manager, and points the manager at the private mods repo.
+  After this, pressing F7 in-game opens the mod manager, which pulls updates and reloads them. No restart needed.
 
 .PARAMETER Token
   Read-only GitHub token for the private repo (given to you by the repo owner).
@@ -116,12 +115,7 @@ if ((Test-Path $seDll) -and -not $Force) {
 New-Item -ItemType Directory -Force (Join-Path $bepinex "scripts") | Out-Null
 
 # ---- 5. ModUpdater ----------------------------------------------------------------------------
-Step "Installing ModUpdater"
-$updaterDir = Join-Path $bepinex "plugins\ModUpdater"
-New-Item -ItemType Directory -Force $updaterDir | Out-Null
-Invoke-WebRequest "https://api.github.com/repos/$Owner/$Repo/contents/installer/ModUpdater.dll?ref=$Branch" `
-    -Headers $ghRawHeaders -OutFile (Join-Path $updaterDir "ModUpdater.dll")
-
+Step "Configuring the mod manager (ModUpdater itself is downloaded with the mods below)"
 $configDir = Join-Path $bepinex "config"
 New-Item -ItemType Directory -Force $configDir | Out-Null
 @"
@@ -158,7 +152,7 @@ Mods installed in: $ValheimDir
 Next:
   1. Launch Valheim from Steam (the first launch with mods is slower than usual).
   2. Load into the world. You should see a chat line like:  [Mod]: CraftFromChests v... loaded
-  3. Later, press F7 in-game to fetch the newest mods - they reload instantly, no restart.
+  3. Later, press F7 in-game to open the mod manager and fetch the newest mods - they reload instantly, no restart.
 
 Troubleshooting: BepInEx\LogOutput.log in the Valheim folder lists every mod that loaded and any errors.
 "@ -ForegroundColor Green

@@ -2,7 +2,6 @@
   <PropertyGroup>
     <AssemblyName>ModUpdater</AssemblyName>
     <RootNamespace>ModUpdater</RootNamespace>
-    <!-- The updater lives in plugins (normal load), NOT scripts: it must survive the reloads it triggers. -->
-    <DeployDir>$(BepInExDir)\plugins\ModUpdater</DeployDir>
+    <!-- Deploys to BepInEx\scripts like every other mod, so the manager can hot-reload (and update itself). -->
   </PropertyGroup>
 </Project>

@@ -1,11 +1,12 @@
-# Builds every mod and copies the results into .\dist, ready to commit and push to the private repo.
-# ModUpdater is skipped: it's installed once by hand and shouldn't overwrite itself.
+# Builds every mod (including the ModUpdater mod manager, which updates itself like any other mod) and copies
+# the results into .\dist plus a manifest.json, ready to commit and push to the private repo.
 $root = $PSScriptRoot
 $dist = Join-Path $root "dist"
 New-Item -ItemType Directory -Force $dist | Out-Null
 
+$manifest = @()   # becomes dist\manifest.json, which the in-game mod manager reads
+
 foreach ($proj in Get-ChildItem (Join-Path $root "mods") -Directory) {
-    if ($proj.Name -eq "ModUpdater") { continue }
     $csproj = Join-Path $proj.FullName "$($proj.Name).csproj"
     if (-not (Test-Path $csproj)) { continue }
 
@@ -16,14 +17,25 @@ foreach ($proj in Get-ChildItem (Join-Path $root "mods") -Directory) {
     $out = Join-Path $proj.FullName "bin\Release\net48"
     Copy-Item (Join-Path $out "$($proj.Name).dll") $dist -Force
     Copy-Item (Join-Path $out "$($proj.Name).pdb") $dist -Force   # ScriptEngine needs the .pdb beside the DLL
+
+    # Read guid/name/version from the mod's [BepInPlugin] constants, description from DESCRIPTION.txt (optional).
+    $src = (Get-ChildItem $proj.FullName -Filter *.cs -Recurse | Where-Object { $_.FullName -notmatch '\\(obj|bin)\\' } |
+            ForEach-Object { Get-Content $_.FullName -Raw }) -join "`n"
+    $guid = [regex]::Match($src, 'const string Guid\s*=\s*"([^"]+)"').Groups[1].Value
+    $name = [regex]::Match($src, 'const string Name\s*=\s*"([^"]+)"').Groups[1].Value
+    $ver  = [regex]::Match($src, 'const string Version\s*=\s*"([^"]+)"').Groups[1].Value
+    if (-not $guid -or -not $ver) { Write-Error "Couldn't find Guid/Version constants in $($proj.Name)"; exit 1 }
+    $descFile = Join-Path $proj.FullName "DESCRIPTION.txt"
+    $desc = if (Test-Path $descFile) { (Get-Content $descFile -Raw).Trim() } else { "" }
+
+    $manifest += [ordered]@{
+        guid = $guid; name = $name; version = $ver; description = $desc
+        files = @("$($proj.Name).dll", "$($proj.Name).pdb")
+    }
 }
 
-# The updater goes in installer\ (used by install.ps1), never dist\.
-Write-Host "Building ModUpdater..."
-$updater = Join-Path $root "mods\ModUpdater"
-dotnet build (Join-Path $updater "ModUpdater.csproj") -c Release --nologo -v q
-if ($LASTEXITCODE -ne 0) { Write-Error "Build failed for ModUpdater"; exit 1 }
-Copy-Item (Join-Path $updater "bin\Release\net48\ModUpdater.dll") (Join-Path $root "installer") -Force
+$json = ConvertTo-Json -InputObject ([ordered]@{ mods = @($manifest) }) -Depth 5
+[IO.File]::WriteAllText((Join-Path $dist "manifest.json"), $json, (New-Object Text.UTF8Encoding($false)))
 
 Write-Host "`nReady in $dist :"
 Get-ChildItem $dist | Select-Object Name, Length, LastWriteTime

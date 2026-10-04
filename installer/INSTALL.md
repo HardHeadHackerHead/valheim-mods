@@ -31,7 +31,7 @@ never installed mods before. Do the install for them and explain what you're doi
 4. **Verify.** The installer prints each step. Afterwards check that these exist in the Valheim folder:
    - `BepInEx\core\BepInEx.dll`
    - `BepInEx\plugins\ScriptEngine.dll`
-   - `BepInEx\plugins\ModUpdater\ModUpdater.dll`
+   - `BepInEx\scripts\ModUpdater.dll` (and its `.pdb`)
    - at least one `BepInEx\scripts\*.dll`
 
 5. **Have the player launch Valheim from Steam and load into the world.** The first launch with mods is slower.
@@ -42,7 +42,7 @@ never installed mods before. Do the install for them and explain what you're doi
 |---|---|
 | BepInEx | The standard Valheim mod loader. Mods can't run without it. |
 | ScriptEngine | Lets mods reload while the game is running (F6), so no restarts. |
-| ModUpdater | Press **F7** in-game to download the newest mods from the private repo and reload them. |
+| ModUpdater | The mod manager. Press **F7** in-game to see installed vs. latest versions (and what other players have), and to download/reload updates. It updates itself too. |
 | CraftFromChests | The first mod: crafting stations use materials from nearby chests. |
 
 ## Using it
