@@ -1,1 +1,1 @@
-Mods that exist only on your machine (not published yet) now get a proper card with Reload and Disable instead of a plain line; only loader plugins are listed separately.
+Fix: the F7 hotkey now works while holding Shift (running). Local mods you're still building get their own card with Reload and Disable.

@@ -1,0 +1,1 @@
+Ghosts are now genuinely see-through (setting: GhostOpacity) instead of a solid glowing copy.

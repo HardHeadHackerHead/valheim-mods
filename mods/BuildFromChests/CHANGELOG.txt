@@ -1,1 +1,1 @@
-First release: build pieces using materials from nearby chests.
+The build menu now shows how many of each material you HAVE (inventory plus chests in range) next to how many you need, with the split on hover.

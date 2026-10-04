@@ -1,1 +1,1 @@
-Polish: rounded panels, bars and pictures with soft shadows, fade-in for new players, a PARTY header, F8 to hide/show the panel, and a cap on how many players are listed.
+The panel hides while the inventory, crafting window, build menu, trader or big map is open. Fix: the F8 hide/show key now works while holding Shift (running).

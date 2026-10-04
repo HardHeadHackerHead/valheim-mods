@@ -3,20 +3,31 @@
                  {
                      "guid":  "com.dhack.buildfromchests",
                      "name":  "BuildFromChests",
-                     "version":  "1.0.0",
-                     "description":  "Building with the hammer uses materials from chests near you (default 20 m), not just your inventory.",
-                     "notes":  "First release: build pieces using materials from nearby chests.",
+                     "version":  "1.1.0",
+                     "description":  "Building with the hammer uses materials from chests near you (default 20 m), not just your inventory. The build menu shows how many of each material you have.",
+                     "notes":  "The build menu now shows how many of each material you HAVE (inventory plus chests in range) next to how many you need, with the split on hover.",
                      "files":  [
                                    "BuildFromChests.dll",
                                    "BuildFromChests.pdb"
                                ]
                  },
                  {
+                     "guid":  "com.dhack.buildorders",
+                     "name":  "BuildOrders",
+                     "version":  "1.0.1",
+                     "description":  "Ghost build orders: hold Left Alt and place with the hammer to plan a piece instead of building it. Everyone in the party sees it as a glowing ghost, your placement snaps onto it, and it disappears once built. A panel totals the materials the orders need.",
+                     "notes":  "Ghosts are now genuinely see-through (setting: GhostOpacity) instead of a solid glowing copy.",
+                     "files":  [
+                                   "BuildOrders.dll",
+                                   "BuildOrders.pdb"
+                               ]
+                 },
+                 {
                      "guid":  "com.dhack.craftfromchests",
                      "name":  "CraftFromChests",
-                     "version":  "1.1.0",
-                     "description":  "Crafting stations use materials from nearby chests. Buttons beside the crafting tabs show lines to the chests in use and cycle the range (5-30 m).",
-                     "notes":  "Chest-lines and range buttons beside the crafting tabs; reload-safe for hot reloading.",
+                     "version":  "1.3.0",
+                     "description":  "Crafting stations (and hand-crafting from the inventory) use materials from nearby chests. Shows how many of each material you have, buttons beside the crafting tabs show lines to the chests in use and cycle the range (5-30 m).",
+                     "notes":  "Hand-crafting from the inventory screen (no crafting station) now uses nearby chests too, measured from you. The window shows how many of each material you HAVE (inventory plus chests) next to how many you need, with the split on hover.",
                      "files":  [
                                    "CraftFromChests.dll",
                                    "CraftFromChests.pdb"
@@ -25,9 +36,9 @@
                  {
                      "guid":  "com.dhack.modupdater",
                      "name":  "ModUpdater",
-                     "version":  "2.4.1",
+                     "version":  "2.4.2",
                      "description":  "This mod manager (F7). Updates itself like any other mod.",
-                     "notes":  "Mods that exist only on your machine (not published yet) now get a proper card with Reload and Disable instead of a plain line; only loader plugins are listed separately.",
+                     "notes":  "Fix: the F7 hotkey now works while holding Shift (running). Local mods you\u0027re still building get their own card with Reload and Disable.",
                      "files":  [
                                    "ModUpdater.dll",
                                    "ModUpdater.pdb"
@@ -36,9 +47,9 @@
                  {
                      "guid":  "com.dhack.partyhud",
                      "name":  "PartyHud",
-                     "version":  "1.2.0",
+                     "version":  "1.2.2",
                      "description":  "Party panel on the right of the screen: every player\u0027s Steam picture, name, health, stamina and distance, live, at any range.",
-                     "notes":  "Polish: rounded panels, bars and pictures with soft shadows, fade-in for new players, a PARTY header, F8 to hide/show the panel, and a cap on how many players are listed.",
+                     "notes":  "The panel hides while the inventory, crafting window, build menu, trader or big map is open. Fix: the F8 hide/show key now works while holding Shift (running).",
                      "files":  [
                                    "PartyHud.dll",
                                    "PartyHud.pdb"
@@ -47,9 +58,9 @@
                  {
                      "guid":  "com.dhack.qualityoflife",
                      "name":  "QualityOfLife",
-                     "version":  "1.0.0",
+                     "version":  "1.0.1",
                      "description":  "Small controls: hover items and press Q to build a quick set, press Q in the world to swap to it and back; press B to jump into construction mode with your hammer and back. Keys are configurable.",
-                     "notes":  "First release: a quick set you build from your inventory (swap to it and back with one key) and a hammer key that jumps into construction mode and back. Both keys are configurable.",
+                     "notes":  "Fix: the Q and B keys now work while you\u0027re running (holding Shift). Extra held keys no longer cancel the shortcut.",
                      "files":  [
                                    "QualityOfLife.dll",
                                    "QualityOfLife.pdb"

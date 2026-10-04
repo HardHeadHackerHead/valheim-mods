@@ -25,12 +25,23 @@ namespace CraftFromChests
             if (!AllContainers.Contains(c)) AllContainers.Add(c);
         }
 
-        /// <summary>Is this the local player's own inventory, and are we standing at a station?</summary>
+        /// <summary>
+        /// Is this the local player's own inventory while they're crafting? That's either at a crafting station, or
+        /// hand-crafting from the inventory screen with no station (the crafting tab is showing).
+        /// </summary>
         internal static bool Applies(Inventory inv)
         {
             if (Suspend || !Plugin.Enabled.Value) return false;
             Player p = Player.m_localPlayer;
-            return p != null && inv == p.GetInventory() && p.GetCurrentCraftingStation() != null;
+            if (p == null || inv != p.GetInventory()) return false;
+            return p.GetCurrentCraftingStation() != null || HandCrafting();
+        }
+
+        /// <summary>The inventory screen is open on its crafting tab with no crafting station involved.</summary>
+        internal static bool HandCrafting()
+        {
+            InventoryGui gui = InventoryGui.instance;
+            return gui != null && InventoryGui.IsVisible() && gui.InCraftTab();
         }
 
         /// <summary>Chests near the current crafting station that we're allowed to use (cached per frame).</summary>
@@ -41,10 +52,13 @@ namespace CraftFromChests
             Nearby.Clear();
 
             Player p = Player.m_localPlayer;
-            CraftingStation station = p != null ? p.GetCurrentCraftingStation() : null;
-            if (station == null) return Nearby;
+            if (p == null) return Nearby;
 
-            Vector3 origin = station.transform.position;
+            // At a station, chests are measured from the station; hand-crafting from the inventory, from the player.
+            CraftingStation station = p.GetCurrentCraftingStation();
+            if (station == null && !HandCrafting()) return Nearby;
+
+            Vector3 origin = station != null ? station.transform.position : p.transform.position;
             float maxSqr = Plugin.Radius.Value * Plugin.Radius.Value;
             long playerId = Game.instance.GetPlayerProfile().GetPlayerID();
 

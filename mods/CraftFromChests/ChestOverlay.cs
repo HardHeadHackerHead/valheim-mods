@@ -40,13 +40,19 @@ namespace CraftFromChests
         {
             EnsureButtons();
 
-            CraftingStation station = Player.m_localPlayer != null ? Player.m_localPlayer.GetCurrentCraftingStation() : null;
-            bool craftingOpen = InventoryGui.IsVisible() && station != null && Plugin.Enabled.Value;
+            Player player = Player.m_localPlayer;
+            CraftingStation station = player != null ? player.GetCurrentCraftingStation() : null;
 
-            if (_linesButton != null) _linesButton.Root.SetActive(craftingOpen);
-            if (_rangeButton != null) _rangeButton.Root.SetActive(craftingOpen);
+            // Crafting at a station, or hand-crafting from the inventory screen (then chests are measured from the player).
+            bool craftingOpen = player != null && InventoryGui.IsVisible() && Plugin.Enabled.Value
+                                && (station != null || ChestScanner.HandCrafting());
 
-            DrawLines(craftingOpen && Plugin.ShowLines.Value ? station : null);
+            if (Alive(_linesButton)) _linesButton.Root.SetActive(craftingOpen);
+            if (Alive(_rangeButton)) _rangeButton.Root.SetActive(craftingOpen);
+
+            Vector3? origin = !craftingOpen || !Plugin.ShowLines.Value ? (Vector3?)null
+                              : station != null ? station.transform.position : player.transform.position;
+            DrawLines(origin);
         }
 
         // ---- buttons ---------------------------------------------------------------------------
@@ -56,8 +62,11 @@ namespace CraftFromChests
             InventoryGui gui = InventoryGui.instance;
             if (_buttonsFailed || gui == null || gui.m_tabUpgrade == null) return;
 
-            if (_linesButton == null)
+            // The game rebuilds its whole inventory UI when you leave a world and join another, which destroys our buttons.
+            // A destroyed button still looks like a real object to ordinary C# null checks, so use Alive().
+            if (!Alive(_linesButton) || !Alive(_rangeButton))
             {
+                DestroyButtons(); // clear out whichever half survived, then build both fresh
                 try
                 {
                     _linesButton = CreateButton(gui, "CFC_LineToggle", ToggleLines,
@@ -142,11 +151,14 @@ namespace CraftFromChests
             Plugin.Radius.Value = RangeSteps[0];
         }
 
+        /// <summary>True if the button exists and the game hasn't destroyed it (Unity-aware null check on the GameObject).</summary>
+        private static bool Alive(ModButton b) => b != null && b.Root != null;
+
         private void DestroyButtons()
         {
             // The buttons live in the game's UI, not under our plugin object, so we remove them ourselves.
-            if (_linesButton != null) Destroy(_linesButton.Root);
-            if (_rangeButton != null) Destroy(_rangeButton.Root);
+            if (Alive(_linesButton)) Destroy(_linesButton.Root);
+            if (Alive(_rangeButton)) Destroy(_rangeButton.Root);
             _linesButton = _rangeButton = null;
         }
 
@@ -154,9 +166,10 @@ namespace CraftFromChests
 
         // ---- lines -----------------------------------------------------------------------------
 
-        private void DrawLines(CraftingStation station)
+        /// <param name="origin">Where the lines start (the station, or you when hand-crafting); null = draw nothing.</param>
+        private void DrawLines(Vector3? origin)
         {
-            List<Container> chests = station != null ? ChestScanner.GetNearby() : null;
+            List<Container> chests = origin.HasValue ? ChestScanner.GetNearby() : null;
             int count = chests != null ? chests.Count : 0;
 
             while (_lines.Count < count) _lines.Add(CreateLine());
@@ -171,7 +184,7 @@ namespace CraftFromChests
                 if (i >= count) continue;
 
                 lr.startColor = lr.endColor = color;
-                lr.SetPosition(0, station.transform.position + Vector3.up * 1f);
+                lr.SetPosition(0, origin.Value + Vector3.up * 1f);
                 lr.SetPosition(1, chests[i].transform.position + Vector3.up * 0.6f);
             }
         }

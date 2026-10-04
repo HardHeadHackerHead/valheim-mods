@@ -68,6 +68,7 @@ namespace PartyHud
             if (Event.current.type != EventType.Repaint) return; // the panel has no buttons: draw only, never handle input
             if (!_enabled.Value || !_visible || Player.m_localPlayer == null || _members.Count == 0) return;
             if (Hud.IsUserHidden() || Menu.IsVisible()) return;
+            if (_hideInMenus.Value && ScreenCoversPanel()) return;
             EnsureStyles();
 
             // Scale with the screen so it stays the same relative size at 1440p/4K.
@@ -83,6 +84,13 @@ namespace PartyHud
 
             foreach (Member m in _members) y += DrawMember(m, x, y) + 7f;
         }
+
+        /// <summary>
+        /// Is a screen open that would sit under the panel (inventory, crafting, build menu, trader, big map)?
+        /// Our panel is drawn on top of the game's own UI, so we simply get out of the way.
+        /// </summary>
+        private static bool ScreenCoversPanel() =>
+            InventoryGui.IsVisible() || StoreGui.IsVisible() || Minimap.IsOpen() || Hud.IsPieceSelectionVisible() || TextInput.IsVisible();
 
         /// <summary>Draw one player's row and return how tall it was.</summary>
         private float DrawMember(Member m, float x, float y)

@@ -23,9 +23,9 @@ namespace PartyHud
     {
         public const string Guid = "com.dhack.partyhud";
         public const string Name = "PartyHud";
-        public const string Version = "1.2.0";
+        public const string Version = "1.2.2";
 
-        private ConfigEntry<bool> _enabled, _showSelf, _showPortraits, _showDistance;
+        private ConfigEntry<bool> _enabled, _showSelf, _showPortraits, _showDistance, _hideInMenus;
         private ConfigEntry<float> _offsetX, _offsetY, _scale, _opacity;
         private ConfigEntry<int> _maxRows;
         private ConfigEntry<KeyboardShortcut> _toggleKey;
@@ -53,6 +53,8 @@ namespace PartyHud
             _showPortraits = Config.Bind("General", "ShowPortraits", true,
                 "Show each player's Steam profile picture. Off (or no picture available) = a coloured initial.");
             _showDistance = Config.Bind("General", "ShowDistance", true, "Show how far away each player is.");
+            _hideInMenus = Config.Bind("General", "HideInMenus", true,
+                "Hide the panel while the inventory, crafting window, build menu, trader or big map is open, so it doesn't overlap them.");
             _maxRows = Config.Bind("General", "MaxPlayers", 8, "Most players to show (you first, then the rest alphabetically).");
             _toggleKey = Config.Bind("General", "ToggleKey", new KeyboardShortcut(KeyCode.F8), "Press to hide or show the panel (handy for screenshots).");
             _offsetX = Config.Bind("Layout", "OffsetX", 10f, "Gap from the right edge of the screen (UI pixels).");
@@ -81,7 +83,9 @@ namespace PartyHud
         {
             if (!_enabled.Value) return;
 
-            if (_toggleKey.Value.IsDown()) _visible = !_visible;
+            // (Not IsDown(): that ignores the key while another modifier, like the Shift you hold to run, is down.)
+            if (_toggleKey.Value.MainKey != KeyCode.None && Input.GetKeyDown(_toggleKey.Value.MainKey) && _toggleKey.Value.Modifiers.All(Input.GetKey))
+                _visible = !_visible;
 
             UpdateNetwork();
 

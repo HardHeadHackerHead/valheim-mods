@@ -1,1 +1,1 @@
-Crafting stations use materials from nearby chests. Buttons beside the crafting tabs show lines to the chests in use and cycle the range (5-30 m).
+Crafting stations (and hand-crafting from the inventory) use materials from nearby chests. Shows how many of each material you have, buttons beside the crafting tabs show lines to the chests in use and cycle the range (5-30 m).

@@ -1,0 +1,1 @@
+Ghost build orders: hold Left Alt and place with the hammer to plan a piece instead of building it. Everyone in the party sees it as a glowing ghost, your placement snaps onto it, and it disappears once built. A panel totals the materials the orders need.

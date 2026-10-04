@@ -14,15 +14,20 @@ namespace BuildFromChests
     {
         public const string Guid = "com.dhack.buildfromchests";
         public const string Name = "BuildFromChests";
-        public const string Version = "1.0.0";
+        public const string Version = "1.1.0";
 
         internal static ConfigEntry<bool> Enabled;
+        internal static ConfigEntry<bool> ShowHaveCounts;
         internal static ConfigEntry<float> Radius;
+        internal static BepInEx.Logging.ManualLogSource Log;
 
         private Harmony _harmony;
 
         private void Awake()
         {
+            Log = Logger;
+            ShowHaveCounts = Config.Bind("Display", "ShowHaveCounts", true,
+                "In the build menu, show how many of each material you HAVE (inventory + chests) next to how many you need.");
             Enabled = Config.Bind("General", "Enabled", true, "Turn the mod on or off.");
             Radius = Config.Bind("General", "Radius", 20f,
                 "How far (in meters) from YOU a chest can be and still be used while building.");
@@ -46,6 +51,7 @@ namespace BuildFromChests
             _harmony?.UnpatchSelf();
             ChestScanner.Suspend = false;
             ChestScanner.Consuming = false;
+            HaveLabel.DestroyAll(); // the "you have" numbers live in the game's UI, so remove them ourselves
         }
     }
 }

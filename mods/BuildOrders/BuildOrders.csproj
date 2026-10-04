@@ -1,0 +1,11 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <AssemblyName>BuildOrders</AssemblyName>
+    <RootNamespace>BuildOrders</RootNamespace>
+  </PropertyGroup>
+  <ItemGroup>
+    <!-- The ghosts switch off particles and sounds the same way the game's own placement ghost does. -->
+    <Reference Include="UnityEngine.ParticleSystemModule"><HintPath>$(ManagedDir)\UnityEngine.ParticleSystemModule.dll</HintPath><Private>false</Private></Reference>
+    <Reference Include="UnityEngine.AudioModule"><HintPath>$(ManagedDir)\UnityEngine.AudioModule.dll</HintPath><Private>false</Private></Reference>
+  </ItemGroup>
+</Project>

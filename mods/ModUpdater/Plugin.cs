@@ -1,6 +1,7 @@
 using System;
 using System.Collections;
 using System.IO;
+using System.Linq;
 using BepInEx;
 using BepInEx.Bootstrap;
 using BepInEx.Configuration;
@@ -23,7 +24,7 @@ namespace ModUpdater
     {
         public const string Guid = "com.dhack.modupdater";
         public const string Name = "ModUpdater";
-        public const string Version = "2.4.1";
+        public const string Version = "2.4.2";
 
         private const string ScriptEngineGuid = "com.bepis.bepinex.scriptengine";
 
@@ -111,7 +112,9 @@ namespace ModUpdater
             // Run whatever a button asked for (queued from OnGUI so the window layout never changes mid-draw).
             if (_deferred != null) { Action action = _deferred; _deferred = null; action(); }
 
-            if (_hotkey.Value.IsDown()) ToggleWindow();
+            // (Not IsDown(): that ignores the key while another modifier, like the Shift you hold to run, is down.)
+            if (_hotkey.Value.MainKey != KeyCode.None && Input.GetKeyDown(_hotkey.Value.MainKey) && _hotkey.Value.Modifiers.All(Input.GetKey))
+                ToggleWindow();
             _needsSetup = !Configured;
             WatchScripts();
 

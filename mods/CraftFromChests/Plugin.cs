@@ -10,11 +10,12 @@ namespace CraftFromChests
     {
         public const string Guid = "com.dhack.craftfromchests";
         public const string Name = "CraftFromChests";
-        public const string Version = "1.1.0";
+        public const string Version = "1.3.0";
 
         internal static ConfigEntry<bool> Enabled;
         internal static ConfigEntry<float> Radius;
 
+        internal static ConfigEntry<bool> ShowHaveCounts;
         internal static ConfigEntry<bool> ShowLines;
         internal static ConfigEntry<float> ToggleOffsetX;
         internal static ConfigEntry<float> ToggleOffsetY;
@@ -27,6 +28,8 @@ namespace CraftFromChests
         private void Awake()
         {
             Log = Logger;
+            ShowHaveCounts = Config.Bind("Display", "ShowHaveCounts", true,
+                "In the crafting window, show how many of each material you HAVE (inventory + chests) next to how many you need.");
             ShowLines = Config.Bind("Display", "ShowLines", false, "Draw lines from the crafting station to every chest it can use.");
             ToggleOffsetX = Config.Bind("Display", "ToggleOffsetX", 0f, "Move the 'Chest lines' button horizontally from its default spot beside the Upgrade tab (UI pixels).");
             ToggleOffsetY = Config.Bind("Display", "ToggleOffsetY", 0f, "Move the 'Chest lines' button vertically (UI pixels). Negative = down.");
@@ -90,6 +93,7 @@ namespace CraftFromChests
             _harmony?.UnpatchSelf();
             ChestScanner.Suspend = false;
             ChestScanner.Consuming = false;
+            HaveLabel.DestroyAll(); // the "you have" numbers live in the game's UI, so remove them ourselves
         }
 
         private Harmony _harmony;

@@ -1,1 +1,1 @@
-Chest-lines and range buttons beside the crafting tabs; reload-safe for hot reloading.
+Hand-crafting from the inventory screen (no crafting station) now uses nearby chests too, measured from you. The window shows how many of each material you HAVE (inventory plus chests) next to how many you need, with the split on hover.

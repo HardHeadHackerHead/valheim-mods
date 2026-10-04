@@ -1,3 +1,4 @@
+using System.Linq;
 using BepInEx;
 using BepInEx.Configuration;
 using UnityEngine;
@@ -17,7 +18,7 @@ namespace QualityOfLife
     {
         public const string Guid = "com.dhack.qualityoflife";
         public const string Name = "QualityOfLife";
-        public const string Version = "1.0.0";
+        public const string Version = "1.0.1";
 
         private ConfigEntry<bool> _quickSetEnabled, _showBadges, _hammerEnabled, _showMessages;
         private ConfigEntry<KeyboardShortcut> _quickSetKey, _hammerKey;
@@ -54,16 +55,23 @@ namespace QualityOfLife
             if (player == null || player.IsDead()) return;
             if (TypingOrMenuOpen()) return;
 
-            if (_quickSetEnabled.Value && _quickSetKey.Value.IsDown())
+            if (_quickSetEnabled.Value && Pressed(_quickSetKey.Value))
             {
                 if (InventoryGui.IsVisible()) AssignHovered(player);
                 else SwapQuickSet(player);
             }
-            else if (_hammerEnabled.Value && _hammerKey.Value.IsDown() && !InventoryGui.IsVisible())
+            else if (_hammerEnabled.Value && Pressed(_hammerKey.Value) && !InventoryGui.IsVisible())
             {
                 ToggleHammer(player);
             }
         }
+
+        /// <summary>
+        /// Was this shortcut just pressed? Unlike BepInEx's own IsDown(), extra modifier keys being held don't cancel it.
+        /// That matters because running is Shift: IsDown() treats "Q while holding Shift" as a different shortcut and ignores it.
+        /// </summary>
+        private static bool Pressed(KeyboardShortcut shortcut) =>
+            shortcut.MainKey != KeyCode.None && Input.GetKeyDown(shortcut.MainKey) && shortcut.Modifiers.All(Input.GetKey);
 
         /// <summary>True when the key press belongs to something else (chat, console, a text box, the game menu).</summary>
         private static bool TypingOrMenuOpen() =>
