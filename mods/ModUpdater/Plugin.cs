@@ -23,13 +23,13 @@ namespace ModUpdater
     {
         public const string Guid = "com.dhack.modupdater";
         public const string Name = "ModUpdater";
-        public const string Version = "2.2.1";
+        public const string Version = "2.3.0";
 
         private const string ScriptEngineGuid = "com.bepis.bepinex.scriptengine";
 
         private ConfigEntry<string> _owner, _repo, _branch, _folder, _token;
         private ConfigEntry<KeyboardShortcut> _hotkey;
-        private ConfigEntry<bool> _checkOnStart, _developerMode, _notifyOnJoin;
+        private ConfigEntry<bool> _checkOnStart, _developerMode, _notifyOnJoin, _allowGitHubCli;
         private ConfigEntry<float> _uiScale;
 
         // A reload creates a brand-new copy of this mod in a fresh assembly, so statics are lost. AppDomain data
@@ -50,7 +50,10 @@ namespace ModUpdater
             _folder = Config.Bind("Repo", "Folder", "dist", "Folder in the repo that holds the built mod .dll files and manifest.json.");
             _token = Config.Bind("Repo", "Token", "",
                 "GitHub fine-grained personal access token with READ-ONLY 'Contents' access to this one repo. Keep it private. " +
-                "Leave blank to use your GitHub CLI login instead (needs `gh auth login` done once).");
+                "You can also paste it in the mod manager window (F7).");
+            _allowGitHubCli = Config.Bind("Repo", "AllowGitHubCli", false,
+                "OFF by default. If you turn this on and no Token is set, the manager runs `gh auth token` and uses your GitHub CLI login. " +
+                "That login is your whole GitHub sign-in, with far more access than one read-only token, so only allow it if you're comfortable with that.");
             _hotkey = Config.Bind("General", "Hotkey", new KeyboardShortcut(KeyCode.F7), "Opens/closes the mod manager window.");
             _checkOnStart = Config.Bind("General", "CheckOnStart", false,
                 "When the game starts, check GitHub and automatically install any updates.");
@@ -65,7 +68,7 @@ namespace ModUpdater
             Directory.CreateDirectory(_scriptsDir);
 
             _awakeFrame = Time.frameCount;
-            string warmUp = ActiveToken; // starts the background `gh auth token` lookup now, so it's ready by the time F7 is pressed
+            string warmUp = ActiveToken; // if (and only if) the GitHub CLI was explicitly allowed, starts its lookup now so it's ready by F7
             _harmony = new Harmony(Guid);
             _harmony.PatchAll();
             ScanLocal();
@@ -106,6 +109,7 @@ namespace ModUpdater
             if (_deferred != null) { Action action = _deferred; _deferred = null; action(); }
 
             if (_hotkey.Value.IsDown()) ToggleWindow();
+            _needsSetup = !Configured;
 
             // Once, when we first get into a world: quietly check and tell the player if updates are waiting.
             // (Skipped if CheckOnStart is on, because that already installs updates and reports them.)
@@ -115,7 +119,8 @@ namespace ModUpdater
                 if (_notifyOnJoin.Value && !_checkOnStart.Value) StartCoroutine(RefreshRoutine(autoInstall: false, notify: true));
             }
 
-            // If the window was opened before the GitHub CLI login arrived, do the first check as soon as it does.
+            // If the window was opened before we had credentials (just pasted a token, or the allowed CLI login is still
+            // loading), do the first check as soon as they're there.
             if (WindowOpen && !_busy && !_firstCheckStarted && _lastRefresh == DateTime.MinValue && Configured)
             {
                 _firstCheckStarted = true;
@@ -124,28 +129,41 @@ namespace ModUpdater
             UpdatePeers();
         }
 
-        // ---- authentication: the Token from the config, or else the GitHub CLI's login ---------------
+        // ---- authentication ----------------------------------------------------------------------
+        // Default: ONLY the read-only Token from the config is ever used.
+        // The GitHub CLI login (far broader access) is used only if the user explicitly turned on AllowGitHubCli.
 
         private volatile string _ghToken;
         private bool _ghTried;
+        private bool _needsSetup;   // cached once per frame so the window layout can't change mid-draw
 
-        /// <summary>The token to use: the config's Token if set, otherwise whatever `gh auth token` gave us.</summary>
+        /// <summary>The token to use: the config's Token if set; otherwise the GitHub CLI's, but only with explicit permission.</summary>
         private string ActiveToken
         {
             get
             {
                 if (!string.IsNullOrEmpty(_token.Value)) return _token.Value;
+
+                if (!_allowGitHubCli.Value)
+                {
+                    // Permission not given (or taken back): never run gh, and forget anything we fetched earlier.
+                    _ghToken = null;
+                    _ghTried = false;
+                    return "";
+                }
                 if (!_ghTried) { _ghTried = true; AskGitHubCli(); }
                 return _ghToken ?? "";
             }
         }
 
         private string AuthSource =>
-            !string.IsNullOrEmpty(_token.Value) ? "config token" : !string.IsNullOrEmpty(_ghToken) ? "GitHub CLI login" : "none";
+            !string.IsNullOrEmpty(_token.Value) ? "access token"
+            : _allowGitHubCli.Value && !string.IsNullOrEmpty(_ghToken) ? "GitHub CLI login"
+            : "none";
 
         /// <summary>
-        /// Run `gh auth token` on a background thread (so the game never stalls). The token is held in memory only:
-        /// never written to disk, only sent to api.github.com.
+        /// Run `gh auth token` on a background thread (so the game never stalls). Only called with explicit permission.
+        /// The token is held in memory only: never written to disk, only sent to api.github.com.
         /// </summary>
         private void AskGitHubCli()
         {

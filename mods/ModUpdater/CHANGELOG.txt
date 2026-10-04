@@ -1,1 +1,1 @@
-New look: opaque window, mod cards with status badges, tidier player table. Turn mods on/off, Reload and Open-folder buttons, update notes, chat notice when updates are waiting, window stays open across reloads. Fixes the refresh crash. Developer Mode now asks before replacing your own build.
+Safer sign-in: only your read-only access token is used. Your GitHub CLI login is used only if you explicitly allow it. New "Connect to GitHub" panel to paste a token in the window.

@@ -103,7 +103,7 @@ namespace ModUpdater
             if (_busy) yield break;
             if (!Configured)
             {
-                _statusLine = "Not set up: in BepInEx\\config\\" + Guid + ".cfg fill in Owner and Repo, and either a Token or log in with `gh auth login`.";
+                _statusLine = "Not connected to GitHub yet. Add a read-only access token (see 'Connect to GitHub' below).";
                 yield break;
             }
 

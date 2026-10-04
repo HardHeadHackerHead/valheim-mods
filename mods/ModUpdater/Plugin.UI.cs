@@ -195,6 +195,7 @@ namespace ModUpdater
             DrawHeader();
             DrawStatusLine();
             GUILayout.Space(6);
+            if (_needsSetup) { DrawSetup(); GUILayout.Space(8); }
 
             _scroll = GUILayout.BeginScrollView(_scroll, false, false, GUIStyle.none, GUI.skin.verticalScrollbar, GUILayout.ExpandHeight(true));
             DrawMods();
@@ -227,10 +228,54 @@ namespace ModUpdater
         private void DrawStatusLine()
         {
             bool failed = _statusLine.StartsWith("Check failed") || _statusLine.StartsWith("Download failed") ||
-                          _statusLine.StartsWith("Couldn't") || _statusLine.StartsWith("Not set up") || _statusLine.StartsWith("No manifest");
+                          _statusLine.StartsWith("Couldn't") || _statusLine.StartsWith("Not connected") || _statusLine.StartsWith("No manifest");
             Color c = failed ? Bad : _busy ? Warn : TextDim;
             string text = _busy ? _statusLine + new string('.', 1 + (int)(Time.realtimeSinceStartup * 2f) % 3) : _statusLine;
             GUILayout.Label(text, TextStyle(12, c, FontStyle.Normal, true));
+        }
+
+        // ---- connecting to GitHub --------------------------------------------------------------
+
+        private string _tokenInput = "";
+
+        /// <summary>Shown only while we have no credentials: paste a read-only token, or explicitly allow the GitHub CLI.</summary>
+        private void DrawSetup()
+        {
+            GUILayout.BeginVertical(_sCard);
+            GUILayout.Label("Connect to GitHub", _sH2);
+
+            if (string.IsNullOrEmpty(_owner.Value) || string.IsNullOrEmpty(_repo.Value))
+            {
+                GUILayout.Label($"Owner and Repo aren't set yet. Fill them in under [Repo] in BepInEx\\config\\{Guid}.cfg, then press F6.", _sBody);
+                GUILayout.EndVertical();
+                return;
+            }
+
+            GUILayout.Label($"The mods are in a private repo ({_owner.Value}/{_repo.Value}), so the manager needs an access token for it. " +
+                            "Create a fine-grained token on GitHub (Settings > Developer settings > Fine-grained tokens) limited to " +
+                            "ONLY this repository with Contents set to Read-only, then paste it here.", _sBody);
+            GUILayout.Space(4);
+
+            GUILayout.BeginHorizontal();
+            _tokenInput = GUILayout.PasswordField(_tokenInput, '*', 255, GUILayout.ExpandWidth(true), GUILayout.Height(28));
+            if (Button("Save token", 120, true, _tokenInput.Trim().Length > 0))
+                Defer(() =>
+                {
+                    _token.Value = _tokenInput.Trim();   // saved in the config file on this PC
+                    _tokenInput = "";
+                    StartCoroutine(RefreshRoutine(autoInstall: false));
+                });
+            GUILayout.EndHorizontal();
+
+            GUILayout.Space(8);
+            GUILayout.Label("Don't want to make a token? You can let the manager borrow your GitHub CLI (gh) login instead. " +
+                            "Be aware: that login is your whole GitHub sign-in, with much broader access than one read-only token. " +
+                            "Only allow it if you're comfortable with that. You can turn it off again at the bottom of this window.", _sDim);
+            GUILayout.BeginHorizontal();
+            if (Button("Allow GitHub CLI login", 200)) Defer(() => _allowGitHubCli.Value = true);
+            GUILayout.EndHorizontal();
+
+            GUILayout.EndVertical();
         }
 
         // ---- mods ------------------------------------------------------------------------------
@@ -443,11 +488,14 @@ namespace ModUpdater
             GUILayout.Box(GUIContent.none, _sRule, GUILayout.ExpandWidth(true));
 
             GUILayout.BeginHorizontal();
-            bool auto = GUILayout.Toggle(_checkOnStart.Value, "Auto-update when the game starts", _sToggle);
+            bool auto = GUILayout.Toggle(_checkOnStart.Value, "Auto-update on start", _sToggle);
             if (auto != _checkOnStart.Value) _checkOnStart.Value = auto;
             GUILayout.Space(14);
-            bool notify = GUILayout.Toggle(_notifyOnJoin.Value, "Tell me when updates are waiting", _sToggle);
+            bool notify = GUILayout.Toggle(_notifyOnJoin.Value, "Notify about updates", _sToggle);
             if (notify != _notifyOnJoin.Value) _notifyOnJoin.Value = notify;
+            GUILayout.Space(14);
+            bool gh = GUILayout.Toggle(_allowGitHubCli.Value, "Allow GitHub CLI login", _sToggle);
+            if (gh != _allowGitHubCli.Value) _allowGitHubCli.Value = gh;
             GUILayout.FlexibleSpace();
             if (Button("Reload mods", 110)) Defer(() => { if (!ReloadScripts()) _statusLine = "ScriptEngine not found: press F6 instead."; });
             if (Button("Open mods folder", 140)) Defer(() => System.Diagnostics.Process.Start("explorer.exe", _scriptsDir));

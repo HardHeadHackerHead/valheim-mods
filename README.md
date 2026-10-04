@@ -20,6 +20,10 @@ Players press **F7** in-game and get the update with no restart.
 - `dotnet build -c Release` inside a mod folder builds and copies it to `Valheim\BepInEx\scripts`; press **F6** in-game to reload.
 - Game path is set once in `mods/Directory.Build.props`.
 
+## How the manager signs in to GitHub
+- By default it uses **only** the read-only `Token` from its config (or one pasted into the window's "Connect to GitHub" panel).
+- It will use the GitHub CLI (`gh`) login **only if explicitly allowed** (`AllowGitHubCli = true`, or the "Allow GitHub CLI login" button/toggle), because that login has much broader access than one read-only token. Otherwise `gh` is never run.
+
 ## Adding a new player
 1. Create a fine-grained GitHub token: **only this repo**, **Contents: Read-only**. Send it to them privately.
 2. Send them the prompt in `installer/INSTALL.md`'s spirit: *"Follow the instructions in installer/INSTALL.md of HardHeadHackerHead/valheim-mods"* plus the token. Their agent does the rest.
