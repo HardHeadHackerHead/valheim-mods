@@ -66,7 +66,7 @@ namespace ModUpdater
         private string BuildPayload()
         {
             var sb = new StringBuilder();
-            foreach (LocalMod m in _local)
+            foreach (LocalMod m in _local.Where(l => !l.Disabled))
                 sb.Append(m.Guid).Append('|').Append(m.Version).Append(';');
             return sb.ToString();
         }
@@ -86,14 +86,16 @@ namespace ModUpdater
         private void BroadcastVersions()
         {
             if (ZRoutedRpc.instance == null || Player.m_localPlayer == null) return;
-            ZRoutedRpc.instance.InvokeRoutedRPC(ZRoutedRpc.Everybody, RpcVersions, BuildPayload());
+            try { ZRoutedRpc.instance.InvokeRoutedRPC(ZRoutedRpc.Everybody, RpcVersions, BuildPayload()); }
+            catch (System.Exception e) { Logger.LogWarning("Could not share mod versions: " + e.Message); }
         }
 
         /// <summary>Ask everyone in the world to tell us what they have (used by Refresh).</summary>
         private void RequestPeerVersions()
         {
             if (ZRoutedRpc.instance == null || Player.m_localPlayer == null) return;
-            ZRoutedRpc.instance.InvokeRoutedRPC(ZRoutedRpc.Everybody, RpcRequest);
+            try { ZRoutedRpc.instance.InvokeRoutedRPC(ZRoutedRpc.Everybody, RpcRequest); }
+            catch (System.Exception e) { Logger.LogWarning("Could not ask other players for their mod versions: " + e.Message); }
         }
 
         private void OnVersionsReceived(long sender, string payload)

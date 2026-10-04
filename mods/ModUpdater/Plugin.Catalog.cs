@@ -6,6 +6,7 @@ using System.Linq;
 using System.Security.Cryptography;
 using System.Text;
 using Mono.Cecil;
+using Newtonsoft.Json.Linq;
 using UnityEngine;
 
 namespace ModUpdater
@@ -15,21 +16,21 @@ namespace ModUpdater
         // ---- data ------------------------------------------------------------------------------
 
         /// <summary>A mod DLL found on disk (read without loading it).</summary>
-        private class LocalMod { public string Guid, Name, Version, Path; public bool InPlugins; }
+        private class LocalMod { public string Guid, Name, Version, Path; public bool InPlugins, Disabled; }
 
-        // These mirror manifest.json (written by publish.ps1); JsonUtility needs public fields.
-        [Serializable] private class RemoteMod { public string guid, name, version, description; public string[] files; }
-        [Serializable] private class Manifest { public RemoteMod[] mods; }
-        [Serializable] private class Entry { public string name, sha, type; }
-        [Serializable] private class Listing { public Entry[] items; }
+        /// <summary>One mod as described by manifest.json (written by publish.ps1).</summary>
+        private class RemoteMod { public string guid, name, version, description, notes; public string[] files; }
 
-        private enum Status { UpToDate, UpdateAvailable, NotInstalled, LocalNewer, Rebuilt, LocalOnly }
+        private enum Status { UpToDate, UpdateAvailable, NotInstalled, LocalNewer, Rebuilt, Disabled, LocalOnly }
 
         private class Row
         {
-            public string Name, Description, LocalVersion, RemoteVersion;
+            public string Name, Description, Notes, LocalVersion, RemoteVersion;
             public Status Status;
             public RemoteMod Remote;
+            public LocalMod Local;
+            /// <summary>Can the user switch this mod on/off? (Not the manager itself, and not loader plugins.)</summary>
+            public bool CanToggle => Local != null && !Local.InPlugins && Local.Guid != Plugin.Guid;
         }
 
         private List<LocalMod> _local = new List<LocalMod>();
@@ -55,11 +56,16 @@ namespace ModUpdater
         private static void Scan(string dir, SearchOption option, bool inPlugins, List<LocalMod> into)
         {
             if (!Directory.Exists(dir)) return;
-            foreach (string path in Directory.GetFiles(dir, "*.dll", option))
+            // "X.dll.disabled" is a mod the user switched off (ScriptEngine only loads *.dll).
+            foreach (string path in Directory.GetFiles(dir, "*.dll*", option))
             {
+                bool disabled = path.EndsWith(".dll.disabled", StringComparison.OrdinalIgnoreCase);
+                if (!disabled && !path.EndsWith(".dll", StringComparison.OrdinalIgnoreCase)) continue;
+
                 LocalMod mod = ReadPlugin(path);
                 if (mod == null) continue;
                 mod.InPlugins = inPlugins;
+                mod.Disabled = disabled;
                 into.Add(mod);
             }
         }
@@ -90,7 +96,9 @@ namespace ModUpdater
 
         // ---- what's on GitHub ------------------------------------------------------------------
 
-        private IEnumerator RefreshRoutine(bool autoInstall)
+        /// <param name="autoInstall">Install anything out of date straight away.</param>
+        /// <param name="notify">Say in chat if updates are waiting (used once when joining a world).</param>
+        private IEnumerator RefreshRoutine(bool autoInstall, bool notify = false)
         {
             if (_busy) yield break;
             if (!Configured)
@@ -123,15 +131,8 @@ namespace ModUpdater
                     yield break;
                 }
 
-                Listing listing = JsonUtility.FromJson<Listing>("{\"items\":" + listJson + "}");
-                _remoteSha.Clear();
-                foreach (Entry e in listing.items) if (e.type == "file") _remoteSha[e.name] = e.sha;
-
-                _remote = JsonUtility.FromJson<Manifest>(manifestJson)?.mods ?? new RemoteMod[0];
-                _lastRefresh = DateTime.Now;
-                _authNote = AuthSource;
-                ScanLocal();
-                BuildRows();
+                string problem = ApplyRefresh(listJson, manifestJson);
+                if (problem != null) { _statusLine = problem; yield break; }
                 ok = true;
             }
             finally
@@ -147,8 +148,59 @@ namespace ModUpdater
                                        : $"{pending} update(s) available. Checked {_lastRefresh:HH:mm:ss}{via}.";
             RequestPeerVersions();
 
+            if (notify && pending > 0)
+                Say($"{pending} mod update(s) available. Press {_hotkey.Value} to open the mod manager.");
+
             if (autoInstall && pending > 0)
                 yield return InstallRoutine(_rows.Where(NeedsUpdate).Select(r => r.Remote).ToList());
+        }
+
+        /// <summary>
+        /// Turn GitHub's two responses into our data. Returns null on success, or a message naming the step that
+        /// failed (an iterator can't use try/catch around its yields, so this lives in its own method).
+        /// </summary>
+        private string ApplyRefresh(string listJson, string manifestJson)
+        {
+            string step = "reading the file list";
+            try
+            {
+                var shas = new Dictionary<string, string>();
+                foreach (JToken item in JArray.Parse(listJson))
+                    if ((string)item["type"] == "file") shas[(string)item["name"]] = (string)item["sha"];
+
+                step = "reading manifest.json";
+                var mods = new List<RemoteMod>();
+                foreach (JToken m in JObject.Parse(manifestJson)["mods"])
+                {
+                    mods.Add(new RemoteMod
+                    {
+                        guid = (string)m["guid"],
+                        name = (string)m["name"],
+                        version = (string)m["version"],
+                        description = (string)m["description"],
+                        notes = (string)m["notes"],
+                        files = m["files"] != null ? m["files"].Select(f => (string)f).ToArray() : new string[0],
+                    });
+                }
+
+                _remoteSha.Clear();
+                foreach (var kv in shas) _remoteSha[kv.Key] = kv.Value;
+                _remote = mods.ToArray();
+
+                step = "scanning installed mods";
+                ScanLocal();
+                step = "comparing versions";
+                BuildRows();
+
+                _lastRefresh = DateTime.Now;
+                _authNote = AuthSource;
+                return null;
+            }
+            catch (Exception ex)
+            {
+                Logger.LogError($"Refresh failed while {step}: {ex}");
+                return $"Check failed while {step}: {ex.GetType().Name}: {ex.Message} (details in BepInEx\\LogOutput.log)";
+            }
         }
 
         private void BuildRows()
@@ -157,9 +209,14 @@ namespace ModUpdater
             foreach (RemoteMod r in _remote)
             {
                 LocalMod local = _local.FirstOrDefault(l => l.Guid == r.guid);
-                var row = new Row { Name = r.name, Description = r.description, RemoteVersion = r.version, Remote = r, LocalVersion = local?.Version };
+                var row = new Row
+                {
+                    Name = r.name, Description = r.description, Notes = r.notes, RemoteVersion = r.version,
+                    Remote = r, Local = local, LocalVersion = local?.Version,
+                };
 
                 if (local == null) row.Status = Status.NotInstalled;
+                else if (local.Disabled) row.Status = Status.Disabled;
                 else
                 {
                     int cmp = CompareVersions(local.Version, r.version);
@@ -173,7 +230,7 @@ namespace ModUpdater
             // Mods we have that aren't in the repo (the loader itself, ScriptEngine, a mod still in development...).
             foreach (LocalMod l in _local)
                 if (!_remote.Any(r => r.guid == l.Guid))
-                    rows.Add(new Row { Name = l.Name, LocalVersion = l.Version, Status = Status.LocalOnly });
+                    rows.Add(new Row { Name = l.Name, LocalVersion = l.Version, Local = l, Status = l.Disabled ? Status.Disabled : Status.LocalOnly });
 
             _rows = rows;
         }
@@ -268,6 +325,31 @@ namespace ModUpdater
                 _statusLine = $"Updated: {string.Join(", ", installed)} - press F6 to reload";
                 Say("Press F6 to reload the mods (ScriptEngine not detected).");
             }
+        }
+
+        /// <summary>Switch a mod on or off by renaming X.dll to X.dll.disabled (ScriptEngine only loads *.dll), then reload.</summary>
+        private void SetEnabled(Row row, bool enable)
+        {
+            if (_busy || row.Local == null || !row.CanToggle) return;
+            try
+            {
+                string path = row.Local.Path;
+                string target = enable ? path.Substring(0, path.Length - ".disabled".Length) : path + ".disabled";
+                if (File.Exists(target)) File.Delete(target);
+                File.Move(path, target);
+            }
+            catch (Exception e)
+            {
+                _statusLine = $"Couldn't {(enable ? "enable" : "disable")} {row.Name}: {e.Message}";
+                return;
+            }
+
+            // Finish our own bookkeeping first, reload last (the reload replaces this running copy of the manager).
+            ScanLocal();
+            BuildRows();
+            BroadcastVersions();
+            _statusLine = $"{row.Name} {(enable ? "enabled" : "disabled")}";
+            if (!ReloadScripts()) _statusLine += " - press F6 to apply";
         }
 
         private void InstallOne(Row row) { if (row.Remote != null) StartCoroutine(InstallRoutine(new List<RemoteMod> { row.Remote })); }

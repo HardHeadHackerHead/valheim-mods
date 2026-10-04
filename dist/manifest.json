@@ -5,6 +5,7 @@
                      "name":  "CraftFromChests",
                      "version":  "1.1.0",
                      "description":  "Crafting stations use materials from nearby chests. Buttons beside the crafting tabs show lines to the chests in use and cycle the range (5-30 m).",
+                     "notes":  "Chest-lines and range buttons beside the crafting tabs; reload-safe for hot reloading.",
                      "files":  [
                                    "CraftFromChests.dll",
                                    "CraftFromChests.pdb"
@@ -13,8 +14,9 @@
                  {
                      "guid":  "com.dhack.modupdater",
                      "name":  "ModUpdater",
-                     "version":  "2.1.0",
+                     "version":  "2.2.1",
                      "description":  "This mod manager (F7). Updates itself like any other mod.",
+                     "notes":  "New look: opaque window, mod cards with status badges, tidier player table. Turn mods on/off, Reload and Open-folder buttons, update notes, chat notice when updates are waiting, window stays open across reloads. Fixes the refresh crash. Developer Mode now asks before replacing your own build.",
                      "files":  [
                                    "ModUpdater.dll",
                                    "ModUpdater.pdb"

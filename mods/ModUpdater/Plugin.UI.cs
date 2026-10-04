@@ -1,22 +1,40 @@
+using System;
+using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
 
 namespace ModUpdater
 {
-    /// <summary>The F7 window. Uses Unity's immediate-mode GUI (OnGUI): simple, no assets, works everywhere.</summary>
+    /// <summary>The F7 window. Unity's immediate-mode GUI (OnGUI), with our own dark, opaque styling.</summary>
     public partial class Plugin
     {
         private const int WindowId = 7731;
 
-        private static readonly Color Good = new Color(0.45f, 1f, 0.55f);
-        private static readonly Color Warn = new Color(1f, 0.78f, 0.3f);
-        private static readonly Color Bad = new Color(1f, 0.45f, 0.45f);
-        private static readonly Color Dim = new Color(0.7f, 0.7f, 0.7f);
+        // ---- palette ---------------------------------------------------------------------------
+        private static readonly Color Gold = new Color(0.95f, 0.78f, 0.35f);
+        private static readonly Color TextMain = new Color(0.92f, 0.90f, 0.86f);
+        private static readonly Color TextDim = new Color(0.62f, 0.60f, 0.56f);
+        private static readonly Color Good = new Color(0.50f, 0.95f, 0.58f);
+        private static readonly Color Warn = new Color(1f, 0.78f, 0.30f);
+        private static readonly Color Bad = new Color(1f, 0.50f, 0.50f);
 
+        private static readonly Color PillGreen = new Color(0.17f, 0.42f, 0.24f);
+        private static readonly Color PillAmber = new Color(0.58f, 0.40f, 0.08f);
+        private static readonly Color PillRed = new Color(0.52f, 0.18f, 0.18f);
+        private static readonly Color PillBlue = new Color(0.17f, 0.33f, 0.58f);
+        private static readonly Color PillGrey = new Color(0.27f, 0.27f, 0.27f);
+
+        // ---- state -----------------------------------------------------------------------------
         private Rect _window;
         private bool _windowPlaced;
         private Vector2 _scroll;
-        private GUIStyle _title, _small;
+        private string _confirmRevert;      // which mod's "Use GitHub copy" is waiting for a second click
+        private float _confirmRevertAt;
+        private Action _deferred;   // clicks are run from Update, not mid-draw, so the layout never changes under IMGUI
+
+        private readonly List<Texture2D> _textures = new List<Texture2D>();
+        private bool _stylesReady;
+        private GUIStyle _sWindow, _sCard, _sTitle, _sH2, _sName, _sBody, _sDim, _sVer, _sPill, _sBtn, _sBtnPrimary, _sToggle, _sRule;
 
         private void ToggleWindow()
         {
@@ -26,158 +44,437 @@ namespace ModUpdater
             ScanLocal();
             BuildRows();
             // Refresh when opened if we've never checked, or it's been a while.
-            if (Configured && (System.DateTime.Now - _lastRefresh).TotalSeconds > 60)
+            if (Configured && (DateTime.Now - _lastRefresh).TotalSeconds > 60)
                 StartCoroutine(RefreshRoutine(autoInstall: false));
         }
+
+        // ---- styles ----------------------------------------------------------------------------
+
+        private Texture2D Solid(Color c)
+        {
+            var t = new Texture2D(1, 1, TextureFormat.RGBA32, false) { hideFlags = HideFlags.HideAndDontSave };
+            t.SetPixel(0, 0, c);
+            t.Apply();
+            _textures.Add(t);
+            return t;
+        }
+
+        /// <summary>A tiny texture with a 2px border, used 9-sliced so any size gets a crisp outline.</summary>
+        private Texture2D Boxed(Color fill, Color border)
+        {
+            const int size = 6;
+            var t = new Texture2D(size, size, TextureFormat.RGBA32, false)
+            {
+                hideFlags = HideFlags.HideAndDontSave, filterMode = FilterMode.Point, wrapMode = TextureWrapMode.Clamp,
+            };
+            for (int x = 0; x < size; x++)
+                for (int y = 0; y < size; y++)
+                    t.SetPixel(x, y, (x < 2 || y < 2 || x >= size - 2 || y >= size - 2) ? border : fill);
+            t.Apply();
+            _textures.Add(t);
+            return t;
+        }
+
+        private static Font FindGameFont()
+        {
+            try
+            {
+                return Resources.FindObjectsOfTypeAll<Font>().FirstOrDefault(f =>
+                    f.name.IndexOf("Averia", StringComparison.OrdinalIgnoreCase) >= 0 ||
+                    f.name.IndexOf("Norse", StringComparison.OrdinalIgnoreCase) >= 0);
+            }
+            catch { return null; }
+        }
+
+        private static GUIStyle TextStyle(int size, Color color, FontStyle fontStyle = FontStyle.Normal, bool wrap = false, Font font = null)
+        {
+            var s = new GUIStyle(GUI.skin.label) { fontSize = size, fontStyle = fontStyle, wordWrap = wrap, richText = false };
+            if (font != null) s.font = font;
+            s.normal.textColor = color;
+            return s;
+        }
+
+        private GUIStyle ButtonStyle(Color fill, Color hover, Color pressed, Color border, Color text)
+        {
+            var s = new GUIStyle(GUI.skin.button)
+            {
+                fontSize = 13, fontStyle = FontStyle.Bold, alignment = TextAnchor.MiddleCenter,
+                border = new RectOffset(2, 2, 2, 2), padding = new RectOffset(10, 10, 4, 4), margin = new RectOffset(3, 3, 3, 3),
+            };
+            s.normal.background = Boxed(fill, border);
+            s.hover.background = Boxed(hover, border);
+            s.active.background = Boxed(pressed, border);
+            s.focused.background = s.normal.background;
+            s.normal.textColor = s.hover.textColor = s.active.textColor = s.focused.textColor = text;
+            return s;
+        }
+
+        private void EnsureStyles()
+        {
+            if (_stylesReady) return;
+            _stylesReady = true;
+            Font font = FindGameFont();
+
+            _sWindow = new GUIStyle(GUI.skin.window)
+            {
+                border = new RectOffset(2, 2, 2, 2), padding = new RectOffset(18, 18, 14, 12),
+            };
+            Texture2D win = Boxed(new Color(0.075f, 0.065f, 0.055f, 1f), new Color(0.62f, 0.47f, 0.22f, 1f));
+            _sWindow.normal.background = _sWindow.onNormal.background = win;
+            _sWindow.normal.textColor = _sWindow.onNormal.textColor = TextMain;
+
+            _sCard = new GUIStyle(GUI.skin.box)
+            {
+                border = new RectOffset(2, 2, 2, 2), padding = new RectOffset(12, 12, 9, 9), margin = new RectOffset(0, 0, 0, 0),
+            };
+            _sCard.normal.background = Boxed(new Color(0.13f, 0.115f, 0.10f, 1f), new Color(0.26f, 0.22f, 0.17f, 1f));
+
+            _sTitle = TextStyle(22, Gold, FontStyle.Bold, false, font);
+            _sH2 = TextStyle(15, Gold, FontStyle.Bold, false, font);
+            _sName = TextStyle(15, TextMain, FontStyle.Bold, false, font);
+            _sBody = TextStyle(12, TextMain, FontStyle.Normal, true);
+            _sDim = TextStyle(12, TextDim, FontStyle.Normal, true);
+            _sVer = TextStyle(13, TextDim);
+
+            _sPill = new GUIStyle(GUI.skin.label)
+            {
+                alignment = TextAnchor.MiddleCenter, fontSize = 12, fontStyle = FontStyle.Bold,
+                padding = new RectOffset(6, 6, 2, 2), margin = new RectOffset(2, 2, 2, 2),
+            };
+            _sPill.normal.background = Solid(Color.white); // tinted per use through GUI.backgroundColor
+            _sPill.normal.textColor = Color.white;
+
+            _sBtn = ButtonStyle(new Color(0.22f, 0.19f, 0.15f), new Color(0.33f, 0.27f, 0.18f), new Color(0.42f, 0.33f, 0.16f),
+                                new Color(0.45f, 0.36f, 0.2f), TextMain);
+            _sBtnPrimary = ButtonStyle(new Color(0.18f, 0.40f, 0.24f), new Color(0.24f, 0.52f, 0.31f), new Color(0.15f, 0.33f, 0.2f),
+                                       new Color(0.4f, 0.8f, 0.5f), Color.white);
+
+            _sToggle = new GUIStyle(GUI.skin.toggle) { fontSize = 12, alignment = TextAnchor.MiddleLeft };
+            _sToggle.normal.textColor = _sToggle.onNormal.textColor = _sToggle.hover.textColor = _sToggle.onHover.textColor =
+                _sToggle.active.textColor = _sToggle.onActive.textColor = TextMain;
+
+            _sRule = new GUIStyle { margin = new RectOffset(0, 0, 8, 8), fixedHeight = 1 };
+            _sRule.normal.background = Solid(new Color(0.35f, 0.29f, 0.2f, 1f));
+        }
+
+        private void DestroyUi()
+        {
+            foreach (Texture2D t in _textures) if (t != null) Destroy(t);
+            _textures.Clear();
+            _stylesReady = false;
+        }
+
+        // ---- window ----------------------------------------------------------------------------
 
         private void OnGUI()
         {
             if (!WindowOpen) return;
+            EnsureStyles();
 
-            // Scale for big screens so the text stays readable.
-            float s = Mathf.Max(1f, Screen.height / 1080f);
+            // Scale with the screen so text stays readable at 1440p/4K (UiScale in the config adjusts it further).
+            float s = Mathf.Max(0.75f, Screen.height / 1080f) * Mathf.Clamp(_uiScale.Value, 0.5f, 2f);
             GUI.matrix = Matrix4x4.Scale(new Vector3(s, s, 1f));
+            float sw = Screen.width / s, sh = Screen.height / s;
+            float w = Mathf.Min(960f, sw - 30f), h = Mathf.Min(700f, sh - 30f);
 
             if (!_windowPlaced)
             {
-                float w = 860f, h = 620f;
-                _window = new Rect((Screen.width / s - w) / 2f, (Screen.height / s - h) / 2f, w, h);
+                _window = new Rect((sw - w) / 2f, (sh - h) / 2f, w, h);
                 _windowPlaced = true;
             }
-            if (_title == null)
-            {
-                _title = new GUIStyle(GUI.skin.label) { fontStyle = FontStyle.Bold, fontSize = 15 };
-                _small = new GUIStyle(GUI.skin.label) { fontSize = 11, wordWrap = true };
-            }
+            _window.width = w; // size follows the screen; the position is draggable
+            _window.height = h;
 
-            _window = GUI.Window(WindowId, _window, DrawWindow, "Mod Manager");
+            _window = GUI.Window(WindowId, _window, DrawWindow, GUIContent.none, _sWindow);
+            _window.x = Mathf.Clamp(_window.x, 0f, Mathf.Max(0f, sw - w));
+            _window.y = Mathf.Clamp(_window.y, 0f, Mathf.Max(0f, sh - h));
         }
 
         private void DrawWindow(int id)
         {
-            GUILayout.BeginVertical();
-
-            // --- top bar ---
-            GUILayout.BeginHorizontal();
-            GUILayout.Label(_statusLine, GUILayout.ExpandWidth(true));
-            GUI.enabled = !_busy && Configured;
-            if (GUILayout.Button("Refresh", GUILayout.Width(90)))
-                StartCoroutine(RefreshRoutine(autoInstall: false));
-            int pending = _rows.Count(NeedsUpdate);
-            GUI.enabled = !_busy && pending > 0;
-            if (GUILayout.Button($"Update all ({pending})", GUILayout.Width(120))) InstallAll();
-            GUI.enabled = true;
-            if (GUILayout.Button("Close", GUILayout.Width(70))) WindowOpen = false;
-            GUILayout.EndHorizontal();
-
+            DrawHeader();
+            DrawStatusLine();
             GUILayout.Space(6);
-            _scroll = GUILayout.BeginScrollView(_scroll);
 
-            // --- mods table ---
-            GUILayout.Label("Mods", _title);
-            GUILayout.BeginHorizontal();
-            Cell("Mod", 230, Dim); Cell("Installed", 90, Dim); Cell("GitHub", 90, Dim); Cell("Status", 200, Dim);
-            GUILayout.EndHorizontal();
-
-            foreach (Row row in _rows)
-            {
-                GUILayout.BeginHorizontal();
-                Cell(row.Name, 230, Color.white);
-                Cell(row.LocalVersion ?? "-", 90, Color.white);
-                Cell(row.RemoteVersion ?? "-", 90, Color.white);
-                StatusCell(row);
-                if (row.Remote != null && (row.Status == Status.UpdateAvailable || row.Status == Status.NotInstalled || row.Status == Status.Rebuilt))
-                {
-                    GUI.enabled = !_busy;
-                    if (GUILayout.Button(row.Status == Status.NotInstalled ? "Install" : "Update", GUILayout.Width(80))) InstallOne(row);
-                    GUI.enabled = true;
-                }
-                GUILayout.EndHorizontal();
-
-                if (!string.IsNullOrEmpty(row.Description))
-                {
-                    GUI.contentColor = Dim;
-                    GUILayout.Label("    " + row.Description, _small);
-                    GUI.contentColor = Color.white;
-                }
-            }
-            if (_rows.Count == 0) GUILayout.Label("No mods found yet. Press Refresh.");
-
+            _scroll = GUILayout.BeginScrollView(_scroll, false, false, GUIStyle.none, GUI.skin.verticalScrollbar, GUILayout.ExpandHeight(true));
+            DrawMods();
             GUILayout.Space(14);
             DrawPlayers();
-
             GUILayout.EndScrollView();
-            GUILayout.EndVertical();
 
-            GUI.DragWindow(new Rect(0, 0, 10000, 22));
+            DrawFooter();
+            GUI.DragWindow(new Rect(0, 0, 10000, 46)); // drag by the header
         }
 
-        private void DrawPlayers()
-        {
-            GUILayout.Label("Players", _title);
-            if (_remote.Length == 0)
-            {
-                GUILayout.Label("Refresh to compare against the versions on GitHub.", _small);
-                return;
-            }
-
-            if (ZRoutedRpc.instance == null || Player.m_localPlayer == null)
-            {
-                GUILayout.Label("Join a world to see what the other players have.", _small);
-                return;
-            }
-
-            DrawPlayerRow("You", _local.ToDictionary(m => m.Guid, m => m.Version, System.StringComparer.Ordinal));
-
-            var others = OtherPlayers();
-            if (others.Count == 0) GUILayout.Label("Nobody else is in this world right now.", _small);
-
-            foreach (var kv in others)
-            {
-                if (_peers.TryGetValue(kv.Key, out PeerMods peer))
-                    DrawPlayerRow(kv.Value, peer.Versions);
-                else
-                {
-                    GUILayout.BeginHorizontal();
-                    Cell(kv.Value, 110, Color.white);
-                    Cell("no mod manager installed (or still loading) - press Refresh", 520, Bad);
-                    GUILayout.EndHorizontal();
-                }
-            }
-        }
-
-        /// <summary>One line per player: each mod from GitHub, coloured by whether they have the latest version.</summary>
-        private void DrawPlayerRow(string who, System.Collections.Generic.Dictionary<string, string> versions)
+        private void DrawHeader()
         {
             GUILayout.BeginHorizontal();
-            Cell(who, 110, Color.white);
-            foreach (RemoteMod r in _remote)
-            {
-                if (!versions.TryGetValue(r.guid, out string v)) Cell($"{r.name}: missing", 190, Bad);
-                else if (CompareVersions(v, r.version) >= 0) Cell($"{r.name}: v{v}", 190, Good);
-                else Cell($"{r.name}: v{v} (old)", 190, Warn);
-            }
+            GUILayout.Label("Mod Manager", _sTitle, GUILayout.ExpandWidth(false));
+            GUILayout.Space(8);
+            GUILayout.BeginVertical();
+            GUILayout.Space(9);
+            GUILayout.Label($"v{Version}", _sVer, GUILayout.ExpandWidth(false));
+            GUILayout.EndVertical();
+            GUILayout.FlexibleSpace();
+
+            int pending = _rows.Count(NeedsUpdate);
+            if (Button("Refresh", 90, false, !_busy && Configured)) Defer(() => StartCoroutine(RefreshRoutine(autoInstall: false)));
+            if (Button(pending > 0 ? $"Update all ({pending})" : "Update all", 130, pending > 0, !_busy && pending > 0)) Defer(InstallAll);
+            if (Button("Close", 70)) Defer(() => WindowOpen = false);
             GUILayout.EndHorizontal();
         }
 
-        private static void Cell(string text, float width, Color color)
+        private void DrawStatusLine()
         {
-            GUI.contentColor = color;
-            GUILayout.Label(text, GUILayout.Width(width));
-            GUI.contentColor = Color.white;
+            bool failed = _statusLine.StartsWith("Check failed") || _statusLine.StartsWith("Download failed") ||
+                          _statusLine.StartsWith("Couldn't") || _statusLine.StartsWith("Not set up") || _statusLine.StartsWith("No manifest");
+            Color c = failed ? Bad : _busy ? Warn : TextDim;
+            string text = _busy ? _statusLine + new string('.', 1 + (int)(Time.realtimeSinceStartup * 2f) % 3) : _statusLine;
+            GUILayout.Label(text, TextStyle(12, c, FontStyle.Normal, true));
         }
 
-        private static void StatusCell(Row row)
+        // ---- mods ------------------------------------------------------------------------------
+
+        private void DrawMods()
+        {
+            List<Row> mods = _rows.Where(r => r.Status != Status.LocalOnly).ToList();
+            GUILayout.Label($"Mods  ({mods.Count})", _sH2);
+            GUILayout.Space(2);
+
+            foreach (Row row in mods) DrawCard(row);
+            if (mods.Count == 0) GUILayout.Label("No mods found yet. Press Refresh.", _sDim);
+
+            List<Row> others = _rows.Where(r => r.Status == Status.LocalOnly).ToList();
+            if (others.Count > 0)
+            {
+                GUILayout.Space(8);
+                GUILayout.Label("Loaders and local-only", _sH2);
+                foreach (Row row in others)
+                    GUILayout.Label($"{row.Name}   v{row.LocalVersion}", _sDim);
+            }
+        }
+
+        private void DrawCard(Row row)
+        {
+            GUILayout.BeginVertical(_sCard);
+            GUILayout.BeginHorizontal();
+
+            // name, version, description
+            GUILayout.BeginVertical(GUILayout.ExpandWidth(true));
+            GUILayout.BeginHorizontal();
+            GUILayout.Label(row.Name, _sName, GUILayout.ExpandWidth(false));
+            GUILayout.Space(6);
+            GUILayout.BeginVertical();
+            GUILayout.Space(2);
+            GUILayout.Label(VersionText(row), _sVer, GUILayout.ExpandWidth(false));
+            GUILayout.EndVertical();
+            GUILayout.EndHorizontal();
+            if (!string.IsNullOrEmpty(row.Description)) GUILayout.Label(row.Description, _sDim);
+            GUILayout.EndVertical();
+
+            // status badge
+            StatusLook(row, out string pillText, out Color pillColor);
+            GUILayout.BeginVertical(GUILayout.Width(170));
+            GUILayout.FlexibleSpace();
+            Pill(pillText, pillColor, 164);
+            GUILayout.FlexibleSpace();
+            GUILayout.EndVertical();
+
+            // actions
+            GUILayout.BeginVertical(GUILayout.Width(130));
+            GUILayout.FlexibleSpace();
+            switch (row.Status)
+            {
+                case Status.NotInstalled:
+                    if (Button("Install", 124, true, !_busy)) Defer(() => InstallOne(row));
+                    break;
+                case Status.UpdateAvailable:
+                    if (Button("Update", 124, true, !_busy)) Defer(() => InstallOne(row));
+                    break;
+                case Status.Rebuilt:
+                    if (!_developerMode.Value)
+                    {
+                        if (Button("Update", 124, true, !_busy)) Defer(() => InstallOne(row));
+                    }
+                    else
+                    {
+                        // Developer Mode: this overwrites your own build, so ask twice (the "sure?" state times out after 5s).
+                        bool sure = _confirmRevert == row.Name && Time.realtimeSinceStartup - _confirmRevertAt < 5f;
+                        if (Button(sure ? "Really replace mine?" : "Use GitHub copy", 124, false, !_busy))
+                        {
+                            if (sure) Defer(() => { _confirmRevert = null; InstallOne(row); });
+                            else Defer(() => { _confirmRevert = row.Name; _confirmRevertAt = Time.realtimeSinceStartup; });
+                        }
+                    }
+                    break;
+            }
+            if (row.CanToggle)
+            {
+                bool disabled = row.Status == Status.Disabled;
+                if (Button(disabled ? "Enable" : "Disable", 124, disabled, !_busy)) Defer(() => SetEnabled(row, disabled));
+            }
+            GUILayout.FlexibleSpace();
+            GUILayout.EndVertical();
+
+            GUILayout.EndHorizontal();
+
+            // what's new, only when there's something to get
+            if (!string.IsNullOrEmpty(row.Notes) && (row.Status == Status.UpdateAvailable || row.Status == Status.NotInstalled))
+            {
+                GUILayout.Space(4);
+                GUILayout.Label("What's new in v" + row.RemoteVersion + ":  " + row.Notes, _sBody);
+            }
+
+            GUILayout.EndVertical();
+            GUILayout.Space(6);
+        }
+
+        private static string VersionText(Row row)
         {
             switch (row.Status)
             {
-                case Status.UpToDate: Cell("Up to date", 200, Good); break;
-                case Status.UpdateAvailable: Cell("Update available", 200, Warn); break;
-                case Status.NotInstalled: Cell("Not installed", 200, Bad); break;
-                case Status.LocalNewer: Cell("Newer than GitHub (unpublished)", 200, Dim); break;
-                case Status.Rebuilt: Cell("Differs from GitHub (same version)", 200, Warn); break;
-                default: Cell("Local only", 200, Dim); break;
+                case Status.UpdateAvailable: return $"v{row.LocalVersion}  ->  v{row.RemoteVersion}";
+                case Status.NotInstalled: return $"v{row.RemoteVersion} on GitHub";
+                case Status.LocalNewer: return $"v{row.LocalVersion}   (GitHub has v{row.RemoteVersion})";
+                default: return $"v{row.LocalVersion}";
             }
+        }
+
+        private void StatusLook(Row row, out string text, out Color color)
+        {
+            switch (row.Status)
+            {
+                case Status.UpToDate: text = "Up to date"; color = PillGreen; break;
+                case Status.UpdateAvailable: text = "Update available"; color = PillAmber; break;
+                case Status.NotInstalled: text = "Not installed"; color = PillRed; break;
+                case Status.LocalNewer: text = "Newer than GitHub"; color = PillBlue; break;
+                case Status.Rebuilt:
+                    // Same version number but different bytes: for the mod's author that's just "I rebuilt it and haven't pushed".
+                    if (_developerMode.Value) { text = "Unpublished changes"; color = PillBlue; }
+                    else { text = "Update available"; color = PillAmber; }
+                    break;
+                case Status.Disabled: text = "Disabled"; color = PillGrey; break;
+                default: text = "Local only"; color = PillGrey; break;
+            }
+        }
+
+        // ---- players ---------------------------------------------------------------------------
+
+        private void DrawPlayers()
+        {
+            GUILayout.Label("Players", _sH2);
+            GUILayout.Space(2);
+
+            if (_remote.Length == 0)
+            {
+                GUILayout.Label("Press Refresh to compare against the versions on GitHub.", _sDim);
+                return;
+            }
+            if (ZRoutedRpc.instance == null || Player.m_localPlayer == null)
+            {
+                GUILayout.Label("Join a world to see what the other players have.", _sDim);
+                return;
+            }
+
+            const float nameWidth = 150f;
+            float colWidth = Mathf.Clamp((_window.width - nameWidth - 90f) / Mathf.Max(1, _remote.Length), 110f, 220f);
+
+            GUILayout.BeginVertical(_sCard);
+
+            GUILayout.BeginHorizontal();
+            GUILayout.Label("Player", _sDim, GUILayout.Width(nameWidth));
+            foreach (RemoteMod r in _remote) GUILayout.Label(r.name, _sDim, GUILayout.Width(colWidth));
+            GUILayout.EndHorizontal();
+
+            DrawPlayerRow("You", VersionsOf(_local), colWidth, nameWidth);
+
+            Dictionary<long, string> others = OtherPlayers();
+            int behind = 0;
+            foreach (var kv in others)
+            {
+                if (_peers.TryGetValue(kv.Key, out PeerMods peer))
+                {
+                    if (DrawPlayerRow(kv.Value, peer.Versions, colWidth, nameWidth)) behind++;
+                }
+                else
+                {
+                    behind++;
+                    GUILayout.BeginHorizontal();
+                    GUILayout.Label(kv.Value, _sName, GUILayout.Width(nameWidth));
+                    Pill("no mod manager yet", PillRed, colWidth * _remote.Length - 6);
+                    GUILayout.EndHorizontal();
+                }
+            }
+            GUILayout.EndVertical();
+
+            GUILayout.Space(4);
+            if (others.Count == 0) GUILayout.Label("Nobody else is in this world right now.", _sDim);
+            else if (behind == 0) GUILayout.Label("Everyone is up to date.", TextStyle(12, Good));
+            else GUILayout.Label($"{behind} player(s) need updates. They can press {_hotkey.Value} and click Update all.", TextStyle(12, Warn, FontStyle.Normal, true));
+        }
+
+        private static Dictionary<string, string> VersionsOf(IEnumerable<LocalMod> mods)
+        {
+            var d = new Dictionary<string, string>();
+            foreach (LocalMod m in mods) if (!m.Disabled) d[m.Guid] = m.Version; // (a plain loop: tolerates duplicate guids)
+            return d;
+        }
+
+        /// <summary>One line per player; returns true if they're missing something or behind.</summary>
+        private bool DrawPlayerRow(string who, Dictionary<string, string> versions, float colWidth, float nameWidth)
+        {
+            bool behind = false;
+            GUILayout.BeginHorizontal();
+            GUILayout.Label(who, _sName, GUILayout.Width(nameWidth));
+            foreach (RemoteMod r in _remote)
+            {
+                if (!versions.TryGetValue(r.guid, out string v)) { Pill("missing", PillRed, colWidth - 6); behind = true; }
+                else if (CompareVersions(v, r.version) >= 0) Pill("v" + v, PillGreen, colWidth - 6);
+                else { Pill($"v{v} (old)", PillAmber, colWidth - 6); behind = true; }
+            }
+            GUILayout.EndHorizontal();
+            return behind;
+        }
+
+        // ---- footer ----------------------------------------------------------------------------
+
+        private void DrawFooter()
+        {
+            GUILayout.Box(GUIContent.none, _sRule, GUILayout.ExpandWidth(true));
+
+            GUILayout.BeginHorizontal();
+            bool auto = GUILayout.Toggle(_checkOnStart.Value, "Auto-update when the game starts", _sToggle);
+            if (auto != _checkOnStart.Value) _checkOnStart.Value = auto;
+            GUILayout.Space(14);
+            bool notify = GUILayout.Toggle(_notifyOnJoin.Value, "Tell me when updates are waiting", _sToggle);
+            if (notify != _notifyOnJoin.Value) _notifyOnJoin.Value = notify;
+            GUILayout.FlexibleSpace();
+            if (Button("Reload mods", 110)) Defer(() => { if (!ReloadScripts()) _statusLine = "ScriptEngine not found: press F6 instead."; });
+            if (Button("Open mods folder", 140)) Defer(() => System.Diagnostics.Process.Start("explorer.exe", _scriptsDir));
+            GUILayout.EndHorizontal();
+
+            GUILayout.Label($"Mod Manager v{Version}   |   {_owner.Value}/{_repo.Value}   |   signed in via {AuthSource}   |   {_hotkey.Value} opens/closes this window", _sDim);
+        }
+
+        // ---- widgets ---------------------------------------------------------------------------
+
+        private void Defer(Action action) => _deferred = action;
+
+        private bool Button(string text, float width, bool primary = false, bool enabled = true)
+        {
+            bool previous = GUI.enabled;
+            GUI.enabled = previous && enabled;
+            bool clicked = GUILayout.Button(text, primary ? _sBtnPrimary : _sBtn, GUILayout.Width(width), GUILayout.Height(30));
+            GUI.enabled = previous;
+            return clicked;
+        }
+
+        private void Pill(string text, Color background, float width)
+        {
+            Color previous = GUI.backgroundColor;
+            GUI.backgroundColor = background;
+            GUILayout.Label(text, _sPill, GUILayout.Width(width), GUILayout.Height(24));
+            GUI.backgroundColor = previous;
         }
     }
 }

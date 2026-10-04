@@ -28,8 +28,20 @@ foreach ($proj in Get-ChildItem (Join-Path $root "mods") -Directory) {
     $descFile = Join-Path $proj.FullName "DESCRIPTION.txt"
     $desc = if (Test-Path $descFile) { (Get-Content $descFile -Raw).Trim() } else { "" }
 
+    # "What's new" shown in the manager when an update is waiting: the top section of CHANGELOG.txt (up to the first blank line).
+    $notes = ""
+    $logFile = Join-Path $proj.FullName "CHANGELOG.txt"
+    if (Test-Path $logFile) {
+        $lines = @()
+        foreach ($line in (Get-Content $logFile)) {
+            if ($line.Trim() -eq "") { if ($lines.Count -gt 0) { break } else { continue } }
+            $lines += $line.Trim()
+        }
+        $notes = ($lines -join "  ")
+    }
+
     $manifest += [ordered]@{
-        guid = $guid; name = $name; version = $ver; description = $desc
+        guid = $guid; name = $name; version = $ver; description = $desc; notes = $notes
         files = @("$($proj.Name).dll", "$($proj.Name).pdb")
     }
 }

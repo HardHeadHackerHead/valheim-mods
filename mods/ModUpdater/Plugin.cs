@@ -23,13 +23,19 @@ namespace ModUpdater
     {
         public const string Guid = "com.dhack.modupdater";
         public const string Name = "ModUpdater";
-        public const string Version = "2.1.0";
+        public const string Version = "2.2.1";
 
         private const string ScriptEngineGuid = "com.bepis.bepinex.scriptengine";
 
         private ConfigEntry<string> _owner, _repo, _branch, _folder, _token;
         private ConfigEntry<KeyboardShortcut> _hotkey;
-        private ConfigEntry<bool> _checkOnStart, _developerMode;
+        private ConfigEntry<bool> _checkOnStart, _developerMode, _notifyOnJoin;
+        private ConfigEntry<float> _uiScale;
+
+        // A reload creates a brand-new copy of this mod in a fresh assembly, so statics are lost. AppDomain data
+        // survives, which lets the new copy re-open the window and keep the last status message.
+        private const string ReopenKey = "DHack.ModManager.Reopen";
+        private const string StatusKey = "DHack.ModManager.Status";
 
         private string _scriptsDir, _pluginsDir;
 
@@ -48,6 +54,9 @@ namespace ModUpdater
             _hotkey = Config.Bind("General", "Hotkey", new KeyboardShortcut(KeyCode.F7), "Opens/closes the mod manager window.");
             _checkOnStart = Config.Bind("General", "CheckOnStart", false,
                 "When the game starts, check GitHub and automatically install any updates.");
+            _notifyOnJoin = Config.Bind("General", "NotifyOnJoin", true,
+                "When you join a world, check GitHub once and say in chat if mod updates are waiting.");
+            _uiScale = Config.Bind("General", "UiScale", 1f, "Size of the mod manager window (1 = normal, 1.25 = bigger).");
             _developerMode = Config.Bind("General", "DeveloperMode", false,
                 "For the person who builds the mods: 'Update all' and auto-update never overwrite a build whose version is the same or newer than GitHub's.");
 
@@ -60,6 +69,15 @@ namespace ModUpdater
             _harmony = new Harmony(Guid);
             _harmony.PatchAll();
             ScanLocal();
+            BuildRows();
+
+            // Coming back from a reload (e.g. we just updated ourselves): re-open the window and keep the message.
+            var domain = AppDomain.CurrentDomain;
+            if (domain.GetData(ReopenKey) is bool reopen && reopen) WindowOpen = true;
+            if (domain.GetData(StatusKey) is string lastStatus && lastStatus.Length > 0) _statusLine = lastStatus;
+            domain.SetData(ReopenKey, false);
+            domain.SetData(StatusKey, "");
+
             Logger.LogInfo($"{Name} {Version} ready. Press {_hotkey.Value} in-game to open the mod manager.");
 
             if (_checkOnStart.Value) StartCoroutine(RefreshRoutine(autoInstall: true));
@@ -67,7 +85,7 @@ namespace ModUpdater
 
         private Harmony _harmony;
         private int _awakeFrame;
-        private bool _firstCheckStarted;
+        private bool _firstCheckStarted, _joinCheckDone;
 
         // ScriptEngine destroys this copy when mods reload (including when we update ourselves).
         // Undo everything we hooked into the game so the fresh copy starts clean.
@@ -75,12 +93,27 @@ namespace ModUpdater
         {
             _harmony?.UnpatchSelf();
             UnregisterRpc();
+
+            AppDomain.CurrentDomain.SetData(ReopenKey, WindowOpen);
+            AppDomain.CurrentDomain.SetData(StatusKey, _statusLine);
             WindowOpen = false;
+            DestroyUi();
         }
 
         private void Update()
         {
+            // Run whatever a button asked for (queued from OnGUI so the window layout never changes mid-draw).
+            if (_deferred != null) { Action action = _deferred; _deferred = null; action(); }
+
             if (_hotkey.Value.IsDown()) ToggleWindow();
+
+            // Once, when we first get into a world: quietly check and tell the player if updates are waiting.
+            // (Skipped if CheckOnStart is on, because that already installs updates and reports them.)
+            if (!_joinCheckDone && Player.m_localPlayer != null && Configured && !_busy)
+            {
+                _joinCheckDone = true;
+                if (_notifyOnJoin.Value && !_checkOnStart.Value) StartCoroutine(RefreshRoutine(autoInstall: false, notify: true));
+            }
 
             // If the window was opened before the GitHub CLI login arrived, do the first check as soon as it does.
             if (WindowOpen && !_busy && !_firstCheckStarted && _lastRefresh == DateTime.MinValue && Configured)

@@ -1,0 +1,1 @@
+New look: opaque window, mod cards with status badges, tidier player table. Turn mods on/off, Reload and Open-folder buttons, update notes, chat notice when updates are waiting, window stays open across reloads. Fixes the refresh crash. Developer Mode now asks before replacing your own build.
