@@ -1,1 +1,1 @@
-Opening the window and joining a world are faster: each mod file is only read and checked again if it actually changed. F7 works while holding Shift (running). Local mods you're still building get their own card with Reload and Disable.
+Fix for Linux / Steam Deck / controller setups: the mouse cursor now moves freely when the mod manager window is open instead of staying stuck in the middle of the screen. Faster window opening and world joining. F7 works while holding Shift.

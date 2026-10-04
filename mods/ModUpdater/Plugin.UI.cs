@@ -170,6 +170,12 @@ namespace ModUpdater
         private void OnGUI()
         {
             if (!WindowOpen) return;
+
+            // Make sure the mouse can move. The game only frees the cursor when it thinks the mouse is the active input device, which on
+            // some setups (Linux, Steam Deck/Steam Input, a controller plugged in) it doesn't, leaving it stuck in the middle of the screen.
+            if (Cursor.lockState != CursorLockMode.None) Cursor.lockState = CursorLockMode.None;
+            if (!Cursor.visible) Cursor.visible = true;
+
             EnsureStyles();
 
             // Scale with the screen so text stays readable at 1440p/4K (UiScale in the config adjusts it further).

@@ -19,7 +19,10 @@ namespace FeedFromChests
             public string Name, Display;
             public bool IsFuel;
             public int InInventory, InChests;
+            public string Title, CountsText; // the text shown, built once per refresh (building strings on every redraw creates garbage)
         }
+
+        private string _stationTitle = "", _subtitle = "";
 
         private StationInfo _station;
         private List<Row> _rows = new List<Row>();
@@ -41,7 +44,11 @@ namespace FeedFromChests
         {
             _station = info;
             _status = "";
+            Mark("opened the menu");
+            _stationTitle = "Add to " + Localization.instance.Localize(info.Title);
+            _subtitle = $"Uses your inventory first, then chests within {_radius.Value:0} m. The station's own limits still apply.";
             RefreshRows(player);
+            Logger.LogInfo($"Menu for '{info.Title}': {_rows.Count} item(s) available, {_station.Inputs.Count} input(s), fuel={(_station.Fuel != null ? "yes" : "no")}");
             if (_rows.Count == 0)
             {
                 player.Message(MessageHud.MessageType.Center, "Nothing to add: no item this takes in your inventory or nearby chests");
@@ -95,6 +102,8 @@ namespace FeedFromChests
                     IsFuel = _station.Fuel != null && drop == _station.Fuel,
                     InInventory = inventory.CountItems(name), InChests = Chests.Count(chests, name),
                 };
+                row.Title = row.Display + (row.IsFuel ? "   (fuel)" : "");
+                row.CountsText = $"In your inventory: {row.InInventory}     In chests: {row.InChests}";
                 if (row.InInventory + row.InChests > 0) rows.Add(row);
             }
             // Things to add first, fuel after; each group from the lesser item to the greater (wood, fine wood, core wood...).
@@ -107,6 +116,7 @@ namespace FeedFromChests
         {
             if (_station == null || !_station.Alive || _filling) return;
 
+            Mark($"Add 1 {row.Display}");
             bool ok = AddOne(player, _station, row.Drop, row.IsFuel);
             _status = ok ? $"Added 1 {row.Display}" : $"Couldn't add {row.Display} (full, or not accepted right now)";
             RefreshRows(player);
@@ -117,6 +127,7 @@ namespace FeedFromChests
         private void FillFromMenu(Player player, Row row)
         {
             if (_station == null || !_station.Alive || _filling) return;
+            Mark($"Fill {row.Display}");
             StartCoroutine(FillRoutine(player, _station, new List<Row> { row }));
         }
 
@@ -124,6 +135,7 @@ namespace FeedFromChests
         private void FillStation(Player player)
         {
             if (_station == null || !_station.Alive || _filling) return;
+            Mark("Fill station");
             StartCoroutine(FillRoutine(player, _station, _rows.OrderByDescending(r => r.IsFuel).ToList()));
         }
 
@@ -132,6 +144,7 @@ namespace FeedFromChests
         private void OnGUI()
         {
             if (!MenuOpen || _station == null) return;
+            FreeTheMouse();
             EnsureStyles();
 
             Matrix4x4 previous = GUI.matrix;
@@ -158,11 +171,11 @@ namespace FeedFromChests
             GUILayout.BeginArea(new Rect(16f, 12f, w - 32f, h - 24f));
 
             GUILayout.BeginHorizontal();
-            GUILayout.Label("Add to " + Localization.instance.Localize(_station.Title), _title);
+            GUILayout.Label(_stationTitle, _title);
             GUILayout.FlexibleSpace();
             if (GUILayout.Button("Close", _button, GUILayout.Width(80), GUILayout.Height(28))) CloseMenu();
             GUILayout.EndHorizontal();
-            GUILayout.Label($"Uses your inventory first, then chests within {_radius.Value:0} m. The station's own limits still apply.", _dim);
+            GUILayout.Label(_subtitle, _dim);
             GUILayout.Space(6);
 
             Player player = Player.m_localPlayer;
@@ -175,8 +188,8 @@ namespace FeedFromChests
                 DrawIcon(icon, row.Drop.m_itemData.GetIcon());
 
                 GUILayout.BeginVertical();
-                GUILayout.Label(row.Display + (row.IsFuel ? "   (fuel)" : ""), _text);
-                GUILayout.Label($"In your inventory: {row.InInventory}     In chests: {row.InChests}", _dim);
+                GUILayout.Label(row.Title, _text);
+                GUILayout.Label(row.CountsText, _dim);
                 GUILayout.EndVertical();
 
                 GUILayout.FlexibleSpace();
@@ -196,6 +209,18 @@ namespace FeedFromChests
             GUILayout.EndHorizontal();
             GUILayout.EndArea();
             GUI.DragWindow(new Rect(0, 0, w, 40));
+        }
+
+        /// <summary>
+        /// Make sure the mouse can move. The game only frees the cursor when it thinks the mouse is the active input device, which on
+        /// some setups (Linux, Steam Deck/Steam Input, a controller plugged in) it doesn't, leaving the cursor stuck in the middle of
+        /// the screen. So while our window is open we set Unity's cursor directly, every time we draw (which happens after the game's own
+        /// per-frame cursor handling, so ours wins).
+        /// </summary>
+        private static void FreeTheMouse()
+        {
+            if (Cursor.lockState != CursorLockMode.None) Cursor.lockState = CursorLockMode.None;
+            if (!Cursor.visible) Cursor.visible = true;
         }
 
         private static void DrawIcon(Rect r, Sprite sprite)

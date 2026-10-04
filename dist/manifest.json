@@ -36,9 +36,9 @@
                  {
                      "guid":  "com.dhack.feedfromchests",
                      "name":  "FeedFromChests",
-                     "version":  "1.2.1",
+                     "version":  "1.2.4",
                      "description":  "Smelters, kilns, cooking racks, fires and fermenters can use items from nearby chests. Press E at a station (it adds from a chest if you have none, or opens a menu if there\u0027s a choice), or look at one and press F for a menu of everything you can add.",
-                     "notes":  "Fixes filling adding more than you actually had. Fill is now smooth: it adds a couple per frame and takes from the chests once at the end. The menu opens and runs smoother, has Fill and Fill station, and lists items from lesser to greater (wood, fine wood, core wood...). Feeds smelters, kilns, cooking racks, fires and fermenters from nearby chests.",
+                     "notes":  "Fix for Linux / Steam Deck / controller setups: the mouse cursor now moves freely when the menu is open instead of staying stuck in the middle of the screen. Plus a tip about the F menu, an AlwaysOpenMenu setting, smoother menu and Fill, and items listed lesser to greater. Feeds smelters, kilns, cooking racks, fires and fermenters from nearby chests.",
                      "files":  [
                                    "FeedFromChests.dll",
                                    "FeedFromChests.pdb"
@@ -47,9 +47,9 @@
                  {
                      "guid":  "com.dhack.modupdater",
                      "name":  "ModUpdater",
-                     "version":  "2.4.3",
+                     "version":  "2.4.4",
                      "description":  "This mod manager (F7). Updates itself like any other mod.",
-                     "notes":  "Opening the window and joining a world are faster: each mod file is only read and checked again if it actually changed. F7 works while holding Shift (running). Local mods you\u0027re still building get their own card with Reload and Disable.",
+                     "notes":  "Fix for Linux / Steam Deck / controller setups: the mouse cursor now moves freely when the mod manager window is open instead of staying stuck in the middle of the screen. Faster window opening and world joining. F7 works while holding Shift.",
                      "files":  [
                                    "ModUpdater.dll",
                                    "ModUpdater.pdb"
@@ -69,9 +69,9 @@
                  {
                      "guid":  "com.dhack.qualityoflife",
                      "name":  "QualityOfLife",
-                     "version":  "1.3.3",
+                     "version":  "1.3.4",
                      "description":  "Small controls: Q builds a quick set and swaps to it and back; B jumps into construction mode with your hammer and back; a button under your inventory stacks items into nearby chests, and L locks items you want to keep. Keys are configurable.",
-                     "notes":  "Menus open and run smoother: chests are tracked instead of searched for, the item list only draws the rows you can see, and chest tags and hover text are worked out once and reused. Items in the assign menu are listed from lesser to greater. Plus sounds, Undo, chest assignment (K), the stack button, item locking (L), and Q/B working while you run.",
+                     "notes":  "Fix for Linux / Steam Deck / controller setups: the mouse cursor now moves freely when the chest-assign menu is open instead of staying stuck in the middle of the screen. Plus smoother menus, Stack to chests with Undo and sounds, chest assignment (K), item locking (L), and Q/B working while you run.",
                      "files":  [
                                    "QualityOfLife.dll",
                                    "QualityOfLife.pdb"

@@ -23,11 +23,11 @@ namespace FeedFromChests
     {
         public const string Guid = "com.dhack.feedfromchests";
         public const string Name = "FeedFromChests";
-        public const string Version = "1.2.1";
+        public const string Version = "1.2.4";
 
         internal static Plugin Instance;
 
-        private ConfigEntry<bool> _enabled, _autoFeed;
+        private ConfigEntry<bool> _enabled, _autoFeed, _alwaysOpenMenu;
         private ConfigEntry<float> _radius;
         private ConfigEntry<KeyCode> _menuKey;
         private ConfigEntry<int> _fillLimit;
@@ -41,6 +41,8 @@ namespace FeedFromChests
             _radius = Config.Bind("General", "Radius", 15f, "How far (in metres) from the station a chest can be and still be used.");
             _autoFeed = Config.Bind("General", "AutoFeedOnUse", true,
                 "Pressing E at a station when you carry nothing it takes, but a nearby chest has some: add it for you (or open the menu if there's a choice).");
+            _alwaysOpenMenu = Config.Bind("General", "AlwaysOpenMenu", false,
+                "Pressing E at a station when you rely on chests: off = add one automatically if there's only one kind to add (menu only for a choice); on = always open the menu (so Fill is always at hand).");
             _menuKey = Config.Bind("General", "MenuKey", KeyCode.F,
                 "Look at a station and press this to open the add-items menu any time (it lists your inventory and nearby chests).");
             _fillLimit = Config.Bind("General", "FillLimit", 100,
@@ -51,6 +53,7 @@ namespace FeedFromChests
             ContainerRegistry.Seed(); // chests that already exist; new ones are added as they appear
 
             Logger.LogInfo($"{Name} {Version} loaded (menu key: {_menuKey.Value})");
+            StartCoroutine(Warmup());
 
             // Awake with a player already in the world means this was a hot reload.
             if (Player.m_localPlayer != null && Chat.instance != null)
@@ -66,8 +69,58 @@ namespace FeedFromChests
             DestroyMenuResources();
         }
 
+        // ---- finding slowness -------------------------------------------------------------------------
+
+        private string _lastAction = "";
+        private float _lastActionAt = -100f;
+        private int _lastGc;
+
+        /// <summary>Note what we just did, so a slow frame right after it can be put down to it.</summary>
+        private void Mark(string action)
+        {
+            _lastAction = action;
+            _lastActionAt = Time.unscaledTime;
+        }
+
+        /// <summary>If the previous frame was slow soon after one of our actions, say so (with whether memory cleanup happened).</summary>
+        private void WatchForSpikes()
+        {
+            int gc = GC.CollectionCount(0);
+            float frame = Time.unscaledDeltaTime;
+            if (frame > 0.1f && Time.unscaledTime - _lastActionAt < 3f)
+                Logger.LogInfo($"Slow frame: {frame * 1000f:0} ms, {gc - _lastGc} memory cleanup(s), shortly after: {_lastAction}");
+            _lastGc = gc;
+        }
+
+        /// <summary>
+        /// The first time Unity runs a piece of new code it has to compile it, which can take a noticeable moment. Do that for all of
+        /// our code a little while after loading, a few methods per frame, so the first click on a station isn't the one that pays for it.
+        /// </summary>
+        private System.Collections.IEnumerator Warmup()
+        {
+            yield return new WaitForSeconds(3f); // let the game settle first
+            var methods = new List<System.Reflection.MethodBase>();
+            foreach (Type t in typeof(Plugin).Assembly.GetTypes())
+            {
+                if (t.IsGenericTypeDefinition) continue;
+                const System.Reflection.BindingFlags all = System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.Static |
+                    System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.DeclaredOnly;
+                foreach (System.Reflection.MethodBase m in t.GetMethods(all)) methods.Add(m);
+            }
+
+            int done = 0;
+            foreach (System.Reflection.MethodBase m in methods)
+            {
+                if (m.IsAbstract || m.ContainsGenericParameters) continue;
+                try { System.Runtime.CompilerServices.RuntimeHelpers.PrepareMethod(m.MethodHandle); } catch (Exception) { /* some can't be pre-compiled: fine */ }
+                if (++done % 4 == 0) yield return null; // four per frame
+            }
+            Logger.LogInfo($"Warmed up {done} methods");
+        }
+
         private void Update()
         {
+            WatchForSpikes();
             if (_pending != null) { Action a = _pending; _pending = null; a(); }
 
             Player player = Player.m_localPlayer;
@@ -75,9 +128,18 @@ namespace FeedFromChests
 
             if (MenuOpen) { UpdateMenu(player); return; }
 
-            if (Input.GetKeyDown(_menuKey.Value) && !TypingOrMenuOpen())
+            if (Input.GetKeyDown(_menuKey.Value))
             {
-                if (Stations.TryGet(player.GetHoverObject(), out StationInfo info, out _)) OpenMenu(player, info);
+                bool blocked = TypingOrMenuOpen();
+                GameObject hover = player.GetHoverObject();
+                bool isStation = Stations.TryGet(hover, out StationInfo info, out _);
+                Logger.LogInfo($"Menu key pressed: blocked={blocked}, looking at '{(hover != null ? hover.name : "nothing")}', is a station={isStation}");
+
+                if (!blocked)
+                {
+                    if (isStation) OpenMenu(player, info);
+                    else player.Message(MessageHud.MessageType.Center, "Look at a smelter, kiln, cooking rack, fire or fermenter and press " + _menuKey.Value);
+                }
             }
         }
 
@@ -178,6 +240,8 @@ namespace FeedFromChests
         /// Called when you press E on something. Returns true if we handled it (so the game shouldn't). We only step in when you carry
         /// none of what the station takes but a chest has some; otherwise the game does exactly what it always did.
         /// </summary>
+        private float _lastHintAt = -100f;
+
         internal bool TryAutoFeed(Player player, GameObject go)
         {
             if (!_enabled.Value || !_autoFeed.Value) return false;
@@ -194,8 +258,19 @@ namespace FeedFromChests
             List<ItemDrop> inChests = candidates.Where(d => Chests.Count(chests, d.m_itemData.m_shared.m_name) > 0).ToList();
             if (inChests.Count == 0) return false; // nothing in the chests either: the game says "nothing to add" as usual
 
-            if (inChests.Count == 1) AddOne(player, info, inChests[0], fuel);
-            else OpenMenu(player, info); // a choice to make
+            Mark("pressed E at a station");
+            if (inChests.Count == 1 && !_alwaysOpenMenu.Value)
+            {
+                AddOne(player, info, inChests[0], fuel);
+
+                // With only one kind there's no menu, so nothing would tell you that Fill exists. Say so (not every single time).
+                if (Time.unscaledTime - _lastHintAt > 30f)
+                {
+                    _lastHintAt = Time.unscaledTime;
+                    player.Message(MessageHud.MessageType.TopLeft, $"Tip: press {_menuKey.Value} while looking at this for the menu (Fill, Add 1)");
+                }
+            }
+            else OpenMenu(player, info); // a choice to make (or you asked to always see the menu)
             return true;
         }
     }

@@ -19,7 +19,7 @@ namespace QualityOfLife
     {
         public const string Guid = "com.dhack.qualityoflife";
         public const string Name = "QualityOfLife";
-        public const string Version = "1.3.3";
+        public const string Version = "1.3.4";
 
         private ConfigEntry<bool> _quickSetEnabled, _showBadges, _hammerEnabled, _showMessages;
         private ConfigEntry<KeyboardShortcut> _quickSetKey, _hammerKey;

@@ -232,6 +232,7 @@ namespace QualityOfLife
         private void DrawRulesWindow()
         {
             if (!RulesWindowOpen || _rulesChest == null) return;
+            FreeTheMouse();
             EnsureMenuStyles();
 
             Matrix4x4 previous = GUI.matrix;
@@ -386,6 +387,17 @@ namespace QualityOfLife
                 rows.Add(new DisplayRow { Item = item });
             }
             _display = rows;
+        }
+
+        /// <summary>
+        /// Make sure the mouse can move. The game only frees the cursor when it thinks the mouse is the active input device, which on
+        /// some setups (Linux, Steam Deck/Steam Input, a controller plugged in) it doesn't, leaving the cursor stuck in the middle of
+        /// the screen. So while our window is open we set Unity's cursor directly, every time we draw.
+        /// </summary>
+        private static void FreeTheMouse()
+        {
+            if (Cursor.lockState != CursorLockMode.None) Cursor.lockState = CursorLockMode.None;
+            if (!Cursor.visible) Cursor.visible = true;
         }
 
         private static void DrawIcon(Rect r, Sprite sprite)
