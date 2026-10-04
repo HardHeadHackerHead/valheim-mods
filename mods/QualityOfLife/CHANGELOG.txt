@@ -1,0 +1,1 @@
+First release: a quick set you build from your inventory (swap to it and back with one key) and a hammer key that jumps into construction mode and back. Both keys are configurable.

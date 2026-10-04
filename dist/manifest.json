@@ -25,12 +25,34 @@
                  {
                      "guid":  "com.dhack.modupdater",
                      "name":  "ModUpdater",
-                     "version":  "2.3.0",
+                     "version":  "2.4.1",
                      "description":  "This mod manager (F7). Updates itself like any other mod.",
-                     "notes":  "Safer sign-in: only your read-only access token is used. Your GitHub CLI login is used only if you explicitly allow it. New \"Connect to GitHub\" panel to paste a token in the window.",
+                     "notes":  "Mods that exist only on your machine (not published yet) now get a proper card with Reload and Disable instead of a plain line; only loader plugins are listed separately.",
                      "files":  [
                                    "ModUpdater.dll",
                                    "ModUpdater.pdb"
+                               ]
+                 },
+                 {
+                     "guid":  "com.dhack.partyhud",
+                     "name":  "PartyHud",
+                     "version":  "1.2.0",
+                     "description":  "Party panel on the right of the screen: every player\u0027s Steam picture, name, health, stamina and distance, live, at any range.",
+                     "notes":  "Polish: rounded panels, bars and pictures with soft shadows, fade-in for new players, a PARTY header, F8 to hide/show the panel, and a cap on how many players are listed.",
+                     "files":  [
+                                   "PartyHud.dll",
+                                   "PartyHud.pdb"
+                               ]
+                 },
+                 {
+                     "guid":  "com.dhack.qualityoflife",
+                     "name":  "QualityOfLife",
+                     "version":  "1.0.0",
+                     "description":  "Small controls: hover items and press Q to build a quick set, press Q in the world to swap to it and back; press B to jump into construction mode with your hammer and back. Keys are configurable.",
+                     "notes":  "First release: a quick set you build from your inventory (swap to it and back with one key) and a hammer key that jumps into construction mode and back. Both keys are configurable.",
+                     "files":  [
+                                   "QualityOfLife.dll",
+                                   "QualityOfLife.pdb"
                                ]
                  }
              ]

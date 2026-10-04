@@ -1,0 +1,10 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <AssemblyName>PartyHud</AssemblyName>
+    <RootNamespace>PartyHud</RootNamespace>
+  </PropertyGroup>
+  <ItemGroup>
+    <!-- Valheim's own copy of Steamworks.NET: used to fetch each player's Steam profile picture. -->
+    <Reference Include="com.rlabrecque.steamworks.net"><HintPath>$(ManagedDir)\com.rlabrecque.steamworks.net.dll</HintPath><Private>false</Private></Reference>
+  </ItemGroup>
+</Project>

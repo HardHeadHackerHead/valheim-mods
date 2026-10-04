@@ -34,7 +34,7 @@ namespace ModUpdater
 
         private readonly List<Texture2D> _textures = new List<Texture2D>();
         private bool _stylesReady;
-        private GUIStyle _sWindow, _sCard, _sTitle, _sH2, _sName, _sBody, _sDim, _sVer, _sPill, _sBtn, _sBtnPrimary, _sToggle, _sRule;
+        private GUIStyle _sWindow, _sCard, _sTitle, _sH2, _sName, _sBody, _sDim, _sVer, _sPill, _sBtn, _sBtnSmall, _sBtnPrimary, _sToggle, _sRule;
 
         private void ToggleWindow()
         {
@@ -146,6 +146,7 @@ namespace ModUpdater
 
             _sBtn = ButtonStyle(new Color(0.22f, 0.19f, 0.15f), new Color(0.33f, 0.27f, 0.18f), new Color(0.42f, 0.33f, 0.16f),
                                 new Color(0.45f, 0.36f, 0.2f), TextMain);
+            _sBtnSmall = new GUIStyle(_sBtn) { fontSize = 12, padding = new RectOffset(4, 4, 2, 2) };
             _sBtnPrimary = ButtonStyle(new Color(0.18f, 0.40f, 0.24f), new Color(0.24f, 0.52f, 0.31f), new Color(0.15f, 0.33f, 0.2f),
                                        new Color(0.4f, 0.8f, 0.5f), Color.white);
 
@@ -282,18 +283,20 @@ namespace ModUpdater
 
         private void DrawMods()
         {
-            List<Row> mods = _rows.Where(r => r.Status != Status.LocalOnly).ToList();
+            // Real mods get a card each: everything on GitHub, plus mods that only exist in your scripts folder (not published yet).
+            // Loader plugins (ScriptEngine, ...) live in the plugins folder and just get a line at the bottom.
+            List<Row> mods = _rows.Where(r => !IsLoader(r)).ToList();
             GUILayout.Label($"Mods  ({mods.Count})", _sH2);
             GUILayout.Space(2);
 
             foreach (Row row in mods) DrawCard(row);
             if (mods.Count == 0) GUILayout.Label("No mods found yet. Press Refresh.", _sDim);
 
-            List<Row> others = _rows.Where(r => r.Status == Status.LocalOnly).ToList();
+            List<Row> others = _rows.Where(IsLoader).ToList();
             if (others.Count > 0)
             {
                 GUILayout.Space(8);
-                GUILayout.Label("Loaders and local-only", _sH2);
+                GUILayout.Label("Loaders", _sH2);
                 foreach (Row row in others)
                     GUILayout.Label($"{row.Name}   v{row.LocalVersion}", _sDim);
             }
@@ -356,7 +359,10 @@ namespace ModUpdater
             if (row.CanToggle)
             {
                 bool disabled = row.Status == Status.Disabled;
-                if (Button(disabled ? "Enable" : "Disable", 124, disabled, !_busy)) Defer(() => SetEnabled(row, disabled));
+                GUILayout.BeginHorizontal();
+                if (!disabled && Button("Reload", 60, false, !_busy, small: true)) Defer(() => ReloadOne(row));
+                if (Button(disabled ? "Enable" : "Disable", disabled ? 124 : 60, disabled, !_busy, small: !disabled)) Defer(() => SetEnabled(row, disabled));
+                GUILayout.EndHorizontal();
             }
             GUILayout.FlexibleSpace();
             GUILayout.EndVertical();
@@ -373,6 +379,9 @@ namespace ModUpdater
             GUILayout.EndVertical();
             GUILayout.Space(6);
         }
+
+        /// <summary>A loader plugin from the plugins folder (ScriptEngine and friends): not one of "our" mods.</summary>
+        private static bool IsLoader(Row row) => row.Status == Status.LocalOnly && row.Local != null && row.Local.InPlugins;
 
         private static string VersionText(Row row)
         {
@@ -399,7 +408,11 @@ namespace ModUpdater
                     else { text = "Update available"; color = PillAmber; }
                     break;
                 case Status.Disabled: text = "Disabled"; color = PillGrey; break;
-                default: text = "Local only"; color = PillGrey; break;
+                default:
+                    // A mod in your scripts folder that isn't on GitHub (yet): fine while you're building it.
+                    if (row.Local != null && !row.Local.InPlugins) { text = "Not published yet"; color = PillBlue; }
+                    else { text = "Local only"; color = PillGrey; }
+                    break;
             }
         }
 
@@ -496,23 +509,33 @@ namespace ModUpdater
             GUILayout.Space(14);
             bool gh = GUILayout.Toggle(_allowGitHubCli.Value, "Allow GitHub CLI login", _sToggle);
             if (gh != _allowGitHubCli.Value) _allowGitHubCli.Value = gh;
+            if (_developerMode.Value)
+            {
+                GUILayout.Space(14);
+                bool rebuilt = GUILayout.Toggle(_autoReload.Value, "Auto-reload rebuilt mods", _sToggle);
+                if (rebuilt != _autoReload.Value) _autoReload.Value = rebuilt;
+            }
             GUILayout.FlexibleSpace();
-            if (Button("Reload mods", 110)) Defer(() => { if (!ReloadScripts()) _statusLine = "ScriptEngine not found: press F6 instead."; });
-            if (Button("Open mods folder", 140)) Defer(() => System.Diagnostics.Process.Start("explorer.exe", _scriptsDir));
             GUILayout.EndHorizontal();
 
+            GUILayout.BeginHorizontal();
             GUILayout.Label($"Mod Manager v{Version}   |   {_owner.Value}/{_repo.Value}   |   signed in via {AuthSource}   |   {_hotkey.Value} opens/closes this window", _sDim);
+            GUILayout.FlexibleSpace();
+            if (Button("Reload all mods", 130, false, true, true)) Defer(() => { if (!ReloadScripts()) _statusLine = "ScriptEngine not found: press F6 instead."; });
+            if (Button("Open mods folder", 130, false, true, true)) Defer(() => System.Diagnostics.Process.Start("explorer.exe", _scriptsDir));
+            GUILayout.EndHorizontal();
         }
 
         // ---- widgets ---------------------------------------------------------------------------
 
         private void Defer(Action action) => _deferred = action;
 
-        private bool Button(string text, float width, bool primary = false, bool enabled = true)
+        private bool Button(string text, float width, bool primary = false, bool enabled = true, bool small = false)
         {
             bool previous = GUI.enabled;
             GUI.enabled = previous && enabled;
-            bool clicked = GUILayout.Button(text, primary ? _sBtnPrimary : _sBtn, GUILayout.Width(width), GUILayout.Height(30));
+            GUIStyle style = primary ? _sBtnPrimary : small ? _sBtnSmall : _sBtn;
+            bool clicked = GUILayout.Button(text, style, GUILayout.Width(width), GUILayout.Height(small ? 26 : 30));
             GUI.enabled = previous;
             return clicked;
         }

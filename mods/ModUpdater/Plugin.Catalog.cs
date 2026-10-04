@@ -279,6 +279,7 @@ namespace ModUpdater
             if (_busy || mods.Count == 0) yield break;
             _busy = true;
             var installed = new List<string>();
+            var toReload = new List<ModFile>();
             string failure = null;
             try
             {
@@ -302,6 +303,8 @@ namespace ModUpdater
                         File.Move(tmp, localPath);
                     }
                     installed.Add(mod.name);
+                    ModFile modFile = FileOf(mod);
+                    if (modFile != null) toReload.Add(modFile);
                 }
             }
             finally
@@ -320,7 +323,8 @@ namespace ModUpdater
             _statusLine = $"Updated: {string.Join(", ", installed)} (reloading)";
             Say(_statusLine);
 
-            if (!ReloadScripts())
+            // Reload only the mods we just changed (the others keep running untouched).
+            if (!ReloadMods(toReload))
             {
                 _statusLine = $"Updated: {string.Join(", ", installed)} - press F6 to reload";
                 Say("Press F6 to reload the mods (ScriptEngine not detected).");
@@ -344,12 +348,16 @@ namespace ModUpdater
                 return;
             }
 
-            // Finish our own bookkeeping first, reload last (the reload replaces this running copy of the manager).
+            // Finish our own bookkeeping first, then (un)load just this mod. Nothing else is reloaded.
             ScanLocal();
             BuildRows();
             BroadcastVersions();
             _statusLine = $"{row.Name} {(enable ? "enabled" : "disabled")}";
-            if (!ReloadScripts()) _statusLine += " - press F6 to apply";
+
+            string dll = enable ? row.Local.Path.Substring(0, row.Local.Path.Length - ".disabled".Length) : row.Local.Path;
+            var file = new ModFile { Guid = row.Local.Guid, Path = dll };
+            bool ok = enable ? ReloadMods(new List<ModFile> { file }) : UnloadMods(new List<ModFile> { file });
+            if (!ok) _statusLine += " - press F6 to apply";
         }
 
         private void InstallOne(Row row) { if (row.Remote != null) StartCoroutine(InstallRoutine(new List<RemoteMod> { row.Remote })); }

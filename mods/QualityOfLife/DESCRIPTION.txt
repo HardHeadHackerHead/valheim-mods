@@ -1,0 +1,1 @@
+Small controls: hover items and press Q to build a quick set, press Q in the world to swap to it and back; press B to jump into construction mode with your hammer and back. Keys are configurable.

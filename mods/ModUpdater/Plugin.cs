@@ -23,13 +23,13 @@ namespace ModUpdater
     {
         public const string Guid = "com.dhack.modupdater";
         public const string Name = "ModUpdater";
-        public const string Version = "2.3.0";
+        public const string Version = "2.4.1";
 
         private const string ScriptEngineGuid = "com.bepis.bepinex.scriptengine";
 
         private ConfigEntry<string> _owner, _repo, _branch, _folder, _token;
         private ConfigEntry<KeyboardShortcut> _hotkey;
-        private ConfigEntry<bool> _checkOnStart, _developerMode, _notifyOnJoin, _allowGitHubCli;
+        private ConfigEntry<bool> _checkOnStart, _developerMode, _notifyOnJoin, _allowGitHubCli, _autoReload;
         private ConfigEntry<float> _uiScale;
 
         // A reload creates a brand-new copy of this mod in a fresh assembly, so statics are lost. AppDomain data
@@ -62,6 +62,8 @@ namespace ModUpdater
             _uiScale = Config.Bind("General", "UiScale", 1f, "Size of the mod manager window (1 = normal, 1.25 = bigger).");
             _developerMode = Config.Bind("General", "DeveloperMode", false,
                 "For the person who builds the mods: 'Update all' and auto-update never overwrite a build whose version is the same or newer than GitHub's.");
+            _autoReload = Config.Bind("General", "AutoReloadRebuiltMods", true,
+                "Developer Mode only: when you rebuild a mod, reload just that mod automatically (no F6, other mods untouched).");
 
             _scriptsDir = Path.Combine(Paths.BepInExRootPath, "scripts");
             _pluginsDir = Paths.PluginPath;
@@ -73,6 +75,7 @@ namespace ModUpdater
             _harmony.PatchAll();
             ScanLocal();
             BuildRows();
+            BaselineWatch(); // whatever is in scripts right now is what's loaded
 
             // Coming back from a reload (e.g. we just updated ourselves): re-open the window and keep the message.
             var domain = AppDomain.CurrentDomain;
@@ -110,6 +113,7 @@ namespace ModUpdater
 
             if (_hotkey.Value.IsDown()) ToggleWindow();
             _needsSetup = !Configured;
+            WatchScripts();
 
             // Once, when we first get into a world: quietly check and tell the player if updates are waiting.
             // (Skipped if CheckOnStart is on, because that already installs updates and reports them.)
