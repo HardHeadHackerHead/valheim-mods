@@ -21,7 +21,7 @@ namespace BuildOrders
     {
         public const string Guid = "com.dhack.buildorders";
         public const string Name = "BuildOrders";
-        public const string Version = "1.3.0";
+        public const string Version = "1.3.1";
 
         internal static Plugin Instance;
 
@@ -33,7 +33,8 @@ namespace BuildOrders
         private ConfigEntry<string> _shaderOverride;
         private ConfigEntry<float> _viewDistance, _snapDistance;
         private ConfigEntry<KeyCode> _planKey, _selectKey, _removeKey, _toggleGhostsKey;
-        private ConfigEntry<bool> _planToggle;
+        private ConfigEntry<bool> _planToggle, _swimBuild;
+        internal bool BuildWhileSwimming => _enabled.Value && _swimBuild.Value;
         private ConfigEntry<float> _panelX, _panelY;
 
         private Harmony _harmony;
@@ -46,6 +47,8 @@ namespace BuildOrders
             _showGhosts = Config.Bind("General", "ShowGhosts", true, "Show the glowing ghosts of planned pieces.");
             _buildByHand = Config.Bind("General", "BuildByPressingUse", true,
                 "Walk up to a ghost and press E to build it, no hammer needed. It costs the normal materials (from your inventory, then nearby chests if BuildFromChests is installed).");
+            _swimBuild = Config.Bind("General", "BuildWhileSwimming", true,
+                "Keep your hammer in your hand while swimming so you can plan and build from the water (equip it before you jump in: the game does not let you equip things while swimming).");
             _buildAllRadius = Config.Bind("General", "BuildAllRadius", 12f, "Holding E at a ghost builds every ghost within this many metres (supports first), as far as your materials go.");
             _stabilityKey = Config.Bind("Keys", "StabilityKey", KeyCode.F10, "Show or hide the estimated stability colours on the ghosts (blue = solid, green to red = weaker, red = would fall).");
             _stabilityInPlan = Config.Bind("General", "StabilityInPlanMode", true, "Show the stability colours automatically while plan mode is on.");

@@ -49,3 +49,33 @@ namespace BuildOrders
         }
     }
 }
+
+namespace BuildOrders
+{
+    // Swimming normally puts your hammer away every frame, which ends building. With BuildWhileSwimming on, the hammer stays in your
+    // hand in the water, so you can plan and build from it. (Equip the hammer before you jump in: the game does not let you equip things
+    // while swimming.) Only the automatic put-away is skipped; the hide-hands key still works.
+    [HarmonyPatch(typeof(Humanoid), "UpdateEquipment")]
+    internal static class Humanoid_UpdateEquipment
+    {
+        internal static bool Running;
+        private static void Prefix(Humanoid __instance) => Running = __instance == Player.m_localPlayer;
+        private static void Finalizer() => Running = false;
+    }
+
+    [HarmonyPatch(typeof(Humanoid), nameof(Humanoid.HideHandItems))]
+    internal static class Humanoid_HideHandItems
+    {
+        private static readonly System.Reflection.FieldInfo RightItem = AccessTools.Field(typeof(Humanoid), "m_rightItem");
+        private static bool Prefix(Humanoid __instance, ref bool __result)
+        {
+            if (!Humanoid_UpdateEquipment.Running) return true; // not the automatic swimming put-away
+            Plugin plugin = Plugin.Instance;
+            if (plugin == null || !plugin.BuildWhileSwimming) return true;
+            ItemDrop.ItemData right = RightItem.GetValue(__instance) as ItemDrop.ItemData;
+            if (right == null || right.m_shared.m_buildPieces == null) return true; // only the hammer (a build tool) stays out
+            __result = false;
+            return false;
+        }
+    }
+}
