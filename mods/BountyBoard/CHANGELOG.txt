@@ -1,1 +1,1 @@
-First release: a buildable Bounty Board with daily hunt, starred-hunt and loot contracts, paid in coins, with ranks.
+Group contracts: everyone on the server shares the same running contracts (three at a time, a new one only when one is finished). Five notices a day, harder ones as you beat bosses, Hard and Brutal contracts, region-clearing contracts, and rewards in materials that match your progress (bronze, iron, silver and on) as well as coins. Collect your own reward per contract. A switch in the menu shows the contracts on your screen.

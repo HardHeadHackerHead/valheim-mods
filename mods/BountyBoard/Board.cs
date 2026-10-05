@@ -30,11 +30,11 @@ namespace BountyBoard
 
         public string GetHoverText()
         {
-            int ready = 0, active = 0;
-            Player me = Player.m_localPlayer;
-            if (me != null)
-                foreach (Bounty b in Bounties.Active()) { active++; if (Bounties.IsComplete(b, me)) ready++; }
-            string line = ready > 0 ? $"<color=#9BE37A>{ready} contract{(ready == 1 ? "" : "s")} ready to hand in</color>" : active > 0 ? $"{active} contract{(active == 1 ? "" : "s")} in progress" : "New notices are posted every day";
+            State state = Plugin.Instance?.Current;
+            int running = state?.Active.Count ?? 0, mine = Plugin.Instance?.ToClaim() ?? 0;
+            string line = mine > 0 ? $"<color=#9BE37A>{mine} reward{(mine == 1 ? "" : "s")} waiting for you</color>"
+                : running > 0 ? $"The group has {running} contract{(running == 1 ? "" : "s")} running"
+                : "New notices are posted every day";
             return Localization.instance.Localize($"Bounty Board\n[<color=yellow><b>$KEY_Use</b></color>] Read the notices\n<size=14>{line}</size>");
         }
 

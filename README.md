@@ -124,7 +124,7 @@ Press **E** on a portal and pick where it goes from a list of every portal in th
 ### 📜 BountyBoard
 <img src="dist/BountyBoard.cover.png" alt="BountyBoard" width="100%">
 
-A buildable notice board that posts new jobs every day: hunt creatures, slay starred ones or bring in loot, and get paid in coins. Jobs follow how far you have got, and your rank raises the pay.
+A buildable notice board with contracts the whole server works on together: hunt, clear out regions, slay starred creatures or bring in loot, and get paid in coins and materials that match how far you have got (bronze, iron, silver...). Harder contracts as you beat bosses, and a tracker you can keep on screen.
 
 </td>
 <td valign="top">

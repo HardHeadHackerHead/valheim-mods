@@ -16,25 +16,36 @@ namespace BountyBoard
     /// Board.cs (the piece), Window.cs (the menu).
     /// </summary>
     [BepInPlugin(Guid, Name, Version)]
-    public class Plugin : BaseUnityPlugin
+    public partial class Plugin : BaseUnityPlugin
     {
         public const string Guid = "com.dhack.bountyboard";
         public const string Name = "BountyBoard";
-        public const string Version = "1.0.0";
+        public const string Version = "1.1.0";
         public const string PiecePrefab = "piece_bountyboard";
 
+        internal static Plugin Instance;
         internal static ConfigEntry<int> RefreshDays, NoticesPerBoard, MaxActive, RewardPercent;
+        internal static ConfigEntry<bool> ShowTracker;
+        internal static ConfigEntry<float> TrackerX, TrackerY, TrackerScale;
 
         private static GameObject _holder, _prefab;
         private Harmony _harmony;
 
         private void Awake()
         {
-            RefreshDays = Config.Bind("Notices", "DaysBetweenNewNotices", 1, new ConfigDescription("How many in-game days before a board posts new notices.", new AcceptableValueRange<int>(1, 7)));
-            NoticesPerBoard = Config.Bind("Notices", "NoticesPerBoard", 4, new ConfigDescription("How many notices a board shows (the last one is always for starred creatures, the one before it for loot).", new AcceptableValueRange<int>(2, 8)));
-            MaxActive = Config.Bind("Contracts", "MostAtOnce", 5, new ConfigDescription("How many contracts you can carry at once.", new AcceptableValueRange<int>(1, 12)));
+            // These four are used by the host's game (it decides what is posted and what it pays).
+            RefreshDays = Config.Bind("Notices", "DaysBetweenNewNotices", 1, new ConfigDescription("How many in-game days before the board posts new notices.", new AcceptableValueRange<int>(1, 7)));
+            NoticesPerBoard = Config.Bind("Notices", "NoticesPerBoard", 5, new ConfigDescription("How many notices are posted.", new AcceptableValueRange<int>(3, 8)));
+            MaxActive = Config.Bind("Contracts", "MostAtOnce", 3, new ConfigDescription("How many contracts the group can have going at once. A new one can only be taken when one is finished.", new AcceptableValueRange<int>(1, 5)));
             RewardPercent = Config.Bind("Contracts", "RewardPercent", 100, new ConfigDescription("Pay as a percentage of the standard rate (50 = half, 200 = double).", new AcceptableValueRange<int>(10, 500)));
+            // These are yours alone.
+            ShowTracker = Config.Bind("Tracker", "ShowOnScreen", false, "Show the group's contracts and their progress on your screen (also a switch in the board's menu).");
+            TrackerX = Config.Bind("Tracker", "X", 14f, "Distance from the left edge of the screen (UI pixels).");
+            TrackerY = Config.Bind("Tracker", "Y", 330f, "Distance from the top of the screen (UI pixels).");
+            TrackerScale = Config.Bind("Tracker", "Scale", 1f, new ConfigDescription("Size of the tracker.", new AcceptableValueRange<float>(0.6f, 2f)));
 
+            Instance = this;
+            _awakeFrame = Time.frameCount;
             _harmony = new Harmony(Guid);
             _harmony.PatchAll();
             if (ZNetScene.instance != null) Register(ZNetScene.instance); // hot reload while in a world
@@ -44,13 +55,15 @@ namespace BountyBoard
         private void OnDestroy()
         {
             Window.Close();
+            UnregisterRpc();
+            if (Instance == this) Instance = null;
             _harmony?.UnpatchSelf();
             Unregister();
             Styles.Destroy();
         }
 
-        private void Update() => Window.Tick();
-        private void OnGUI() => Window.Draw();
+        private void Update() { UpdateNetwork(); Window.Tick(); }
+        private void OnGUI() { Window.Draw(); Tracker.Draw(); }
 
         internal static void Register(ZNetScene scene)
         {
@@ -127,6 +140,13 @@ namespace BountyBoard
             GameObject go = ObjectDB.instance.GetItemPrefab(item);
             return new Piece.Requirement { m_resItem = go != null ? go.GetComponent<ItemDrop>() : null, m_amount = amount, m_recover = true };
         }
+    }
+
+    // You land the last blow on something: the host counts it for the group's contracts.
+    [HarmonyPatch(typeof(Character), nameof(Character.OnDeath))]
+    internal static class Character_OnDeath
+    {
+        private static void Prefix(Character __instance) => Plugin.Instance?.ReportKill(__instance);
     }
 
     [HarmonyPatch(typeof(ZNetScene), "Awake")]

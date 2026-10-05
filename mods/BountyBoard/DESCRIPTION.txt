@@ -1,11 +1,13 @@
-A buildable notice board that posts jobs for you to do and pays you in coins.
+A buildable notice board with contracts for the whole group, paid in coins and the materials of the stage you have reached.
 
 How it works
-- Build it with the hammer at a workbench (Wood, Leather Scraps and Flint), put it down anywhere, and press E on it.
-- Every in-game day it posts new notices: hunt a number of creatures, slay starred ones, or bring in loot. Take up to five at a time.
-- Kills count when you land the last blow. Loot is handed in at the board. Then collect the coins.
-- The jobs follow how far you have got: each boss you beat opens the next region's creatures and loot, so a board never asks for something far beyond you.
-- Hand in more contracts to rank up (Newcomer, Hunter, Tracker, Slayer, Warden, Legend). Every rank pays a little more.
-- The board is shared, the contracts are yours: everyone sees the same notices, and each player keeps their own list, progress and rank.
-- A Bounty Board has its own hand-made look: a gabled roof, a horned skull, a hanging rune sign, pinned notices, a lantern and a bell.
-Settings let you change how often it posts, how many notices there are and how much it pays.
+- Build it with the hammer at a workbench (Wood, Leather Scraps and Flint) and press E on it. Every board shows the same notices.
+- Five notices are posted each in-game day: hunt a number of one creature, clear out a region's creatures, slay starred ones, or bring in loot.
+- The whole server shares the contracts. The group can run three at a time, and a new one can only be taken when one is finished. Everyone's kills count towards them, and loot is handed in by whoever has it.
+- When a contract is finished, every player collects their own reward at a board.
+- The further you get, the harder it gets: each boss you beat opens the next region's creatures, and Hard and Brutal contracts (more to kill, better pay) show up more often.
+- Rewards are materials you will actually use, matched to progress: resin and flint early, then copper, tin and bronze after Eikthyr, iron after the Elder, silver after Bonemass, black metal after Moder, and on up to Ashlands metals. Coins come too.
+- Finished contracts raise the group's rank (Newcomers up to Legends), which adds a bonus to every reward.
+- A switch in the board's menu shows the running contracts and their progress on your screen, so you can hunt with them in mind.
+- It has its own hand-made look: a gabled roof, a horned skull, a hanging rune sign, pinned notices, a lantern and a bell.
+The contracts are kept by the host's game, so BountyBoard has to be installed on the host too.

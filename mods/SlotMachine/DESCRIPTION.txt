@@ -1,7 +1,7 @@
 Odin's Fortune: a buildable slot machine. Put coins in, pull the lever, and the winnings come out of the tray.
 
 How it works
-- Build it with the hammer at a forge: Fine Wood, Iron, Bronze and a stack of 150 coins for the house.
+- Build it with the hammer at a workbench: Fine Wood, Bronze and Stone.
 - Press E to pull the lever. Your bet goes in, three reels spin and stop one after another, and a win is spat out of the tray as coins.
 - Press the alternate-use key with E to change the bet (5, 10, 25, 50 or 100 coins).
 - Three alike pay the most, from three Coins to three Valknuts (300 times your bet). Pairs of Coins, Ravens and Valknuts pay a little.

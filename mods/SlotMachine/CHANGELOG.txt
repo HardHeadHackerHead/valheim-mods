@@ -1,1 +1,1 @@
-First release: a buildable slot machine with three reels, a lever, a payout tray and a Valheim symbol set.
+For testing, the machine costs a single Fine Wood (at a workbench). The real cost comes back after testing.

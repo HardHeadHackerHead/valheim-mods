@@ -2,51 +2,103 @@ using System;
 using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
-using HarmonyLib;
 using UnityEngine;
 
 namespace BountyBoard
 {
-    internal enum Kind { Hunt, Elite, Gather }
+    internal enum Kind { Hunt, Elite, Sweep, Gather }
 
-    /// <summary>One contract. Everything needed to show, track and pay it is in here, so a contract survives the board posting new ones.</summary>
+    /// <summary>One contract: what to do, how hard it is, what it pays, and (once taken) how far along the group is.</summary>
     internal class Bounty
     {
         public string Id;
         public Kind Kind;
-        public string Target;   // creature prefab (hunt, elite) or item prefab (gather)
-        public int Count, Coins, Tier, Progress;
+        public string Target;           // creature prefab (hunt, elite), the tier number (sweep) or item prefab (gather)
+        public int Count, Tier, Stars, Coins, Progress;
+        public List<KeyValuePair<string, int>> Items = new List<KeyValuePair<string, int>>(); // reward materials
+        public HashSet<long> Claimed = new HashSet<long>();                                    // players who have collected the reward (finished contracts)
 
-        public string Serialize() => string.Join("~", new[] { Id, ((int)Kind).ToString(), Target, Count.ToString(), Coins.ToString(), Tier.ToString(), Progress.ToString() });
+        public Bounty Copy() => Parse(Serialize());
+
+        public string Serialize() => string.Join("~", new[]
+        {
+            Id, ((int)Kind).ToString(), Target, Count.ToString(), Tier.ToString(), Stars.ToString(), Coins.ToString(), Progress.ToString(),
+            string.Join(",", Items.Select(i => i.Key + ":" + i.Value).ToArray()), string.Join(",", Claimed.Select(c => c.ToString(CultureInfo.InvariantCulture)).ToArray()),
+        });
 
         public static Bounty Parse(string text)
         {
             string[] f = text.Split('~');
-            if (f.Length < 7) return null;
+            if (f.Length < 10) return null;
             try
             {
-                return new Bounty { Id = f[0], Kind = (Kind)int.Parse(f[1]), Target = f[2], Count = int.Parse(f[3]), Coins = int.Parse(f[4]), Tier = int.Parse(f[5]), Progress = int.Parse(f[6]) };
+                var b = new Bounty
+                {
+                    Id = f[0], Kind = (Kind)int.Parse(f[1]), Target = f[2], Count = int.Parse(f[3]), Tier = int.Parse(f[4]), Stars = int.Parse(f[5]),
+                    Coins = int.Parse(f[6]), Progress = int.Parse(f[7]),
+                };
+                foreach (string item in f[8].Split(new[] { ',' }, StringSplitOptions.RemoveEmptyEntries))
+                {
+                    string[] kv = item.Split(':');
+                    if (kv.Length == 2) b.Items.Add(new KeyValuePair<string, int>(kv[0], int.Parse(kv[1])));
+                }
+                foreach (string c in f[9].Split(new[] { ',' }, StringSplitOptions.RemoveEmptyEntries)) b.Claimed.Add(long.Parse(c, CultureInfo.InvariantCulture));
+                return b;
             }
             catch (FormatException) { return null; }
         }
     }
 
-    /// <summary>What the board posts, what you have taken on, and how kills are counted.</summary>
-    internal static class Bounties
+    /// <summary>Everything the group shares: today's notices, the contracts being worked on, finished ones waiting to be collected, and the rank.</summary>
+    internal class State
     {
-        private const string ActiveKey = "DHack_BB_active", DoneKey = "DHack_BB_done", TotalKey = "DHack_BB_total";
+        public int Day = -1, Total;
+        public List<Bounty> Posted = new List<Bounty>(), Active = new List<Bounty>(), Done = new List<Bounty>();
 
-        // ---- the world's progress decides what can be posted ----
+        public string Serialize()
+        {
+            var lines = new List<string> { "S~" + Day + "~" + Total };
+            lines.AddRange(Posted.Select(b => "P~" + b.Serialize()));
+            lines.AddRange(Active.Select(b => "A~" + b.Serialize()));
+            lines.AddRange(Done.Select(b => "D~" + b.Serialize()));
+            return string.Join("\n", lines.ToArray());
+        }
 
-        // The boss you have to have beaten for each tier (tier 0 is always open).
+        public static State Parse(string text)
+        {
+            var s = new State();
+            foreach (string line in (text ?? "").Split(new[] { '\n' }, StringSplitOptions.RemoveEmptyEntries))
+            {
+                if (line.StartsWith("S~"))
+                {
+                    string[] f = line.Split('~');
+                    if (f.Length >= 3) { int.TryParse(f[1], out s.Day); int.TryParse(f[2], out s.Total); }
+                }
+                else if (line.Length > 2)
+                {
+                    Bounty b = Bounty.Parse(line.Substring(2));
+                    if (b == null) continue;
+                    if (line[0] == 'P') s.Posted.Add(b); else if (line[0] == 'A') s.Active.Add(b); else if (line[0] == 'D') s.Done.Add(b);
+                }
+            }
+            return s;
+        }
+    }
+
+    /// <summary>The rules: what can be posted at each stage of the game, how it is made harder and what it pays.</summary>
+    internal static class Rules
+    {
+        // The boss you have to have beaten for each tier (tier 0 is always open). More bosses beaten means harder contracts and better pay.
         private static readonly string[] TierKeys = { "", "defeated_eikthyr", "defeated_gdking", "defeated_bonemass", "defeated_dragon", "defeated_goblinking", "defeated_queen" };
         internal static readonly string[] TierNames = { "Meadows", "Black Forest", "Swamp", "Mountain", "Plains", "Mistlands", "Ashlands" };
+        internal static readonly string[] StarNames = { "", "Standard", "Hard", "Brutal" };
 
         private class Hunt { public string Prefab; public int Min, Max, Value; public Hunt(string p, int min, int max, int v) { Prefab = p; Min = min; Max = max; Value = v; } }
         private class Gather { public string Item; public int Min, Max, Value; public Gather(string i, int min, int max, int v) { Item = i; Min = min; Max = max; Value = v; } }
+        private class Reward { public string Item; public int Value, Min, Max; public Reward(string i, int v, int min, int max) { Item = i; Value = v; Min = min; Max = max; } }
 
-        // Creatures (prefab, how many at least/at most, coins each) and loot (item, how many, coins each) for each tier. Names the game
-        // does not know are skipped when the list is built, so a wrong or removed name never causes trouble.
+        // Creatures (prefab, how many at least/at most, coins each) and loot (item, how many, coins each), per tier. Names the game does not
+        // know are skipped when notices are made, so a wrong or removed name never causes trouble.
         private static readonly Hunt[][] Hunts =
         {
             new[] { new Hunt("Boar", 3, 6, 9), new Hunt("Neck", 4, 8, 6), new Hunt("Greyling", 4, 8, 6), new Hunt("Deer", 3, 5, 7) },
@@ -69,14 +121,27 @@ namespace BountyBoard
             new[] { new Gather("CharredBone", 6, 12, 15), new Gather("AskHide", 4, 8, 20), new Gather("MoltenCore", 1, 2, 200), new Gather("Flametal", 3, 6, 40) },
         };
 
-        internal static bool Reached(int tier)
+        // What a contract of each tier can pay in materials (item, coin value of one, fewest, most). A tier only pays what that stage of the
+        // game has opened up: bronze after the first boss, iron after the second, silver after the third, and so on.
+        private static readonly Reward[][] Rewards =
+        {
+            new[] { new Reward("Resin", 3, 10, 40), new Reward("Flint", 2, 10, 40), new Reward("Honey", 6, 3, 12), new Reward("LeatherScraps", 5, 6, 24) },
+            new[] { new Reward("Copper", 14, 2, 16), new Reward("Tin", 14, 2, 16), new Reward("Bronze", 22, 2, 14), new Reward("BronzeNails", 3, 10, 60), new Reward("CoreWood", 6, 10, 40) },
+            new[] { new Reward("Iron", 30, 2, 14), new Reward("IronNails", 3, 10, 60), new Reward("Chain", 25, 1, 6), new Reward("Bronze", 22, 2, 10), new Reward("ElderBark", 8, 10, 30) },
+            new[] { new Reward("Silver", 45, 2, 12), new Reward("Iron", 30, 3, 14), new Reward("WolfPelt", 25, 1, 6), new Reward("FreezeGland", 14, 2, 10), new Reward("Obsidian", 8, 5, 30) },
+            new[] { new Reward("BlackMetal", 60, 2, 12), new Reward("LinenThread", 10, 5, 30), new Reward("Silver", 45, 2, 10), new Reward("Flax", 5, 10, 40) },
+            new[] { new Reward("BlackMarble", 35, 3, 20), new Reward("YggdrasilWood", 25, 3, 16), new Reward("Eitr", 70, 1, 6), new Reward("Carapace", 18, 3, 16), new Reward("BlackMetal", 60, 2, 10) },
+            new[] { new Reward("Flametal", 100, 1, 8), new Reward("Grausten", 40, 3, 16), new Reward("MoltenCore", 120, 1, 3), new Reward("AskHide", 20, 3, 16) },
+        };
+
+        private static bool Reached(int tier)
         {
             if (tier <= 0) return true;
             ZoneSystem zone = ZoneSystem.instance;
             return zone != null && zone.GetGlobalKey(TierKeys[tier]);
         }
 
-        /// <summary>The highest tier whose boss has been beaten (0 if none).</summary>
+        /// <summary>How far the world has got: the highest tier whose boss has been beaten (0 if none).</summary>
         internal static int HighestTier()
         {
             int top = 0;
@@ -87,142 +152,116 @@ namespace BountyBoard
         private static bool CreatureExists(string prefab) => ZNetScene.instance != null && ZNetScene.instance.GetPrefab(prefab) != null;
         private static bool ItemExists(string item) => ObjectDB.instance != null && ObjectDB.instance.GetItemPrefab(item) != null;
 
-        // ---- posting ----
+        /// <summary>Is this creature one of the tier's (for "clear out the region" contracts)?</summary>
+        internal static bool InTier(int tier, string prefab) => tier >= 0 && tier < Hunts.Length && Hunts[tier].Any(h => h.Prefab == prefab);
 
-        /// <summary>
-        /// The notices on a board right now. They are worked out from the board and the in-game day, so every player sees the same ones
-        /// without anything being sent between games.
-        /// </summary>
-        internal static List<Bounty> Posted(string boardKey, int count)
+        // ---- making a day's notices ----
+
+        internal static List<Bounty> MakeNotices(int day, int count)
         {
-            int day = EnvMan.instance != null ? EnvMan.instance.GetDay() / Math.Max(1, Plugin.RefreshDays.Value) : 0;
-            var rng = new System.Random(unchecked(boardKey.GetStableHashCode() * 31 + day * 7919));
+            var rng = new System.Random(unchecked(day * 7919 + 104729));
             int top = HighestTier();
             var list = new List<Bounty>();
             var used = new HashSet<string>();
+            Kind[] plan = { Kind.Hunt, Kind.Hunt, Kind.Sweep, Kind.Gather, Kind.Elite, Kind.Hunt, Kind.Gather, Kind.Sweep };
 
             for (int slot = 0; slot < count; slot++)
             {
-                // most notices are for where you are now, some for earlier places
-                int tier = rng.NextDouble() < 0.65 ? top : rng.Next(0, top + 1);
-                Kind kind = slot == count - 1 ? Kind.Elite : slot == count - 2 ? Kind.Gather : Kind.Hunt;
-                Bounty b = Make(rng, tier, kind, boardKey + ":" + day + ":" + slot);
-                if (b == null && (b = Make(rng, top, Kind.Hunt, boardKey + ":" + day + ":" + slot)) == null) continue;
-                if (!used.Add(b.Kind + b.Target)) continue; // no two notices for the same thing
-                list.Add(b);
+                Kind kind = plan[slot % plan.Length];
+                for (int attempt = 0; attempt < 6; attempt++)
+                {
+                    int tier = rng.NextDouble() < 0.6 ? top : rng.Next(0, top + 1);
+                    int stars = kind == Kind.Elite ? 3 : RollStars(rng, top);
+                    Bounty b = Make(rng, tier, kind, stars, "d" + day + "s" + slot);
+                    if (b == null || !used.Add(b.Kind + b.Target + b.Stars)) continue;
+                    list.Add(b);
+                    break;
+                }
             }
             return list;
         }
 
-        private static Bounty Make(System.Random rng, int tier, Kind kind, string id)
+        /// <summary>Early on nearly everything is standard; the further the world has got, the more hard and brutal contracts appear.</summary>
+        private static int RollStars(System.Random rng, int top)
         {
+            double roll = rng.NextDouble();
+            double brutal = Math.Min(0.30, 0.02 + 0.045 * top), hard = Math.Min(0.45, 0.14 + 0.07 * top);
+            return roll < brutal ? 3 : roll < brutal + hard ? 2 : 1;
+        }
+
+        private static readonly float[] CountFactor = { 0f, 1f, 1.5f, 2.2f };
+        private static readonly float[] PayFactor = { 0f, 1f, 1.7f, 2.8f };
+
+        private static Bounty Make(System.Random rng, int tier, Kind kind, int stars, string id)
+        {
+            float baseValue; int count; string target;
+
             if (kind == Kind.Gather)
             {
                 List<Gather> pool = Gathers[tier].Where(g => ItemExists(g.Item)).ToList();
                 if (pool.Count == 0) return null;
                 Gather g = pool[rng.Next(pool.Count)];
-                int n = rng.Next(g.Min, g.Max + 1);
-                return new Bounty { Id = id, Kind = kind, Target = g.Item, Count = n, Tier = tier, Coins = Pay(rng, g.Value * n * 1.15f) };
+                count = Mathf.Max(1, Mathf.RoundToInt(rng.Next(g.Min, g.Max + 1) * CountFactor[stars]));
+                target = g.Item; baseValue = g.Value * count * 1.15f;
             }
-
-            List<Hunt> creatures = Hunts[tier].Where(h => CreatureExists(h.Prefab)).ToList();
-            if (creatures.Count == 0) return null;
-            Hunt h = creatures[rng.Next(creatures.Count)];
-            if (kind == Kind.Elite)
+            else if (kind == Kind.Sweep)
             {
-                int n = rng.Next(1, 3 + (tier >= 3 ? 1 : 0));
-                return new Bounty { Id = id, Kind = kind, Target = h.Prefab, Count = n, Tier = tier, Coins = Pay(rng, h.Value * n * 2.6f) };
+                List<Hunt> pool = Hunts[tier].Where(h => CreatureExists(h.Prefab)).ToList();
+                if (pool.Count < 2) return null;
+                count = Mathf.RoundToInt((10 + rng.Next(0, 6)) * CountFactor[stars] * (1f + tier * 0.1f));
+                target = tier.ToString(); baseValue = (float)pool.Average(h => h.Value) * count * 0.9f;
             }
-            int count = rng.Next(h.Min, h.Max + 1);
-            return new Bounty { Id = id, Kind = kind, Target = h.Prefab, Count = count, Tier = tier, Coins = Pay(rng, h.Value * count) };
-        }
-
-        private static int Pay(System.Random rng, float basePay)
-        {
-            float pay = basePay * Plugin.RewardPercent.Value / 100f * (0.9f + (float)rng.NextDouble() * 0.25f);
-            return Mathf.Max(5, (int)(Mathf.Round(pay / 5f) * 5f));
-        }
-
-        // ---- what you have taken on (kept in your character, so it is yours and survives logging out) ----
-
-        private static Dictionary<string, string> Data => Player.m_localPlayer?.m_customData;
-
-        internal static List<Bounty> Active()
-        {
-            var list = new List<Bounty>();
-            if (Data == null || !Data.TryGetValue(ActiveKey, out string raw) || raw.Length == 0) return list;
-            foreach (string s in raw.Split(new[] { ';' }, StringSplitOptions.RemoveEmptyEntries))
+            else
             {
-                Bounty b = Bounty.Parse(s);
-                if (b != null) list.Add(b);
+                List<Hunt> pool = Hunts[tier].Where(h => CreatureExists(h.Prefab)).ToList();
+                if (pool.Count == 0) return null;
+                Hunt h = pool[rng.Next(pool.Count)];
+                target = h.Prefab;
+                if (kind == Kind.Elite) { count = rng.Next(1, 3 + (tier >= 3 ? 1 : 0)); baseValue = h.Value * count * 2.6f; }
+                else { count = Mathf.Max(1, Mathf.RoundToInt(rng.Next(h.Min, h.Max + 1) * CountFactor[stars])); baseValue = h.Value * count; }
             }
-            return list;
+
+            baseValue *= PayFactor[stars] * Plugin.RewardPercent.Value / 100f * (0.9f + (float)rng.NextDouble() * 0.25f);
+            var b = new Bounty { Id = id, Kind = kind, Target = target, Count = count, Tier = tier, Stars = stars };
+            Pay(rng, b, baseValue);
+            return b;
         }
 
-        private static void SaveActive(List<Bounty> list)
+        /// <summary>Turn the value of the job into coins and a few materials from what that tier's stage of the game offers.</summary>
+        private static void Pay(System.Random rng, Bounty b, float value)
         {
-            if (Data != null) Data[ActiveKey] = string.Join(";", list.Select(b => b.Serialize()).ToArray());
-        }
-
-        internal static HashSet<string> Done()
-        {
-            if (Data == null || !Data.TryGetValue(DoneKey, out string raw)) return new HashSet<string>();
-            return new HashSet<string>(raw.Split(new[] { ',' }, StringSplitOptions.RemoveEmptyEntries));
-        }
-
-        internal static int Total() => Data != null && Data.TryGetValue(TotalKey, out string v) && int.TryParse(v, out int n) ? n : 0;
-
-        internal static bool Take(Bounty b)
-        {
-            List<Bounty> active = Active();
-            if (active.Count >= Plugin.MaxActive.Value || active.Any(a => a.Id == b.Id) || Done().Contains(b.Id)) return false;
-            active.Add(new Bounty { Id = b.Id, Kind = b.Kind, Target = b.Target, Count = b.Count, Coins = b.Coins, Tier = b.Tier, Progress = 0 });
-            SaveActive(active);
-            return true;
-        }
-
-        internal static void Abandon(string id) => SaveActive(Active().Where(a => a.Id != id).ToList());
-
-        // ---- counting kills ----
-
-        private static readonly HashSet<int> Counted = new HashSet<int>();
-
-        internal static void OnKill(Character victim)
-        {
-            Player me = Player.m_localPlayer;
-            if (me == null || victim == null || victim.IsPlayer() || victim.IsTamed()) return;
-            HitData hit = LastHit(victim);
-            if (hit == null || hit.GetAttacker() != me) return;
-            if (!Counted.Add(victim.GetInstanceID())) return; // death can be reported more than once
-            if (Counted.Count > 200) Counted.Clear();
-
-            string prefab = Utils.GetPrefabName(victim.gameObject);
-            bool starred = victim.GetLevel() >= 2;
-            List<Bounty> active = Active();
-            bool changed = false;
-            foreach (Bounty b in active)
+            const float coinShare = 0.4f;
+            List<Reward> pool = Rewards[b.Tier].Where(r => ItemExists(r.Item)).OrderBy(_ => rng.Next()).ToList();
+            int kinds = Mathf.Min(pool.Count, b.Stars >= 2 ? 2 : 1);
+            float spent = 0f;
+            for (int i = 0; i < kinds; i++)
             {
-                if (b.Kind == Kind.Gather || b.Progress >= b.Count || b.Target != prefab) continue;
-                if (b.Kind == Kind.Elite && !starred) continue;
-                b.Progress++;
-                changed = true;
-                string name = Localization.instance.Localize(victim.m_name);
-                me.Message(MessageHud.MessageType.TopLeft, b.Progress >= b.Count
-                    ? "Contract done: " + b.Count + " " + name + ". Hand it in at a Bounty Board."
-                    : "Contract: " + name + " " + b.Progress + "/" + b.Count);
+                Reward r = pool[i];
+                int amount = Mathf.Clamp(Mathf.RoundToInt(value * (1f - coinShare) / kinds / r.Value), r.Min, r.Max * b.Stars);
+                b.Items.Add(new KeyValuePair<string, int>(r.Item, amount));
+                spent += amount * r.Value;
             }
-            if (changed) SaveActive(active);
+            // coins are the share left over, so the total always matches the value of the job
+            b.Coins = Mathf.Max(5, Mathf.RoundToInt(Mathf.Max(value * coinShare, value - spent) / 5f) * 5);
         }
 
-        private static readonly AccessTools.FieldRef<Character, HitData> LastHitField = AccessTools.FieldRefAccess<Character, HitData>("m_lastHit");
-        private static HitData LastHit(Character c) => LastHitField(c);
+        // ---- rank (the whole group's) ----
 
-        // ---- handing in ----
+        internal static readonly int[] RankAt = { 0, 5, 15, 30, 60, 100 };
+        internal static readonly string[] RankName = { "Newcomers", "Hunters", "Trackers", "Slayers", "Wardens", "Legends" };
+        internal static readonly int[] RankBonus = { 0, 5, 10, 15, 20, 25 };
 
-        internal static bool IsComplete(Bounty b, Player player) =>
-            b.Kind == Kind.Gather ? player.GetInventory().CountItems(ItemName(b.Target)) >= b.Count : b.Progress >= b.Count;
+        internal static int Rank(int total)
+        {
+            int r = 0;
+            for (int i = 0; i < RankAt.Length; i++) if (total >= RankAt[i]) r = i;
+            return r;
+        }
 
-        /// <summary>The name the game uses inside an item (what the inventory counts by).</summary>
+        internal static int WithBonus(int amount, int total) => Mathf.CeilToInt(amount * (1f + RankBonus[Rank(total)] / 100f));
+
+        // ---- names for the screen ----
+
         internal static string ItemName(string itemPrefab)
         {
             GameObject go = ObjectDB.instance != null ? ObjectDB.instance.GetItemPrefab(itemPrefab) : null;
@@ -233,74 +272,16 @@ namespace BountyBoard
         internal static string TargetName(Bounty b)
         {
             if (b.Kind == Kind.Gather) return Localization.instance.Localize(ItemName(b.Target));
+            if (b.Kind == Kind.Sweep) return "creatures of the " + TierNames[Mathf.Clamp(int.Parse(b.Target), 0, TierNames.Length - 1)];
             GameObject go = ZNetScene.instance != null ? ZNetScene.instance.GetPrefab(b.Target) : null;
             Character c = go != null ? go.GetComponent<Character>() : null;
             return c != null ? Localization.instance.Localize(c.m_name) : b.Target;
         }
 
-        /// <summary>Rank: more completed contracts, a bigger share of the pay.</summary>
-        internal static readonly int[] RankAt = { 0, 5, 15, 30, 60, 100 };
-        internal static readonly string[] RankName = { "Newcomer", "Hunter", "Tracker", "Slayer", "Warden", "Legend" };
-        internal static readonly int[] RankBonus = { 0, 5, 10, 15, 20, 25 };
-
-        internal static int Rank(int total)
+        internal static string Describe(Bounty b)
         {
-            int r = 0;
-            for (int i = 0; i < RankAt.Length; i++) if (total >= RankAt[i]) r = i;
-            return r;
+            string verb = b.Kind == Kind.Gather ? "Bring" : b.Kind == Kind.Elite ? "Slay starred" : b.Kind == Kind.Sweep ? "Clear out" : "Hunt";
+            return verb + "  " + b.Count + " × " + TargetName(b);
         }
-
-        /// <summary>Pay out a finished contract: take the loot (gather), give the coins, record it. Returns the coins paid, or 0 if it is not finished.</summary>
-        internal static int Claim(Bounty posted, Player player)
-        {
-            List<Bounty> active = Active();
-            Bounty b = active.FirstOrDefault(a => a.Id == posted.Id);
-            if (b == null || !IsComplete(b, player)) return 0;
-
-            if (b.Kind == Kind.Gather)
-            {
-                string name = ItemName(b.Target);
-                if (player.GetInventory().CountItems(name) < b.Count) return 0;
-                player.GetInventory().RemoveItem(name, b.Count);
-            }
-
-            int total = Total();
-            int coins = Mathf.RoundToInt(b.Coins * (1f + RankBonus[Rank(total)] / 100f));
-            Give(player, coins);
-
-            active.Remove(b);
-            SaveActive(active);
-            HashSet<string> done = Done();
-            done.Add(b.Id);
-            Data[DoneKey] = string.Join(",", done.Skip(Math.Max(0, done.Count - 80)).ToArray());
-            Data[TotalKey] = (total + 1).ToString();
-            return coins;
-        }
-
-        private static void Give(Player player, int coins)
-        {
-            GameObject prefab = ObjectDB.instance.GetItemPrefab("Coins");
-            if (prefab == null) return;
-            int max = prefab.GetComponent<ItemDrop>().m_itemData.m_shared.m_maxStackSize;
-            while (coins > 0)
-            {
-                int n = Mathf.Min(coins, max);
-                coins -= n;
-                if (player.GetInventory().CanAddItem(prefab, n)) player.GetInventory().AddItem(prefab, n);
-                else
-                {
-                    GameObject drop = UnityEngine.Object.Instantiate(prefab, player.transform.position + Vector3.up, Quaternion.identity);
-                    ItemDrop itemDrop = drop.GetComponent<ItemDrop>();
-                    itemDrop.SetStack(n);
-                }
-            }
-        }
-    }
-
-    // Count a kill for the contracts when something dies by your hand.
-    [HarmonyPatch(typeof(Character), nameof(Character.OnDeath))]
-    internal static class Character_OnDeath
-    {
-        private static void Prefix(Character __instance) => Bounties.OnKill(__instance);
     }
 }
