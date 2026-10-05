@@ -14,7 +14,7 @@ namespace BuildFromChests
     {
         public const string Guid = "com.dhack.buildfromchests";
         public const string Name = "BuildFromChests";
-        public const string Version = "1.1.3";
+        public const string Version = "1.2.0";
 
         internal static ConfigEntry<bool> Enabled;
         internal static ConfigEntry<bool> ShowHaveCounts;
@@ -38,6 +38,7 @@ namespace BuildFromChests
             // On a hot reload, chests already exist and won't run Awake again, so pick them up here.
             foreach (Container c in FindObjectsOfType<Container>()) ChestScanner.Register(c);
 
+            Api.Publish(); // lets BuildOrders fetch materials from the chests around you
             Logger.LogInfo($"{Name} {Version} loaded");
 
             // Awake with a player already in the world means this was a hot reload (F6 / ScriptEngine).
@@ -48,6 +49,7 @@ namespace BuildFromChests
         // ScriptEngine destroys the old plugin instance on reload; remove our patches so they don't stack.
         private void OnDestroy()
         {
+            Api.Withdraw();
             _harmony?.UnpatchSelf();
             ChestScanner.Suspend = false;
             ChestScanner.Consuming = false;

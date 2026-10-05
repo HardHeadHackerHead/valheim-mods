@@ -83,6 +83,7 @@ namespace BuildOrders
             if (PlanKeyHeld && placing) DrawBanner(sw);
             if (_orders.Count > 0 && (placing || _alwaysShowPanel.Value)) { RefreshNeeds(); DrawPanel(player); }
             if (Aimed != null) DrawAimLabel(sw, sh, placing);
+            if (placing && FetchAvailable) DrawFetchHint(sw, sh);
             GUI.matrix = previousMatrix; // leave the drawing scale as we found it, for whatever draws after us
         }
 
@@ -218,6 +219,42 @@ namespace BuildOrders
             }
             Label(bar, HoldProgress > 0f ? "Keep holding to build everything nearby" : $"Hold E: build everything within {_buildAllRadius.Value:0} m", _small,
                   HoldProgress > 0f ? new Color(0.1f, 0.08f, 0.04f) : new Color(0.72f, 0.7f, 0.66f), TextAnchor.MiddleCenter);
+        }
+
+        /// <summary>
+        /// With the hammer out: "[Y] Fetch materials for 10 x Wood wall from the chests", with a tile for each material that is short in your
+        /// inventory but in the chests (what you have, and how many one press takes).
+        /// </summary>
+        private void DrawFetchHint(float sw, float sh)
+        {
+            List<FetchLine> lines = FetchLines.Where(l => l.Short).ToList();
+            if (lines.Count == 0) return;
+            const float tile = 56f, gap = 8f;
+            float w = Mathf.Max(360f, lines.Count * (tile + gap) - gap + 40f);
+            float h = 38f + tile + 26f;
+            var r = new Rect(sw / 2f - w / 2f, sh - 250f - h, w, h);
+
+            Round(new Rect(r.x + 2f, r.y + 3f, r.width, r.height), new Color(0f, 0f, 0f, 0.4f), 10f);
+            Round(r, new Color(0.07f, 0.06f, 0.05f, 0.9f), 10f);
+            Outline(r, new Color(Gold.r, Gold.g, Gold.b, 0.85f), 10f);
+
+            const float cap = 24f;
+            var key = new Rect(r.x + 14f, r.y + 7f, cap + 4f, cap);
+            Round(key, new Color(0.95f, 0.78f, 0.35f, 1f), 6f);
+            Label(key, _fetchKey.Value.ToString(), _bold, new Color(0.12f, 0.09f, 0.04f), TextAnchor.MiddleCenter);
+            Label(new Rect(key.xMax + 8f, r.y + 6f, r.width - 60f, cap), $"Fetch a stack of each material for {FetchPieceName} from the chests", _bold, Color.white, TextAnchor.MiddleLeft);
+
+            float x = r.x + (r.width - (lines.Count * (tile + gap) - gap)) / 2f;
+            for (int i = 0; i < lines.Count; i++)
+            {
+                FetchLine line = lines[i];
+                var t = new Rect(x + i * (tile + gap), r.y + 36f, tile, tile + 22f);
+                Round(t, new Color(0.14f, 0.12f, 0.1f, 0.95f), 7f);
+                Outline(t, new Color(0.5f, 0.42f, 0.28f, 0.9f), 7f);
+                Icon(new Rect(t.x + 8f, t.y + 4f, tile - 16f, tile - 16f), line.Icon);
+                Label(new Rect(t.x, t.y + tile - 12f, t.width, 14f), $"have {line.InInventory}", _bold, Orange, TextAnchor.MiddleCenter);
+                Label(new Rect(t.x, t.y + tile + 2f, t.width, 14f), $"take {line.Take}", _small, new Color(0.7f, 0.85f, 0.7f), TextAnchor.MiddleCenter);
+            }
         }
 
         /// <summary>An item or piece picture (they are cut out of a shared sheet, so draw just the part we want).</summary>

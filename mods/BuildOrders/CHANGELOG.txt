@@ -1,1 +1,1 @@
-You can now plan and build from the water: your hammer stays in your hand while swimming (equip it before you jump in). Walking up to a ghost and pressing E already worked without the hammer, in the water or out.
+The fetch key (Y) now takes one stack of each material the selected piece needs from the chests around you, instead of enough for 10 pieces.

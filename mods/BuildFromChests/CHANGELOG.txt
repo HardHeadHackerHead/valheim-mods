@@ -1,1 +1,1 @@
-Lets BuildOrders build ghosts by pressing E, with the materials taken from nearby chests too.
+Lets BuildOrders fetch materials from the chests around you into your inventory (a small shared function it leaves for it).

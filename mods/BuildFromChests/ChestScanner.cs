@@ -140,3 +140,38 @@ namespace BuildFromChests
         }
     }
 }
+
+namespace BuildFromChests
+{
+    /// <summary>
+    /// A small public door for our other mods (BuildOrders uses it to fetch materials from the chests around you). Mods load as separate
+    /// assemblies, so instead of a reference the two plain functions are left in the app domain's shared data under these names.
+    /// </summary>
+    internal static class Api
+    {
+        internal const string TakeKey = "DHack.BuildFromChests.Take";   // Func<string,int,int>: item name, wanted amount -> amount taken out of the chests
+        internal const string CountKey = "DHack.BuildFromChests.Count"; // Func<string,int>: item name -> how many the chests in range hold
+
+        private static readonly System.Func<string, int, int> Take = (name, amount) =>
+        {
+            if (!Plugin.Enabled.Value || amount <= 0) return 0;
+            int left = ChestScanner.RemoveFromChests(name, amount, -1, false);
+            return amount - left;
+        };
+
+        private static readonly System.Func<string, int> Count = name => Plugin.Enabled.Value ? ChestScanner.CountInChests(name, -1, false) : 0;
+
+        internal static void Publish()
+        {
+            System.AppDomain.CurrentDomain.SetData(TakeKey, Take);
+            System.AppDomain.CurrentDomain.SetData(CountKey, Count);
+        }
+
+        /// <summary>On unload: remove the functions, but only if they are still ours (a reloaded copy may already have replaced them).</summary>
+        internal static void Withdraw()
+        {
+            if (ReferenceEquals(System.AppDomain.CurrentDomain.GetData(TakeKey), Take)) System.AppDomain.CurrentDomain.SetData(TakeKey, null);
+            if (ReferenceEquals(System.AppDomain.CurrentDomain.GetData(CountKey), Count)) System.AppDomain.CurrentDomain.SetData(CountKey, null);
+        }
+    }
+}

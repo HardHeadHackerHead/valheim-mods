@@ -21,7 +21,7 @@ namespace BuildOrders
     {
         public const string Guid = "com.dhack.buildorders";
         public const string Name = "BuildOrders";
-        public const string Version = "1.3.1";
+        public const string Version = "1.4.1";
 
         internal static Plugin Instance;
 
@@ -47,6 +47,7 @@ namespace BuildOrders
             _showGhosts = Config.Bind("General", "ShowGhosts", true, "Show the glowing ghosts of planned pieces.");
             _buildByHand = Config.Bind("General", "BuildByPressingUse", true,
                 "Walk up to a ghost and press E to build it, no hammer needed. It costs the normal materials (from your inventory, then nearby chests if BuildFromChests is installed).");
+            BindFetch();
             _swimBuild = Config.Bind("General", "BuildWhileSwimming", true,
                 "Keep your hammer in your hand while swimming so you can plan and build from the water (equip it before you jump in: the game does not let you equip things while swimming).");
             _buildAllRadius = Config.Bind("General", "BuildAllRadius", 12f, "Holding E at a ghost builds every ghost within this many metres (supports first), as far as your materials go.");
@@ -107,6 +108,7 @@ namespace BuildOrders
             if (player == null || ZNetScene.instance == null) return;
 
             UpdatePlanMode(player);
+            UpdateFetch(player);
             SetGhostColliders(PlanKeyHeld); // while planning, ghosts can be snapped onto like real pieces
             UpdateStability(player);
 
