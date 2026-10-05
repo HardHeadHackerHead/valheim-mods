@@ -10,3 +10,5 @@ obj/
 *.token
 *.cfg
 output/
+__pycache__/
+*.pyc
