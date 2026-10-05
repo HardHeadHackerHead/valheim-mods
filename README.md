@@ -110,6 +110,12 @@ A Gear panel next to your inventory: Head, Chest, Legs, Cape, Belt, Trinket, Amm
 
 </td>
 <td valign="top">
+
+### 🌀 PortalHub
+<img src="dist/PortalHub.cover.png" alt="PortalHub" width="100%">
+
+Press **E** on a portal and pick where it goes from a list of every portal in the world: nearest first, searchable, with favourites. One click links it both ways, and no more matching names on two portals. (Install it on the host too.)
+
 </td>
 </tr>
 </table>
@@ -122,6 +128,7 @@ A Gear panel next to your inventory: Head, Chest, Legs, Cape, Belt, Trinket, Amm
 | **Q** | QualityOfLife | Build a quick set (inventory open) / swap to it and back |
 | **B** | QualityOfLife | Jump into construction mode with your hammer, and back |
 | **K** / **L** | QualityOfLife | Assign what a chest receives / lock an item |
+| **E** at a portal | PortalHub | Open the portal menu and choose where it goes |
 | **P** | QualityOfLife | Tap or hold next to a boat (not in it) to push it where you look |
 | **Z** / **X** / **C** / **V** | GearSlots | Use what is in Quick slot 1 to 4 (equip a weapon or tool, drink a potion) |
 | **E** | FeedFromChests | Open a smelter or kiln menu (auto-feed settings, Add, Fill); add items to other stations |
