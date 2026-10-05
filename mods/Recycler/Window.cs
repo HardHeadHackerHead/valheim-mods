@@ -245,3 +245,19 @@ namespace Recycler
         private static void Postfix(ref float __result) { if (Window.IsOpen) __result = 0f; }
     }
 }
+
+namespace Recycler
+{
+    // Escape closes our window, and only that: the game's own menu does not open (so the game is not paused by it).
+    [HarmonyLib.HarmonyPatch(typeof(Menu), "Update")]
+    internal static class Menu_Update_EscapeCloses
+    {
+        private static bool Prefix()
+        {
+            if (!(Window.IsOpen)) return true;
+            if (!(ZInput.GetKeyDown(UnityEngine.KeyCode.Escape) || ZInput.GetButtonDown("JoyMenu"))) return true;
+            Window.Close();
+            return false; // skip the game's menu handling for this frame
+        }
+    }
+}

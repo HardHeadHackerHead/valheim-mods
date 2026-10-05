@@ -52,7 +52,7 @@ Building with the hammer uses materials from chests near you. The build menu sho
 ### 🔥 FeedFromChests
 <img src="dist/FeedFromChests.cover.png" alt="FeedFromChests" width="100%">
 
-Feed smelters, kilns, cooking racks, fires and fermenters straight from your chests. Press **E** or **F** at a station, or hit **Fill**.
+Feed smelters, kilns, cooking racks, fires and fermenters straight from your chests, and let smelters and kilns run themselves: choose what they use, keep a minimum in stock, and send what they make into your assigned chests.
 
 </td>
 <td valign="top">
@@ -70,7 +70,7 @@ Quick gear sets on **Q**, hammer on **B**, **Stack to chests** with undo, chest 
 ### 👻 BuildOrders
 <img src="dist/BuildOrders.cover.png" alt="BuildOrders" width="100%">
 
-Plan pieces as shared ghost build orders. Your party sees them, your placement snaps onto them, and a panel totals the materials you still need.
+Plan pieces as shared ghost build orders. Your party sees them, you can build one by just walking up and pressing **E**, and a panel totals the materials you still need.
 
 </td>
 <td valign="top">
@@ -108,9 +108,10 @@ Want your own mods in the manager? See [Make your own mod repo](#-make-your-own-
 | **Q** | QualityOfLife | Build a quick set (inventory open) / swap to it and back |
 | **B** | QualityOfLife | Jump into construction mode with your hammer, and back |
 | **K** / **L** | QualityOfLife | Assign what a chest receives / lock an item |
-| **E** / **F** | FeedFromChests | Add to a station / always open its menu |
-| **Left Alt** + place | BuildOrders | Plan a ghost instead of building |
-| **G** / **Delete** / **F9** | BuildOrders | Select a ghost's piece / remove a ghost / show or hide ghosts |
+| **E** | FeedFromChests | Open a smelter or kiln menu (auto-feed settings, Add, Fill); add items to other stations |
+| **Left Alt** / **E** | BuildOrders | Toggle plan mode (placing then plans a ghost) / build the ghost you walk up to |
+| **G** / **Delete** / **F9** / **F10** | BuildOrders | Select a ghost piece / remove a ghost / show or hide ghosts / show or hide the stability colours |
+| Hold **E** at a ghost | BuildOrders | Build everything buildable within 12 m, lowest first |
 | **F8** | PartyHud | Show or hide the party panel |
 
 Every key and setting is configurable in `BepInEx/config`.

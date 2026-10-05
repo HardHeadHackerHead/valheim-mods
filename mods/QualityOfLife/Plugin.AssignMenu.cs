@@ -60,6 +60,8 @@ namespace QualityOfLife
             RulesWindowOpen = true;
         }
 
+        internal static void CloseFromEscape() => Instance?.CloseRules();
+
         private void CloseRules()
         {
             RulesWindowOpen = false;
@@ -509,5 +511,21 @@ namespace QualityOfLife
     internal static class ZInput_GetMouseScrollWheel
     {
         private static void Postfix(ref float __result) { if (Plugin.RulesWindowOpen) __result = 0f; }
+    }
+}
+
+namespace QualityOfLife
+{
+    // Escape closes our window, and only that: the game's own menu does not open (so the game is not paused by it).
+    [HarmonyLib.HarmonyPatch(typeof(Menu), "Update")]
+    internal static class Menu_Update_EscapeCloses
+    {
+        private static bool Prefix()
+        {
+            if (!(Plugin.RulesWindowOpen)) return true;
+            if (!(ZInput.GetKeyDown(UnityEngine.KeyCode.Escape) || ZInput.GetButtonDown("JoyMenu"))) return true;
+            Plugin.CloseFromEscape();
+            return false; // skip the game's menu handling for this frame
+        }
     }
 }

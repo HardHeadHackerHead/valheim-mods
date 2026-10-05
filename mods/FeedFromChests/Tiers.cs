@@ -28,6 +28,13 @@ namespace FeedFromChests
             return n.Replace("_", "").Replace(" ", "");
         }
 
+        /// <summary>Is this one of the wood types (wood, fine wood, core wood...)?</summary>
+        public static bool IsWood(ItemDrop.ItemData.SharedData shared)
+        {
+            int index = Array.IndexOf(Order, Normalize(shared.m_name));
+            return index >= 0 && index <= Array.IndexOf(Order, "blackwood");
+        }
+
         /// <summary>Lower = lesser. Known items come first in progression order, then the rest by trade value.</summary>
         public static int Rank(ItemDrop.ItemData.SharedData shared)
         {

@@ -12,6 +12,8 @@ namespace FeedFromChests
         private static readonly System.Reflection.MethodInfo CheckAccess = AccessTools.Method(typeof(Container), "CheckAccess");
         private static readonly System.Reflection.FieldInfo NView = AccessTools.Field(typeof(Container), "m_nview");
 
+        internal static ZNetView ViewOf(Container c) => NView.GetValue(c) as ZNetView;
+
         /// <summary>Can this player use this chest (not in use by someone else, not warded off, not someone's private chest)?</summary>
         private static bool Usable(Container c)
         {

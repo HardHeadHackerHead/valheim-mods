@@ -133,7 +133,8 @@ namespace BuildOrders
             MakeTranslucent(go, materials);
             _ghostMaterials[o.Id] = materials;
             _ghosts[o.Id] = go;
-            Tint(go, aimed: false);
+            RegisterColliders(o.Id, go);
+            Tint(go, aimed: false, id: o.Id);
         }
 
         /// <summary>Remove everything but the model, the same way the game prepares its own placement ghost.</summary>
@@ -143,7 +144,7 @@ namespace BuildOrders
             foreach (var c in go.GetComponentsInChildren<Rigidbody>()) Destroy(c);
             foreach (var c in go.GetComponentsInChildren<ParticleSystemForceField>()) Destroy(c);
             foreach (var c in go.GetComponentsInChildren<Demister>()) Destroy(c);
-            foreach (var c in go.GetComponentsInChildren<Collider>()) Destroy(c);        // nothing can hit, hover or bump a ghost
+            foreach (var c in go.GetComponentsInChildren<Collider>()) c.enabled = false;  // nothing can hit, hover or bump a ghost (kept, switched off, so planning can snap onto it)
             foreach (var c in go.GetComponentsInChildren<TerrainModifier>()) Destroy(c);
             foreach (var c in go.GetComponentsInChildren<GuidePoint>()) Destroy(c);
             foreach (var c in go.GetComponentsInChildren<LightLod>()) Destroy(c);
@@ -203,11 +204,18 @@ namespace BuildOrders
         }
 
         /// <summary>Colour and opacity of a ghost: cyan normally, gold (and a bit more solid) while you're aiming at it.</summary>
-        private void Tint(GameObject go, bool aimed)
+        private void Tint(GameObject go, bool aimed, string id = null)
         {
             float opacity = Mathf.Clamp(_ghostOpacity.Value, 0.03f, 1f);
             Color c = aimed ? AimedColor : PlannedColor;
             c.a = aimed ? Mathf.Min(1f, opacity * 2f + 0.1f) : opacity;
+
+            // With the stability colours showing, a ghost takes the colour of how well it would be supported (a bit more solid, so it reads).
+            if (!aimed && _stabilityShown && id != null && _stability.TryGetValue(id, out Stab stab))
+            {
+                c = StabilityColor(stab);
+                c.a = Mathf.Min(1f, opacity * 1.6f + 0.08f);
+            }
 
             foreach (Renderer r in go.GetComponentsInChildren<Renderer>(true))
             {
@@ -223,19 +231,20 @@ namespace BuildOrders
 
         private void SetHighlight(Order o, bool on)
         {
-            if (_ghosts.TryGetValue(o.Id, out GameObject go) && go != null) Tint(go, on);
+            if (_ghosts.TryGetValue(o.Id, out GameObject go) && go != null) Tint(go, on, o.Id);
         }
 
         /// <summary>Re-apply opacity to every ghost (used when the setting changes).</summary>
         private void RetintAll()
         {
-            foreach (var kv in _ghosts) if (kv.Value != null) Tint(kv.Value, aimed: Aimed != null && Aimed.Id == kv.Key);
+            foreach (var kv in _ghosts) if (kv.Value != null) Tint(kv.Value, aimed: Aimed != null && Aimed.Id == kv.Key, id: kv.Key);
         }
 
         private void DestroyGhost(string id)
         {
             if (_ghosts.TryGetValue(id, out GameObject go) && go != null) Destroy(go);
             _ghosts.Remove(id);
+            _ghostColliders.Remove(id);
             FreeMaterials(id);
         }
 
@@ -243,7 +252,42 @@ namespace BuildOrders
         {
             foreach (GameObject go in _ghosts.Values) if (go != null) Destroy(go);
             _ghosts.Clear();
+            _ghostColliders.Clear();
             foreach (string id in _ghostMaterials.Keys.ToList()) FreeMaterials(id);
+        }
+
+        // ---- snapping onto ghosts while planning --------------------------------------------------
+
+        // The game finds things to snap to, and lets you aim at them, through their colliders. A ghost has none while you build for real
+        // (so it is only a picture: you walk through it, nothing hits it). While you hold the plan key, they are switched on, on the
+        // layer for non-solid pieces, so a wall can snap onto a ghost floor exactly as it would onto a real one.
+        private readonly Dictionary<string, List<Collider>> _ghostColliders = new Dictionary<string, List<Collider>>();
+        private bool _collidersOn;
+
+        private void RegisterColliders(string id, GameObject ghost)
+        {
+            var list = new List<Collider>(ghost.GetComponentsInChildren<Collider>(true));
+            _ghostColliders[id] = list;
+            ApplyColliders(list, _collidersOn);
+        }
+
+        private static void ApplyColliders(List<Collider> list, bool on)
+        {
+            int layer = LayerMask.NameToLayer(on ? "piece_nonsolid" : "ghost");
+            foreach (Collider c in list)
+            {
+                if (c == null) continue;
+                c.enabled = on;
+                c.gameObject.layer = layer;
+            }
+        }
+
+        /// <summary>Switch every ghost's colliders on (planning) or off (building for real).</summary>
+        internal void SetGhostColliders(bool on)
+        {
+            if (on == _collidersOn) return;
+            _collidersOn = on;
+            foreach (List<Collider> list in _ghostColliders.Values) ApplyColliders(list, on);
         }
 
         private void FreeMaterials(string id)

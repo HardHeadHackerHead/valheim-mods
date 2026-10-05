@@ -23,16 +23,20 @@ namespace FeedFromChests
     {
         public const string Guid = "com.dhack.feedfromchests";
         public const string Name = "FeedFromChests";
-        public const string Version = "1.2.7";
+        public const string Version = "1.3.3";
 
         internal static Plugin Instance;
 
-        private ConfigEntry<bool> _enabled, _autoFeed, _alwaysOpenMenu;
-        private ConfigEntry<float> _radius;
-        private ConfigEntry<KeyCode> _menuKey;
+        private ConfigEntry<bool> _enabled, _autoFeed, _alwaysOpenMenu, _stationAuto;
+        private ConfigEntry<float> _radius, _autoInterval, _autoRange, _outputRadius;
         private ConfigEntry<int> _fillLimit;
 
         private Harmony _harmony;
+
+        internal bool AutoEnabled => _stationAuto != null && _stationAuto.Value;
+        internal float ChestRadius => _radius.Value;
+        internal float OutputRadius => _outputRadius.Value;
+        internal void Info(string message) => Logger.LogInfo(message);
 
         private void Awake()
         {
@@ -43,26 +47,33 @@ namespace FeedFromChests
                 "Pressing E at a station when you carry nothing it takes, but a nearby chest has some: add it for you (or open the menu if there's a choice).");
             _alwaysOpenMenu = Config.Bind("General", "AlwaysOpenMenu", false,
                 "Pressing E at a station when you rely on chests: off = add one automatically if there's only one kind to add (menu only for a choice); on = always open the menu (so Fill is always at hand).");
-            _menuKey = Config.Bind("General", "MenuKey", KeyCode.F,
-                "Look at a station and press this to open the add-items menu any time (it lists your inventory and nearby chests).");
             _fillLimit = Config.Bind("General", "FillLimit", 100,
                 "Safety limit: the most of one item the menu's Fill button will put in at once. (Fill stops sooner when the station is full or you run out.)");
+
+            _stationAuto = Config.Bind("AutoFeed", "Enabled", true,
+                "Allow smelters, kilns and furnaces to be set to keep themselves stocked from nearby chests (set up in the station's menu).");
+            _outputRadius = Config.Bind("AutoFeed", "OutputRadius", 30f, "How far (in metres) from a smelter or kiln a chest can be and still receive what it makes.");
+            _autoInterval = Config.Bind("AutoFeed", "Interval", 1f, "Seconds between automatic top-ups of each station.");
+            _autoRange = Config.Bind("AutoFeed", "PlayerRange", 40f,
+                "Automatic feeding only runs while you are within this many metres of the station (the game only loads chests near players).");
 
             _harmony = new Harmony(Guid);
             _harmony.PatchAll();
             ContainerRegistry.Seed(); // chests that already exist; new ones are added as they appear
+            AutoFeed.Seed();          // so do the stations
 
-            Logger.LogInfo($"{Name} {Version} loaded (menu key: {_menuKey.Value})");
+            Logger.LogInfo($"{Name} {Version} loaded");
             StartCoroutine(Warmup());
 
             // Awake with a player already in the world means this was a hot reload.
             if (Player.m_localPlayer != null && Chat.instance != null)
-                Chat.instance.AddString("[Mod]", $"{Name} v{Version} reloaded | menu key: {_menuKey.Value}", Talker.Type.Normal);
+                Chat.instance.AddString("[Mod]", $"{Name} v{Version} reloaded", Talker.Type.Normal);
         }
 
         private void OnDestroy()
         {
             MenuOpen = false;
+            AutoFeed.Clear();
             ContainerRegistry.Clear();
             if (Instance == this) Instance = null;
             _harmony?.UnpatchSelf();
@@ -126,21 +137,9 @@ namespace FeedFromChests
             Player player = Player.m_localPlayer;
             if (!_enabled.Value || player == null || player.IsDead()) return;
 
-            if (MenuOpen) { UpdateMenu(player); return; }
+            if (_stationAuto.Value) AutoFeed.Tick(this, player, _autoInterval.Value, _autoRange.Value); // stations set to feed themselves
 
-            if (Input.GetKeyDown(_menuKey.Value))
-            {
-                bool blocked = TypingOrMenuOpen();
-                GameObject hover = player.GetHoverObject();
-                bool isStation = Stations.TryGet(hover, out StationInfo info, out _);
-                Logger.LogInfo($"Menu key pressed: blocked={blocked}, looking at '{(hover != null ? hover.name : "nothing")}', is a station={isStation}");
-
-                if (!blocked)
-                {
-                    if (isStation) OpenMenu(player, info);
-                    else player.Message(MessageHud.MessageType.Center, "Look at a smelter, kiln, cooking rack, fire or fermenter and press " + _menuKey.Value);
-                }
-            }
+            if (MenuOpen) UpdateMenu(player);
         }
 
         private static bool TypingOrMenuOpen() =>
@@ -155,7 +154,7 @@ namespace FeedFromChests
         /// Ask the station to take one of an item, drawing on your inventory and the chests. True if it took it.
         /// Pass <paramref name="chests"/> when adding many in a row, so the chests are only looked up once.
         /// </summary>
-        internal bool AddOne(Player player, StationInfo info, ItemDrop drop, bool isFuel, List<Container> chests = null)
+        internal bool AddOne(Player player, StationInfo info, ItemDrop drop, bool isFuel, List<Container> chests = null, bool chestsOnly = false)
         {
             if (info == null || !info.Alive) return false;
 
@@ -165,17 +164,18 @@ namespace FeedFromChests
             long lookup = clock.ElapsedMilliseconds;
 
             // Stations that take a stand-in item don't check that you really have one, so we must: never add what we couldn't pay for.
-            int have = player.GetInventory().CountItems(name) + Chests.Count(Feed.Chests, name) - Feed.ReservedFor(name);
+            int have = (chestsOnly ? 0 : player.GetInventory().CountItems(name)) + Chests.Count(Feed.Chests, name) - Feed.ReservedFor(name);
             if (have <= 0) return false;
             long counted = clock.ElapsedMilliseconds;
 
             Outcome outcome;
             Feed.Active = true; // the game's questions about your inventory now include the chests
+            Feed.ChestsOnly = chestsOnly;
             try { outcome = (isFuel ? info.AddFuel : info.AddInput)(player, Stations.StandIn(drop)); }
-            finally { Feed.Active = false; }
+            finally { Feed.Active = false; Feed.ChestsOnly = false; }
             long station = clock.ElapsedMilliseconds;
 
-            if (outcome == Outcome.AddedTakeOne) TakeOne(player, name);
+            if (outcome == Outcome.AddedTakeOne) TakeOne(player, name, chestsOnly);
             long total = clock.ElapsedMilliseconds;
 
             // For tracking down slowness: say where the time went whenever one add takes noticeably long.
@@ -184,10 +184,10 @@ namespace FeedFromChests
         }
 
         /// <summary>For stand-in items the game used nothing real, so we take one real item: from your inventory, else a chest.</summary>
-        private void TakeOne(Player player, string itemName)
+        private void TakeOne(Player player, string itemName, bool chestsOnly = false)
         {
             Inventory inventory = player.GetInventory();
-            if (inventory.CountItems(itemName) > 0) inventory.RemoveItem(itemName, 1);
+            if (!chestsOnly && inventory.CountItems(itemName) > 0) inventory.RemoveItem(itemName, 1);
             else if (Feed.Reserved != null) Feed.Reserve(itemName, 1);   // during a big fill the chest is emptied once, at the end
             else Chests.Take(Feed.Chests, itemName, 1);
         }
@@ -244,8 +244,18 @@ namespace FeedFromChests
 
         internal bool TryAutoFeed(Player player, GameObject go)
         {
-            if (!_enabled.Value || !_autoFeed.Value) return false;
+            if (!_enabled.Value) return false;
             if (!Stations.TryGet(go, out StationInfo info, out Purpose? purpose) || purpose == null) return false;
+
+            // Smelters, kilns and furnaces: E always opens the menu, whatever you carry, so you can always set up auto-feed.
+            if (_stationAuto.Value && AutoFeed.Supported(info))
+            {
+                Mark("pressed E at a smelter");
+                OpenMenu(player, info);
+                return true;
+            }
+
+            if (!_autoFeed.Value) return false;
 
             bool fuel = purpose == Purpose.Fuel;
             List<ItemDrop> candidates = fuel ? (info.Fuel != null ? new List<ItemDrop> { info.Fuel } : new List<ItemDrop>()) : info.Inputs;
@@ -267,7 +277,7 @@ namespace FeedFromChests
                 if (Time.unscaledTime - _lastHintAt > 30f)
                 {
                     _lastHintAt = Time.unscaledTime;
-                    player.Message(MessageHud.MessageType.TopLeft, $"Tip: press {_menuKey.Value} while looking at this for the menu (Fill, Add 1)");
+                    player.Message(MessageHud.MessageType.TopLeft, "Tip: turn on AlwaysOpenMenu in the FeedFromChests config to get the menu (Fill, Add 1) every time");
                 }
             }
             else OpenMenu(player, info); // a choice to make (or you asked to always see the menu)

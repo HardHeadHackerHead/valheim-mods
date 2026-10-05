@@ -41,6 +41,8 @@ namespace BuildFromChests
         /// </summary>
         private static bool BuildingNow()
         {
+            // Another of our mods (BuildOrders: walk up to a ghost and press E) builds without a hammer in hand and says so here.
+            if (AppDomain.CurrentDomain.GetData("DHack.BuildFromChests.ForceContext") is bool forced && forced) return true;
             if (_contextFrame == Time.frameCount) return _contextActive;
             _contextFrame = Time.frameCount;
             Player p = Player.m_localPlayer;

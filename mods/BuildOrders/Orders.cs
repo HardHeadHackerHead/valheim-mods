@@ -44,6 +44,7 @@ namespace BuildOrders
 
             var order = new Order { Id = Guid_(), Prefab = prefab, Pos = pos, Rot = rot, By = player.GetPlayerName() };
             _orders[order.Id] = order;
+            _stabilityDirty = true;
             Save();
             Send("A|" + Encode(order));
             player.Message(MessageHud.MessageType.TopLeft, $"Planned: {PieceName(prefab)}  ({_orders.Count} order(s))");
@@ -53,6 +54,7 @@ namespace BuildOrders
         internal void RemoveOrder(string id, bool broadcast, bool save = true)
         {
             if (!_orders.Remove(id) && _removed.Contains(id)) return;
+            _stabilityDirty = true;
             _removed.Add(id);
             DestroyGhost(id);
             if (save) Save();

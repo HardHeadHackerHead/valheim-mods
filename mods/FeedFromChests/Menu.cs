@@ -24,6 +24,12 @@ namespace FeedFromChests
 
         private string _stationTitle = "", _subtitle = "";
 
+        // automatic feeding (smelters, kilns, furnaces)
+        private class AutoItem { public string Name, Display; public ItemDrop Drop; public bool IsFuel; }
+        private bool _supportsAuto;
+        private AutoSetting _auto = new AutoSetting();
+        private List<AutoItem> _autoItems = new List<AutoItem>();
+
         private StationInfo _station;
         private List<Row> _rows = new List<Row>();
         private float _nextRefresh;
@@ -47,9 +53,13 @@ namespace FeedFromChests
             Mark("opened the menu");
             _stationTitle = "Add to " + Localization.instance.Localize(info.Title);
             _subtitle = $"Uses your inventory first, then chests within {_radius.Value:0} m. The station's own limits still apply.";
+            _supportsAuto = _stationAuto.Value && AutoFeed.Supported(info);
+            _autoItems = BuildAutoItems(info);
+            _auto = _supportsAuto ? AutoFeed.Read(info.Component) : new AutoSetting();
+            _autoEverSet = _supportsAuto && (_auto.On || _auto.Output || _auto.Allowed.Count > 0);
             RefreshRows(player);
-            Logger.LogInfo($"Menu for '{info.Title}': {_rows.Count} item(s) available, {_station.Inputs.Count} input(s), fuel={(_station.Fuel != null ? "yes" : "no")}");
-            if (_rows.Count == 0)
+            Logger.LogInfo($"Menu for '{info.Title}': {_rows.Count} item(s) available, {_station.Inputs.Count} input(s), fuel={(_station.Fuel != null ? "yes" : "no")}, auto-feed={(_supportsAuto ? (_auto.On ? "on" : "off") : "n/a")}");
+            if (_rows.Count == 0 && !_supportsAuto)
             {
                 player.Message(MessageHud.MessageType.Center, "Nothing to add: no item this takes in your inventory or nearby chests");
                 _station = null;
@@ -57,6 +67,8 @@ namespace FeedFromChests
             }
             MenuOpen = true;
         }
+
+        internal static void CloseFromEscape() => Instance?.CloseMenu();
 
         private void CloseMenu()
         {
@@ -83,9 +95,75 @@ namespace FeedFromChests
             if (clock.ElapsedMilliseconds >= 12) Logger.LogInfo($"Slow menu refresh: {clock.ElapsedMilliseconds} ms");
         }
 
+        /// <summary>Every item this station can use (whether or not any is in stock), lesser to greater, fuel last.</summary>
+        private static List<AutoItem> BuildAutoItems(StationInfo info)
+        {
+            var seen = new HashSet<string>();
+            var items = new List<AutoItem>();
+            foreach (ItemDrop drop in info.Inputs.Concat(info.Fuel != null ? new[] { info.Fuel } : new ItemDrop[0]))
+            {
+                string name = drop.m_itemData.m_shared.m_name;
+                if (!seen.Add(name)) continue;
+                items.Add(new AutoItem { Name = name, Display = Localization.instance.Localize(name), Drop = drop, IsFuel = info.Fuel != null && drop == info.Fuel });
+            }
+            return items.OrderBy(i => i.IsFuel).ThenBy(i => Tiers.Rank(i.Drop.m_itemData.m_shared)).ToList();
+        }
+
+        /// <summary>Turn automatic feeding on or off. The first time, tick sensible items: only the plain wood for a kiln, everything otherwise.</summary>
+        private void ToggleAuto()
+        {
+            if (_station == null || !_station.Alive || !_supportsAuto) return;
+            AutoSetting setting = AutoFeed.Read(_station.Component);
+            setting.On = !setting.On;
+            if (setting.On && setting.Allowed.Count == 0)
+            {
+                bool onlyWood = _autoItems.Count > 0 && _autoItems.All(i => i.IsFuel || Tiers.IsWood(i.Drop.m_itemData.m_shared));
+                foreach (AutoItem item in _autoItems)
+                {
+                    if (onlyWood && !item.IsFuel && item != _autoItems.First(i => !i.IsFuel)) continue; // a kiln: just the first (plain) wood
+                    setting.Allowed.Add(item.Name);
+                }
+            }
+            if (setting.On && !_autoEverSet) { setting.Output = true; setting.Reserve = 20; } // sensible start: output to chests, keep 20 in stock
+            AutoFeed.Write(_station.Component, setting);
+            _auto = setting;
+            _status = setting.On ? "Auto-feed is on" : "Auto-feed is off";
+        }
+
+        private bool _autoEverSet; // this station already has saved settings (so we do not overwrite what someone chose)
+
+        private void AdjustReserve(int delta)
+        {
+            if (_station == null || !_station.Alive || !_supportsAuto) return;
+            AutoSetting setting = AutoFeed.Read(_station.Component);
+            setting.Reserve = Mathf.Clamp(setting.Reserve + delta, 0, 9999);
+            AutoFeed.Write(_station.Component, setting);
+            _auto = setting;
+        }
+
+        private void ToggleOutput()
+        {
+            if (_station == null || !_station.Alive || !_supportsAuto) return;
+            AutoSetting setting = AutoFeed.Read(_station.Component);
+            setting.Output = !setting.Output;
+            AutoFeed.Write(_station.Component, setting);
+            _auto = setting;
+            _status = setting.Output ? "What it makes goes into chests" : "What it makes drops on the ground";
+        }
+
+        private void ToggleAutoItem(string name)
+        {
+            if (_station == null || !_station.Alive || !_supportsAuto) return;
+            AutoSetting setting = AutoFeed.Read(_station.Component);
+            if (!setting.Allowed.Remove(name)) setting.Allowed.Add(name);
+            AutoFeed.Write(_station.Component, setting);
+            _auto = setting;
+        }
+
         private void RefreshRowsCore(Player player)
         {
             _nextRefresh = Time.unscaledTime + 0.5f;
+            if (_supportsAuto && _station != null && _station.Alive) _auto = AutoFeed.Read(_station.Component); // others may have changed it
             List<Container> chests = Chests.Near(_station.Position, _radius.Value);
             Inventory inventory = player.GetInventory();
 
@@ -152,7 +230,7 @@ namespace FeedFromChests
             GUI.matrix = Matrix4x4.Scale(new Vector3(s, s, 1f));
             float sw = Screen.width / s, sh = Screen.height / s;
 
-            float w = Mathf.Min(520f, sw - 40f), h = Mathf.Min(520f, sh - 60f);
+            float w = Mathf.Min(520f, sw - 40f), h = Mathf.Min(_supportsAuto ? 760f : 520f, sh - 60f);
             if (!_placed) { _rect = new Rect((sw - w) / 2f, (sh - h) / 2f, w, h); _placed = true; }
             _rect.width = w; _rect.height = h;
 
@@ -178,7 +256,10 @@ namespace FeedFromChests
             GUILayout.Label(_subtitle, _dim);
             GUILayout.Space(6);
 
+            if (_supportsAuto) DrawAutoPanel();
+
             Player player = Player.m_localPlayer;
+            if (_rows.Count == 0) GUILayout.Label("Nothing to add by hand right now: none of what this takes is in your inventory or the nearby chests.", _dim);
             _scroll = GUILayout.BeginScrollView(_scroll, GUILayout.ExpandHeight(true));
             foreach (Row row in _rows)
             {
@@ -209,6 +290,54 @@ namespace FeedFromChests
             GUILayout.EndHorizontal();
             GUILayout.EndArea();
             GUI.DragWindow(new Rect(0, 0, w, 40));
+        }
+
+        /// <summary>The auto-feed switch and the list of items it may use.</summary>
+        private void DrawAutoPanel()
+        {
+            GUILayout.BeginHorizontal();
+            GUILayout.Label("Auto-feed from chests", _text);
+            GUILayout.FlexibleSpace();
+            if (GUILayout.Button(_auto.On ? "ON" : "OFF", _auto.On ? _buttonOn : _button, GUILayout.Width(80), GUILayout.Height(28))) _pending = ToggleAuto;
+            GUILayout.EndHorizontal();
+            GUILayout.Label(_auto.On
+                ? $"Keeps this stocked from chests within {_radius.Value:0} m, by itself. It only uses the items ticked below, plain ones first."
+                : "Turn on to keep this stocked from nearby chests without pressing anything. You choose which items it may use.", _dim);
+
+            GUILayout.Space(2);
+            GUILayout.BeginHorizontal();
+            GUILayout.Label("Keep at least this many in the chests:", _dim, GUILayout.Width(210));
+            if (GUILayout.Button("-10", _button, GUILayout.Width(44), GUILayout.Height(24))) _pending = () => AdjustReserve(-10);
+            if (GUILayout.Button("-1", _button, GUILayout.Width(36), GUILayout.Height(24))) _pending = () => AdjustReserve(-1);
+            GUILayout.Label(_auto.Reserve.ToString(), _text, GUILayout.Width(50));
+            if (GUILayout.Button("+1", _button, GUILayout.Width(36), GUILayout.Height(24))) _pending = () => AdjustReserve(1);
+            if (GUILayout.Button("+10", _button, GUILayout.Width(44), GUILayout.Height(24))) _pending = () => AdjustReserve(10);
+            GUILayout.FlexibleSpace();
+            GUILayout.EndHorizontal();
+            GUILayout.Label("It stops feeding an item once the chests are down to this amount, so it never uses all of your stock.", _dim);
+
+            GUILayout.Space(2);
+            GUILayout.BeginHorizontal();
+            GUILayout.Label("What it makes goes into chests", _text);
+            GUILayout.FlexibleSpace();
+            if (GUILayout.Button(_auto.Output ? "ON" : "OFF", _auto.Output ? _buttonOn : _button, GUILayout.Width(80), GUILayout.Height(26))) _pending = ToggleOutput;
+            GUILayout.EndHorizontal();
+            GUILayout.Label("Goes to the chests assigned to that item (the chest assign menu, K), nearest first. With none assigned it drops on the ground as usual.", _dim);
+
+            GUILayout.Space(2);
+            for (int i = 0; i < _autoItems.Count; i += 3)
+            {
+                GUILayout.BeginHorizontal();
+                for (int j = i; j < Mathf.Min(i + 3, _autoItems.Count); j++)
+                {
+                    AutoItem item = _autoItems[j];
+                    bool on = _auto.Allowed.Contains(item.Name);
+                    string label = (on ? "[x] " : "[  ] ") + item.Display + (item.IsFuel ? " (fuel)" : "");
+                    if (GUILayout.Button(label, on ? _buttonOn : _button, GUILayout.Height(26))) { string name = item.Name; _pending = () => ToggleAutoItem(name); }
+                }
+                GUILayout.EndHorizontal();
+            }
+            GUILayout.Space(8);
         }
 
         /// <summary>
@@ -320,5 +449,21 @@ namespace FeedFromChests
     internal static class ZInput_GetMouseScrollWheel
     {
         private static void Postfix(ref float __result) { if (Plugin.MenuOpen) __result = 0f; }
+    }
+}
+
+namespace FeedFromChests
+{
+    // Escape closes our window, and only that: the game's own menu does not open (so the game is not paused by it).
+    [HarmonyLib.HarmonyPatch(typeof(Menu), "Update")]
+    internal static class Menu_Update_EscapeCloses
+    {
+        private static bool Prefix()
+        {
+            if (!(Plugin.MenuOpen)) return true;
+            if (!(ZInput.GetKeyDown(UnityEngine.KeyCode.Escape) || ZInput.GetButtonDown("JoyMenu"))) return true;
+            Plugin.CloseFromEscape();
+            return false; // skip the game's menu handling for this frame
+        }
     }
 }

@@ -1,1 +1,1 @@
-Faster: the build menu's chest checks are worked out once and reused instead of for every piece. The build menu shows how many of each material you have (inventory plus chests).
+Lets BuildOrders build ghosts by pressing E, with the materials taken from nearby chests too.

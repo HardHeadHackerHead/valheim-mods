@@ -15,6 +15,9 @@ namespace FeedFromChests
 
         public static bool Active;
         public static bool Suspend; // our own inventory work, so we don't recurse into ourselves
+
+        /// <summary>Automatic feeding: take only from the chests, never from the player's own inventory.</summary>
+        public static bool ChestsOnly;
         public static List<Container> Chests = new List<Container>();
 
         /// <summary>
@@ -44,7 +47,9 @@ namespace FeedFromChests
     {
         private static void Postfix(Inventory __instance, string name, ref bool __result)
         {
-            if (__result || !Feed.Applies(__instance)) return;
+            if (!Feed.Applies(__instance)) return;
+            if (Feed.ChestsOnly) { __result = FeedFromChests.Chests.Count(Feed.Chests, name) - Feed.ReservedFor(name) > 0; return; } // not your own items
+            if (__result) return;
             __result = FeedFromChests.Chests.Count(Feed.Chests, name) - Feed.ReservedFor(name) > 0;
         }
     }
@@ -56,6 +61,13 @@ namespace FeedFromChests
         private static bool Prefix(Inventory __instance, string name, int amount, int itemQuality, bool worldLevelBased)
         {
             if (!Feed.Applies(__instance)) return true;
+
+            if (Feed.ChestsOnly) // automatic feeding: straight from the chests
+            {
+                if (Feed.Reserved != null) Feed.Reserve(name, amount);
+                else FeedFromChests.Chests.Take(Feed.Chests, name, amount);
+                return false;
+            }
 
             Feed.Suspend = true;
             try
