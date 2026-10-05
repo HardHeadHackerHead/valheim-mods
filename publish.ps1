@@ -50,6 +50,18 @@ foreach ($proj in Get-ChildItem (Join-Path $root "mods") -Directory) {
     }
 }
 
+# Prebuilt mods that live in another repo but are still offered from here (see bridge\README.md).
+$bridge = Join-Path $root "bridge"
+if (Test-Path (Join-Path $bridge "entries.json")) {
+    foreach ($e in (Get-Content (Join-Path $bridge "entries.json") -Raw | ConvertFrom-Json)) {
+        foreach ($f in $e.files) { Copy-Item (Join-Path $bridge $f) $dist -Force }
+        $manifest += [ordered]@{
+            guid = $e.guid; name = $e.name; version = $e.version; description = $e.description; notes = $e.notes; restart = $e.restart
+            files = @($e.files)
+        }
+    }
+}
+
 $json = ConvertTo-Json -InputObject ([ordered]@{ mods = @($manifest) }) -Depth 5
 [IO.File]::WriteAllText((Join-Path $dist "manifest.json"), $json, (New-Object Text.UTF8Encoding($false)))
 

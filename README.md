@@ -1,41 +1,33 @@
 # valheim-mods
 
-Our Valheim mods (BepInEx + Harmony, C#).
+My Valheim mods (BepInEx + Harmony, C#). This is a **mod repo**: a folder per mod plus a built `dist/` that the in-game
+[mod manager](https://github.com/HardHeadHackerHead/valheim-mod-manager) reads. The manager already knows about this repo, so anyone running it can see and install these mods (press **F7**).
 
 | Folder | What |
 |---|---|
-| `mods/CraftFromChests` | Crafting stations use materials from nearby chests (range button, optional lines to chests). |
-| `mods/ModUpdater` | The in-game mod manager (F7): installed vs. latest versions, other players' versions, one-click updates with hot reload. Updates itself. |
-| `dist/` | **Built** mod DLLs (including the manager) and `manifest.json`. Produced by `publish.ps1`. |
-| `installer/` | One-time setup for a new player: `INSTALL.md` (hand to their AI agent) and `install.ps1`. |
+| `mods/CraftFromChests` | Crafting stations use materials from nearby chests. |
+| `mods/BuildFromChests` | Building uses materials from nearby chests. |
+| `mods/FeedFromChests` | Feed smelters, kilns, cooking racks, fires and fermenters from chests. |
+| `mods/QualityOfLife` | Quick sets, hammer key, stack to chests, chest assignment, item locks. |
+| `mods/BuildOrders` | Shared ghost build orders. |
+| `mods/PartyHud` | Party panel with Steam avatars. |
+| `mods/Recycler` | A buildable Recycler (and Press) that returns a share of the materials of old gear. |
+| `dist/` | **Built** DLLs and `manifest.json`. Produced by `publish.ps1`. |
+| `bridge/` | A prebuilt copy of the mod manager so older managers can update to the new one. Delete once nobody needs it. |
 
-## Release flow (owner)
+## Install
+Get the mod manager and install from its repo: https://github.com/HardHeadHackerHead/valheim-mod-manager (it has a one-step installer for new players).
+
+## Release flow
 ```powershell
 .\publish.ps1                 # builds every mod, fills dist/ and writes dist/manifest.json (bump each mod's Version first)
 git add -A; git commit -m "Update mods"; git push
 ```
-Players press **F7** in-game and get the update with no restart.
+Players press **F7** in-game and get the update with no restart. A mod that cannot be reloaded in-game gets a `RESTART_REQUIRED.txt` in its folder (the text says why).
 
 ## Develop
-- `dotnet build -c Release` inside a mod folder builds and copies it to `Valheim\BepInEx\scripts`; press **F6** in-game to reload.
+- `dotnet build -c Release` inside a mod folder builds it and copies it to `Valheim\BepInEx\scripts`; press **F6** in-game to reload.
 - Game path is set once in `mods/Directory.Build.props`.
 
-## How the manager signs in to GitHub
-- **Public repo:** no login at all (GitHub allows 60 anonymous requests per hour, plenty for update checks).
-- **Private repo:** it uses **only** the read-only `Token` from its config (or one pasted into the window's "Connect to GitHub" panel), shown only if GitHub refuses the anonymous request.
-- It will use the GitHub CLI (`gh`) login **only if explicitly allowed** (`AllowGitHubCli = true`, or the "Allow GitHub CLI login" button/toggle), because that login has much broader access than one read-only token. Otherwise `gh` is never run.
-
-## Adding a new player
-1. Public repo: nothing to prepare. (Private repo: create a fine-grained token, **only this repo**, **Contents: Read-only**, and send it privately.)
-2. Send them the prompt in `installer/INSTALL.md`'s spirit: *"Follow the instructions in installer/INSTALL.md of HardHeadHackerHead/valheim-mods"* plus the token. Their agent does the rest.
-   (Or just send them `installer/INSTALL.md` and `installer/install.ps1`.)
-
-The manager lives in `BepInEx\scripts` like every other mod, so it hot-reloads and updates itself. If a bad
-manager build ever breaks F7, re-run `installer/install.ps1` to recover.
-On the machine that builds the mods, set `DeveloperMode = true` in `com.dhack.modupdater.cfg` so the manager
-never overwrites your own builds.
-
-## Sharing mods from more than one repo
-The manager reads "feeds": a GitHub folder with `manifest.json` plus the DLL/PDB files that `publish.ps1` makes. Ours is the main feed; anyone can add more under **Mod sources** in the window (or `ExtraFeeds` in the config, `owner/repo;owner/repo@branch:folder`). Mods from extra feeds are never installed automatically, and our feed wins if two feeds ship the same mod GUID.
-- To publish your own mods, copy the `template/` folder into a new repo (see `template/README.md`).
-- A mod that can't be hot-reloaded gets a `RESTART_REQUIRED.txt` in its folder (the text says why). The manager then shows "Restart the game" instead of reloading it.
+## Want your own mod repo?
+Copy the `template/` folder from the mod manager repo. It is the same layout as this one. You can ask for it to be watched by everyone by default with a pull request that adds it to `sources.json` there.

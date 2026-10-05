@@ -49,18 +49,6 @@
                                ]
                  },
                  {
-                     "guid":  "com.dhack.modupdater",
-                     "name":  "ModUpdater",
-                     "version":  "2.6.0",
-                     "description":  "This mod manager (F7). Updates itself like any other mod.",
-                     "notes":  "Mod sources: add other people\u0027s GitHub repos and install their mods from the same window (never installed automatically). Mods that cannot be reloaded in-game now say \"Restart the game\" instead. Works with a public repo without a token.",
-                     "restart":  "",
-                     "files":  [
-                                   "ModUpdater.dll",
-                                   "ModUpdater.pdb"
-                               ]
-                 },
-                 {
                      "guid":  "com.dhack.partyhud",
                      "name":  "PartyHud",
                      "version":  "1.2.3",
@@ -94,6 +82,18 @@
                      "files":  [
                                    "Recycler.dll",
                                    "Recycler.pdb"
+                               ]
+                 },
+                 {
+                     "guid":  "com.dhack.modupdater",
+                     "name":  "ModUpdater",
+                     "version":  "2.9.0",
+                     "description":  "This mod manager (F7). Updates itself like any other mod.",
+                     "notes":  "The mod manager moved to its own repo (valheim-mod-manager) and now has a list of community sources. This copy lets older managers update to it.",
+                     "restart":  "",
+                     "files":  [
+                                   "ModUpdater.dll",
+                                   "ModUpdater.pdb"
                                ]
                  }
              ]

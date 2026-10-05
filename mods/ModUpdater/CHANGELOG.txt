@@ -1,1 +1,0 @@
-Mod sources: add other people's GitHub repos and install their mods from the same window (never installed automatically). Mods that cannot be reloaded in-game now say "Restart the game" instead. Works with a public repo without a token.

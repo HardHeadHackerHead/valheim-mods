@@ -1,0 +1,11 @@
+[
+  {
+    "guid": "com.dhack.modupdater",
+    "name": "ModUpdater",
+    "version": "2.9.0",
+    "description": "This mod manager (F7). Updates itself like any other mod.",
+    "notes": "The mod manager moved to its own repo (valheim-mod-manager) and now has a list of community sources. This copy lets older managers update to it.",
+    "restart": "",
+    "files": [ "ModUpdater.dll", "ModUpdater.pdb" ]
+  }
+]
