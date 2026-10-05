@@ -23,7 +23,7 @@ namespace FeedFromChests
     {
         public const string Guid = "com.dhack.feedfromchests";
         public const string Name = "FeedFromChests";
-        public const string Version = "1.3.5";
+        public const string Version = "1.3.6";
 
         internal static Plugin Instance;
 
@@ -75,6 +75,7 @@ namespace FeedFromChests
         {
             MenuOpen = false;
             AutoFeed.Clear();
+            Feed.Reserved = null;
             ContainerRegistry.Clear();
             if (Instance == this) Instance = null;
             _harmony?.UnpatchSelf();
@@ -138,7 +139,7 @@ namespace FeedFromChests
             Player player = Player.m_localPlayer;
             if (!_enabled.Value || player == null || player.IsDead()) return;
 
-            if (_stationAuto.Value) AutoFeed.Tick(this, player, _autoInterval.Value, _autoRange.Value); // stations set to feed themselves
+            if (_stationAuto.Value && !_filling) AutoFeed.Tick(this, player, _autoInterval.Value, _autoRange.Value); // stations set to feed themselves
 
             if (MenuOpen) UpdateMenu(player);
         }

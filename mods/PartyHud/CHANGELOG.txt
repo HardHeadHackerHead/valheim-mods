@@ -1,1 +1,1 @@
-The panel hides while the inventory, crafting window, build menu, trader or big map is open. Tidier drawing (no leftover scale change). The F8 hide/show key works while holding Shift (running).
+Three food slots under each player's picture show what they are eating, with a line for how long each has left (red when nearly gone). The arrow and buff icons are as in 1.5.0.

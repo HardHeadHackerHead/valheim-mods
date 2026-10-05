@@ -28,6 +28,7 @@ namespace FeedFromChests
         private class AutoItem { public string Name, Display; public ItemDrop Drop; public bool IsFuel; }
         private bool _supportsAuto;
         private AutoFeed.Inside _inside = new AutoFeed.Inside();
+        private readonly Dictionary<string, int> _autoStock = new Dictionary<string, int>(); // item -> how many the chests in auto-feed range hold
         private AutoSetting _auto = new AutoSetting();
         private List<AutoItem> _autoItems = new List<AutoItem>();
 
@@ -40,7 +41,7 @@ namespace FeedFromChests
         private string _status = "";
 
         private readonly List<Texture2D> _textures = new List<Texture2D>();
-        private GUIStyle _title, _text, _dim, _button, _buttonOn;
+        private GUIStyle _title, _text, _dim, _button, _buttonOn, _good, _warn, _bad;
 
         private static readonly Color Gold = new Color(0.95f, 0.78f, 0.35f);
         private static readonly Color Dim = new Color(0.68f, 0.66f, 0.62f);
@@ -75,6 +76,7 @@ namespace FeedFromChests
         {
             MenuOpen = false;
             _station = null;
+            if (!_filling) Feed.Reserved = null; // never leave a stale "reserved" count behind: it would make stock look lower than it is
         }
 
         private void UpdateMenu(Player player)
@@ -177,6 +179,9 @@ namespace FeedFromChests
             {
                 _auto = AutoFeed.Read(_station.Component); // others may have changed it
                 _inside = AutoFeed.Look((Smelter)_station.Component);
+                _autoStock.Clear();
+                List<Container> autoChests = Chests.Near(_station.Position, _autoRadius.Value);
+                foreach (AutoItem item in _autoItems) _autoStock[item.Name] = Chests.Count(autoChests, item.Name);
             }
             List<Container> chests = Chests.Near(_station.Position, _radius.Value);
             Inventory inventory = player.GetInventory();
@@ -387,6 +392,20 @@ namespace FeedFromChests
                 }
                 GUILayout.EndHorizontal();
             }
+            // For each ticked item: how many the chests hold against the minimum, so it is clear why it is or is not being fed.
+            // And a warning if the fuel is not ticked (the smelter would run out and stop).
+            if (_station != null && _station.Fuel != null && !_auto.Allowed.Contains(_station.Fuel.m_itemData.m_shared.m_name) && _auto.On)
+                GUILayout.Label($"{Localization.instance.Localize(_station.Fuel.m_itemData.m_shared.m_name)} is not ticked, so this will run out of fuel and stop.", _bad);
+            if (_auto.On)
+                foreach (AutoItem item in _autoItems)
+                {
+                    if (!_auto.Allowed.Contains(item.Name)) continue;
+                    _autoStock.TryGetValue(item.Name, out int stock);
+                    int keep = item.IsFuel ? _auto.FuelReserve : _auto.Reserve;
+                    bool feeding = stock > keep;
+                    GUILayout.Label($"{item.Display}: {stock} in the chests, keeping {keep}  ->  {(feeding ? "feeding" : stock == 0 ? "none in the chests" : "not feeding (down to the minimum)")}",
+                                    (feeding ? _good : _warn));
+                }
             GUILayout.Space(8);
         }
 
@@ -452,6 +471,9 @@ namespace FeedFromChests
             _text.normal.textColor = new Color(0.95f, 0.92f, 0.86f);
             _dim = new GUIStyle(GUI.skin.label) { fontSize = 11, wordWrap = true };
             _dim.normal.textColor = Dim;
+            _good = new GUIStyle(_dim); _good.normal.textColor = new Color(0.6f, 0.9f, 0.6f);
+            _warn = new GUIStyle(_dim); _warn.normal.textColor = new Color(1f, 0.75f, 0.35f);
+            _bad = new GUIStyle(_dim); _bad.normal.textColor = new Color(1f, 0.55f, 0.4f);
             _button = ButtonLook(new Color(0.22f, 0.19f, 0.15f), new Color(0.33f, 0.27f, 0.18f), new Color(0.45f, 0.36f, 0.2f));
             _buttonOn = ButtonLook(new Color(0.55f, 0.42f, 0.16f), new Color(0.62f, 0.48f, 0.2f), new Color(0.95f, 0.78f, 0.35f));
         }
@@ -460,7 +482,7 @@ namespace FeedFromChests
         {
             foreach (Texture2D t in _textures) if (t != null) Destroy(t);
             _textures.Clear();
-            _title = _text = _dim = _button = _buttonOn = null;
+            _title = _text = _dim = _button = _buttonOn = _good = _warn = _bad = null;
         }
     }
 

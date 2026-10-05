@@ -341,13 +341,23 @@ namespace FeedFromChests
 
                 if (smelter.m_maxOre > 0 && AutoFeedQueue(smelter) < smelter.m_maxOre)
                 {
+                    string waiting = null;
+                    bool fed = false;
                     foreach (ItemDrop drop in info.Inputs.OrderBy(d => Tiers.Rank(d.m_itemData.m_shared)))
                     {
                         string name = drop.m_itemData.m_shared.m_name;
-                        if (!setting.Allowed.Contains(name) || Chests.Count(chests, name) <= setting.Reserve) continue; // keep the minimum in stock
+                        if (!setting.Allowed.Contains(name)) continue;
+                        int stock = Chests.Count(chests, name);
+                        if (stock <= setting.Reserve) // keep the minimum in stock
+                        {
+                            if (stock > 0) waiting = $"{Localization.instance.Localize(name)}: {stock} in the chests, but it keeps at least {setting.Reserve}";
+                            continue;
+                        }
                         AddOne(player, info, drop, false, chests, chestsOnly: true);
+                        fed = true;
                         break; // one per step: lowest tier first
                     }
+                    if (!fed && waiting != null) Why(smelter, "not feeding, " + waiting);
                 }
             }
             finally

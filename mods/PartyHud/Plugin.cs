@@ -23,13 +23,16 @@ namespace PartyHud
     {
         public const string Guid = "com.dhack.partyhud";
         public const string Name = "PartyHud";
-        public const string Version = "1.2.3";
+        public const string Version = "1.6.0";
 
-        private ConfigEntry<bool> _enabled, _showSelf, _showPortraits, _showDistance, _hideInMenus;
+        private ConfigEntry<bool> _enabled, _showSelf, _showPortraits, _showDistance, _hideInMenus, _avoidShipHud, _compact, _onLeft, _showArrow, _showEffects, _showFood;
         private ConfigEntry<float> _offsetX, _offsetY, _scale, _opacity;
         private ConfigEntry<int> _maxRows;
         private ConfigEntry<KeyboardShortcut> _toggleKey;
         private bool _visible = true;
+
+        private class Effect { public Sprite Icon; public float Fraction; }
+        private class FoodSlot { public Sprite Icon; public float Fraction; }
 
         /// <summary>One row in the panel.</summary>
         private class Member
@@ -40,6 +43,11 @@ namespace PartyHud
             public bool Self, HasData;
             public float Hp, MaxHp, St, MaxSt, Eitr, MaxEitr;
             public float Distance = -1f;
+            public Vector3 Pos;
+            public bool HasPos;
+            public List<Effect> Effects = new List<Effect>();
+            public List<FoodSlot> Foods = new List<FoodSlot>();
+            public bool FoodKnown; // we know what they are eating (so empty slots mean "nothing")
         }
 
         private List<Member> _members = new List<Member>();
@@ -60,6 +68,12 @@ namespace PartyHud
             _offsetX = Config.Bind("Layout", "OffsetX", 10f, "Gap from the right edge of the screen (UI pixels).");
             _offsetY = Config.Bind("Layout", "OffsetY", 300f, "Gap from the top of the screen (UI pixels). Raise it if it overlaps your minimap.");
             _scale = Config.Bind("Layout", "Scale", 1f, "Size of the panel (1 = normal, 1.25 = bigger).");
+            _avoidShipHud = Config.Bind("Layout", "AvoidShipHud", true, "While you are steering a ship, move the panel down so it does not cover the wind indicator and the rest of the ship display.");
+            _compact = Config.Bind("Layout", "Compact", false, "A smaller, tighter panel: a small picture and thinner bars, for when you want it out of the way.");
+            _onLeft = Config.Bind("Layout", "OnLeft", false, "Put the panel on the left edge of the screen instead of the right.");
+            _showArrow = Config.Bind("General", "ShowDirectionArrow", true, "Next to each player's distance, an arrow pointing the way they are, relative to where you are looking.");
+            _showFood = Config.Bind("General", "ShowFood", true, "Show three food slots under each player's picture: what they are eating and how long it has left. Only for players who also have this mod.");
+            _showEffects = Config.Bind("General", "ShowStatusEffects", true, "Show each player's buffs and debuffs (food, rested, wet, poison...) as small icons under their bars. Only for players who also have this mod.");
             _opacity = Config.Bind("Layout", "Opacity", 0.85f, "How solid the panel background is (0.2 to 1).");
 
             _awakeFrame = Time.frameCount;
@@ -127,6 +141,8 @@ namespace PartyHud
                     Hp = me.GetHealth(), MaxHp = me.GetMaxHealth(),
                     St = me.GetStamina(), MaxSt = me.GetMaxStamina(),
                     Eitr = me.GetEitr(), MaxEitr = me.GetMaxEitr(),
+                    Effects = ToEffects(ParseEffects(EffectsText(me)), 0f),
+                    Foods = ToFoods(ParseFoods(FoodsText(me)), 0f), FoodKnown = true,
                 });
             }
 
@@ -138,13 +154,15 @@ namespace PartyHud
                 if (id == 0 || id == MyId) continue;
 
                 var m = new Member { Id = id, Name = info.m_name, SteamId = SteamIdOf(info) };
-                if (info.m_publicPosition) m.Distance = Vector3.Distance(me.transform.position, info.m_position);
+                if (info.m_publicPosition) { m.Distance = Vector3.Distance(me.transform.position, info.m_position); m.Pos = info.m_position; m.HasPos = true; }
 
                 if (_remote.TryGetValue(id, out Remote r) && Time.time - r.Seen < 5f)
                 {
                     // Best case: that player's own game told us, so the numbers are exact and work at any distance.
                     m.HasData = true;
                     m.Hp = r.Hp; m.MaxHp = r.MaxHp; m.St = r.St; m.MaxSt = r.MaxSt; m.Eitr = r.Eitr; m.MaxEitr = r.MaxEitr;
+                    m.Effects = ToEffects(r.Effects, Time.time - r.EffectsAt);
+                    m.Foods = ToFoods(r.Foods, Time.time - r.EffectsAt); m.FoodKnown = r.FoodsKnown;
                 }
                 else
                 {
@@ -158,6 +176,7 @@ namespace PartyHud
                         m.St = zdo.GetFloat(ZDOVars.s_stamina, 0f);
                         m.MaxSt = Mathf.Max(m.St, 100f);
                         m.Distance = Vector3.Distance(me.transform.position, near.transform.position);
+                        m.Pos = near.transform.position; m.HasPos = true;
                     }
                 }
                 others.Add(m);

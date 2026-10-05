@@ -2,6 +2,6 @@ A party panel on the right of the screen showing every player in your world.
 
 What it shows
 - Each player's Steam picture, name, health, stamina and distance, live, at any range.
-- F8 hides or shows the panel (handy for screenshots). It hides itself while menus are open.
+- Each picture has a ring that is green, amber or red by how healthy that player is, and an arrow next to their distance points the way they are, relative to where you are looking. F8 hides or shows the panel (handy for screenshots). It hides itself while menus are open.
 
-Settings: how many players, size, opacity, position, and whether to show yourself, portraits and distance.
+Settings: how many players, size, opacity, position, left or right edge, a Compact mode, and whether to show yourself, portraits, distance and the arrow. While you steer a ship the panel moves out of the way of the ship display.
