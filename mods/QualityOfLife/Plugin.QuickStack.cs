@@ -133,6 +133,7 @@ namespace QualityOfLife
             if (IsKept(item)) return true;                                     // locked by you
             if (IsQuick(item)) return true;                                    // part of your quick set
             if (item.m_shared.m_questItem) return true;
+            if (AppDomain.CurrentDomain.GetData("DHack.GearSlots.IsGear") is Func<ItemDrop.ItemData, bool> inGearSlot && inGearSlot(item)) return true; // GearSlots mod: worn gear and food slots stay put
             if (_protectHotbar.Value && item.m_gridPos.y == 0) return true;    // top row
             return false;
         }
@@ -329,9 +330,9 @@ namespace QualityOfLife
         private void OnGUI()
         {
             DrawQuickSetBadges();
+            DrawStackButtons(); // the Sort button works on its own; Stack to chests needs the feature on
             if (!_stackEnabled.Value) return;
             DrawLockBadges();
-            DrawStackButtons();
             DrawAssignButton();
             DrawRulesWindow();
         }
@@ -373,8 +374,12 @@ namespace QualityOfLife
         /// <summary>The two buttons under your inventory panel. They exist only while a chest is in range.</summary>
         private void DrawStackButtons()
         {
-            if (!_showStackButtons.Value || _stackChests.Count == 0 || !ShowStackUi(out Player player, out InventoryGui gui)) return;
-            if (OpenChest() != null) return; // with a chest open you're already in it: the game's own stack/take buttons do the job
+            if (!_showStackButtons.Value || !ShowStackUi(out Player player, out InventoryGui gui)) return;
+            bool stack = _stackEnabled.Value && _stackChests.Count > 0 && OpenChest() == null; // with a chest open the game's own stack/take buttons do the job
+            bool sort = _sortEnabled.Value;
+            if (!stack && !sort) return;
+            // How far down the buttons (and the hint under Stack to chests) reach, for other mods' panels below the inventory.
+            AppDomain.CurrentDomain.SetData("DHack.QoL.UnderInventoryHeight", stack ? 54f : 36f);
             EnsureStackStyle();
 
             var corners = new Vector3[4];
@@ -384,27 +389,40 @@ namespace QualityOfLife
             Vector2 bottomLeft = RectTransformUtility.WorldToScreenPoint(cam, corners[0]);
             float scale = canvas != null ? Mathf.Max(0.6f, canvas.scaleFactor) : 1f;
 
-            float w = 170f * scale, h = 30f * scale;
+            float h = 30f * scale;
             float x = bottomLeft.x + 8f * scale;
             float y = Screen.height - bottomLeft.y + 6f * scale; // IMGUI's y runs top-down
 
-            var stack = new Rect(x, y, w, h);
-            if (StackButton(stack, $"Stack to chests ({_stackChests.Count})")) { Player p = player; _pending = () => StackToChests(p); }
-
-            // Undo appears only right after a stack that really moved something, and goes when you close the inventory.
-            if (_undo != null)
+            // One row: Sort, Stack to chests, Undo. Other mods (GearSlots) read how much room this takes.
+            if (sort)
             {
-                var undo = new Rect(stack.xMax + 6f * scale, y, 80f * scale, h);
-                if (StackButton(undo, "Undo")) { Player p = player; _pending = () => UndoStack(p); }
+                var sortRect = new Rect(x, y, 70f * scale, h);
+                if (StackButton(sortRect, "Sort")) { Player p = player; _pending = () => SortInventory(p); }
+                x = sortRect.xMax + 6f * scale;
             }
 
-            if (Event.current.type == EventType.Repaint)
+            float hintX = x;
+            if (stack)
             {
-                _stackLabel.fontSize = Mathf.RoundToInt(10f * scale);
-                GUI.color = new Color(1f, 1f, 1f, 0.65f);
-                GUI.Label(new Rect(x, y + h + 3f * scale, w, 16f * scale), $"Hover an item + {_lockKey.Value} to lock it", _stackLabel);
-                GUI.color = Color.white;
-                _stackLabel.fontSize = 10;
+                var stackRect = new Rect(x, y, 170f * scale, h);
+                if (StackButton(stackRect, $"Stack to chests ({_stackChests.Count})")) { Player p = player; _pending = () => StackToChests(p); }
+                x = stackRect.xMax + 6f * scale;
+
+                // Undo appears only right after a stack that really moved something, and goes when you close the inventory.
+                if (_undo != null)
+                {
+                    var undo = new Rect(x, y, 80f * scale, h);
+                    if (StackButton(undo, "Undo")) { Player p = player; _pending = () => UndoStack(p); }
+                }
+
+                if (Event.current.type == EventType.Repaint)
+                {
+                    _stackLabel.fontSize = Mathf.RoundToInt(10f * scale);
+                    GUI.color = new Color(1f, 1f, 1f, 0.65f);
+                    GUI.Label(new Rect(hintX, y + h + 3f * scale, 190f * scale, 16f * scale), $"Hover an item + {_lockKey.Value} to lock it", _stackLabel);
+                    GUI.color = Color.white;
+                    _stackLabel.fontSize = 10;
+                }
             }
         }
 

@@ -53,6 +53,19 @@
                                ]
                  },
                  {
+                     "guid":  "com.dhack.gearslots",
+                     "name":  "GearSlots",
+                     "version":  "1.0.0",
+                     "description":  "Extra inventory slots for what you wear, eat and use, in a Gear panel next to your inventory.\n\nWhat is in it\n- Head, Chest, Legs, Cape, Belt, Trinket, Ammo and Shield slots: drop a matching piece in and you put it on. Armor and arrows no longer take room in your bag, and gear you are already wearing moves into its slot by itself.\n- The shield follows your weapon: switch to a one-handed weapon and the shield from the Shield slot comes out with it (two-handed weapons and bows put it away).\n- Three Food slots: keep your best meals in their own place (right-click to eat). Optional auto-eat is in the settings.\n- Five Quick slots (Z, X, C, V by default; the fifth is unbound) for a weapon, tool, potion or anything else: press the key to equip or use it. With the inventory closed they show in a row under your hotbar, with their keys.\n- Slots only accept the right kind of item, and Sort and Stack to Chests (QualityOfLife) leave them alone.\n- Nothing is stored in a new place: the slots are extra rows of your real inventory, so saving, weight, crafting and dragging work as normal, and removing the mod never loses an item.\nEvery key and option is in the settings (the manager\u0027s Mod settings tab).",
+                     "notes":  "First release: a Gear panel with Head, Chest, Legs, Cape, Belt, Trinket, Ammo and Shield slots, three Food slots and five Quick slots (shown under the hotbar), a shield that follows your one-handed weapon, auto-fill of worn gear, and optional auto-eat.",
+                     "restart":  "",
+                     "cover":  "GearSlots.cover.png",
+                     "files":  [
+                                   "GearSlots.dll",
+                                   "GearSlots.pdb"
+                               ]
+                 },
+                 {
                      "guid":  "com.dhack.mapshare",
                      "name":  "MapShare",
                      "version":  "1.0.0",
@@ -81,9 +94,9 @@
                  {
                      "guid":  "com.dhack.qualityoflife",
                      "name":  "QualityOfLife",
-                     "version":  "1.4.0",
-                     "description":  "Small controls that make the game nicer to play, each with its own switch.\n\nWhat is in it\n- Q: build a quick set from items you hover in your inventory; outside the inventory it swaps to the set and back.\n- B: jump into construction mode with your hammer, and back to what you had.\n- Stack to chests: a button under your inventory moves matching items into nearby chests, with Undo and sounds.\n- K opens the chest assignment menu (choose what each chest receives); L locks items so they are never stacked.\n- Boat push: tap or hold G next to a boat to shove it where you look (gentle, with a speed cap).\nKeys are configurable. Q and B work while you are running.",
-                     "notes":  "New: tap or hold G next to a boat (not in it) to push it the way you are looking. Gentle, with a top speed. Strength, speed, range and key are in the settings.",
+                     "version":  "1.5.0",
+                     "description":  "Small controls that make the game nicer to play, each with its own switch.\r\n\r\nWhat is in it\r\n- Q: build a quick set from items you hover in your inventory; outside the inventory it swaps to the set and back.\r\n- B: jump into construction mode with your hammer, and back to what you had.\r\n- Sort: a button under your inventory joins split stacks and puts everything in order (hotbar and gear slots stay put).\r\n- Stack to chests: a button under your inventory moves matching items into nearby chests, with Undo and sounds.\r\n- K opens the chest assignment menu (choose what each chest receives); L locks items so they are never stacked.\r\n- Boat push: tap or hold P next to a boat to shove it where you look (gentle, with a speed cap).\r\nKeys are configurable. Q and B work while you are running.",
+                     "notes":  "New: a Sort button next to Stack to chests (joins split stacks, puts items in order by kind and name; leaves the hotbar and GearSlots slots alone). Boat push (tap or hold P next to a boat) now defaults to P so it does not clash with BuildOrders\u0027 G. Stack to chests leaves GearSlots gear, food and quick slots alone.",
                      "restart":  "",
                      "cover":  "QualityOfLife.cover.png",
                      "files":  [

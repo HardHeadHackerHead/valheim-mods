@@ -21,7 +21,7 @@ namespace QualityOfLife
         private void BindBoatPushConfig()
         {
             _pushEnabled = Config.Bind("BoatPush", "Enabled", true, "Turn boat pushing on or off.");
-            _pushKey = Config.Bind("BoatPush", "Key", KeyCode.G, "Tap (or hold) this next to a boat, not in it, to push it the way you are looking.");
+            _pushKey = Config.Bind("BoatPush", "Key", KeyCode.P, "Tap (or hold) this next to a boat, not in it, to push it the way you are looking.");
             _pushStrength = Config.Bind("BoatPush", "Strength", 3f, new ConfigDescription(
                 "How hard you push (metres per second, per second). Higher gets a heavy boat moving faster.", new AcceptableValueRange<float>(0.5f, 10f)));
             _pushMaxSpeed = Config.Bind("BoatPush", "MaxSpeed", 2.5f, new ConfigDescription(

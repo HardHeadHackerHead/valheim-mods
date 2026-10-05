@@ -60,7 +60,7 @@ Feed smelters, kilns, cooking racks, fires and fermenters straight from your che
 ### 🎒 QualityOfLife
 <img src="dist/QualityOfLife.cover.png" alt="QualityOfLife" width="100%">
 
-Quick gear sets on **Q**, hammer on **B**, **Stack to chests** with undo, chest assignment on **K**, and item locks on **L**.
+Quick gear sets on **Q**, hammer on **B**, a **Sort** button that joins stacks, **Stack to chests** with undo, chest assignment on **K**, item locks on **L**, and tap **P** next to a boat to push it.
 
 </td>
 </tr>
@@ -100,6 +100,18 @@ Share the map you uncover with everyone in the world, live, as you run through t
 
 </td>
 </tr>
+<tr>
+<td valign="top">
+
+### 🛡️ GearSlots
+<img src="dist/GearSlots.cover.png" alt="GearSlots" width="100%">
+
+A Gear panel next to your inventory: Head, Chest, Legs, Cape, Belt, Trinket, Ammo and Shield slots (drop gear in and you wear it), three Food slots, and five Quick slots with hotkeys that also show under your hotbar. Your shield follows your one-handed weapon.
+
+</td>
+<td valign="top">
+</td>
+</tr>
 </table>
 
 ## ⌨️ Keys at a glance
@@ -110,6 +122,8 @@ Share the map you uncover with everyone in the world, live, as you run through t
 | **Q** | QualityOfLife | Build a quick set (inventory open) / swap to it and back |
 | **B** | QualityOfLife | Jump into construction mode with your hammer, and back |
 | **K** / **L** | QualityOfLife | Assign what a chest receives / lock an item |
+| **P** | QualityOfLife | Tap or hold next to a boat (not in it) to push it where you look |
+| **Z** / **X** / **C** / **V** | GearSlots | Use what is in Quick slot 1 to 4 (equip a weapon or tool, drink a potion) |
 | **E** | FeedFromChests | Open a smelter or kiln menu (auto-feed settings, Add, Fill); add items to other stations |
 | **Left Alt** / **E** | BuildOrders | Toggle plan mode (placing then plans a ghost) / build the ghost you walk up to |
 | **G** / **Delete** / **F9** / **F10** | BuildOrders | Select a ghost piece / remove a ghost / show or hide ghosts / show or hide the stability colours |

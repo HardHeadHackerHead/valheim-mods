@@ -3,7 +3,8 @@ Small controls that make the game nicer to play, each with its own switch.
 What is in it
 - Q: build a quick set from items you hover in your inventory; outside the inventory it swaps to the set and back.
 - B: jump into construction mode with your hammer, and back to what you had.
+- Sort: a button under your inventory joins split stacks and puts everything in order (hotbar and gear slots stay put).
 - Stack to chests: a button under your inventory moves matching items into nearby chests, with Undo and sounds.
 - K opens the chest assignment menu (choose what each chest receives); L locks items so they are never stacked.
-- Boat push: tap or hold G next to a boat to shove it where you look (gentle, with a speed cap).
+- Boat push: tap or hold P next to a boat to shove it where you look (gentle, with a speed cap).
 Keys are configurable. Q and B work while you are running.

@@ -1,0 +1,1 @@
+First release: a Gear panel with Head, Chest, Legs, Cape, Belt, Trinket, Ammo and Shield slots, three Food slots and five Quick slots (shown under the hotbar), a shield that follows your one-handed weapon, auto-fill of worn gear, and optional auto-eat.
