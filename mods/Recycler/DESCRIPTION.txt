@@ -1,1 +1,9 @@
-Build a Recycler with the hammer, open it like a crafting station, and recycle old weapons, armor and tools into a share of the materials they were made from. Build Recycler Presses nearby to raise the share.
+Build a Recycler with the hammer and turn old gear back into a share of the materials it was made from.
+
+How it works
+- Look at the Recycler and press E: pick a weapon, armor piece or tool from your inventory, see what it would return, and recycle it.
+- You get about half of the materials back (50% by default; leftovers are a chance of one more). Recycler Presses built within 8 m raise this to 60% and then 75%.
+- The gear must be one you could craft, and the crafting station it was made at (and its level) must be nearby. Equipped or upgraded gear asks for a second click. Items locked with L are skipped.
+- Costs fine wood, iron and bronze. Restart the game after installing or updating it.
+
+Settings: refund percentages, chance rounding, which gear types are allowed.

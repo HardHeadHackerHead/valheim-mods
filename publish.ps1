@@ -44,21 +44,21 @@ foreach ($proj in Get-ChildItem (Join-Path $root "mods") -Directory) {
     $restartFile = Join-Path $proj.FullName "RESTART_REQUIRED.txt"
     $restart = if (Test-Path $restartFile) { (Get-Content $restartFile -Raw).Trim() } else { "" }
 
-    $manifest += [ordered]@{
-        guid = $guid; name = $name; version = $ver; description = $desc; notes = $notes; restart = $restart
-        files = @("$($proj.Name).dll", "$($proj.Name).pdb")
-    }
-}
-
-# Prebuilt mods that live in another repo but are still offered from here (see bridge\README.md).
-$bridge = Join-Path $root "bridge"
-if (Test-Path (Join-Path $bridge "entries.json")) {
-    foreach ($e in (Get-Content (Join-Path $bridge "entries.json") -Raw | ConvertFrom-Json)) {
-        foreach ($f in $e.files) { Copy-Item (Join-Path $bridge $f) $dist -Force }
-        $manifest += [ordered]@{
-            guid = $e.guid; name = $e.name; version = $e.version; description = $e.description; notes = $e.notes; restart = $e.restart
-            files = @($e.files)
+    # Optional cover image (cover.png or cover.jpg in the mod folder), shown on the mod's card in the manager. Keep it small: about 640x360, under 1 MB.
+    $cover = ""
+    foreach ($ext in @("png", "jpg", "jpeg")) {
+        $coverSrc = Join-Path $proj.FullName "cover.$ext"
+        if (Test-Path $coverSrc) {
+            $cover = "$($proj.Name).cover.$ext"
+            Copy-Item $coverSrc (Join-Path $dist $cover) -Force
+            if ((Get-Item $coverSrc).Length -gt 1MB) { Write-Warning "$($proj.Name): the cover image is over 1 MB, so the manager will skip it" }
+            break
         }
+    }
+
+    $manifest += [ordered]@{
+        guid = $guid; name = $name; version = $ver; description = $desc; notes = $notes; restart = $restart; cover = $cover
+        files = @("$($proj.Name).dll", "$($proj.Name).pdb")
     }
 }
 

@@ -1,1 +1,8 @@
-Small controls: Q builds a quick set and swaps to it and back; B jumps into construction mode with your hammer and back; a button under your inventory stacks items into nearby chests, and L locks items you want to keep. Keys are configurable.
+Small controls that make the game nicer to play, each with its own switch.
+
+What is in it
+- Q: build a quick set from items you hover in your inventory; outside the inventory it swaps to the set and back.
+- B: jump into construction mode with your hammer, and back to what you had.
+- Stack to chests: a button under your inventory moves matching items into nearby chests, with Undo and sounds.
+- K opens the chest assignment menu (choose what each chest receives); L locks items so they are never stacked.
+Keys are configurable. Q and B work while you are running.

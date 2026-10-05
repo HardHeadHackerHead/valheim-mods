@@ -1,1 +1,8 @@
-Building with the hammer uses materials from chests near you (default 20 m), not just your inventory. The build menu shows how many of each material you have.
+Building with the hammer uses materials from chests near you, not just your inventory.
+
+How it works
+- Pieces you place take materials from your inventory first, then from chests within range (default 20 m).
+- The build menu shows how many of each material you have in total, so you can see what is possible before you place anything.
+- Works together with CraftFromChests; each can be turned off on its own.
+
+Settings: range and whether the counts show.

@@ -1,1 +1,8 @@
-Crafting stations (and hand-crafting from the inventory) use materials from nearby chests. Shows how many of each material you have, buttons beside the crafting tabs show lines to the chests in use and cycle the range (5-30 m).
+Crafting stations, and hand-crafting from your inventory, use materials from nearby chests.
+
+How it works
+- Anything you can reach within the range counts toward a recipe. The game takes the materials from your inventory first, then from the chests.
+- The crafting menu shows how many of each material you have in total.
+- A Chest lines button beside the crafting tabs draws lines from the station to every chest in use; a Range button cycles the distance (5 to 30 m).
+
+Settings: range (default 20 m), whether counts and lines show, and the position and size of the buttons.

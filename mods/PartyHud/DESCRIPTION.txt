@@ -1,1 +1,7 @@
-Party panel on the right of the screen: every player's Steam picture, name, health, stamina and distance, live, at any range.
+A party panel on the right of the screen showing every player in your world.
+
+What it shows
+- Each player's Steam picture, name, health, stamina and distance, live, at any range.
+- F8 hides or shows the panel (handy for screenshots). It hides itself while menus are open.
+
+Settings: how many players, size, opacity, position, and whether to show yourself, portraits and distance.

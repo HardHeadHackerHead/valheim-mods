@@ -1,1 +1,9 @@
-Ghost build orders: hold Left Alt and place with the hammer to plan a piece instead of building it. Everyone in the party sees it as a glowing ghost, your placement snaps onto it, and it disappears once built. A panel totals the materials the orders need.
+Plan pieces as shared ghost build orders for everyone in your party.
+
+How it works
+- Hold Left Alt and place with the hammer to plan a piece instead of building it. It shows as a see-through ghost that other players see too.
+- Your own placement snaps onto a ghost, and the ghost disappears once the real piece is built.
+- G selects the piece you are looking at to build more like it, and Delete removes a ghost. F9 shows or hides all ghosts.
+- A panel totals the materials your orders still need.
+
+Settings: ghost opacity, view distance, snap distance and the keys.
