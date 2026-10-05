@@ -1,1 +1,1 @@
-First version: a buildable Recycler with a crafting-station style menu, Recycler Press upgrades, chance-based rounding, station requirements, confirmation for valuable gear, sounds and synced spinning rollers.
+The mouse wheel now scrolls the menus instead of zooming the camera while they are open.

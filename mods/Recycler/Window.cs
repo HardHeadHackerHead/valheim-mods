@@ -235,3 +235,13 @@ namespace Recycler
         }
     }
 }
+
+namespace Recycler
+{
+    // While one of our windows is open, the mouse wheel should scroll the window, not zoom the camera (or cycle the hotbar).
+    [HarmonyLib.HarmonyPatch(typeof(ZInput), nameof(ZInput.GetMouseScrollWheel))]
+    internal static class ZInput_GetMouseScrollWheel
+    {
+        private static void Postfix(ref float __result) { if (Window.IsOpen) __result = 0f; }
+    }
+}

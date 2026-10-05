@@ -42,9 +42,9 @@
                  {
                      "guid":  "com.dhack.feedfromchests",
                      "name":  "FeedFromChests",
-                     "version":  "1.2.6",
+                     "version":  "1.2.7",
                      "description":  "Smelters, kilns, cooking racks, fires and fermenters can use items from nearby chests.\n\nHow it works\n- Press E at a station: it adds from a chest if you have none, or opens a menu if there is a choice. Look at a station and press F to always get the menu of everything you can add.\n- The menu lists items from the lesser to the greater (wood, fine wood, core wood...) and has a Fill option that tops the station up.\n- Nothing is created from nothing: every item comes out of your inventory or a chest.\n\nSettings: range (default 15 m), automatic adding, always open the menu, the menu key, and the Fill limit.",
-                     "notes":  "Better fix for the mouse cursor sticking in the middle of the screen on Linux: while the menu is open the game\u0027s own cursor-locking is skipped altogether, so the pointer is never snapped to the center. Plus a tip about the F menu, an AlwaysOpenMenu setting, smoother menu and Fill, and items listed lesser to greater. Feeds smelters, kilns, cooking racks, fires and fermenters from nearby chests.",
+                     "notes":  "The mouse wheel now scrolls the menus instead of zooming the camera while they are open.",
                      "restart":  "",
                      "cover":  "FeedFromChests.cover.png",
                      "files":  [
@@ -68,9 +68,9 @@
                  {
                      "guid":  "com.dhack.qualityoflife",
                      "name":  "QualityOfLife",
-                     "version":  "1.3.6",
+                     "version":  "1.3.7",
                      "description":  "Small controls that make the game nicer to play, each with its own switch.\n\nWhat is in it\n- Q: build a quick set from items you hover in your inventory; outside the inventory it swaps to the set and back.\n- B: jump into construction mode with your hammer, and back to what you had.\n- Stack to chests: a button under your inventory moves matching items into nearby chests, with Undo and sounds.\n- K opens the chest assignment menu (choose what each chest receives); L locks items so they are never stacked.\nKeys are configurable. Q and B work while you are running.",
-                     "notes":  "Better fix for the mouse cursor sticking in the middle of the screen on Linux: while the chest-assign menu is open the game\u0027s own cursor-locking is skipped altogether. Plus smoother menus, Stack to chests with Undo and sounds, chest assignment (K), item locking (L), and Q/B working while you run.",
+                     "notes":  "The mouse wheel now scrolls the menus instead of zooming the camera while they are open.",
                      "restart":  "",
                      "cover":  "QualityOfLife.cover.png",
                      "files":  [
@@ -81,9 +81,9 @@
                  {
                      "guid":  "com.dhack.recycler",
                      "name":  "Recycler",
-                     "version":  "1.0.0",
+                     "version":  "1.0.1",
                      "description":  "Build a Recycler with the hammer and turn old gear back into a share of the materials it was made from.\n\nHow it works\n- Look at the Recycler and press E: pick a weapon, armor piece or tool from your inventory, see what it would return, and recycle it.\n- You get about half of the materials back (50% by default; leftovers are a chance of one more). Recycler Presses built within 8 m raise this to 60% and then 75%.\n- The gear must be one you could craft, and the crafting station it was made at (and its level) must be nearby. Equipped or upgraded gear asks for a second click. Items locked with L are skipped.\n- Costs fine wood, iron and bronze. Restart the game after installing or updating it.\n\nSettings: refund percentages, chance rounding, which gear types are allowed.",
-                     "notes":  "First version: a buildable Recycler with a crafting-station style menu, Recycler Press upgrades, chance-based rounding, station requirements, confirmation for valuable gear, sounds and synced spinning rollers.",
+                     "notes":  "The mouse wheel now scrolls the menus instead of zooming the camera while they are open.",
                      "restart":  "It adds new build pieces. Restart the game after updating so they register cleanly.",
                      "cover":  "Recycler.cover.png",
                      "files":  [

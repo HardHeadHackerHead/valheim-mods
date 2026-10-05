@@ -9,3 +9,4 @@ obj/
 # Never commit secrets
 *.token
 *.cfg
+output/

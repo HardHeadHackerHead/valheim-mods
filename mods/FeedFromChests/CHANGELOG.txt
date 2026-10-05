@@ -1,1 +1,1 @@
-Better fix for the mouse cursor sticking in the middle of the screen on Linux: while the menu is open the game's own cursor-locking is skipped altogether, so the pointer is never snapped to the center. Plus a tip about the F menu, an AlwaysOpenMenu setting, smoother menu and Fill, and items listed lesser to greater. Feeds smelters, kilns, cooking racks, fires and fermenters from nearby chests.
+The mouse wheel now scrolls the menus instead of zooming the camera while they are open.

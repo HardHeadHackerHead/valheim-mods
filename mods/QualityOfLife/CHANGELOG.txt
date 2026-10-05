@@ -1,1 +1,1 @@
-Better fix for the mouse cursor sticking in the middle of the screen on Linux: while the chest-assign menu is open the game's own cursor-locking is skipped altogether. Plus smoother menus, Stack to chests with Undo and sounds, chest assignment (K), item locking (L), and Q/B working while you run.
+The mouse wheel now scrolls the menus instead of zooming the camera while they are open.
