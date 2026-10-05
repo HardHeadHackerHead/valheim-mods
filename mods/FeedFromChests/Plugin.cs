@@ -23,7 +23,7 @@ namespace FeedFromChests
     {
         public const string Guid = "com.dhack.feedfromchests";
         public const string Name = "FeedFromChests";
-        public const string Version = "1.2.5";
+        public const string Version = "1.2.6";
 
         internal static Plugin Instance;
 

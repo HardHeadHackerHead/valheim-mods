@@ -27,7 +27,7 @@ namespace BuildFromChests
 
         internal static void Register(Container c)
         {
-            if (!AllContainers.Contains(c)) AllContainers.Add(c);
+            if (c != null && !c.name.StartsWith("piece_recycler") && !AllContainers.Contains(c)) AllContainers.Add(c); // the Recycler is not a storage chest
         }
 
         // ---- are we building? (worked out once per frame) ---------------------------------------------

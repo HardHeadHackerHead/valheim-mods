@@ -4,16 +4,16 @@ You are helping a Valheim player install a small set of friend-made mods on **Wi
 never installed mods before. Do the install for them and explain what you're doing in plain language.
 
 ## What you need from the player
-- A **read-only GitHub token** for the private repo `HardHeadHackerHead/valheim-mods`. The repo owner
-  sends this separately. Ask the player to paste it. Treat it as a secret: don't echo it back, don't commit it,
+- Nothing, if the repo `HardHeadHackerHead/valheim-mods` is public. If it is private, a **read-only GitHub token** (the repo owner
+  sends it separately): ask the player to paste it and pass it as `-Token` below. Treat it as a secret: don't echo it back, don't commit it,
   don't put it in logs or screenshots.
 
 ## Steps
-1. **Get the installer.** This repo is private, so authenticate with the token:
+1. **Get the installer.** (For a private repo add the header `Authorization = "Bearer $token"` to the request.)
    ```powershell
-   $token = "<PASTE TOKEN>"
+   $token = ""   # only for a private repo: put the read-only token here
    Invoke-WebRequest "https://api.github.com/repos/HardHeadHackerHead/valheim-mods/contents/installer/install.ps1?ref=main" `
-     -Headers @{ Authorization = "Bearer $token"; Accept = "application/vnd.github.raw+json"; "User-Agent" = "installer" } `
+     -Headers @{ Accept = "application/vnd.github.raw+json"; "User-Agent" = "installer" } `   # private repo: also add Authorization = "Bearer $token"
      -OutFile "$env:TEMP\install-valheim-mods.ps1"
    ```
    (In Windows PowerShell 5.1, run `[Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12` first.)

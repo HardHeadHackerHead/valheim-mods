@@ -1,1 +1,1 @@
-Better fix for the mouse cursor sticking in the middle of the screen on Linux: while the mod manager window is open the game's own cursor-locking is skipped altogether. Faster window opening and world joining. F7 works while holding Shift.
+Mod sources: add other people's GitHub repos and install their mods from the same window (never installed automatically). Mods that cannot be reloaded in-game now say "Restart the game" instead. Works with a public repo without a token.

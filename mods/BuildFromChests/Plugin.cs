@@ -14,7 +14,7 @@ namespace BuildFromChests
     {
         public const string Guid = "com.dhack.buildfromchests";
         public const string Name = "BuildFromChests";
-        public const string Version = "1.1.1";
+        public const string Version = "1.1.2";
 
         internal static ConfigEntry<bool> Enabled;
         internal static ConfigEntry<bool> ShowHaveCounts;

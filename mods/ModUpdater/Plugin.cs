@@ -1,5 +1,6 @@
 using System;
 using System.Collections;
+using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using BepInEx;
@@ -24,11 +25,11 @@ namespace ModUpdater
     {
         public const string Guid = "com.dhack.modupdater";
         public const string Name = "ModUpdater";
-        public const string Version = "2.4.5";
+        public const string Version = "2.6.0";
 
         private const string ScriptEngineGuid = "com.bepis.bepinex.scriptengine";
 
-        private ConfigEntry<string> _owner, _repo, _branch, _folder, _token;
+        private ConfigEntry<string> _owner, _repo, _branch, _folder, _token, _extraFeeds;
         private ConfigEntry<KeyboardShortcut> _hotkey;
         private ConfigEntry<bool> _checkOnStart, _developerMode, _notifyOnJoin, _allowGitHubCli, _autoReload;
         private ConfigEntry<float> _uiScale;
@@ -49,8 +50,9 @@ namespace ModUpdater
             _repo = Config.Bind("Repo", "Repo", "", "Repository name.");
             _branch = Config.Bind("Repo", "Branch", "main", "Branch to pull from.");
             _folder = Config.Bind("Repo", "Folder", "dist", "Folder in the repo that holds the built mod .dll files and manifest.json.");
+            _extraFeeds = Config.Bind("Repo", "ExtraFeeds", "", "More places to get mods from, separated by semicolons. Each is owner/repo, owner/repo@branch or owner/repo@branch:folder (the folder holds manifest.json; default dist). You are trusting whoever runs them: their mods run inside your game. Easier to manage in the mod manager window.");
             _token = Config.Bind("Repo", "Token", "",
-                "GitHub fine-grained personal access token with READ-ONLY 'Contents' access to this one repo. Keep it private. " +
+                "Only needed if the repo is private. A GitHub fine-grained token with READ-ONLY 'Contents' access to this one repo. Keep it private. " +
                 "You can also paste it in the mod manager window (F7).");
             _allowGitHubCli = Config.Bind("Repo", "AllowGitHubCli", false,
                 "OFF by default. If you turn this on and no Token is set, the manager runs `gh auth token` and uses your GitHub CLI login. " +
@@ -115,7 +117,7 @@ namespace ModUpdater
             // (Not IsDown(): that ignores the key while another modifier, like the Shift you hold to run, is down.)
             if (_hotkey.Value.MainKey != KeyCode.None && Input.GetKeyDown(_hotkey.Value.MainKey) && _hotkey.Value.Modifiers.All(Input.GetKey))
                 ToggleWindow();
-            _needsSetup = !Configured;
+            _needsSetup = !Configured || (_repoNeedsLogin && ActiveToken.Length == 0);
             WatchScripts();
 
             // Once, when we first get into a world: quietly check and tell the player if updates are waiting.
@@ -142,6 +144,18 @@ namespace ModUpdater
 
         private volatile string _ghToken;
         private bool _ghTried;
+        /// <summary>Mods updated on disk that can't be hot-reloaded, so they only take effect after restarting the game (kept across hot reloads).</summary>
+        private static HashSet<string> RestartPending
+        {
+            get
+            {
+                const string key = "DHack.ModUpdater.RestartPending";
+                var set = AppDomain.CurrentDomain.GetData(key) as HashSet<string>;
+                if (set == null) AppDomain.CurrentDomain.SetData(key, set = new HashSet<string>());
+                return set;
+            }
+        }
+        private bool _repoNeedsLogin;   // GitHub said it can't see the repo without a login (private repo)
         private bool _needsSetup;   // cached once per frame so the window layout can't change mid-draw
 
         /// <summary>The token to use: the config's Token if set; otherwise the GitHub CLI's, but only with explicit permission.</summary>
@@ -166,7 +180,7 @@ namespace ModUpdater
         private string AuthSource =>
             !string.IsNullOrEmpty(_token.Value) ? "access token"
             : _allowGitHubCli.Value && !string.IsNullOrEmpty(_ghToken) ? "GitHub CLI login"
-            : "none";
+            : "no login (public repo)";
 
         /// <summary>
         /// Run `gh auth token` on a background thread (so the game never stalls). Only called with explicit permission.
@@ -200,16 +214,16 @@ namespace ModUpdater
         }
 
         private bool Configured =>
-            !string.IsNullOrEmpty(_owner.Value) && !string.IsNullOrEmpty(_repo.Value) && !string.IsNullOrEmpty(ActiveToken);
+            !string.IsNullOrEmpty(_owner.Value) && !string.IsNullOrEmpty(_repo.Value); // a token is only needed for a private repo
 
-        private string ApiBase => $"https://api.github.com/repos/{_owner.Value}/{_repo.Value}/contents/{_folder.Value}";
 
         /// <summary>One authenticated GET against the GitHub API.</summary>
-        private IEnumerator Get(string url, string accept, Action<string, byte[], string> done)
+        private IEnumerator Get(string url, string accept, Action<string, byte[], string> done, bool auth = true)
         {
             using (UnityWebRequest req = UnityWebRequest.Get(url))
             {
-                req.SetRequestHeader("Authorization", "Bearer " + ActiveToken);
+                string token = auth ? ActiveToken : "";
+                if (token.Length > 0) req.SetRequestHeader("Authorization", "Bearer " + token); // public repos need no sign-in
                 req.SetRequestHeader("Accept", accept);
                 req.SetRequestHeader("User-Agent", Name);
                 req.SetRequestHeader("X-GitHub-Api-Version", "2022-11-28");

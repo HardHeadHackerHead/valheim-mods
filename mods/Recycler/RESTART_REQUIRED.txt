@@ -1,0 +1,1 @@
+It adds new build pieces. Restart the game after updating so they register cleanly.

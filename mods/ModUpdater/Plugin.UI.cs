@@ -207,7 +207,9 @@ namespace ModUpdater
             if (_needsSetup) { DrawSetup(); GUILayout.Space(8); }
 
             _scroll = GUILayout.BeginScrollView(_scroll, false, false, GUIStyle.none, GUI.skin.verticalScrollbar, GUILayout.ExpandHeight(true));
-            DrawMods();
+            GUILayout.Space(14);
+            GUILayout.Space(14);
+            DrawFeeds();
             GUILayout.Space(14);
             DrawPlayers();
             GUILayout.EndScrollView();
@@ -260,7 +262,7 @@ namespace ModUpdater
                 return;
             }
 
-            GUILayout.Label($"The mods are in a private repo ({_owner.Value}/{_repo.Value}), so the manager needs an access token for it. " +
+            GUILayout.Label($"GitHub won't show {_owner.Value}/{_repo.Value} without a login, so it looks like a private repo and the manager needs an access token for it. " +
                             "Create a fine-grained token on GitHub (Settings > Developer settings > Fine-grained tokens) limited to " +
                             "ONLY this repository with Contents set to Read-only, then paste it here.", _sBody);
             GUILayout.Space(4);
@@ -284,6 +286,63 @@ namespace ModUpdater
             if (Button("Allow GitHub CLI login", 200)) Defer(() => _allowGitHubCli.Value = true);
             GUILayout.EndHorizontal();
 
+            GUILayout.EndVertical();
+        }
+
+        // ---- mod sources (feeds) -----------------------------------------------------------------
+
+        private string _feedInput = "";
+        private string _feedConfirm;       // the source waiting for a second click
+        private float _feedConfirmAt;
+        private string _feedProblem = "";
+
+        private void DrawFeeds()
+        {
+            GUILayout.Label("Mod sources", _sH2);
+            GUILayout.Space(2);
+            GUILayout.BeginVertical(_sCard);
+
+            foreach (Feed feed in Feeds())
+            {
+                GUILayout.BeginHorizontal();
+                GUILayout.Label(feed.Spec + (feed.Primary ? "   (main)" : ""), _sBody, GUILayout.ExpandWidth(false));
+                if (feed.Error != null) GUILayout.Label("  " + feed.Error, _sDim);
+                GUILayout.FlexibleSpace();
+                if (!feed.Primary && Button("Remove", 80, false, !_busy, true))
+                {
+                    Feed gone = feed;
+                    Defer(() =>
+                    {
+                        _extraFeeds.Value = string.Join(";", Feeds().Where(f => !f.Primary && f.Spec != gone.Spec).Select(f => f.Spec).ToArray());
+                        StartCoroutine(RefreshRoutine(autoInstall: false));
+                    });
+                }
+                GUILayout.EndHorizontal();
+            }
+
+            GUILayout.Space(6);
+            GUILayout.Label("Add another place to get mods from, for example a friend's repo. Format: owner/repo (or owner/repo@branch:folder). " +
+                            "Mods from other sources run inside your game with full access to your PC, so only add people you trust. " +
+                            "They are never installed automatically; you click Install yourself.", _sDim);
+            GUILayout.BeginHorizontal();
+            _feedInput = GUILayout.TextField(_feedInput, 120, GUILayout.ExpandWidth(true), GUILayout.Height(28));
+            bool sure = _feedConfirm != null && _feedConfirm == _feedInput.Trim() && Time.realtimeSinceStartup - _feedConfirmAt < 8f;
+            if (Button(sure ? "Yes, I trust them" : "Add source", 150, true, _feedInput.Trim().Length > 0 && !_busy))
+            {
+                string spec = _feedInput.Trim();
+                Defer(() =>
+                {
+                    Feed f = ParseFeed(spec);
+                    if (f == null) { _feedProblem = "That doesn't look right. Use owner/repo, or owner/repo@branch:folder."; _feedConfirm = null; return; }
+                    if (Feeds().Any(x => x.Spec == f.Spec)) { _feedProblem = "That source is already in the list."; _feedConfirm = null; return; }
+                    if (_feedConfirm != spec || Time.realtimeSinceStartup - _feedConfirmAt >= 8f) { _feedConfirm = spec; _feedConfirmAt = Time.realtimeSinceStartup; _feedProblem = ""; return; }
+                    _extraFeeds.Value = string.Join(";", Feeds().Where(x => !x.Primary).Select(x => x.Spec).Concat(new[] { f.Spec }).ToArray());
+                    _feedInput = ""; _feedConfirm = null; _feedProblem = "";
+                    StartCoroutine(RefreshRoutine(autoInstall: false));
+                });
+            }
+            GUILayout.EndHorizontal();
+            if (_feedProblem.Length > 0) GUILayout.Label(_feedProblem, _sDim);
             GUILayout.EndVertical();
         }
 
@@ -326,6 +385,8 @@ namespace ModUpdater
             GUILayout.EndVertical();
             GUILayout.EndHorizontal();
             if (!string.IsNullOrEmpty(row.Description)) GUILayout.Label(row.Description, _sDim);
+            if (row.Feed != null && !row.Feed.Primary) GUILayout.Label("From " + row.Feed.Label + "  (someone else's mods: you are trusting their code)", _sDim);
+            if (row.Remote != null && !string.IsNullOrEmpty(row.Remote.restart)) GUILayout.Label("Needs a game restart to update: " + row.Remote.restart, _sDim);
             GUILayout.EndVertical();
 
             // status badge
@@ -404,6 +465,7 @@ namespace ModUpdater
 
         private void StatusLook(Row row, out string text, out Color color)
         {
+            if (row.Remote != null && RestartPending.Contains(row.Remote.guid)) { text = "Restart the game"; color = PillAmber; return; }
             switch (row.Status)
             {
                 case Status.UpToDate: text = "Up to date"; color = PillGreen; break;

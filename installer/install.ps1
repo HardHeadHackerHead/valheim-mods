@@ -9,7 +9,7 @@
   After this, pressing F7 in-game opens the mod manager, which pulls updates and reloads them. No restart needed.
 
 .PARAMETER Token
-  Read-only GitHub token for the private repo (given to you by the repo owner).
+  Optional. Read-only GitHub token, only needed if the mods repo is private.
 
 .PARAMETER ValheimDir
   Only needed if the game can't be found automatically, e.g. "D:\SteamLibrary\steamapps\common\Valheim".
@@ -18,7 +18,7 @@
   Reinstall BepInEx / ScriptEngine even if already present.
 #>
 param(
-    [Parameter(Mandatory = $true)][string]$Token,
+    [string]$Token = "",   # only needed if the repo is private
     [string]$ValheimDir,
     [switch]$Force
 )
@@ -37,11 +37,11 @@ function Step($msg) { Write-Host "`n==> $msg" -ForegroundColor Cyan }
 function Fail($msg) { Write-Host "`nERROR: $msg" -ForegroundColor Red; exit 1 }
 
 $ghHeaders = @{
-    Authorization          = "Bearer $Token"
     Accept                 = "application/vnd.github+json"
     "User-Agent"           = "valheim-mods-installer"
     "X-GitHub-Api-Version" = "2022-11-28"
 }
+if ($Token) { $ghHeaders.Authorization = "Bearer $Token" }   # public repo: no sign-in needed
 $ghRawHeaders = $ghHeaders.Clone(); $ghRawHeaders.Accept = "application/vnd.github.raw+json"
 
 # ---- 1. find Valheim -------------------------------------------------------------------------
@@ -80,7 +80,7 @@ if (Get-Process valheim -ErrorAction SilentlyContinue) { Fail "Valheim is runnin
 # ---- 2. check the token works before changing anything ---------------------------------------
 Step "Checking access to the mods repo"
 try { Invoke-RestMethod "https://api.github.com/repos/$Owner/$Repo" -Headers $ghHeaders | Out-Null }
-catch { Fail "Can't read $Owner/$Repo with that token ($($_.Exception.Message)). Ask the repo owner for a fresh token." }
+catch { Fail "Can't read $Owner/$Repo ($($_.Exception.Message)). If the repo is private, pass -Token with a read-only token from the repo owner." }
 
 $tmp = Join-Path $env:TEMP "valheim-mods-install"
 Remove-Item $tmp -Recurse -Force -ErrorAction SilentlyContinue

@@ -19,7 +19,52 @@ namespace ModUpdater
         private class LocalMod { public string Guid, Name, Version, Path; public bool InPlugins, Disabled; }
 
         /// <summary>One mod as described by manifest.json (written by publish.ps1).</summary>
-        private class RemoteMod { public string guid, name, version, description, notes; public string[] files; }
+        private class RemoteMod { public string guid, name, version, description, notes, restart; public string[] files; public Feed Feed; }
+
+        /// <summary>
+        /// A place mods are published: a GitHub folder holding manifest.json plus the DLL/PDB files (what publish.ps1 makes).
+        /// The first feed is the one in [Repo]; others come from ExtraFeeds. Only the first one gets the access token.
+        /// </summary>
+        private class Feed
+        {
+            public string Owner, Repo, Branch = "main", Folder = "dist";
+            public bool Primary;
+            public string Error;
+            public string Label => Owner + "/" + Repo;
+            public string Api => $"https://api.github.com/repos/{Owner}/{Repo}/contents/{Folder}";
+            public string Spec => Branch == "main" && Folder == "dist" ? Label : $"{Label}@{Branch}:{Folder}";
+        }
+
+        private static string ShaKey(Feed feed, string file) => feed.Owner + "/" + feed.Repo + "|" + file;
+
+        /// <summary>"owner/repo", "owner/repo@branch" or "owner/repo@branch:folder". Null if it doesn't look like one.</summary>
+        private static Feed ParseFeed(string spec)
+        {
+            spec = (spec ?? "").Trim();
+            string folder = "dist", branch = "main";
+            int colon = spec.IndexOf(':');
+            if (colon >= 0) { folder = spec.Substring(colon + 1).Trim().Trim('/'); spec = spec.Substring(0, colon); }
+            int at = spec.IndexOf('@');
+            if (at >= 0) { branch = spec.Substring(at + 1).Trim(); spec = spec.Substring(0, at); }
+            string[] parts = spec.Trim().Split('/');
+            if (parts.Length != 2 || parts[0].Length == 0 || parts[1].Length == 0 || branch.Length == 0 || folder.Length == 0) return null;
+            foreach (char c in parts[0] + parts[1]) if (!(char.IsLetterOrDigit(c) || c == '-' || c == '_' || c == '.')) return null;
+            return new Feed { Owner = parts[0], Repo = parts[1], Branch = branch, Folder = folder };
+        }
+
+        /// <summary>Every feed to read: ours first, then the extra ones (duplicates ignored).</summary>
+        private List<Feed> Feeds()
+        {
+            var list = new List<Feed>();
+            if (!string.IsNullOrEmpty(_owner.Value) && !string.IsNullOrEmpty(_repo.Value))
+                list.Add(new Feed { Owner = _owner.Value, Repo = _repo.Value, Branch = _branch.Value, Folder = _folder.Value, Primary = true });
+            foreach (string spec in (_extraFeeds.Value ?? "").Split(new[] { ';', ',', '\n' }, StringSplitOptions.RemoveEmptyEntries))
+            {
+                Feed f = ParseFeed(spec);
+                if (f != null && !list.Any(x => x.Spec == f.Spec)) list.Add(f);
+            }
+            return list;
+        }
 
         private enum Status { UpToDate, UpdateAvailable, NotInstalled, LocalNewer, Rebuilt, Disabled, LocalOnly }
 
@@ -29,6 +74,7 @@ namespace ModUpdater
             public Status Status;
             public RemoteMod Remote;
             public LocalMod Local;
+            public Feed Feed;
             /// <summary>Can the user switch this mod on/off? (Not the manager itself, and not loader plugins.)</summary>
             public bool CanToggle => Local != null && !Local.InPlugins && Local.Guid != Plugin.Guid;
         }
@@ -120,42 +166,41 @@ namespace ModUpdater
 
         // ---- what's on GitHub ------------------------------------------------------------------
 
-        /// <param name="autoInstall">Install anything out of date straight away.</param>
+        /// <param name="autoInstall">Install anything out of date straight away (only mods from our own feed; others always ask).</param>
         /// <param name="notify">Say in chat if updates are waiting (used once when joining a world).</param>
         private IEnumerator RefreshRoutine(bool autoInstall, bool notify = false)
         {
             if (_busy) yield break;
-            if (!Configured)
+            List<Feed> feeds = Feeds();
+            if (feeds.Count == 0)
             {
-                _statusLine = "Not connected to GitHub yet. Add a read-only access token (see 'Connect to GitHub' below).";
+                _statusLine = $"Owner and Repo aren't set yet (see [Repo] in BepInEx\\config\\{Guid}.cfg).";
                 yield break;
             }
 
             _busy = true;
             _statusLine = "Checking GitHub...";
             bool ok = false;
+            var got = new List<KeyValuePair<Feed, string[]>>(); // feed -> { file list json, manifest json }
             try
             {
-                string listJson = null, manifestJson = null, error = null;
-                yield return Get($"{ApiBase}?ref={_branch.Value}", "application/vnd.github+json", (t, b, e) => { listJson = t; error = e; });
-                if (error != null)
+                foreach (Feed feed in feeds)
                 {
-                    _statusLine = error.StartsWith("404")
-                        ? $"Check failed (404): can't find {_owner.Value}/{_repo.Value} folder '{_folder.Value}' on branch '{_branch.Value}'. Check Owner/Repo/Folder/Branch, and that the token can see the repo."
-                        : "Check failed: " + error;
-                    yield break;
+                    feed.Error = null;
+                    string listJson = null, manifestJson = null, error = null;
+                    yield return Get($"{feed.Api}?ref={feed.Branch}", "application/vnd.github+json", (t, b, e) => { listJson = t; error = e; }, feed.Primary);
+                    if (error != null) { feed.Error = Describe(feed, error, false); continue; }
+
+                    yield return Get($"{feed.Api}/manifest.json?ref={feed.Branch}", "application/vnd.github.raw+json", (t, b, e) => { manifestJson = t; error = e; }, feed.Primary);
+                    if (error != null) { feed.Error = Describe(feed, error, true); continue; }
+
+                    if (feed.Primary) _repoNeedsLogin = false;
+                    got.Add(new KeyValuePair<Feed, string[]>(feed, new[] { listJson, manifestJson }));
                 }
 
-                yield return Get($"{ApiBase}/manifest.json?ref={_branch.Value}", "application/vnd.github.raw+json", (t, b, e) => { manifestJson = t; error = e; });
-                if (error != null)
-                {
-                    _statusLine = error.StartsWith("404")
-                        ? "No manifest.json on GitHub yet: the owner needs to run publish.ps1, then commit and push."
-                        : "Check failed: " + error;
-                    yield break;
-                }
+                if (got.Count == 0) { _statusLine = feeds[0].Error; yield break; }
 
-                string problem = ApplyRefresh(listJson, manifestJson);
+                string problem = ApplyRefresh(got);
                 if (problem != null) { _statusLine = problem; yield break; }
                 ok = true;
             }
@@ -170,41 +215,81 @@ namespace ModUpdater
             string via = $" (via {_authNote})";
             _statusLine = pending == 0 ? $"Up to date. Checked {_lastRefresh:HH:mm:ss}{via}."
                                        : $"{pending} update(s) available. Checked {_lastRefresh:HH:mm:ss}{via}.";
+            foreach (Feed f in feeds.Where(f => f.Error != null)) _statusLine += $"  {f.Label}: {f.Error}";
             RequestPeerVersions();
 
             if (notify && pending > 0)
                 Say($"{pending} mod update(s) available. Press {_hotkey.Value} to open the mod manager.");
 
-            if (autoInstall && pending > 0)
-                yield return InstallRoutine(_rows.Where(NeedsUpdate).Select(r => r.Remote).ToList());
+            if (autoInstall)
+            {
+                List<RemoteMod> toInstall = _rows.Where(r => NeedsUpdate(r) && r.Feed != null && r.Feed.Primary).Select(r => r.Remote).ToList();
+                if (toInstall.Count > 0) yield return InstallRoutine(toInstall);
+            }
+        }
+
+        /// <summary>A readable explanation of why a feed couldn't be read.</summary>
+        private string Describe(Feed feed, string error, bool manifestStep)
+        {
+            bool noLogin = !feed.Primary || ActiveToken.Length == 0;
+            if (!manifestStep && feed.Primary) _repoNeedsLogin = noLogin && (error.StartsWith("404") || error.StartsWith("401"));
+            if (noLogin && (error.StartsWith("403") || error.StartsWith("429")))
+                return "GitHub's limit for requests without a login was reached (60 per hour). Wait a bit, or add a token to raise it.";
+            if (manifestStep && error.StartsWith("404"))
+                return feed.Primary ? "No manifest.json on GitHub yet: the owner needs to run publish.ps1, then commit and push."
+                                    : $"No manifest.json in {feed.Folder} on branch {feed.Branch}. The owner needs to run publish.ps1 and push.";
+            if (!manifestStep && error.StartsWith("404"))
+            {
+                if (feed.Primary && noLogin)
+                    return $"Can't see {feed.Label} without a login. If the repo is private, add a read-only token (see below); otherwise check Owner, Repo, Folder and Branch.";
+                return $"Can't find {feed.Label} folder '{feed.Folder}' on branch '{feed.Branch}'. Check the name, and that the repo is public" + (feed.Primary ? ", or that the token can see it." : ".");
+            }
+            if (!manifestStep && error.StartsWith("401") && feed.Primary && noLogin)
+                return $"Can't see {feed.Label} without a login. If the repo is private, add a read-only token (see below).";
+            return "Check failed: " + error;
         }
 
         /// <summary>
-        /// Turn GitHub's two responses into our data. Returns null on success, or a message naming the step that
+        /// Turn GitHub's responses into our data. Returns null on success, or a message naming the step that
         /// failed (an iterator can't use try/catch around its yields, so this lives in its own method).
+        /// A mod that appears in two feeds comes from the first one; a file name another mod already uses is skipped.
         /// </summary>
-        private string ApplyRefresh(string listJson, string manifestJson)
+        private string ApplyRefresh(List<KeyValuePair<Feed, string[]>> feeds)
         {
-            string step = "reading the file list";
+            string step = "reading the file lists";
             try
             {
                 var shas = new Dictionary<string, string>();
-                foreach (JToken item in JArray.Parse(listJson))
-                    if ((string)item["type"] == "file") shas[(string)item["name"]] = (string)item["sha"];
-
-                step = "reading manifest.json";
                 var mods = new List<RemoteMod>();
-                foreach (JToken m in JObject.Parse(manifestJson)["mods"])
+                var guids = new HashSet<string>();
+                var files = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+
+                foreach (var pair in feeds)
                 {
-                    mods.Add(new RemoteMod
+                    Feed feed = pair.Key;
+                    step = $"reading {feed.Label}'s file list";
+                    foreach (JToken item in JArray.Parse(pair.Value[0]))
+                        if ((string)item["type"] == "file") shas[ShaKey(feed, (string)item["name"])] = (string)item["sha"];
+
+                    step = $"reading {feed.Label}'s manifest.json";
+                    foreach (JToken m in JObject.Parse(pair.Value[1])["mods"])
                     {
-                        guid = (string)m["guid"],
-                        name = (string)m["name"],
-                        version = (string)m["version"],
-                        description = (string)m["description"],
-                        notes = (string)m["notes"],
-                        files = m["files"] != null ? m["files"].Select(f => (string)f).ToArray() : new string[0],
-                    });
+                        var mod = new RemoteMod
+                        {
+                            guid = (string)m["guid"],
+                            name = (string)m["name"],
+                            version = (string)m["version"],
+                            description = (string)m["description"],
+                            notes = (string)m["notes"],
+                            restart = (string)m["restart"], // set when this mod can't be hot-reloaded safely: the reason, shown to the player
+                            files = m["files"] != null ? m["files"].Select(f => (string)f).Where(IsPlainFileName).ToArray() : new string[0],
+                            Feed = feed,
+                        };
+                        if (string.IsNullOrEmpty(mod.guid) || string.IsNullOrEmpty(mod.name) || !guids.Add(mod.guid)) continue; // first feed wins
+                        if (mod.files.Any(f => files.Contains(f))) { guids.Remove(mod.guid); Logger.LogWarning($"{feed.Label}: skipping {mod.name}, a file with the same name comes from another mod"); continue; }
+                        foreach (string f in mod.files) files.Add(f);
+                        mods.Add(mod);
+                    }
                 }
 
                 _remoteSha.Clear();
@@ -227,6 +312,11 @@ namespace ModUpdater
             }
         }
 
+        /// <summary>Manifest file names go straight into the scripts folder, so reject anything with a path in it.</summary>
+        private static bool IsPlainFileName(string f) =>
+            !string.IsNullOrEmpty(f) && f.IndexOfAny(new[] { '/', '\\', ':' }) < 0 && f != "." && f != ".." &&
+            (f.EndsWith(".dll", StringComparison.OrdinalIgnoreCase) || f.EndsWith(".pdb", StringComparison.OrdinalIgnoreCase));
+
         private void BuildRows()
         {
             var rows = new List<Row>();
@@ -236,7 +326,7 @@ namespace ModUpdater
                 var row = new Row
                 {
                     Name = r.name, Description = r.description, Notes = r.notes, RemoteVersion = r.version,
-                    Remote = r, Local = local, LocalVersion = local?.Version,
+                    Remote = r, Local = local, LocalVersion = local?.Version, Feed = r.Feed,
                 };
 
                 if (local == null) row.Status = Status.NotInstalled;
@@ -268,7 +358,7 @@ namespace ModUpdater
             foreach (string file in r.files ?? new string[0])
             {
                 string path = Path.Combine(_scriptsDir, file);
-                if (!_remoteSha.TryGetValue(file, out string sha)) continue;
+                if (!_remoteSha.TryGetValue(ShaKey(r.Feed, file), out string sha)) continue;
                 if (!File.Exists(path) || LocalSha(path) != sha) return false;
             }
             return true;
@@ -304,6 +394,7 @@ namespace ModUpdater
             _busy = true;
             var installed = new List<string>();
             var toReload = new List<ModFile>();
+            var needRestart = new List<string>();
             string failure = null;
             try
             {
@@ -313,11 +404,11 @@ namespace ModUpdater
                     foreach (string file in mod.files ?? new string[0])
                     {
                         string localPath = Path.Combine(_scriptsDir, file);
-                        if (_remoteSha.TryGetValue(file, out string sha) && File.Exists(localPath) &&
+                        if (_remoteSha.TryGetValue(ShaKey(mod.Feed, file), out string sha) && File.Exists(localPath) &&
                             LocalSha(localPath) == sha) continue;
 
                         byte[] data = null; string error = null;
-                        yield return Get($"{ApiBase}/{file}?ref={_branch.Value}", "application/vnd.github.raw+json", (t, b, e) => { data = b; error = e; });
+                        yield return Get($"{mod.Feed.Api}/{file}?ref={mod.Feed.Branch}", "application/vnd.github.raw+json", (t, b, e) => { data = b; error = e; }, mod.Feed.Primary);
                         if (error != null || data == null) { failure = $"{file}: {error}"; yield break; }
 
                         // Write to a temp file then move, so ScriptEngine never sees a half-written DLL.
@@ -327,8 +418,8 @@ namespace ModUpdater
                         File.Move(tmp, localPath);
                     }
                     installed.Add(mod.name);
-                    ModFile modFile = FileOf(mod);
-                    if (modFile != null) toReload.Add(modFile);
+                    if (!string.IsNullOrEmpty(mod.restart)) { RestartPending.Add(mod.guid); needRestart.Add(mod.name); } // can't be hot-reloaded safely
+                    else { ModFile modFile = FileOf(mod); if (modFile != null) toReload.Add(modFile); }
                 }
             }
             finally
@@ -344,7 +435,8 @@ namespace ModUpdater
             ScanLocal();
             BuildRows();
             BroadcastVersions();
-            _statusLine = $"Updated: {string.Join(", ", installed)} (reloading)";
+            _statusLine = $"Updated: {string.Join(", ", installed)}" + (toReload.Count > 0 ? " (reloading)" : "");
+            if (needRestart.Count > 0) _statusLine += $"  Restart the game to finish: {string.Join(", ", needRestart)}.";
             Say(_statusLine);
 
             // Reload only the mods we just changed (the others keep running untouched).

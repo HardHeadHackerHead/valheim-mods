@@ -10,7 +10,7 @@ namespace CraftFromChests
     {
         public const string Guid = "com.dhack.craftfromchests";
         public const string Name = "CraftFromChests";
-        public const string Version = "1.3.2";
+        public const string Version = "1.3.3";
 
         internal static ConfigEntry<bool> Enabled;
         internal static ConfigEntry<float> Radius;

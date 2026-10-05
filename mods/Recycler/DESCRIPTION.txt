@@ -1,0 +1,1 @@
+Build a Recycler with the hammer, open it like a crafting station, and recycle old weapons, armor and tools into a share of the materials they were made from. Build Recycler Presses nearby to raise the share.

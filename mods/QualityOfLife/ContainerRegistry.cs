@@ -13,7 +13,7 @@ namespace QualityOfLife
 
         public static void Register(Container c)
         {
-            if (c != null && !All.Contains(c)) All.Add(c);
+            if (c != null && !c.name.StartsWith("piece_recycler") && !All.Contains(c)) All.Add(c); // the Recycler is not a storage chest
         }
 
         /// <summary>Pick up chests that already exist (once, when the mod loads or reloads).</summary>
