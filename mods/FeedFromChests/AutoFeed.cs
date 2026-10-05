@@ -17,11 +17,14 @@ namespace FeedFromChests
         /// <summary>It stops feeding an item once the chests are down to this many of it, so your stock is never used up.</summary>
         public int Reserve = 20;
 
+        /// <summary>The same, for the fuel (coal) a smelter burns. Kept apart because you usually want a different number.</summary>
+        public int FuelReserve = 0;
+
         /// <summary>What the station makes goes into the chests assigned to it (instead of dropping on the ground).</summary>
         public bool Output = true; // on unless someone turns it off (a station nobody has set up still sends output to its chests)
 
-        /// <summary>Format: "on;item,item;output;reserve" (older saves have fewer parts).</summary>
-        public string Encode() => (On ? "1" : "0") + ";" + string.Join(",", Allowed.ToArray()) + ";" + (Output ? "1" : "0") + ";" + Reserve;
+        /// <summary>Format: "on;item,item;output;reserve;fuelreserve" (older saves have fewer parts).</summary>
+        public string Encode() => (On ? "1" : "0") + ";" + string.Join(",", Allowed.ToArray()) + ";" + (Output ? "1" : "0") + ";" + Reserve + ";" + FuelReserve;
 
         public static AutoSetting Parse(string text)
         {
@@ -33,12 +36,13 @@ namespace FeedFromChests
                 foreach (string name in parts[1].Split(new[] { ',' }, System.StringSplitOptions.RemoveEmptyEntries)) setting.Allowed.Add(name);
             if (parts.Length > 2) setting.Output = parts[2] != "0";
             if (parts.Length > 3 && int.TryParse(parts[3], out int reserve)) setting.Reserve = Mathf.Max(0, reserve);
+            if (parts.Length > 4 && int.TryParse(parts[4], out int fuelReserve)) setting.FuelReserve = Mathf.Max(0, fuelReserve);
             return setting;
         }
 
         public AutoSetting Copy()
         {
-            var copy = new AutoSetting { On = On, Output = Output, Reserve = Reserve };
+            var copy = new AutoSetting { On = On, Output = Output, Reserve = Reserve, FuelReserve = FuelReserve };
             foreach (string name in Allowed) copy.Allowed.Add(name);
             return copy;
         }
@@ -149,18 +153,20 @@ namespace FeedFromChests
 
         /// <summary>
         /// A station that has finished something: put it in a chest assigned to that item (by name first, then by kind), nearest first.
-        /// Returns false if there is no such chest with room, and then the game drops it on the ground as usual.
+        /// Returns how many went into chests; whatever is left (no assigned chest, or it is full) the game drops on the ground as usual.
+        /// Each add is checked by counting the chest before and after, so nothing is ever counted as stored that was not.
         /// </summary>
-        public static bool SendOutput(Smelter smelter, string ore, int stack, float radius, System.Action<string> log)
+        public static int SendOutput(Smelter smelter, string ore, int stack, float radius, System.Action<string> log)
         {
-            if (Player.m_localPlayer == null || stack <= 0 || ConversionOf == null) return false;
+            if (Player.m_localPlayer == null || stack <= 0 || ConversionOf == null) return 0;
             AutoSetting setting = Read(smelter);
-            if (!setting.Output) return false;
+            if (!setting.Output) return 0;
 
             object conversion = ConversionOf.Invoke(smelter, new object[] { ore });
             ItemDrop product = conversion != null ? (ItemDrop)AccessTools.Field(conversion.GetType(), "m_to").GetValue(conversion) : null;
-            if (product == null) return false;
+            if (product == null) return 0;
             string name = product.m_itemData.m_shared.m_name;
+            string display = Localization.instance.Localize(name);
             string category = CategoryOf(product.m_itemData.m_shared);
 
             List<Container> nearby = Chests.Near(smelter.transform.position, radius);
@@ -170,22 +176,38 @@ namespace FeedFromChests
                 int wants = Wants(chest, name, category);
                 if (wants > 0) candidates.Add(new KeyValuePair<int, Container>(wants, chest));
             }
-            if (candidates.Count == 0) { log($"{smelter.m_name} made {stack} {Localization.instance.Localize(name)}: none of the {nearby.Count} usable chest(s) within {radius:0} m is assigned to it or to {category}, so it drops on the ground"); Explain(smelter, name, category, radius, log); }
+            if (candidates.Count == 0)
+            {
+                log($"{smelter.m_name} made {stack} {display}: none of the {nearby.Count} usable chest(s) within {radius:0} m is assigned to it or to {category}, so it drops on the ground");
+                Explain(smelter, name, category, radius, log);
+                return 0;
+            }
+
+            int remaining = stack;
             // by name before by kind; Near() already lists the nearest first and OrderByDescending keeps that order within a group
             foreach (var pair in candidates.OrderByDescending(p => p.Key))
             {
+                if (remaining <= 0) break;
                 Container chest = pair.Value;
                 Inventory inventory = chest.GetInventory();
-                if (!inventory.CanAddItem(product.gameObject, stack)) { log($"{smelter.m_name}: an assigned chest has no room for {stack} {Localization.instance.Localize(name)}"); continue; }
+                int max = product.m_itemData.m_shared.m_maxStackSize;
+                int take = Mathf.Min(remaining, max);
+                if (!inventory.CanAddItem(product.gameObject, take)) { log($"{smelter.m_name}: an assigned chest ({Vector3.Distance(smelter.transform.position, chest.transform.position):0} m away) has no room for {take} {display}"); continue; }
 
                 ZNetView view = Chests.ViewOf(chest);
                 if (view != null && !view.IsOwner()) view.ClaimOwnership(); // only the owner can save a chest's contents
-                if (!inventory.AddItem(product.gameObject, stack)) continue;
+
+                int before = inventory.CountItems(name);
+                inventory.AddItem(product.gameObject, take);
+                int added = inventory.CountItems(name) - before;
+                if (added <= 0) { log($"{smelter.m_name}: the chest did not take {take} {display}, so it will drop on the ground"); continue; }
+                if (added < take) log($"{smelter.m_name}: the chest only took {added} of {take} {display}");
+
+                remaining -= added;
                 smelter.m_produceEffects.Create(smelter.transform.position, smelter.transform.rotation);
-                log($"{smelter.m_name} made {stack} {Localization.instance.Localize(name)} and put it in a chest");
-                return true;
+                log($"{smelter.m_name} made {added} {display} and put it in a chest {Vector3.Distance(smelter.transform.position, chest.transform.position):0} m away");
             }
-            return false;
+            return stack - remaining;
         }
 
         private static float _explainedAt = -100f;
@@ -209,6 +231,72 @@ namespace FeedFromChests
             log($"  looking for an assignment to '{name}' or '{category}'; chests with assignments within {radius + 15f:0} m: {withRules}" + (lines.Count > 0 ? " -> " + string.Join(" ;; ", lines.Take(8).ToArray()) : ""));
         }
 
+        // ---- what is loaded into a smelter -------------------------------------------------------
+
+        internal class Inside
+        {
+            public readonly List<KeyValuePair<string, int>> Queue = new List<KeyValuePair<string, int>>(); // ore (prefab name) -> how many are waiting
+            public int QueueSize, MaxOre, MaxFuel, Ready;
+            public float Fuel;
+            public string ReadyName = "";
+        }
+
+        /// <summary>Read the station's own saved state: the queue of ore, the fuel, and what has been made but not collected.</summary>
+        public static Inside Look(Smelter s)
+        {
+            var inside = new Inside { MaxOre = s.m_maxOre, MaxFuel = s.m_maxFuel };
+            ZNetView view = s != null ? s.GetComponent<ZNetView>() : null;
+            if (view == null || !view.IsValid()) return inside;
+            ZDO zdo = view.GetZDO();
+
+            inside.QueueSize = zdo.GetInt(ZDOVars.s_queued, 0);
+            var order = new List<string>();
+            var counts = new Dictionary<string, int>();
+            for (int i = 0; i < inside.QueueSize; i++)
+            {
+                string name = zdo.GetString("item" + i, "");
+                if (name.Length == 0) continue;
+                if (!counts.ContainsKey(name)) { counts[name] = 0; order.Add(name); }
+                counts[name]++;
+            }
+            foreach (string name in order) inside.Queue.Add(new KeyValuePair<string, int>(name, counts[name]));
+
+            inside.Fuel = zdo.GetFloat(ZDOVars.s_fuel, 0f);
+            inside.Ready = zdo.GetInt(ZDOVars.s_spawnAmount, 0);
+            string readyOre = zdo.GetString(ZDOVars.s_spawnOre, "");
+            if (inside.Ready > 0 && readyOre.Length > 0 && ConversionOf != null)
+            {
+                object conversion = ConversionOf.Invoke(s, new object[] { readyOre });
+                ItemDrop product = conversion != null ? (ItemDrop)AccessTools.Field(conversion.GetType(), "m_to").GetValue(conversion) : null;
+                if (product != null) inside.ReadyName = Localization.instance.Localize(product.m_itemData.m_shared.m_name);
+            }
+            return inside;
+        }
+
+        private static ItemDrop DropOf(string prefabName)
+        {
+            GameObject go = ObjectDB.instance != null ? ObjectDB.instance.GetItemPrefab(prefabName) : null;
+            return go != null ? go.GetComponent<ItemDrop>() : null;
+        }
+
+        public static string NameOf(string prefabName)
+        {
+            ItemDrop drop = DropOf(prefabName);
+            return drop != null ? Localization.instance.Localize(drop.m_itemData.m_shared.m_name) : prefabName;
+        }
+
+        public static Sprite IconOf(string prefabName) => DropOf(prefabName)?.m_itemData.GetIcon();
+
+        /// <summary>One line: "Inside: 4 Tin Ore, 2 Copper Ore   Fuel 8/20   Ready: 3 Tin".</summary>
+        public static string InsideLine(Inside i)
+        {
+            string contents = i.Queue.Count > 0 ? string.Join(", ", i.Queue.Select(q => $"{q.Value} {NameOf(q.Key)}").ToArray()) : "nothing loaded";
+            string line = "Inside: " + contents;
+            if (i.MaxFuel > 0) line += $"   Fuel {Mathf.Floor(i.Fuel):0}/{i.MaxFuel}";
+            if (i.Ready > 0) line += $"   Ready: {i.Ready} {i.ReadyName}";
+            return line;
+        }
+
         /// <summary>The text added to the station's hover text: whether it is on, and how to change it.</summary>
         private static float _hoverAt;
         private static Smelter _hoverFor;
@@ -220,7 +308,7 @@ namespace FeedFromChests
             {
                 _hoverFor = smelter;
                 _hoverAt = Time.unscaledTime;
-                _hoverText = $"\n<size=14>Auto-feed from chests: {(Read(smelter).On ? "<color=#8fe388>ON</color>" : "off")}</size>";
+                _hoverText = $"\n<size=14>{InsideLine(Look(smelter))}</size>\n<size=14>Auto-feed from chests: {(Read(smelter).On ? "<color=#8fe388>ON</color>" : "off")}</size>";
             }
             return _hoverText;
         }
@@ -231,16 +319,24 @@ namespace FeedFromChests
         /// <summary>One automatic top-up of a station: fuel first, then one item. Does nothing if it is full or the chests have none.</summary>
         internal void AutoStep(Player player, Smelter smelter, StationInfo info, AutoSetting setting)
         {
-            List<Container> chests = Chests.Near(info.Position, _radius.Value);
-            if (chests.Count == 0) return;
+            List<Container> chests = Chests.Near(info.Position, _autoRadius.Value);
+            if (chests.Count == 0) { Why(smelter, $"no usable chest within {_autoRadius.Value:0} m of it, so nothing to feed from"); return; }
 
             AutoFeed.Silent = true;
             try
             {
-                if (info.Fuel != null && smelter.m_maxFuel > 0 && AutoFeedFuel(smelter) < smelter.m_maxFuel - 1)
+                if (info.Fuel != null && smelter.m_maxFuel > 0)
                 {
+                    float level = AutoFeedFuel(smelter);
                     string fuel = info.Fuel.m_itemData.m_shared.m_name;
-                    if (setting.Allowed.Contains(fuel) && Chests.Count(chests, fuel) > setting.Reserve) AddOne(player, info, info.Fuel, true, chests, chestsOnly: true);
+                    if (level < smelter.m_maxFuel - 1)
+                    {
+                        int stock = Chests.Count(chests, fuel);
+                        bool allowed = setting.Allowed.Contains(fuel);
+                        bool added = allowed && stock > setting.FuelReserve && AddOne(player, info, info.Fuel, true, chests, chestsOnly: true);
+                        if (!added)
+                            Why(smelter, $"fuel is {level:0}/{smelter.m_maxFuel} but it did not add {Localization.instance.Localize(fuel)}: ticked={allowed}, in the {chests.Count} chest(s) within {_autoRadius.Value:0} m there are {stock}, and it keeps at least {setting.FuelReserve}");
+                    }
                 }
 
                 if (smelter.m_maxOre > 0 && AutoFeedQueue(smelter) < smelter.m_maxOre)
@@ -260,6 +356,16 @@ namespace FeedFromChests
             }
         }
 
+        private readonly Dictionary<Smelter, float> _whyAt = new Dictionary<Smelter, float>();
+
+        /// <summary>Say, now and then, why a station that has room was not topped up (so "it isn't feeding" can be answered from the log).</summary>
+        private void Why(Smelter smelter, string reason)
+        {
+            if (_whyAt.TryGetValue(smelter, out float last) && Time.unscaledTime - last < 20f) return;
+            _whyAt[smelter] = Time.unscaledTime;
+            Logger.LogInfo($"Auto-feed, {smelter.m_name}: {reason}");
+        }
+
         private static float AutoFeedFuel(Smelter s) => (float)AccessTools.Method(typeof(Smelter), "GetFuel").Invoke(s, null);
         private static int AutoFeedQueue(Smelter s) => (int)AccessTools.Method(typeof(Smelter), "GetQueueSize").Invoke(s, null);
     }
@@ -274,11 +380,17 @@ namespace FeedFromChests
     [HarmonyPatch(typeof(Smelter), "Spawn")]
     internal static class Smelter_Spawn
     {
-        private static bool Prefix(Smelter __instance, string ore, int stack)
+        private static bool Prefix(Smelter __instance, string ore, ref int stack)
         {
             Plugin plugin = Plugin.Instance;
             if (plugin == null || !plugin.AutoEnabled) return true;
-            try { return !AutoFeed.SendOutput(__instance, ore, stack, plugin.OutputRadius, plugin.Info); }
+            try
+            {
+                int sent = AutoFeed.SendOutput(__instance, ore, stack, plugin.OutputRadius, plugin.Info);
+                if (sent >= stack) return false; // all of it went into chests
+                stack -= sent;                   // the rest (if any) is dropped by the game as usual
+                return true;
+            }
             catch (System.Exception e) { plugin.Log("Could not send output to a chest, dropping it instead: " + e.Message); return true; }
         }
     }

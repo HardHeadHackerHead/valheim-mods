@@ -1,0 +1,9 @@
+Share the map you uncover with everyone in the world, live, as you run through the fog of war.
+
+How it works
+- The cartography table only shares a map by hand: you write your map to the table, then others read it one visit at a time. This mod does it automatically instead.
+- Every few seconds, the new parts of the map you uncovered are sent to the other players and appear on their maps.
+- When someone joins, one of the players already there sends them the whole map, and the newcomer sends theirs back, so everyone ends up with the same explored area.
+- Only the explored area is shared, not pins. Players without the mod do not take part.
+
+Settings: turn sending or receiving on or off, and how often updates go out.

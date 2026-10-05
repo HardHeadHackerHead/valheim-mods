@@ -1,0 +1,1 @@
+First version: live sharing of the explored map between players, plus a full sync when someone joins.

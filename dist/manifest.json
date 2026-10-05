@@ -42,14 +42,27 @@
                  {
                      "guid":  "com.dhack.feedfromchests",
                      "name":  "FeedFromChests",
-                     "version":  "1.3.3",
-                     "description":  "Smelters, kilns, cooking racks, fires and fermenters can use items from nearby chests, and smelters and kilns can run themselves.\n\nHow it works\n- Press E at a smelter, kiln or furnace to open its menu, whatever you are carrying. Add 1 and Fill put items in by hand; the Auto-feed panel at the top sets the station up to feed itself.\n- Auto-feed: turn it on, tick which items it may use (for a kiln, just plain wood to start with, and tick fine wood, core wood and so on if you want them used), and it keeps itself stocked from the chests nearby. Coal comes first, then the lowest-tier item you ticked.\n- Keep at least: it stops feeding an item once the chests are down to the amount you set (20 to start), so it never uses all of your stock.\n- Output to chests: what the station makes goes into the chests assigned to that item (the chest assign menu from QualityOfLife, K), nearest first. With none assigned it drops on the ground as usual.\n- Other stations: press E when you carry nothing it takes and a chest has some, and one is added for you (a menu opens if there is a choice). Turn on AlwaysOpenMenu in the config to always get the menu.\n- Nothing is created from nothing: every item comes out of a chest or your inventory, and a station that is full is left alone.\n\nSettings: range (default 15 m), auto-feed on or off, how often it tops up, how near you must be for it to run, and the Fill limit.",
-                     "notes":  "Escape now closes the menu without opening the game\u0027s pause menu.",
+                     "version":  "1.3.5",
+                     "description":  "Smelters, kilns, cooking racks, fires and fermenters can use items from nearby chests, and smelters and kilns can run themselves.\n\nHow it works\n- Press E at a smelter, kiln or furnace to open its menu, whatever you are carrying. Add 1 and Fill put items in by hand; the Auto-feed panel at the top sets the station up to feed itself.\n- The menu also shows what is loaded inside: the ore waiting in the queue, the fuel, and anything ready to collect. The same line appears when you look at the smelter.\n- Auto-feed: turn it on, tick which items it may use (for a kiln, just plain wood to start with, and tick fine wood, core wood and so on if you want them used), and it keeps itself stocked from the chests nearby. Coal comes first, then the lowest-tier item you ticked.\n- Keep at least: it stops feeding an item once the chests are down to the amount you set (20 to start), so it never uses all of your stock.\n- Output to chests: what the station makes goes into the chests assigned to that item (the chest assign menu from QualityOfLife, K), nearest first. With none assigned it drops on the ground as usual.\n- Other stations: press E when you carry nothing it takes and a chest has some, and one is added for you (a menu opens if there is a choice). Turn on AlwaysOpenMenu in the config to always get the menu.\n- Nothing is created from nothing: every item comes out of a chest or your inventory, and a station that is full is left alone.\n\nSettings: range (default 15 m), auto-feed on or off, how often it tops up, how near you must be for it to run, and the Fill limit.",
+                     "notes":  "Smelters now find coal in chests up to 30 m away (FeedRadius), and the fuel has its own \"keep at least\" number, separate from the ore and wood minimum (it starts at 0). The log now says why a smelter that has room was not topped up. You can see what is loaded inside a smelter, in its menu and when you look at it.",
                      "restart":  "",
                      "cover":  "FeedFromChests.cover.png",
                      "files":  [
                                    "FeedFromChests.dll",
                                    "FeedFromChests.pdb"
+                               ]
+                 },
+                 {
+                     "guid":  "com.dhack.mapshare",
+                     "name":  "MapShare",
+                     "version":  "1.0.0",
+                     "description":  "Share the map you uncover with everyone in the world, live, as you run through the fog of war.\n\nHow it works\n- The cartography table only shares a map by hand: you write your map to the table, then others read it one visit at a time. This mod does it automatically instead.\n- Every few seconds, the new parts of the map you uncovered are sent to the other players and appear on their maps.\n- When someone joins, one of the players already there sends them the whole map, and the newcomer sends theirs back, so everyone ends up with the same explored area.\n- Only the explored area is shared, not pins. Players without the mod do not take part.\n\nSettings: turn sending or receiving on or off, and how often updates go out.",
+                     "notes":  "First version: live sharing of the explored map between players, plus a full sync when someone joins.",
+                     "restart":  "",
+                     "cover":  "MapShare.cover.png",
+                     "files":  [
+                                   "MapShare.dll",
+                                   "MapShare.pdb"
                                ]
                  },
                  {
@@ -68,9 +81,9 @@
                  {
                      "guid":  "com.dhack.qualityoflife",
                      "name":  "QualityOfLife",
-                     "version":  "1.3.8",
+                     "version":  "1.3.9",
                      "description":  "Small controls that make the game nicer to play, each with its own switch.\n\nWhat is in it\n- Q: build a quick set from items you hover in your inventory; outside the inventory it swaps to the set and back.\n- B: jump into construction mode with your hammer, and back to what you had.\n- Stack to chests: a button under your inventory moves matching items into nearby chests, with Undo and sounds.\n- K opens the chest assignment menu (choose what each chest receives); L locks items so they are never stacked.\nKeys are configurable. Q and B work while you are running.",
-                     "notes":  "Escape now closes the menu without opening the game\u0027s pause menu.",
+                     "notes":  "Stacking now says how far away the chest it used is, writes where everything went to the log, and checks that nothing went missing (it warns on screen if it ever does).",
                      "restart":  "",
                      "cover":  "QualityOfLife.cover.png",
                      "files":  [
@@ -81,9 +94,9 @@
                  {
                      "guid":  "com.dhack.recycler",
                      "name":  "Recycler",
-                     "version":  "1.0.3",
+                     "version":  "1.0.4",
                      "description":  "Build a Recycler with the hammer and turn old gear back into a share of the materials it was made from.\n\nHow it works\n- Look at the Recycler and press E: pick a weapon, armor piece or tool from your inventory, see what it would return, and recycle it.\n- You get about half of the materials back (50% by default; leftovers are a chance of one more). Recycler Presses built within 8 m raise this to 60% and then 70%.\n- The gear must be one you could craft, and the crafting station it was made at (and its level) must be nearby. Equipped or upgraded gear asks for a second click. Items locked with L are skipped.\n- The Recycler needs only bronze-tier materials (fine wood, bronze and stone), so you can build it as soon as you have bronze. Each Press costs iron, bronze and stone, so the better refunds come with iron. Restart the game after installing or updating it.\n\nSettings: refund percentages, chance rounding, which gear types are allowed.",
-                     "notes":  "Escape now closes the menu without opening the game\u0027s pause menu.",
+                     "notes":  "A much better look: a stone plinth, plank body with dark corner posts, iron bands and rivets, a glowing teal window, a hopper with toothed rollers, a crank wheel, a chute and a chimney, all in the game\u0027s own wood, stone and metal materials. The Press is redone to match.",
                      "restart":  "It adds new build pieces. Restart the game after updating so they register cleanly.",
                      "cover":  "Recycler.cover.png",
                      "files":  [

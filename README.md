@@ -93,8 +93,10 @@ A buildable Recycler that turns old weapons, armor and tools back into a share o
 </td>
 <td valign="top">
 
-### 🧪 Your mod here
-Want your own mods in the manager? See [Make your own mod repo](#-make-your-own-mod-repo).
+### 🗺️ MapShare
+<img src="dist/MapShare.cover.png" alt="MapShare" width="100%">
+
+Share the map you uncover with everyone in the world, live, as you run through the fog. New players get the whole map when they join.
 
 </td>
 </tr>

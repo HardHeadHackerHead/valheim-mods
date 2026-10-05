@@ -1,0 +1,6 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <AssemblyName>MapShare</AssemblyName>
+    <RootNamespace>MapShare</RootNamespace>
+  </PropertyGroup>
+</Project>

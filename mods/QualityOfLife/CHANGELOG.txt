@@ -1,1 +1,1 @@
-Escape now closes the menu without opening the game's pause menu.
+Stacking now says how far away the chest it used is, writes where everything went to the log, and checks that nothing went missing (it warns on screen if it ever does).

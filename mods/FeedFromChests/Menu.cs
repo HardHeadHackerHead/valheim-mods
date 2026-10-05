@@ -27,6 +27,7 @@ namespace FeedFromChests
         // automatic feeding (smelters, kilns, furnaces)
         private class AutoItem { public string Name, Display; public ItemDrop Drop; public bool IsFuel; }
         private bool _supportsAuto;
+        private AutoFeed.Inside _inside = new AutoFeed.Inside();
         private AutoSetting _auto = new AutoSetting();
         private List<AutoItem> _autoItems = new List<AutoItem>();
 
@@ -141,6 +142,15 @@ namespace FeedFromChests
             _auto = setting;
         }
 
+        private void AdjustFuelReserve(int delta)
+        {
+            if (_station == null || !_station.Alive || !_supportsAuto) return;
+            AutoSetting setting = AutoFeed.Read(_station.Component);
+            setting.FuelReserve = Mathf.Clamp(setting.FuelReserve + delta, 0, 9999);
+            AutoFeed.Write(_station.Component, setting);
+            _auto = setting;
+        }
+
         private void ToggleOutput()
         {
             if (_station == null || !_station.Alive || !_supportsAuto) return;
@@ -163,7 +173,11 @@ namespace FeedFromChests
         private void RefreshRowsCore(Player player)
         {
             _nextRefresh = Time.unscaledTime + 0.5f;
-            if (_supportsAuto && _station != null && _station.Alive) _auto = AutoFeed.Read(_station.Component); // others may have changed it
+            if (_supportsAuto && _station != null && _station.Alive)
+            {
+                _auto = AutoFeed.Read(_station.Component); // others may have changed it
+                _inside = AutoFeed.Look((Smelter)_station.Component);
+            }
             List<Container> chests = Chests.Near(_station.Position, _radius.Value);
             Inventory inventory = player.GetInventory();
 
@@ -230,7 +244,7 @@ namespace FeedFromChests
             GUI.matrix = Matrix4x4.Scale(new Vector3(s, s, 1f));
             float sw = Screen.width / s, sh = Screen.height / s;
 
-            float w = Mathf.Min(520f, sw - 40f), h = Mathf.Min(_supportsAuto ? 760f : 520f, sh - 60f);
+            float w = Mathf.Min(520f, sw - 40f), h = Mathf.Min(_supportsAuto ? 900f : 520f, sh - 60f);
             if (!_placed) { _rect = new Rect((sw - w) / 2f, (sh - h) / 2f, w, h); _placed = true; }
             _rect.width = w; _rect.height = h;
 
@@ -256,7 +270,7 @@ namespace FeedFromChests
             GUILayout.Label(_subtitle, _dim);
             GUILayout.Space(6);
 
-            if (_supportsAuto) DrawAutoPanel();
+            if (_supportsAuto) { DrawInsidePanel(); DrawAutoPanel(); }
 
             Player player = Player.m_localPlayer;
             if (_rows.Count == 0) GUILayout.Label("Nothing to add by hand right now: none of what this takes is in your inventory or the nearby chests.", _dim);
@@ -292,6 +306,30 @@ namespace FeedFromChests
             GUI.DragWindow(new Rect(0, 0, w, 40));
         }
 
+        /// <summary>What is loaded into the station right now: the ore waiting to be processed, the fuel, and what is ready to collect.</summary>
+        private void DrawInsidePanel()
+        {
+            AutoFeed.Inside i = _inside;
+            GUILayout.Label("Inside", _text);
+            GUILayout.BeginHorizontal(GUILayout.Height(30));
+            if (i.Queue.Count == 0) GUILayout.Label("Nothing is loaded.", _dim);
+            foreach (var entry in i.Queue)
+            {
+                Rect icon = GUILayoutUtility.GetRect(28f, 28f, GUILayout.Width(28), GUILayout.Height(28));
+                DrawIcon(icon, AutoFeed.IconOf(entry.Key));
+                GUILayout.Label($"{entry.Value} {AutoFeed.NameOf(entry.Key)}", _text, GUILayout.ExpandWidth(false));
+                GUILayout.Space(10);
+            }
+            GUILayout.FlexibleSpace();
+            GUILayout.EndHorizontal();
+
+            string status = $"Loaded {i.QueueSize}/{i.MaxOre}";
+            if (i.MaxFuel > 0) status += $"     Fuel {Mathf.Floor(i.Fuel):0}/{i.MaxFuel}";
+            if (i.Ready > 0) status += $"     Ready to collect: {i.Ready} {i.ReadyName}";
+            GUILayout.Label(status, _dim);
+            GUILayout.Space(8);
+        }
+
         /// <summary>The auto-feed switch and the list of items it may use.</summary>
         private void DrawAutoPanel()
         {
@@ -301,12 +339,12 @@ namespace FeedFromChests
             if (GUILayout.Button(_auto.On ? "ON" : "OFF", _auto.On ? _buttonOn : _button, GUILayout.Width(80), GUILayout.Height(28))) _pending = ToggleAuto;
             GUILayout.EndHorizontal();
             GUILayout.Label(_auto.On
-                ? $"Keeps this stocked from chests within {_radius.Value:0} m, by itself. It only uses the items ticked below, plain ones first."
+                ? $"Keeps this stocked from chests within {_autoRadius.Value:0} m, by itself. It only uses the items ticked below, plain ones first."
                 : "Turn on to keep this stocked from nearby chests without pressing anything. You choose which items it may use.", _dim);
 
             GUILayout.Space(2);
             GUILayout.BeginHorizontal();
-            GUILayout.Label("Keep at least this many in the chests:", _dim, GUILayout.Width(210));
+            GUILayout.Label("Keep at least this many of the items:", _dim, GUILayout.Width(250));
             if (GUILayout.Button("-10", _button, GUILayout.Width(44), GUILayout.Height(24))) _pending = () => AdjustReserve(-10);
             if (GUILayout.Button("-1", _button, GUILayout.Width(36), GUILayout.Height(24))) _pending = () => AdjustReserve(-1);
             GUILayout.Label(_auto.Reserve.ToString(), _text, GUILayout.Width(50));
@@ -315,6 +353,18 @@ namespace FeedFromChests
             GUILayout.FlexibleSpace();
             GUILayout.EndHorizontal();
             GUILayout.Label("It stops feeding an item once the chests are down to this amount, so it never uses all of your stock.", _dim);
+            if (_station != null && _station.Fuel != null)
+            {
+                GUILayout.BeginHorizontal();
+                GUILayout.Label($"Keep at least this much {Localization.instance.Localize(_station.Fuel.m_itemData.m_shared.m_name)} (fuel):", _dim, GUILayout.Width(250));
+                if (GUILayout.Button("-10", _button, GUILayout.Width(44), GUILayout.Height(24))) _pending = () => AdjustFuelReserve(-10);
+                if (GUILayout.Button("-1", _button, GUILayout.Width(36), GUILayout.Height(24))) _pending = () => AdjustFuelReserve(-1);
+                GUILayout.Label(_auto.FuelReserve.ToString(), _text, GUILayout.Width(50));
+                if (GUILayout.Button("+1", _button, GUILayout.Width(36), GUILayout.Height(24))) _pending = () => AdjustFuelReserve(1);
+                if (GUILayout.Button("+10", _button, GUILayout.Width(44), GUILayout.Height(24))) _pending = () => AdjustFuelReserve(10);
+                GUILayout.FlexibleSpace();
+                GUILayout.EndHorizontal();
+            }
 
             GUILayout.Space(2);
             GUILayout.BeginHorizontal();

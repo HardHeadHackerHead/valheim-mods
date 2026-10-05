@@ -23,12 +23,12 @@ namespace FeedFromChests
     {
         public const string Guid = "com.dhack.feedfromchests";
         public const string Name = "FeedFromChests";
-        public const string Version = "1.3.3";
+        public const string Version = "1.3.5";
 
         internal static Plugin Instance;
 
         private ConfigEntry<bool> _enabled, _autoFeed, _alwaysOpenMenu, _stationAuto;
-        private ConfigEntry<float> _radius, _autoInterval, _autoRange, _outputRadius;
+        private ConfigEntry<float> _radius, _autoInterval, _autoRange, _outputRadius, _autoRadius;
         private ConfigEntry<int> _fillLimit;
 
         private Harmony _harmony;
@@ -52,6 +52,7 @@ namespace FeedFromChests
 
             _stationAuto = Config.Bind("AutoFeed", "Enabled", true,
                 "Allow smelters, kilns and furnaces to be set to keep themselves stocked from nearby chests (set up in the station's menu).");
+            _autoRadius = Config.Bind("AutoFeed", "FeedRadius", 30f, "How far (in metres) from a smelter or kiln a chest can be and still be used to keep it stocked automatically.");
             _outputRadius = Config.Bind("AutoFeed", "OutputRadius", 30f, "How far (in metres) from a smelter or kiln a chest can be and still receive what it makes.");
             _autoInterval = Config.Bind("AutoFeed", "Interval", 1f, "Seconds between automatic top-ups of each station.");
             _autoRange = Config.Bind("AutoFeed", "PlayerRange", 40f,

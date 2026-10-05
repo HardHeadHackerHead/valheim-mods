@@ -151,6 +151,13 @@ namespace QualityOfLife
             var used = new HashSet<Container>();
             var record = new List<Moved>(); // for Undo
 
+            // A safety check: count every kind of item we are about to move (yours plus the chests') now and again afterwards, so that
+            // if anything ever goes missing it is noticed, reported, and written to the log.
+            int Total(string itemName) => inventory.CountItems(itemName) + chests.Sum(c => c.GetInventory().CountItems(itemName));
+            var totalsBefore = new Dictionary<string, int>();
+            foreach (ItemDrop.ItemData item in inventory.GetAllItems())
+                if (!IsProtected(player, item) && !totalsBefore.ContainsKey(item.m_shared.m_name)) totalsBefore[item.m_shared.m_name] = Total(item.m_shared.m_name);
+
             foreach (ItemDrop.ItemData item in inventory.GetAllItems().ToList())
             {
                 if (IsProtected(player, item)) continue;
@@ -193,9 +200,31 @@ namespace QualityOfLife
             // Undo exists only if this stack really moved something; a new stack replaces the previous Undo.
             _undo = record.Count > 0 ? record : null;
 
-            Tell(player, moved > 0
-                ? $"Stacked {moved} item(s) into {used.Count} chest(s)"
-                : "Nothing to stack: no nearby chest is assigned, or holds, any of your unlocked items.");
+            // Where did it all go? (also in the log), and did anything go missing?
+            Vector3 here = player.transform.position;
+            var where = new List<string>();
+            foreach (var group in record.GroupBy(r => r.Item.m_shared.m_name))
+            {
+                string display = Localization.instance.Localize(group.Key);
+                string chestsText = string.Join(", ", group.Select(r => $"{r.Item.m_stack} in a chest {Vector3.Distance(here, r.Chest.transform.position):0} m away").ToArray());
+                where.Add($"{display}: {chestsText}");
+            }
+            if (where.Count > 0) Logger.LogInfo("Stacked: " + string.Join("; ", where.ToArray()));
+
+            int missing = 0;
+            foreach (var kv in totalsBefore)
+            {
+                int now = Total(kv.Key);
+                if (now >= kv.Value) continue;
+                missing += kv.Value - now;
+                Logger.LogError($"STACK LOST ITEMS: {Localization.instance.Localize(kv.Key)} had {kv.Value} (inventory + nearby chests) before and {now} after");
+            }
+
+            string summary = moved > 0
+                ? $"Stacked {moved} item(s) into {used.Count} chest(s)" + (record.Count > 0 ? $" ({record.Select(r => Vector3.Distance(here, r.Chest.transform.position)).Min():0} m away)" : "")
+                : "Nothing to stack: no nearby chest is assigned, or holds, any of your unlocked items.";
+            if (missing > 0) summary += $"   WARNING: {missing} item(s) went missing, see the log";
+            Tell(player, summary);
 
             if (moved > 0) PlayChestSounds(used, opening: false);
         }

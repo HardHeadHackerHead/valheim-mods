@@ -1,1 +1,1 @@
-Escape now closes the menu without opening the game's pause menu.
+Smelters now find coal in chests up to 30 m away (FeedRadius), and the fuel has its own "keep at least" number, separate from the ore and wood minimum (it starts at 0). The log now says why a smelter that has room was not topped up. You can see what is loaded inside a smelter, in its menu and when you look at it.

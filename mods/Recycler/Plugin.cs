@@ -18,7 +18,7 @@ namespace Recycler
     {
         public const string Guid = "com.dhack.recycler";
         public const string Name = "Recycler";
-        public const string Version = "1.0.3";
+        public const string Version = "1.0.4";
         public const string RecyclerPrefab = "piece_recycler";
         public const string PressPrefab = "piece_recycler_press";
 
@@ -73,12 +73,13 @@ namespace Recycler
                 _holder.SetActive(false); // keeps the copies from waking up as real objects
                 Object.DontDestroyOnLoad(_holder);
                 Material mat = source.GetComponentInChildren<Renderer>(true).sharedMaterial;
+                Look.Harvest(scene, mat); // the game's own wood, stone and metal materials
 
                 Prefabs.Add(Make(RecyclerPrefab, source, mat, "Recycler", "Turns old gear back into a share of its crafting materials. Presses nearby raise the share.",
-                    Model.Recycler, Model.RecyclerHitCenter, Model.RecyclerHitSize, typeof(RecyclerStation),
+                    true, Model.RecyclerHitCenter, Model.RecyclerHitSize, typeof(RecyclerStation),
                     Req("FineWood", 10), Req("Bronze", 8), Req("Stone", 10)));
                 Prefabs.Add(Make(PressPrefab, source, mat, "Recycler Press", "Place within 8 m of a Recycler to raise the share it returns. Up to two count.",
-                    Model.Press, Model.PressHitCenter, Model.PressHitSize, typeof(RecyclerPress),
+                    false, Model.PressHitCenter, Model.PressHitSize, typeof(RecyclerPress),
                     Req("Iron", 15), Req("Bronze", 10), Req("Stone", 10)));
             }
 
@@ -92,7 +93,7 @@ namespace Recycler
             }
         }
 
-        private static GameObject Make(string prefabName, GameObject source, Material mat, string title, string description, Model.Part[] parts,
+        private static GameObject Make(string prefabName, GameObject source, Material mat, string title, string description, bool recycler,
                                        Vector3 hitCenter, Vector3 hitSize, System.Type logic, params Piece.Requirement[] cost)
         {
             GameObject go = Object.Instantiate(source, _holder.transform);
@@ -100,7 +101,7 @@ namespace Recycler
             Container container = go.GetComponent<Container>();
             if (container != null) Object.DestroyImmediate(container); // these are not storage
 
-            Model.Build(go, mat, parts, hitCenter, hitSize);
+            Model.Build(go, mat, recycler, hitCenter, hitSize);
 
             Piece piece = go.GetComponent<Piece>();
             piece.m_name = title;
