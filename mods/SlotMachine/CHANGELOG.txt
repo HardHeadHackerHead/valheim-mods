@@ -1,0 +1,1 @@
+First release: a buildable slot machine with three reels, a lever, a payout tray and a Valheim symbol set.

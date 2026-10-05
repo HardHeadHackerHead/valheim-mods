@@ -18,7 +18,7 @@ namespace Recycler
     {
         public const string Guid = "com.dhack.recycler";
         public const string Name = "Recycler";
-        public const string Version = "1.0.4";
+        public const string Version = "1.0.5";
         public const string RecyclerPrefab = "piece_recycler";
         public const string PressPrefab = "piece_recycler_press";
 
@@ -108,6 +108,8 @@ namespace Recycler
             piece.m_description = description;
             piece.m_category = Piece.PieceCategory.Misc;
             piece.m_resources = cost;
+            Sprite picture = Icon.Make(go); // the build menu shows the Recycler itself, not the chest it was copied from
+            if (picture != null) piece.m_icon = picture;
             go.AddComponent(logic);
             return go;
         }

@@ -114,7 +114,25 @@ A Gear panel next to your inventory: Head, Chest, Legs, Cape, Belt, Trinket, Amm
 ### 🌀 PortalHub
 <img src="dist/PortalHub.cover.png" alt="PortalHub" width="100%">
 
-Press **E** on a portal and pick where it goes from a list of every portal in the world: nearest first, searchable, with favourites. One click links it both ways, and no more matching names on two portals. (Install it on the host too.)
+Press **E** on a portal and pick where it goes from a list of every portal in the world: nearest first, searchable, with favourites. Every portal shows on the map with lines between linked ones. One click links it both ways, and no more matching names on two portals. (Install it on the host too.)
+
+</td>
+</tr>
+<tr>
+<td valign="top">
+
+### 📜 BountyBoard
+<img src="dist/BountyBoard.cover.png" alt="BountyBoard" width="100%">
+
+A buildable notice board that posts new jobs every day: hunt creatures, slay starred ones or bring in loot, and get paid in coins. Jobs follow how far you have got, and your rank raises the pay.
+
+</td>
+<td valign="top">
+
+### 🎰 SlotMachine
+<img src="dist/SlotMachine.cover.png" alt="SlotMachine" width="100%">
+
+Odin's Fortune: build a slot machine, put coins in, pull the lever and watch three reels spin. Wins are spat out of the tray. It pays back about 93% over time, so it is for fun.
 
 </td>
 </tr>
@@ -128,6 +146,8 @@ Press **E** on a portal and pick where it goes from a list of every portal in th
 | **Q** | QualityOfLife | Build a quick set (inventory open) / swap to it and back |
 | **B** | QualityOfLife | Jump into construction mode with your hammer, and back |
 | **K** / **L** | QualityOfLife | Assign what a chest receives / lock an item |
+| **E** at a Bounty Board | BountyBoard | Read the day's notices, take a contract, hand one in |
+| **E** / alternate-use + **E** at a slot machine | SlotMachine | Pull the lever / change the bet |
 | **E** at a portal | PortalHub | Open the portal menu and choose where it goes |
 | **P** | QualityOfLife | Tap or hold next to a boat (not in it) to push it where you look |
 | **Z** / **X** / **C** / **V** | GearSlots | Use what is in Quick slot 1 to 4 (equip a weapon or tool, drink a potion) |

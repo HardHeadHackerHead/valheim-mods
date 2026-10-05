@@ -1,1 +1,1 @@
-A much better look: a stone plinth, plank body with dark corner posts, iron bands and rivets, a glowing teal window, a hopper with toothed rollers, a crank wheel, a chute and a chimney, all in the game's own wood, stone and metal materials. The Press is redone to match.
+The build menu now shows the Recycler and the Press themselves instead of a chest.

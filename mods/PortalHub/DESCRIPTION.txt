@@ -3,7 +3,8 @@ Portals you can actually use: press E on a portal and pick where it goes from a 
 What is in it
 - The list shows every portal in the world, nearest first, with its biome and distance. Search it, sort it by name, or star the ones you use most to keep them at the top.
 - One click links this portal to the one you pick, and (by default) links that one back, so there is no more matching names on both ends.
-- Look at a portal and it tells you where it goes. A Map button next to each portal opens the map at that spot.
-- You can still rename a portal from the menu. Portals you never choose a destination for work the old way, by matching names, so nothing you built breaks.
+- Every portal shows on the map with its name, and the big map draws a line from each portal to where it goes (an arrow when it only goes one way). A Map button next to each portal in the menu opens the map at that spot.
+- Look at a portal and it tells you where it goes.
+- Rename a portal right in the menu. Portals you never choose a destination for work the old way, by matching names, so nothing you built breaks.
 - Teleport rules are unchanged: you still cannot carry ores or other blocked items through a portal.
 - Needs to be installed on the host's game (and on yours to use the menu). Players without it can still walk through linked portals.

@@ -24,7 +24,7 @@ namespace PortalHub
     {
         public const string Guid = "com.dhack.portalhub";
         public const string Name = "PortalHub";
-        public const string Version = "1.0.0";
+        public const string Version = "1.1.0";
 
         internal static Plugin Instance;
 
@@ -44,6 +44,7 @@ namespace PortalHub
             _linkBothWays = Config.Bind("Menu", "LinkBothWays", true, "Picking a destination also links that portal back to this one.");
             _favorites = Config.Bind("Menu", "Favorites", "", "Portals you starred (managed by the menu; you do not need to edit this).");
 
+            BindMapConfig();
             _awakeFrame = Time.frameCount;
             _harmony = new Harmony(Guid);
             _harmony.PatchAll();
@@ -57,6 +58,7 @@ namespace PortalHub
         private void OnDestroy()
         {
             WindowOpen = false;
+            ClearPins(Minimap.instance);
             UnregisterRpc();
             _harmony?.UnpatchSelf();
             DestroyStyles();
@@ -67,6 +69,7 @@ namespace PortalHub
         {
             UpdateNetwork();
             UpdateWindow();
+            UpdateMap();
         }
 
         private void Tell(string message)

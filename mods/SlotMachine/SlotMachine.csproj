@@ -1,0 +1,11 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <AssemblyName>SlotMachine</AssemblyName>
+    <RootNamespace>SlotMachine</RootNamespace>
+  </PropertyGroup>
+  <ItemGroup>
+    <!-- the build-menu picture (used if the game cannot draw one itself) and the pictures on the reels -->
+    <EmbeddedResource Include="icon.png" LogicalName="icon.png" />
+    <EmbeddedResource Include="symbols.png" LogicalName="symbols.png" />
+  </ItemGroup>
+</Project>

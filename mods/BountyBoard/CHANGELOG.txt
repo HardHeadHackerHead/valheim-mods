@@ -1,0 +1,1 @@
+First release: a buildable Bounty Board with daily hunt, starred-hunt and loot contracts, paid in coins, with ranks.

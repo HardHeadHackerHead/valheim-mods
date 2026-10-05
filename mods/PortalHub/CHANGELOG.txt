@@ -1,1 +1,1 @@
-First release: pick a portal's destination from a list instead of matching names.
+Portals now show on the map with their names, and the big map draws a line (with an arrow if one-way) between linked portals. Rename a portal inside the menu. The list warns when linking back would replace another portal's link.

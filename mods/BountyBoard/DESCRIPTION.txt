@@ -1,0 +1,11 @@
+A buildable notice board that posts jobs for you to do and pays you in coins.
+
+How it works
+- Build it with the hammer at a workbench (Wood, Leather Scraps and Flint), put it down anywhere, and press E on it.
+- Every in-game day it posts new notices: hunt a number of creatures, slay starred ones, or bring in loot. Take up to five at a time.
+- Kills count when you land the last blow. Loot is handed in at the board. Then collect the coins.
+- The jobs follow how far you have got: each boss you beat opens the next region's creatures and loot, so a board never asks for something far beyond you.
+- Hand in more contracts to rank up (Newcomer, Hunter, Tracker, Slayer, Warden, Legend). Every rank pays a little more.
+- The board is shared, the contracts are yours: everyone sees the same notices, and each player keeps their own list, progress and rank.
+- A Bounty Board has its own hand-made look: a gabled roof, a horned skull, a hanging rune sign, pinned notices, a lantern and a bell.
+Settings let you change how often it posts, how many notices there are and how much it pays.

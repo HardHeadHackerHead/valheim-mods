@@ -19,6 +19,7 @@ namespace PortalHub
         private Rect _rect;
         private bool _placed;
         private float _openedAt;
+        private string _nameEdit = "";
         private string _expectDest; private float _expectBy;
 
         private class Row { public PortalInfo Info; public float Distance; public bool Favorite; public string Where; }
@@ -40,6 +41,8 @@ namespace PortalHub
             WindowOpen = true;
             _openedAt = Time.time;
             _expectDest = null;
+            ZDO zdo = view.GetZDO();
+            _nameEdit = zdo != null ? (zdo.GetString(ZDOVars.s_tag) ?? "") : "";
             RequestList();
             _nextAsk = Time.time + 5f;
         }
@@ -109,6 +112,7 @@ namespace PortalHub
 
         private void OnGUI()
         {
+            DrawMapLines();
             if (!WindowOpen || _portal == null) return;
             FreeTheMouse();
             EnsureStyles();
@@ -144,13 +148,19 @@ namespace PortalHub
             GUILayout.BeginHorizontal();
             GUILayout.Label("Portal: " + myName, _title);
             GUILayout.FlexibleSpace();
-            if (GUILayout.Button("Rename", _btn, GUILayout.Width(80), GUILayout.Height(28)))
-            {
-                TeleportWorld tw = _portal;
-                CloseWindow();
-                TextInput.instance.RequestText(tw, "$piece_portal_tag", 10); // the game's own naming box
-            }
             if (GUILayout.Button("Close", _btn, GUILayout.Width(70), GUILayout.Height(28))) CloseWindow();
+            GUILayout.EndHorizontal();
+
+            // Name it right here (the box takes up to 16 letters).
+            GUILayout.BeginHorizontal();
+            GUILayout.Label("Name:", _text, GUILayout.Width(58));
+            _nameEdit = GUILayout.TextField(_nameEdit ?? "", 16, _field, GUILayout.Height(26));
+            bool changed = me == null || _nameEdit != me.Name;
+            if (GUILayout.Button("Save", changed ? _btnOn : _btn, GUILayout.Width(70), GUILayout.Height(26)) && changed && _portal != null)
+            {
+                _portal.SetText(_nameEdit.Trim()); // the game's own rename, so everyone sees it
+                _nextAsk = Time.time + 0.8f;
+            }
             GUILayout.EndHorizontal();
 
             if (!IsServer && PortalsAt < _openedAt && Time.time - _openedAt > 3f)
@@ -178,7 +188,7 @@ namespace PortalHub
 
             GUILayout.Space(6);
             GUILayout.BeginHorizontal();
-            GUILayout.Label(Portals.Count <= 1 ? "No other portals found yet." : "Star a portal to keep it at the top.", _dim);
+            GUILayout.Label(Portals.Count <= 1 ? "No other portals found yet." : "Star a portal to keep it at the top. \"has a link\" means linking back would replace that portal's current link.", _dim);
             GUILayout.FlexibleSpace();
             if (me != null && me.Dest.Length > 0 && GUILayout.Button("Unlink", _btn, GUILayout.Width(90), GUILayout.Height(26)))
                 SetDestination(_portalId, "", false);
@@ -214,7 +224,9 @@ namespace PortalHub
 
                 if (GUI.Button(new Rect(2f, y + 4f, 26f, 26f), row.Favorite ? "★" : "☆", row.Favorite ? _btnOn : _btn)) { ToggleFavorite(row.Info.Id); }
                 GUI.Label(new Rect(36f, y + 2f, content.width - 250f, 30f), NameOf(row.Info), _text);
-                GUI.Label(new Rect(content.width - 214f, y + 2f, 100f, 30f), (row.Where.Length > 0 ? row.Where + " · " : "") + Far(row.Distance), _dim);
+                bool replaces = _linkBothWays.Value && !linked && row.Info.Dest.Length > 0 && row.Info.Dest != _portalId;
+                string detail = (row.Where.Length > 0 ? row.Where + " · " : "") + Far(row.Distance);
+                GUI.Label(new Rect(content.width - 214f, y + 2f, 100f, 30f), replaces ? "has a link" : detail, replaces ? _warn : _dim);
 
                 if (GUI.Button(new Rect(content.width - 112f, y + 3f, 52f, 28f), "Map", _btn)) { var pos = row.Info.Pos; CloseWindow(); ShowOnMap(pos); }
                 if (GUI.Button(new Rect(content.width - 56f, y + 3f, 56f, 28f), linked ? "Linked" : "Link", linked ? _btnOn : _btn) && !linked)
@@ -240,7 +252,7 @@ namespace PortalHub
         // ---- look ----
 
         private readonly List<Texture2D> _textures = new List<Texture2D>();
-        private GUIStyle _title, _text, _dim, _good, _btn, _btnOn, _toggle, _field;
+        private GUIStyle _warn, _title, _text, _dim, _good, _btn, _btnOn, _toggle, _field;
         private Texture2D _roundedTexture;
 
         private Texture2D Box(Color fill, Color border)
@@ -277,6 +289,7 @@ namespace PortalHub
             _text.normal.textColor = new Color(0.93f, 0.9f, 0.85f);
             _dim = new GUIStyle(GUI.skin.label) { fontSize = 12, wordWrap = true, alignment = TextAnchor.MiddleLeft, clipping = TextClipping.Clip };
             _dim.normal.textColor = new Color(0.68f, 0.66f, 0.62f);
+            _warn = new GUIStyle(_dim); _warn.normal.textColor = new Color(0.95f, 0.65f, 0.3f);
             _good = new GUIStyle(GUI.skin.label) { fontSize = 14, fontStyle = FontStyle.Bold };
             _good.normal.textColor = new Color(0.6f, 0.9f, 0.6f);
             _btn = Button(new Color(0.22f, 0.19f, 0.15f), new Color(0.33f, 0.27f, 0.18f), new Color(0.45f, 0.36f, 0.2f));
@@ -291,7 +304,7 @@ namespace PortalHub
         {
             foreach (Texture2D t in _textures) if (t != null) Destroy(t);
             _textures.Clear();
-            _title = _text = _dim = _good = _btn = _btnOn = _toggle = _field = null;
+            _title = _text = _dim = _warn = _good = _btn = _btnOn = _toggle = _field = null;
         }
 
         private static void Rounded(Rect r, Color c, float radius)
