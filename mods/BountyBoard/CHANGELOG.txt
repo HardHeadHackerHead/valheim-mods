@@ -1,1 +1,1 @@
-Group contracts: everyone on the server shares the same running contracts (three at a time, a new one only when one is finished). Five notices a day, harder ones as you beat bosses, Hard and Brutal contracts, region-clearing contracts, and rewards in materials that match your progress (bronze, iron, silver and on) as well as coins. Collect your own reward per contract. A switch in the menu shows the contracts on your screen.
+The on-screen tracker is easier to read: taller progress bars with a larger, outlined 3/6, bigger text and more room between contracts.
