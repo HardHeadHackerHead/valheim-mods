@@ -1,1 +1,1 @@
-Stacking now says how far away the chest it used is, writes where everything went to the log, and checks that nothing went missing (it warns on screen if it ever does).
+New: tap or hold G next to a boat (not in it) to push it the way you are looking. Gentle, with a top speed. Strength, speed, range and key are in the settings.

@@ -5,4 +5,5 @@ What is in it
 - B: jump into construction mode with your hammer, and back to what you had.
 - Stack to chests: a button under your inventory moves matching items into nearby chests, with Undo and sounds.
 - K opens the chest assignment menu (choose what each chest receives); L locks items so they are never stacked.
+- Boat push: tap or hold G next to a boat to shove it where you look (gentle, with a speed cap).
 Keys are configurable. Q and B work while you are running.
