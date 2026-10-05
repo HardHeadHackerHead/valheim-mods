@@ -2,8 +2,8 @@
 
 # ⚒️ Valheim Mods
 
-**Quality-of-life mods for Valheim, built to play nicely together.**
-Craft from chests. Build from chests. Plan builds as ghosts with your friends. Recycle the gear you never use.
+**Quality-of-life mods and new things to build for Valheim, made to play nicely together.**
+Craft and build from chests. Plan builds as ghosts with your friends. Wear gear from its own slots. Take on group bounties, recycle old gear, link portals from a list, and try your luck at a slot machine.
 
 ![Valheim](https://img.shields.io/badge/Valheim-BepInEx-3b6e8f?style=flat-square)
 ![C#](https://img.shields.io/badge/made%20with-C%23-68217a?style=flat-square)
@@ -17,7 +17,7 @@ Craft from chests. Build from chests. Plan builds as ghosts with your friends. R
 ## 🚀 Get them in one minute
 
 Everything here installs and updates through the in-game **[mod manager](https://github.com/HardHeadHackerHead/valheim-mod-manager)**.
-It already knows about this repo, so press **F7** in game, open **Browse** and click **Install**. No downloading DLLs, no restarting the game for most updates.
+It already knows about this repo, so press **F7** in game, open **Browse** and click **Install**. No downloading DLLs, and most updates need no restart (mods that add new build pieces ask for one).
 
 New to modding? The manager repo has a one-step installer that sets up BepInEx for you.
 
@@ -88,7 +88,7 @@ A party panel with every player's Steam picture, health, stamina and distance, l
 ### ♻️ Recycler
 <img src="dist/Recycler.cover.png" alt="Recycler" width="100%">
 
-A buildable Recycler that turns old weapons, armor and tools back into a share of their materials. Build Presses nearby to raise the share.
+A buildable Recycler, with its own look in the build menu, that turns old weapons, armor and tools back into a share of their materials. Build Presses nearby to raise the share.
 
 </td>
 <td valign="top">
@@ -106,7 +106,7 @@ Share the map you uncover with everyone in the world, live, as you run through t
 ### 🛡️ GearSlots
 <img src="dist/GearSlots.cover.png" alt="GearSlots" width="100%">
 
-A Gear panel next to your inventory: Head, Chest, Legs, Cape, Belt, Trinket, Ammo and Shield slots (drop gear in and you wear it), three Food slots, and five Quick slots with hotkeys that also show under your hotbar. Your shield follows your one-handed weapon.
+A Gear panel next to your inventory: Head, Chest, Legs, Cape, Belt, Trinket, Ammo and Shield slots (drop gear in and you wear it), three Food slots, and five Quick slots with hotkeys that also show in a row under your hotbar. Your shield follows your one-handed weapon, and worn gear moves into its slot by itself.
 
 </td>
 <td valign="top">
@@ -132,7 +132,7 @@ A buildable notice board with contracts the whole server works on together: hunt
 ### 🎰 SlotMachine
 <img src="dist/SlotMachine.cover.png" alt="SlotMachine" width="100%">
 
-Odin's Fortune: build a slot machine, put coins in, pull the lever and watch three reels spin. Wins are spat out of the tray. It pays back about 93% over time, so it is for fun.
+Odin's Fortune: build a slot machine, put coins in, pull the lever and watch three reels spin. Wins are spat out of the tray, and you can change the bet. It pays back about 93% over time, so it is for fun.
 
 </td>
 </tr>
@@ -150,7 +150,7 @@ Odin's Fortune: build a slot machine, put coins in, pull the lever and watch thr
 | **E** / alternate-use + **E** at a slot machine | SlotMachine | Pull the lever / change the bet |
 | **E** at a portal | PortalHub | Open the portal menu and choose where it goes |
 | **P** | QualityOfLife | Tap or hold next to a boat (not in it) to push it where you look |
-| **Z** / **X** / **C** / **V** | GearSlots | Use what is in Quick slot 1 to 4 (equip a weapon or tool, drink a potion) |
+| **Z** / **X** / **C** / **V** | GearSlots | Use what is in Quick slot 1 to 4 (equip a weapon or tool, drink a potion); the fifth slot has no key until you set one |
 | **E** | FeedFromChests | Open a smelter or kiln menu (auto-feed settings, Add, Fill); add items to other stations |
 | **Left Alt** / **E** | BuildOrders | Toggle plan mode (placing then plans a ghost) / build the ghost you walk up to |
 | **G** / **Delete** / **F9** / **F10** | BuildOrders | Select a ghost piece / remove a ghost / show or hide ghosts / show or hide the stability colours |
@@ -161,7 +161,7 @@ Every key and setting is configurable in `BepInEx/config`.
 
 ## 🛡️ Playing fair
 
-These mods are about convenience, not cheating. Materials always come out of your inventory or a chest, recycling returns only part of what gear cost, and nothing is created from nothing.
+These mods are about convenience, not cheating. Materials always come out of your inventory or a chest, and recycling returns only part of what gear cost. The two mods that do hand things out are tuned to stay fair: Bounty Board pay follows how many bosses the group has beaten, and the slot machine gives back less than it takes in.
 
 ## 🧑‍💻 For developers
 
@@ -191,12 +191,13 @@ python3 ../valheim-mod-manager/installer/install-linux.py --mods-only --mods-rep
 
 This syncs the manager from its repo and gameplay mods from this one. Press F6
 after it finishes, or restart if the installer reports a mod that requires it
-(such as Recycler).
+(such as Recycler, Bounty Board and Slot Machine, which add build pieces).
 
 - Each mod is a folder under `mods/` with its own `.csproj`, `Plugin.cs`, `DESCRIPTION.txt` (first paragraph is the summary, the rest is shown under **Details**), `CHANGELOG.txt` (first paragraph is "what is new") and an optional `cover.png`.
 - Bump the `Version` constant in `Plugin.cs` for every change people should get.
 - A mod that cannot be reloaded in game gets a `RESTART_REQUIRED.txt` explaining why.
 - Set `VALHEIM_DIR` for a custom game library; you do not need to edit shared build settings.
+- Mods with hand-made 3D looks (Bounty Board, Slot Machine) are described as simple shapes in `tools/modelkit`, which draws previews and writes the C# for them; see its README.
 - Release: `.\publish.ps1`, then `git add -A; git commit; git push`.
 
 ## 🧱 Make your own mod repo
