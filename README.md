@@ -21,6 +21,10 @@ It already knows about this repo, so press **F7** in game, open **Browse** and c
 
 New to modding? The manager repo has a one-step installer that sets up BepInEx for you.
 
+On **native Linux**, including **Flatpak Steam**, follow the manager's
+[Linux installation guide](https://github.com/HardHeadHackerHead/valheim-mod-manager/blob/main/installer/INSTALL-LINUX.md).
+The installer lives in the manager repo; this repo contains the gameplay mods.
+
 ## 🧰 The mods
 
 <table>
@@ -125,10 +129,30 @@ dotnet build mods/CraftFromChests -c Release
 .\publish.ps1
 ```
 
+Linux builds detect common native and Flatpak Steam locations. For a custom
+library, set `VALHEIM_DIR` (or pass `-p:ValheimDir=/path/to/Valheim`):
+
+```bash
+export VALHEIM_DIR="$HOME/.var/app/com.valvesoftware.Steam/.local/share/Steam/steamapps/common/Valheim"
+dotnet build mods/CraftFromChests -c Release
+pwsh -NoProfile -File ./publish.ps1   # PowerShell 7; publishing does not deploy to the game
+```
+
+Use `-p:DeployToGame=false` to compile without changing the installed mods.
+With both repos checked out side by side, after pulling them run:
+
+```bash
+python3 ../valheim-mod-manager/installer/install-linux.py --mods-only --mods-repo .
+```
+
+This syncs the manager from its repo and gameplay mods from this one. Press F6
+after it finishes, or restart if the installer reports a mod that requires it
+(such as Recycler).
+
 - Each mod is a folder under `mods/` with its own `.csproj`, `Plugin.cs`, `DESCRIPTION.txt` (first paragraph is the summary, the rest is shown under **Details**), `CHANGELOG.txt` (first paragraph is "what is new") and an optional `cover.png`.
 - Bump the `Version` constant in `Plugin.cs` for every change people should get.
 - A mod that cannot be reloaded in game gets a `RESTART_REQUIRED.txt` explaining why.
-- Set your game path once in `mods/Directory.Build.props`.
+- Set `VALHEIM_DIR` for a custom game library; you do not need to edit shared build settings.
 - Release: `.\publish.ps1`, then `git add -A; git commit; git push`.
 
 ## 🧱 Make your own mod repo
