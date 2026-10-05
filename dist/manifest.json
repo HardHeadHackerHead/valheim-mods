@@ -92,6 +92,19 @@
                                ]
                  },
                  {
+                     "guid":  "com.dhack.portalhub",
+                     "name":  "PortalHub",
+                     "version":  "1.0.0",
+                     "description":  "Portals you can actually use: press E on a portal and pick where it goes from a list.\n\nWhat is in it\n- The list shows every portal in the world, nearest first, with its biome and distance. Search it, sort it by name, or star the ones you use most to keep them at the top.\n- One click links this portal to the one you pick, and (by default) links that one back, so there is no more matching names on both ends.\n- Look at a portal and it tells you where it goes. A Map button next to each portal opens the map at that spot.\n- You can still rename a portal from the menu. Portals you never choose a destination for work the old way, by matching names, so nothing you built breaks.\n- Teleport rules are unchanged: you still cannot carry ores or other blocked items through a portal.\n- Needs to be installed on the host\u0027s game (and on yours to use the menu). Players without it can still walk through linked portals.",
+                     "notes":  "First release: pick a portal\u0027s destination from a list instead of matching names.",
+                     "restart":  "",
+                     "cover":  "PortalHub.cover.png",
+                     "files":  [
+                                   "PortalHub.dll",
+                                   "PortalHub.pdb"
+                               ]
+                 },
+                 {
                      "guid":  "com.dhack.qualityoflife",
                      "name":  "QualityOfLife",
                      "version":  "1.5.0",
