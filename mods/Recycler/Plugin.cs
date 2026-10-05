@@ -18,7 +18,7 @@ namespace Recycler
     {
         public const string Guid = "com.dhack.recycler";
         public const string Name = "Recycler";
-        public const string Version = "1.0.1";
+        public const string Version = "1.0.2";
         public const string RecyclerPrefab = "piece_recycler";
         public const string PressPrefab = "piece_recycler_press";
 
@@ -35,7 +35,7 @@ namespace Recycler
             var pct = new AcceptableValueRange<int>(0, 100);
             BasePercent = Config.Bind("Refund", "BasePercent", 50, new ConfigDescription("Share of the materials you get back with no Press nearby (0-100).", pct));
             Press1Bonus = Config.Bind("Refund", "OnePressBonus", 10, new ConfigDescription("Extra percentage points with one Press within 8 m.", pct));
-            Press2Bonus = Config.Bind("Refund", "TwoPressBonus", 25, new ConfigDescription("Extra percentage points with two Presses within 8 m.", pct));
+            Press2Bonus = Config.Bind("Refund", "TwoPressBonus", 20, new ConfigDescription("Extra percentage points with two Presses within 8 m.", pct));
             ChanceRounding = Config.Bind("Refund", "ChanceRounding", true, "Instead of always rounding down, a leftover fraction becomes a matching chance of one more (so 50% averages out to 50%).");
             RequireStation = Config.Bind("Rules", "RequireCraftingStation", true, "Gear can only be recycled with the crafting station (and level) it was made at nearby.");
             ConfirmValuable = Config.Bind("Rules", "ConfirmValuable", true, "Ask for a second click before recycling equipped or upgraded gear.");
@@ -76,7 +76,7 @@ namespace Recycler
 
                 Prefabs.Add(Make(RecyclerPrefab, source, mat, "Recycler", "Turns old gear back into a share of its crafting materials. Presses nearby raise the share.",
                     Model.Recycler, Model.RecyclerHitCenter, Model.RecyclerHitSize, typeof(RecyclerStation),
-                    Req("FineWood", 10), Req("Iron", 10), Req("Bronze", 5)));
+                    Req("FineWood", 10), Req("Bronze", 8), Req("Stone", 10)));
                 Prefabs.Add(Make(PressPrefab, source, mat, "Recycler Press", "Place within 8 m of a Recycler to raise the share it returns. Up to two count.",
                     Model.Press, Model.PressHitCenter, Model.PressHitSize, typeof(RecyclerPress),
                     Req("Iron", 15), Req("Bronze", 10), Req("Stone", 10)));

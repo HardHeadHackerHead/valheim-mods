@@ -1,1 +1,1 @@
-The mouse wheel now scrolls the menus instead of zooming the camera while they are open.
+The Recycler no longer needs iron (fine wood, bronze and stone), so you can build it as soon as you have bronze. The Press still costs iron, bronze and stone. Refunds are 50%, 60% with one Press and 70% with two.
