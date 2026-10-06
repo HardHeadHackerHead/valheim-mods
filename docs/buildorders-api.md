@@ -6,7 +6,7 @@ Calls run synchronously on the Unity main thread, with `Player.m_localPlayer`, a
 `TryCreateGhostPlan(Player player, string title, string[] prefabs, Vector3[] positions, Quaternion[] rotations, out string planKey, out string error)`
 accepts 1–256 pieces at **absolute world positions and rotations**. The entire input is validated before changes: matching array lengths,
 bounded delimiter-free names, finite poses, nonzero rotations (normalized by the API), available buildable pieces, known recipes, an 80-metre
-reach limit, wards, and no-build locations. Menu-only Bridge and terrain-operation prefabs are rejected. Exact nearby duplicate orders are
+reach limit, wards, and no-build locations. Creation also refuses concurrent blueprint/bridge placement or an open Plans window. Menu-only Bridge and terrain-operation prefabs are rejected. Exact nearby duplicate orders are
 skipped; a batch containing only duplicates returns false. No building resources are consumed until the ghosts are built normally.
 
 Success returns a unique named plan key, using the existing orders, saving, sharing, material totals, and stability mechanisms. Failed
@@ -32,3 +32,19 @@ blueprints and still offer Move/Level, bypassing the add-on group's terrain prot
 Validation: `dotnet run --project tests/BuildOrders.Api.Tests -c Release` runs the linked API implementation against boundary doubles,
 checking batch rejection before mutation, sharing/save calls, unique groups, ghost-only undo, and world changes. Unity rendering,
 multiplayer RPC delivery, disk persistence, and fresh-launch/F6 behavior still need game testing.
+
+## Optional selection and input queries (BuildOrders 1.9.5)
+
+`IsPlanningInputAvailable(Player player)` reports whether an add-on may capture planning input in the loaded local world.
+Blueprint placement, bridge drawing/options, the Plans window, typing/menus, and inventory return false. This query processes no input.
+Add-ons should also use their own normal-play/tool/UI gates, stop or suspend when another planner mode takes input, and recheck after reload.
+
+`TryGetGhostAtRay(Player player, Vector3 origin, Vector3 direction, out string orderId, out string prefab, out Vector3 position, out Quaternion rotation, out float distance)`
+returns the closest rendered ghost intersecting a normalized world ray, within 80 metres along the ray and 80 metres of the local player.
+The origin must be within 20 metres of the player; nonfinite/degenerate rays, hidden ghosts, and unavailable input are rejected.
+Selection uses world-aligned render bounds, without ghost colliders. It does not test physical occlusion: callers should compare the hit
+distance against a physical raycast. It queries current orders directly, so it does not depend on the prior frame's `Aimed` and never
+processes G/Delete/E. The returned ID/pose is a snapshot for the current session, not a persistent object reference.
+
+These additive methods preserve `PlanningApiVersion = 1`. Feature-detect their exact signatures on the live instance; older API v1
+releases still support creation/removal but cannot provide ghost selection or planning-input exclusion.

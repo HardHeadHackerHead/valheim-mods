@@ -51,4 +51,29 @@ api.WorldReady = false; Rejected(() => Create(out _,out _),"Unavailable world");
 api.World = 2;
 Check(Create(out string otherWorld,out _) && api.Orders.Count == 2, "World loads before accepting a new plan");
 Check(api.TryRemoveGhostPlan(p,second,out removed,out _) && removed == 0 && api.Orders.Count == 2, "Old-world key cannot remove new-world ghosts");
+// Selection uses the current world and fresh ray, never cached Aimed or input processing.
+api.Orders.Clear();
+api.Orders["far"] = new Plugin.Order {Id="far",Prefab="wood_beam",Pos=new Vector3(0,0,8),Rot=turns[0]};
+api.Orders["near"] = new Plugin.Order {Id="near",Prefab="wood_beam",Pos=new Vector3(0,0,3),Rot=turns[0]};
+bool Ray(out string id) => api.TryGetGhostAtRay(p,new Vector3(0,0,0),new Vector3(0,0,2),out id,out _,out _,out _,out _);
+saved=api.Saves;sent=api.Sent.Count;
+Check(Ray(out string selected) && selected=="near","Closest ghost ray intersection selected, direction normalized");
+Check(api.Saves==saved && api.Sent.Count==sent && api.Orders.Count==2,"Selection does not save, broadcast, delete, or build");
+api.ShowGhosts=false;Check(!Ray(out _),"Hidden ghosts excluded immediately before their render objects are destroyed");api.ShowGhosts=true;
+api.Hidden.Add("near");Check(Ray(out selected)&&selected=="far","Unrendered ghost excluded");
+api.Orders.Remove("far");Check(!Ray(out _) ,"Disappeared ghost not returned from stale cached aim");
+api.Hidden.Clear();
+Check(!api.TryGetGhostAtRay(p,new Vector3(float.NaN,0,0),new Vector3(0,0,1),out _,out _,out _,out _,out _),"Nonfinite ray rejected");
+Check(!api.TryGetGhostAtRay(p,new Vector3(21,0,0),new Vector3(0,0,1),out _,out _,out _,out _,out _),"Camera origin bounded near local player");
+Check(!api.TryGetGhostAtRay(p,new Vector3(),new Vector3(),out _,out _,out _,out _,out _),"Zero ray rejected");
+foreach(Action<bool> busy in new Action<bool>[] {v=>api.Placing=v,v=>api.DrawingBridge=v,v=>api.PlansWindowOpen=v,v=>api.BridgeOptionsOpen=v})
+{
+ busy(true);Check(!api.IsPlanningInputAvailable(p)&&!Ray(out _),"Conflicting planner tool refuses add-on input/query");
+ before=api.Orders.Count;saved=api.Saves;sent=api.Sent.Count;
+ Rejected(()=>Create(out _,out _),"Creation refuses concurrent blueprint/bridge placement");busy(false);
+}
+api.Typing=true;Check(!api.IsPlanningInputAvailable(p),"Typing yields input");api.Typing=false;
+InventoryGui.Open=true;Check(!api.IsPlanningInputAvailable(p),"Inventory yields input");InventoryGui.Open=false;
+Check(api.IsPlanningInputAvailable(p),"Input available after conflicting mode closes");
+api.World=3;Check(!Ray(out _)&&api.Orders.Count==0,"Ghost query loads current world before selecting");
 Console.WriteLine($"Passed {checks} ghost-only planning API boundary checks (Unity runtime is stubbed).");

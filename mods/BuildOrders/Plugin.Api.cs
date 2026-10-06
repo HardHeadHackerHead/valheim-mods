@@ -21,6 +21,7 @@ namespace BuildOrders
         {
             planKey = null;
             if (!ApiReady(player, out error)) return false;
+            if (ApiToolBusy) { error = "Finish or cancel the current blueprint/bridge placement first."; return false; }
             if (string.IsNullOrWhiteSpace(title) || title.Length > 80 || title.IndexOfAny(new[] { '|', '\r', '\n' }) >= 0)
             { error = "Invalid plan title."; return false; }
             if (prefabs == null || positions == null || rotations == null || prefabs.Length < 1 || prefabs.Length > MaximumApiPieces ||
@@ -98,5 +99,36 @@ namespace BuildOrders
             error = null; return true;
         }
         private static bool ApiFinite(float value) => !float.IsNaN(value) && !float.IsInfinity(value);
+
+        private bool ApiToolBusy => _placing != null || PlansWindowOpen || _bridgeStart.HasValue || BridgeOptionsOpen;
+
+        /// <summary>Whether an add-on can capture planning input without conflicting with a blueprint, bridge, or menu.
+        /// Query on the main thread; this does not advance placement or process any keys.</summary>
+        public bool IsPlanningInputAvailable(Player player) => ApiReady(player, out _) && !ApiToolBusy &&
+            !TypingOrMenuOpen() && !InventoryGui.IsVisible();
+
+        /// <summary>Find the nearest rendered ghost intersected by a world ray, independent of ghost colliders and cached aim.
+        /// Only game/BCL pose values and its session order id are returned. No key handling, building, or deletion occurs.</summary>
+        public bool TryGetGhostAtRay(Player player, Vector3 origin, Vector3 direction, out string orderId, out string prefab,
+            out Vector3 position, out Quaternion rotation, out float distance)
+        {
+            orderId = prefab = null; position = default; rotation = default; distance = 0;
+            if (!IsPlanningInputAvailable(player) || !_showGhosts.Value || !ApiFinite(origin.x) || !ApiFinite(origin.y) || !ApiFinite(origin.z) ||
+                !ApiFinite(direction.x) || !ApiFinite(direction.y) || !ApiFinite(direction.z) ||
+                (origin-player.transform.position).sqrMagnitude > 20f*20f || direction.sqrMagnitude < 0.0001f || direction.sqrMagnitude > 10000f)
+                return false;
+            var ray = new Ray(origin, direction.normalized);
+            float best = 80f;
+            Order chosen = null;
+            foreach (Order order in _orders.Values)
+            {
+                if ((order.Pos-player.transform.position).sqrMagnitude > 80f*80f || !GhostBounds(order, out Bounds bounds)) continue;
+                if (bounds.IntersectRay(ray, out float hit) && hit >= 0 && hit <= best)
+                { best = hit; chosen = order; }
+            }
+            if (chosen == null) return false;
+            orderId = chosen.Id; prefab = chosen.Prefab; position = chosen.Pos; rotation = chosen.Rot; distance = best;
+            return true;
+        }
     }
 }
