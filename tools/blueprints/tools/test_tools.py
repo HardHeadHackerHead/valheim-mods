@@ -171,6 +171,39 @@ def _():
         assert any("must stand on the ground" in p for p in bp3.check()["problems"])
 
 
+@check("check() knows the sleeping and smoke rules: bed far from a fire, bed and fire in the open, fire shut in a room")
+def _():
+    # a bed with a fire 10 m away and nothing over either of them
+    bp = Blueprint("t", P)
+    bp.place("bed", 0, 0, y=0.0, ground=True)
+    bp.place("fire_pit", 10, 0, y=0.0, ground=True)
+    c = bp.check()
+    assert any("no fire within 8 m" in p for p in c["problems"]), c["problems"]
+    assert any("no roof over it" in p for p in c["problems"]), c["problems"]
+    assert any("rain will put it out" in n for n in c["notes"]), c["notes"]
+    # a fire in a closed, roofed 4 x 4 room: its smoke has nowhere to go
+    room = Blueprint("t", P)
+    for x in (-1, 1):
+        room.raw("woodwall", x, 1.0, -2.0); room.raw("woodwall", x, 1.0, 2.0)
+    for z in (-1, 1):
+        room.raw("woodwall", -2.0, 1.0, z, yaw=90); room.raw("woodwall", 2.0, 1.0, z, yaw=90)
+    for x in (-1, 1):
+        for z in (-1, 1):
+            room.raw("wood_floor", x, 2.1, z)
+    room.place("fire_pit", 0, 0, y=0.0, ground=True)
+    assert any("inside a closed room" in n for n in room.check()["notes"])
+    # the emergency hut: beds warm and roofed, fire outside under cover, nothing to warn about
+    import runpy, io, contextlib
+    out = os.path.join(tempfile.mkdtemp(), "hut.json")
+    os.environ["BLUEPRINT_OUT"] = out
+    with contextlib.redirect_stdout(io.StringIO()):
+        try:
+            runpy.run_path(os.path.join(os.path.dirname(os.path.abspath(__file__)), "emergency_hut.py"), run_name="__main__")
+        except SystemExit as e:
+            assert e.code in (0, None), "emergency_hut.py reported problems"
+    del os.environ["BLUEPRINT_OUT"]
+
+
 @check("shapes exported from the game match the measured sizes of the main pieces")
 def _():
     import numpy as np

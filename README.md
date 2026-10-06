@@ -70,7 +70,7 @@ Quick gear sets on **Q**, hammer on **B**, a **Sort** button that joins stacks, 
 ### 👻 BuildOrders
 <img src="dist/BuildOrders.cover.png" alt="BuildOrders" width="100%">
 
-Plan pieces as shared ghost build orders. Your party sees them, you can build one by just walking up and pressing **E**, and a panel totals the materials you still need. Pick a blueprint in the Plans window (**F11**), turn its preview into place, and a whole structure appears as ghosts: ask an AI assistant to design a fort for you.
+Plan pieces as shared ghost build orders. Your party sees them, you can build one by just walking up and pressing **E**, and a panel totals the materials you still need. Pick a blueprint in the Plans window (**F11**), turn its preview into place, and a whole structure appears as ghosts (share blueprints with your friends from the same window): ask an AI assistant to design a fort for you.
 
 </td>
 <td valign="top">
@@ -156,7 +156,7 @@ Odin's Fortune: build a slot machine, put coins in, pull the lever and watch thr
 | **G** / **Delete** / **F9** / **F10** | BuildOrders | Select a ghost piece / remove a ghost / show or hide ghosts / show or hide the stability colours |
 | Hold **E** at a ghost | BuildOrders | Build everything buildable within 24 m (adjustable), lowest first |
 | **F11** | BuildOrders | Plans window: place blueprints with a preview, move or remove placed plans, build settings |
-| Wheel / **R** / **PgUp** **PgDn** / click | BuildOrders | While placing a blueprint: turn it / turn 90° / raise or lower it / place it (right-click or Esc cancels); **L** levels the ground under it when placed |
+| Wheel / **R** / **PgUp** **PgDn** / click | BuildOrders | While placing a blueprint: turn it / turn 90° / raise or lower it / place it (right-click or Esc cancels); the ground under it is levelled when placed |
 | **F12** / **Ctrl+F11** | BuildOrders | Save a screenshot / survey the ground around where you look, for whoever designs your blueprints |
 | **F8** | PartyHud | Show or hide the party panel |
 

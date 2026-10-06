@@ -128,7 +128,7 @@ namespace BuildOrders
         }
 
         /// <summary>Turn entries into build orders at an anchor. Returns how many were placed.</summary>
-        internal int PlaceEntries(Player player, string title, string file, List<Entry> entries, Vector3 anchor, float yaw, float offsetY, bool auto, bool level = false, float fixedBaseY = float.NaN)
+        internal int PlaceEntries(Player player, string title, string file, List<Entry> entries, Vector3 anchor, float yaw, float offsetY, float fixedBaseY = float.NaN)
         {
             if (ZNetScene.instance == null || ZoneSystem.instance == null) return 0;
             title = FreeTitle(title);
@@ -147,27 +147,14 @@ namespace BuildOrders
                 Send("A|" + Encode(order));
                 added++;
             }
-            int posts = 0;
-            List<Foot> feet = GroundFeet(entries);
-            foreach (Post post in Supports(feet, anchor, yaw, baseY, out int _, level))
-            {
-                if (_orders.Values.Any(o => o.Prefab == post.Prefab && (o.Pos - post.Pos).sqrMagnitude < 0.01f)) continue;
-                var order = new Order { Id = SupportIdPrefix + Guid_(), Prefab = post.Prefab, Pos = post.Pos, Rot = post.Rot, By = by };
-                _orders[order.Id] = order;
-                Send("A|" + Encode(order));
-                added++; posts++;
-            }
             _stabilityDirty = true;
             Save();
             RecordSnapshotOrders(by);
-            if (posts > 0) Logger.LogInfo($"Blueprint '{title}': {posts} support posts added where the ground falls away");
-            if (file != null) try { File.WriteAllText(file + ".imported", DateTime.Now.ToString("s") + "  " + added + " placed, " + skipped + " skipped  at " + anchor); } catch (Exception) { }
             if (unknown.Count > 0) Logger.LogWarning($"Blueprint '{title}': skipped pieces that cannot be built: {string.Join(", ", unknown.ToArray())}");
             Logger.LogInfo($"Blueprint '{title}': {added} build orders placed at {anchor} turned {yaw:0}° ({skipped} skipped)");
-            player.Message(MessageHud.MessageType.Center, $"\"{title}\": {added} pieces planned" + (skipped > 0 ? $" ({skipped} skipped)" : "") + (auto ? " near your bed" : ""));
+            player.Message(MessageHud.MessageType.Center, $"\"{title}\": {added} pieces planned" + (skipped > 0 ? $" ({skipped} skipped)" : ""));
             player.Message(MessageHud.MessageType.TopLeft, $"Wrong spot? {_blueprintKey.Value} > Placed plans: Move or Remove it");
             RememberImport(title, file ?? "", new Vector3(anchor.x, baseY - offsetY, anchor.z), yaw, added, offsetY);
-            if (level) StartLevel(by, title, LevelPoints(entries, feet, anchor, yaw, baseY), anchor, yaw);
             return added;
         }
 
@@ -186,16 +173,11 @@ namespace BuildOrders
             public Vector3 Anchor;
             public bool HaveAnchor;
             public List<Foot> Feet;
-            public readonly List<KeyValuePair<string, GameObject>> PostGhosts = new List<KeyValuePair<string, GameObject>>();
-            public List<Post> Posts = new List<Post>();
-            public int TooHigh;
-            public bool Level;
             public List<Vector3> LevelSpots = new List<Vector3>();
             public int Strokes;
             public float Cut, Fill;
             public GameObject Pad;
         }
-        private static readonly Color SupportColor = new Color(1f, 0.85f, 0.35f);
 
         private Placement _placing;
         internal static bool Placing => Instance != null && Instance._placing != null;
@@ -204,7 +186,7 @@ namespace BuildOrders
         internal void StartPlacement(string title, string file, List<Entry> entries, float yaw, float offsetY, string replaceKey)
         {
             CancelPlacement();
-            _placing = new Placement { Title = title, File = file, Entries = entries, Yaw = yaw, OffsetY = offsetY, ReplaceKey = replaceKey, Feet = GroundFeet(entries), Level = _levelByDefault.Value };
+            _placing = new Placement { Title = title, File = file, Entries = entries, Yaw = yaw, OffsetY = offsetY, ReplaceKey = replaceKey, Feet = GroundFeet(entries) };
             PlansWindowOpen = false;
         }
 
@@ -212,7 +194,6 @@ namespace BuildOrders
         {
             if (_placing == null) return;
             foreach (var kv in _placing.Ghosts) if (kv.Value != null) Destroy(kv.Value);
-            foreach (var kv in _placing.PostGhosts) if (kv.Value != null) Destroy(kv.Value);
             if (_placing.Pad != null) Destroy(_placing.Pad);
             foreach (Material m in _placing.Materials) if (m != null) Destroy(m);
             _placing = null;
@@ -235,7 +216,6 @@ namespace BuildOrders
                 if (Input.GetKeyDown(KeyCode.PageUp)) pl.OffsetY += fine ? 0.1f : 0.5f;
                 if (Input.GetKeyDown(KeyCode.PageDown)) pl.OffsetY -= fine ? 0.1f : 0.5f;
                 if (Input.GetKeyDown(KeyCode.Home)) { pl.OffsetY = 0f; }
-                if (Input.GetKeyDown(KeyCode.L)) { pl.Level = !pl.Level; pl.LastAnchor = new Vector3(float.NaN, 0, 0); }
                 if (Input.GetMouseButtonDown(1)) { CancelPlacement(); player.Message(MessageHud.MessageType.TopLeft, "Placement cancelled"); return; }
                 if ((Input.GetMouseButtonDown(0) || Input.GetKeyDown(KeyCode.Return) || Input.GetKeyDown(KeyCode.KeypadEnter)) && pl.HaveAnchor)
                 {
@@ -270,62 +250,37 @@ namespace BuildOrders
                 kv.Value.transform.SetPositionAndRotation(pos, rot);
             }
             UpdatePreviewLevel(pl, anchor, baseY);
-            UpdatePreviewPosts(pl, player, anchor, baseY);
-        }
-
-        /// <summary>Show the auto-support posts the plan would get here, reusing the post ghosts already made.</summary>
-        private void UpdatePreviewPosts(Placement pl, Player player, Vector3 anchor, float baseY)
-        {
-            pl.Posts = Supports(pl.Feet, anchor, pl.Yaw, baseY, out pl.TooHigh, pl.Level);
-            int i = 0;
-            for (; i < pl.Posts.Count && i < 400; i++)
-            {
-                Post post = pl.Posts[i];
-                if (i < pl.PostGhosts.Count && pl.PostGhosts[i].Key != post.Prefab)
-                {
-                    if (pl.PostGhosts[i].Value != null) Destroy(pl.PostGhosts[i].Value);
-                    pl.PostGhosts[i] = new KeyValuePair<string, GameObject>(post.Prefab, null);
-                }
-                if (i >= pl.PostGhosts.Count) pl.PostGhosts.Add(new KeyValuePair<string, GameObject>(post.Prefab, null));
-                GameObject go = pl.PostGhosts[i].Value;
-                if (go == null)
-                {
-                    go = MakeGhostObject(post.Prefab, post.Pos, post.Rot, pl.Materials);
-                    if (go == null) continue;
-                    go.name = post.Prefab + "_support_preview";
-                    TintWith(go, new Color(SupportColor.r, SupportColor.g, SupportColor.b, Mathf.Clamp(_ghostOpacity.Value * 1.6f, 0.15f, 0.65f)));
-                    pl.PostGhosts[i] = new KeyValuePair<string, GameObject>(post.Prefab, go);
-                }
-                if (!go.activeSelf) go.SetActive(true);
-                go.transform.SetPositionAndRotation(post.Pos, post.Rot);
-            }
-            for (; i < pl.PostGhosts.Count; i++) if (pl.PostGhosts[i].Value != null && pl.PostGhosts[i].Value.activeSelf) pl.PostGhosts[i].Value.SetActive(false);
         }
 
         private void ConfirmPlacement(Player player)
         {
             Placement pl = _placing;
             if (pl.ReplaceKey != null) RemovePlan(pl.ReplaceKey);
-            string title = pl.Title;
+            string title = pl.Title, file = pl.File;
             Vector3 anchor = pl.Anchor;
             float yaw = pl.Yaw, offset = pl.OffsetY;
-            bool level = pl.Level;
             List<Entry> entries = pl.Entries;
-            string file = pl.File;
             CancelPlacement();
-            if (!level) { PlaceEntries(player, title, file, entries, anchor, yaw, offset, auto: false); return; }
+            LevelThenPlace(player, title, file, entries, anchor, yaw, offset);
+        }
 
-            // level first, then place the ghosts on the finished ground (posts only where it still falls short)
+        /// <summary>
+        /// Every plan is placed on level ground: the ground under it is set to the plan's floor first (Remove puts it back), then the ghosts are
+        /// placed on the finished ground. Returns how many pieces the plan has (they appear once the levelling is done, about a second later).
+        /// </summary>
+        internal int LevelThenPlace(Player player, string title, string file, List<Entry> entries, Vector3 anchor, float yaw, float offset)
+        {
+            if (ZoneSystem.instance == null) return 0;
             title = FreeTitle(title);
             float baseY = ZoneSystem.instance.GetGroundHeight(anchor) + offset;
             List<Vector3> points = LevelPoints(entries, GroundFeet(entries), anchor, yaw, baseY);
-            string key = BlueprintPrefix + title;
-            StartLevel(key, title, points, anchor, yaw, () =>
+            StartLevel(BlueprintPrefix + title, title, points, anchor, yaw, () =>
             {
                 Player me = Player.m_localPlayer;
-                if (me != null) PlaceEntries(me, title, file, entries, anchor, yaw, offset, auto: false, fixedBaseY: baseY);
+                if (me != null) PlaceEntries(me, title, file, entries, anchor, yaw, offset, fixedBaseY: baseY);
             });
             player.Message(MessageHud.MessageType.TopLeft, $"Levelling the ground for \"{title}\": its ghosts appear when it is done");
+            return entries.Count;
         }
 
         /// <summary>Pick a placed plan up again: its pieces relative to where it was placed, ready to be put down somewhere else.</summary>
@@ -345,7 +300,7 @@ namespace BuildOrders
             return points.Count;
         }
 
-        /// <summary>A placed plan's pieces (not its auto-supports) relative to where it was placed, and that place.</summary>
+        /// <summary>A placed plan's pieces (not support posts from older versions) relative to where it was placed, and that place.</summary>
         private List<Entry> PlanEntries(PlanInfo plan, out Vector3 origin, out float yaw, out float offset)
         {
             yaw = 0f; offset = 0f;
@@ -371,21 +326,14 @@ namespace BuildOrders
         {
             Placement pl = _placing;
             if (pl == null) return;
-            bool supports = _autoSupports.Value && (pl.Posts.Count > 0 || pl.TooHigh > 0);
-            var r = new Rect(sw / 2f - 450f, 70f, 900f, supports ? 100f : 78f);
+            var r = new Rect(sw / 2f - 450f, 70f, 900f, 78f);
             Round(r, new Color(0.04f, 0.1f, 0.06f, 0.88f), 8f);
             Outline(r, new Color(PreviewColor.r, PreviewColor.g, PreviewColor.b, 0.9f), 8f);
             string loading = pl.Spawned < pl.Entries.Count ? $"   (showing {pl.Spawned}/{pl.Entries.Count})" : "";
             Label(new Rect(r.x, r.y + 4f, r.width, 22f), $"PLACING \"{pl.Title}\"   turned {pl.Yaw:0}°   height {pl.OffsetY:+0.0;-0.0;0} m{loading}", _bold, PreviewColor, TextAnchor.MiddleCenter);
             Label(new Rect(r.x, r.y + 28f, r.width, 20f), "Look where it goes   ·   Wheel: turn (Shift: fine)   ·   R: 90°   ·   PgUp/PgDn: height   ·   Click: place   ·   Right-click / Esc: cancel",
                 _text, Color.white, TextAnchor.MiddleCenter);
-            if (supports)
-            {
-                string text = pl.Posts.Count > 0 ? $"+ {pl.Posts.Count} support posts down to the ground ({PostCost(pl.Posts)})" : "";
-                if (pl.TooHigh > 0) text += (text.Length > 0 ? "   ·   " : "") + $"{pl.TooHigh} spot(s) more than {_supportMaxHeight.Value:0} m up: lower it";
-                Label(new Rect(r.x, r.y + 50f, r.width, 20f), text, _bold, pl.TooHigh > 0 ? new Color(1f, 0.6f, 0.4f) : SupportColor, TextAnchor.MiddleCenter);
-            }
-            Label(new Rect(r.x, r.yMax - 24f, r.width, 20f), LevelBannerText(pl), pl.Level ? _bold : _text, pl.Level ? PadColor : new Color(0.8f, 0.8f, 0.8f), TextAnchor.MiddleCenter);
+            Label(new Rect(r.x, r.yMax - 24f, r.width, 20f), LevelBannerText(pl), _bold, PadColor, TextAnchor.MiddleCenter);
         }
     }
 }

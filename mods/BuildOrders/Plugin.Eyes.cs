@@ -367,7 +367,7 @@ namespace BuildOrders
                             if (a.Length >= 5) { at = new Vector3(F(2, 0), 0f, F(3, 0)); yaw = F(4, 0); }
                             else if (a.Length > 2 && a[2] == "here") at = player.transform.position;
                             else if (!LookPoint(player, out at)) at = player.transform.position + player.transform.forward * 6f;
-                            int placed = Import(player, path, doc, at, yaw, auto: false);
+                            int placed = Import(player, path, doc, at, yaw);
                             outputs.Add(new JObject { ["import"] = a[1], ["placed"] = placed });
                             break;
                         }
@@ -377,6 +377,18 @@ namespace BuildOrders
                             string name = a.Length > 1 ? string.Join(" ", a.Skip(1).ToArray()) : "last";
                             if (name == "last") { try { name = (string)JObject.Parse(File.ReadAllText(ImportsFile))["_last"]; } catch { } }
                             outputs.Add(new JObject { ["removed"] = RemovePlan(BlueprintPrefix + name), ["blueprint"] = name });
+                            break;
+                        }
+                        case "selfshare":
+                        {
+                            // selfshare <file.json>: pack a blueprint as Share does and receive it as if a friend had sent it (tests sharing alone)
+                            string path = a.Length > 1 ? Path.Combine(BlueprintDir, Path.GetFileName(a[1])) : null;
+                            if (path == null || !File.Exists(path)) { errors.Add("no blueprint file " + (a.Length > 1 ? a[1] : "")); break; }
+                            string code = ToCode(Tame(JObject.Parse(File.ReadAllText(path)), "Test friend"));
+                            byte[] pic = PictureForSharing(path);
+                            OnSharedBlueprint("Test friend|" + code + (pic != null ? "|" + Convert.ToBase64String(pic) : ""));
+                            outputs.Add(new JObject { ["pictureBytes"] = pic != null ? pic.Length : 0 });
+                            outputs.Add(new JObject { ["selfshare"] = a[1], ["codeLength"] = code.Length, ["inbox"] = Directory.Exists(InboxDir) ? Directory.GetFiles(InboxDir, "*.json").Length : 0 });
                             break;
                         }
                         case "check":
@@ -432,21 +444,12 @@ namespace BuildOrders
                                 outputs.Add(new JObject { ["ui"] = "confirm" });
                                 break;
                             }
-                            else if (what == "level")
-                            {
-                                // ui level on|off: what L does while placing
-                                if (_placing == null) { errors.Add("not placing anything"); break; }
-                                _placing.Level = a.Length < 3 || a[2] != "off";
-                                _placing.LastAnchor = new Vector3(float.NaN, 0, 0);
-                                outputs.Add(new JObject { ["ui"] = "level", ["on"] = _placing.Level, ["strokes"] = _placing.Strokes, ["cut"] = Math.Round(_placing.Cut, 2), ["fill"] = Math.Round(_placing.Fill, 2), ["posts"] = _placing.Posts.Count });
-                                break;
-                            }
                             else if (what == "height" || what == "turn")
                             {
                                 // ui height <metres> / ui turn <degrees>: what PgUp/PgDn and the mouse wheel do while placing
                                 if (_placing == null) { errors.Add("not placing anything"); break; }
                                 if (what == "height") _placing.OffsetY = F(2, 0f); else _placing.Yaw = Mathf.Repeat(F(2, 0f), 360f);
-                                outputs.Add(new JObject { ["ui"] = what, ["posts"] = _placing.Posts.Count, ["tooHigh"] = _placing.TooHigh });
+                                outputs.Add(new JObject { ["ui"] = what, ["levelSpots"] = _placing.Strokes, ["cut"] = Math.Round(_placing.Cut, 2), ["fill"] = Math.Round(_placing.Fill, 2) });
                                 break;
                             }
                             else if (what == "place")

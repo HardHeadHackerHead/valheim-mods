@@ -31,6 +31,7 @@ namespace BuildOrders
             public Vector3 Size;
             public List<KeyValuePair<string, int>> Materials = new List<KeyValuePair<string, int>>();
             public bool Placed;
+            public string SharedBy;
             public Texture2D Picture;
             public string Error;
         }
@@ -81,7 +82,9 @@ namespace BuildOrders
                         }
                         bf.Materials = MaterialsOf(entries.Select(e => e.Prefab));
                         bf.Placed = placedTitles.Any(t => t == bf.Name || t.StartsWith(bf.Name + " "));
-                        bf.Picture = Picture(System.IO.Path.ChangeExtension(file, ".png"));
+                        bf.SharedBy = (string)doc["sharedBy"];
+                        string pic = PictureFile(file);
+                        if (pic != null) bf.Picture = Picture(pic); else WantPicture(file);   // none yet: one is made in a moment
                     }
                     catch (Exception e) { bf.Error = e.Message; }
                     list.Add(bf);
@@ -242,12 +245,41 @@ namespace BuildOrders
         private void DrawLibrary(Player player)
         {
             RefreshLibrary();
+            RefreshInbox();
+            GUILayout.BeginHorizontal();
             GUILayout.Label($"Blueprints in <b>BepInEx/blueprints</b>. Place one: a green preview follows where you look; turn it with the mouse wheel and click to place. " +
-                            "To get new ones, ask an AI assistant started in that folder (it reads CLAUDE.md there).", _wDim);
+                            "Share sends one to everyone playing here; a share code is the same as text for a chat.", _wDim);
+            if (GUILayout.Button("Paste code", _wButton, GUILayout.Width(110), GUILayout.Height(28))) PasteCode();
+            if (GUILayout.Button("Open folder", _wButton, GUILayout.Width(110), GUILayout.Height(28))) { Directory.CreateDirectory(BlueprintDir); Application.OpenURL("file:///" + BlueprintDir.Replace(Path.DirectorySeparatorChar, '/')); }
+            GUILayout.EndHorizontal();
             GUILayout.Space(4);
-            if (_library.Count == 0) { GUILayout.Label("No blueprints yet.", _wText); GUILayout.FlexibleSpace(); return; }
 
             _plansScroll = GUILayout.BeginScrollView(_plansScroll, GUILayout.ExpandHeight(true));
+
+            // blueprints other players shared with you
+            if (_inbox.Count > 0)
+            {
+                GUILayout.Label($"<b>Shared with you</b> ({_inbox.Count})", _wText);
+                foreach (SharedBlueprint s in _inbox.ToList())
+                {
+                    Rect r = GUILayoutUtility.GetRect(0f, 70f, GUILayout.ExpandWidth(true));
+                    r.height = 64f;
+                    Round(r, new Color(0.1f, 0.13f, 0.09f, 1f), 8f);
+                    Outline(r, new Color(0.5f, 0.75f, 0.45f, 1f), 8f);
+                    var spic = new Rect(r.x + 6f, r.y + 6f, 92f, 52f);
+                    if (s.Picture != null) GUI.DrawTexture(spic, s.Picture, ScaleMode.ScaleToFit); else Round(spic, new Color(0.13f, 0.17f, 0.12f, 1f), 5f);
+                    float tw = r.width - 486f;
+                    GUI.Label(new Rect(spic.xMax + 10f, r.y + 7f, tw, 24f), $"{s.Name}   <color=#a8d8a0>from {s.From}</color>", _wBold);
+                    string mats = string.Join("   ", s.Materials.Take(4).Select(kv => $"{Localization.instance.Localize(kv.Key)} {kv.Value}").ToArray());
+                    GUI.Label(new Rect(spic.xMax + 10f, r.y + 34f, tw, 22f), $"{s.Pieces} pieces   ·   {mats}", _wDim);
+                    if (GUI.Button(new Rect(r.xMax - 364f, r.y + 15f, 110f, 34f), "Place", _wButtonGood)) PlaceShared(player, s);
+                    if (GUI.Button(new Rect(r.xMax - 248f, r.y + 15f, 130f, 34f), "Save to library", _wButton)) SaveShared(s);
+                    if (GUI.Button(new Rect(r.xMax - 112f, r.y + 15f, 100f, 34f), "Dismiss", _wButton)) DismissShared(s);
+                    GUILayout.Space(4);
+                }
+                GUILayout.Space(6);
+            }
+            if (_library.Count == 0) GUILayout.Label("No blueprints yet.", _wText);
             foreach (BlueprintFile bf in _library)
             {
                 Rect r = GUILayoutUtility.GetRect(0f, 104f, GUILayout.ExpandWidth(true));
@@ -259,7 +291,7 @@ namespace BuildOrders
                 else { Round(pic, new Color(0.13f, 0.17f, 0.2f, 1f), 6f); GUI.Label(pic, "no picture", new GUIStyle(_wDim) { alignment = TextAnchor.MiddleCenter }); }
 
                 float x = pic.xMax + 12f, tw = r.width - (pic.width + 30f) - 130f;
-                GUI.Label(new Rect(x, r.y + 6f, tw, 24f), bf.Name + (bf.Placed ? "   <color=#8fe08f>(placed)</color>" : ""), _wBold);
+                GUI.Label(new Rect(x, r.y + 6f, tw, 24f), bf.Name + (bf.SharedBy != null ? $"   <color=#a8d8a0>from {bf.SharedBy}</color>" : "") + (bf.Placed ? "   <color=#8fe08f>(placed)</color>" : ""), _wBold);
                 if (bf.Error != null) GUI.Label(new Rect(x, r.y + 32f, tw, 40f), "Could not read: " + bf.Error, _wDim);
                 else
                 {
@@ -267,7 +299,16 @@ namespace BuildOrders
                     string mats = string.Join("   ", bf.Materials.Take(5).Select(kv => $"{Localization.instance.Localize(kv.Key)} {kv.Value}").ToArray());
                     GUI.Label(new Rect(x, r.y + 56f, tw, 36f), mats.Length > 0 ? "Needs: " + mats : "", _wDim);
                 }
-                if (bf.Error == null && GUI.Button(new Rect(r.xMax - 122f, r.y + 14f, 110f, 34f), "Place", _wButtonGood))
+                if (bf.Error == null)
+                {
+                    string key = "share:" + bf.Path;
+                    if (GUI.Button(new Rect(r.xMax - 122f, r.y + 54f, 54f, 30f), Confirming(key) ? "Send?" : "Share", Confirming(key) ? _wButtonBad : _wButton))
+                    {
+                        if (Confirming(key)) { ShareWithEveryone(bf.Path); _confirmKey = null; } else AskConfirm(key);
+                    }
+                    if (GUI.Button(new Rect(r.xMax - 64f, r.y + 54f, 52f, 30f), "Code", _wButton)) CopyCode(bf.Path);
+                }
+                if (bf.Error == null && GUI.Button(new Rect(r.xMax - 122f, r.y + 12f, 110f, 34f), "Place", _wButtonGood))
                 {
                     try
                     {
@@ -383,10 +424,6 @@ namespace BuildOrders
             GUILayout.Space(6);
             Toggle(_showGhosts, "Show ghosts", "Hide them all for a moment (also F9).");
             Toggle(_buildByHand, "Build by pressing E", "Walk up to a ghost and press E to build it, no hammer needed.");
-            Toggle(_autoSupports, "Add support posts on uneven ground", "Pieces meant to stand on the ground get posts down to it where the ground falls away or you raise a plan (shown in yellow while placing).");
-            Toggle(_levelByDefault, "Level ground when placing (L)", "Start each placement with Level ground on: the ground under the plan is flattened to its floor as soon as you place it.");
-            Slider("Tallest support post", "Posts taller than this are not added (wood and stone stop holding at about 12 m).", _supportMaxHeight, 2f, 30f, "0", " m");
-            Toggle(_blueprintAuto,"Place blueprints marked auto by themselves", "A blueprint file with \"auto\": true places itself at your bed.");
             Toggle(_allowRequests, "Let a designer use request files", "An AI assistant in BepInEx/blueprints can take pictures, survey and place or remove ghosts through files. Nothing moves your character.");
             GUILayout.Space(6);
             GUILayout.Label($"Keys: {_blueprintKey.Value} this window   ·   {_planKey.Value} plan mode (hammer)   ·   {_selectKey.Value} select an aimed ghost's piece   ·   {_removeKey.Value} remove an aimed ghost (Shift: all within 8 m)   ·   " +

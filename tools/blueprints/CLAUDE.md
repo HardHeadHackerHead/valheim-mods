@@ -20,32 +20,30 @@ This folder is `BepInEx/blueprints` in the player's Valheim folder (in the mod r
 | `tools/blueprint.py` | Place pieces (by box, snap point or origin), any rotation, `check()` and `summary()` (stations, overlaps, ground, fires, roofs, materials). |
 | `tools/stability.py` | Will it stand? The game's own support rules. |
 | `tools/preview.py` | `render(items, pieces, "out.png")`: four views with the real shapes. Look at it before handing a design over. |
-| `tools/emergency_hut.py`, `tools/wood_fort.py`, `tools/fort.py`, `tools/selftest.py` | Worked examples (a two-bed cabin with a smoke louvre over the fire, wooden fort with towers and stairs, stone keep, small test hut). Copy one to start. |
+| `tools/emergency_hut.py`, `tools/wood_fort.py`, `tools/fort.py`, `tools/selftest.py` | Worked examples (a two-bed catslide cottage with the fire outside under a lean-to, wooden fort with towers and stairs, stone keep, small test hut). Copy one to start. |
 | `tools/test_tools.py` | Tests for all of the above: run it if you change the tools. |
-| `*.json` (no leading `_`) | Blueprints. `X.json.imported` beside one means it has been placed (delete the marker to place it again). |
+| `_inbox/` | Blueprints other players shared in game (Plans window, "Shared with you"); share codes start with `BO1:` (base64 of the compressed JSON). |
+| `*.json` (no leading `_`) | Blueprints: each shows in the player's Plans window (F11). |
+| `<blueprint>.png` / `.jpg` | Its picture in the Plans window. The mod makes one in the game (a solid copy photographed out of sight) when there is none; put your own image there to replace it. It goes along with in-game Share. |
 
 Files in `tools/` are replaced when the mod updates: copy before editing. Python 3 with `numpy` and `Pillow` is needed for previews only.
 
 ## The blueprint file
 
 ```json
-{ "name": "Stone keep", "anchor": "look", "yaw": 0, "offset": [0,0,0], "auto": false,
+{ "name": "Stone keep", "anchor": "look", "yaw": 0, "offset": [0,0,0],
   "pieces": [ {"p": "stone_wall_4x2", "x": -8, "y": 1, "z": -10, "ry": 0, "g": true} ] }
 ```
-- `anchor`: `"look"` (the player opens the Plans window with **F11**, presses Place, and puts a preview where they look, turning it as they
-  like; it starts facing the way they face), `"bed"` (with `"auto": true` it
-  places itself at their bed when they are in a world), `"player"`, or `"world"` with `"at": [x, z]`.
-- **Auto-supports:** when placed, every bottom corner (lowest snap point) of a piece within 0.6 m of the blueprint's ground level (y 0) that
-  ends up above the real ground gets posts down to it, in that piece's material (setting AutoSupports, up to SupportMaxHeight, 12 m). So a
-  design for level ground works on a slope or raised: put its base at y 0 and leave the posts out. Pieces with `g: true` are not given posts.
-  For a site you have surveyed you can still place your own posts (as `wood_fort.py --site` does); they then reach the ground and none are added.
-- **Level ground:** the player can press L while placing to flatten the ground under the plan's bottom to its floor level as soon as it is
-  placed (no hoe needed; at most 8 m of cut or fill). It sets the ground exactly to the floor height (3 m blend at the edges), then places the ghosts (posts only where still needed). Removing the plan restores the ground
-  (saved in `_terrain/`) unless pieces of it are built. Request: `level <name|last>` levels a placed plan;
-  `check <name|last>` reports post columns that do not reach the ground and how high doors and gates sit above it.
-- Posts in a design that do not stand on another piece are lengthened down to the ground when placed. Keep designs for any ground
-  (base at y 0); a design fitted to one surveyed hillside only fits there, so save it under its own name (`wood_fort.py --site` writes
-  `wooden_fort_site.json`).
+- **Placing:** the player opens the Plans window (**F11**), presses Place and puts a preview where they look, turning and raising it as they
+  like (it starts facing the way they face). `anchor` is `"look"`; `"world"` with `"at": [x, z]` is for request files that give coordinates.
+- **Every plan is placed on level ground:** the ground under the whole plan (every piece that touches the ground, plus 1 m) is set exactly to
+  the plan's floor height (y 0, or higher if the player raised it), with a 3 m slope back to the natural ground, and painted as dirt; then the
+  ghosts appear. The game moves ground at most 8 m from where it started; warded ground is left alone. Removing or moving the plan restores the
+  ground (saved in `_terrain/`) unless pieces of it are built. So **design for flat ground with the base at y 0**; there is no need for posts
+  down a slope. Requests: `level <name|last>` levels a placed plan again; `check <name|last>` reports post columns that do not reach the ground
+  and how high doors and gates sit above it.
+- A design fitted to one surveyed hillside (its own posts cut to the slope, as `wood_fort.py --site` does) only fits there, so save it under its
+  own name (`wooden_fort_site.json`); being levelled, it no longer needs those posts.
 - Each piece: `p` prefab, `x y z` metres from the anchor (y above the ground at the anchor), `rx ry rz` degrees (Unity order z, x, y),
   `g: true` to measure `y` from the ground under that piece (follows slopes; for pieces touching the ground). Max 1500 pieces.
 
@@ -69,9 +67,7 @@ Files in `tools/` are replaced when the mod updates: copy before editing. Python
   **need a roof over them** to be used.
 - `rules`: `noClipping` pieces may not overlap others (stations, furniture), `notOnWood` (fires), `groundPiece`/`groundOnly` must stand on terrain,
   `noInWater`, `notOnTiltingSurface`, `onlyInBiome`, `mustConnectTo`, `spaceRequirement`. `check()` reports these.
-- **Sleeping:** a bed needs a roof over it, at least 80% cover around it, and a fire whose warmth reaches it (a fire pit warms 8 m). A fire
-  pit goes out in rain unless something is over it, smoke needs a way out (a raised ridge cap, as in `emergency_hut.py`), and it cannot
-  stand on wood.
+- Fires, smoke and sleeping: see "Game facts" below (checked in the game's code; do not guess these).
 - Material availability follows progress: check `cost` (bronze nails, iron, black marble...) against what the player has unlocked; ask if unsure.
 
 ## Structural support (run `tools/stability.py` on every design)
@@ -91,6 +87,32 @@ A piece on terrain gets the max. Others get `S - loss * d * S` from each touchin
 for a piece below, horizontal for one beside); two supports on opposite sides give their average. Below the minimum it collapses. Wood and
 stone run out after about 8 stacked 2 m pieces; stone cannot cantilever; iron and timberwood go much higher. Fix anything reported as falling.
 
+## Game facts (read from the game's code and assets; trust these over memory or forum lore)
+
+**Sleeping in a bed** (`Bed.Interact`): the bed's spawn point must be **under a roof** (a ray straight up hits something) and have **cover of at
+least 80%** (rays in all directions mostly hit something: a closed room passes, an open side usually does not); a **fire's warmth must reach
+the bed** (`EffectArea` of type Heat); the player must not be **wet**, and no enemy may be close enough to sense them. A bed costs 8 wood.
+
+**Fire warmth** reaches through walls: a fire pit's warmth (Heat + Fire, which also gives the Warm/Resting effects) is a sphere of **8 m**
+around it, walls or not. So **a fire outside the wall still warms the beds inside**: the simplest way to never be smoked out.
+
+**A fire pit goes out** when it is raining and nothing is straight above it (`underRoof`), or in strong wind (80%+) when its cover is under
+70%. It also goes out when its **own smoke piles up** around it for 4 seconds (the check looks for smoke within 0.75 m of a point 0.5 m
+above a fire pit, 0.9 m above a hearth: smoke trapped under a roof fills down until it smothers the fire). A roof close above is fine. It may not stand on wood (no wooden
+floor under it) and burns 1 wood per 5000 s (10 wood fills it).
+
+**Smoke** (`Smoke`, `SmokeSpawner`): a fire puts out a puff every half second (at most 100 in the world). Each puff is a small physics ball that
+rises (strongly at first, weakly over its 10 s life), slides along whatever it touches, then fades. It **only leaves a building through an
+opening at the top**: it collects in the highest pocket under a roof and fills downwards from there. A vent must be the highest point of the
+space (an open ridge, or a gap at the top of a slope), not a side opening below a cap: a raised ridge cap traps smoke in its peak. Players
+standing in smoke are "smoked" (damage over time). Easiest of all: keep the fire outside under its own small roof, sloping **up** away from the wall so its open top edge is the highest
+point (a roof sloping down from a wall makes a pocket against the wall where smoke gathers). `check()` warns about fires in closed rooms.
+
+**Costs per area** (wood): wall 2 x 2 = 2, half wall 2 x 1 = 1, quarter 1 x 1 = 1 (twice the price per metre), 26 and 45 degree roofs 2 each,
+gable wedges 2, door 4, floor 2 x 2 = 2, pole 1 m = 1, 2 m = 2, stake wall 4. Walls cost the same per square metre, so a cheaper building has
+**less wall area**: low walls under a steep roof (`emergency_hut.py`: a half wall under a 45 degree roof on one side). The workbench costs 10
+and must be within 20 m of anything built; taking pieces down gives all their materials back.
+
 ## Seeing the player's world
 
 Ask the player before doing any of this in their world.
@@ -107,19 +129,19 @@ Ask the player before doing any of this in their world.
   - `orbit <frame> [radius] [pitch] [count] [w] [h]`: views from all round a placed blueprint. `top <frame> [size] [width]`: straight down.
   - `survey [radius] [step] [look|here|frame]`, `import <file.json> [look|here|x z yaw]`, `remove <name|last>`, `wait <seconds>`, `status`.
   - `ui <blueprints|plans|settings|close>` opens the Plans window on that tab; `ui place <file.json>` starts the player's placement preview
-    (`ui height <m>`, `ui turn <deg>`, `ui level on|off` adjust it) and `ui cancel` ends it. Follow with `wait 1` and `shot` to see what the player sees. These show on the player's screen, so keep them short.
+    (`ui height <m>`, `ui turn <deg>` adjust it) and `ui cancel` ends it. Follow with `wait 1` and `shot` to see what the player sees. These show on the player's screen, so keep them short.
   - Example check after placing: `import my_fort.json look`, `wait 6`, `orbit last 30 30 4`, `top last 30`. Ghosts are only drawn near the player.
 - `python tools/selftest.py --request` drops a request that places the test hut where the player looks, photographs it and removes it: a quick way
   to confirm everything works on a new PC.
 
 ## How to work with the player
 
-1. Ask: what to build, how big, what style, what materials they can use yet, and where (flat ground? their bed? a survey of the site?).
+1. Ask: what to build, how big, what style and what materials they can use yet.
 2. Read `_pieces.json`; copy an example design script; build with snaps; run `stability` and `summary()`; render a preview and look at it.
 3. Hand over: what it is, the materials list, the stations needed, and anything to check. Write the JSON into this folder.
-4. They press **F11**, choose it and place the preview (or it places itself at their bed if `auto`). With requests on, place it and photograph it
+4. They press **F11**, choose it and place the preview. With requests on, place it and photograph it
    yourself. If it lands wrong they can Move or Remove it in the Plans window.
-5. Adjust from screenshots and regenerate (delete the `.imported` marker first, or `remove` the old ghosts with a request).
+5. Adjust from screenshots and regenerate (`remove` the old ghosts with a request, or the player removes them in the Plans window).
 
 ## If you also work on the mods themselves
 

@@ -14,16 +14,9 @@ namespace BuildOrders
     /// </summary>
     public partial class Plugin
     {
-        private ConfigEntry<bool> _levelByDefault;
         private const string LevelPiece = "mud_road_v2";   // the hoe's "Level ground"
         private const float TerrainLimit = 8f;              // the game lets ground be raised or lowered this far from where it started
         private const float LevelMargin = 1f;               // flatten this far beyond the plan's bottom corners
-
-        private void BindLevelConfig()
-        {
-            _levelByDefault = Config.Bind("Blueprints", "LevelByDefault", false,
-                "Start every blueprint placement with Level ground switched on (L toggles it while placing).");
-        }
 
         internal class LevelJob
         {
@@ -292,12 +285,6 @@ namespace BuildOrders
         /// <summary>While placing with Level ground on: the spots to level, what it takes, and a flat pad showing where the ground will be.</summary>
         private void UpdatePreviewLevel(Placement pl, Vector3 anchor, float baseY)
         {
-            if (!pl.Level)
-            {
-                pl.LevelSpots.Clear(); pl.Strokes = 0;
-                if (pl.Pad != null && pl.Pad.activeSelf) pl.Pad.SetActive(false);
-                return;
-            }
             pl.LevelSpots = LevelPoints(pl.Entries, pl.Feet, anchor, pl.Yaw, baseY);
             LevelStats(pl.LevelSpots, out pl.Strokes, out pl.Cut, out pl.Fill);
             if (pl.LevelSpots.Count == 0) return;
@@ -328,10 +315,9 @@ namespace BuildOrders
 
         private string LevelBannerText(Placement pl)
         {
-            if (!pl.Level) return "L: level the ground under it (off)";
-            if (pl.Strokes == 0) return "L: level ground ON   ·   already level here";
-            string limit = pl.Cut > TerrainLimit || pl.Fill > TerrainLimit ? $"   ·   more than {TerrainLimit:0} m: posts make up the rest" : "";
-            return $"L: level ground ON   ·   levels {pl.Strokes} spots as soon as you place it, cutting up to {pl.Cut:0.0} m and filling up to {pl.Fill:0.0} m{limit}";
+            if (pl.Strokes == 0) return "The ground here is already level";
+            string limit = pl.Cut > TerrainLimit || pl.Fill > TerrainLimit ? $"   ·   more than {TerrainLimit:0} m: the game cannot move ground that far, find flatter ground" : "";
+            return $"The ground is levelled when you place it: cutting up to {pl.Cut:0.0} m, filling up to {pl.Fill:0.0} m{limit}";
         }
 
         private void DrawLevelBanner(float sw)

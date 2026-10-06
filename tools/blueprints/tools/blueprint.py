@@ -1,7 +1,7 @@
 """
 Helpers for designing blueprints (files the BuildOrders mod turns into build-order ghosts).
 
-A blueprint is JSON: {"name", "anchor": "bed" | "player" | "look" | "world", "at": [x, z], "offset": [x, y, z], "yaw", "auto", "pieces": [...]}
+A blueprint is JSON: {"name", "anchor": "look" | "world", "at": [x, z], "offset": [x, y, z], "yaw", "pieces": [...]}
 where each piece is {"p": prefab, "x", "y", "z", "rx", "ry", "rz", "g"}. The numbers are where the piece's ORIGIN goes, in metres from the
 anchor, and its turn in degrees (Unity order: z, then x, then y). Pieces keep their origin in different places, so this module reads the
 game's own piece list (_pieces.json) and lets you place a piece by its box (`place`), by a snap point (`place_snap`, `place_mid`, `attach`)
@@ -163,8 +163,8 @@ def pieces_overlap(item_a, piece_a, item_b, piece_b):
 # ---------------------------------------------------------------- the blueprint
 
 class Blueprint:
-    def __init__(self, name, pieces, anchor="bed", offset=(0, 0, 0), yaw=0, auto=True, at=None):
-        self.meta = {"name": name, "anchor": anchor, "offset": list(offset), "yaw": yaw, "auto": auto}
+    def __init__(self, name, pieces, anchor="look", offset=(0, 0, 0), yaw=0, auto=None, at=None):   # auto: no longer used (kept so old scripts run)
+        self.meta = {"name": name, "anchor": anchor, "offset": list(offset), "yaw": yaw}
         if at:
             self.meta["at"] = list(at)
         self.pieces = pieces
@@ -287,6 +287,49 @@ class Blueprint:
                              for j, b in enumerate(boxes))
                 if not roofed:
                     notes.append(f"#{i} {item['p']} needs a roof over it before you can craft at it")
+
+        # fires and beds (see "Game facts" in CLAUDE.md): rain puts out an uncovered fire, smoke fills a closed room from the roof down,
+        # and a bed needs a fire within 8 m and a roof over it
+        shapes = [solids(it, cat[it["p"]], shrink=0.0) for it in self.items]   # the real turned shapes (a sloped roof is not a wall)
+
+        def solid_at(x, y, z, skip):
+            for j, b in enumerate(boxes):
+                if j == skip or not (b[0][0] <= x <= b[1][0] and b[0][1] <= y <= b[1][1] and b[0][2] <= z <= b[1][2]):
+                    continue
+                for c, axes, half in shapes[j]:
+                    d = (x - c[0], y - c[1], z - c[2])
+                    if all(abs(d[0] * a[0] + d[1] * a[1] + d[2] * a[2]) <= h for a, h in zip(axes, half)):
+                        return True
+            return False
+
+        def covered(i, height=8.0):
+            cx, cz = (boxes[i][0][0] + boxes[i][1][0]) / 2, (boxes[i][0][2] + boxes[i][1][2]) / 2
+            y0 = boxes[i][1][1] + 0.3
+            return any(solid_at(cx, y0 + k * 0.05, cz, i) for k in range(int(height / 0.05)))   # fine steps: a floor is 13 cm thick
+
+        fires = [i for i, it in enumerate(self.items) if cat[it["p"]].get("rules", {}).get("notOnWood")]
+        for i in fires:
+            name = self.items[i]["p"]
+            if not covered(i):
+                notes.append(f"#{i} {name} has nothing above it: rain will put it out (and then beds near it cannot be slept in)")
+                continue
+            cx, cz = (boxes[i][0][0] + boxes[i][1][0]) / 2, (boxes[i][0][2] + boxes[i][1][2]) / 2
+            y = boxes[i][0][1] + 1.2
+            walled = all(any(solid_at(cx + dx * k * 0.1, y, cz + dz * k * 0.1, i) for k in range(1, 51)) for dx, dz in ((1, 0), (-1, 0), (0, 1), (0, -1)))
+            if walled:
+                notes.append(f"#{i} {name} is inside a closed room: its smoke collects under the roof and fills downwards unless the roof has an "
+                             f"opening at its highest point. Simplest: put the fire outside under its own small roof (its warmth reaches 8 m through walls)")
+        for i, it in enumerate(self.items):
+            if it["p"] != "bed" and not it["p"].startswith("piece_bed"):
+                continue
+            centre = [(boxes[i][0][k] + boxes[i][1][k]) / 2 for k in range(3)]
+            near = [j for j in fires if math.dist(centre, [(boxes[j][0][k] + boxes[j][1][k]) / 2 for k in range(3)]) <= 8.0]
+            if fires and not near:
+                problems.append(f"#{i} {it['p']} has no fire within 8 m: it cannot be slept in")
+            elif not fires:
+                notes.append(f"#{i} {it['p']} needs a fire within 8 m to be slept in (none in this blueprint)")
+            if not covered(i):
+                problems.append(f"#{i} {it['p']} has no roof over it: it cannot be slept in")
         return {"pieces": len(self.items), "materials": self.materials(), "notes": notes, "problems": problems}
 
     def summary(self):

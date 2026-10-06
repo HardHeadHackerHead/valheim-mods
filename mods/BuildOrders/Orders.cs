@@ -206,6 +206,10 @@ namespace BuildOrders
                         Send(BuildState(), sender);
                         break;
 
+                    case 'B': // someone shared a blueprint with everyone
+                        OnSharedBlueprint(message.Substring(2));
+                        break;
+
                     case 'S': // here is everything someone knows
                         foreach (string line in message.Substring(1).Split('\n'))
                         {

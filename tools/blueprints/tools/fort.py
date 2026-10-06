@@ -64,8 +64,12 @@ bp.place("bed", 1.7, 6.5, y=FLOOR_TOP)
 bp.place("piece_chest_wood", -4.1, 3.6, y=FLOOR_TOP, yaw=90)
 bp.place("piece_chest_wood", -4.1, 5.5, y=FLOOR_TOP, yaw=90)
 
-# the courtyard: a fire pit in the middle and torches by the gate
-bp.place("fire_pit", 0.0, -3.0, y=0.0, ground=True)
+# the fire: outside the hall's front wall, within 8 m of the beds (its warmth reaches through the wall), under a little shed roof that keeps
+# the rain off and rises away from the wall so the smoke slides out at its top edge; no smoke ever gets into the hall
+bp.place("fire_pit", 3.0, 1.2, y=0.0, ground=True)
+bp.place_mid("wood_roof", ("bottom 1", "bottom 2"), (3.0, FLOOR_TOP + 2.0, 2.5), yaw=bp.yaw_for("wood_roof", 0, -1))
+
+# torches by the gate
 for sx in (-1, 1):
     bp.place("piece_groundtorch_wood", sx * 3.4, -8.6, y=0.0, ground=True)
 

@@ -15,15 +15,13 @@ namespace BuildOrders
     /// structure appear and you build them the usual way (walk up and press E, hold E to build many, fetch materials). Nothing is
     /// built for free: the pieces still cost what they cost.
     ///
-    /// Files live in BepInEx/blueprints. A blueprint can place itself (anchor "bed", with "auto": true) or wait for the import key.
+    /// Files live in BepInEx/blueprints; the Plans window (F11) places them, always on levelled ground.
     /// The first time you are in a world the mod also writes blueprints/_pieces.json, the size and snap points of every buildable
     /// piece, which is what a blueprint designer needs to line pieces up.
     /// </summary>
     public partial class Plugin
     {
         private ConfigEntry<KeyCode> _blueprintKey;
-        private ConfigEntry<bool> _blueprintAuto;
-        private float _nextBlueprintScan;
         private bool _dumpStarted;
 
         private static string BlueprintDir => Path.Combine(Paths.BepInExRootPath, "blueprints");
@@ -31,11 +29,7 @@ namespace BuildOrders
         private void BindBlueprintConfig()
         {
             _blueprintKey = Config.Bind("Blueprints", "ImportKey", KeyCode.F11,
-                "Opens the Plans window: place blueprints from BepInEx/blueprints with a preview, see and remove placed plans, change build settings. (Blueprints marked auto place themselves.)");
-            _blueprintAuto = Config.Bind("Blueprints", "AllowAutoPlace", true,
-                "Let blueprint files that say \"auto\": true place their ghosts by themselves (at your bed, or at coordinates the file gives).");
-            BindSupportConfig();
-            BindLevelConfig();
+                "Opens the Plans window: place blueprints from BepInEx/blueprints with a preview, see and remove placed plans, change build settings.");
             BindEyesConfig();
         }
 
@@ -54,16 +48,6 @@ namespace BuildOrders
             UpdatePlacement(player);
             UpdateEyes(player);
 
-            if (_blueprintAuto.Value && Time.time >= _nextBlueprintScan)
-            {
-                _nextBlueprintScan = Time.time + 5f;
-                foreach (string file in PendingFiles())
-                {
-                    JObject doc = Read(file);
-                    if (doc == null || !(bool?)doc["auto"] == true) continue;
-                    if (Anchor(player, doc, out Vector3 at, out float yaw)) Import(player, file, doc, at, yaw, auto: true);
-                }
-            }
         }
 
         /// <summary>
@@ -99,39 +83,12 @@ namespace BuildOrders
             catch (Exception e) { Logger.LogWarning("Could not write the blueprint guide: " + e.Message); }
         }
 
-        // ---- finding blueprints ----
-
-        private static IEnumerable<string> PendingFiles()
-        {
-            if (!Directory.Exists(BlueprintDir)) return new string[0];
-            return Directory.GetFiles(BlueprintDir, "*.json")
-                .Where(f => !Path.GetFileName(f).StartsWith("_") && !File.Exists(f + ".imported"))
-                .OrderBy(f => f, StringComparer.OrdinalIgnoreCase).ToList();
-        }
+        // ---- reading blueprints ----
 
         private JObject Read(string file)
         {
             try { return JObject.Parse(File.ReadAllText(file)); }
             catch (Exception e) { Logger.LogWarning("Could not read blueprint " + Path.GetFileName(file) + ": " + e.Message); return null; }
-        }
-
-        // ---- the key: place the next blueprint where you look ----
-
-        private void ImportNext(Player player)
-        {
-            string file = PendingFiles().FirstOrDefault();
-            if (file == null)
-            {
-                player.Message(MessageHud.MessageType.Center, "No new blueprints in BepInEx/blueprints");
-                return;
-            }
-            JObject doc = Read(file);
-            if (doc == null) { File.WriteAllText(file + ".imported", "unreadable"); return; }
-
-            Vector3 at;
-            float yaw = player.transform.eulerAngles.y;
-            if (!LookPoint(player, out at)) at = player.transform.position + player.transform.forward * 6f;
-            Import(player, file, doc, at, yaw, auto: false);
         }
 
         private static bool LookPoint(Player player, out Vector3 point)
@@ -144,39 +101,16 @@ namespace BuildOrders
             return true;
         }
 
-        /// <summary>Where a blueprint that places itself goes: at your bed, or at coordinates the file gives.</summary>
-        private static bool Anchor(Player player, JObject doc, out Vector3 at, out float yaw)
-        {
-            at = Vector3.zero;
-            yaw = doc["yaw"] != null ? (float)doc["yaw"] : 0f;
-            string anchor = (string)doc["anchor"] ?? "bed";
-
-            if (anchor == "world" && doc["at"] is JArray w && w.Count >= 2)
-            {
-                at = new Vector3((float)w[0], 0f, (float)w[w.Count - 1]);
-                return true;
-            }
-            if (anchor == "bed")
-            {
-                PlayerProfile profile = Game.instance != null ? Game.instance.GetPlayerProfile() : null;
-                if (profile == null || !profile.HaveCustomSpawnPoint()) return false; // no bed yet: wait for one
-                at = profile.GetCustomSpawnPoint();
-                return true;
-            }
-            if (anchor == "player") { at = player.transform.position; return true; }
-            return false;
-        }
-
         // ---- turning the file into orders ----
 
-        private int Import(Player player, string file, JObject doc, Vector3 anchor, float yaw, bool auto)
+        private int Import(Player player, string file, JObject doc, Vector3 anchor, float yaw)
         {
             var pieces = doc["pieces"] as JArray;
             string title = (string)doc["name"] ?? Path.GetFileNameWithoutExtension(file);
-            if (pieces == null || pieces.Count == 0) { File.WriteAllText(file + ".imported", "empty"); return 0; }
+            if (pieces == null || pieces.Count == 0) return 0;
             Vector3 offset = doc["offset"] is JArray o && o.Count >= 3 ? new Vector3((float)o[0], (float)o[1], (float)o[2]) : Vector3.zero;
             Vector3 origin = anchor + Quaternion.Euler(0f, yaw, 0f) * new Vector3(offset.x, 0f, offset.z);
-            return PlaceEntries(player, title, file, EntriesFrom(pieces), origin, yaw, offset.y, auto);
+            return LevelThenPlace(player, title, file, EntriesFrom(pieces), origin, yaw, offset.y);
         }
 
         // ---- the piece list a blueprint designer needs ----

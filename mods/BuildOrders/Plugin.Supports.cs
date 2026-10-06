@@ -2,35 +2,19 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using BepInEx.Configuration;
 using Newtonsoft.Json.Linq;
 using UnityEngine;
 
 namespace BuildOrders
 {
     /// <summary>
-    /// Auto-supports: a blueprint is designed on level ground, but the world is not level. When it is placed, every bottom corner of a piece
-    /// that was meant to stand on the ground (its feet are at the blueprint's ground level) and now hangs in the air, because the hill falls
-    /// away or the player raised the plan, gets a post down to the ground (or to a building already there), in the piece's own material.
-    /// The posts are part of the plan (shown in the preview, built like any ghost) and are worked out again whenever the plan moves.
+    /// Piece shapes (from the piece list the mod writes, _pieces.json) and a plan's footprint: the bottom corners of the pieces meant to stand
+    /// on the ground, which is the area levelled when a plan is placed.
     /// </summary>
     public partial class Plugin
     {
-        private ConfigEntry<bool> _autoSupports;
-        private ConfigEntry<float> _supportMaxHeight;
-
-        internal const string SupportIdPrefix = "s-"; // build orders that are auto-supports (so moving a plan works them out afresh)
+        internal const string SupportIdPrefix = "s-"; // support posts placed by older versions (left out when a plan is moved)
         private const float GroundBand = 0.6f;        // feet this close to the blueprint's ground level count as "meant to stand on the ground"
-        private const float MinGap = 0.25f;           // a gap smaller than this is left alone (pieces may sit a little into or above the ground)
-
-        private void BindSupportConfig()
-        {
-            _autoSupports = Config.Bind("Blueprints", "AutoSupports", true,
-                "When a blueprint is placed on uneven ground (or raised), add posts under the pieces meant to stand on the ground, down to the ground.");
-            _supportMaxHeight = Config.Bind("Blueprints", "SupportMaxHeight", 12f,
-                new ConfigDescription("The tallest post auto-supports will add (metres). Wood and stone posts much taller than this do not hold.", new AcceptableValueRange<float>(2f, 30f)));
-        }
-
         // ---- piece shapes, from the piece list the mod writes (_pieces.json) ----
 
         private class Shape
@@ -89,28 +73,7 @@ namespace BuildOrders
             return shapes;
         }
 
-        /// <summary>The posts for a material, longest first: (prefab, length between its end snaps, its top snap above its origin).</summary>
-        private List<KeyValuePair<string, Vector2>> PostsFor(string material)
-        {
-            string[] names;
-            switch (material)
-            {
-                case "HardWood": names = new[] { "wood_pole_log_4", "wood_pole_log" }; break;
-                case "Stone": case "Marble": case "Ashstone": case "Ancient": case "Ice": names = new[] { "stone_pillar" }; break;
-                case "Iron": names = new[] { "woodiron_pole" }; break;
-                case "Timberwood": names = new[] { "stave_pole_2m" }; break;
-                default: names = new[] { "wood_pole2", "wood_pole" }; break;
-            }
-            var shapes = Shapes();
-            var list = new List<KeyValuePair<string, Vector2>>();
-            foreach (string n in names)
-                if (shapes.TryGetValue(n, out Shape s) && s.Top - s.Bottom > 0.4f && ZNetScene.instance.GetPrefab(n) != null)
-                    list.Add(new KeyValuePair<string, Vector2>(n, new Vector2(s.Top - s.Bottom, s.Top)));
-            if (list.Count == 0 && material != "Wood") return PostsFor("Wood");
-            return list.OrderByDescending(kv => kv.Value.x).ToList();
-        }
-
-        // ---- which feet need a post ----
+        // ---- the footprint ----
 
         internal class Foot
         {
@@ -170,50 +133,5 @@ namespace BuildOrders
             return feet;
         }
 
-        internal struct Post { public string Prefab; public Vector3 Pos; public Quaternion Rot; }
-
-        private static readonly int SupportMask = LayerMask.GetMask("terrain", "piece", "static_solid");
-
-        /// <summary>The posts needed for a plan at an anchor, turn and base height, and how many feet were too high to hold up.</summary>
-        private List<Post> Supports(List<Foot> feet, Vector3 anchor, float yaw, float baseY, out int tooHigh, bool level = false)
-        {
-            var posts = new List<Post>();
-            tooHigh = 0;
-            if (!_autoSupports.Value || feet == null) return posts;
-            Quaternion turn = Quaternion.Euler(0f, yaw, 0f);
-            float max = _supportMaxHeight.Value;
-            var cache = new Dictionary<string, List<KeyValuePair<string, Vector2>>>();
-            foreach (Foot f in feet)
-            {
-                Vector3 top = anchor + turn * new Vector3(f.Local.x, 0f, f.Local.z);
-                top.y = baseY + f.Local.y;
-                float ground = ZoneSystem.instance.GetGroundHeight(top);
-                if (level) ground = LevelledGround(ground, baseY); // the ground once levelled to the plan's floor
-                if (Physics.Raycast(top + Vector3.down * 0.05f, Vector3.down, out RaycastHit hit, max + 2f, SupportMask, QueryTriggerInteraction.Ignore))
-                    ground = Mathf.Max(ground, hit.point.y); // stand on a floor or rock that is already there
-                float gap = top.y - ground;
-                if (gap < MinGap) continue;
-                if (gap > max) { tooHigh++; continue; }
-                if (!cache.TryGetValue(f.Material, out var kinds)) cache[f.Material] = kinds = PostsFor(f.Material);
-                if (kinds.Count == 0) continue;
-                float y = top.y;
-                for (int n = 0; n < 16 && y - ground > 0.05f; n++)
-                {
-                    float left = y - ground;
-                    var kind = kinds.FirstOrDefault(k => k.Value.x <= left + 0.6f); // the longest that does not sink far into the ground
-                    if (kind.Key == null) kind = kinds[kinds.Count - 1];
-                    posts.Add(new Post { Prefab = kind.Key, Pos = new Vector3(top.x, y - kind.Value.y, top.z), Rot = turn });
-                    y -= kind.Value.x;
-                }
-            }
-            return posts;
-        }
-
-        /// <summary>What a list of posts costs, for the preview banner.</summary>
-        private string PostCost(List<Post> posts)
-        {
-            if (posts.Count == 0) return "";
-            return string.Join(", ", MaterialsOf(posts.Select(p => p.Prefab)).Select(kv => $"{kv.Value} {Localization.instance.Localize(kv.Key)}").ToArray());
-        }
     }
 }
