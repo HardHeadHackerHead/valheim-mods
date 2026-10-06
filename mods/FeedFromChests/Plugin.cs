@@ -23,11 +23,11 @@ namespace FeedFromChests
     {
         public const string Guid = "com.dhack.feedfromchests";
         public const string Name = "FeedFromChests";
-        public const string Version = "1.3.7";
+        public const string Version = "1.3.8";
 
         internal static Plugin Instance;
 
-        private ConfigEntry<bool> _enabled, _autoFeed, _alwaysOpenMenu, _stationAuto;
+        private ConfigEntry<bool> _enabled, _autoFeed, _alwaysOpenMenu, _stationAuto, _takeOffCooked, _refuelLights, _refuelFires;
         private ConfigEntry<float> _radius, _autoInterval, _autoRange, _outputRadius, _autoRadius;
         private ConfigEntry<int> _fillLimit;
 
@@ -36,6 +36,8 @@ namespace FeedFromChests
         internal bool AutoEnabled => _stationAuto != null && _stationAuto.Value;
         internal float ChestRadius => _radius.Value;
         internal float OutputRadius => _outputRadius.Value;
+        internal float FeedRadius => _autoRadius.Value;
+        internal bool RefuelsItself(Fireplace f) => _enabled.Value && Lights.Refuels(f, _refuelLights.Value, _refuelFires.Value);
         internal void Info(string message) => Logger.LogInfo(message);
 
         private void Awake()
@@ -57,11 +59,21 @@ namespace FeedFromChests
             _autoInterval = Config.Bind("AutoFeed", "Interval", 1f, "Seconds between automatic top-ups of each station.");
             _autoRange = Config.Bind("AutoFeed", "PlayerRange", 40f,
                 "Automatic feeding only runs while you are within this many metres of the station (the game only loads chests near players).");
+            _takeOffCooked = Config.Bind("Cooking", "TakeOffCooked", true,
+                "Food on a cooking station comes off by itself the moment it is done, so it never burns: into a chest assigned to it or to Food " +
+                "(the chest assign menu, K), else it slides off the side of the spit. Each station can also be switched off in its menu (E).");
+            _refuelLights = Config.Bind("Fires", "RefuelTorches", true,
+                "Every torch, sconce and brazier keeps itself lit: when it has room for more fuel (resin, coal...), one is taken from a chest " +
+                "within FeedRadius of it. For all of them at once, no setup per torch. Runs while you are within PlayerRange; never uses your inventory.");
+            _refuelFires = Config.Bind("Fires", "RefuelCampfires", false,
+                "The same for fires that burn wood (campfires, hearths, bonfires): keep them topped up with wood from nearby chests.");
 
             _harmony = new Harmony(Guid);
             _harmony.PatchAll();
             ContainerRegistry.Seed(); // chests that already exist; new ones are added as they appear
             AutoFeed.Seed();          // so do the stations
+            Cooking.Seed();
+            Lights.Seed();
 
             Logger.LogInfo($"{Name} {Version} loaded");
             StartCoroutine(Warmup());
@@ -75,6 +87,8 @@ namespace FeedFromChests
         {
             MenuOpen = false;
             AutoFeed.Clear();
+            Cooking.Clear();
+            Lights.Clear();
             Feed.Reserved = null;
             ContainerRegistry.Clear();
             if (Instance == this) Instance = null;
@@ -140,6 +154,8 @@ namespace FeedFromChests
             if (!_enabled.Value || player == null || player.IsDead()) return;
 
             if (_stationAuto.Value && !_filling) AutoFeed.Tick(this, player, _autoInterval.Value, _autoRange.Value); // stations set to feed themselves
+            if (_stationAuto.Value && !_filling) Cooking.Tick(this, player, _autoRange.Value, _takeOffCooked.Value); // spits: done food off, raw food on
+            if (!_filling) Lights.Tick(this, player, _autoRange.Value, _refuelLights.Value, _refuelFires.Value);   // torches keep themselves lit
 
             if (MenuOpen) UpdateMenu(player);
         }
@@ -244,9 +260,30 @@ namespace FeedFromChests
         /// </summary>
         private float _lastHintAt = -100f;
 
-        internal bool TryAutoFeed(Player player, GameObject go)
+        internal bool TryAutoFeed(Player player, GameObject go, bool alt = false)
         {
             if (!_enabled.Value) return false;
+
+            // Cooking stations: E takes everything that is done straight into your inventory; otherwise it opens the menu (what is
+            // cooking, Add 1 / Fill, auto-feed). Alt+E leaves E to the game (put food on by hand).
+            CookingStation cooking = go != null ? go.GetComponentInParent<CookingStation>() : null;
+            if (cooking != null && !alt)
+            {
+                if (Cooking.HasDone(cooking))
+                {
+                    int taken = Cooking.TakeAllInto(player, cooking);
+                    Mark($"took {taken} off a cooking station");
+                    return taken > 0;
+                }
+                if (_stationAuto.Value && Stations.TryGet(go, out StationInfo cookInfo, out _))
+                {
+                    Mark("pressed E at a cooking station");
+                    OpenMenu(player, cookInfo);
+                    return true;
+                }
+            }
+            if (cooking != null && alt) return false;
+
             if (!Stations.TryGet(go, out StationInfo info, out Purpose? purpose) || purpose == null) return false;
 
             // Smelters, kilns and furnaces: E always opens the menu, whatever you carry, so you can always set up auto-feed.
@@ -291,11 +328,11 @@ namespace FeedFromChests
     [HarmonyPatch(typeof(Player), "Interact")]
     internal static class Player_Interact
     {
-        private static bool Prefix(Player __instance, GameObject go, bool hold)
+        private static bool Prefix(Player __instance, GameObject go, bool hold, bool alt)
         {
             Plugin plugin = Plugin.Instance;
             if (plugin == null || hold || __instance != Player.m_localPlayer) return true;
-            try { return !plugin.TryAutoFeed(__instance, go); }
+            try { return !plugin.TryAutoFeed(__instance, go, alt); }
             catch (Exception e) { plugin.Log("Auto-feed failed, using the normal behaviour: " + e.Message); return true; }
         }
     }

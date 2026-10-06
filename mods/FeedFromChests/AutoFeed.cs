@@ -23,8 +23,11 @@ namespace FeedFromChests
         /// <summary>What the station makes goes into the chests assigned to it (instead of dropping on the ground).</summary>
         public bool Output = true; // on unless someone turns it off (a station nobody has set up still sends output to its chests)
 
-        /// <summary>Format: "on;item,item;output;reserve;fuelreserve" (older saves have fewer parts).</summary>
-        public string Encode() => (On ? "1" : "0") + ";" + string.Join(",", Allowed.ToArray()) + ";" + (Output ? "1" : "0") + ";" + Reserve + ";" + FuelReserve;
+        /// <summary>Cooking stations: food that is done comes off by itself (so it never burns). On unless someone turns it off.</summary>
+        public bool TakeOff = true;
+
+        /// <summary>Format: "on;item,item;output;reserve;fuelreserve;takeoff" (older saves have fewer parts).</summary>
+        public string Encode() => (On ? "1" : "0") + ";" + string.Join(",", Allowed.ToArray()) + ";" + (Output ? "1" : "0") + ";" + Reserve + ";" + FuelReserve + ";" + (TakeOff ? "1" : "0");
 
         public static AutoSetting Parse(string text)
         {
@@ -37,12 +40,13 @@ namespace FeedFromChests
             if (parts.Length > 2) setting.Output = parts[2] != "0";
             if (parts.Length > 3 && int.TryParse(parts[3], out int reserve)) setting.Reserve = Mathf.Max(0, reserve);
             if (parts.Length > 4 && int.TryParse(parts[4], out int fuelReserve)) setting.FuelReserve = Mathf.Max(0, fuelReserve);
+            if (parts.Length > 5) setting.TakeOff = parts[5] != "0";
             return setting;
         }
 
         public AutoSetting Copy()
         {
-            var copy = new AutoSetting { On = On, Output = Output, Reserve = Reserve, FuelReserve = FuelReserve };
+            var copy = new AutoSetting { On = On, Output = Output, Reserve = Reserve, FuelReserve = FuelReserve, TakeOff = TakeOff };
             foreach (string name in Allowed) copy.Allowed.Add(name);
             return copy;
         }
@@ -69,7 +73,7 @@ namespace FeedFromChests
         public static void Seed() { foreach (Smelter s in Object.FindObjectsOfType<Smelter>()) Register(s); }
         public static void Clear() { All.Clear(); Infos.Clear(); }
 
-        public static bool Supported(StationInfo info) => info != null && info.Component is Smelter;
+        public static bool Supported(StationInfo info) => info != null && (info.Component is Smelter || info.Component is CookingStation);
 
         public static AutoSetting Read(MonoBehaviour station)
         {
@@ -205,6 +209,40 @@ namespace FeedFromChests
                 remaining -= added;
                 smelter.m_produceEffects.Create(smelter.transform.position, smelter.transform.rotation);
                 log($"{smelter.m_name} made {added} {display} and put it in a chest {Vector3.Distance(smelter.transform.position, chest.transform.position):0} m away");
+            }
+            return stack - remaining;
+        }
+
+        /// <summary>
+        /// Put <paramref name="stack"/> of an item into the chests assigned to it (by name first, then by its kind), nearest first, within
+        /// <paramref name="radius"/> of <paramref name="from"/>. Returns how many went in; each add is checked by counting before and after.
+        /// </summary>
+        public static int SendItem(Vector3 from, ItemDrop product, int stack, float radius, string category, System.Action<string> log, string station)
+        {
+            if (product == null || stack <= 0) return 0;
+            string name = product.m_itemData.m_shared.m_name;
+            var candidates = new List<KeyValuePair<int, Container>>();
+            foreach (Container chest in Chests.Near(from, radius))
+            {
+                int wants = Wants(chest, name, category);
+                if (wants > 0) candidates.Add(new KeyValuePair<int, Container>(wants, chest));
+            }
+            int remaining = stack;
+            foreach (var pair in candidates.OrderByDescending(p => p.Key))
+            {
+                if (remaining <= 0) break;
+                Container chest = pair.Value;
+                if (chest == null || Chests.InUse(chest)) continue;
+                Chests.TakeOwnership(chest);
+                Inventory inventory = chest.GetInventory();
+                int take = Mathf.Min(remaining, product.m_itemData.m_shared.m_maxStackSize);
+                if (!inventory.CanAddItem(product.gameObject, take)) continue;
+                int before = inventory.CountItems(name);
+                inventory.AddItem(product.gameObject, take);
+                int added = inventory.CountItems(name) - before;
+                if (added <= 0) continue;
+                remaining -= added;
+                log($"{station} finished {added} {Localization.instance.Localize(name)} and put it in a chest {Vector3.Distance(from, chest.transform.position):0} m away");
             }
             return stack - remaining;
         }

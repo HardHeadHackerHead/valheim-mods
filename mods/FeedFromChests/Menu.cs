@@ -28,6 +28,8 @@ namespace FeedFromChests
         private class AutoItem { public string Name, Display; public ItemDrop Drop; public bool IsFuel; }
         private bool _supportsAuto;
         private AutoFeed.Inside _inside = new AutoFeed.Inside();
+        private List<string> _cookLines = new List<string>();   // a cooking station: what is on each slot
+        private bool IsCooking => _station != null && _station.Component is CookingStation;
         private readonly Dictionary<string, int> _autoStock = new Dictionary<string, int>(); // item -> how many the chests in auto-feed range hold
         private AutoSetting _auto = new AutoSetting();
         private List<AutoItem> _autoItems = new List<AutoItem>();
@@ -53,12 +55,12 @@ namespace FeedFromChests
             _station = info;
             _status = "";
             Mark("opened the menu");
-            _stationTitle = "Add to " + Localization.instance.Localize(info.Title);
+            _stationTitle = (info.Component is CookingStation ? "" : "Add to ") + Localization.instance.Localize(info.Title);
             _subtitle = $"Uses your inventory first, then chests within {_radius.Value:0} m. The station's own limits still apply.";
             _supportsAuto = _stationAuto.Value && AutoFeed.Supported(info);
             _autoItems = BuildAutoItems(info);
             _auto = _supportsAuto ? AutoFeed.Read(info.Component) : new AutoSetting();
-            _autoEverSet = _supportsAuto && (_auto.On || _auto.Output || _auto.Allowed.Count > 0);
+            _autoEverSet = _supportsAuto && (_auto.On || _auto.Allowed.Count > 0);
             RefreshRows(player);
             Logger.LogInfo($"Menu for '{info.Title}': {_rows.Count} item(s) available, {_station.Inputs.Count} input(s), fuel={(_station.Fuel != null ? "yes" : "no")}, auto-feed={(_supportsAuto ? (_auto.On ? "on" : "off") : "n/a")}");
             if (_rows.Count == 0 && !_supportsAuto)
@@ -127,7 +129,7 @@ namespace FeedFromChests
                     setting.Allowed.Add(item.Name);
                 }
             }
-            if (setting.On && !_autoEverSet) { setting.Output = true; setting.Reserve = 20; } // sensible start: output to chests, keep 20 in stock
+            if (setting.On && !_autoEverSet) { setting.Output = true; setting.Reserve = IsCooking ? 0 : 20; } // sensible start: output to chests; keep 20 ore, cook all the food
             AutoFeed.Write(_station.Component, setting);
             _auto = setting;
             _status = setting.On ? "Auto-feed is on" : "Auto-feed is off";
@@ -163,6 +165,16 @@ namespace FeedFromChests
             _status = setting.Output ? "What it makes goes into chests" : "What it makes drops on the ground";
         }
 
+        private void ToggleTakeOff()
+        {
+            if (_station == null || !_station.Alive || !_supportsAuto) return;
+            AutoSetting setting = AutoFeed.Read(_station.Component);
+            setting.TakeOff = !setting.TakeOff;
+            AutoFeed.Write(_station.Component, setting);
+            _auto = setting;
+            _status = setting.TakeOff ? "Done food comes off by itself" : "Done food stays on (and can burn)";
+        }
+
         private void ToggleAutoItem(string name)
         {
             if (_station == null || !_station.Alive || !_supportsAuto) return;
@@ -178,7 +190,8 @@ namespace FeedFromChests
             if (_supportsAuto && _station != null && _station.Alive)
             {
                 _auto = AutoFeed.Read(_station.Component); // others may have changed it
-                _inside = AutoFeed.Look((Smelter)_station.Component);
+                if (_station.Component is Smelter smelter) _inside = AutoFeed.Look(smelter);
+                else if (_station.Component is CookingStation cooking) _cookLines = Cooking.Lines(cooking);
                 _autoStock.Clear();
                 List<Container> autoChests = Chests.Near(_station.Position, _autoRadius.Value);
                 foreach (AutoItem item in _autoItems) _autoStock[item.Name] = Chests.Count(autoChests, item.Name);
@@ -314,6 +327,13 @@ namespace FeedFromChests
         /// <summary>What is loaded into the station right now: the ore waiting to be processed, the fuel, and what is ready to collect.</summary>
         private void DrawInsidePanel()
         {
+            if (IsCooking)
+            {
+                GUILayout.Label("On the station", _text);
+                foreach (string line in _cookLines) GUILayout.Label(line, _dim);
+                GUILayout.Space(8);
+                return;
+            }
             AutoFeed.Inside i = _inside;
             GUILayout.Label("Inside", _text);
             GUILayout.BeginHorizontal(GUILayout.Height(30));
@@ -371,13 +391,28 @@ namespace FeedFromChests
                 GUILayout.EndHorizontal();
             }
 
+            if (IsCooking)
+            {
+                GUILayout.Space(2);
+                GUILayout.BeginHorizontal();
+                GUILayout.Label("Done food comes off by itself", _text);
+                GUILayout.FlexibleSpace();
+                if (GUILayout.Button(_auto.TakeOff ? "ON" : "OFF", _auto.TakeOff ? _buttonOn : _button, GUILayout.Width(80), GUILayout.Height(26))) _pending = ToggleTakeOff;
+                GUILayout.EndHorizontal();
+                GUILayout.Label(_takeOffCooked.Value
+                    ? "The moment something is done it comes off, so it never burns: into a chest (below), or it slides off the side of the spit towards you."
+                    : "Switched off for every station in the config (Cooking, TakeOffCooked).", _dim);
+            }
+
             GUILayout.Space(2);
             GUILayout.BeginHorizontal();
-            GUILayout.Label("What it makes goes into chests", _text);
+            GUILayout.Label(IsCooking ? "Done food goes into chests" : "What it makes goes into chests", _text);
             GUILayout.FlexibleSpace();
             if (GUILayout.Button(_auto.Output ? "ON" : "OFF", _auto.Output ? _buttonOn : _button, GUILayout.Width(80), GUILayout.Height(26))) _pending = ToggleOutput;
             GUILayout.EndHorizontal();
-            GUILayout.Label("Goes to the chests assigned to that item (the chest assign menu, K), nearest first. With none assigned it drops on the ground as usual.", _dim);
+            GUILayout.Label(IsCooking
+                ? "Goes to the chests assigned to that food or to Food (the chest assign menu, K), nearest first. With none, it slides off the spit."
+                : "Goes to the chests assigned to that item (the chest assign menu, K), nearest first. With none assigned it drops on the ground as usual.", _dim);
 
             GUILayout.Space(2);
             for (int i = 0; i < _autoItems.Count; i += 3)
