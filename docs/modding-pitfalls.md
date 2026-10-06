@@ -34,6 +34,14 @@ Every time a world loads, the game gives each object a new `ZDOID` (`ZDO.Load` s
 object across restarts, store your own random id on it (PortalHub's `dh_pid` in `mods/PortalHub/Plugin.Net.cs`), or use the game's
 connections (`ZDO.SetConnection`), which it re-links by hash when the world loads.
 
+## Check every default key against the game's
+
+Valheim reads its own keys whatever a mod does: GearSlots' quick slot 4 on V also flipped the game's auto-pickup toggle (V), and the
+player only saw it as "auto-pickup stopped working". The game's defaults are in `ZInput` (in `assembly_utils.dll`, `AddButton(...)`):
+V auto-pickup, X sit, C walk, Q auto-run and previous tab, G radial menu, F forsaken power, R hide, T emotes, E use, Tab, M, digits
+1-8. Mods that use one of these call `GameKeys.Free` (in GearSlots, QualityOfLife, BuildOrders), which unbinds the game's action once
+(saved in the game's own settings, never the essential ones) and tells the player, so they can give it another key in Settings, Controls.
+
 ## Test with a real restart
 
 These bugs only show on a fresh launch. Before releasing a mod that registers prefabs or changes the player, quit the game fully,

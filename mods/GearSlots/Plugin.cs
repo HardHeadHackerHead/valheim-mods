@@ -22,7 +22,7 @@ namespace GearSlots
     {
         public const string Guid = "com.dhack.gearslots";
         public const string Name = "GearSlots";
-        public const string Version = "1.0.1";
+        public const string Version = "1.0.2";
 
         internal static Plugin Instance;
 
@@ -57,7 +57,9 @@ namespace GearSlots
             _quickKeys = new ConfigEntry<KeyboardShortcut>[Layout.QuickCount];
             for (int i = 0; i < Layout.QuickCount; i++)
                 _quickKeys[i] = Config.Bind("Quick slots", "Key" + (i + 1), new KeyboardShortcut(defaults[i]),
-                    "Press to use what is in quick slot " + (i + 1) + ": equips or unequips a weapon, tool or shield, or drinks a potion. Set to None to turn it off.");
+                    "Press to use what is in quick slot " + (i + 1) + ": equips or unequips a weapon, tool or shield, or drinks a potion. Set to None to turn it off. " +
+                    "If the game uses the same key for something (V: auto-pickup, X: sit, C: walk), the game's key is unbound once, so only this one works; bind it again in the game's Settings, Controls.");
+            foreach (var entry in _quickKeys) entry.SettingChanged += (s, e) => _keysChecked = false;
 
             _harmony = new Harmony(Guid);
             _harmony.PatchAll();
@@ -99,8 +101,42 @@ namespace GearSlots
         private readonly Dictionary<Slot, ItemDrop.ItemData> _last = new Dictionary<Slot, ItemDrop.ItemData>();
         private float _nextEat, _nextFill;
 
+        // ---- our keys win over the game's (see GameKeys) ----
+
+        private bool _keysChecked;
+        private readonly List<string> _keyNotes = new List<string>();
+
+        private void FreeGameKeys()
+        {
+            if (_keysChecked || ZInput.instance == null) return;
+            _keysChecked = true;
+            var keys = new List<KeyValuePair<KeyCode, string>>();
+            for (int i = 0; i < _quickKeys.Length; i++)
+            {
+                KeyboardShortcut k = _quickKeys[i].Value;
+                if (k.MainKey != KeyCode.None && !k.Modifiers.Any()) keys.Add(new KeyValuePair<KeyCode, string>(k.MainKey, "quick slot " + (i + 1)));
+            }
+            _keyNotes.AddRange(GameKeys.Free(Name, keys));
+
+            // With its key unbound nothing can switch auto-pickup back on, so make sure it is on (the game's default).
+            var autoPickup = AccessTools.Field(typeof(Player), "m_enableAutoPickup");
+            if (autoPickup != null && !(bool)autoPickup.GetValue(null) && string.IsNullOrEmpty(ZInput.instance.GetButtonDef("AutoPickup")?.GetActionPath()))
+            {
+                autoPickup.SetValue(null, true);
+                _keyNotes.Add($"{Name}: auto-pickup was off and its key is unbound, so it is switched back on");
+                Logger.LogInfo("Auto-pickup was off and its key is unbound: switched it back on");
+            }
+        }
+
         private void Update()
         {
+            FreeGameKeys();
+            if (_keyNotes.Count > 0 && Chat.instance != null && Player.m_localPlayer != null)
+            {
+                foreach (string note in _keyNotes) Chat.instance.AddString("[Mod]", note, Talker.Type.Normal);
+                _keyNotes.Clear();
+            }
+
             Player player = Player.m_localPlayer;
             if (player == null || player.IsDead()) return;
             Inventory inv = player.GetInventory();

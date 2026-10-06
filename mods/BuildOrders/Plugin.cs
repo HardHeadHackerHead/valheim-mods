@@ -21,7 +21,7 @@ namespace BuildOrders
     {
         public const string Guid = "com.dhack.buildorders";
         public const string Name = "BuildOrders";
-        public const string Version = "1.9.3";
+        public const string Version = "1.9.4";
 
         internal static Plugin Instance;
 
@@ -111,8 +111,46 @@ namespace BuildOrders
 
         private float _nextGhostUpdate, _nextCompletion, _lastOpacity = -1f;
 
+        // ---- our keys win over the game's (see GameKeys) ----
+
+        private bool _keysChecked, _keysWatched;
+        private readonly System.Collections.Generic.List<string> _keyNotes = new System.Collections.Generic.List<string>();
+
+        private void FreeGameKeys()
+        {
+            if (!_keysWatched)
+            {
+                _keysWatched = true;
+                Config.SettingChanged += (s, e) =>                    // changing a key in the settings checks again
+                {
+                    if (e.ChangedSetting.SettingType == typeof(KeyCode) || e.ChangedSetting.SettingType == typeof(KeyboardShortcut)) _keysChecked = false;
+                };
+            }
+            if (_keysChecked || ZInput.instance == null) return;
+            _keysChecked = true;
+            var keys = new System.Collections.Generic.List<System.Collections.Generic.KeyValuePair<KeyCode, string>>();
+            foreach (ConfigEntryBase entry in Config.Select(kv => kv.Value))
+            {
+                string what = entry.Definition.Section + " " + entry.Definition.Key;
+                if (entry.BoxedValue is KeyCode code && code != KeyCode.None)
+                    keys.Add(new System.Collections.Generic.KeyValuePair<KeyCode, string>(code, what));
+                else if (entry.BoxedValue is KeyboardShortcut sc && sc.MainKey != KeyCode.None && !sc.Modifiers.Any())
+                    keys.Add(new System.Collections.Generic.KeyValuePair<KeyCode, string>(sc.MainKey, what));
+            }
+            _keyNotes.AddRange(GameKeys.Free(Name, keys));
+        }
+
+        private void TellKeyNotes()
+        {
+            if (_keyNotes.Count == 0 || Chat.instance == null || Player.m_localPlayer == null) return;
+            foreach (string note in _keyNotes) Chat.instance.AddString("[Mod]", note, Talker.Type.Normal);
+            _keyNotes.Clear();
+        }
+
         private void Update()
         {
+            FreeGameKeys();
+            TellKeyNotes();
             if (!_enabled.Value) { DestroyAllGhosts(); return; }
 
             UpdateNetwork();
