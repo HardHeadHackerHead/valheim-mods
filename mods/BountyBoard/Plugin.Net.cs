@@ -106,30 +106,38 @@ namespace BountyBoard
         // =============================================================== the host's side
 
         private State _state;
+        private string _statePath; // the file _state belongs to: hosting another world without restarting must not carry it over
         private float _nextDayCheck;
         private bool _dirty;
 
-        private string SavePath
+        // Kept per world by the world's unique id (two worlds can share a name); older versions used the name.
+        private static string WorldFile(string world)
         {
-            get
-            {
-                string world = ZNet.instance != null ? ZNet.instance.GetWorldName() : "world";
-                foreach (char c in Path.GetInvalidFileNameChars()) world = world.Replace(c, '_');
-                return Path.Combine(BepInEx.Paths.ConfigPath, "DHack.BountyBoard." + world + ".txt");
-            }
+            foreach (char c in Path.GetInvalidFileNameChars()) world = world.Replace(c, '_');
+            return Path.Combine(BepInEx.Paths.ConfigPath, "DHack.BountyBoard." + world + ".txt");
         }
+
+        private string SavePath => WorldFile(ZNet.instance != null ? ZNet.instance.GetWorldUID().ToString(CultureInfo.InvariantCulture) : "world");
+        private string OldSavePath => WorldFile(ZNet.instance != null ? ZNet.instance.GetWorldName() : "world");
 
         private State Server()
         {
-            if (_state != null) return _state;
-            try { _state = File.Exists(SavePath) ? State.Parse(File.ReadAllText(SavePath)) : new State(); }
+            string path = SavePath;
+            if (_state != null && path == _statePath) return _state;
+            if (_state != null && _dirty) WriteState(_statePath, _state); // the last world's unsaved changes go to its own file
+            _statePath = path;
+            _dirty = false;
+            string from = File.Exists(path) ? path : File.Exists(OldSavePath) ? OldSavePath : null;
+            try { _state = from != null ? State.Parse(File.ReadAllText(from)) : new State(); }
             catch (Exception e) { Logger.LogWarning("Could not read the saved contracts: " + e.Message); _state = new State(); }
             return _state;
         }
 
-        private void SaveState()
+        private void SaveState() => WriteState(SavePath, Server());
+
+        private void WriteState(string path, State state)
         {
-            try { File.WriteAllText(SavePath, Server().Serialize()); }
+            try { File.WriteAllText(path, state.Serialize()); }
             catch (Exception e) { Logger.LogWarning("Could not save the contracts: " + e.Message); }
         }
 
@@ -206,6 +214,7 @@ namespace BountyBoard
             if (f.Length < 2) return;
             string prefab = f[0];
             bool starred = f[1] == "1";
+            if (f.Length > 2 && long.TryParse(f[2], NumberStyles.Integer, CultureInfo.InvariantCulture, out long killer) && killer != 0) sender = killer;
             State s = Server();
             bool any = false;
             foreach (Bounty b in s.Active.ToList())
@@ -349,16 +358,22 @@ namespace BountyBoard
             return n;
         }
 
-        /// <summary>You landed the last blow on something: tell the host, which counts it for every contract it fits.</summary>
+        /// <summary>
+        /// A player landed the last blow on something: tell the host, which counts it for every contract it fits. A creature only
+        /// dies on the game that owns it (usually whoever loaded the area first), so that game reports it for whichever player
+        /// killed it, with the killer's id so the host tells them the progress.
+        /// </summary>
         internal void ReportKill(Character victim)
         {
-            Player me = Player.m_localPlayer;
-            if (me == null || victim == null || victim.IsPlayer() || victim.IsTamed()) return;
+            if (Player.m_localPlayer == null || victim == null || victim.IsPlayer() || victim.IsTamed()) return;
+            ZNetView view = victim.GetComponent<ZNetView>();
+            if (view == null || !view.IsValid() || !view.IsOwner()) return;
             HitData hit = LastHitField(victim);
-            if (hit == null || hit.GetAttacker() != me) return;
+            if (!(hit?.GetAttacker() is Player killer)) return;
             if (!_counted.Add(victim.GetInstanceID())) return; // death can be reported more than once
             if (_counted.Count > 200) _counted.Clear();
-            ToServer(RpcKill, Utils.GetPrefabName(victim.gameObject) + "|" + (victim.GetLevel() >= 2 ? "1" : "0"));
+            ToServer(RpcKill, Utils.GetPrefabName(victim.gameObject) + "|" + (victim.GetLevel() >= 2 ? "1" : "0") + "|" +
+                              killer.GetZDOID().UserID.ToString(CultureInfo.InvariantCulture));
         }
 
         private static readonly AccessTools.FieldRef<Character, HitData> LastHitField = AccessTools.FieldRefAccess<Character, HitData>("m_lastHit");

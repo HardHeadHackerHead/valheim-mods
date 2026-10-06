@@ -189,13 +189,12 @@ namespace FeedFromChests
             {
                 if (remaining <= 0) break;
                 Container chest = pair.Value;
+                if (chest == null || Chests.InUse(chest)) continue; // someone opened it since we looked it up
                 Inventory inventory = chest.GetInventory();
                 int max = product.m_itemData.m_shared.m_maxStackSize;
                 int take = Mathf.Min(remaining, max);
+                Chests.TakeOwnership(chest); // and load its latest contents, so the room check below is up to date
                 if (!inventory.CanAddItem(product.gameObject, take)) { log($"{smelter.m_name}: an assigned chest ({Vector3.Distance(smelter.transform.position, chest.transform.position):0} m away) has no room for {take} {display}"); continue; }
-
-                ZNetView view = Chests.ViewOf(chest);
-                if (view != null && !view.IsOwner()) view.ClaimOwnership(); // only the owner can save a chest's contents
 
                 int before = inventory.CountItems(name);
                 inventory.AddItem(product.gameObject, take);

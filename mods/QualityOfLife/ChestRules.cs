@@ -46,18 +46,22 @@ namespace QualityOfLife
             return rules;
         }
 
-        public static void Write(Container chest, ChestRules rules)
+        /// <summary>Save the rules on the chest. False (nothing saved) if the chest is gone or someone else has it open.</summary>
+        public static bool Write(Container chest, ChestRules rules)
         {
             var view = NView.GetValue(chest) as ZNetView;
             ZDO zdo = view?.GetZDO();
-            if (zdo == null) return;
+            if (zdo == null) return false;
 
-            // Only the owner of a chest can save changes to it, so take ownership first (matters in multiplayer).
-            if (!view.IsOwner()) view.ClaimOwnership();
+            // Only the owner of a chest can save changes to it, so take ownership first (matters in multiplayer). Not while another
+            // player has it open: taking it from them would lose what they move in it from then on.
+            if (ContainerRegistry.InUse(chest)) return false;
+            ContainerRegistry.TakeOwnership(chest);
 
             string text = rules.IsEmpty ? ""
                 : "C=" + string.Join(",", rules.Categories.OrderBy(x => x).ToArray()) + "|I=" + string.Join(",", rules.Items.OrderBy(x => x).ToArray());
             zdo.Set(Key, text);
+            return true;
         }
 
         /// <summary>Does this chest want this item (by its exact name, or by its category)?</summary>

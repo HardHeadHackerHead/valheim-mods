@@ -33,7 +33,7 @@ namespace PortalHub
             ZNetView view = portal.GetComponent<ZNetView>();
             if (view == null || view.GetZDO() == null) return;
             _portal = portal;
-            _portalId = Key(view.GetZDO().m_uid);
+            _portalId = PortalId(view.GetZDO());
             _search = "";
             _scroll = Vector2.zero;
             _rowsKey = null;
@@ -73,7 +73,17 @@ namespace PortalHub
 
         // ---- the list the menu shows ----
 
-        private PortalInfo ThisPortal => Find(_portalId);
+        private PortalInfo ThisPortal { get { RefreshPortalId(); return Find(_portalId); } }
+
+        // A new portal gets its stored id from the host a moment after it is built: pick it up while the menu is open.
+        private void RefreshPortalId()
+        {
+            ZNetView view = _portal != null ? _portal.GetComponent<ZNetView>() : null;
+            ZDO zdo = view != null && view.IsValid() ? view.GetZDO() : null;
+            if (zdo == null) return;
+            string id = PortalId(zdo);
+            if (id != _portalId) { _portalId = id; _rowsKey = null; }
+        }
 
         private void BuildRows()
         {

@@ -1,1 +1,3 @@
+Fix: in multiplayer, Stack to chests, Undo and chest assignments could lose or duplicate items in a chest another player had open. Chests in use are now left alone.
+
 New: a Sort button next to Stack to chests (joins split stacks, puts items in order by kind and name; leaves the hotbar and GearSlots slots alone). Boat push (tap or hold P next to a boat) now defaults to P so it does not clash with BuildOrders' G. Stack to chests leaves GearSlots gear, food and quick slots alone.

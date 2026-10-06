@@ -18,7 +18,7 @@ namespace Recycler
     {
         public const string Guid = "com.dhack.recycler";
         public const string Name = "Recycler";
-        public const string Version = "1.0.5";
+        public const string Version = "1.0.6";
         public const string RecyclerPrefab = "piece_recycler";
         public const string PressPrefab = "piece_recycler_press";
 
@@ -62,9 +62,8 @@ namespace Recycler
 
         internal static void Register(ZNetScene scene)
         {
-            if (ObjectDB.instance == null) return;
             GameObject source = scene.GetPrefab("piece_chest_wood");
-            GameObject hammer = ObjectDB.instance.GetItemPrefab("Hammer");
+            GameObject hammer = scene.GetPrefab("Hammer"); // items are in the scene too, and ObjectDB may not be awake yet
             if (source == null || hammer == null) { Debug.LogWarning("Recycler: chest or hammer prefab not found"); return; }
 
             if (Prefabs.Count == 0)
@@ -126,7 +125,9 @@ namespace Recycler
                 if (ZNetScene.instance != null)
                 {
                     ZNetScene.instance.m_prefabs.Remove(prefab);
-                    Named(ZNetScene.instance).Remove(prefab.name.GetStableHashCode());
+                    var named = Named(ZNetScene.instance);
+                    int hash = prefab.name.GetStableHashCode();
+                    if (named.TryGetValue(hash, out GameObject current) && current == prefab) named.Remove(hash);
                 }
                 if (hammer != null) hammer.GetComponent<ItemDrop>().m_itemData.m_shared.m_buildPieces.m_pieces.Remove(prefab);
             }
@@ -137,7 +138,8 @@ namespace Recycler
 
         private static Piece.Requirement Req(string item, int amount)
         {
-            GameObject go = ObjectDB.instance.GetItemPrefab(item);
+            GameObject go = ZNetScene.instance != null ? ZNetScene.instance.GetPrefab(item) : null;
+            if (go == null && ObjectDB.instance != null) go = ObjectDB.instance.GetItemPrefab(item);
             return new Piece.Requirement { m_resItem = go != null ? go.GetComponent<ItemDrop>() : null, m_amount = amount, m_recover = true };
         }
     }
@@ -146,6 +148,13 @@ namespace Recycler
     internal static class ZNetScene_Awake
     {
         private static void Postfix(ZNetScene __instance) => Plugin.Register(__instance);
+    }
+
+    // Whichever of ZNetScene and ObjectDB wakes second, the piece is registered before any saved one is loaded.
+    [HarmonyPatch(typeof(ObjectDB), "Awake")]
+    internal static class ObjectDB_Awake
+    {
+        private static void Postfix() { if (ZNetScene.instance != null) Plugin.Register(ZNetScene.instance); }
     }
 
     // While the menu is open: keep the game from reacting to clicks and typing, and show the mouse.

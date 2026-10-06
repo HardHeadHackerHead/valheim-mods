@@ -30,6 +30,38 @@ namespace QualityOfLife
         }
 
         public static void Clear() => All.Clear();
+
+        private static readonly System.Reflection.FieldInfo NView = AccessTools.Field(typeof(Container), "m_nview");
+        private static readonly System.Reflection.MethodInfo Load = AccessTools.Method(typeof(Container), "Load");
+
+        /// <summary>
+        /// Someone has this chest open. IsInUse() is only right on the chest's owner; everyone else has to read the flag the owner
+        /// keeps in the chest's save data.
+        /// </summary>
+        public static bool InUse(Container c)
+        {
+            if (c.IsInUse()) return true;
+            var view = NView.GetValue(c) as ZNetView;
+            return view != null && view.IsValid() && !view.IsOwner() && view.GetZDO().GetInt(ZDOVars.s_inUse) == 1;
+        }
+
+        /// <summary>
+        /// Load the chest's latest contents from its save data. A chest you don't own is only refreshed once a second, so the copy
+        /// you see can be that far behind. (The game's own reload: does nothing if the copy is already the latest.)
+        /// </summary>
+        public static void Reload(Container c) => Load?.Invoke(c, null);
+
+        /// <summary>
+        /// Only the owner of a chest can save its contents, so take ownership first (matters in multiplayer), then reload it so we
+        /// change the latest contents and not an old copy (saving an old copy would undo another player's changes).
+        /// </summary>
+        public static void TakeOwnership(Container c)
+        {
+            var view = NView.GetValue(c) as ZNetView;
+            if (view == null || !view.IsValid() || view.IsOwner()) return;
+            view.ClaimOwnership();
+            Reload(c);
+        }
     }
 
     [HarmonyPatch(typeof(Container), "Awake")]

@@ -44,6 +44,7 @@ namespace QualityOfLife
             Container chest = InventoryGui.IsVisible() ? OpenChest() : LookedAtChest(player);
             if (chest == null) { Tell(player, $"Look at a chest (or open one) and press {_assignKey.Value} to choose what it receives."); return; }
             if (!Usable(chest)) { Tell(player, "You can't use that chest."); return; }
+            if (chest != OpenChest() && ContainerRegistry.InUse(chest)) { Tell(player, "Someone else has that chest open."); return; }
             OpenRules(chest, player);
         }
 
@@ -114,7 +115,9 @@ namespace QualityOfLife
 
         private void SaveRules()
         {
-            if (_rulesChest != null) ChestRules.Write(_rulesChest, _rules);
+            if (_rulesChest == null || ChestRules.Write(_rulesChest, _rules)) return;
+            _rules = ChestRules.Read(_rulesChest); // not saved: show what the chest really has
+            if (Player.m_localPlayer != null) Tell(Player.m_localPlayer, "Someone else has this chest open. Try again when they close it.");
         }
 
         // ---- the button beside an open chest ------------------------------------------------------

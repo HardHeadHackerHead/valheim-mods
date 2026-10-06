@@ -19,6 +19,7 @@ namespace BuildFromChests
 
         private static readonly System.Reflection.MethodInfo CheckAccess = AccessTools.Method(typeof(Container), "CheckAccess");
         private static readonly System.Reflection.FieldInfo NView = AccessTools.Field(typeof(Container), "m_nview");
+        private static readonly System.Reflection.MethodInfo Load = AccessTools.Method(typeof(Container), "Load");
 
         /// <summary>True while a patch is doing its own inventory work, so we don't recurse into ourselves.</summary>
         internal static bool Suspend;
@@ -88,12 +89,35 @@ namespace BuildFromChests
             foreach (Container c in AllContainers)
             {
                 if ((c.transform.position - origin).sqrMagnitude > maxSqr) continue; // cheapest test first
-                if (c.GetInventory() == null || c.IsInUse()) continue;
+                if (c.GetInventory() == null || InUse(c)) continue;
                 if (c.m_checkGuardStone && !PrivateArea.CheckAccess(c.transform.position, 0f, false)) continue;
                 if (!(bool)CheckAccess.Invoke(c, new object[] { playerId })) continue;
                 Nearby.Add(c);
             }
             return Nearby;
+        }
+
+        /// <summary>
+        /// Someone has this chest open. IsInUse() is only right on the chest's owner; everyone else has to read the flag the owner
+        /// keeps in the chest's save data.
+        /// </summary>
+        private static bool InUse(Container c)
+        {
+            if (c.IsInUse()) return true;
+            ZNetView nview = NView.GetValue(c) as ZNetView;
+            return nview != null && nview.IsValid() && !nview.IsOwner() && nview.GetZDO().GetInt(ZDOVars.s_inUse) == 1;
+        }
+
+        /// <summary>
+        /// Only the owner can save a chest's contents, so take ownership first (matters in multiplayer). Then reload the contents from
+        /// the save data: until now we only had a copy that can be up to a second old, and saving that would undo another player's changes.
+        /// </summary>
+        private static void TakeOwnership(Container c)
+        {
+            ZNetView nview = NView.GetValue(c) as ZNetView;
+            if (nview == null || !nview.IsValid() || nview.IsOwner()) return;
+            nview.ClaimOwnership();
+            Load?.Invoke(c, null); // the game's own reload: does nothing if our copy is already the latest
         }
 
         // ---- how many of an item the chests hold (remembered within a frame) --------------------------
@@ -123,14 +147,13 @@ namespace BuildFromChests
             foreach (Container c in GetNearby())
             {
                 if (amount <= 0) break;
+                if (c == null || InUse(c)) continue; // someone opened it since we last looked
                 Inventory inv = c.GetInventory();
+                if (inv.CountItems(name, quality, matchWorldLevel) <= 0) continue;
 
-                int take = Math.Min(inv.CountItems(name, quality, matchWorldLevel), amount);
+                TakeOwnership(c);
+                int take = Math.Min(inv.CountItems(name, quality, matchWorldLevel), amount); // counted again: the reload may have changed it
                 if (take <= 0) continue;
-
-                // Only the ZDO owner can save a chest's contents, so grab ownership first (matters in multiplayer).
-                ZNetView nview = NView.GetValue(c) as ZNetView;
-                if (nview != null && !nview.IsOwner()) nview.ClaimOwnership();
 
                 inv.RemoveItem(name, take, quality, matchWorldLevel);
                 amount -= take;

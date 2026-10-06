@@ -1,1 +1,3 @@
+Fix: after a fresh game start the Recycler and Press were not registered until the mods were reloaded, so the game deleted any it found standing in the world. It is now registered as the world loads. Ones already lost can't be brought back; build them again.
+
 The build menu now shows the Recycler and the Press themselves instead of a chest.

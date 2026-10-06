@@ -13,7 +13,7 @@ namespace GearSlots
     /// worn), three Food slots, and five Quick slots with hotkeys for weapons, tools or potions.
     ///
     /// The slots are extra rows of your real inventory shown in their own panel, so nothing is stored anywhere new: if you
-    /// ever remove the mod, the items simply move into ordinary slots the next time the game loads.
+    /// remove the mod, the game drops whatever is in those rows at your feet the next time you spawn (move it into the bag first).
     ///
     /// Split across files: Plugin.cs (setup, input), Slots.cs (what each slot accepts), Patches.cs (game hooks), Panel.cs (the look).
     /// </summary>
@@ -22,7 +22,7 @@ namespace GearSlots
     {
         public const string Guid = "com.dhack.gearslots";
         public const string Name = "GearSlots";
-        public const string Version = "1.0.0";
+        public const string Version = "1.0.1";
 
         internal static Plugin Instance;
 

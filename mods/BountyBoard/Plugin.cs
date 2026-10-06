@@ -20,7 +20,7 @@ namespace BountyBoard
     {
         public const string Guid = "com.dhack.bountyboard";
         public const string Name = "BountyBoard";
-        public const string Version = "1.1.2";
+        public const string Version = "1.1.3";
         public const string PiecePrefab = "piece_bountyboard";
 
         internal static Plugin Instance;
@@ -67,9 +67,8 @@ namespace BountyBoard
 
         internal static void Register(ZNetScene scene)
         {
-            if (ObjectDB.instance == null) return;
             GameObject source = scene.GetPrefab("piece_chest_wood");
-            GameObject hammer = ObjectDB.instance.GetItemPrefab("Hammer");
+            GameObject hammer = scene.GetPrefab("Hammer"); // items are in the scene too, and ObjectDB may not be awake yet
             GameObject bench = scene.GetPrefab("piece_workbench");
             if (source == null || hammer == null) { Debug.LogWarning(Name + ": chest or hammer prefab not found"); return; }
 
@@ -125,7 +124,9 @@ namespace BountyBoard
             if (ZNetScene.instance != null)
             {
                 ZNetScene.instance.m_prefabs.Remove(_prefab);
-                ((Dictionary<int, GameObject>)AccessTools.Field(typeof(ZNetScene), "m_namedPrefabs").GetValue(ZNetScene.instance)).Remove(_prefab.name.GetStableHashCode());
+                var named = (Dictionary<int, GameObject>)AccessTools.Field(typeof(ZNetScene), "m_namedPrefabs").GetValue(ZNetScene.instance);
+                int hash = _prefab.name.GetStableHashCode();
+                if (named.TryGetValue(hash, out GameObject current) && current == _prefab) named.Remove(hash); // only our own entry
             }
             GameObject hammer = ObjectDB.instance != null ? ObjectDB.instance.GetItemPrefab("Hammer") : null;
             if (hammer != null) hammer.GetComponent<ItemDrop>().m_itemData.m_shared.m_buildPieces.m_pieces.Remove(_prefab);
@@ -137,7 +138,8 @@ namespace BountyBoard
 
         private static Piece.Requirement Req(string item, int amount)
         {
-            GameObject go = ObjectDB.instance.GetItemPrefab(item);
+            GameObject go = ZNetScene.instance != null ? ZNetScene.instance.GetPrefab(item) : null;
+            if (go == null && ObjectDB.instance != null) go = ObjectDB.instance.GetItemPrefab(item);
             return new Piece.Requirement { m_resItem = go != null ? go.GetComponent<ItemDrop>() : null, m_amount = amount, m_recover = true };
         }
     }
@@ -153,6 +155,13 @@ namespace BountyBoard
     internal static class ZNetScene_Awake
     {
         private static void Postfix(ZNetScene __instance) => Plugin.Register(__instance);
+    }
+
+    // Whichever of ZNetScene and ObjectDB wakes second, the piece is registered before any saved one is loaded.
+    [HarmonyPatch(typeof(ObjectDB), "Awake")]
+    internal static class ObjectDB_Awake
+    {
+        private static void Postfix() { if (ZNetScene.instance != null) Plugin.Register(ZNetScene.instance); }
     }
 
     // While the menu is open: keep the game from reacting to clicks and typing, show the mouse, and let Escape close only the menu.

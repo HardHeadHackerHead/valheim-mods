@@ -1,1 +1,3 @@
+Fix: everything in the gear slots was dropped on the ground each time you spawned after starting the game (the game resets the inventory size on spawn since inventory rows can be bought). The gear rows now stay, and if you buy a row they move down under it.
+
 First release: a Gear panel with Head, Chest, Legs, Cape, Belt, Trinket, Ammo and Shield slots, three Food slots and five Quick slots (shown under the hotbar), a shield that follows your one-handed weapon, auto-fill of worn gear, and optional auto-eat.

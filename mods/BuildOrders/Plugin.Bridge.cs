@@ -22,8 +22,8 @@ namespace BuildOrders
 
         internal void RegisterBridgeTool(ZNetScene scene)
         {
-            if (ObjectDB.instance == null || scene == null) return;
-            GameObject hammer = ObjectDB.instance.GetItemPrefab("Hammer");
+            if (scene == null) return;
+            GameObject hammer = scene.GetPrefab("Hammer"); // items are in the scene too, and ObjectDB may not be awake yet at world load
             GameObject pole = scene.GetPrefab("wood_pole");
             if (hammer == null || pole == null) return;
             if (_bridgeTool == null)
@@ -185,7 +185,7 @@ namespace BuildOrders
 
         private string LastPlacedTitle()
         {
-            try { return (string)Newtonsoft.Json.Linq.JObject.Parse(System.IO.File.ReadAllText(ImportsFile))["_last"] ?? "Bridge"; }
+            try { return LastImport(ReadImports()) ?? "Bridge"; }
             catch (Exception) { return "Bridge"; }
         }
 
@@ -193,9 +193,14 @@ namespace BuildOrders
         {
             try
             {
-                var all = Newtonsoft.Json.Linq.JObject.Parse(System.IO.File.ReadAllText(ImportsFile));
+                var all = ReadImports();
                 string title = key.StartsWith(BlueprintPrefix) ? key.Substring(BlueprintPrefix.Length) : key;
-                if (all[title] is Newtonsoft.Json.Linq.JObject rec) { rec["bridge"] = true; System.IO.File.WriteAllText(ImportsFile, all.ToString()); }
+                if (ImportRecord(all, title) is Newtonsoft.Json.Linq.JObject rec)
+                {
+                    rec["bridge"] = true;
+                    if (all[title] is Newtonsoft.Json.Linq.JObject top && (string)top["uid"] == _loadedWorld) top["bridge"] = true;
+                    System.IO.File.WriteAllText(ImportsFile, all.ToString());
+                }
             }
             catch (Exception) { }
         }
@@ -211,8 +216,7 @@ namespace BuildOrders
                 _bridgeTitlesAt = Time.unscaledTime;
                 try
                 {
-                    var all = Newtonsoft.Json.Linq.JObject.Parse(System.IO.File.ReadAllText(ImportsFile));
-                    _bridgeTitles = new HashSet<string>(all.Properties().Where(p => p.Value is Newtonsoft.Json.Linq.JObject o && (bool?)o["bridge"] == true).Select(p => p.Name));
+                    _bridgeTitles = new HashSet<string>(WorldImportRecords(ReadImports()).Where(kv => (bool?)kv.Value["bridge"] == true).Select(kv => kv.Key));
                 }
                 catch (Exception) { }
             }
@@ -309,5 +313,11 @@ namespace BuildOrders
     internal static class ZNetScene_Awake_Bridge
     {
         private static void Postfix(ZNetScene __instance) => Plugin.Instance?.RegisterBridgeTool(__instance);
+    }
+
+    [HarmonyPatch(typeof(ObjectDB), "Awake")]
+    internal static class ObjectDB_Awake_Bridge
+    {
+        private static void Postfix() { if (ZNetScene.instance != null) Plugin.Instance?.RegisterBridgeTool(ZNetScene.instance); }
     }
 }

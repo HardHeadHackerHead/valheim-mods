@@ -1,3 +1,5 @@
+Fix: after a fresh game start the board was not registered until the mods were reloaded, so the game deleted any it found standing in the world. It is now registered as the world loads. Ones already lost can't be brought back; build them again. Fix: kills by any player now count in multiplayer (before, a kill only counted when the killer's own game was handling that creature). Fix: hosting a different world without restarting the game no longer carries the last world's contracts over and overwrites the new one's. Contracts are now kept by the world's id, so two worlds with the same name no longer share them (your existing contracts carry over).
+
 The sign on the board now reads BOUNTIES in gold carved letters (the old marks sat too close to the board and partly disappeared). Restart the game to see it on boards already built.
 
 The on-screen tracker is easier to read: taller progress bars with a larger, outlined 3/6, bigger text and more room between contracts.

@@ -6,5 +6,5 @@ What is in it
 - Three Food slots: keep your best meals in their own place (right-click to eat). Optional auto-eat is in the settings.
 - Five Quick slots (Z, X, C, V by default; the fifth is unbound) for a weapon, tool, potion or anything else: press the key to equip or use it. With the inventory closed they show in a row under your hotbar, with their keys.
 - Slots only accept the right kind of item, and Sort and Stack to Chests (QualityOfLife) leave them alone.
-- Nothing is stored in a new place: the slots are extra rows of your real inventory, so saving, weight, crafting and dragging work as normal, and removing the mod never loses an item.
+- Nothing is stored in a new place: the slots are extra rows of your real inventory, so saving, weight, crafting and dragging work as normal. Before removing the mod, move your gear-slot items into your bag: without it the game drops anything in those rows at your feet the next time you spawn.
 Every key and option is in the settings (the manager's Mod settings tab).

@@ -25,7 +25,8 @@ namespace BuildOrders
 
         private readonly Dictionary<string, Order> _orders = new Dictionary<string, Order>();
         private readonly HashSet<string> _removed = new HashSet<string>(); // ids deleted, so a stale copy can't bring one back
-        private string _loadedWorld;
+        private string _loadedWorld, _loadedWorldName;   // the world's UID (its files are named after it), and its name
+        private ZNet _worldOf;                           // the session that world belongs to
         private ZRoutedRpc _registeredOn;
         private bool _announcePending;
 
@@ -99,24 +100,40 @@ namespace BuildOrders
 
         // ---- saving (one file per world, next to the other config files) ---------------------------
 
-        private string SavePath()
+        /// <summary>
+        /// True once we know which world this session is in. The game keeps the world in a static field, so right after joining a server it
+        /// still holds the last world until the server's answer arrives; the local player only appears after that, so we wait for it.
+        /// </summary>
+        internal bool WorldKnown => ZNet.instance != null && ZNet.instance == _worldOf && _loadedWorld != null;
+
+        private static string Safe(string s) => new string(s.Select(c => char.IsLetterOrDigit(c) || c == '-' || c == '_' ? c : '_').ToArray());
+
+        private static string NamePath(string world)
         {
-            string world = ZNet.instance != null ? ZNet.instance.GetWorldName() : "world";
             foreach (char c in Path.GetInvalidFileNameChars()) world = world.Replace(c, '_');
             return Path.Combine(Paths.ConfigPath, "BuildOrders", world + ".txt");
         }
 
+        private string SavePath() => NamePath(_loadedWorld ?? "world");
+
         private void EnsureWorldLoaded()
         {
-            if (ZNet.instance == null) return;
-            string world = ZNet.instance.GetWorldName();
+            if (ZNet.instance == null || ZNet.instance == _worldOf) return;
+            if (Player.m_localPlayer == null || ZNet.World == null) return; // not in the world yet: what the game says may still be the last world
+            _worldOf = ZNet.instance;
+            string world = ZNet.World.m_uid.ToString(CultureInfo.InvariantCulture);
             if (world == _loadedWorld) return;
 
             // Joined a different world: start from that world's saved file.
             _loadedWorld = world;
+            _loadedWorldName = ZNet.World.m_name ?? "";
+            DropPlacing();
+            ForgetWorld();
             DestroyAllGhosts();
             _orders.Clear();
             _removed.Clear();
+            AdoptNamedFiles();
+            LoadPendingLevels();
             try
             {
                 string path = SavePath();
@@ -128,6 +145,31 @@ namespace BuildOrders
                 }
             }
             catch (Exception e) { Logger.LogWarning("Could not read saved build orders: " + e.Message); }
+        }
+
+        /// <summary>
+        /// Files from before worlds were told apart by their UID are named after the world. The first time a world is loaded it takes over the
+        /// files of its name that no world has taken yet (moved, not copied, so another world of the same name does not get them too).
+        /// </summary>
+        private void AdoptNamedFiles()
+        {
+            if (_loadedWorldName.Length == 0) return;
+            try
+            {
+                string named = NamePath(_loadedWorldName), mine = SavePath();
+                if (!File.Exists(mine) && File.Exists(named)) { File.Move(named, mine); Logger.LogInfo($"Build orders of '{_loadedWorldName}' now kept as {Path.GetFileName(mine)}"); }
+                string from = Safe(_loadedWorldName + "__"), to = Safe(_loadedWorld + "__");
+                foreach (string dir in new[] { PlanRecordDir, TerrainDir })
+                {
+                    if (!Directory.Exists(dir) || from == to) continue;
+                    foreach (string file in Directory.GetFiles(dir, from + "*.json"))
+                    {
+                        string target = Path.Combine(dir, to + Path.GetFileName(file).Substring(from.Length));
+                        if (!File.Exists(target)) File.Move(file, target);
+                    }
+                }
+            }
+            catch (Exception e) { Logger.LogWarning("Could not take over this world's older files: " + e.Message); }
         }
 
         private void Save()
@@ -162,7 +204,7 @@ namespace BuildOrders
             }
 
             // Once we're really in the world, ask everyone for their orders (they answer with their full list).
-            if (_announcePending && Player.m_localPlayer != null && _loadedWorld != null)
+            if (_announcePending && Player.m_localPlayer != null && WorldKnown)
             {
                 _announcePending = false;
                 Send("Q");
@@ -186,6 +228,7 @@ namespace BuildOrders
         private void OnMessage(long sender, string message)
         {
             if (sender == ZDOMan.GetSessionID() || string.IsNullOrEmpty(message)) return;
+            if (!WorldKnown && message[0] != 'B') return; // not sure yet which world we are in: never mix its orders into another world's (we ask for them all once in)
             try
             {
                 switch (message[0])
@@ -204,6 +247,11 @@ namespace BuildOrders
 
                     case 'Q': // someone joined and wants everything we know
                         Send(BuildState(), sender);
+                        SendPlanRecords(sender);
+                        break;
+
+                    case 'P': // the pieces of a placed plan (so anyone can take down what was built of it)
+                        OnPlanRecord(message.Substring(2));
                         break;
 
                     case 'B': // someone shared a blueprint with everyone

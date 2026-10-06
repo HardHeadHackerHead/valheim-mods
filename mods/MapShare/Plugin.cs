@@ -22,7 +22,7 @@ namespace MapShare
     {
         public const string Guid = "com.dhack.mapshare";
         public const string Name = "MapShare";
-        public const string Version = "1.0.0";
+        public const string Version = "1.0.1";
 
         private const string RpcCells = "DHack_MapCells";   // newly explored cells
         private const string RpcHello = "DHack_MapHello";   // "I just joined: send me the map"
@@ -178,24 +178,12 @@ namespace MapShare
         private readonly Dictionary<long, Assembly_> _incoming = new Dictionary<long, Assembly_>();
         private class Assembly_ { public int Total; public byte[][] Parts; public int Have; }
 
-        /// <summary>Exactly one player answers a newcomer: the one with the lowest id of those already there.</summary>
-        private bool IAmTheResponder(long newcomer)
-        {
-            if (ZNet.instance == null) return false;
-            long me = ZDOMan.GetSessionID();
-            long lowest = me;
-            foreach (ZNet.PlayerInfo p in ZNet.instance.GetPlayerList())
-            {
-                long id = p.m_characterID.UserID;
-                if (id != 0 && id != newcomer && id < lowest) lowest = id;
-            }
-            return lowest == me;
-        }
-
+        // Every player who shares their map answers a newcomer. (Picking just one could pick a player without MapShare, or with
+        // sharing off, and then nobody answered.) The maps merge, so getting several does no harm; a map is a few KB.
         private void OnHello(long sender)
         {
             if (!_send.Value || sender == ZDOMan.GetSessionID() || Minimap.instance == null) return;
-            if (IAmTheResponder(sender)) StartCoroutine(SendFullMap(sender));
+            StartCoroutine(SendFullMap(sender));
         }
 
         private IEnumerator SendOwnMapLater()

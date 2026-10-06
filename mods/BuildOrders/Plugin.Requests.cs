@@ -67,12 +67,60 @@ namespace BuildOrders
 
         private static JArray Vec(Vector3 v) => new JArray(Math.Round(v.x, 2), Math.Round(v.y, 2), Math.Round(v.z, 2));
 
+        // Each world keeps its own list under "_worlds" -> its UID (plan names repeat between worlds). The newest placement is also written at the
+        // top level by its name, as before, for the blueprint tools. Entries from before worlds were told apart (no "uid") count only in a world
+        // of the same name.
+
+        private static JObject ReadImports() => File.Exists(ImportsFile) ? JObject.Parse(File.ReadAllText(ImportsFile)) : new JObject();
+
+        /// <summary>This world's own list in _imports.json (made if asked to).</summary>
+        private static JObject WorldImports(JObject all, bool make = false)
+        {
+            string uid = Instance?._loadedWorld ?? "";
+            if (!(all["_worlds"] is JObject worlds)) { if (!make) return null; all["_worlds"] = worlds = new JObject(); }
+            if (!(worlds[uid] is JObject mine)) { if (!make) return null; worlds[uid] = mine = new JObject(); }
+            return mine;
+        }
+
+        private static bool LegacyHere(JToken rec) => rec is JObject o && o["uid"] == null && (string)o["world"] == (Instance?._loadedWorldName ?? "");
+
+        /// <summary>Where a blueprint of this name was placed in this world, or null.</summary>
+        private static JObject ImportRecord(JObject all, string title)
+        {
+            if (title == null) return null;
+            if (WorldImports(all)?[title] is JObject rec) return rec;
+            return LegacyHere(all[title]) ? (JObject)all[title] : null;
+        }
+
+        /// <summary>The newest blueprint placed in this world.</summary>
+        private static string LastImport(JObject all)
+        {
+            string last = (string)WorldImports(all)?["_last"];
+            if (last != null) return last;
+            last = (string)all["_last"];
+            return LegacyHere(all[last ?? ""]) ? last : null;
+        }
+
+        /// <summary>Every placement in this world, by name.</summary>
+        private static IEnumerable<KeyValuePair<string, JObject>> WorldImportRecords(JObject all)
+        {
+            var seen = new Dictionary<string, JObject>();
+            foreach (JProperty p in all.Properties()) if (!p.Name.StartsWith("_") && LegacyHere(p.Value)) seen[p.Name] = (JObject)p.Value;
+            JObject mine = WorldImports(all);
+            if (mine != null) foreach (JProperty p in mine.Properties()) if (p.Value is JObject o) seen[p.Name] = o;
+            return seen;
+        }
+
         private void RememberImport(string title, string file, Vector3 origin, float yaw, int count, float offsetY = 0f)
         {
             try
             {
-                JObject all = File.Exists(ImportsFile) ? JObject.Parse(File.ReadAllText(ImportsFile)) : new JObject();
-                all[title] = new JObject { ["file"] = Path.GetFileName(file), ["origin"] = Vec(origin), ["yaw"] = Math.Round(yaw, 2), ["offsetY"] = Math.Round(offsetY, 2), ["pieces"] = count, ["time"] = DateTime.Now.ToString("s"), ["world"] = ZNet.instance != null ? ZNet.instance.GetWorldName() : "" };
+                JObject all = ReadImports();
+                var rec = new JObject { ["file"] = Path.GetFileName(file), ["origin"] = Vec(origin), ["yaw"] = Math.Round(yaw, 2), ["offsetY"] = Math.Round(offsetY, 2), ["pieces"] = count, ["time"] = DateTime.Now.ToString("s"), ["world"] = _loadedWorldName ?? "", ["uid"] = _loadedWorld ?? "" };
+                JObject mine = WorldImports(all, make: true);
+                mine[title] = rec;
+                mine["_last"] = title;
+                all[title] = rec.DeepClone();
                 all["_last"] = title;
                 File.WriteAllText(ImportsFile, all.ToString());
             }
@@ -81,11 +129,7 @@ namespace BuildOrders
 
         private static float ImportOffset(string title)
         {
-            try
-            {
-                JObject all = File.Exists(ImportsFile) ? JObject.Parse(File.ReadAllText(ImportsFile)) : new JObject();
-                return all[title] is JObject rec ? (float)(rec["offsetY"] ?? 0f) : 0f;
-            }
+            try { return ImportRecord(ReadImports(), title) is JObject rec ? (float)(rec["offsetY"] ?? 0f) : 0f; }
             catch (Exception) { return 0f; }
         }
 
@@ -95,9 +139,9 @@ namespace BuildOrders
             origin = Vector3.zero; yaw = 0f; error = null;
             try
             {
-                JObject all = File.Exists(ImportsFile) ? JObject.Parse(File.ReadAllText(ImportsFile)) : new JObject();
-                string name = token == "last" ? (string)all["_last"] : token;
-                if (name == null || !(all[name] is JObject rec)) { error = "no placed blueprint called '" + token + "'"; return false; }
+                JObject all = ReadImports();
+                string name = token == "last" ? LastImport(all) : token;
+                if (!(ImportRecord(all, name) is JObject rec)) { error = "no placed blueprint called '" + token + "'"; return false; }
                 var o = (JArray)rec["origin"];
                 origin = new Vector3((float)o[0], (float)o[1], (float)o[2]);
                 yaw = (float)rec["yaw"];
@@ -114,7 +158,7 @@ namespace BuildOrders
         private static string NameArg(string[] a, int from, string fallback = "last")
         {
             string name = a.Length > from ? string.Join(" ", a.Skip(from).ToArray()) : fallback;
-            if (name == "last") { try { name = (string)JObject.Parse(File.ReadAllText(ImportsFile))["_last"]; } catch { } }
+            if (name == "last") { try { name = LastImport(ReadImports()); } catch { } }
             return name ?? "";
         }
 

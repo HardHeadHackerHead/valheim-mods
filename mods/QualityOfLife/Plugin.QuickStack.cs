@@ -25,7 +25,6 @@ namespace QualityOfLife
         private Action _pending; // clicks run from Update, not mid-draw, so the layout never changes under IMGUI
 
         private static readonly System.Reflection.MethodInfo CheckAccess = AccessTools.Method(typeof(Container), "CheckAccess");
-        private static readonly System.Reflection.FieldInfo NView = AccessTools.Field(typeof(Container), "m_nview");
 
         private void BindQuickStackConfig()
         {
@@ -112,7 +111,7 @@ namespace QualityOfLife
 
             foreach (Container c in ContainerRegistry.Alive())
             {
-                if (c == null || c.IsInUse()) continue;       // (a chest you have open is handled by the game's own button)
+                if (c == null || ContainerRegistry.InUse(c)) continue; // (a chest you have open is handled by the game's own button)
                 if (c.GetInventory() == null || (c.transform.position - here).sqrMagnitude > max) continue;
                 if (!Usable(c)) continue;
                 _stackChests.Add(c);
@@ -144,8 +143,10 @@ namespace QualityOfLife
         /// </summary>
         private void StackToChests(Player player)
         {
-            List<Container> chests = _stackChests.Where(c => c != null).ToList();
+            // Leave out any chest someone opened since the last scan, and bring the rest up to date before looking inside them.
+            List<Container> chests = _stackChests.Where(c => c != null && !ContainerRegistry.InUse(c)).ToList();
             if (chests.Count == 0) { Tell(player, "No chest in range."); return; }
+            foreach (Container c in chests) ContainerRegistry.Reload(c);
 
             Inventory inventory = player.GetInventory();
             int moved = 0;
@@ -264,9 +265,7 @@ namespace QualityOfLife
             Inventory into = chest.GetInventory();
             int before = item.m_stack;
 
-            // Only the owner of a chest can save its contents, so take ownership first (matters in multiplayer).
-            ZNetView view = NView.GetValue(chest) as ZNetView;
-            if (view != null && !view.IsOwner()) view.ClaimOwnership();
+            ContainerRegistry.TakeOwnership(chest); // only the owner can save a chest's contents (matters in multiplayer)
 
             if (into.AddItem(item))
             {
@@ -299,6 +298,8 @@ namespace QualityOfLife
             {
                 Inventory chest = m.Chest != null ? m.Chest.GetInventory() : null;
                 if (chest == null) { couldNot += m.Item.m_stack; continue; } // the chest is gone
+                if (ContainerRegistry.InUse(m.Chest)) { couldNot += m.Item.m_stack; continue; } // someone has it open: leave it alone
+                ContainerRegistry.Reload(m.Chest); // count what's really in it now
 
                 string name = m.Item.m_shared.m_name;
                 int n = Math.Min(m.Item.m_stack, chest.CountItems(name, m.Item.m_quality)); // someone may have taken some since
@@ -307,8 +308,7 @@ namespace QualityOfLife
                 m.Item.m_stack = n;
                 if (!inventory.CanAddItem(m.Item, n)) { couldNot += n; continue; } // no room: leave it in the chest rather than lose it
 
-                ZNetView view = NView.GetValue(m.Chest) as ZNetView;
-                if (view != null && !view.IsOwner()) view.ClaimOwnership();
+                ContainerRegistry.TakeOwnership(m.Chest);
                 chest.RemoveItem(name, n, m.Item.m_quality);
 
                 bool slotFree = inventory.GetItemAt(m.Slot.x, m.Slot.y) == null;
@@ -320,7 +320,7 @@ namespace QualityOfLife
 
             Tell(player, couldNot == 0
                 ? $"Put back {back} item(s)"
-                : $"Put back {back} item(s); {couldNot} couldn't be returned (taken from the chest, or no room)");
+                : $"Put back {back} item(s); {couldNot} couldn't be returned (taken from the chest, chest in use, or no room)");
         }
 
         // ---- buttons and badges -----------------------------------------------------------------

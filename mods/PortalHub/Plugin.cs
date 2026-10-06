@@ -24,7 +24,7 @@ namespace PortalHub
     {
         public const string Guid = "com.dhack.portalhub";
         public const string Name = "PortalHub";
-        public const string Version = "1.1.0";
+        public const string Version = "1.1.1";
 
         internal static Plugin Instance;
 

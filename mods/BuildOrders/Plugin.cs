@@ -21,7 +21,7 @@ namespace BuildOrders
     {
         public const string Guid = "com.dhack.buildorders";
         public const string Name = "BuildOrders";
-        public const string Version = "1.9.0";
+        public const string Version = "1.9.1";
 
         internal static Plugin Instance;
 
@@ -119,7 +119,7 @@ namespace BuildOrders
             EnsureWorldLoaded();
 
             Player player = Player.m_localPlayer;
-            if (player == null || ZNetScene.instance == null) return;
+            if (player == null || ZNetScene.instance == null) { DropPlacing(); return; }
 
             UpdatePlanMode(player);
             UpdateFetch(player);
@@ -144,8 +144,39 @@ namespace BuildOrders
                 _nextCompletion = Time.time + 1f;
                 CheckCompletion(player);
             }
+            if (Time.time >= _nextRecords && WorldKnown)
+            {
+                _nextRecords = Time.time + 5f;
+                UpdatePendingLevels(player);
+                RetryPendingTerrain();
+                SweepFinishedPlans();
+            }
 
             UpdateAim(player);
+        }
+
+        private float _nextRecords;
+
+        /// <summary>
+        /// No player (died, logged out, disconnected) or another world: placing, the Plans window and drawing a bridge end, or the next world
+        /// would start with the wheel and attacks held off and a click placing the blueprint.
+        /// </summary>
+        private void DropPlacing()
+        {
+            if (_placing != null) CancelPlacement();
+            PlansWindowOpen = false;
+            if (_bridgeStart.HasValue || BridgeOptionsOpen) CancelBridge();
+        }
+
+        /// <summary>Joined another world: forget what belonged to the last one (its levelling, and what was learnt from its pieces).</summary>
+        private void ForgetWorld()
+        {
+            foreach (LevelJob job in _levelJobs.Values) job.Running = false;
+            _levelJobs.Clear();
+            _badPrefabs.Clear();
+            _recordPlans.Clear();
+            _bridgeTitlesAt = -99f;
+            _nextRecords = 0f;
         }
 
         // ---- aiming at an order -----------------------------------------------------------------

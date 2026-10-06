@@ -49,10 +49,17 @@ namespace BuildOrders
         {
             StopLevel(key);
             _levelJobs.Remove(key);
+            ForgetPendingLevel(key);
             Player me = Player.m_localPlayer;
             int standing = -1;
             if (takeDownBuilt && me != null) TakeDownBuilt(me, key, out standing);
+            bool haveUndo = File.Exists(UndoFile(key));
             string ground = RestoreTerrain(key, nothingBuilt: standing == 0);
+            // someone else's levelled plan: only their game has the ground as it was (it puts it back once it sees the ghosts are gone)
+            JObject record = haveUndo ? null : ReadPlanRecord(key);
+            string placer = record != null ? (string)record["by"] : null;
+            if (record != null && (bool?)record["levelled"] == true && !string.IsNullOrEmpty(placer) && placer != me?.GetPlayerName())
+                ground = $"Only {placer}'s game can put the ground under it back: it does so the next time they are near it";
             if (ground != null) Player.m_localPlayer?.Message(MessageHud.MessageType.TopLeft, ground);
             var ids = _orders.Values.Where(o => (o.By ?? "") == key).Select(o => o.Id).ToList();
             foreach (string id in ids) RemoveOrder(id, broadcast: true, save: false);
@@ -73,8 +80,21 @@ namespace BuildOrders
         private string FreeTitle(string title)
         {
             var used = new HashSet<string>(_orders.Values.Select(o => o.By ?? ""));
+            used.UnionWith(_levelJobs.Values.Where(j => j.OnDone != null).Select(j => j.Key)); // plans still waiting for their ground
+            used.UnionWith(PendingLevelKeys());
             if (!used.Contains(BlueprintPrefix + title)) return title;
             for (int n = 2; ; n++) if (!used.Contains(BlueprintPrefix + title + " " + n)) return title + " " + n;
+        }
+
+        /// <summary>
+        /// A new plan takes a name: whatever an earlier plan of that name left behind (all built, removed by someone else, or the game quit) is
+        /// dealt with first, so it is never mixed into the new plan's records. Its ground is handled as removing it would (put back where nothing
+        /// of it was built; later, if it is far away).
+        /// </summary>
+        private void ClearStaleRecords(string key)
+        {
+            RestoreTerrain(key);
+            ForgetPlan(key);
         }
 
         // ---- the pieces of a blueprint (or of a plan being moved), relative to its anchor ----
@@ -133,10 +153,12 @@ namespace BuildOrders
         }
 
         /// <summary>Turn entries into build orders at an anchor. Returns how many were placed.</summary>
-        internal int PlaceEntries(Player player, string title, string file, List<Entry> entries, Vector3 anchor, float yaw, float offsetY, float fixedBaseY = float.NaN)
+        /// <param name="fresh">a new plan name (false: its ground was just levelled under that name, and its records are already new)</param>
+        internal int PlaceEntries(Player player, string title, string file, List<Entry> entries, Vector3 anchor, float yaw, float offsetY, float fixedBaseY = float.NaN, bool fresh = true)
         {
             if (ZNetScene.instance == null || ZoneSystem.instance == null) return 0;
             title = FreeTitle(title);
+            if (fresh) ClearStaleRecords(BlueprintPrefix + title);
             float baseY = float.IsNaN(fixedBaseY) ? ZoneSystem.instance.GetGroundHeight(anchor) + offsetY : fixedBaseY;
             HashSet<string> buildable = Buildable();
             int added = 0, skipped = 0;
@@ -278,13 +300,10 @@ namespace BuildOrders
         {
             if (ZoneSystem.instance == null) return 0;
             title = FreeTitle(title);
+            ClearStaleRecords(BlueprintPrefix + title);
             float baseY = ZoneSystem.instance.GetGroundHeight(anchor) + offset;
-            List<Vector3> points = LevelPoints(entries, GroundFeet(entries), anchor, yaw, baseY);
-            StartLevel(BlueprintPrefix + title, title, points, anchor, yaw, () =>
-            {
-                Player me = Player.m_localPlayer;
-                if (me != null) PlaceEntries(me, title, file, entries, anchor, yaw, offset, fixedBaseY: baseY);
-            });
+            RememberPendingLevel(title, file, entries, anchor, yaw, offset, baseY); // kept until its ghosts are placed, even if you leave first
+            StartPlanLevel((JObject)_pendingLevels.Last);
             player.Message(MessageHud.MessageType.TopLeft, $"Levelling the ground for \"{title}\": its ghosts appear when it is done");
             return entries.Count;
         }

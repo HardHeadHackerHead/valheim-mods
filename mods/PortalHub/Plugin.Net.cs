@@ -23,6 +23,42 @@ namespace PortalHub
     {
         private const string RpcRequest = "DH_PortalsRequest", RpcList = "DH_PortalsList", RpcSet = "DH_PortalsSet";
         private const string DestKey = "dh_dest";
+        // A portal's own name for links and favourites. The game gives every object a new ZDOID each time the world loads, so a ZDOID
+        // saved in a link points at some unrelated object after a restart. The host gives each portal a random id stored on it instead.
+        private const string PidKey = "dh_pid";
+
+        /// <summary>The id the menu, links and favourites use for a portal: its stored id, or (until the host has given it one) its ZDOID.</summary>
+        internal static string PortalId(ZDO zdo)
+        {
+            string pid = zdo.GetString(PidKey, "");
+            return pid.Length > 0 ? pid : Key(zdo.m_uid);
+        }
+
+        // Host only: make sure the portal has a stored id.
+        private static string EnsurePid(ZDO zdo)
+        {
+            string pid = zdo.GetString(PidKey, "");
+            if (pid.Length > 0) return pid;
+            pid = System.Guid.NewGuid().ToString("N").Substring(0, 12);
+            zdo.SetOwner(ZDOMan.GetSessionID());
+            zdo.Set(PidKey, pid);
+            ZDOMan.instance.ForceSendZDO(zdo.m_uid);
+            return pid;
+        }
+
+        // Host only: the portal an id names (a stored id, or a ZDOID of this session).
+        private static ZDO ResolvePortal(string id)
+        {
+            if (string.IsNullOrEmpty(id) || ZDOMan.instance == null) return null;
+            if (id.IndexOf(':') >= 0)
+            {
+                ZDO byUid = TryParse(id, out ZDOID uid) ? ZDOMan.instance.GetZDO(uid) : null;
+                return byUid != null && IsPortalZdo(byUid) ? byUid : null;
+            }
+            foreach (ZDO zdo in ZDOMan.instance.GetPortalList())
+                if (zdo.GetString(PidKey, "") == id) return zdo;
+            return null;
+        }
 
         internal List<PortalInfo> Portals = new List<PortalInfo>();
         internal float PortalsAt = -999f;
@@ -55,6 +91,9 @@ namespace PortalHub
             if (rpc != _registeredOn)
             {
                 _registeredOn = rpc;
+                Portals = new List<PortalInfo>(); // a new world: the last one's portals must not show on its map
+                PortalsAt = -999f;
+                _rowsKey = null;
                 UnregisterRpc(); // Valheim throws if a name is registered twice
                 rpc.Register<string>(RpcRequest, OnRequest);
                 rpc.Register<string>(RpcList, OnList);
@@ -103,7 +142,7 @@ namespace PortalHub
                 string name = (zdo.GetString(ZDOVars.s_tag) ?? "").Replace('|', ' ').Replace('\n', ' ');
                 lines.Add(string.Join("|", new[]
                 {
-                    Key(zdo.m_uid), name,
+                    EnsurePid(zdo), name,
                     p.x.ToString("0.#", CultureInfo.InvariantCulture), p.y.ToString("0.#", CultureInfo.InvariantCulture), p.z.ToString("0.#", CultureInfo.InvariantCulture),
                     zdo.GetString(DestKey, ""),
                 }));
@@ -160,21 +199,20 @@ namespace PortalHub
         private static void ApplySet(string payload)
         {
             string[] f = payload.Split('|');
-            if (f.Length < 3 || !TryParse(f[0], out ZDOID portalId)) return;
-            ZDO portal = ZDOMan.instance.GetZDO(portalId);
-            if (portal == null || !IsPortalZdo(portal)) return;
+            if (f.Length < 3) return;
+            ZDO portal = ResolvePortal(f[0]);
+            if (portal == null) return;
 
             bool unlink = string.IsNullOrEmpty(f[1]);
             ZDO target = null;
             if (!unlink)
             {
-                if (!TryParse(f[1], out ZDOID targetId) || targetId == portalId) return;
-                target = ZDOMan.instance.GetZDO(targetId);
-                if (target == null || !IsPortalZdo(target)) return;
+                target = ResolvePortal(f[1]);
+                if (target == null || target == portal) return;
             }
 
-            SetDest(portal, unlink ? "" : f[1]);
-            if (!unlink && f[2] == "1") SetDest(target, f[0]);
+            SetDest(portal, unlink ? "" : EnsurePid(target));
+            if (!unlink && f[2] == "1") SetDest(target, EnsurePid(portal));
             if (unlink) Connect(portal, ZDOID.None); // the game's own name matching takes over again on its next pass
             ApplyDestinations();
         }
@@ -205,10 +243,13 @@ namespace PortalHub
             if (!IsServer || Instance == null || !Instance.Enabled || ZDOMan.instance == null) return;
             foreach (ZDO portal in ZDOMan.instance.GetPortalList())
             {
+                EnsurePid(portal);
                 string dest = portal.GetString(DestKey, "");
                 if (dest.Length == 0) continue;
 
-                ZDO target = TryParse(dest, out ZDOID id) ? ZDOMan.instance.GetZDO(id) : null;
+                // A link saved by version 1.1.0 or older names a ZDOID from an earlier session, which now means some other object:
+                // drop it (the portal goes back to pairing by name) rather than send players somewhere random.
+                ZDO target = dest.IndexOf(':') >= 0 ? null : ResolvePortal(dest);
                 if (target == null) { SetDest(portal, ""); Connect(portal, ZDOID.None); continue; }
                 if (portal.GetConnectionZDOID(ZDOExtraData.ConnectionType.Portal) != target.m_uid) Connect(portal, target.m_uid);
             }

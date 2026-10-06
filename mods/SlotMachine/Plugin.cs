@@ -19,7 +19,7 @@ namespace SlotMachine
     {
         public const string Guid = "com.dhack.slotmachine";
         public const string Name = "SlotMachine";
-        public const string Version = "1.0.3";
+        public const string Version = "1.0.4";
         public const string PiecePrefab = "piece_slotmachine";
 
         internal static ConfigEntry<int> Bet, PayoutPercent;
@@ -53,9 +53,8 @@ namespace SlotMachine
 
         internal static void Register(ZNetScene scene)
         {
-            if (ObjectDB.instance == null) return;
             GameObject source = scene.GetPrefab("piece_chest_wood");
-            GameObject hammer = ObjectDB.instance.GetItemPrefab("Hammer");
+            GameObject hammer = scene.GetPrefab("Hammer"); // items are in the scene too, and ObjectDB may not be awake yet
             GameObject bench = scene.GetPrefab("piece_workbench");
             if (source == null || hammer == null) { Debug.LogWarning(Name + ": chest or hammer prefab not found"); return; }
 
@@ -111,7 +110,9 @@ namespace SlotMachine
             if (ZNetScene.instance != null)
             {
                 ZNetScene.instance.m_prefabs.Remove(_prefab);
-                ((Dictionary<int, GameObject>)AccessTools.Field(typeof(ZNetScene), "m_namedPrefabs").GetValue(ZNetScene.instance)).Remove(_prefab.name.GetStableHashCode());
+                var named = (Dictionary<int, GameObject>)AccessTools.Field(typeof(ZNetScene), "m_namedPrefabs").GetValue(ZNetScene.instance);
+                int hash = _prefab.name.GetStableHashCode();
+                if (named.TryGetValue(hash, out GameObject current) && current == _prefab) named.Remove(hash); // only our own entry
             }
             GameObject hammer = ObjectDB.instance != null ? ObjectDB.instance.GetItemPrefab("Hammer") : null;
             if (hammer != null) hammer.GetComponent<ItemDrop>().m_itemData.m_shared.m_buildPieces.m_pieces.Remove(_prefab);
@@ -123,7 +124,8 @@ namespace SlotMachine
 
         private static Piece.Requirement Req(string item, int amount)
         {
-            GameObject go = ObjectDB.instance.GetItemPrefab(item);
+            GameObject go = ZNetScene.instance != null ? ZNetScene.instance.GetPrefab(item) : null;
+            if (go == null && ObjectDB.instance != null) go = ObjectDB.instance.GetItemPrefab(item);
             return new Piece.Requirement { m_resItem = go != null ? go.GetComponent<ItemDrop>() : null, m_amount = amount, m_recover = true };
         }
     }
@@ -132,5 +134,20 @@ namespace SlotMachine
     internal static class ZNetScene_Awake
     {
         private static void Postfix(ZNetScene __instance) => Plugin.Register(__instance);
+    }
+
+    // Whichever of ZNetScene and ObjectDB wakes second, the piece is registered before any saved one is loaded.
+    [HarmonyPatch(typeof(ObjectDB), "Awake")]
+    internal static class ObjectDB_Awake
+    {
+        private static void Postfix() { if (ZNetScene.instance != null) Plugin.Register(ZNetScene.instance); }
+    }
+
+    // Logging out mid-spin: put the winnings in the inventory before the character is saved.
+    // (Game.Shutdown runs on logout and quit, just before it saves; the autosave goes through SavePlayerProfile alone.)
+    [HarmonyPatch(typeof(Game), "Shutdown")]
+    internal static class Game_Shutdown
+    {
+        private static void Prefix() => SlotMachinePiece.PayOwed();
     }
 }

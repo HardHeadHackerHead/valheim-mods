@@ -1,8 +1,11 @@
+using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using BepInEx.Configuration;
 using HarmonyLib;
+using Newtonsoft.Json.Linq;
 using UnityEngine;
 
 namespace BuildOrders
@@ -11,6 +14,8 @@ namespace BuildOrders
     /// Level ground for a plan: while placing a blueprint, L flattens the ground under it to the plan's floor level (cutting the high side and
     /// filling the low side), so it needs fewer posts. It starts as soon as the plan is placed and uses the hoe's own "Level ground" operation
     /// spot by spot (no hoe or stamina needed). Warded ground and places the game keeps unbuildable are left alone.
+    /// A plan waiting for its ground is kept in a file per world (BepInEx/blueprints/_levelling), so it still appears after you walk away, die,
+    /// log out or restart: the levelling carries on when you are back in that world.
     /// </summary>
     public partial class Plugin
     {
@@ -21,6 +26,8 @@ namespace BuildOrders
         internal class LevelJob
         {
             public string Key, Title;
+            public string World;                  // the world it levels (never another)
+            public bool Interrupted;              // stopped because you died or left, not by you: carries on by itself
             public List<Vector3> Points;
             public List<Vector3> Checks;          // where flatness is measured after each pass (the spots and the points between them)
             public int Next, Done, Skipped, Pass = 1;
@@ -131,24 +138,24 @@ namespace BuildOrders
             foreach (Vector3 p in points) { Vector3 l = back * (p - anchor); lo = Vector3.Min(lo, l); hi = Vector3.Max(hi, l); }
             var job = new LevelJob
             {
-                Key = key, Title = title, Points = points, Checks = points, Running = true, OnDone = onDone,
+                Key = key, Title = title, World = _loadedWorld, Points = points, Checks = points, Running = true, OnDone = onDone,
                 Anchor = anchor, Yaw = yaw, Target = points[0].y, Lo = new Vector2(lo.x, lo.z), Hi = new Vector2(hi.x, hi.z),
             };
             _levelJobs[key] = job;
-            SnapshotTerrain(key, points); // so removing the plan can put the ground back
             Logger.LogInfo($"Levelling '{title}': {hi.x - lo.x:0}x{hi.z - lo.z:0} m to height {job.Target:0.00}");
             StartCoroutine(RunLevel(job));
         }
 
         internal void StopLevel(string key)
         {
-            if (_levelJobs.TryGetValue(key, out LevelJob job)) { job.Running = false; job.Status = "stopped"; }
+            if (_levelJobs.TryGetValue(key, out LevelJob job)) { job.Running = false; job.Interrupted = false; job.Status = "stopped"; }
         }
 
         internal void ResumeLevel(string key)
         {
             if (!_levelJobs.TryGetValue(key, out LevelJob job) || job.Running || job.Finished) return;
             job.Running = true;
+            job.Interrupted = false;
             StartCoroutine(RunLevel(job));
         }
 
@@ -159,14 +166,14 @@ namespace BuildOrders
         /// </summary>
         private IEnumerator RunLevel(LevelJob job)
         {
-            bool Current() => job.Running && _levelJobs.TryGetValue(job.Key, out LevelJob current) && current == job;
+            bool Current() => job.Running && _levelJobs.TryGetValue(job.Key, out LevelJob current) && current == job && WorldKnown && job.World == _loadedWorld;
             Quaternion back = Quaternion.Inverse(Quaternion.Euler(0f, job.Yaw, 0f));
 
             // the ground is only loaded near you: wait for it
             while (Current())
             {
                 Player p = Player.m_localPlayer;
-                if (p == null || p.IsDead()) { job.Running = false; job.Status = "stopped"; yield break; }
+                if (p == null || p.IsDead()) { job.Running = false; job.Interrupted = true; job.Status = "stopped: carries on when you are back"; yield break; }
                 Vector3 flat = job.Anchor - p.transform.position; flat.y = 0f;
                 if (flat.magnitude <= 60f) break;
                 job.Status = "paused: walk back within 60 m";
@@ -194,6 +201,7 @@ namespace BuildOrders
                 ZNetView view = TcView(tc);
                 if (view == null || !view.IsValid()) continue;
                 if (!view.IsOwner()) view.ClaimOwnership(); // only the owner may write the ground
+                SnapshotTerrain(job.Key, job.Points, hm, tc); // first, so removing the plan can put the ground back (only now is it loaded)
                 int width = TcWidth(tc), pitch = width + 1;
                 float scale = hm.m_scale;
                 Vector3 origin = tc.transform.position;
@@ -263,6 +271,87 @@ namespace BuildOrders
             System.Action done = job.OnDone;
             job.OnDone = null;
             done?.Invoke();
+        }
+
+        // ---- plans waiting for their ground (kept per world, so they are not lost) ----
+
+        private static string PendingLevelDir => Path.Combine(BlueprintDir, "_levelling");
+        private string PendingLevelFile => Path.Combine(PendingLevelDir, Safe(_loadedWorld ?? "world") + ".json");
+        private JArray _pendingLevels = new JArray();
+
+        private IEnumerable<string> PendingLevelKeys() => _pendingLevels.OfType<JObject>().Select(j => (string)j["key"]);
+
+        private void LoadPendingLevels()
+        {
+            _pendingLevels = new JArray();
+            try { if (File.Exists(PendingLevelFile)) _pendingLevels = JArray.Parse(File.ReadAllText(PendingLevelFile)); }
+            catch (Exception e) { Logger.LogWarning("Could not read the plans waiting for their ground: " + e.Message); }
+        }
+
+        private void SavePendingLevels()
+        {
+            try
+            {
+                if (_pendingLevels.Count == 0) { File.Delete(PendingLevelFile); return; }
+                Directory.CreateDirectory(PendingLevelDir);
+                File.WriteAllText(PendingLevelFile, _pendingLevels.ToString(Newtonsoft.Json.Formatting.None));
+            }
+            catch (Exception e) { Logger.LogWarning("Could not save the plans waiting for their ground: " + e.Message); }
+        }
+
+        /// <summary>Remember a plan waiting for its ground (everything needed to level it and place it again later).</summary>
+        private void RememberPendingLevel(string title, string file, List<Entry> entries, Vector3 anchor, float yaw, float offset, float baseY)
+        {
+            ForgetPendingLevel(BlueprintPrefix + title, save: false);
+            _pendingLevels.Add(new JObject
+            {
+                ["key"] = BlueprintPrefix + title, ["title"] = title, ["file"] = file, ["anchor"] = new JArray(anchor.x, anchor.y, anchor.z),
+                ["yaw"] = yaw, ["offset"] = offset, ["baseY"] = baseY,
+                ["pieces"] = new JArray(entries.Select(e =>
+                {
+                    Vector3 r = e.Rot.eulerAngles;
+                    return new JObject { ["p"] = e.Prefab, ["x"] = e.Local.x, ["y"] = e.Local.y, ["z"] = e.Local.z, ["rx"] = r.x, ["ry"] = r.y, ["rz"] = r.z, ["g"] = e.Ground };
+                })),
+            });
+            SavePendingLevels();
+        }
+
+        private void ForgetPendingLevel(string key, bool save = true)
+        {
+            List<JObject> gone = _pendingLevels.OfType<JObject>().Where(j => (string)j["key"] == key).ToList();
+            if (gone.Count == 0) return;
+            foreach (JObject j in gone) j.Remove();
+            if (save) SavePendingLevels();
+        }
+
+        /// <summary>Level the ground for a waiting plan, then place its ghosts (only in the world it was placed in).</summary>
+        private void StartPlanLevel(JObject p)
+        {
+            string title = (string)p["title"], file = (string)p["file"], key = BlueprintPrefix + title, world = _loadedWorld;
+            List<Entry> entries = EntriesFrom((JArray)p["pieces"]);
+            var a = (JArray)p["anchor"];
+            var anchor = new Vector3((float)a[0], (float)a[1], (float)a[2]);
+            float yaw = (float)p["yaw"], offset = (float)p["offset"], baseY = (float)p["baseY"];
+            List<Vector3> points = LevelPoints(entries, GroundFeet(entries), anchor, yaw, baseY);
+            StartLevel(key, title, points, anchor, yaw, () =>
+            {
+                Player me = Player.m_localPlayer;
+                if (me == null || !WorldKnown || _loadedWorld != world) return; // never into another world: it waits for you to be back in its own
+                ForgetPendingLevel(key);
+                PlaceEntries(me, title, file, entries, anchor, yaw, offset, fixedBaseY: baseY, fresh: false);
+            });
+        }
+
+        /// <summary>
+        /// Every few seconds in a world: start the waiting plans with no levelling going (just loaded, or their ghosts could not be placed), and
+        /// carry on with levelling that stopped because you died or left.
+        /// </summary>
+        private void UpdatePendingLevels(Player player)
+        {
+            foreach (JObject p in _pendingLevels.OfType<JObject>().ToList())
+                if (!_levelJobs.TryGetValue((string)p["key"], out LevelJob job) || (job.Finished && job.OnDone == null)) StartPlanLevel(p);
+            if (player.IsDead()) return;
+            foreach (LevelJob job in _levelJobs.Values.Where(j => j.Interrupted && !j.Running && !j.Finished).ToList()) ResumeLevel(job.Key);
         }
 
         private GameObject _paintPrefab;

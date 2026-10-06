@@ -1,5 +1,7 @@
 # valhiem
 
+Before writing or changing a mod, read `docs/modding-pitfalls.md` (bugs that lost players' items and buildings, and how to avoid them).
+
 This project is managed by **QuadFlow** — a multi-agent terminal manager with integrated project tools.
 
 ## QuadFlow Integration

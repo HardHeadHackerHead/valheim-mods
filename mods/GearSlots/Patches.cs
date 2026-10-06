@@ -26,6 +26,50 @@ namespace GearSlots
             private static void Postfix(Player __instance) => Extend(__instance.GetInventory());
         }
 
+        // How many ordinary rows this character has: the game keeps it in the "invrows" key (rows can be bought from the trader).
+        private static int SavedRows(Player player) =>
+            player.TryGetUniqueKeyValue(Player.InventoryRowsKey, out string value) && int.TryParse(value, out int rows) ? Mathf.Clamp(rows, 0, 9) : 4;
+
+        // The character's items are loaded before it spawns (positions are not checked then), so take its row count from the save
+        // and size the inventory for it straight away. Switching to a character with a different row count lands its gear right.
+        [HarmonyPatch(typeof(Player), nameof(Player.Load))]
+        private static class PlayerLoad
+        {
+            private static void Postfix(Player __instance)
+            {
+                if (__instance != Player.m_localPlayer && Player.m_localPlayer != null) return;
+                Layout.RememberNormalRows(SavedRows(__instance));
+                Inventory inv = __instance.GetInventory();
+                inv.SetHeight(Layout.NormalRows + Layout.ExtraRows);
+            }
+        }
+
+        // On every spawn (and when a row is bought) the game sets the inventory to its ordinary height and then drops anything
+        // below it, which used to throw the gear slots on the ground. Do the same job but keep the gear rows under the ordinary
+        // ones, moving them down when a row is added.
+        [HarmonyPatch(typeof(Player), nameof(Player.SetInventorySize))]
+        private static class SetInventorySize
+        {
+            private static bool Prefix(Player __instance, int rows)
+            {
+                rows = Mathf.Clamp(rows, 0, 9);
+                Inventory inv = __instance.GetInventory();
+                int before = Layout.NormalRows;
+                if (rows != before)
+                    foreach (ItemDrop.ItemData item in inv.GetAllItems())
+                    {
+                        if (item.m_gridPos.y >= before) item.m_gridPos.y += rows - before;        // gear rows follow the ordinary ones
+                        else if (item.m_gridPos.y >= rows) item.m_gridPos = new Vector2i(-1, -1); // a removed ordinary row: dropped, as in the game
+                    }
+                Layout.RememberNormalRows(rows);
+                inv.SetHeight(rows + Layout.ExtraRows);
+                __instance.AddUniqueKeyValue(Player.InventoryRowsKey, rows.ToString());
+                if (InventoryGui.instance != null) InventoryGui.instance.SetInventorySize(rows);
+                __instance.DropInvalidItems();
+                return false;
+            }
+        }
+
         // ---- the game must not drop loose items into the gear cells ----
 
         [HarmonyPatch(typeof(Inventory), "FindEmptySlot")]

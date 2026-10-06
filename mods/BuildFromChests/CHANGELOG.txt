@@ -1,1 +1,3 @@
+Fix: in multiplayer, building with materials from a chest another player had open could lose or duplicate items. Chests in use are now left alone.
+
 Lets BuildOrders fetch materials from the chests around you into your inventory (a small shared function it leaves for it).

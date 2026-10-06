@@ -13,7 +13,8 @@ namespace BuildOrders
     public partial class Plugin
     {
         private readonly Dictionary<string, GameObject> _ghosts = new Dictionary<string, GameObject>();
-        private readonly HashSet<string> _badPrefabs = new HashSet<string>();
+        private readonly HashSet<string> _badPrefabs = new HashSet<string>();   // per scene and world (cleared when either changes)
+        private ZNetScene _badPrefabsOf;
 
         private static readonly Color PlannedColor = new Color(0.35f, 0.8f, 1f);
         private static readonly Color AimedColor = new Color(1f, 0.85f, 0.35f);
@@ -111,6 +112,7 @@ namespace BuildOrders
         /// <summary>A see-through copy of a piece at a spot: the real piece, made without networking and stripped to its model. Also used for the placement preview.</summary>
         internal GameObject MakeGhostObject(string prefabName, Vector3 pos, Quaternion rot, List<Material> materials)
         {
+            if (_badPrefabsOf != ZNetScene.instance) { _badPrefabs.Clear(); _badPrefabsOf = ZNetScene.instance; } // a new scene can have other prefabs (mods load theirs)
             if (_badPrefabs.Contains(prefabName)) return null;
             GameObject prefab = ZNetScene.instance.GetPrefab(prefabName);
             if (prefab == null) { _badPrefabs.Add(prefabName); return null; }

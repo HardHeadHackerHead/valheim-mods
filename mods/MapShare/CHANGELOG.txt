@@ -1,1 +1,3 @@
+Fix: a player joining could miss the map explored so far when someone online did not have MapShare or had sharing off. Everyone who shares now sends it.
+
 First version: live sharing of the explored map between players, plus a full sync when someone joins.

@@ -24,6 +24,46 @@ namespace SlotMachine
         private long _spinSeen;
         private readonly System.Random _rng = new System.Random();
 
+        // What this game's player is owed for a spin still turning. If they log out, or walk off so the machine unloads, before the
+        // reels stop, the winnings go straight into their inventory instead of being lost with the spin.
+        private static long _owedSpin;
+        private static int _owedCoins;
+        private static ZDOID _owedMachine = ZDOID.None;
+
+        /// <summary>Pay a spin that never got to finish on screen (logout, machine unloaded).</summary>
+        internal static void PayOwed()
+        {
+            if (_owedCoins <= 0) { _owedSpin = 0L; return; }
+            Player me = Player.m_localPlayer;
+            if (me == null) return;
+            int coins = _owedCoins, total = _owedCoins;
+            ZDO zdo = ZDOMan.instance != null ? ZDOMan.instance.GetZDO(_owedMachine) : null;
+            if (zdo != null)
+            {
+                if (zdo.GetLong(KeyPaid, 0L) == _owedSpin) { _owedCoins = 0; _owedSpin = 0L; return; } // already paid out of the tray
+                if (zdo.IsOwner()) zdo.Set(KeyPaid, _owedSpin);
+            }
+            _owedCoins = 0; _owedSpin = 0L;
+            GameObject prefab = ZNetScene.instance != null ? ZNetScene.instance.GetPrefab("Coins") : null;
+            if (prefab == null) return;
+            Inventory inv = me.GetInventory();
+            int max = Mathf.Max(1, prefab.GetComponent<ItemDrop>().m_itemData.m_shared.m_maxStackSize);
+            while (coins > 0)
+            {
+                int n = Mathf.Min(coins, max);
+                coins -= n;
+                if (inv.CanAddItem(prefab, n)) inv.AddItem(prefab, n);
+                else Instantiate(prefab, me.transform.position + Vector3.up, Quaternion.identity).GetComponent<ItemDrop>().SetStack(n);
+            }
+            me.Message(MessageHud.MessageType.TopLeft, "Odin's Fortune paid your winnings: " + total + " coins");
+        }
+
+        private void OnDestroy()
+        {
+            ZDO zdo = Zdo;
+            if (_owedCoins > 0 && zdo != null && zdo.m_uid == _owedMachine) PayOwed();
+        }
+
         private void Awake()
         {
             _nview = GetComponent<ZNetView>();
@@ -96,7 +136,10 @@ namespace SlotMachine
             zdo.Set(KeyPay, pay);
             zdo.Set(KeyBet, bet);
             zdo.Set(KeyWho, ZDOMan.GetSessionID());
-            zdo.Set(KeyStart, NowMs);
+            long start = NowMs;
+            zdo.Set(KeyStart, start);
+            if (_owedCoins > 0) PayOwed(); // a spin elsewhere that never settled
+            _owedSpin = start; _owedCoins = pay; _owedMachine = zdo.m_uid;
             Effect(false);
         }
 
@@ -164,6 +207,7 @@ namespace SlotMachine
             if (zdo.GetLong(KeyWho, 0L) != ZDOMan.GetSessionID() || zdo.GetLong(KeyPaid, 0L) == start) return;
             _nview.ClaimOwnership();
             zdo.Set(KeyPaid, start);
+            if (_owedSpin == start) { _owedSpin = 0L; _owedCoins = 0; } // paid here, out of the tray
 
             int pay = zdo.GetInt(KeyPay, 0), bet = zdo.GetInt(KeyBet, 0);
             Player me = Player.m_localPlayer;

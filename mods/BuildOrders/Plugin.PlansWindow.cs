@@ -347,6 +347,7 @@ namespace BuildOrders
                 {
                     StopLevel(pending.Key);
                     _levelJobs.Remove(pending.Key);
+                    ForgetPendingLevel(pending.Key);
                     string ground = RestoreTerrain(pending.Key);
                     PlansToast($"Cancelled \"{pending.Title}\"" + (ground != null ? ". " + ground : ""));
                 }

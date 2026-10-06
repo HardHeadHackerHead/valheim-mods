@@ -11,13 +11,37 @@ namespace FeedFromChests
     {
         private static readonly System.Reflection.MethodInfo CheckAccess = AccessTools.Method(typeof(Container), "CheckAccess");
         private static readonly System.Reflection.FieldInfo NView = AccessTools.Field(typeof(Container), "m_nview");
+        private static readonly System.Reflection.MethodInfo Load = AccessTools.Method(typeof(Container), "Load");
 
         internal static ZNetView ViewOf(Container c) => NView.GetValue(c) as ZNetView;
+
+        /// <summary>
+        /// Someone has this chest open. IsInUse() is only right on the chest's owner; everyone else has to read the flag the owner
+        /// keeps in the chest's save data.
+        /// </summary>
+        internal static bool InUse(Container c)
+        {
+            if (c.IsInUse()) return true;
+            ZNetView view = ViewOf(c);
+            return view != null && view.IsValid() && !view.IsOwner() && view.GetZDO().GetInt(ZDOVars.s_inUse) == 1;
+        }
+
+        /// <summary>
+        /// Only the owner of a chest can save its contents, so take ownership first (matters in multiplayer). Then reload the contents
+        /// from the save data: until now we only had a copy that can be up to a second old, and saving that would undo another player's changes.
+        /// </summary>
+        internal static void TakeOwnership(Container c)
+        {
+            ZNetView view = ViewOf(c);
+            if (view == null || !view.IsValid() || view.IsOwner()) return;
+            view.ClaimOwnership();
+            Load?.Invoke(c, null); // the game's own reload: does nothing if our copy is already the latest
+        }
 
         /// <summary>Can this player use this chest (not in use by someone else, not warded off, not someone's private chest)?</summary>
         private static bool Usable(Container c)
         {
-            if (c == null || c.GetInventory() == null || c.IsInUse()) return false;
+            if (c == null || c.GetInventory() == null || InUse(c)) return false;
             if (c.m_checkGuardStone && !PrivateArea.CheckAccess(c.transform.position, 0f, false)) return false;
             long playerId = Game.instance.GetPlayerProfile().GetPlayerID();
             return (bool)CheckAccess.Invoke(c, new object[] { playerId });
@@ -53,7 +77,8 @@ namespace FeedFromChests
         public static int Count(IEnumerable<Container> chests, string itemName)
         {
             int total = 0;
-            foreach (Container c in chests) total += c.GetInventory().CountItems(itemName);
+            foreach (Container c in chests)
+                if (c != null && !InUse(c)) total += c.GetInventory().CountItems(itemName); // a chest opened since the lookup can't be taken from, so don't count it
             return total;
         }
 
@@ -64,13 +89,13 @@ namespace FeedFromChests
             foreach (Container c in chests)
             {
                 if (taken >= amount) break;
+                if (c == null || InUse(c)) continue; // someone opened it since we looked it up
                 Inventory inventory = c.GetInventory();
-                int n = Math.Min(inventory.CountItems(itemName), amount - taken);
-                if (n <= 0) continue;
+                if (inventory.CountItems(itemName) <= 0) continue;
 
-                // Only the owner of a chest can save its contents, so take ownership first (matters in multiplayer).
-                ZNetView view = NView.GetValue(c) as ZNetView;
-                if (view != null && !view.IsOwner()) view.ClaimOwnership();
+                TakeOwnership(c);
+                int n = Math.Min(inventory.CountItems(itemName), amount - taken); // counted again: the reload may have changed it
+                if (n <= 0) continue;
 
                 inventory.RemoveItem(itemName, n);
                 taken += n;
