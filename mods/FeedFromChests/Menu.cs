@@ -31,6 +31,8 @@ namespace FeedFromChests
         private List<string> _cookLines = new List<string>();   // a cooking station: what is on each slot
         private bool IsCooking => _station != null && _station.Component is CookingStation;
         private bool IsFermenter => _station != null && _station.Component is Fermenter;
+        private LimitPlan _plan = new LimitPlan();
+        private readonly List<KeyValuePair<string, bool>> _limitLines = new List<KeyValuePair<string, bool>>(); // per ticked item: why it is or is not fed
         private string _fermentLine = "";
         private readonly Dictionary<string, int> _autoStock = new Dictionary<string, int>(); // item -> how many the chests in auto-feed range hold
         private AutoSetting _auto = new AutoSetting();
@@ -62,6 +64,7 @@ namespace FeedFromChests
             _supportsAuto = _stationAuto.Value && AutoFeed.Supported(info);
             _autoItems = BuildAutoItems(info);
             _auto = _supportsAuto ? AutoFeed.Read(info.Component) : new AutoSetting();
+            _plan = Limits.For(info);
             _autoEverSet = _supportsAuto && (_auto.On || _auto.Allowed.Count > 0);
             RefreshRows(player);
             Logger.LogInfo($"Menu for '{info.Title}': {_rows.Count} item(s) available, {_station.Inputs.Count} input(s), fuel={(_station.Fuel != null ? "yes" : "no")}, auto-feed={(_supportsAuto ? (_auto.On ? "on" : "off") : "n/a")}");
@@ -131,7 +134,13 @@ namespace FeedFromChests
                     setting.Allowed.Add(item.Name);
                 }
             }
-            if (setting.On && !_autoEverSet) { setting.Output = true; setting.Reserve = IsCooking || IsFermenter ? 0 : 20; } // sensible start: output to chests; keep 20 ore, cook all the food
+            if (setting.On && !_autoEverSet)        // a sensible start, for this kind of station
+            {
+                setting.Output = true;
+                setting.Target = _plan.DefaultTarget;
+                setting.Reserve = _plan.DefaultReserve;
+                setting.FuelReserve = _plan.DefaultFuelReserve;
+            }
             AutoFeed.Write(_station.Component, setting);
             _auto = setting;
             _status = setting.On ? "Auto-feed is on" : "Auto-feed is off";
@@ -144,6 +153,15 @@ namespace FeedFromChests
             if (_station == null || !_station.Alive || !_supportsAuto) return;
             AutoSetting setting = AutoFeed.Read(_station.Component);
             setting.Reserve = Mathf.Clamp(setting.Reserve + delta, 0, 9999);
+            AutoFeed.Write(_station.Component, setting);
+            _auto = setting;
+        }
+
+        private void AdjustTarget(int delta)
+        {
+            if (_station == null || !_station.Alive || !_supportsAuto) return;
+            AutoSetting setting = AutoFeed.Read(_station.Component);
+            setting.Target = Mathf.Clamp(setting.Target + delta, 0, 99999);
             AutoFeed.Write(_station.Component, setting);
             _auto = setting;
         }
@@ -198,6 +216,14 @@ namespace FeedFromChests
                 _autoStock.Clear();
                 List<Container> autoChests = Chests.Near(_station.Position, _autoRadius.Value);
                 foreach (AutoItem item in _autoItems) _autoStock[item.Name] = Chests.Count(autoChests, item.Name);
+                _limitLines.Clear();
+                if (_auto.On)
+                    foreach (AutoItem item in _autoItems)
+                    {
+                        if (!_auto.Allowed.Contains(item.Name)) continue;
+                        bool ok = Limits.MayFeed(_station, _auto, _plan, item.Drop, item.IsFuel, _autoStock[item.Name], _outputRadius.Value, out string line);
+                        _limitLines.Add(new KeyValuePair<string, bool>(line, ok));
+                    }
             }
             List<Container> chests = Chests.Near(_station.Position, _radius.Value);
             Inventory inventory = player.GetInventory();
@@ -377,29 +403,7 @@ namespace FeedFromChests
                 ? $"Keeps this stocked from chests within {_autoRadius.Value:0} m, by itself. It only uses the items ticked below, plain ones first."
                 : "Turn on to keep this stocked from nearby chests without pressing anything. You choose which items it may use.", _dim);
 
-            GUILayout.Space(2);
-            GUILayout.BeginHorizontal();
-            GUILayout.Label("Keep at least this many of the items:", _dim, GUILayout.Width(250));
-            if (GUILayout.Button("-10", _button, GUILayout.Width(44), GUILayout.Height(24))) _pending = () => AdjustReserve(-10);
-            if (GUILayout.Button("-1", _button, GUILayout.Width(36), GUILayout.Height(24))) _pending = () => AdjustReserve(-1);
-            GUILayout.Label(_auto.Reserve.ToString(), _text, GUILayout.Width(50));
-            if (GUILayout.Button("+1", _button, GUILayout.Width(36), GUILayout.Height(24))) _pending = () => AdjustReserve(1);
-            if (GUILayout.Button("+10", _button, GUILayout.Width(44), GUILayout.Height(24))) _pending = () => AdjustReserve(10);
-            GUILayout.FlexibleSpace();
-            GUILayout.EndHorizontal();
-            GUILayout.Label("It stops feeding an item once the chests are down to this amount, so it never uses all of your stock.", _dim);
-            if (_station != null && _station.Fuel != null)
-            {
-                GUILayout.BeginHorizontal();
-                GUILayout.Label($"Keep at least this much {Localization.instance.Localize(_station.Fuel.m_itemData.m_shared.m_name)} (fuel):", _dim, GUILayout.Width(250));
-                if (GUILayout.Button("-10", _button, GUILayout.Width(44), GUILayout.Height(24))) _pending = () => AdjustFuelReserve(-10);
-                if (GUILayout.Button("-1", _button, GUILayout.Width(36), GUILayout.Height(24))) _pending = () => AdjustFuelReserve(-1);
-                GUILayout.Label(_auto.FuelReserve.ToString(), _text, GUILayout.Width(50));
-                if (GUILayout.Button("+1", _button, GUILayout.Width(36), GUILayout.Height(24))) _pending = () => AdjustFuelReserve(1);
-                if (GUILayout.Button("+10", _button, GUILayout.Width(44), GUILayout.Height(24))) _pending = () => AdjustFuelReserve(10);
-                GUILayout.FlexibleSpace();
-                GUILayout.EndHorizontal();
-            }
+            DrawLimits();
 
             if (IsFermenter)
             {
@@ -453,17 +457,30 @@ namespace FeedFromChests
             // And a warning if the fuel is not ticked (the smelter would run out and stop).
             if (_station != null && _station.Fuel != null && !_auto.Allowed.Contains(_station.Fuel.m_itemData.m_shared.m_name) && _auto.On)
                 GUILayout.Label($"{Localization.instance.Localize(_station.Fuel.m_itemData.m_shared.m_name)} is not ticked, so this will run out of fuel and stop.", _bad);
-            if (_auto.On)
-                foreach (AutoItem item in _autoItems)
-                {
-                    if (!_auto.Allowed.Contains(item.Name)) continue;
-                    _autoStock.TryGetValue(item.Name, out int stock);
-                    int keep = item.IsFuel ? _auto.FuelReserve : _auto.Reserve;
-                    bool feeding = stock > keep;
-                    GUILayout.Label($"{item.Display}: {stock} in the chests, keeping {keep}  ->  {(feeding ? "feeding" : stock == 0 ? "none in the chests" : "not feeding (down to the minimum)")}",
-                                    (feeding ? _good : _warn));
-                }
+            foreach (var line in _limitLines) GUILayout.Label(line.Key, line.Value ? _good : _warn);
             GUILayout.Space(8);
+        }
+
+        /// <summary>The limits that make sense for this station (see Limits), each as one row: label, -/+ buttons, value.</summary>
+        private void DrawLimits()
+        {
+            if (_plan.Target) NumberRow(_plan.TargetLabel, _auto.Target, true, _plan.TargetHelp, AdjustTarget);
+            if (_plan.Reserve) NumberRow(_plan.ReserveLabel, _auto.Reserve, false, _plan.ReserveHelp, AdjustReserve);
+            if (_plan.FuelReserve) NumberRow(_plan.FuelLabel, _auto.FuelReserve, false, _plan.FuelHelp, AdjustFuelReserve);
+        }
+
+        private void NumberRow(string label, int value, bool offWhenZero, string help, Action<int> adjust)
+        {
+            GUILayout.Space(2);
+            GUILayout.BeginHorizontal();
+            GUILayout.Label(label, _text, GUILayout.ExpandWidth(true));
+            if (GUILayout.Button("-10", _button, GUILayout.Width(44), GUILayout.Height(24))) _pending = () => adjust(-10);
+            if (GUILayout.Button("-1", _button, GUILayout.Width(36), GUILayout.Height(24))) _pending = () => adjust(-1);
+            GUILayout.Label(value == 0 && offWhenZero ? "off" : value.ToString(), _text, GUILayout.Width(48));
+            if (GUILayout.Button("+1", _button, GUILayout.Width(36), GUILayout.Height(24))) _pending = () => adjust(1);
+            if (GUILayout.Button("+10", _button, GUILayout.Width(44), GUILayout.Height(24))) _pending = () => adjust(10);
+            GUILayout.EndHorizontal();
+            if (!string.IsNullOrEmpty(help)) GUILayout.Label(help, _dim);
         }
 
         /// <summary>

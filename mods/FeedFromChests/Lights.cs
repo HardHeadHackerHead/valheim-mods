@@ -69,7 +69,7 @@ namespace FeedFromChests
         {
             if (!Stations.TryGet(fire.gameObject, out StationInfo info, out _) || info.Fuel == null) return;
             List<Container> chests = Chests.Near(info.Position, _autoRadius.Value);
-            if (chests.Count == 0 || Chests.Count(chests, info.Fuel.m_itemData.m_shared.m_name) <= 0) return;
+            if (chests.Count == 0 || Chests.Count(chests, info.Fuel.m_itemData.m_shared.m_name) <= KeepFuel) return; // always leave a few, for crafting
             AutoFeed.Silent = true;
             bool added;
             try { added = AddOne(player, info, info.Fuel, true, chests, chestsOnly: true); }

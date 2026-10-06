@@ -203,20 +203,21 @@ namespace FeedFromChests
             if (!Stations.TryGet(station.gameObject, out StationInfo info, out _)) return;
             List<Container> chests = Chests.Near(info.Position, _autoRadius.Value);
             if (chests.Count == 0) return;
+            LimitPlan plan = Limits.For(info);
             AutoFeed.Silent = true;
             try
             {
                 if (info.Fuel != null && station.m_useFuel && Cooking.Fuel(station) < station.m_maxFuel - 1)
                 {
                     string fuel = info.Fuel.m_itemData.m_shared.m_name;
-                    if (setting.Allowed.Contains(fuel) && Chests.Count(chests, fuel) > setting.FuelReserve)
+                    if (setting.Allowed.Contains(fuel) && Limits.MayFeed(info, setting, plan, info.Fuel, true, Chests.Count(chests, fuel), _outputRadius.Value, out _))
                         AddOne(player, info, info.Fuel, true, chests, chestsOnly: true);
                 }
                 if (!Cooking.HasFreeSlot(station)) return;
                 foreach (ItemDrop drop in info.Inputs.OrderBy(d => Tiers.Rank(d.m_itemData.m_shared)))
                 {
                     string name = drop.m_itemData.m_shared.m_name;
-                    if (!setting.Allowed.Contains(name) || Chests.Count(chests, name) <= setting.Reserve) continue;
+                    if (!setting.Allowed.Contains(name) || !Limits.MayFeed(info, setting, plan, drop, false, Chests.Count(chests, name), _outputRadius.Value, out _)) continue;
                     if (AddOne(player, info, drop, false, chests, chestsOnly: true)) break; // one per step
                 }
             }

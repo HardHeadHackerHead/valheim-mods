@@ -23,11 +23,13 @@ namespace FeedFromChests
     {
         public const string Guid = "com.dhack.feedfromchests";
         public const string Name = "FeedFromChests";
-        public const string Version = "1.4.0";
+        public const string Version = "1.4.1";
 
         internal static Plugin Instance;
 
         private ConfigEntry<bool> _enabled, _autoFeed, _alwaysOpenMenu, _stationAuto, _takeOffCooked, _refuelLights, _refuelFires, _collectHoney;
+        private ConfigEntry<int> _keepFuel;
+        internal int KeepFuel => Mathf.Max(0, _keepFuel.Value);
         private ConfigEntry<float> _radius, _autoInterval, _autoRange, _outputRadius, _autoRadius;
         private ConfigEntry<int> _fillLimit;
 
@@ -72,6 +74,8 @@ namespace FeedFromChests
                 "so they never sit full: a full hive stops making honey. With no such chest within OutputRadius the honey stays in the hive.");
             _refuelFires = Config.Bind("Fires", "RefuelCampfires", false,
                 "The same for fires that burn wood (campfires, hearths, bonfires): keep them topped up with wood from nearby chests.");
+            _keepFuel = Config.Bind("Fires", "KeepFuel", 10,
+                "Torches and fires never take the last of a fuel: this many of it (resin, coal, wood...) always stay in the chests, for crafting.");
 
             _harmony = new Harmony(Guid);
             _harmony.PatchAll();

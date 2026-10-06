@@ -26,8 +26,11 @@ namespace FeedFromChests
         /// <summary>Cooking stations: food that is done comes off by itself (so it never burns). On unless someone turns it off.</summary>
         public bool TakeOff = true;
 
-        /// <summary>Format: "on;item,item;output;reserve;fuelreserve;takeoff" (older saves have fewer parts).</summary>
-        public string Encode() => (On ? "1" : "0") + ";" + string.Join(",", Allowed.ToArray()) + ";" + (Output ? "1" : "0") + ";" + Reserve + ";" + FuelReserve + ";" + (TakeOff ? "1" : "0");
+        /// <summary>Stop once the chests hold this much of what it makes (0 = no limit). Only for stations where that makes sense.</summary>
+        public int Target = 0;
+
+        /// <summary>Format: "on;item,item;output;reserve;fuelreserve;takeoff;target" (older saves have fewer parts).</summary>
+        public string Encode() => (On ? "1" : "0") + ";" + string.Join(",", Allowed.ToArray()) + ";" + (Output ? "1" : "0") + ";" + Reserve + ";" + FuelReserve + ";" + (TakeOff ? "1" : "0") + ";" + Target;
 
         public static AutoSetting Parse(string text)
         {
@@ -41,12 +44,13 @@ namespace FeedFromChests
             if (parts.Length > 3 && int.TryParse(parts[3], out int reserve)) setting.Reserve = Mathf.Max(0, reserve);
             if (parts.Length > 4 && int.TryParse(parts[4], out int fuelReserve)) setting.FuelReserve = Mathf.Max(0, fuelReserve);
             if (parts.Length > 5) setting.TakeOff = parts[5] != "0";
+            if (parts.Length > 6 && int.TryParse(parts[6], out int target)) setting.Target = Mathf.Max(0, target);
             return setting;
         }
 
         public AutoSetting Copy()
         {
-            var copy = new AutoSetting { On = On, Output = Output, Reserve = Reserve, FuelReserve = FuelReserve, TakeOff = TakeOff };
+            var copy = new AutoSetting { On = On, Output = Output, Reserve = Reserve, FuelReserve = FuelReserve, TakeOff = TakeOff, Target = Target };
             foreach (string name in Allowed) copy.Allowed.Add(name);
             return copy;
         }
@@ -358,43 +362,33 @@ namespace FeedFromChests
         {
             List<Container> chests = Chests.Near(info.Position, _autoRadius.Value);
             if (chests.Count == 0) { Why(smelter, $"no usable chest within {_autoRadius.Value:0} m of it, so nothing to feed from"); return; }
+            LimitPlan plan = Limits.For(info);
 
             AutoFeed.Silent = true;
             try
             {
-                if (info.Fuel != null && smelter.m_maxFuel > 0)
+                if (info.Fuel != null && smelter.m_maxFuel > 0 && AutoFeedFuel(smelter) < smelter.m_maxFuel - 1)
                 {
-                    float level = AutoFeedFuel(smelter);
                     string fuel = info.Fuel.m_itemData.m_shared.m_name;
-                    if (level < smelter.m_maxFuel - 1)
+                    if (setting.Allowed.Contains(fuel))
                     {
-                        int stock = Chests.Count(chests, fuel);
-                        bool allowed = setting.Allowed.Contains(fuel);
-                        bool added = allowed && stock > setting.FuelReserve && AddOne(player, info, info.Fuel, true, chests, chestsOnly: true);
-                        if (!added)
-                            Why(smelter, $"fuel is {level:0}/{smelter.m_maxFuel} but it did not add {Localization.instance.Localize(fuel)}: ticked={allowed}, in the {chests.Count} chest(s) within {_autoRadius.Value:0} m there are {stock}, and it keeps at least {setting.FuelReserve}");
+                        if (Limits.MayFeed(info, setting, plan, info.Fuel, true, Chests.Count(chests, fuel), _outputRadius.Value, out string line))
+                            AddOne(player, info, info.Fuel, true, chests, chestsOnly: true);
+                        else Why(smelter, line);
                     }
                 }
 
                 if (smelter.m_maxOre > 0 && AutoFeedQueue(smelter) < smelter.m_maxOre)
                 {
-                    string waiting = null;
-                    bool fed = false;
+                    string why = null;
                     foreach (ItemDrop drop in info.Inputs.OrderBy(d => Tiers.Rank(d.m_itemData.m_shared)))
                     {
                         string name = drop.m_itemData.m_shared.m_name;
                         if (!setting.Allowed.Contains(name)) continue;
-                        int stock = Chests.Count(chests, name);
-                        if (stock <= setting.Reserve) // keep the minimum in stock
-                        {
-                            if (stock > 0) waiting = $"{Localization.instance.Localize(name)}: {stock} in the chests, but it keeps at least {setting.Reserve}";
-                            continue;
-                        }
-                        AddOne(player, info, drop, false, chests, chestsOnly: true);
-                        fed = true;
-                        break; // one per step: lowest tier first
+                        if (!Limits.MayFeed(info, setting, plan, drop, false, Chests.Count(chests, name), _outputRadius.Value, out string line)) { why = why ?? line; continue; }
+                        if (AddOne(player, info, drop, false, chests, chestsOnly: true)) { why = null; break; } // one per step: lowest tier first
                     }
-                    if (!fed && waiting != null) Why(smelter, "not feeding, " + waiting);
+                    if (why != null) Why(smelter, why);
                 }
             }
             finally

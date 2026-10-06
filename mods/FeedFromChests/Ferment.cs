@@ -114,13 +114,14 @@ namespace FeedFromChests
             if (!Stations.TryGet(fermenter.gameObject, out StationInfo info, out _)) return;
             List<Container> chests = Chests.Near(info.Position, _autoRadius.Value);
             if (chests.Count == 0) return;
+            LimitPlan plan = Limits.For(info);
             AutoFeed.Silent = true;
             try
             {
                 foreach (ItemDrop drop in info.Inputs)
                 {
                     string name = drop.m_itemData.m_shared.m_name;
-                    if (!setting.Allowed.Contains(name) || Chests.Count(chests, name) <= setting.Reserve) continue;
+                    if (!setting.Allowed.Contains(name) || !Limits.MayFeed(info, setting, plan, drop, false, Chests.Count(chests, name), _outputRadius.Value, out _)) continue;
                     if (AddOne(player, info, drop, false, chests, chestsOnly: true))
                     {
                         Logger.LogInfo($"{Localization.instance.Localize(fermenter.m_name)} at {fermenter.transform.position:F0} took {Localization.instance.Localize(name)} from a chest");
