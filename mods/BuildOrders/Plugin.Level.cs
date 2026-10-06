@@ -106,7 +106,7 @@ namespace BuildOrders
                     p.y = targetY;
                     list.Add(p);
                 }
-            return list.Take(900).ToList();
+            return list.Take(4000).ToList();     // a big site (a 40 m churchyard at a 1 m stroke) needs a couple of thousand
         }
 
         /// <summary>The ground there once levelled to targetY (as far as the game allows ground to move).</summary>

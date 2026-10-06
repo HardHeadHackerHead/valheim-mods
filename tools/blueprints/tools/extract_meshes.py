@@ -126,10 +126,21 @@ def export_piece(root):
 def main():
     env = UnityPy.load(BUNDLE)
     os.makedirs(OUT, exist_ok=True)
+    # Most pieces live under gameelements/pieces; a few (ships, carts, some stations, saplings) live elsewhere: take any prefab whose
+    # name is a piece in _pieces.json too.
+    wanted = set()
+    try:
+        with open(os.path.join(blueprints_dir(), "_pieces.json"), encoding="utf-8") as fh:
+            wanted = {p["p"] for p in json.load(fh)["pieces"]}
+    except (OSError, ValueError, KeyError):
+        pass
     count = 0
     for path, asset in env.container.items():
         low = path.lower()
-        if not low.startswith("assets/gameelements/pieces/") or not low.endswith(".prefab") or "/effects/" in low:
+        if not low.endswith(".prefab") or "/effects/" in low:
+            continue
+        in_pieces = low.startswith("assets/gameelements/pieces/")
+        if not in_pieces and os.path.splitext(os.path.basename(path))[0] not in wanted:
             continue
         try:
             root = asset.read()

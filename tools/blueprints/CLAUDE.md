@@ -27,6 +27,22 @@ This folder is `BepInEx/blueprints` in the player's Valheim folder (in the mod r
 
 Files in `tools/` are replaced when the mod updates: copy before editing. Python 3 with `numpy` and `Pillow` is needed for previews only.
 
+### First-time setup: real piece shapes for previews
+
+You can design and check a whole build without the game running: `_pieces.json` (written by the mod the first time the player plays
+with it) has every piece's size and snap points, and `tools/preview.py` draws the design. To draw pieces as they really look instead of
+plain boxes, export their shapes from the player's own game files once:
+
+```
+pip install numpy Pillow UnityPy
+python tools/extract_meshes.py
+```
+
+It takes about 15 seconds and writes `_meshes/` here (about 10 MB). It finds the game from this folder's location (set `VALHEIM_DIR` if the
+game is elsewhere), and finds the right asset file itself if a game update renamed it. Run it again after an update adds pieces. The
+shapes are the game's own assets: keep them on the player's machine, never share or commit them. Pieces added by mods (and a few
+stations) have no exported shape and are drawn as their box.
+
 ## The blueprint file
 
 ```json
@@ -44,7 +60,7 @@ Files in `tools/` are replaced when the mod updates: copy before editing. Python
 - A design fitted to one surveyed hillside (its own posts cut to the slope, as `wood_fort.py --site` does) only fits there, so save it under its
   own name (`wooden_fort_site.json`); being levelled, it no longer needs those posts.
 - Each piece: `p` prefab, `x y z` metres from the anchor (y above the ground at the anchor), `rx ry rz` degrees (Unity order z, x, y),
-  `g: true` to measure `y` from the ground under that piece (follows slopes; for pieces touching the ground). Max 1500 pieces.
+  `g: true` to measure `y` from the ground under that piece (follows slopes; for pieces touching the ground). Max 5000 pieces.
 
 ## Conventions
 

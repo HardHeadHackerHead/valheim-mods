@@ -11,9 +11,38 @@ import json, math, os, sys
 import numpy as np
 import UnityPy
 
-GAME = r"D:\SteamLibrary\steamapps\common\Valheim\valheim_Data"
-BUNDLE = os.path.join(GAME, "StreamingAssets", "SoftRef", "Bundles", "c4210710")
-OUT = os.environ.get("PIECES_OUT", r"D:\SteamLibrary\steamapps\common\Valheim\BepInEx\blueprints\_pieces.json")
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+from blueprint import blueprints_dir  # noqa: E402
+
+
+def _game_data():
+    """valheim_Data: VALHEIM_DIR if set, else the game folder this blueprints folder sits in (<Valheim>/BepInEx/blueprints)."""
+    root = os.environ.get("VALHEIM_DIR") or os.path.dirname(os.path.dirname(os.path.abspath(blueprints_dir())))
+    return os.path.join(root, "valheim_Data")
+
+
+def _find_bundle():
+    """The asset bundle that holds the building pieces. Its file name is a hash that a game update can change: look for it if needed."""
+    folder = os.path.join(GAME, "StreamingAssets", "SoftRef", "Bundles")
+    known = os.path.join(folder, "c4210710")
+    if os.environ.get("VALHEIM_BUNDLE"):
+        return os.environ["VALHEIM_BUNDLE"]
+    if os.path.exists(known) or not os.path.isdir(folder):
+        return known
+    print("Looking for the building pieces among the game's asset bundles (once, may take a few minutes)...")
+    for name in sorted(os.listdir(folder), key=lambda n: -os.path.getsize(os.path.join(folder, n))):
+        try:
+            if any(p.lower().startswith("assets/gameelements/pieces/") for p in UnityPy.load(os.path.join(folder, name)).container):
+                print("Found it:", name, "(set VALHEIM_BUNDLE to skip this search)")
+                return os.path.join(folder, name)
+        except Exception:
+            continue
+    return known
+
+
+GAME = _game_data()
+BUNDLE = _find_bundle()
+OUT = os.environ.get("PIECES_OUT", os.path.join(blueprints_dir(), "_pieces.json"))
 MATERIALS = ["Wood", "Stone", "Iron", "HardWood", "Marble", "Ashstone", "Ancient", "Ice", "Timberwood"]
 CATEGORIES = ["Misc", "Crafting", "BuildingWorkbench", "BuildingStonecutter", "Furniture", "DeepNorth", "Feasts", "Food", "Meads"]
 SNAP_PREFIX = "$hud_snappoint_"

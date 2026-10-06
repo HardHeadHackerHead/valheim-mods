@@ -33,6 +33,10 @@ def render(items, catalog, path, views=((25, 30), (-35, 30), (0, 89), (0, 8)), s
     from modelkit import Model, contact_sheet
     m = Model()
     lo = np.array([1e9] * 3); hi = -lo
+    if meshes and not os.path.isdir(os.path.join(blueprints_dir(), "_meshes")):
+        print("preview: no real piece shapes yet, so pieces are drawn as boxes. Export them once from the game's files:\n"
+              "    pip install UnityPy\n    python tools/extract_meshes.py\n"
+              "(about 15 seconds; writes _meshes/ in the blueprints folder. Run it again after a game update adds pieces.)")
     for n, item in enumerate(items):
         piece = catalog.by_name[item["p"]]
         r = np.array(item_rotation(item))

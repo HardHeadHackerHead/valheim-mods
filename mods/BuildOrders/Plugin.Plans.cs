@@ -107,10 +107,14 @@ namespace BuildOrders
             public bool Ground;
         }
 
+        /// <summary>The most pieces one blueprint may have. Each ghost is a live object (only the nearest are drawn) and a shared
+        /// blueprint goes over the network, so there is a ceiling; 5000 holds the biggest designs (Kizhi church: about 2500).</summary>
+        internal const int MaxPieces = 5000;
+
         internal static List<Entry> EntriesFrom(JArray pieces)
         {
             var list = new List<Entry>();
-            foreach (JToken p in pieces.Take(1500))
+            foreach (JToken p in pieces.Take(MaxPieces))
             {
                 string prefab = (string)p["p"];
                 if (string.IsNullOrEmpty(prefab)) continue;

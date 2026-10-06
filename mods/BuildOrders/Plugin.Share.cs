@@ -56,7 +56,7 @@ namespace BuildOrders
                 if (raw.Length > MaxShareBytes) { error = "too big"; return null; }
                 JObject doc = JObject.Parse(Encoding.UTF8.GetString(raw));
                 if (!(doc["pieces"] is JArray pieces) || pieces.Count == 0) { error = "it has no pieces"; return null; }
-                if (pieces.Count > 1500) { error = "it has more than 1500 pieces"; return null; }
+                if (pieces.Count > MaxPieces) { error = "it has more than " + MaxPieces + " pieces"; return null; }
                 return doc;
             }
             catch (Exception e) { error = "the code is damaged (" + e.Message + ")"; return null; }
@@ -72,7 +72,7 @@ namespace BuildOrders
                 ["yaw"] = 0,
                 ["offset"] = doc["offset"] is JArray o && o.Count == 3 ? o : new JArray(0, 0, 0),
                 ["sharedBy"] = from,
-                ["pieces"] = new JArray(((JArray)doc["pieces"]).Take(1500).OfType<JObject>()
+                ["pieces"] = new JArray(((JArray)doc["pieces"]).Take(MaxPieces).OfType<JObject>()
                     .Where(p => p["p"] != null)
                     .Select(p => new JObject(p.Properties().Where(q => q.Name == "p" || q.Name == "x" || q.Name == "y" || q.Name == "z" || q.Name == "rx" || q.Name == "ry" || q.Name == "rz" || q.Name == "g")))),
             };
