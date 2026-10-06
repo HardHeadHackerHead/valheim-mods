@@ -38,6 +38,14 @@ namespace BuildOrders
 
             bool ctrl = Input.GetKey(KeyCode.LeftControl) || Input.GetKey(KeyCode.RightControl); // Ctrl + the key is the survey
             if (!ctrl && Input.GetKeyDown(_blueprintKey.Value) && (PlansWindowOpen || Placing || !TypingOrMenuOpen())) TogglePlansWindow();
+            if (Input.GetKeyDown(KeyCode.Escape) && BridgeDrawing && !PlansWindowOpen)
+            {
+                PlansPatches.EscapeFrame = Time.frameCount;
+                CancelBridge();
+                player.Message(MessageHud.MessageType.TopLeft, "Bridge cancelled");
+            }
+            MakeBridgeKnown(player);
+            UpdateBridge(player);
             if (Input.GetKeyDown(KeyCode.Escape) && (PlansWindowOpen || Placing))
             {
                 PlansPatches.EscapeFrame = Time.frameCount;
@@ -137,7 +145,7 @@ namespace BuildOrders
                 if (table == null) continue;
                 foreach (GameObject prefab in table.m_pieces.ToList())
                 {
-                    if (prefab == null || !seen.Add(prefab.name)) continue;
+                    if (prefab == null || prefab.name == BridgeToolPrefab || !seen.Add(prefab.name)) continue;
                     JObject entry = Describe(prefab, tool);
                     if (entry != null) list.Add(entry);
                     if (++count % 15 == 0) yield return null; // a few at a time, so there is no stutter

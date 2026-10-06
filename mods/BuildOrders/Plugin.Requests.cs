@@ -49,6 +49,7 @@ namespace BuildOrders
                 Add("level", "level <blueprint name|last>: level the ground under a placed blueprint again", CmdLevel);
                 Add("plans", "plans: every placed plan (pieces left, distance) and any levelling in progress", CmdPlans);
                 Add("ui", "ui <blueprints|plans|settings|close> | ui place <file.json> | ui height <m> | ui turn <deg> | ui confirm | ui cancel: the Plans window and placement preview", CmdUi);
+                Add("bridge", "bridge <from> <to>: plan a medieval wooden bridge between two spots (each: here, look, or x,z with no space)", CmdBridge);
                 Add("selfshare", "selfshare <file.json>: send a blueprint to yourself as if a friend had shared it (tests sharing alone)", CmdSelfShare);
                 frame?.Invoke(null, new object[] { Name, (Func<string, float[]>)BlueprintFrame });
                 Logger.LogInfo("Claude Tools found: blueprint commands added");
@@ -171,12 +172,15 @@ namespace BuildOrders
             if (mine.Count == 0) { error("no placed plan called '" + name + "'"); return null; }
             var columns = new Dictionary<string, float>();   // lowest post bottom per column
             var doors = new JArray();
+            // tops of the plan's other pieces (floors, walls...): a post standing on one of them (a rail post on a deck) is not meant to reach the ground
+            var tops = mine.Where(o => shapes.TryGetValue(o.Prefab, out Shape t) && !t.IsPost && t.Max != t.Min)
+                           .Select(o => { Shape t = shapes[o.Prefab]; return new { o.Pos, R = new Vector2(t.Max.x - t.Min.x, t.Max.z - t.Min.z).magnitude * 0.5f + 0.1f, Top = o.Pos.y + t.Max.y }; }).ToList();
             foreach (Order o in mine)
             {
                 if (!shapes.TryGetValue(o.Prefab, out Shape s)) continue;
                 float bottom = o.Pos.y + (o.Rot * new Vector3(0f, s.Bottom, 0f)).y;
                 float ground = ZoneSystem.instance.GetGroundHeight(o.Pos);
-                if (s.IsPost)
+                if (s.IsPost && !tops.Any(t => Mathf.Abs(t.Top - bottom) < 0.35f && new Vector2(t.Pos.x - o.Pos.x, t.Pos.z - o.Pos.z).magnitude < t.R))
                 {
                     string col = Mathf.Round(o.Pos.x * 4f) + "," + Mathf.Round(o.Pos.z * 4f);
                     float gap = bottom - ground;
@@ -186,7 +190,15 @@ namespace BuildOrders
                     doors.Add(new JObject { ["piece"] = o.Prefab, ["bottomAboveGround"] = Math.Round(o.Pos.y + s.Min.y - ground, 2) });
             }
             var floating = columns.Where(kv => kv.Value > 0.15f).OrderByDescending(kv => kv.Value).Select(kv => Math.Round(kv.Value, 2)).ToList();
-            output(new JObject { ["check"] = name, ["pieces"] = mine.Count, ["postColumns"] = columns.Count, ["floatingColumns"] = new JArray(floating), ["doors"] = doors });
+            // would it stand once built? (the same estimate as the stability colours, from the game's support rules)
+            ComputeStability(Player.m_localPlayer, new HashSet<string>(mine.Select(o => o.Id)));
+            var weak = mine.Select(o => _stability.TryGetValue(o.Id, out Stab st) ? st : null).Where(st => st != null).ToList();
+            _stabilityDirty = true;
+            output(new JObject
+            {
+                ["check"] = name, ["pieces"] = mine.Count, ["postColumns"] = columns.Count, ["floatingColumns"] = new JArray(floating), ["doors"] = doors,
+                ["wouldFall"] = weak.Count(st => st.Collapses), ["weakestSupport"] = weak.Count > 0 ? weak.Min(st => st.Percent) + "%" : null,
+            });
             return null;
         }
 
@@ -243,6 +255,26 @@ namespace BuildOrders
                     break;
             }
             output(new JObject { ["ui"] = what });
+            return null;
+        }
+
+        private IEnumerator CmdBridge(string[] a, Action<JObject> output, Action<string> error)
+        {
+            Player player = Player.m_localPlayer;
+            bool Spot(string token, out Vector3 at)
+            {
+                at = player.transform.position;
+                if (token == "here") { at.y = ZoneSystem.instance.GetGroundHeight(at); return true; }
+                if (token == "look") return LookPoint(player, out at);
+                string[] xz = token.Split(',');
+                if (xz.Length == 2 && float.TryParse(xz[0], System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture, out float x)
+                    && float.TryParse(xz[1], System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture, out float z))
+                { at = new Vector3(x, 0f, z); at.y = ZoneSystem.instance.GetGroundHeight(at); return true; }
+                return false;
+            }
+            if (a.Length < 3 || !Spot(a[1], out Vector3 from) || !Spot(a[2], out Vector3 to)) { error("bridge <here|look|x,z> <here|look|x,z>"); return null; }
+            BridgeDesign d = PlanBridge(player, from, to);
+            output(new JObject { ["bridge"] = LastPlacedTitle(), ["length"] = Math.Round(d.Length, 1), ["pieces"] = d.Entries.Count, ["warnings"] = new JArray(d.Warnings), ["from"] = Vec(from), ["to"] = Vec(to) });
             return null;
         }
 

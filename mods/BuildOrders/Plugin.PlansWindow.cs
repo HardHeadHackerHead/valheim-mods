@@ -381,7 +381,10 @@ namespace BuildOrders
                 GUI.enabled = near;
                 if (GUI.Button(new Rect(bx, r.y + 12f, 110f, 32f), near ? "Build nearby" : "Too far", _wButtonGood)) { PlansWindowOpen = false; StartCoroutine(BuildMany(player)); }
                 GUI.enabled = true;
-                if (GUI.Button(new Rect(bx + 114f, r.y + 12f, 100f, 32f), "Move", _wButton)) StartMove(player, plan);
+                bool bridge = plan.IsBlueprint && IsBridgePlan(plan.Title);
+                GUI.enabled = !bridge;   // a bridge's posts are cut to the riverbed where it stands: draw a new one instead of moving it
+                if (GUI.Button(new Rect(bx + 114f, r.y + 12f, 100f, 32f), bridge ? "(bridge)" : "Move", _wButton)) StartMove(player, plan);
+                GUI.enabled = true;
                 string key = "plan:" + plan.Key;
                 if (!Confirming(key))
                 {
@@ -402,9 +405,10 @@ namespace BuildOrders
                 }
                 else
                 {
-                    float lw = plan.IsBlueprint ? 214f : 336f;
+                    bool levelable = plan.IsBlueprint && !IsBridgePlan(plan.Title);
+                    float lw = levelable ? 214f : 336f;
                     GUI.Label(new Rect(bx, r.y + 50f, lw, 34f), near ? $"Builds every ghost within {_buildAllRadius.Value:0} m of you that you have materials for, lowest first." : $"Walk within {_buildAllRadius.Value:0} m to build it.", _wDim);
-                    if (plan.IsBlueprint && GUI.Button(new Rect(bx + 218f, r.y + 50f, 118f, 30f), "Level ground", _wButton))
+                    if (levelable && GUI.Button(new Rect(bx + 218f, r.y + 50f, 118f, 30f), "Level ground", _wButton))
                         PlansToast($"Levelling the ground under \"{plan.Title}\" ({LevelPlacedPlan(plan)} spots)");
                 }
                 GUILayout.Space(4);

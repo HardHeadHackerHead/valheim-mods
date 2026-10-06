@@ -43,7 +43,7 @@ namespace BuildOrders
 
         private static void NoScrollPostfix(ref float __result) { if (Busy) __result = 0f; }
 
-        private static bool MenuPrefix() => !Busy && UnityEngine.Time.frameCount != EscapeFrame && UnityEngine.Time.frameCount != EscapeFrame + 1;
+        private static bool MenuPrefix() => !Busy && !Plugin.BridgeDrawing && UnityEngine.Time.frameCount != EscapeFrame && UnityEngine.Time.frameCount != EscapeFrame + 1;
 
         private static bool NoAttackPrefix(Humanoid __instance, ref bool __result)
         {

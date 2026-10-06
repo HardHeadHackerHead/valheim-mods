@@ -169,6 +169,7 @@ Lets an AI assistant like [Claude Code](https://claude.com/claude-code) see your
 | **G** / **Delete** / **F9** / **F10** | BuildOrders | Select a ghost piece / remove a ghost / show or hide ghosts / show or hide the stability colours |
 | Hold **E** at a ghost | BuildOrders | Build everything buildable within 24 m (adjustable), lowest first |
 | **F11** | BuildOrders | Plans window: place blueprints with a preview, move or remove placed plans, build settings |
+| Hammer → **Bridge** | BuildOrders | Click where a bridge starts, walk across, click where it ends: a wooden bridge to build, posts down to the riverbed |
 | Wheel / **R** / **PgUp** **PgDn** / click | BuildOrders | While placing a blueprint: turn it / turn 90° / raise or lower it / place it (right-click or Esc cancels); the ground under it is levelled when placed |
 | **F12** / **Ctrl+F12** | ClaudeTools | Save a screenshot / survey the ground around where you look, for the AI assistant |
 | **F8** | PartyHud | Show or hide the party panel |

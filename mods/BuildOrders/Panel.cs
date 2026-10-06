@@ -69,7 +69,7 @@ namespace BuildOrders
         private void OnGUI()
         {
             if (!_enabled.Value) return;
-            if (Player.m_localPlayer != null && (PlansWindowOpen || _placing != null || ActiveLevelJob != null))
+            if (Player.m_localPlayer != null && (PlansWindowOpen || _placing != null || ActiveLevelJob != null || BridgeDrawing))
             {
                 EnsureStyles();
                 if (Event.current.type == EventType.Repaint && !PlansWindowOpen)
@@ -79,6 +79,7 @@ namespace BuildOrders
                     GUI.matrix = Matrix4x4.Scale(new Vector3(sc, sc, 1f));
                     DrawPlacementBanner(Screen.width / sc);
                     DrawLevelBanner(Screen.width / sc);
+                    DrawBridgeBanner(Screen.width / sc);
                     GUI.matrix = m;
                 }
                 DrawPlansWindow();

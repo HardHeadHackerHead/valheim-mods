@@ -22,6 +22,12 @@ namespace BuildOrders
         private static bool Prefix(Player __instance, Piece piece, ref bool __result, GameObject ___m_placementGhost)
         {
             Plugin plugin = Plugin.Instance;
+            if (plugin != null && __instance == Player.m_localPlayer && Plugin.IsBridgeTool(piece))
+            {
+                plugin.BridgeClick(__instance);   // the Bridge tool is never built itself: its clicks mark where a bridge starts and ends
+                __result = false;
+                return false;
+            }
             if (plugin == null || __instance != Player.m_localPlayer || !plugin.PlanKeyHeld) return true; // not planning: build normally
 
             __result = false; // nothing is built, nothing is paid for

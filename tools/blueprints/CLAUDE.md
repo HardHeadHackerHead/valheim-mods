@@ -124,7 +124,8 @@ BuildOrders adds these commands to it, and lets the camera commands use a placed
 
 - `import <file.json> [look|here|x z yaw]`: place a blueprint (the ground is levelled first; the ghosts follow about a second later).
 - `remove <name|last>` (ghosts only), `takedown <name>` (also takes down what was built, materials back to the player).
-- `check <name|last>`: post columns that do not reach the ground, and how high doors and gates sit. `level <name|last>`: level again.
+- `check <name|last>`: post columns that do not reach the ground (posts standing on the plan's own pieces, like rail posts, are left out), how high doors and gates sit, and whether it would stand (`wouldFall`, `weakestSupport`). `level <name|last>`: level again.
+- `bridge <from> <to>`: plan a medieval wooden bridge between two spots (`here`, `look`, or `x,z`); the player can also draw one with the hammer's Bridge piece.
 - `build <count> <name>`: build that many ghosts as E does (spends the player's materials; the workbench first). `plans`: the placed plans.
 - `ui <blueprints|plans|settings|close>` opens the Plans window on that tab; `ui place <file.json>` starts the player's placement preview
   (`ui height <m>`, `ui turn <deg>`, `ui confirm`, `ui cancel`). Follow with `wait 1` and `shot` to see what the player sees. These show on
