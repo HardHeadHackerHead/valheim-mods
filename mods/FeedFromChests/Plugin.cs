@@ -23,11 +23,11 @@ namespace FeedFromChests
     {
         public const string Guid = "com.dhack.feedfromchests";
         public const string Name = "FeedFromChests";
-        public const string Version = "1.3.8";
+        public const string Version = "1.4.0";
 
         internal static Plugin Instance;
 
-        private ConfigEntry<bool> _enabled, _autoFeed, _alwaysOpenMenu, _stationAuto, _takeOffCooked, _refuelLights, _refuelFires;
+        private ConfigEntry<bool> _enabled, _autoFeed, _alwaysOpenMenu, _stationAuto, _takeOffCooked, _refuelLights, _refuelFires, _collectHoney;
         private ConfigEntry<float> _radius, _autoInterval, _autoRange, _outputRadius, _autoRadius;
         private ConfigEntry<int> _fillLimit;
 
@@ -37,6 +37,8 @@ namespace FeedFromChests
         internal float ChestRadius => _radius.Value;
         internal float OutputRadius => _outputRadius.Value;
         internal float FeedRadius => _autoRadius.Value;
+        internal bool CollectsHoney => _enabled.Value && _collectHoney.Value;
+        internal bool HiveInfo => _enabled.Value;
         internal bool RefuelsItself(Fireplace f) => _enabled.Value && Lights.Refuels(f, _refuelLights.Value, _refuelFires.Value);
         internal void Info(string message) => Logger.LogInfo(message);
 
@@ -65,6 +67,9 @@ namespace FeedFromChests
             _refuelLights = Config.Bind("Fires", "RefuelTorches", true,
                 "Every torch, sconce and brazier keeps itself lit: when it has room for more fuel (resin, coal...), one is taken from a chest " +
                 "within FeedRadius of it. For all of them at once, no setup per torch. Runs while you are within PlayerRange; never uses your inventory.");
+            _collectHoney = Config.Bind("Beehives", "CollectHoney", true,
+                "Beehives near you put their honey into a chest (one assigned to honey or to Food with K, else one that already has honey), " +
+                "so they never sit full: a full hive stops making honey. With no such chest within OutputRadius the honey stays in the hive.");
             _refuelFires = Config.Bind("Fires", "RefuelCampfires", false,
                 "The same for fires that burn wood (campfires, hearths, bonfires): keep them topped up with wood from nearby chests.");
 
@@ -74,6 +79,8 @@ namespace FeedFromChests
             AutoFeed.Seed();          // so do the stations
             Cooking.Seed();
             Lights.Seed();
+            Hives.Seed();
+            Ferment.Seed();
 
             Logger.LogInfo($"{Name} {Version} loaded");
             StartCoroutine(Warmup());
@@ -89,6 +96,8 @@ namespace FeedFromChests
             AutoFeed.Clear();
             Cooking.Clear();
             Lights.Clear();
+            Hives.Clear();
+            Ferment.Clear();
             Feed.Reserved = null;
             ContainerRegistry.Clear();
             if (Instance == this) Instance = null;
@@ -156,6 +165,8 @@ namespace FeedFromChests
             if (_stationAuto.Value && !_filling) AutoFeed.Tick(this, player, _autoInterval.Value, _autoRange.Value); // stations set to feed themselves
             if (_stationAuto.Value && !_filling) Cooking.Tick(this, player, _autoRange.Value, _takeOffCooked.Value); // spits: done food off, raw food on
             if (!_filling) Lights.Tick(this, player, _autoRange.Value, _refuelLights.Value, _refuelFires.Value);   // torches keep themselves lit
+            if (!_filling && _collectHoney.Value) Hives.Tick(this, player, _autoRange.Value, _outputRadius.Value); // hives never sit full
+            if (_stationAuto.Value && !_filling) Ferment.Tick(this, player, _autoRange.Value);                    // fermenters reload and tap themselves
 
             if (MenuOpen) UpdateMenu(player);
         }
@@ -283,6 +294,19 @@ namespace FeedFromChests
                 }
             }
             if (cooking != null && alt) return false;
+
+            // Fermenters: E on an empty one opens the menu (status, Add 1, auto-load); tapping a ready one and the rest are the game's.
+            Fermenter fermenter = go != null ? go.GetComponentInParent<Fermenter>() : null;
+            if (fermenter != null)
+            {
+                if (alt || !_stationAuto.Value || Ferment.StateOf(fermenter, out _) != Ferment.State.Empty) return false;
+                if (Stations.TryGet(go, out StationInfo fermentInfo, out _))
+                {
+                    Mark("pressed E at a fermenter");
+                    OpenMenu(player, fermentInfo);
+                    return true;
+                }
+            }
 
             if (!Stations.TryGet(go, out StationInfo info, out Purpose? purpose) || purpose == null) return false;
 

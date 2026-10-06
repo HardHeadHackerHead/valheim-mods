@@ -30,6 +30,8 @@ namespace FeedFromChests
         private AutoFeed.Inside _inside = new AutoFeed.Inside();
         private List<string> _cookLines = new List<string>();   // a cooking station: what is on each slot
         private bool IsCooking => _station != null && _station.Component is CookingStation;
+        private bool IsFermenter => _station != null && _station.Component is Fermenter;
+        private string _fermentLine = "";
         private readonly Dictionary<string, int> _autoStock = new Dictionary<string, int>(); // item -> how many the chests in auto-feed range hold
         private AutoSetting _auto = new AutoSetting();
         private List<AutoItem> _autoItems = new List<AutoItem>();
@@ -129,7 +131,7 @@ namespace FeedFromChests
                     setting.Allowed.Add(item.Name);
                 }
             }
-            if (setting.On && !_autoEverSet) { setting.Output = true; setting.Reserve = IsCooking ? 0 : 20; } // sensible start: output to chests; keep 20 ore, cook all the food
+            if (setting.On && !_autoEverSet) { setting.Output = true; setting.Reserve = IsCooking || IsFermenter ? 0 : 20; } // sensible start: output to chests; keep 20 ore, cook all the food
             AutoFeed.Write(_station.Component, setting);
             _auto = setting;
             _status = setting.On ? "Auto-feed is on" : "Auto-feed is off";
@@ -192,6 +194,7 @@ namespace FeedFromChests
                 _auto = AutoFeed.Read(_station.Component); // others may have changed it
                 if (_station.Component is Smelter smelter) _inside = AutoFeed.Look(smelter);
                 else if (_station.Component is CookingStation cooking) _cookLines = Cooking.Lines(cooking);
+                else if (_station.Component is Fermenter fermenter) _fermentLine = Ferment.Line(fermenter);
                 _autoStock.Clear();
                 List<Container> autoChests = Chests.Near(_station.Position, _autoRadius.Value);
                 foreach (AutoItem item in _autoItems) _autoStock[item.Name] = Chests.Count(autoChests, item.Name);
@@ -327,6 +330,13 @@ namespace FeedFromChests
         /// <summary>What is loaded into the station right now: the ore waiting to be processed, the fuel, and what is ready to collect.</summary>
         private void DrawInsidePanel()
         {
+            if (IsFermenter)
+            {
+                GUILayout.Label("In the barrel", _text);
+                GUILayout.Label(_fermentLine, _dim);
+                GUILayout.Space(8);
+                return;
+            }
             if (IsCooking)
             {
                 GUILayout.Label("On the station", _text);
@@ -391,6 +401,16 @@ namespace FeedFromChests
                 GUILayout.EndHorizontal();
             }
 
+            if (IsFermenter)
+            {
+                GUILayout.Space(2);
+                GUILayout.BeginHorizontal();
+                GUILayout.Label("Taps itself when ready", _text);
+                GUILayout.FlexibleSpace();
+                if (GUILayout.Button(_auto.TakeOff ? "ON" : "OFF", _auto.TakeOff ? _buttonOn : _button, GUILayout.Width(80), GUILayout.Height(26))) _pending = ToggleTakeOff;
+                GUILayout.EndHorizontal();
+                GUILayout.Label("When the mead is ready it comes out by itself (and with auto-load on, the next base goes straight in).", _dim);
+            }
             if (IsCooking)
             {
                 GUILayout.Space(2);
@@ -406,11 +426,13 @@ namespace FeedFromChests
 
             GUILayout.Space(2);
             GUILayout.BeginHorizontal();
-            GUILayout.Label(IsCooking ? "Done food goes into chests" : "What it makes goes into chests", _text);
+            GUILayout.Label(IsCooking ? "Done food goes into chests" : IsFermenter ? "Mead goes into chests" : "What it makes goes into chests", _text);
             GUILayout.FlexibleSpace();
             if (GUILayout.Button(_auto.Output ? "ON" : "OFF", _auto.Output ? _buttonOn : _button, GUILayout.Width(80), GUILayout.Height(26))) _pending = ToggleOutput;
             GUILayout.EndHorizontal();
-            GUILayout.Label(IsCooking
+            GUILayout.Label(IsFermenter
+                ? "Goes to a chest assigned to that mead or to Potions (K), or one that already holds it. With none, it drops as usual."
+                : IsCooking
                 ? "Goes to the chests assigned to that food or to Food (the chest assign menu, K), nearest first. With none, it slides off the spit."
                 : "Goes to the chests assigned to that item (the chest assign menu, K), nearest first. With none assigned it drops on the ground as usual.", _dim);
 

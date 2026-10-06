@@ -73,7 +73,7 @@ namespace FeedFromChests
         public static void Seed() { foreach (Smelter s in Object.FindObjectsOfType<Smelter>()) Register(s); }
         public static void Clear() { All.Clear(); Infos.Clear(); }
 
-        public static bool Supported(StationInfo info) => info != null && (info.Component is Smelter || info.Component is CookingStation);
+        public static bool Supported(StationInfo info) => info != null && (info.Component is Smelter || info.Component is CookingStation || info.Component is Fermenter);
 
         public static AutoSetting Read(MonoBehaviour station)
         {

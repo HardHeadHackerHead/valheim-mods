@@ -102,5 +102,23 @@ namespace FeedFromChests
             }
             return taken;
         }
+    
+        /// <summary>Put items into a chest near <paramref name="origin"/> that already holds some of them (for when no chest is assigned).
+        /// Returns how many went in, checked by counting before and after.</summary>
+        public static int AddToChestHolding(Vector3 origin, ItemDrop item, int count, float radius)
+        {
+            string name = item.m_itemData.m_shared.m_name;
+            foreach (Container chest in Near(origin, radius))
+            {
+                if (chest == null || InUse(chest) || chest.GetInventory().CountItems(name) <= 0) continue;
+                TakeOwnership(chest);
+                Inventory inventory = chest.GetInventory();
+                if (!inventory.CanAddItem(item.gameObject, count)) continue;
+                int before = inventory.CountItems(name);
+                inventory.AddItem(item.gameObject, count);
+                return inventory.CountItems(name) - before;
+            }
+            return 0;
+        }
     }
 }
