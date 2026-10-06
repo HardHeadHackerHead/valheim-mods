@@ -9,7 +9,7 @@ Nothing is built for free: the player still builds every ghost with real materia
   fires and roofs), `stability.py` (will it stand?), `preview.py` (four views with the game's real shapes), worked examples (`wood_fort.py`,
   `fort.py`, `selftest.py`), `test_tools.py` (tests), and `extract_pieces.py` / `extract_meshes.py` (read every piece's data and shape from
   the game files, no game needed; `pip install UnityPy`).
-- In game, BuildOrders adds a screenshot key (F12), a survey key (Ctrl+F11) and optional request files, so the assistant can see the site and
+- With the Claude Tools mod, the assistant gets a request mailbox (`BepInEx/claude`): pictures, surveys and BuildOrders' blueprint commands, so it can see the site and
   check what it placed. See `CLAUDE.md`.
 
 ## Try it

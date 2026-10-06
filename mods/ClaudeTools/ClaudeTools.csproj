@@ -1,0 +1,15 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <AssemblyName>ClaudeTools</AssemblyName>
+    <RootNamespace>ClaudeTools</RootNamespace>
+  </PropertyGroup>
+  <ItemGroup>
+    <Reference Include="netstandard"><HintPath>$(ManagedDir)/netstandard.dll</HintPath><Private>false</Private></Reference>
+    <Reference Include="UnityEngine.ScreenCaptureModule"><HintPath>$(ManagedDir)/UnityEngine.ScreenCaptureModule.dll</HintPath><Private>false</Private></Reference>
+    <Reference Include="UnityEngine.ImageConversionModule"><HintPath>$(ManagedDir)/UnityEngine.ImageConversionModule.dll</HintPath><Private>false</Private></Reference>
+  </ItemGroup>
+  <ItemGroup>
+    <!-- The guide for AI assistants; the mod writes it to BepInEx/claude/CLAUDE.md. -->
+    <EmbeddedResource Include="CLAUDE.md" LogicalName="guide/CLAUDE.md" />
+  </ItemGroup>
+</Project>

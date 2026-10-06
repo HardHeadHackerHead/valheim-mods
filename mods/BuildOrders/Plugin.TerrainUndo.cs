@@ -110,7 +110,8 @@ namespace BuildOrders
         }
 
         /// <summary>Put the ground under a removed plan back as it was before it was levelled. Returns a message, or null if there was nothing to do.</summary>
-        private string RestoreTerrain(string key)
+        /// <param name="nothingBuilt">the caller knows nothing of it stands any more (just taken down: the pieces go at the end of the frame)</param>
+        private string RestoreTerrain(string key, bool nothingBuilt = false)
         {
             string path = UndoFile(key);
             if (!File.Exists(path)) return null;
@@ -120,7 +121,7 @@ namespace BuildOrders
                 // pieces of the plan that are already built: keep the level ground under them
                 int built = 0;
                 var near = new List<Piece>();
-                foreach (JArray o in ((JArray)doc["orders"] ?? new JArray()).OfType<JArray>())
+                foreach (JArray o in nothingBuilt ? new List<JArray>() : ((JArray)doc["orders"] ?? new JArray()).OfType<JArray>().ToList())
                 {
                     var pos = new Vector3((float)o[1], (float)o[2], (float)o[3]);
                     if (_orders.Values.Any(x => x.By == key && x.Prefab == (string)o[0] && (x.Pos - pos).sqrMagnitude < 0.04f)) continue; // still a ghost

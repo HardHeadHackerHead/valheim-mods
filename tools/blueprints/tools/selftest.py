@@ -3,7 +3,7 @@ A small test build that uses every kind of joint the tools know (floor, walls, a
 rail, and stairs), plus the request file that checks it in the game.
 
     python selftest.py              writes selftest_hut.json into the blueprints folder (and a preview if you pass a png path)
-    python selftest.py --request    also writes requests/selftest.txt: the next time the game is open with AllowRequests on, it surveys the
+    python selftest.py --request    also writes ../claude/requests/selftest.txt (Claude Tools): the next time the game is open with requests on, it surveys the
                                     spot you look at, places the hut there, photographs it from all sides and from above, then removes it.
 """
 import os, sys
@@ -54,13 +54,13 @@ out = os.path.join(blueprints_dir(), "selftest_hut.json")
 print(bp.save(out), "pieces ->", out)
 
 if "--request" in sys.argv:
-    req_dir = os.path.join(blueprints_dir(), "requests")
+    req_dir = os.path.join(blueprints_dir(), "..", "claude", "requests")   # the Claude Tools mailbox
     os.makedirs(req_dir, exist_ok=True)
     with open(os.path.join(req_dir, "selftest.txt"), "w", encoding="utf-8") as f:
         f.write("# check the blueprint tools in the game: survey, place the test hut, photograph it, take it away again\n"
                 "status\nshot 1280\nsurvey 16 1 look\nimport selftest_hut.json look\nwait 6\norbit last 14 28 4 1280 720\ntop last 16 1024\n"
                 "view last 0 1.6 -7 0 5 60 1280 720\nremove last\n")
-    print("request written: the game will run it the next time AllowRequests is on and you are in a world")
+    print("request written: the game will run it the next time Claude Tools has requests on and you are in a world")
 
 pngs = [a for a in sys.argv[1:] if a.endswith(".png")]
 if pngs:

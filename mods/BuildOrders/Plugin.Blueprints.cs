@@ -30,7 +30,6 @@ namespace BuildOrders
         {
             _blueprintKey = Config.Bind("Blueprints", "ImportKey", KeyCode.F11,
                 "Opens the Plans window: place blueprints from BepInEx/blueprints with a preview, see and remove placed plans, change build settings.");
-            BindEyesConfig();
         }
 
         private void UpdateBlueprints(Player player)
@@ -46,7 +45,7 @@ namespace BuildOrders
                 PlansWindowOpen = false;
             }
             UpdatePlacement(player);
-            UpdateEyes(player);
+            UpdateClaudeLink();
 
         }
 

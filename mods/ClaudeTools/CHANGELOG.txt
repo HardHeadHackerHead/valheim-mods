@@ -1,0 +1,1 @@
+First version: the request mailbox (BepInEx/claude/requests), pictures, surveys, status, inventory, nearby, looking, mods, settings, log, messages and map pins, and commands added by other mods (BuildOrders adds its blueprint commands).

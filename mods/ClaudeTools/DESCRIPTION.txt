@@ -1,0 +1,10 @@
+Lets an AI assistant like Claude Code see your game and help you, through files on your computer: no network port, and it never moves your character or presses keys.
+
+How it works
+- The assistant writes a request (a text file of commands) into BepInEx/claude/requests. While you are in a world, the game carries it out and writes the answer next to it. Pictures go to BepInEx/claude/shots.
+- It can take pictures (your view, a separate camera anywhere, all round a place, straight down), survey the ground, and find out your status, inventory, what is nearby, what you are looking at, which mods are running, their settings and the log. It can show you a message and put a pin on your map.
+- Other mods add their own commands. With BuildOrders, the assistant can design blueprints, place them, photograph and check them.
+- F12 saves a screenshot for the assistant; Ctrl+F12 surveys the ground where you look.
+- The assistant's guide is written to BepInEx/claude/CLAUDE.md: start Claude Code in that folder (or in BepInEx/blueprints to design builds).
+
+Requests are off until you switch AllowRequests on (BepInEx/config/com.dhack.claudetools.cfg). Changing mods' settings by request needs AllowConfigChanges as well. Only switch requests on while you work with an assistant.

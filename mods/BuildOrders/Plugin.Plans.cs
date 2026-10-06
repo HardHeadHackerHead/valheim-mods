@@ -44,15 +44,20 @@ namespace BuildOrders
             return list.OrderBy(p => p.Distance).ToList();
         }
 
-        internal int RemovePlan(string key)
+        /// <param name="takeDownBuilt">also take down the pieces already built from it, giving their materials back</param>
+        internal int RemovePlan(string key, bool takeDownBuilt = false)
         {
             StopLevel(key);
             _levelJobs.Remove(key);
-            string ground = RestoreTerrain(key);
+            Player me = Player.m_localPlayer;
+            int standing = -1;
+            if (takeDownBuilt && me != null) TakeDownBuilt(me, key, out standing);
+            string ground = RestoreTerrain(key, nothingBuilt: standing == 0);
             if (ground != null) Player.m_localPlayer?.Message(MessageHud.MessageType.TopLeft, ground);
             var ids = _orders.Values.Where(o => (o.By ?? "") == key).Select(o => o.Id).ToList();
             foreach (string id in ids) RemoveOrder(id, broadcast: true, save: false);
             SaveOrders();
+            ForgetPlan(key);
             return ids.Count;
         }
 
@@ -150,6 +155,7 @@ namespace BuildOrders
             _stabilityDirty = true;
             Save();
             RecordSnapshotOrders(by);
+            RecordPlan(by);
             if (unknown.Count > 0) Logger.LogWarning($"Blueprint '{title}': skipped pieces that cannot be built: {string.Join(", ", unknown.ToArray())}");
             Logger.LogInfo($"Blueprint '{title}': {added} build orders placed at {anchor} turned {yaw:0}° ({skipped} skipped)");
             player.Message(MessageHud.MessageType.Center, $"\"{title}\": {added} pieces planned" + (skipped > 0 ? $" ({skipped} skipped)" : ""));

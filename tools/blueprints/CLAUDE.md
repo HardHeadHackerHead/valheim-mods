@@ -13,15 +13,14 @@ This folder is `BepInEx/blueprints` in the player's Valheim folder (in the mod r
 |---|---|
 | `_pieces.json` | Every buildable piece: name, size (`min`/`max`), named `snaps`, `ascend`, solid `boxes`, `material`, `cost`, the `station` it needs, placement `rules`, `health`; plus `stations` (build range, needs a roof...). **Read this; never guess names or sizes.** |
 | `_meshes/` | The real 3D shape of each piece (for previews). Made by `tools/extract_meshes.py`. |
-| `_survey.json` | Ground heights, water, biome and existing pieces around a spot (Ctrl+F11 in game, or a `survey` request). |
+| `../claude/` | The **Claude Tools** mod's folder (if installed): `requests/` (the request mailbox), `shots/` (pictures), `_survey.json` (the ground around a spot), and its own `CLAUDE.md` listing every command. |
 | `_imports.json` | Where each blueprint was placed (origin and turn), for views and removal. |
-| `shots/` | Screenshots and camera views saved by the mod (`latest.png` is the newest; each has a `.json` with where it was taken). |
-| `requests/` | Drop request files here to have the game take pictures, survey, place or remove blueprints (needs AllowRequests). |
 | `tools/blueprint.py` | Place pieces (by box, snap point or origin), any rotation, `check()` and `summary()` (stations, overlaps, ground, fires, roofs, materials). |
 | `tools/stability.py` | Will it stand? The game's own support rules. |
 | `tools/preview.py` | `render(items, pieces, "out.png")`: four views with the real shapes. Look at it before handing a design over. |
 | `tools/emergency_hut.py`, `tools/wood_fort.py`, `tools/fort.py`, `tools/selftest.py` | Worked examples (a two-bed catslide cottage with the fire outside under a lean-to, wooden fort with towers and stairs, stone keep, small test hut). Copy one to start. |
 | `tools/test_tools.py` | Tests for all of the above: run it if you change the tools. |
+| `_plans/`, `_terrain/` | Per placed plan: its pieces as placed (to take down what was built of it) and the ground before levelling (to put it back). |
 | `_inbox/` | Blueprints other players shared in game (Plans window, "Shared with you"); share codes start with `BO1:` (base64 of the compressed JSON). |
 | `*.json` (no leading `_`) | Blueprints: each shows in the player's Plans window (F11). |
 | `<blueprint>.png` / `.jpg` | Its picture in the Plans window. The mod makes one in the game (a solid copy photographed out of sight) when there is none; put your own image there to replace it. It goes along with in-game Share. |
@@ -113,26 +112,29 @@ gable wedges 2, door 4, floor 2 x 2 = 2, pole 1 m = 1, 2 m = 2, stake wall 4. Wa
 **less wall area**: low walls under a steep roof (`emergency_hut.py`: a half wall under a 45 degree roof on one side). The workbench costs 10
 and must be within 20 m of anything built; taking pieces down gives all their materials back.
 
-## Seeing the player's world
+## Seeing the player's world (with the Claude Tools mod)
 
-Ask the player before doing any of this in their world.
-- **Screenshot key** (F12) saves what they see to `shots/` with a `.json` of where they stood and looked.
-- **Survey key** (Ctrl+F11) writes `_survey.json` for the spot they look at: `ground` and `solid` height grids (rows -z to +z, columns -x to +x,
-  `step` metres apart, heights relative to the centre), water level, biome, and the pieces already there. Use it to design for a real slope
-  (posts and stairs reaching the ground, `g: true` for ground pieces) or to extend an existing base.
-- **Request files** (only if `AllowRequests = true` in `BepInEx/config/com.dhack.buildorders.cfg`): write `requests/<name>.txt`, one command per
-  line; the game moves it to `.taken`, carries it out within a second or two while the player is in a world, and writes `requests/<name>.done.json`
-  listing the files made and any errors. Then read the images from `shots/`.
-  - `shot [width]`: the player's own view.
-  - `view <frame> <x> <y> <z> <yaw> <pitch> [fov] [w] [h]`: a separate camera at a point in a frame: `last` (the last placed blueprint, in its own
-    coordinates), a blueprint's name, or `world` (world coordinates). The character does not move.
-  - `orbit <frame> [radius] [pitch] [count] [w] [h]`: views from all round a placed blueprint. `top <frame> [size] [width]`: straight down.
-  - `survey [radius] [step] [look|here|frame]`, `import <file.json> [look|here|x z yaw]`, `remove <name|last>`, `wait <seconds>`, `status`.
-  - `ui <blueprints|plans|settings|close>` opens the Plans window on that tab; `ui place <file.json>` starts the player's placement preview
-    (`ui height <m>`, `ui turn <deg>` adjust it) and `ui cancel` ends it. Follow with `wait 1` and `shot` to see what the player sees. These show on the player's screen, so keep them short.
-  - Example check after placing: `import my_fort.json look`, `wait 6`, `orbit last 30 30 4`, `top last 30`. Ghosts are only drawn near the player.
-- `python tools/selftest.py --request` drops a request that places the test hut where the player looks, photographs it and removes it: a quick way
-  to confirm everything works on a new PC.
+The **Claude Tools** mod gives you a request mailbox in `BepInEx/claude` (next to this folder): you write commands into
+`../claude/requests/<name>.txt`, the game carries them out while the player is in a world and writes `../claude/requests/<name>.done.json`;
+pictures land in `../claude/shots/`. Read `../claude/CLAUDE.md` for how it works and every built-in command (pictures, `survey`, `status`,
+`inventory`, `nearby`, `looking`, ...). It only runs when the player has switched `AllowRequests` on in Claude Tools' settings: ask first.
+Without Claude Tools you can still design: the player places your blueprints from the Plans window, and can send you F12 screenshots.
+
+BuildOrders adds these commands to it, and lets the camera commands use a placed blueprint's name as the place (`last` for the newest; `_` for spaces):
+
+- `import <file.json> [look|here|x z yaw]`: place a blueprint (the ground is levelled first; the ghosts follow about a second later).
+- `remove <name|last>` (ghosts only), `takedown <name>` (also takes down what was built, materials back to the player).
+- `check <name|last>`: post columns that do not reach the ground, and how high doors and gates sit. `level <name|last>`: level again.
+- `build <count> <name>`: build that many ghosts as E does (spends the player's materials; the workbench first). `plans`: the placed plans.
+- `ui <blueprints|plans|settings|close>` opens the Plans window on that tab; `ui place <file.json>` starts the player's placement preview
+  (`ui height <m>`, `ui turn <deg>`, `ui confirm`, `ui cancel`). Follow with `wait 1` and `shot` to see what the player sees. These show on
+  the player's screen, so keep them short.
+- Example check after placing: `import my_fort.json look`, `wait 3`, `check last`, `orbit last 30 30 4`, `top last 30`. Ghosts are drawn only near the player.
+- The **survey** (`survey 24 1 look`, or the player's Ctrl+F12) writes `../claude/_survey.json`: `ground` and `solid` height grids (rows -z
+  to +z, columns -x to +x, `step` metres apart, heights relative to the centre), water level, biome, and the pieces already there. Plans are
+  levelled anyway; use it to extend an existing base or to see what is in the way.
+- `python tools/selftest.py --request` drops a request that places the test hut where the player looks, photographs it and removes it: a
+  quick way to confirm everything works on a new PC.
 
 ## How to work with the player
 
@@ -145,7 +147,7 @@ Ask the player before doing any of this in their world.
 
 ## If you also work on the mods themselves
 
-Source: the `valheim-mods` repo. `mods/BuildOrders/Plugin.Blueprints.cs` (importer, piece list), `Plugin.Eyes.cs` (screenshots, survey,
-requests), `Stability.cs` (in-game support preview). `tools/blueprints/tools/extract_pieces.py` and `extract_meshes.py` (need `pip install UnityPy`)
+Source: the `valheim-mods` repo. `mods/BuildOrders/Plugin.Blueprints.cs` (importer, piece list), `Plugin.Requests.cs` (its Claude Tools
+commands), `mods/ClaudeTools` (the mailbox, pictures, surveys), `Stability.cs` (in-game support preview). `tools/blueprints/tools/extract_pieces.py` and `extract_meshes.py` (need `pip install UnityPy`)
 rebuild `_pieces.json` and `_meshes` from the game's asset files without running the game. `tools/modelkit` draws previews and the
 hand-made 3D models of other mods.

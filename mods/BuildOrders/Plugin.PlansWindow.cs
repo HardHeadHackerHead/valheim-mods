@@ -20,6 +20,7 @@ namespace BuildOrders
         private bool _plansPlaced;
         private string _confirmKey;       // a removal waiting for its second click
         private float _confirmUntil;
+        private int _confirmBuilt;      // pieces already built from the plan waiting on a Remove
         private float _removeRadius = 20f;
         private string _plansToast = "";
         private float _plansToastUntil;
@@ -382,11 +383,17 @@ namespace BuildOrders
                 GUI.enabled = true;
                 if (GUI.Button(new Rect(bx + 114f, r.y + 12f, 100f, 32f), "Move", _wButton)) StartMove(player, plan);
                 string key = "plan:" + plan.Key;
-                if (GUI.Button(new Rect(bx + 218f, r.y + 12f, 118f, 32f), Confirming(key) ? "Click again" : "Remove", Confirming(key) ? _wButtonBad : _wButton))
+                if (!Confirming(key))
                 {
-                    if (Confirming(key)) { int n = RemovePlan(plan.Key); PlansToast($"Removed \"{plan.Title}\" ({n} ghosts)"); _confirmKey = null; }
-                    else AskConfirm(key);
+                    if (GUI.Button(new Rect(bx + 218f, r.y + 12f, 118f, 32f), "Remove", _wButton)) { AskConfirm(key); _confirmBuilt = plan.IsBlueprint ? BuiltPieces(plan.Key).Count : 0; }
                 }
+                else if (_confirmBuilt > 0)
+                {
+                    // part of it is built: remove just the ghosts, or take the built part down too (materials back)
+                    if (GUI.Button(new Rect(bx, r.y + 12f, 160f, 32f), "Remove ghosts only", _wButton)) { int n = RemovePlan(plan.Key); PlansToast($"Removed \"{plan.Title}\" ({n} ghosts); what is built stays"); _confirmKey = null; }
+                    if (GUI.Button(new Rect(bx + 164f, r.y + 12f, 172f, 32f), $"Also take down {_confirmBuilt} built", _wButtonBad)) { int n = RemovePlan(plan.Key, takeDownBuilt: true); PlansToast($"Removed \"{plan.Title}\" ({n} ghosts) and took down what was built"); _confirmKey = null; }
+                }
+                else if (GUI.Button(new Rect(bx + 218f, r.y + 12f, 118f, 32f), "Click again", _wButtonBad)) { int n = RemovePlan(plan.Key); PlansToast($"Removed \"{plan.Title}\" ({n} ghosts)"); _confirmKey = null; }
                 if (_levelJobs.TryGetValue(plan.Key, out LevelJob job) && (job.Running || job.Next < job.Points.Count))
                 {
                     GUI.Label(new Rect(bx, r.y + 50f, 214f, 34f), $"<color=#e0b070>Levelling {job.Next}/{job.Points.Count}: {job.Status}</color>", _wDim);
@@ -424,10 +431,10 @@ namespace BuildOrders
             GUILayout.Space(6);
             Toggle(_showGhosts, "Show ghosts", "Hide them all for a moment (also F9).");
             Toggle(_buildByHand, "Build by pressing E", "Walk up to a ghost and press E to build it, no hammer needed.");
-            Toggle(_allowRequests, "Let a designer use request files", "An AI assistant in BepInEx/blueprints can take pictures, survey and place or remove ghosts through files. Nothing moves your character.");
+            GUILayout.Label(ClaudeToolsInstalled ? "Claude Tools is installed: an AI assistant can see your game and place blueprints for you while its requests are on (Claude Tools settings)." : "Install the Claude Tools mod to let an AI assistant (Claude Code in BepInEx/blueprints) see your game and place blueprints for you.", _wDim);
             GUILayout.Space(6);
             GUILayout.Label($"Keys: {_blueprintKey.Value} this window   ·   {_planKey.Value} plan mode (hammer)   ·   {_selectKey.Value} select an aimed ghost's piece   ·   {_removeKey.Value} remove an aimed ghost (Shift: all within 8 m)   ·   " +
-                            $"{_toggleGhostsKey.Value} show/hide ghosts   ·   {_stabilityKey.Value} stability colours   ·   {_shotKey.Value} screenshot   ·   {_surveyKey.Value} survey", _wDim);
+                            $"{_toggleGhostsKey.Value} show/hide ghosts   ·   {_stabilityKey.Value} stability colours", _wDim);
             GUILayout.EndScrollView();
         }
 

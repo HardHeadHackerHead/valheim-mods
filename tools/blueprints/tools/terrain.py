@@ -28,7 +28,10 @@ class Site:
         folder = folder or blueprints_dir()
         imports = json.load(open(os.path.join(folder, "_imports.json"), encoding="utf-8"))
         rec = imports[name]
-        survey = json.load(open(os.path.join(folder, "_survey.json"), encoding="utf-8"))
+        survey_file = os.path.join(folder, "..", "claude", "_survey.json")   # Claude Tools writes it there
+        if not os.path.exists(survey_file):
+            survey_file = os.path.join(folder, "_survey.json")                # older BuildOrders wrote it here
+        survey = json.load(open(survey_file, encoding="utf-8"))
         return cls(survey, (rec["origin"][0], rec["origin"][2]), rec["yaw"])
 
     def _world(self, wx, wz):

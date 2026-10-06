@@ -21,7 +21,7 @@ namespace BuildOrders
     {
         public const string Guid = "com.dhack.buildorders";
         public const string Name = "BuildOrders";
-        public const string Version = "1.6.0";
+        public const string Version = "1.7.0";
 
         internal static Plugin Instance;
 
@@ -101,6 +101,7 @@ namespace BuildOrders
             DestroyWindowResources();
             _harmony?.UnpatchSelf();
             UnregisterRpc();
+            UnregisterClaudeCommands();
             DestroyAllGhosts();
             if (Instance == this) Instance = null;
         }
