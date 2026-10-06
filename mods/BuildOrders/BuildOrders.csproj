@@ -6,6 +6,25 @@
   <ItemGroup>
     <!-- The ghosts switch off particles and sounds the same way the game's own placement ghost does. -->
     <Reference Include="UnityEngine.ParticleSystemModule"><HintPath>$(ManagedDir)\UnityEngine.ParticleSystemModule.dll</HintPath><Private>false</Private></Reference>
+    <Reference Include="netstandard"><HintPath>$(ManagedDir)/netstandard.dll</HintPath><Private>false</Private></Reference>
+    <Reference Include="UnityEngine.ScreenCaptureModule"><HintPath>$(ManagedDir)/UnityEngine.ScreenCaptureModule.dll</HintPath><Private>false</Private></Reference>
+    <Reference Include="UnityEngine.ImageConversionModule"><HintPath>$(ManagedDir)/UnityEngine.ImageConversionModule.dll</HintPath><Private>false</Private></Reference>
     <Reference Include="UnityEngine.AudioModule"><HintPath>$(ManagedDir)\UnityEngine.AudioModule.dll</HintPath><Private>false</Private></Reference>
+  </ItemGroup>
+  <ItemGroup>
+    <!-- The design guide and helper scripts for blueprints (one shared copy in tools/blueprints); the mod writes them next to the blueprints. -->
+    <EmbeddedResource Include="../../tools/blueprints/CLAUDE.md" LogicalName="guide/CLAUDE.md" />
+    <EmbeddedResource Include="../../tools/blueprints/tools/blueprint.py" LogicalName="guide/tools/blueprint.py" />
+    <EmbeddedResource Include="../../tools/blueprints/tools/stability.py" LogicalName="guide/tools/stability.py" />
+    <EmbeddedResource Include="../../tools/blueprints/tools/terrain.py" LogicalName="guide/tools/terrain.py" />
+    <EmbeddedResource Include="../../tools/blueprints/tools/emergency_hut.py" LogicalName="guide/tools/emergency_hut.py" />
+    <EmbeddedResource Include="../../tools/blueprints/tools/fort.py" LogicalName="guide/tools/fort.py" />
+    <EmbeddedResource Include="../../tools/blueprints/tools/extract_pieces.py" LogicalName="guide/tools/extract_pieces.py" />
+    <EmbeddedResource Include="../../tools/blueprints/tools/preview.py" LogicalName="guide/tools/preview.py" />
+    <EmbeddedResource Include="../../tools/blueprints/tools/wood_fort.py" LogicalName="guide/tools/wood_fort.py" />
+    <EmbeddedResource Include="../../tools/blueprints/tools/extract_meshes.py" LogicalName="guide/tools/extract_meshes.py" />
+    <EmbeddedResource Include="../../tools/blueprints/tools/selftest.py" LogicalName="guide/tools/selftest.py" />
+    <EmbeddedResource Include="../../tools/blueprints/tools/test_tools.py" LogicalName="guide/tools/test_tools.py" />
+    <EmbeddedResource Include="../../tools/modelkit/modelkit.py" LogicalName="guide/tools/modelkit.py" />
   </ItemGroup>
 </Project>

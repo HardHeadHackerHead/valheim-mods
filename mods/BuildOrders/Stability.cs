@@ -61,7 +61,8 @@ namespace BuildOrders
         }
 
         /// <summary>Work out the support of every ghost near you (and tint them if the colours are showing).</summary>
-        internal void ComputeStability(Player player)
+        /// <param name="only">if given, only these ghosts count (the rest are treated as not built): "would this part stand on its own?"</param>
+        internal void ComputeStability(Player player, HashSet<string> only = null)
         {
             _stability.Clear();
             var nodes = new List<Node>();
@@ -69,6 +70,7 @@ namespace BuildOrders
             foreach (Order o in _orders.Values)
             {
                 if ((o.Pos - me).sqrMagnitude > 80f * 80f) continue;
+                if (only != null && !only.Contains(o.Id)) continue;
                 if (!_ghosts.TryGetValue(o.Id, out GameObject ghost) || ghost == null || !GhostBounds(o, out Bounds box)) continue;
                 float[] m = MaterialOf(o, ghost);
                 if (m == null) continue; // not a structural piece (a table, a torch...)

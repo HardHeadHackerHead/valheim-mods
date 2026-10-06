@@ -21,12 +21,13 @@ namespace BuildOrders
     {
         public const string Guid = "com.dhack.buildorders";
         public const string Name = "BuildOrders";
-        public const string Version = "1.4.1";
+        public const string Version = "1.5.0";
 
         internal static Plugin Instance;
 
         private ConfigEntry<bool> _enabled, _showGhosts, _alwaysShowPanel, _buildByHand;
         private ConfigEntry<float> _buildReach, _buildAllRadius;
+        private ConfigEntry<int> _maxGhosts;
         private ConfigEntry<KeyCode> _stabilityKey;
         private ConfigEntry<bool> _stabilityInPlan;
         private ConfigEntry<float> _ghostOpacity;
@@ -44,13 +45,14 @@ namespace BuildOrders
         {
             Instance = this;
             _enabled = Config.Bind("General", "Enabled", true, "Turn the mod on or off.");
+            BindBlueprintConfig();
             _showGhosts = Config.Bind("General", "ShowGhosts", true, "Show the glowing ghosts of planned pieces.");
             _buildByHand = Config.Bind("General", "BuildByPressingUse", true,
                 "Walk up to a ghost and press E to build it, no hammer needed. It costs the normal materials (from your inventory, then nearby chests if BuildFromChests is installed).");
             BindFetch();
             _swimBuild = Config.Bind("General", "BuildWhileSwimming", true,
                 "Keep your hammer in your hand while swimming so you can plan and build from the water (equip it before you jump in: the game does not let you equip things while swimming).");
-            _buildAllRadius = Config.Bind("General", "BuildAllRadius", 12f, "Holding E at a ghost builds every ghost within this many metres (supports first), as far as your materials go.");
+            _buildAllRadius = Config.Bind("General", "BuildAllRadius", 24f, new ConfigDescription("Holding E at a ghost (or Build nearby in the Plans window) builds every ghost within this many metres, lowest first, as far as your materials go.", new AcceptableValueRange<float>(4f, 64f)));
             _stabilityKey = Config.Bind("Keys", "StabilityKey", KeyCode.F10, "Show or hide the estimated stability colours on the ghosts (blue = solid, green to red = weaker, red = would fall).");
             _stabilityInPlan = Config.Bind("General", "StabilityInPlanMode", true, "Show the stability colours automatically while plan mode is on.");
             _buildReach = Config.Bind("General", "UseReach", 6f, "How close (in metres) you must be to a ghost to build it by pressing E.");
@@ -58,7 +60,8 @@ namespace BuildOrders
                 "How solid the ghosts are: 0.05 = barely there, 0.3 = clearly visible, 1 = solid. (Aimed-at ghosts are shown more solid.)");
             _shaderOverride = Config.Bind("Look", "GhostShader", "",
                 "Advanced: force a particular shader name for the ghosts. Leave blank to pick the best transparent one automatically (the choice is written to the BepInEx log).");
-            _viewDistance = Config.Bind("General", "ViewDistance", 60f, "Ghosts further than this many metres away are hidden (saves performance).");
+            _viewDistance = Config.Bind("General", "ViewDistance", 80f, "Ghosts further than this many metres away are hidden (saves performance).");
+            _maxGhosts = Config.Bind("General", "MaxGhosts", 600, new ConfigDescription("Most ghosts shown at once (the nearest first). Big plans need more; very high numbers can cost frame rate.", new AcceptableValueRange<int>(50, 2000)));
             _snapDistance = Config.Bind("General", "SnapDistance", 1.5f,
                 "When you're placing the same piece as a nearby order, your placement ghost snaps onto the order if it's within this many metres.");
             _planKey = Config.Bind("Keys", "PlanKey", KeyCode.LeftAlt,
@@ -78,6 +81,8 @@ namespace BuildOrders
             _awakeFrame = Time.frameCount;
             _harmony = new Harmony(Guid);
             _harmony.PatchAll();
+            Log = Logger;
+            PlansPatches.Apply(_harmony);
 
             Logger.LogInfo($"{Name} {Version} loaded ({PlanHint})");
 
@@ -87,8 +92,13 @@ namespace BuildOrders
         }
 
         // ScriptEngine destroys this copy when mods reload: undo everything we hooked into the game.
+        internal static BepInEx.Logging.ManualLogSource Log;
+
         private void OnDestroy()
         {
+            CancelPlacement();
+            PlansWindowOpen = false;
+            DestroyWindowResources();
             _harmony?.UnpatchSelf();
             UnregisterRpc();
             DestroyAllGhosts();
@@ -109,6 +119,7 @@ namespace BuildOrders
 
             UpdatePlanMode(player);
             UpdateFetch(player);
+            UpdateBlueprints(player);
             SetGhostColliders(PlanKeyHeld); // while planning, ghosts can be snapped onto like real pieces
             UpdateStability(player);
 
@@ -288,9 +299,35 @@ namespace BuildOrders
                     string item = req.m_resItem.m_itemData.m_shared.m_name;
                     HintLines.Add(new HintLine { Name = Localization.instance.Localize(item), Have = inventory.CountItems(item), Need = need, Icon = req.m_resItem.m_itemData.GetIcon() });
                 }
+
+                // the whole plan this ghost belongs to: everything it still needs, against what you have
+                PlanLines.Clear();
+                var plan = _orders.Values.Where(x => (x.By ?? "") == (order.By ?? "")).ToList();
+                PlanLeft = plan.Count;
+                PlanTitle = (order.By ?? "").StartsWith(BlueprintPrefix) ? order.By.Substring(BlueprintPrefix.Length) : "Planned by " + (string.IsNullOrEmpty(order.By) ? "someone" : order.By);
+                var totals = new Dictionary<string, HintLine>();
+                foreach (Order x in plan)
+                {
+                    Piece p = PieceOf(x);
+                    if (p == null) continue;
+                    foreach (Piece.Requirement req in p.m_resources)
+                    {
+                        if (req.m_resItem == null || req.GetAmount(1) <= 0) continue;
+                        string item = req.m_resItem.m_itemData.m_shared.m_name;
+                        if (!totals.TryGetValue(item, out HintLine line))
+                            totals[item] = line = new HintLine { Name = Localization.instance.Localize(item), Have = inventory.CountItems(item), Icon = req.m_resItem.m_itemData.GetIcon() };
+                        line.Need += req.GetAmount(1);
+                    }
+                }
+                PlanLines.AddRange(totals.Values.OrderByDescending(l => l.Need).Take(6));
             }
             finally { ForceBuildContext(false); }
+            HoldCount = AffordableNearby(player, out int _, out HoldAll).Count;
         }
+
+        internal readonly List<HintLine> PlanLines = new List<HintLine>();
+        internal string PlanTitle = "";
+        internal int PlanLeft, HoldCount, HoldAll;
 
         internal class HintLine { public string Name; public int Have, Need; public Sprite Icon; }
         internal Sprite HintPieceIcon;
@@ -356,22 +393,22 @@ namespace BuildOrders
             int built = 0, noMaterials = 0, unsupported = 0;
             try
             {
-                float radius = _buildAllRadius.Value;
-                ComputeStability(player);
-                List<Order> batch = _orders.Values
-                    .Where(o => (o.Pos - player.transform.position).sqrMagnitude <= radius * radius && _ghosts.ContainsKey(o.Id))
-                    .OrderBy(o => Mathf.Round(o.Pos.y * 2f))                                        // bottom first
-                    .ThenBy(o => (o.Pos - player.transform.position).sqrMagnitude)
-                    .Take(200).ToList();
-
-                foreach (Order o in batch)
+                // what you can afford, lowest first; then only the part of that which stands up by itself (on the ground, on what is
+                // already built, or on other pieces built now), so building a plan bit by bit never wastes materials on a piece that falls
+                List<Order> chosen = AffordableNearby(player, out noMaterials, out int all);
+                var keep = new HashSet<string>(chosen.Select(o => o.Id));
+                for (int round = 0; round < 6 && keep.Count > 0; round++)
                 {
-                    if (!_orders.ContainsKey(o.Id)) continue;
-                    if (_stability.TryGetValue(o.Id, out Stab s) && s.Collapses) { unsupported++; continue; } // it would just fall
+                    ComputeStability(player, keep);
+                    var falls = keep.Where(id => _stability.TryGetValue(id, out Stab s) && s.Collapses).ToList();
+                    if (falls.Count == 0) break;
+                    foreach (string id in falls) keep.Remove(id);
+                    unsupported += falls.Count;
+                }
 
-                    Piece piece = PieceOf(o);
-                    if (piece == null || !player.IsRecipeKnown(piece.m_name)) continue;
-                    if (!CanAfford(player, piece)) { noMaterials++; continue; }
+                foreach (Order o in chosen)
+                {
+                    if (!keep.Contains(o.Id) || !_orders.ContainsKey(o.Id)) continue;
                     if (TryBuild(player, o, quiet: true)) { built++; if (built % 2 == 0) yield return null; } // two per frame, so the effects are not all at once
                 }
             }
@@ -383,6 +420,51 @@ namespace BuildOrders
         }
 
         private void BuildByHand(Player player, Order order) => TryBuild(player, order, quiet: false);
+
+        /// <summary>
+        /// The ghosts within the build-all radius that your materials (inventory and nearby chests) cover, picked lowest first and counting the
+        /// materials down as they would be used. <paramref name="short_"/> is how many more there are that you cannot afford yet.
+        /// </summary>
+        private List<Order> AffordableNearby(Player player, out int short_, out int all)
+        {
+            float radius = _buildAllRadius.Value;
+            List<Order> batch = _orders.Values
+                .Where(o => (o.Pos - player.transform.position).sqrMagnitude <= radius * radius && _ghosts.ContainsKey(o.Id))
+                .OrderBy(o => Mathf.Round(o.Pos.y * 2f))                                        // bottom first
+                .ThenBy(o => (o.Pos - player.transform.position).sqrMagnitude)
+                .Take(600).ToList();
+            all = batch.Count;
+            short_ = 0;
+            var chosen = new List<Order>();
+            var budget = new Dictionary<string, int>();
+            ForceBuildContext(true); // count the nearby chests too, as building does
+            try
+            {
+                Inventory inventory = player.GetInventory();
+                bool free = false;
+                foreach (Order o in batch)
+                {
+                    Piece piece = PieceOf(o);
+                    if (piece == null || !player.IsRecipeKnown(piece.m_name)) continue;
+                    free = ZoneSystem.instance.GetGlobalKey(piece.FreeBuildKey());
+                    bool ok = true;
+                    foreach (Piece.Requirement req in piece.m_resources)
+                    {
+                        if (req.m_resItem == null || free) continue;
+                        string item = req.m_resItem.m_itemData.m_shared.m_name;
+                        if (!budget.ContainsKey(item)) budget[item] = inventory.CountItems(item);
+                        if (budget[item] < req.GetAmount(1)) { ok = false; break; }
+                    }
+                    if (!ok) { short_++; continue; }
+                    if (!free)
+                        foreach (Piece.Requirement req in piece.m_resources)
+                            if (req.m_resItem != null) budget[req.m_resItem.m_itemData.m_shared.m_name] -= req.GetAmount(1);
+                    chosen.Add(o);
+                }
+            }
+            finally { ForceBuildContext(false); }
+            return chosen;
+        }
 
         /// <summary>Build one ghost. Returns true if it was built. <paramref name="quiet"/> keeps the per-piece messages off.</summary>
         private bool TryBuild(Player player, Order order, bool quiet)

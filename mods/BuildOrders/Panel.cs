@@ -68,7 +68,23 @@ namespace BuildOrders
 
         private void OnGUI()
         {
-            if (Event.current.type != EventType.Repaint || !_enabled.Value) return;
+            if (!_enabled.Value) return;
+            if (Player.m_localPlayer != null && (PlansWindowOpen || _placing != null || ActiveLevelJob != null))
+            {
+                EnsureStyles();
+                if (Event.current.type == EventType.Repaint && !PlansWindowOpen)
+                {
+                    float sc = Mathf.Max(0.75f, Screen.height / 1080f);
+                    Matrix4x4 m = GUI.matrix;
+                    GUI.matrix = Matrix4x4.Scale(new Vector3(sc, sc, 1f));
+                    DrawPlacementBanner(Screen.width / sc);
+                    DrawLevelBanner(Screen.width / sc);
+                    GUI.matrix = m;
+                }
+                DrawPlansWindow();
+                if (PlansWindowOpen) return; // the window covers the usual panel
+            }
+            if (Event.current.type != EventType.Repaint) return;
             Player player = Player.m_localPlayer;
             if (player == null || Hud.IsUserHidden() || Menu.IsVisible() || InventoryGui.IsVisible()) return;
             bool placing = player.InPlaceMode();
@@ -150,9 +166,11 @@ namespace BuildOrders
             Order o = Aimed;
             const float tile = 64f, gap = 8f;
             int n = HintLines.Count;
-            float w = Mathf.Max(340f, n * (tile + gap) - gap + 40f);
+            const float small = 40f;
+            int pn = PlanLeft > 1 ? PlanLines.Count : 0;   // the whole plan's materials (not worth showing for a lone ghost)
+            float w = Mathf.Max(380f, Mathf.Max(n * (tile + gap) - gap, pn * (small + 30f + gap) - gap) + 40f);
             Stab stab = StabilityOf(o.Id);
-            float h = 64f + (n > 0 ? tile + 38f : 0f) + 38f + (stab != null ? 24f : 0f) + 24f; // + support line, + the hold-E line
+            float h = 64f + (n > 0 ? tile + 38f : 0f) + (pn > 0 ? small + 40f : 0f) + 38f + (stab != null ? 24f : 0f) + 24f; // + plan, + support line, + the hold-E line
             var r = new Rect(sw / 2f - w / 2f, sh / 2f + 80f, w, h);
 
             Round(new Rect(r.x + 2f, r.y + 4f, r.width, r.height), new Color(0f, 0f, 0f, 0.4f), 10f); // soft shadow
@@ -182,6 +200,24 @@ namespace BuildOrders
                     Label(new Rect(t.x, t.y + tile + 6f, t.width, 14f), line.Name, _small, new Color(0.85f, 0.83f, 0.78f), TextAnchor.MiddleCenter);
                 }
                 y += tile + 38f;
+            }
+
+            // the whole plan: what it still needs altogether
+            if (pn > 0)
+            {
+                Label(new Rect(r.x, y - 4f, r.width, 18f), $"Whole plan \"{PlanTitle}\": {PlanLeft} pieces left", _bold, new Color(0.85f, 0.83f, 0.78f), TextAnchor.MiddleCenter);
+                float cw = small + 30f;
+                float x = r.x + (r.width - (pn * (cw + gap) - gap)) / 2f;
+                for (int i = 0; i < pn; i++)
+                {
+                    HintLine line = PlanLines[i];
+                    bool enough = line.Have >= line.Need;
+                    var t = new Rect(x + i * (cw + gap), y + 16f, cw, small);
+                    Round(t, enough ? new Color(0.12f, 0.15f, 0.11f, 0.95f) : new Color(0.2f, 0.1f, 0.09f, 0.95f), 6f);
+                    Icon(new Rect(t.x + 4f, t.y + 4f, small - 8f, small - 8f), line.Icon);
+                    Label(new Rect(t.x + small - 4f, t.y, cw - small + 2f, small), $"{line.Have}\n/{line.Need}", _small, enough ? Green : Orange, TextAnchor.MiddleCenter);
+                }
+                y += small + 40f;
             }
 
             // how well it would be supported (an estimate; the game does the real thing once it is built)
@@ -217,7 +253,10 @@ namespace BuildOrders
                 Round(bar, new Color(0.2f, 0.18f, 0.14f, 0.95f), 6f);
                 Round(new Rect(bar.x, bar.y, bar.width * HoldProgress, bar.height), new Color(0.95f, 0.78f, 0.35f, 1f), 6f);
             }
-            Label(bar, HoldProgress > 0f ? "Keep holding to build everything nearby" : $"Hold E: build everything within {_buildAllRadius.Value:0} m", _small,
+            string hold = HoldCount >= HoldAll ? $"Hold E: build all {HoldAll} pieces within {_buildAllRadius.Value:0} m"
+                        : HoldCount > 0 ? $"Hold E: build the {HoldCount} of {HoldAll} pieces nearby you have materials for (lowest first)"
+                        : "Hold E: nothing nearby you have the materials for yet";
+            Label(bar, HoldProgress > 0f ? "Keep holding to build everything nearby" : hold, _small,
                   HoldProgress > 0f ? new Color(0.1f, 0.08f, 0.04f) : new Color(0.72f, 0.7f, 0.66f), TextAnchor.MiddleCenter);
         }
 

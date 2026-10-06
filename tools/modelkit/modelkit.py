@@ -37,6 +37,16 @@ class Model:
     def sph(self, name, x, y, z, sx, sy, sz, mat, rx=0, ry=0, rz=0):
         self._add(name, "Sphere", (x, y, z), (sx, sy, sz), (rx, ry, rz), mat)
 
+    def mesh(self, name, verts, faces, colours):
+        """Real triangles (already in blueprint coordinates) with an RGB colour (0-255) per triangle."""
+        self._add(name, "Mesh", (0, 0, 0), (1, 1, 1), (0, 0, 0), "")
+        self.parts[-1].verts, self.parts[-1].faces, self.parts[-1].colours = verts, faces, colours
+
+    def box_rot(self, name, center, size, rot, mat):
+        """A box turned by a 3x3 rotation matrix (used for pieces read from the game's data)."""
+        self._add(name, "Cube", tuple(center), tuple(size), (0, 0, 0), mat)
+        self.parts[-1].rot = rot
+
     def quad(self, name, x, y, z, width, height, mat, rx=0, ry=0, rz=0):
         """A flat picture facing -z (Unity's Quad): width x height metres."""
         self._add(name, "Quad", (x, y, z), (width, height, 1), (rx, ry, rz), mat)
@@ -93,6 +103,8 @@ def world_matrices(model):
         m = np.eye(4)
         R = euler_matrix(*p.euler)
         S = np.diag(p.scale)
+        if getattr(p, "rot", None) is not None:
+            R = p.rot
         m[:3, :3] = R @ S
         m[:3, 3] = p.pos
         parent = by_name.get(p.parent) if p.parent else None
@@ -177,7 +189,7 @@ PALETTE = {
 GLOWING = {"Glow", "GlowB"}
 
 
-def render(model, size=(900, 900), yaw=28, pitch=14, target=(0, 1.1, 0), dist=7.0, fov=28, scale=2, bg=None, ground=True, transparent=False, palette=None, atlas=None):
+def render(model, size=(900, 900), yaw=28, pitch=14, target=(0, 1.1, 0), dist=7.0, fov=28, scale=2, bg=None, ground=True, transparent=False, palette=None, atlas=None, floor=None):
     pal = dict(PALETTE)
     if palette:
         pal.update(palette)
@@ -286,7 +298,9 @@ def render(model, size=(900, 900), yaw=28, pitch=14, target=(0, 1.1, 0), dist=7.
         # extent of the model on the floor for the shadow size
         allp = []
         for p, w in zip(model.parts, mats):
-            if p.shape != "Group":
+            if p.shape == "Mesh":
+                allp.extend(list(p.verts[:: max(1, len(p.verts) // 8)]))
+            elif p.shape != "Group":
                 allp.append(w[:3, 3])
         allp = np.array(allp)
         cx, cz = (allp[:, 0].min() + allp[:, 0].max()) / 2, (allp[:, 2].min() + allp[:, 2].max()) / 2
@@ -294,6 +308,11 @@ def render(model, size=(900, 900), yaw=28, pitch=14, target=(0, 1.1, 0), dist=7.
         dd = ((px - cx) / rx_) ** 2 + ((pz - cz) / rz_) ** 2
         shadow = np.clip(1 - dd, 0, 1) ** 1.5 * 0.55
         shadow = np.where(hit, shadow, 0)
+        if floor is not None and not transparent:
+            # a patch of ground under the design, fading out at the edges
+            fd = ((px - cx) / (rx_ * 1.6)) ** 2 + ((pz - cz) / (rz_ * 1.6)) ** 2
+            fa = np.where(hit, np.clip(1.3 - fd, 0, 1), 0)[..., None]
+            img[:, :, :3] = img[:, :, :3] * (1 - fa) + (np.array(floor, np.float32) / 255.0) * fa
         if not transparent:
             img[:, :, :3] *= (1 - shadow[..., None])
         else:
@@ -301,6 +320,23 @@ def render(model, size=(900, 900), yaw=28, pitch=14, target=(0, 1.1, 0), dist=7.
 
     for part, w in zip(model.parts, mats):
         if part.shape == "Group":
+            continue
+        if part.shape == "Mesh":
+            mv, mf, cols = part.verts, part.faces, part.colours   # (not "f": that name is the camera's focal length)
+            if len(mf) == 0:
+                continue
+            tv = mv[mf]                                 # (F, 3, 3)
+            n = np.cross(tv[:, 1] - tv[:, 0], tv[:, 2] - tv[:, 0])
+            n /= np.linalg.norm(n, axis=1, keepdims=True) + 1e-9
+            # light both sides of a face the same (the game's meshes are seen from either side in previews)
+            facing = np.einsum("ij,j->i", n, -fwd) < 0
+            n[facing] *= -1
+            tn = np.repeat(n[:, None, :], 3, axis=1)
+            keys = cols[:, 0].astype(np.int64) * 65536 + cols[:, 1].astype(np.int64) * 256 + cols[:, 2]
+            for key in np.unique(keys):
+                sel = keys == key
+                colour = np.array([(key >> 16) & 255, (key >> 8) & 255, key & 255]) / 255.0
+                draw_tris(tv[sel], tn[sel], colour * 1.15)
             continue
         tris, norms = unit_mesh(part.shape)
         A = w[:3, :3]
@@ -327,9 +363,11 @@ def render(model, size=(900, 900), yaw=28, pitch=14, target=(0, 1.1, 0), dist=7.
 def contact_sheet(model, path, size=(640, 640), views=((28, 14), (-30, 14), (0, 8), (90, 14)), **kw):
     """Four views side by side (front-right, front-left, straight front, side)."""
     imgs = [render(model, size=size, yaw=y, pitch=p, **kw) for y, p in views]
-    sheet = Image.new("RGBA", (size[0] * 2, size[1] * 2))
+    cols = 1 if len(imgs) == 1 else 2
+    rows = (len(imgs) + cols - 1) // cols
+    sheet = Image.new("RGBA", (size[0] * cols, size[1] * rows))
     for i, im in enumerate(imgs):
-        sheet.paste(im, ((i % 2) * size[0], (i // 2) * size[1]))
+        sheet.paste(im, ((i % cols) * size[0], (i // cols) * size[1]))
     sheet.convert("RGB").save(path)
     return path
 

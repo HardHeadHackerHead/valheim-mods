@@ -70,7 +70,7 @@ Quick gear sets on **Q**, hammer on **B**, a **Sort** button that joins stacks, 
 ### 👻 BuildOrders
 <img src="dist/BuildOrders.cover.png" alt="BuildOrders" width="100%">
 
-Plan pieces as shared ghost build orders. Your party sees them, you can build one by just walking up and pressing **E**, and a panel totals the materials you still need.
+Plan pieces as shared ghost build orders. Your party sees them, you can build one by just walking up and pressing **E**, and a panel totals the materials you still need. Pick a blueprint in the Plans window (**F11**), turn its preview into place, and a whole structure appears as ghosts: ask an AI assistant to design a fort for you.
 
 </td>
 <td valign="top">
@@ -154,10 +154,22 @@ Odin's Fortune: build a slot machine, put coins in, pull the lever and watch thr
 | **E** | FeedFromChests | Open a smelter or kiln menu (auto-feed settings, Add, Fill); add items to other stations |
 | **Left Alt** / **E** | BuildOrders | Toggle plan mode (placing then plans a ghost) / build the ghost you walk up to |
 | **G** / **Delete** / **F9** / **F10** | BuildOrders | Select a ghost piece / remove a ghost / show or hide ghosts / show or hide the stability colours |
-| Hold **E** at a ghost | BuildOrders | Build everything buildable within 12 m, lowest first |
+| Hold **E** at a ghost | BuildOrders | Build everything buildable within 24 m (adjustable), lowest first |
+| **F11** | BuildOrders | Plans window: place blueprints with a preview, move or remove placed plans, build settings |
+| Wheel / **R** / **PgUp** **PgDn** / click | BuildOrders | While placing a blueprint: turn it / turn 90° / raise or lower it / place it (right-click or Esc cancels); **L** levels the ground under it when placed |
+| **F12** / **Ctrl+F11** | BuildOrders | Save a screenshot / survey the ground around where you look, for whoever designs your blueprints |
 | **F8** | PartyHud | Show or hide the party panel |
 
 Every key and setting is configurable in `BepInEx/config`.
+
+## 🏗️ Let an AI design your builds
+
+BuildOrders can place whole structures from **blueprint** files, and the repo ships what an AI assistant needs to write them: the real size,
+material and cost of every building piece, the game's structural-support rules, a stability checker and a worked example. The first time you
+play with BuildOrders it writes all of that, with a `CLAUDE.md` guide, into `BepInEx/blueprints`. Start [Claude Code](https://claude.com/claude-code)
+in that folder, ask for a fort, a house or a bridge, then open the Plans window (**F11**) in game, pick it and put its green preview where you want it. You still build every piece with real materials.
+It can check that a design will stand, draw previews with the game's real shapes, and (if you switch it on) look at your world through screenshots and camera views the mod saves to files.
+Details are in [`tools/blueprints`](tools/blueprints).
 
 ## 🛡️ Playing fair
 

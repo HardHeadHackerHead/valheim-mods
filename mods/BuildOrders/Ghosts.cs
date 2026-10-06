@@ -18,7 +18,6 @@ namespace BuildOrders
         private static readonly Color PlannedColor = new Color(0.35f, 0.8f, 1f);
         private static readonly Color AimedColor = new Color(1f, 0.85f, 0.35f);
 
-        private const int MaxGhosts = 150;
 
         // ---- the see-through material ------------------------------------------------------------
         // Valheim's building material can't be transparent, so every ghost gets a plain transparent material instead.
@@ -87,21 +86,34 @@ namespace BuildOrders
             {
                 bool near = (o.Pos - here).sqrMagnitude <= max;
                 bool has = _ghosts.ContainsKey(o.Id);
-                if (near && !has && _ghosts.Count < MaxGhosts && spawned < MaxSpawnsPerPass) { SpawnGhost(o); spawned++; }
+                if (near && !has && _ghosts.Count < _maxGhosts.Value && spawned < MaxSpawnsPerPass) { SpawnGhost(o); spawned++; }
                 else if (!near && has) DestroyGhost(o.Id);
             }
         }
 
-        private const int MaxSpawnsPerPass = 3;
+        private const int MaxSpawnsPerPass = 10;
 
         /// <summary>The materials we created for each ghost. They're ours, so we must free them ourselves or they pile up.</summary>
         private readonly Dictionary<string, List<Material>> _ghostMaterials = new Dictionary<string, List<Material>>();
 
         private void SpawnGhost(Order o)
         {
-            if (_badPrefabs.Contains(o.Prefab)) return;
-            GameObject prefab = ZNetScene.instance.GetPrefab(o.Prefab);
-            if (prefab == null) { _badPrefabs.Add(o.Prefab); return; }
+            var materials = new List<Material>();
+            GameObject go = MakeGhostObject(o.Prefab, o.Pos, o.Rot, materials);
+            if (go == null) return;
+            go.name = o.Prefab + "_order";
+            _ghostMaterials[o.Id] = materials;
+            _ghosts[o.Id] = go;
+            RegisterColliders(o.Id, go);
+            Tint(go, aimed: false, id: o.Id);
+        }
+
+        /// <summary>A see-through copy of a piece at a spot: the real piece, made without networking and stripped to its model. Also used for the placement preview.</summary>
+        internal GameObject MakeGhostObject(string prefabName, Vector3 pos, Quaternion rot, List<Material> materials)
+        {
+            if (_badPrefabs.Contains(prefabName)) return null;
+            GameObject prefab = ZNetScene.instance.GetPrefab(prefabName);
+            if (prefab == null) { _badPrefabs.Add(prefabName); return null; }
 
             GameObject go = null;
             TerrainModifier modifier = prefab.GetComponentInChildren<TerrainModifier>();
@@ -111,13 +123,13 @@ namespace BuildOrders
                 if (modifier != null) modifier.enabled = false;
                 TerrainOp.m_forceDisableTerrainOps = true;
                 ZNetView.m_forceDisableInit = true; // no network object: it's only a picture
-                go = Instantiate(prefab, o.Pos, o.Rot);
+                go = Instantiate(prefab, pos, rot);
                 go.GetComponent<ItemDrop>()?.MakePiece();
             }
             catch (System.Exception e)
             {
-                Logger.LogWarning($"Could not make a ghost of {o.Prefab}: {e.Message}");
-                _badPrefabs.Add(o.Prefab);
+                Logger.LogWarning($"Could not make a ghost of {prefabName}: {e.Message}");
+                _badPrefabs.Add(prefabName);
             }
             finally
             {
@@ -125,16 +137,23 @@ namespace BuildOrders
                 TerrainOp.m_forceDisableTerrainOps = false;
                 if (modifier != null) modifier.enabled = modifierWasOn;
             }
-            if (go == null) return;
-
-            go.name = o.Prefab + "_order";
+            if (go == null) return null;
             Strip(go);
-            var materials = new List<Material>();
             MakeTranslucent(go, materials);
-            _ghostMaterials[o.Id] = materials;
-            _ghosts[o.Id] = go;
-            RegisterColliders(o.Id, go);
-            Tint(go, aimed: false, id: o.Id);
+            return go;
+        }
+
+        /// <summary>Paint a ghost one colour (used by the placement preview).</summary>
+        internal static void TintWith(GameObject go, Color c)
+        {
+            foreach (Renderer r in go.GetComponentsInChildren<Renderer>(true))
+                foreach (Material m in r.sharedMaterials)
+                {
+                    if (m == null) continue;
+                    if (m.HasProperty("_Color")) m.SetColor("_Color", c);
+                    if (m.HasProperty("_TintColor")) m.SetColor("_TintColor", c);
+                    if (m.HasProperty("_EmissionColor")) m.SetColor("_EmissionColor", new Color(c.r, c.g, c.b) * 0.4f);
+                }
         }
 
         /// <summary>Remove everything but the model, the same way the game prepares its own placement ghost.</summary>
