@@ -10,8 +10,8 @@ namespace BuildOrders
     // Patched by hand, one at a time, so a game update that renames one of these leaves the rest (and the mod) working.
     internal static class PlansPatches
     {
-        private static bool WindowOpen => Plugin.PlansWindowOpen;
-        private static bool Busy => Plugin.PlansWindowOpen || Plugin.Placing;
+        private static bool WindowOpen => Plugin.PlansWindowOpen || Plugin.BridgeOptionsOpen;
+        private static bool Busy => Plugin.PlansWindowOpen || Plugin.Placing || Plugin.BridgeOptionsOpen;
         internal static int EscapeFrame = -1; // the frame our window or preview used Esc, so the game menu does not open on the same press
 
         internal static void Apply(Harmony harmony)

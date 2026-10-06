@@ -49,7 +49,7 @@ namespace BuildOrders
                 Add("level", "level <blueprint name|last>: level the ground under a placed blueprint again", CmdLevel);
                 Add("plans", "plans: every placed plan (pieces left, distance) and any levelling in progress", CmdPlans);
                 Add("ui", "ui <blueprints|plans|settings|close> | ui place <file.json> | ui height <m> | ui turn <deg> | ui confirm | ui cancel: the Plans window and placement preview", CmdUi);
-                Add("bridge", "bridge <from> <to>: plan a medieval wooden bridge between two spots (each: here, look, or x,z with no space)", CmdBridge);
+                Add("bridge", "bridge <from> <to> [width=2|4|6] [material=wood|corewood|darkwood|stone] [sides=rails|halfwalls|none] [ends=sloped|steps] [roof=on|off] [supports=auto|2|4] [shape=straight|arched] [torches=on|off]: plan a bridge between two spots (each: here, look, or x,z with no space); unset options use the player's last bridge settings", CmdBridge);
                 Add("selfshare", "selfshare <file.json>: send a blueprint to yourself as if a friend had shared it (tests sharing alone)", CmdSelfShare);
                 frame?.Invoke(null, new object[] { Name, (Func<string, float[]>)BlueprintFrame });
                 Logger.LogInfo("Claude Tools found: blueprint commands added");
@@ -198,6 +198,7 @@ namespace BuildOrders
             {
                 ["check"] = name, ["pieces"] = mine.Count, ["postColumns"] = columns.Count, ["floatingColumns"] = new JArray(floating), ["doors"] = doors,
                 ["wouldFall"] = weak.Count(st => st.Collapses), ["weakestSupport"] = weak.Count > 0 ? weak.Min(st => st.Percent) + "%" : null,
+                ["falling"] = new JArray(mine.Where(o => _stability.TryGetValue(o.Id, out Stab st) && st.Collapses).Take(10).Select(o => o.Prefab + " at " + Vec(o.Pos))),
             });
             return null;
         }
@@ -273,8 +274,28 @@ namespace BuildOrders
                 return false;
             }
             if (a.Length < 3 || !Spot(a[1], out Vector3 from) || !Spot(a[2], out Vector3 to)) { error("bridge <here|look|x,z> <here|look|x,z>"); return null; }
-            BridgeDesign d = PlanBridge(player, from, to);
-            output(new JObject { ["bridge"] = LastPlacedTitle(), ["length"] = Math.Round(d.Length, 1), ["pieces"] = d.Entries.Count, ["warnings"] = new JArray(d.Warnings), ["from"] = Vec(from), ["to"] = Vec(to) });
+            BridgeOptions o = CurrentBridgeOptions();
+            foreach (string kv in a.Skip(3))
+            {
+                string[] p = kv.ToLowerInvariant().Split('=');
+                if (p.Length != 2) continue;
+                bool on = p[1] == "on" || p[1] == "yes" || p[1] == "true";
+                switch (p[0])
+                {
+                    case "width": if (int.TryParse(p[1], out int wv)) o.Width = wv; break;
+                    case "material": o.Material = p[1].StartsWith("core") ? BridgeMaterial.CoreWood : p[1].StartsWith("dark") ? BridgeMaterial.Darkwood : p[1].StartsWith("stone") ? BridgeMaterial.Stone : BridgeMaterial.Wood; break;
+                    case "rails": o.Sides = on ? BridgeSides.Rails : BridgeSides.None; break;
+                    case "sides": o.Sides = p[1].StartsWith("half") ? BridgeSides.HalfWalls : p[1] == "none" ? BridgeSides.None : BridgeSides.Rails; break;
+                    case "ends": o.Ends = p[1].StartsWith("step") ? BridgeEnds.Steps : BridgeEnds.Sloped; break;
+                    case "roof": o.Roof = on; break;
+                    case "torches": o.Torches = on; break;
+                    case "supports": o.Supports = p[1] == "2" ? BridgeSupports.Every2m : p[1] == "4" ? BridgeSupports.Every4m : BridgeSupports.Auto; break;
+                    case "shape": o.Shape = p[1].StartsWith("arch") ? BridgeShape.Arched : BridgeShape.Straight; break;
+                }
+            }
+            BridgeDesign d = PlanBridge(player, from, to, o);
+            output(new JObject { ["bridge"] = LastPlacedTitle(), ["length"] = Math.Round(d.Length, 1), ["pieces"] = d.Entries.Count,
+                ["parts"] = new JObject(d.Entries.GroupBy(e => e.Prefab).OrderByDescending(g => g.Count()).Select(g => new JProperty(g.Key, g.Count()))), ["warnings"] = new JArray(d.Warnings), ["from"] = Vec(from), ["to"] = Vec(to) });
             return null;
         }
 

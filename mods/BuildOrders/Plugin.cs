@@ -21,7 +21,7 @@ namespace BuildOrders
     {
         public const string Guid = "com.dhack.buildorders";
         public const string Name = "BuildOrders";
-        public const string Version = "1.8.0";
+        public const string Version = "1.9.0";
 
         internal static Plugin Instance;
 
@@ -82,6 +82,7 @@ namespace BuildOrders
             _harmony = new Harmony(Guid);
             _harmony.PatchAll();
             Log = Logger;
+            BindBridgeConfig();
             PlansPatches.Apply(_harmony);
             if (ZNetScene.instance != null) RegisterBridgeTool(ZNetScene.instance);   // hot reload while in a world
 

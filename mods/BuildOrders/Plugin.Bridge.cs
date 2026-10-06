@@ -35,7 +35,7 @@ namespace BuildOrders
                 _bridgeTool.name = BridgeToolPrefab;
                 Piece piece = _bridgeTool.GetComponent<Piece>();
                 piece.m_name = "Bridge";
-                piece.m_description = "Plans a bridge: click where it starts, walk or swim across, and click where it ends. It becomes ghosts to build, with posts down to the riverbed. Costs nothing until you build it.";
+                piece.m_description = "Plans a bridge: click where it starts, walk or swim across, and click where it ends; then choose its width, material, rails, roof and more, and confirm. It becomes ghosts to build, with posts down to the riverbed. Costs nothing until you build it.";
                 piece.m_category = Piece.PieceCategory.Misc;
                 piece.m_craftingStation = null;
                 piece.m_resources = new Piece.Requirement[0];
@@ -77,6 +77,7 @@ namespace BuildOrders
         private Vector3 _bridgeEnd;
         private float _bridgeAt;
         private BridgeDesign _bridgeDesign;
+        private bool _bridgeEndFixed, _bridgeDirty;   // the end is set (the options panel is open); the settings changed
         private readonly List<KeyValuePair<string, GameObject>> _bridgeGhosts = new List<KeyValuePair<string, GameObject>>();
         private readonly List<Material> _bridgeMaterials = new List<Material>();
         internal static bool BridgeDrawing => Instance != null && Instance._bridgeStart.HasValue;
@@ -94,17 +95,20 @@ namespace BuildOrders
                 player.Message(MessageHud.MessageType.Center, "Bridge start set: walk or swim across, then click where it ends (Esc cancels)");
                 return;
             }
-            BridgeDesign design = DesignBridge(_bridgeStart.Value, at);
+            BridgeDesign design = DesignBridge(_bridgeStart.Value, at, CurrentBridgeOptions());
             if (design.Entries.Count == 0 || design.Length < 2f) { player.Message(MessageHud.MessageType.Center, "Too short for a bridge: click further away"); return; }
-            Vector3 start = _bridgeStart.Value;
-            CancelBridge();
-            PlanBridge(player, start, at);
-            player.Message(MessageHud.MessageType.TopLeft, $"Bridge planned: {design.Length:0} m. Build it with E (hold E for everything near you)");
+            // the end is set: keep the ghost there and open the options (Confirm places it)
+            _bridgeEnd = at;
+            _bridgeEndFixed = true;
+            OpenBridgeOptions();
         }
 
         internal void CancelBridge()
         {
             _bridgeStart = null;
+            _bridgeEndFixed = false;
+            BridgeOptionsOpen = false;
+            _bridgeOpts = null;
             foreach (var kv in _bridgeGhosts) if (kv.Value != null) Destroy(kv.Value);
             _bridgeGhosts.Clear();
             foreach (Material m in _bridgeMaterials) if (m != null) Destroy(m);
@@ -116,15 +120,21 @@ namespace BuildOrders
         private void UpdateBridge(Player player)
         {
             if (!_bridgeStart.HasValue) return;
-            if (player == null || player.IsDead() || !player.InPlaceMode() || !IsBridgeTool(player.GetSelectedPiece())) { CancelBridge(); return; }
-            GameObject ghost = PlacementGhost(player);
-            if (ghost == null || !ghost.activeSelf) return;
-            Vector3 end = ghost.transform.position;
-            if ((end - _bridgeEnd).sqrMagnitude < 0.09f && _bridgeDesign != null) return;
-            if (Time.unscaledTime - _bridgeAt < 0.15f && _bridgeDesign != null) return;   // a few times a second is plenty
+            if (player == null || player.IsDead() || (!_bridgeEndFixed && (!player.InPlaceMode() || !IsBridgeTool(player.GetSelectedPiece())))) { CancelBridge(); return; }
+            Vector3 end = _bridgeEnd;
+            if (!_bridgeEndFixed)
+            {
+                GameObject ghost = PlacementGhost(player);
+                if (ghost == null || !ghost.activeSelf) return;
+                end = ghost.transform.position;
+                if ((end - _bridgeEnd).sqrMagnitude < 0.09f && _bridgeDesign != null && !_bridgeDirty) return;
+                if (Time.unscaledTime - _bridgeAt < 0.15f && _bridgeDesign != null && !_bridgeDirty) return;   // a few times a second is plenty
+            }
+            else if (!_bridgeDirty) return;   // the end is set: only the settings change it now
             _bridgeAt = Time.unscaledTime;
+            _bridgeDirty = false;
             _bridgeEnd = end;
-            _bridgeDesign = DesignBridge(_bridgeStart.Value, end);
+            _bridgeDesign = DesignBridge(_bridgeStart.Value, end, _bridgeOpts ?? CurrentBridgeOptions());
 
             // the preview: reuse the ghosts already made where the piece is the same, make or hide the rest
             Quaternion turn = Quaternion.Euler(0f, _bridgeDesign.Yaw, 0f);
@@ -158,7 +168,7 @@ namespace BuildOrders
 
         private void DrawBridgeBanner(float sw)
         {
-            if (!_bridgeStart.HasValue) return;
+            if (!_bridgeStart.HasValue || BridgeOptionsOpen) return;
             BridgeDesign d = _bridgeDesign;
             var r = new Rect(sw / 2f - 450f, 70f, 900f, d != null && d.Warnings.Count > 0 ? 78f : 56f);
             Round(r, new Color(0.04f, 0.08f, 0.1f, 0.88f), 8f);
@@ -169,84 +179,6 @@ namespace BuildOrders
             Label(new Rect(r.x, r.y + 28f, r.width, 20f), "Walk or swim across and aim where it ends   ·   Click: plan it   ·   Esc (or another piece): cancel", _text, Color.white, TextAnchor.MiddleCenter);
             if (d != null && d.Warnings.Count > 0)
                 Label(new Rect(r.x, r.y + 50f, r.width, 20f), string.Join("   ·   ", d.Warnings.ToArray()), _bold, new Color(1f, 0.65f, 0.4f), TextAnchor.MiddleCenter);
-        }
-
-        // ---- the design ----
-
-        internal class BridgeDesign
-        {
-            public List<Entry> Entries = new List<Entry>();
-            public float Yaw, Length;
-            public List<string> Warnings = new List<string>();
-        }
-
-        /// <summary>The bridge from a start to an end point, in the start's frame (z along the bridge). The medieval wooden style.</summary>
-        private BridgeDesign DesignBridge(Vector3 start, Vector3 end)
-        {
-            var d = new BridgeDesign();
-            Vector3 flat = end - start; flat.y = 0f;
-            if (flat.magnitude < 0.5f) return d;
-            d.Yaw = Mathf.Atan2(flat.x, flat.z) * Mathf.Rad2Deg;
-            int segments = Mathf.Clamp(Mathf.CeilToInt(flat.magnitude / 2f), 1, 60);   // 2 m planks, up to 120 m
-            float length = segments * 2f;
-            d.Length = length;
-            Quaternion turn = Quaternion.Euler(0f, d.Yaw, 0f);
-            float water = ZoneSystem.instance != null ? ZoneSystem.instance.m_waterLevel - start.y : -100f;
-            // the deck slopes evenly from one end to the other; an end over water (a pier) is kept above it, not down on the bottom
-            float startDeck = Mathf.Max(0f, water + 0.6f), endDeck = Mathf.Max(end.y - start.y, water + 0.6f);
-            float rise = endDeck - startDeck;
-            float slope = rise / length;
-            float tilt = Mathf.Atan(slope) * Mathf.Rad2Deg;
-            float Deck(float z) => startDeck + slope * z + 0.05f;                          // the deck's top, above the start's ground
-            float Ground(float x, float z) => ZoneSystem.instance.GetGroundHeight(start + turn * new Vector3(x, 0f, z)) - start.y;
-            void Add(string prefab, float x, float y, float z, Quaternion rot) => d.Entries.Add(new Entry { Prefab = prefab, Local = new Vector3(x, y, z), Rot = rot });
-
-            // the deck: 2 m planks, tilted with the slope
-            Quaternion plank = Quaternion.Euler(-tilt, 0f, 0f);
-            for (int s = 0; s < segments; s++) Add("wood_floor", 0f, Deck(s * 2f + 1f), s * 2f + 1f, plank);
-
-            // posts down to the riverbed (or the bank) under both edges: every 4 m, every 2 m where the water is deep
-            float deepest = 0f;
-            for (int k = 0; k <= segments; k++)
-            {
-                float z = k * 2f;
-                float under = Deck(z) - Mathf.Min(Ground(-1f, z), Ground(1f, z));
-                deepest = Mathf.Max(deepest, under);
-            }
-            int every = deepest > 6f ? 1 : 2;
-            for (int k = 0; k <= segments; k += every)
-            {
-                float z = k * 2f;
-                foreach (float x in new[] { -1f, 1f })
-                {
-                    float top = Deck(z) - 0.1f, ground = Ground(x, z);
-                    if (top - ground < 0.3f) continue;          // resting on the bank already
-                    for (int n = 0; n < 12 && top - ground > 0.05f; n++)
-                    {
-                        if (top - ground > 1f) { Add("wood_pole2", x, top - 1f, z, Quaternion.identity); top -= 2f; }
-                        else { Add("wood_pole", x, top - 0.5f, z, Quaternion.identity); top -= 1f; }
-                    }
-                }
-            }
-
-            // rails: a short post every 2 m on both edges, a beam along the top
-            Quaternion rail = Quaternion.Euler(0f, -90f, tilt);   // a beam lies along x: turned to run along the bridge and tilted with it
-            for (int k = 0; k <= segments; k++)
-                foreach (float x in new[] { -0.85f, 0.85f })
-                {
-                    float z = k * 2f;
-                    Add("wood_pole", x, Deck(z) + 0.5f, z, Quaternion.identity);
-                    if (k < segments) Add("wood_beam", x, Deck(z + 1f) + 1.05f, z + 1f, rail);
-                }
-
-            // what to tell the player
-            if (Mathf.Abs(tilt) > 25f) d.Warnings.Add($"very steep ({Mathf.Abs(tilt):0}°): hard to walk up");
-            if (deepest > 12f) d.Warnings.Add($"posts {deepest:0} m long: wood may not hold that far down, find a shallower spot");
-            if (Deck(length * 0.5f) < water + 0.5f && water > -50f) d.Warnings.Add("the middle is close to the water: start or end higher up the bank");
-            bool benchStart = CraftingStation.HaveBuildStationInRange("piece_workbench", start) != null;
-            bool benchEnd = CraftingStation.HaveBuildStationInRange("piece_workbench", start + turn * new Vector3(0f, endDeck, length)) != null;
-            if (!benchStart || !benchEnd) d.Warnings.Add(benchStart ? "no workbench near the far end: build one there to finish it" : "needs a workbench within 20 m to build: put one by the start");
-            return d;
         }
 
         // ---- bridges are not levelled, and are not moved (their posts are cut to the riverbed where they stand) ----
@@ -288,9 +220,9 @@ namespace BuildOrders
         }
 
         /// <summary>Plan a bridge between two points straight away (for the assistant's "bridge" command). Returns the design used.</summary>
-        internal BridgeDesign PlanBridge(Player player, Vector3 start, Vector3 end)
+        internal BridgeDesign PlanBridge(Player player, Vector3 start, Vector3 end, BridgeOptions options = null)
         {
-            BridgeDesign design = DesignBridge(start, end);
+            BridgeDesign design = DesignBridge(start, end, options ?? CurrentBridgeOptions());
             if (design.Entries.Count == 0) return design;
             PlaceEntries(player, "Bridge", null, design.Entries, start, design.Yaw, 0f, fixedBaseY: start.y);
             MarkNoLevel(BlueprintPrefix + LastPlacedTitle());

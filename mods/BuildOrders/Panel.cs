@@ -83,6 +83,8 @@ namespace BuildOrders
                     GUI.matrix = m;
                 }
                 DrawPlansWindow();
+                DrawBridgeOptions();
+                if (BridgeOptionsOpen) return;
                 if (PlansWindowOpen) return; // the window covers the usual panel
             }
             if (Event.current.type != EventType.Repaint) return;
