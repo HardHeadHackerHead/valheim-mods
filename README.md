@@ -221,6 +221,7 @@ after it finishes, or restart if the installer reports a mod that requires it
 
 - Each mod is a folder under `mods/` with its own `.csproj`, `Plugin.cs`, `DESCRIPTION.txt` (first paragraph is the summary, the rest is shown under **Details**), `CHANGELOG.txt` (first paragraph is "what is new") and an optional `cover.png`.
 - Bump the `Version` constant in `Plugin.cs` for every change people should get.
+- Add-ons can submit ordinary shared ghosts through the versioned [BuildOrders planning API](docs/buildorders-api.md), without changing terrain or duplicating the planner.
 - A mod that cannot be reloaded in game gets a `RESTART_REQUIRED.txt` explaining why.
 - Set `VALHEIM_DIR` for a custom game library; you do not need to edit shared build settings.
 - Mods with hand-made 3D looks (Bounty Board, Slot Machine) are described as simple shapes in `tools/modelkit`, which draws previews and writes the C# for them; see its README.

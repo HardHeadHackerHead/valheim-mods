@@ -311,6 +311,8 @@ namespace BuildOrders
         /// <summary>Pick a placed plan up again: its pieces relative to where it was placed, ready to be put down somewhere else.</summary>
         internal void StartMove(Player player, PlanInfo plan)
         {
+            if (IsAddonGhostPlan(plan.Key))
+            { player.Message(MessageHud.MessageType.TopLeft, "Draw a new shape with its add-on tool instead of moving it as a levelled blueprint."); return; }
             List<Entry> entries = PlanEntries(plan, out Vector3 _, out float yaw, out float offset);
             StartPlacement(plan.Title, null, entries, yaw, offset, plan.Key);
             player.Message(MessageHud.MessageType.TopLeft, $"Moving \"{plan.Title}\": look where it should go and click");
@@ -319,6 +321,7 @@ namespace BuildOrders
         /// <summary>Level the ground under a plan that is already placed (to its floor level).</summary>
         internal int LevelPlacedPlan(PlanInfo plan)
         {
+            if (IsAddonGhostPlan(plan.Key)) return 0;
             List<Entry> entries = PlanEntries(plan, out Vector3 origin, out float yaw, out float offset);
             List<Vector3> points = LevelPoints(entries, GroundFeet(entries), origin, yaw, origin.y + offset);
             StartLevel(plan.Key, plan.Title, points, origin, yaw);
