@@ -67,8 +67,27 @@ for the newest; use `_` for spaces). Positions in a place are metres: x right, y
 | `say <text>` | A message in the middle of the player's screen. |
 | `pin <place\|x z> <text>` | A labelled pin on the player's map. |
 | `wait <seconds>` | Pause, so things happen before the next picture. |
+| `render <prefab> [yaw=25] [pitch=12] [views=1\|4] [focus=x,y,z] [dist=m] [fov=30] [size=WxH] [bg=sky\|dark\|clear]` | A picture of any piece, item or creature **on its own**, built out of sight with its real materials and its own light (nothing is placed). `yaw=0` is its front (-z); `views=4` gives front, three-quarter, side and back; `focus` (metres from its origin) and `dist` give a close-up of one part. Use it to check and improve mods' models. |
+| `inspect <prefab> [depth=3]` | What an object is made of: its parts with positions, rotations and sizes, components, meshes and materials (with colours). |
+| `errors` | The new errors and exceptions in the log since you last asked, with their stack traces. Run it after every rebuild. |
+| `waitfor <mod> [version] [seconds=30]` | Wait until a mod (that version) is loaded: after a rebuild, before looking at it. |
 
 Pictures can only show what is loaded, which is the world near the player (about 60 m or more).
+
+## Improving a mod's model
+
+A hot reload rebuilds a mod's piece in the build menu, but pieces already standing in the world keep their old model until the game
+restarts. So check models with `render`, which always builds a fresh copy: change the model, rebuild, then
+
+```
+waitfor BountyBoard 1.1.2
+errors
+render piece_bountyboard views=4
+render piece_bountyboard yaw=0 pitch=0 focus=0,2.2,-0.2 dist=1.5 size=1600x600
+```
+
+Small details sitting less than a centimetre or so in front of a surface flicker or vanish at a distance (the camera cannot tell which is
+in front): raise them clearly off it.
 
 ## Commands from other mods
 

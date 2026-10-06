@@ -20,6 +20,7 @@ namespace ClaudeTools
         private void RegisterBuiltIns()
         {
             RegisterPictureCommands();
+            RegisterRenderCommands();
 
             Builtin("help", "help: every command, with the mod that adds it", (a, output, error) =>
             {

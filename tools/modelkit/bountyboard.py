@@ -82,10 +82,25 @@ def make():
     m.box("signBoard", 0, sign_y, -0.19, 0.96, 0.2, 0.05, "Dark")
     m.box("signTrim", 0, sign_y, -0.17, 1.0, 0.24, 0.02, "Planks")
     m.box("signFace", 0, sign_y, -0.218, 0.92, 0.17, 0.012, "Dark")
-    for i, x in enumerate((-0.36, -0.24, -0.12, 0.0, 0.12, 0.24, 0.36)):
-        m.box("rune", x, sign_y, -0.228, 0.022, 0.1, 0.006, "Gold")
-        tilt = 35 if i % 2 else -35
-        m.box("runeTick", x + (0.02 if i % 2 else -0.02), sign_y + (0.03 if i % 3 else -0.03), -0.228, 0.05, 0.016, 0.006, "Gold", rz=tilt)
+    # "BOUNTIES" in angular gold letters (a carved, runic look), raised well off the face so they never flicker into it
+    letters = {   # strokes on a unit box: (x0, y0, x1, y1), x right, y up
+        "B": [(0, 0, 0, 1), (0, 1, .65, 1), (.65, 1, 1, .78), (1, .78, .65, .5), (0, .5, .65, .5), (.65, .5, 1, .25), (1, .25, .65, 0), (.65, 0, 0, 0)],
+        "O": [(.3, 1, .7, 1), (.7, 1, 1, .7), (1, .7, 1, .3), (1, .3, .7, 0), (.7, 0, .3, 0), (.3, 0, 0, .3), (0, .3, 0, .7), (0, .7, .3, 1)],
+        "U": [(0, 1, 0, .28), (0, .28, .3, 0), (.3, 0, .7, 0), (.7, 0, 1, .28), (1, .28, 1, 1)],
+        "N": [(0, 0, 0, 1), (0, 1, 1, 0), (1, 0, 1, 1)],
+        "T": [(0, 1, 1, 1), (.5, 1, .5, 0)],
+        "I": [(.5, 0, .5, 1), (.2, 1, .8, 1), (.2, 0, .8, 0)],
+        "E": [(0, 0, 0, 1), (0, 1, 1, 1), (0, .5, .75, .5), (0, 0, 1, 0)],
+        "S": [(1, 1, .3, 1), (.3, 1, 0, .76), (0, .76, .3, .5), (.3, .5, .7, .5), (.7, .5, 1, .24), (1, .24, .7, 0), (.7, 0, 0, 0)],
+    }
+    word, lw, lh, gap, stroke = "BOUNTIES", 0.078, 0.115, 0.034, 0.02
+    left = -(len(word) * lw + (len(word) - 1) * gap) / 2
+    for i, ch in enumerate(word):
+        x0, y0 = left + i * (lw + gap), sign_y - lh / 2
+        for (a, b, c, d) in letters[ch]:
+            ax, ay, bx, by = x0 + a * lw, y0 + b * lh, x0 + c * lw, y0 + d * lh
+            length = math.hypot(bx - ax, by - ay) + stroke
+            m.box("letter", (ax + bx) / 2, (ay + by) / 2, -0.25, length, stroke, 0.02, "Gold", rz=math.degrees(math.atan2(by - ay, bx - ax)))
 
     # --- notices pinned to the board
     notes = [  # x, y, w, h, tilt, has red seal

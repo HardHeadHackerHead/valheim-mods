@@ -20,7 +20,7 @@ namespace BountyBoard
     {
         public const string Guid = "com.dhack.bountyboard";
         public const string Name = "BountyBoard";
-        public const string Version = "1.1.1";
+        public const string Version = "1.1.2";
         public const string PiecePrefab = "piece_bountyboard";
 
         internal static Plugin Instance;

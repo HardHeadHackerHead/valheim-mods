@@ -1,1 +1,3 @@
+The sign on the board now reads BOUNTIES in gold carved letters (the old marks sat too close to the board and partly disappeared). Restart the game to see it on boards already built.
+
 The on-screen tracker is easier to read: taller progress bars with a larger, outlined 3/6, bigger text and more room between contracts.
