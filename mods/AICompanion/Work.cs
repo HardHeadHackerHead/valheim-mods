@@ -482,7 +482,7 @@ namespace AICompanion
                     if (!me.IsItemEquiped(tool) || me.InAttack() || !st.Ai.IsLookingAt(aim, 25f)) break;
                     float cost = tool.m_shared.m_attack?.m_attackStamina ?? 0f;
                     if (Stamina.Get(me) < cost + 1f) { Brain.Status(st, "catching its breath"); break; }
-                    if (me.GetTimeSinceLastAttack() < 0.5f) break;
+                    if (me.GetTimeSinceLastAttack() < 0.5f && !Tactics.MidCombo(me)) break; // (mid-combo: the next swing at once, for the strong last one)
                     st.WorkSpot = at;
                     if (me.StartAttack(null, false)) Missing(st, t);
                     break;
@@ -505,7 +505,7 @@ namespace AICompanion
                     break;
 
                 case Kind.Cook:
-                    if (dist > 2.2f) { moveTo(at, 1.5f, dist > 8f); break; }
+                    if (dist > 2.2f && !CanReachOver(t, dist)) { moveTo(at, 1.5f, dist > 8f); break; } // (by the fire it cannot get right up to it)
                     t.LastClose = Time.time;
                     stop();
                     if (Time.time - t.Started > 240f || !Kitchen.Cook(st, (CookingStation)t.Target)) st.Task = null; // done (what it cooked lies at its feet: it picks it up next)
@@ -881,7 +881,8 @@ namespace AICompanion
                         && (Companion.BestRanged(me) != null || !(ch.IsSwimming() || ch.InWater())) // (a neck in its pond: no reaching it with an axe)
                         && (!Harmless.Contains(Utils.GetPrefabName(ch.gameObject)) || Vector3.Distance(ch.transform.position, me.transform.position) < reachable) // boars come at it: only runners need a bow
                         && Vector3.Distance(ch.transform.position, center) < range && !Skipped(st, ch))
-                    .OrderBy(ch => Vector3.Distance(ch.transform.position, me.transform.position)).FirstOrDefault();
+                    .OrderBy(ch => Vector3.Distance(ch.transform.position, me.transform.position)).Take(6)
+                    .FirstOrDefault(ch => Companion.BestRanged(me) != null || Brain.CanReach(me, ch.transform.position, 3f)); // (one it can walk to: not across the water, behind the stakes)
                 Character prey = Find(radius);
                 bool trip = false;
                 if (prey == null && fit) { prey = Find(170f); trip = prey != null; }

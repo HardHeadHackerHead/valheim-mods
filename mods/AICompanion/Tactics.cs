@@ -55,12 +55,30 @@ namespace AICompanion
             return target.transform.position - target.transform.forward * (target.GetRadius() + reach * 0.6f);
         }
 
+        // ---- combos ----------------------------------------------------------------------------------------
+
+        private static readonly AccessTools.FieldRef<Humanoid, Attack> CurrentAttack = AccessTools.FieldRefAccess<Humanoid, Attack>("m_currentAttack");
+        private static readonly AccessTools.FieldRef<Attack, int> NextChain = AccessTools.FieldRefAccess<Attack, int>("m_nextAttackChainLevel");
+
+        /// <summary>
+        /// Mid-combo: its last swing was not the last of its weapon's chain (a sword's three, an axe's...), whose last blow hits twice as hard.
+        /// The game carries a combo on only when the next swing starts within a fifth of a second of the last one ending (Attack.Start).
+        /// </summary>
+        public static bool MidCombo(Humanoid me)
+        {
+            Attack last = CurrentAttack(me);
+            return last != null && NextChain(last) > 0 && me.GetTimeSinceLastAttack() < 0.18f;
+        }
+
+        /// <summary>The swing just started leads on to more of its combo (not the last blow, nor a weapon without one).</summary>
+        public static bool MidComboStarted(Humanoid me) { Attack a = CurrentAttack(me); return a != null && NextChain(a) > 0; }
+
         // ---- the weapon's special --------------------------------------------------------------------------
 
         /// <summary>Its secondary attack now? A sweep or slam into three or more, or every third blow on a tough one to stagger it. Never a throw.</summary>
         public static bool Special(BrainState st, ItemDrop.ItemData weapon, Character target, float dist)
         {
-            if (weapon == null || !weapon.HaveSecondaryAttack()) return false;
+            if (weapon == null || !weapon.HaveSecondaryAttack() || MidCombo(st.Body)) return false; // (a combo first: a special would break it)
             Attack special = weapon.m_shared.m_secondaryAttack;
             if (special == null || special.m_attackType == Attack.AttackType.Projectile || special.m_attackProjectile != null) return false;
             if (Stamina.Get(st.Body) < special.m_attackStamina + 15f || dist > Mathf.Max(1.2f, special.m_attackRange * 0.9f)) return false;

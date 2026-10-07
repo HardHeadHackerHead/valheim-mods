@@ -22,8 +22,9 @@ namespace AICompanion
 
         public static void Command(Player p)
         {
-            var mine = Companion.All().Where(c => Companion.CanCommand(c, p) && !c.IsDead() && Vector3.Distance(c.transform.position, p.transform.position) < 60f).ToList();
-            if (mine.Count == 0) { Plugin.Tell("No companion of yours near you."); return; }
+            // Yours, however far (any the game has loaded: one far off in a part of the world nobody is near is not running anywhere).
+            var mine = Companion.All().Where(c => Companion.CanCommand(c, p) && !c.IsDead()).ToList();
+            if (mine.Count == 0) { Plugin.Tell("None of your companions is close enough to be about (the game only runs them near a player)."); return; }
             Transform eye = GameCamera.instance != null ? GameCamera.instance.transform : p.transform;
             RaycastHit[] hits = Physics.RaycastAll(eye.position, eye.forward, Reach, Mask, QueryTriggerInteraction.Ignore).OrderBy(h => h.distance).ToArray();
             foreach (RaycastHit hit in hits)

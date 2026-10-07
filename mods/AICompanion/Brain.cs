@@ -981,14 +981,17 @@ namespace AICompanion
                 return;
             }
             if (me.InAttack() || !st.Ai.IsLookingAt(ranged ? lookAt : aim, ranged ? 4f : 25f)) return;
-            if (me.GetTimeSinceLastAttack() < (ranged ? 1.6f : 0.35f)) return;
+            // Mid-combo: the next blow at once (a moment's pause and the game starts the chain over, and its strong last blow never comes).
+            bool combo = !ranged && Tactics.MidCombo(me);
+            if (!combo && me.GetTimeSinceLastAttack() < (ranged ? 1.6f : 0.35f)) return;
             if (ranged) DrawTime(me) = 10f; // a full draw: the AI has no hold-the-button, and an undrawn bow does no damage
             bool special = !ranged && Tactics.Special(st, weapon, target, dist); // a sweep into a crowd, a stagger on a tough one
             if (me.StartAttack(target, special))
             {
                 st.Blows++;
                 if (special) Activity.Log(me, $"used its {Localization.instance.Localize(weapon.m_shared.m_name).ToLowerInvariant()}'s special on the {Localization.instance.Localize(target.m_name).ToLowerInvariant()}");
-                if (!ranged && TargetOf(target) == me && Tactics.Heavy(me, target)) st.HitAndRun = true; // (it is the one being swung at)
+                if (!ranged && TargetOf(target) == me && Tactics.Heavy(me, target) && !Tactics.MidComboStarted(me)) st.HitAndRun = true; // (it is the one being swung at; after the combo's last blow)
+                if (combo) Journal.Count(me, "combo blows");
             }
             if (ranged) DrawTime(me) = 0f;
         }
