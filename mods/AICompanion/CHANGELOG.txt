@@ -1,3 +1,13 @@
+Fix: its own way-finding could stall the game (seconds after a reload, as it checked every chest, stake and boar it might go to): each search now has a few milliseconds, and all of them a few per frame; a search that runs out of time is taken as a yes and tried; a way not found is remembered for a minute; repairs ask only about the nearest pieces.
+
+Its job is kept: the patch you gave it is saved on it, so a reload, a restart or its area unloading no longer loses it (it carries on, the patch marked again). Its menu shows its current job under its name (the patch and how far along it is, what you pointed at, waiting where you told it, out with you, or its mission at home), with a progress bar and "Stop this job"; the party panel's line says how many it has done in your patch.
+
+Where the game finds no way (its walk map empty, in your base), whether it can reach a chest, a station or a repair it now asks its own way-finding: it thought every chest out of reach, so with a full bag it gave up on its work and asked you to send it home. It no longer picks things up once it carries as much as it can (it went on picking up stone at 332 of 300 kg).
+
+It chops something low (a stump, a log on the ground, a small rock) with its tool's secondary attack, the axe's overhead chop straight down, and switches to it for anything when its usual swings miss twice running.
+
+Fix: it chops logs lying on the ground (and stumps) again: it wanted to be nearer to a low log than its own body lets it, and it waited to be "looking at" them, which the game measures from its eyes, and from close above something low that never came; now it swings when it faces it.
+
 Its own way-finding for where the game's has none (in some places, a big base among them, the game's walk map comes out empty, so it found no way anywhere there and walking straight took it into the stakes): a search over the ground and floors between it and where it goes, round walls, posts, stakes and fires, through doors (a door in a wall of stakes too: it keeps its body clear of the stakes, not a metre round them), up and down stairs. ClaudeTools "companion map" draws what it sees around it (stakes, walls, doors, its way).
 
 It shuts the doors it opened behind itself, as you do, once it is through (not while you or anyone is about to come through after it, or in a fight there). A door that was open when it came it leaves open.

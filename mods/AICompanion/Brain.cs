@@ -60,7 +60,8 @@ namespace AICompanion
         public Vector3 YouWere, IdleAt, LookAroundAt;
         public TombStone GraveOrdered, GraveOn;
         public readonly List<ItemDrop> PickQueue = new List<ItemDrop>();
-        public Work.Area Area;
+        private Work.Area _area;
+        public Work.Area Area { get => _area; set { _area = value; Work.SaveArea(this); } } // the patch you gave it (kept on it: Work.SaveArea)
         public List<Vector3> Path; public Vector3? PathTo; public int PathIndex;                    // its own way (Wayfinding), when the game finds none
         public float PathUntil, NextPathTry, PathProgressAt, PathBest;
         public readonly Dictionary<Door, float> OpenedDoors = new Dictionary<Door, float>(); // doors it opened, to shut behind it
@@ -251,6 +252,8 @@ namespace AICompanion
             BaseAI ai = me.GetComponent<BaseAI>();
             Pathfinding pf = Pathfinding.instance;
             if (ai == null || pf == null) return true;
+            // No walk map where it stands (the game's comes out empty in some places, a big base among them): its own way-finding decides.
+            if (!pf.FindValidPoint(out _, me.transform.position, 2f, ai.m_pathAgentType)) return Wayfinding.CanReach(Get(me), me, to);
             if (!pf.FindValidPoint(out Vector3 goal, to, near, ai.m_pathAgentType)) return false;
             return pf.HavePath(me.transform.position, goal, ai.m_pathAgentType) || PlanDoor(ai, me.transform.position, to) != null;
         }
@@ -401,6 +404,7 @@ namespace AICompanion
             {
                 foreach (Humanoid gone in States.Keys.Where(k => k == null).ToList()) States.Remove(gone);
                 States[h] = st = new BrainState { Body = h, Ai = h.GetComponent<MonsterAI>() };
+                if (h.GetComponent<ZNetView>() is ZNetView v && v.IsValid() && v.IsOwner()) Work.RestoreArea(st); // (its job, kept through a reload)
             }
             return st;
         }

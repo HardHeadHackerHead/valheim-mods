@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.Linq;
 using HarmonyLib;
 using UnityEngine;
@@ -39,7 +40,8 @@ namespace AICompanion
             public bool Ordered;             // you pointed it at this (Pointing)
             public Vector3 Pos;
             public float Closer = 1f;        // how much closer than usual it stands (it steps in when its swings do nothing)
-            public int Swings;
+            public int Swings, MissedRun;  // its swings; its swings that missed, one after another
+            public bool UsedChop;
             public float HealthAt = -1f;     // the target's health when it last checked its swings
             public float Started, LastClose;
         }
@@ -286,8 +288,90 @@ namespace AICompanion
             public Vector3 Center, YouAt; // the patch; where you stood when you pointed at it
             public float Radius = 12f, Until, YouAwaySince;
             public Job Job;
-            public int Done;
+            public int Done, Left = -1;
+            public float LeftAt;
             public readonly List<Component> Marked = new List<Component>();
+        }
+
+        public const string AreaKey = "dhc_area";
+
+        /// <summary>
+        /// The patch it is working, kept on it (its save): where, how big, what kind of work, where you stood, how many it has done, and when it
+        /// ends (in the world's time), so a reload, a restart or its area unloading does not lose its job. Written when it starts, ends, and
+        /// with each thing done.
+        /// </summary>
+        public static void SaveArea(BrainState st)
+        {
+            ZDO z = Companion.Zdo(st.Body);
+            if (z == null) return;
+            Area a = st.Area;
+            if (a == null || ZNet.instance == null) { z.Set(AreaKey, ""); return; }
+            double end = ZNet.instance.GetTimeSeconds() + Mathf.Max(0f, a.Until - Time.time);
+            string V(Vector3 v) => $"{v.x.ToString("0.0", CultureInfo.InvariantCulture)},{v.y.ToString("0.0", CultureInfo.InvariantCulture)},{v.z.ToString("0.0", CultureInfo.InvariantCulture)}";
+            z.Set(AreaKey, string.Join("|", V(a.Center), a.Radius.ToString(CultureInfo.InvariantCulture), (int)a.Job, V(a.YouAt), end.ToString("0", CultureInfo.InvariantCulture), a.Done));
+        }
+
+        /// <summary>Its patch back from its save (a reload, a restart): it carries on with it, marked again. False when it had none (or it ended).</summary>
+        public static bool RestoreArea(BrainState st)
+        {
+            ZDO z = Companion.Zdo(st.Body);
+            string s = z?.GetString(AreaKey, "") ?? "";
+            if (s.Length == 0 || ZNet.instance == null) return false;
+            try
+            {
+                string[] f = s.Split('|');
+                Vector3 V(string t) { string[] p = t.Split(','); return new Vector3(float.Parse(p[0], CultureInfo.InvariantCulture), float.Parse(p[1], CultureInfo.InvariantCulture), float.Parse(p[2], CultureInfo.InvariantCulture)); }
+                double left = double.Parse(f[4], CultureInfo.InvariantCulture) - ZNet.instance.GetTimeSeconds();
+                if (left <= 0) { z.Set(AreaKey, ""); return false; }
+                var a = new Area { Center = V(f[0]), Radius = float.Parse(f[1], CultureInfo.InvariantCulture), Job = (Job)int.Parse(f[2]), YouAt = V(f[3]), Until = Time.time + (float)left, Done = int.Parse(f[5]) };
+                st.Area = a;
+                st.CommandUntil = Time.time + 120f;
+                a.Marked.AddRange(AreaTasks(st, a).Take(8).Select(t => t.Target));
+                foreach (Component c in a.Marked) { Component cc = c; Marks.Put(cc, st.Body, null, () => st.Area == a && cc != null); }
+                st.Remember("carried on with the patch you gave it");
+                return true;
+            }
+            catch { z.Set(AreaKey, ""); return false; }
+        }
+
+        /// <summary>
+        /// Its job right now, in a line (its menu, the party panel), and how far along it is (0 to 1; -1 when that means nothing): the patch you
+        /// gave it, things you pointed at, waiting where you told it, out with you, or living at home on its mission.
+        /// </summary>
+        public static string JobText(BrainState st, out float progress)
+        {
+            progress = -1f;
+            Humanoid me = st.Body;
+            Area a = st.Area;
+            if (a != null)
+            {
+                if (Time.time >= a.LeftAt) { a.LeftAt = Time.time + 3f; a.Left = AreaTasks(st, a).Count(); }
+                if (a.Done + a.Left > 0) progress = a.Done / (float)(a.Done + a.Left);
+                string what = a.Job == Job.Wood ? "Chopping the trees" : a.Job == Job.Forage ? "Picking the plants" : "Mining the rocks";
+                return $"{what} you pointed at: {a.Done} done, {Mathf.Max(0, a.Left)} left";
+            }
+            if (st.PickQueue.Count > 0 || st.Task != null && st.Task.Ordered && st.Task.Kind == Kind.PickUp) return $"Picking up the things you pointed at ({st.PickQueue.Count + 1} left)";
+            if (st.Task != null && st.Task.Ordered && Time.time < st.CommandUntil) return "Doing what you pointed at: " + Describe(st.Task);
+            switch (Companion.OrderOf(me))
+            {
+                case Order.Guard: return "Waiting where you told it";
+                case Order.Stay: return "Staying put";
+                case Order.Follow: return "Out with you" + (string.IsNullOrEmpty(st.AutoNote) ? "" : $" ({st.AutoNote})");
+            }
+            Mission m = Missions.Current(me);
+            if (m != null && m.StartCost > 0) progress = Mathf.Clamp01(1f - m.Cost / (float)m.StartCost);
+            return st.Goal != null ? $"Living at home: its mission is a {st.Goal.What}" + (st.Goal.Raw.Count > 0 ? $" (still {st.Goal.RawText()})" : "") : "Living at home";
+        }
+
+        /// <summary>You stopped its job (its menu): the patch, what you pointed at, the things to pick up. It goes back to what it was doing before.</summary>
+        public static void StopJob(BrainState st)
+        {
+            st.Area = null;
+            st.PickQueue.Clear();
+            if (st.Task != null && st.Task.Ordered) st.Task = null;
+            st.CommandUntil = 0f;
+            SaveArea(st);
+            st.Remember("you stopped its job");
         }
 
         /// <summary>Starts a patch around the thing you pointed at (its task is already ordered). What it will work there, for showing.</summary>
@@ -298,6 +382,7 @@ namespace AICompanion
             Player you = Companion.Master(st.Body);
             area.YouAt = you != null ? you.transform.position : area.Center;
             st.Area = area;
+            SaveArea(st);
             area.Marked.AddRange(AreaTasks(st, area).OrderBy(t => Flat(t.Target.transform.position, area.Center)).Take(8).Select(t => t.Target));
             return area.Marked;
         }
@@ -320,6 +405,7 @@ namespace AICompanion
         {
             if (st.Area == null) return;
             st.Area = null;
+            SaveArea(st);
             if (say != null) Talk.Tell(st.Body, say);
         }
 
@@ -386,6 +472,7 @@ namespace AICompanion
                 return false;
             }
             a.Done++;
+            SaveArea(st);
             Claim(st, next);
             if (!Ordered(st, next, false)) return false;
             Marks.Put(next.Target, me, next.Kind == Kind.Pick ? "picking this" : next.Job == Job.Wood ? "chopping this" : "mining this", () => st.Task == next && next.Target != null);
@@ -433,6 +520,7 @@ namespace AICompanion
             switch (t.Kind)
             {
                 case Kind.PickUp:
+                    if (BagFull(me) && !t.Ordered) { st.Task = null; break; } // (as much as it can carry: it unloads first)
                     if (dist > 1.2f) { moveTo(at, 0.5f, dist > 6f); break; }
                     t.LastClose = Time.time;
                     var drop = (ItemDrop)t.Target;
@@ -467,6 +555,7 @@ namespace AICompanion
                     float big = Mathf.InverseLerp(0.6f, 3f, Mathf.Max(size.size.x, size.size.z, size.size.y * 0.5f));
                     float reach = Mathf.Lerp(0.6f, Mathf.Min(1.3f, (tool.m_shared.m_attack?.m_attackRange ?? 1.8f) * 0.6f), big) * t.Closer;
                     if (size.size.y > 0.01f && size.size.y < 1.5f) reach = Mathf.Min(reach, 0.5f); // something low: right up to it, to swing down on it
+                    reach = Mathf.Max(reach, me.GetRadius() + 0.25f); // (never nearer than its own body lets it: pressed against a log it is still that far off its side)
                     if (dist > reach) { moveTo(at, reach * 0.5f, dist > 8f); break; }
                     t.LastClose = Time.time;
                     stop();
@@ -480,12 +569,27 @@ namespace AICompanion
                     lookAt(aim);
                     Vector3 level = aim - swingFrom;
                     if (level.sqrMagnitude > 0.01f) me.SetLookDir(level.normalized, 0f);
-                    if (!me.IsItemEquiped(tool) || me.InAttack() || !st.Ai.IsLookingAt(aim, 25f)) break;
-                    float cost = tool.m_shared.m_attack?.m_attackStamina ?? 0f;
-                    if (Stamina.Get(me) < cost + 1f) { Brain.Status(st, "catching its breath"); break; }
-                    if (me.GetTimeSinceLastAttack() < 0.5f && !Tactics.MidCombo(me)) break; // (mid-combo: the next swing at once, for the strong last one)
+                    // Facing it (turned its way, flat: the game's "looking at" measures from its eyes, and from close above a log or a stump that
+                    // is far from where its swing goes, so it never swung at them).
+                    Vector3 facing = me.transform.forward, toAim = aim - me.transform.position;
+                    facing.y = 0f; toAim.y = 0f;
+                    if (!me.IsItemEquiped(tool) || me.InAttack() || toAim.sqrMagnitude > 0.01f && Vector3.Angle(facing, toAim) > 25f) break;
+                    // Its tool's secondary attack (an axe's overhead chop, straight down): for something low (a stump, a log on the ground, a
+                    // small rock), and for anything once its usual swings have missed twice running (stuck: the chop comes from above).
+                    Attack second = tool.HaveSecondaryAttack() ? tool.m_shared.m_secondaryAttack : null;
+                    bool downward = second != null && second.m_attackType == Attack.AttackType.Vertical && second.m_attackProjectile == null;
+                    bool low = size.size.y > 0.01f && size.size.y < 1.2f;
+                    bool chop = second != null && second.m_attackProjectile == null && second.m_attackType != Attack.AttackType.Projectile
+                                && (downward && low || st.SwingMissed && t.MissedRun >= 2) && !Tactics.MidCombo(me);
+                    float cost = (chop ? second.m_attackStamina : tool.m_shared.m_attack?.m_attackStamina) ?? 0f;
+                    if (Stamina.Get(me) < cost + 1f) { if (chop) chop = false; else { Brain.Status(st, "catching its breath"); break; } }
+                    if (me.GetTimeSinceLastAttack() < (chop ? 0.8f : 0.5f) && !Tactics.MidCombo(me)) break; // (mid-combo: the next swing at once, for the strong last one)
                     st.WorkSpot = at;
-                    if (me.StartAttack(null, false)) Missing(st, t);
+                    if (me.StartAttack(null, chop))
+                    {
+                        if (chop && !t.UsedChop) { t.UsedChop = true; Activity.Log(me, $"chops the {Hoverable(t.Target)} from above ({(low ? "it is low" : "its swings kept missing")}; its {Localization.instance.Localize(tool.m_shared.m_name).ToLowerInvariant()}'s secondary is {second.m_attackType})"); }
+                        Missing(st, t);
+                    }
                     break;
 
                 case Kind.Store:
@@ -562,7 +666,7 @@ namespace AICompanion
                     st.Task = null;
                     break;
             }
-            if (st.Task != null) Brain.Status(st, Describe(st.Task) + (st.Helping ? " to help you" : st.Task.ForGoal && st.Goal != null ? $" for its {st.Goal.What}" : ""));
+            if (st.Task != null) Brain.Status(st, Describe(st.Task) + (st.Helping ? " to help you" : st.Area != null ? $" (your patch: {st.Area.Done} done)" : st.Task.ForGoal && st.Goal != null ? $" for its {st.Goal.What}" : ""));
         }
 
         /// <summary>
@@ -609,6 +713,7 @@ namespace AICompanion
         private static void Missing(BrainState st, Task t)
         {
             t.Swings++;
+            t.MissedRun = st.SwingMissed ? t.MissedRun + 1 : 0; // (its last swing's: Attack_DoMeleeAttack_Log)
             if (t.Swings % 3 != 1) return;
             float health = Companion.Zdo(t.Target)?.GetFloat(ZDOVars.s_health, -1f) ?? -1f;
             // A big rock (copper, a boulder) keeps no one health (each part has its own): whether its last swing touched it (Attack_DoMeleeAttack_Log).
@@ -654,7 +759,7 @@ namespace AICompanion
         {
             Hoverable h = c.GetComponentInParent<Hoverable>();
             string n = h?.GetHoverName();
-            return string.IsNullOrEmpty(n) ? Utils.GetPrefabName(c.gameObject).Replace('_', ' ') : n;
+            return string.IsNullOrEmpty(n) ? Utils.GetPrefabName(c.gameObject).Replace('_', ' ') : Localization.instance.Localize(n); // ("$piece_groundtorchwood": "wood torch")
         }
 
         private static bool Valid(BrainState st, Task t)
@@ -911,7 +1016,7 @@ namespace AICompanion
                     && ((jobs & Job.Loot) != 0 || (st.Wanted.Contains(Utils.GetPrefabName(d.gameObject)) && Vector3.Distance(d.transform.position, st.WorkSpot) < 10f))
                     && inv.CanAddItem(d.m_itemData))
                 .OrderBy(d => Vector3.Distance(d.transform.position, me.transform.position)).FirstOrDefault();
-            if (loot != null) return New(Kind.PickUp, loot, Job.Loot);
+            if (loot != null && !BagFull(me)) return New(Kind.PickUp, loot, Job.Loot);
 
             // 4. Something to work on.
             ItemDrop.ItemData axe = Axe(me), pick = Pickaxe(me);

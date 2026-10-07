@@ -224,6 +224,22 @@ namespace AICompanion
             }
             string status = Companion.StatusOf(c);
             GUILayout.Label(string.IsNullOrEmpty(status) ? "Idle" : Capital(status), _good);
+            if (c.GetComponent<ZNetView>().IsOwner())
+            {
+                BrainState js = Brain.Get(c);
+                string job = Work.JobText(js, out float jobDone);
+                GUILayout.BeginHorizontal();
+                GUILayout.Label("Job: " + job, _small, GUILayout.MaxWidth(Inner - 230f));
+                bool stoppable = js.Area != null || js.PickQueue.Count > 0 || js.Task != null && js.Task.Ordered;
+                if (stoppable && Mine && GUILayout.Button("Stop this job", _button, GUILayout.Width(110), GUILayout.Height(22))) _pending = () => Work.StopJob(Brain.Get(_shown));
+                GUILayout.EndHorizontal();
+                if (jobDone >= 0f)
+                {
+                    Rect jb = GUILayoutUtility.GetRect(Inner - 230f, 6f, GUILayout.Width(Inner - 230f), GUILayout.Height(6));
+                    Rounded(jb, new Color(0.2f, 0.2f, 0.2f), 3f);
+                    Rounded(new Rect(jb.x, jb.y, jb.width * jobDone, jb.height), ColGood, 3f);
+                }
+            }
             GUILayout.EndVertical();
             GUILayout.FlexibleSpace();
             if (GUILayout.Button("Close", _button, GUILayout.Width(90), GUILayout.Height(30))) CloseMenu();

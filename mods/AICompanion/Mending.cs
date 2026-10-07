@@ -26,7 +26,7 @@ namespace AICompanion
         {
             return Physics.OverlapSphere(at, range, Pieces).Select(c => c.GetComponentInParent<WearNTear>()).Where(w => w != null).Distinct()
                 .Where(w => w.GetHealthPercentage() < 0.9f && Repairable(w))
-                .OrderBy(w => Vector3.Distance(w.transform.position, me.transform.position)).FirstOrDefault(w => allowed(w)); // (nearest first: the costly checks only as far as needed)
+                .OrderBy(w => Vector3.Distance(w.transform.position, me.transform.position)).Take(3).FirstOrDefault(w => allowed(w)); // (the nearest three: the reach check costs; the rest next time)
         }
 
         private static bool Repairable(WearNTear w)

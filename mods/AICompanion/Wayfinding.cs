@@ -14,8 +14,8 @@ namespace AICompanion
     /// </summary>
     internal static class Wayfinding
     {
-        private const float Cell = 0.75f, Step = 0.8f, Margin = 10f, MaxRange = 70f;
-        private const int MaxNodes = 7000;
+        private const float Cell = 0.75f, Step = 0.8f, Margin = 10f, MaxRange = 90f;
+        private const int MaxNodes = 15000;
         private static readonly int Ground = LayerMask.GetMask("Default", "static_solid", "terrain", "piece", "vehicle");
         private static readonly int Solid = LayerMask.GetMask("Default", "static_solid", "piece", "vehicle");
         private static readonly Collider[] Hits = new Collider[16];
@@ -29,7 +29,8 @@ namespace AICompanion
             {
                 if (Time.time < st.NextPathTry) return st.Path != null && Walk(st, me, run);
                 st.NextPathTry = Time.time + 1.5f;
-                st.Path = Find(me, pos, to);
+                st.Path = Find(me, pos, to, 12f); // (the way it walks: a longer search than a quick "can it get there")
+                if (st.Path == null && TimedOut) st.NextPathTry = Time.time + 0.3f; // (no time this frame: again in a moment)
                 st.PathTo = to;
                 st.PathIndex = 0;
                 st.PathUntil = Time.time + 20f;
@@ -75,12 +76,40 @@ namespace AICompanion
             return true;
         }
 
+        private static readonly Dictionary<Vector3Int, (bool ok, float until)> Reach = new Dictionary<Vector3Int, (bool, float)>();
+
+        /// <summary>
+        /// Can it get there by its own way-finding? Remembered (a way: 15 s; none: a minute), by where it is (to 8 m) and where to: the search is
+        /// not free. When the search runs out of its time, it takes it as a yes and tries (it finds out on the way) rather than hold the game up.
+        /// </summary>
+        public static bool CanReach(BrainState st, Humanoid me, Vector3 to)
+        {
+            if (Utils.DistanceXZ(me.transform.position, to) < 2.5f) return true;
+            Vector3 p = me.transform.position;
+            var key = new Vector3Int(Mathf.RoundToInt(to.x) * 1000 + Mathf.RoundToInt(p.x / 8f), Mathf.RoundToInt(to.y), Mathf.RoundToInt(to.z) * 1000 + Mathf.RoundToInt(p.z / 8f));
+            if (Reach.TryGetValue(key, out var r) && Time.time < r.until) return r.ok;
+            if (Reach.Count > 500) Reach.Clear();
+            List<Vector3> way = Find(me, p, to);
+            if (way == null && TimedOut) return true; // (no time to be sure: it tries)
+            Reach[key] = (way != null, Time.time + (way != null ? 15f : 60f));
+            return way != null;
+        }
+
+        /// <summary>The last search ran out of its time (4 ms to ask, 12 ms for the way it walks; 14 ms for all of them in one frame) before it was sure.</summary>
+        public static bool TimedOut;
+        private static int _frame;
+        private static float _frameMs;
+
         private static readonly Comparer<(float f, int n, Vector2Int k)> Order = Comparer<(float f, int n, Vector2Int k)>.Create((a, b) => a.f != b.f ? a.f.CompareTo(b.f) : a.n.CompareTo(b.n));
 
         /// <summary>The way (squares to walk through), or null when there is none it can find (or it is too far for this).</summary>
-        public static List<Vector3> Find(Humanoid me, Vector3 from, Vector3 to)
+        public static List<Vector3> Find(Humanoid me, Vector3 from, Vector3 to, float budgetMs = 4f)
         {
+            TimedOut = false;
             if (Utils.DistanceXZ(from, to) > MaxRange) return null;
+            if (_frame != Time.frameCount) { _frame = Time.frameCount; _frameMs = 0f; }
+            if (_frameMs >= 14f) { TimedOut = true; return null; } // (this frame has had its share)
+            var watch = System.Diagnostics.Stopwatch.StartNew();
             Vector2 min = new Vector2(Mathf.Min(from.x, to.x) - Margin, Mathf.Min(from.z, to.z) - Margin);
             Vector2Int Key(Vector3 p) => new Vector2Int(Mathf.RoundToInt((p.x - min.x) / Cell), Mathf.RoundToInt((p.z - min.y) / Cell));
             Vector3 At(Vector2Int k, float y) => new Vector3(min.x + k.x * Cell, y, min.y + k.y * Cell);
@@ -98,6 +127,7 @@ namespace AICompanion
             Vector2Int? reached = null;
             while (open.Count > 0 && expanded++ < MaxNodes)
             {
+                if ((expanded & 63) == 0 && watch.Elapsed.TotalMilliseconds > budgetMs) { TimedOut = true; break; } // (the game must not stutter for it)
                 var cur = open.Min;
                 open.Remove(cur);
                 Vector2Int k = cur.k;
@@ -115,6 +145,7 @@ namespace AICompanion
                     open.Add((g + Vector2.Distance(n, goal), counter++, n));
                 }
             }
+            _frameMs += (float)watch.Elapsed.TotalMilliseconds;
             if (reached == null) return null;
             var path = new List<Vector3>();
             for (Vector2Int k = reached.Value; came.ContainsKey(k); k = came[k]) path.Add(At(k, height[k]));

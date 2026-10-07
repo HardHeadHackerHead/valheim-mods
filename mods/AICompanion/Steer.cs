@@ -188,10 +188,14 @@ namespace AICompanion
         }
 
         /// <summary>Its body there would touch nothing hurtful (its own width, not a metre round: a door in a wall of stakes is a way through).</summary>
+        private static readonly Collider[] ClearHits = new Collider[32];
+
         public static bool Clear(Vector3 feet, Humanoid me, float radius = 0.45f)
         {
-            foreach (Collider col in Physics.OverlapCapsule(feet + Vector3.up * 0.3f, feet + Vector3.up * 1.5f, radius, ~0, QueryTriggerInteraction.Collide))
+            int n = Physics.OverlapCapsuleNonAlloc(feet + Vector3.up * 0.3f, feet + Vector3.up * 1.5f, radius, ClearHits, ~0, QueryTriggerInteraction.Collide); // (no garbage: the way-finding asks this thousands of times)
+            for (int i = 0; i < n; i++)
             {
+                Collider col = ClearHits[i];
                 Aoe aoe = col.GetComponent<Aoe>() ?? col.GetComponentInParent<Aoe>();
                 if (aoe != null && Dangerous(aoe, me)) return false;
             }

@@ -279,6 +279,7 @@ namespace AICompanion
             st.LootSpots.RemoveAll(s => Time.time - s.At > 90f);
             st.LootDrops.RemoveAll(kv => kv.Key == null || Time.time - kv.Value > 180f);
             if (st.LootSpots.Count == 0 && st.LootDrops.Count == 0) return false;
+            if (Work.BagFull(me)) return false; // (as much as it can carry: it unloads first)
             Inventory inv = me.GetInventory();
             ItemDrop next = null;
             float best = float.MaxValue;
