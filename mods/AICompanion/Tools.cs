@@ -235,6 +235,7 @@ namespace AICompanion
                 ["effects"] = new JArray(c.GetSEMan().GetStatusEffects().Where(se => se != null).Select(se => L(se.m_name))),
                 ["hazards_near"] = Steer.HazardsNear(c),
                 ["move"] = Move(c, t?.Target),
+                ["you_walk_through"] = Player.m_localPlayer != null && c.GetComponent<CapsuleCollider>() is CapsuleCollider cc && Player.m_localPlayer.GetComponent<CapsuleCollider>() is CapsuleCollider pc ? Physics.GetIgnoreCollision(cc, pc) : (bool?)null,
                 ["slots"] = new JArray(Companion.Worn(c).Select(i => $"{L(i.m_shared.m_name)} (in bag: {c.GetInventory().ContainsItem(i)}, flag {i.m_equipped}, game says equipped: {c.IsItemEquiped(i)})")),
                 ["bag"] = new JArray(c.GetInventory().GetAllItems().Select(i => $"{L(i.m_shared.m_name)} x{i.m_stack}{(Companion.Worn(c).Contains(i) ? " (worn)" : "")}{(i.m_shared.m_useDurability && i.GetMaxDurability() > 0f ? $" {i.m_durability / i.GetMaxDurability() * 100f:0}%" : "")}")),
                 ["chests"] = new JArray(Home.Chests(c).Select(ch => $"{Vector3.Distance(ch.transform.position, center):0} m from home: {ch.GetInventory().NrOfItems()} stacks: " + string.Join(", ", ch.GetInventory().GetAllItems().Take(12).Select(i => $"{L(i.m_shared.m_name)} x{i.m_stack}")))),

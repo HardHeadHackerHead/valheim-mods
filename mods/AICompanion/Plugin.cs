@@ -24,7 +24,7 @@ namespace AICompanion
     {
         public const string Guid = "com.dhack.aicompanion";
         public const string Name = "AICompanion";
-        public const string Version = "0.6.3";
+        public const string Version = "0.6.4";
 
         internal static Plugin Instance;
         internal static ConfigEntry<string> ApiKey, Endpoint, Model;
@@ -118,6 +118,7 @@ namespace AICompanion
             Goals.Forget();
             Steer.Forget();
             Activity.Forget();
+            Passing.Forget();
             _harmony?.UnpatchSelf();
             Prefab.Unregister();
             DestroyMenuResources();
@@ -129,6 +130,7 @@ namespace AICompanion
             UpdateClaudeLink();
             Player player = Player.m_localPlayer;
             Net.Update(player);
+            Passing.Tick();     // players and companions walk through each other
             if (player == null) { if (MenuOpen) CloseMenu(); return; }
             Companion.KeepOwnership(player);
             Home.Tick(player);

@@ -276,7 +276,7 @@ namespace AICompanion
 
         public static void Forget()
         {
-            foreach (BrainState st in States.Values) if (st.Body != null) { Blocking(st.Body) = false; if (st.YieldFrom != null) IgnoreBumps(st.Body, st.YieldFrom, false); }
+            foreach (BrainState st in States.Values) if (st.Body != null) Blocking(st.Body) = false;
             States.Clear();
         }
 
@@ -532,7 +532,7 @@ namespace AICompanion
                 MoveToRaw(st.Ai, dt, st.YieldTo, 0.4f, true);
                 return true;
             }
-            if (st.YieldFrom != null) { IgnoreBumps(me, st.YieldFrom, false); st.YieldFrom = null; }
+            st.YieldFrom = null; // (you walk through it anyway: Passing)
             foreach (Player p in Player.GetAllPlayers())
             {
                 if (p == null) continue;
@@ -548,21 +548,11 @@ namespace AICompanion
                 if (Vector3.Dot(side, toMe) < 0f) side = -side; // to the side it is already on
                 st.YieldTo = me.transform.position + side * 3f + dir * 1f;
                 st.YieldUntil = Time.time + 1.2f;
-                if (d < 1.6f) me.ApplyPushback(side * 0.8f + dir * 0.2f, 90f); // the shove: out of the way now, not in a moment
-                IgnoreBumps(me, p, true);
                 st.YieldFrom = p;
                 MoveToRaw(st.Ai, dt, st.YieldTo, 0.4f, true);
                 return true;
             }
             return false;
-        }
-
-        /// <summary>Let a player pass through it (or not) while it clears the way.</summary>
-        private static void IgnoreBumps(Humanoid me, Player p, bool ignore)
-        {
-            if (me == null || p == null) return;
-            Collider mine = me.GetComponent<CapsuleCollider>(), theirs = p.GetComponent<CapsuleCollider>();
-            if (mine != null && theirs != null) Physics.IgnoreCollision(mine, theirs, ignore);
         }
 
         internal static Character TargetOf(Character enemy) => enemy != null && enemy.GetBaseAI() is MonsterAI m ? m.GetTargetCreature() : null;
