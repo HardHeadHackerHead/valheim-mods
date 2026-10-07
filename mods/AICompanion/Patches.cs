@@ -121,18 +121,20 @@ namespace AICompanion
         }
     }
 
-    // Player-built things that hurt whoever touches them (sharpened stakes, spike traps) leave companions alone, as they leave players alone.
-    [HarmonyPatch(typeof(Aoe), "ShouldHit")]
-    internal static class Aoe_ShouldHit
+    // Sharpened stakes and spikes hurt a companion that walks into them (as they hurt any character), but do not wear themselves down on it:
+    // a stake damages itself a little each time it hits something, and a companion pressing against a wall of stakes wore it away.
+    [HarmonyPatch(typeof(Aoe), "OnHit")]
+    internal static class Aoe_OnHit
     {
-        private static void Postfix(Aoe __instance, Collider collider, ref bool __result)
-        {
-            if (!__result || collider == null) return;
-            Character c = collider.GetComponentInParent<Character>();
-            if (c == null || !Companion.Is(c)) return;
-            Piece piece = __instance.GetComponentInParent<Piece>();
-            if (piece != null && piece.IsPlacedByPlayer()) __result = false;
-        }
+        internal static bool HittingCompanion;
+        private static void Prefix(Collider collider) => HittingCompanion = collider != null && Companion.Is(collider.GetComponentInParent<Character>());
+        private static void Postfix() => HittingCompanion = false;
+    }
+
+    [HarmonyPatch(typeof(WearNTear), nameof(WearNTear.Damage))]
+    internal static class WearNTear_Damage_NotFromCompanion
+    {
+        private static bool Prefix(HitData hit) => !(Aoe_OnHit.HittingCompanion && hit.m_hitType == HitData.HitType.Self);
     }
 
     // It falls: its gear goes into a crate where it stood. (And a kill of its own is counted, on the game that runs it.)

@@ -63,7 +63,10 @@ namespace AICompanion
         public ItemDrop.ItemData WorkTool;
         public string WorkNote;
         public Vector3 WorkSpot;
-        public float NextWorkLook, NextDoorLook;
+        public float NextWorkLook, NextDoorLook, NextUpgradeLook, YieldUntil;
+        public Vector3 YieldTo;
+        public bool CaughtUp;                                       // living at home while nobody was there (CatchUp)
+        public float NextStamp, NextBagSave;
         public readonly HashSet<string> Wanted = new HashSet<string>();                  // what its work drops (to pick up)
         public readonly Dictionary<int, float> Skipped = new Dictionary<int, float>();    // things it gave up on, until when
         public readonly Dictionary<string, int> Gathered = new Dictionary<string, int>(); // this session, for the Work tab
@@ -146,7 +149,10 @@ namespace AICompanion
             Player master = Companion.Master(me);
             Container gear = me.GetComponent<Container>();
 
+            if (!st.CaughtUp) CatchUp.OnArrive(st);
+            if (Companion.OrderOf(me) == Order.Gather && Time.time >= st.NextStamp) { st.NextStamp = Time.time + 5f; CatchUp.Stamp(me); }
             Food.Tick(me, st);
+            if (Time.time >= st.NextBagSave) { st.NextBagSave = Time.time + 30f; Companion.SaveBag(me); } // wear from fighting and working
             if (Ride.Tick(st, master)) return true; // on a boat with its player: it sits and rides
             if (Time.time >= st.NextGear) { st.NextGear = Time.time + 0.5f; Companion.Maintain(me, st.Current.Ranged, st.InCombat ? null : st.WorkTool); }
             if (gear != null && gear.IsInUse()) { ai.StopMoving(); Blocking(me) = false; SetStatus(st, "waiting while you sort its gear"); return true; }
@@ -183,6 +189,7 @@ namespace AICompanion
         private static void Peaceful(BrainState st, Player master, float dt)
         {
             Humanoid me = st.Body;
+            if (MakeWay(st, dt)) return;
             if (Repair.Tick(st, (p, dd, run) => MoveTo(st.Ai, dt, p, dd, run), () => st.Ai.StopMoving())) return;
             switch (Companion.OrderOf(me))
             {
@@ -329,6 +336,34 @@ namespace AICompanion
                 door.Interact(me, false, false);
                 return;
             }
+        }
+
+        /// <summary>
+        /// A player walking into it: it steps aside, out of the way, as a person would (the side away from where the player is heading).
+        /// True while it is stepping aside.
+        /// </summary>
+        private static bool MakeWay(BrainState st, float dt)
+        {
+            Humanoid me = st.Body;
+            if (Time.time < st.YieldUntil)
+            {
+                MoveToRaw(st.Ai, dt, st.YieldTo, 0.3f, false);
+                return true;
+            }
+            foreach (Player p in Player.GetAllPlayers())
+            {
+                if (p == null) continue;
+                Vector3 toMe = me.transform.position - p.transform.position; toMe.y = 0f;
+                if (toMe.magnitude > 1.6f) continue;
+                Vector3 v = p.GetVelocity(); v.y = 0f;
+                if (v.magnitude < 1f || Vector3.Dot(v.normalized, toMe.normalized) < 0.5f) continue;
+                Vector3 side = Vector3.Cross(Vector3.up, v.normalized);
+                if (Vector3.Dot(side, toMe) < 0f) side = -side; // step to the side it is already on
+                st.YieldTo = me.transform.position + side * 1.8f + v.normalized * 0.4f;
+                st.YieldUntil = Time.time + 0.9f;
+                return true;
+            }
+            return false;
         }
 
         internal static Character TargetOf(Character enemy) => enemy != null && enemy.GetBaseAI() is MonsterAI m ? m.GetTargetCreature() : null;

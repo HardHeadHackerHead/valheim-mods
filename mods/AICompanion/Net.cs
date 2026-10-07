@@ -132,12 +132,19 @@ namespace AICompanion
         private static string F(float v) => v.ToString("0.#", CultureInfo.InvariantCulture);
         private static float P(string s) => float.TryParse(s, NumberStyles.Float, CultureInfo.InvariantCulture, out float f) ? f : 0f;
 
-        /// <summary>"id|name|master|hp|maxhp|x|y|z|status|stamina|maxstamina|effects" (effects: "namehash:seconds,..." as PartyHud's own).</summary>
+        /// <summary>"id|name|master|hp|maxhp|x|y|z|status|stamina|maxstamina|effects|foods" (effects "namehash:seconds,...", foods "prefab:seconds left:burn time,...", as PartyHud's own).</summary>
         private static string StatsLine(Humanoid c)
         {
             Vector3 p = c.transform.position;
             return string.Join("|", Companion.IdOf(c).ToString(CultureInfo.InvariantCulture), Clean(Companion.NameOf(c)), Clean(Companion.Zdo(c).GetString(Keys.MasterName, "")),
-                F(c.GetHealth()), F(c.GetMaxHealth()), F(p.x), F(p.y), F(p.z), Clean(Companion.StatusOf(c)), F(Stamina.Get(c)), F(Stamina.Max(c)), EffectsText(c));
+                F(c.GetHealth()), F(c.GetMaxHealth()), F(p.x), F(p.y), F(p.z), Clean(Companion.StatusOf(c)), F(Stamina.Get(c)), F(Stamina.Max(c)), EffectsText(c), FoodsText(c));
+        }
+
+        /// <summary>What it is eating (only known to the game that runs it; "-" elsewhere, so the panel shows nothing rather than "hungry").</summary>
+        private static string FoodsText(Humanoid c)
+        {
+            if (!c.GetComponent<ZNetView>().IsOwner()) return "-";
+            return string.Join(",", Food.Meals(c).Select(m => Utils.GetPrefabName(m.Item.m_dropPrefab) + ":" + F(Mathf.Max(0f, m.Time)) + ":" + F(m.Item.m_shared.m_foodBurnTime)));
         }
 
         /// <summary>Its status effects with a picture (a boss power, meads, wet...): "namehash:seconds left,..." (only known to the game that runs it).</summary>
@@ -189,7 +196,7 @@ namespace AICompanion
                 RecentlyFallen.RemoveAll(f => Time.time - f.At > 600f || (Time.time - f.At > 10f && lines.Any(l => l.Split('|')[2] == f.Master)));
                 foreach (Fallen f in RecentlyFallen.Where(f => online.Contains(f.Master)))
                     lines.Add(string.Join("|", (-Math.Abs((long)(f.Name + f.Master).GetStableHashCode())).ToString(CultureInfo.InvariantCulture), Clean(f.Name), Clean(f.Master),
-                        "0", "1", F(f.Pos.x), F(f.Pos.y), F(f.Pos.z), "fallen", "0", "1", ""));
+                        "0", "1", F(f.Pos.x), F(f.Pos.y), F(f.Pos.z), "fallen", "0", "1", "", "-"));
                 return string.Join("\n", lines);
             }
             catch (Exception) { return ""; }

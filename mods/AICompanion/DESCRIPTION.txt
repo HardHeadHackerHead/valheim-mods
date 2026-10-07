@@ -10,6 +10,7 @@ A viking companion who follows you and fights beside you, with an AI deciding ho
 - Lives like a player: it needs food for health and stamina, its skills rise as it fights, the weather wets and chills it, and it repairs its gear at a workbench.
 - Rides along on your boat, in a seat.
 - Choose how it looks (body, hair, beard, skin, hair colour, or copy yours); its face shows in the party panel.
+- Lives its own life at home: gathers, stores what it finds, repairs and upgrades its gear, and catches up on all that while you are away. Tell it to follow you for an adventure.
 - A home like a player's: give it a bed (it wakes there after falling) and chests (it keeps what it gathers there and takes better gear from them).
 - Gather: it chops wood, mines stone and ore, and picks wild berries and mushrooms around its bed, with the tools you give it.
 - It follows you through portals and opens doors.

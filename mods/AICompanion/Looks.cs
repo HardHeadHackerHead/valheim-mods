@@ -172,7 +172,7 @@ namespace AICompanion
     /// </summary>
     internal static class Portraits
     {
-        private class Shot { public RenderTexture Tex; public float At = -99f; }
+        private class Shot { public RenderTexture Tex; public float At = -99f; public string Sig = ""; public float ChangedAt = -99f; }
         private static readonly Dictionary<long, Shot> Shots = new Dictionary<long, Shot>();
         private static Camera _cam;
         private static Light _light;
@@ -182,7 +182,15 @@ namespace AICompanion
 
         public static Texture Get(long id) => Shots.TryGetValue(id, out Shot s) && s.Tex != null && s.At > 0f ? s.Tex : null;
 
-        public static void Dirty(Component c) { if (Shots.TryGetValue(Companion.IdOf(c), out Shot s)) s.At = Mathf.Min(s.At, 0.01f); }
+        public static void Dirty(Component c) { if (Shots.TryGetValue(Companion.IdOf(c), out Shot s)) s.Sig = ""; }
+
+        private static string Signature(Humanoid c)
+        {
+            ZDO z = Companion.Zdo(c);
+            return string.Join("|", z.GetInt(ZDOVars.s_modelIndex, 0), z.GetInt(ZDOVars.s_hairItem, 0), z.GetInt(ZDOVars.s_beardItem, 0), z.GetVec3(ZDOVars.s_skinColor, Vector3.one),
+                z.GetVec3(ZDOVars.s_hairColor, Vector3.one), z.GetInt(ZDOVars.s_helmetItem, 0), z.GetInt(ZDOVars.s_chestItem, 0), z.GetInt(ZDOVars.s_shoulderItem, 0),
+                z.GetInt(ZDOVars.s_rightItem, 0), z.GetInt(ZDOVars.s_leftItem, 0));
+        }
 
         /// <summary>One companion per frame at most, each about twice a second (sooner when its looks just changed).</summary>
         public static void Tick()
@@ -196,7 +204,11 @@ namespace AICompanion
             Humanoid c = all[_next];
             long id = Companion.IdOf(c);
             if (!Shots.TryGetValue(id, out Shot shot)) Shots[id] = shot = new Shot();
-            if (Time.time - shot.At < 0.5f) return;
+            // A new picture only when its looks or what it wears change (then a moment later, once the new gear shows), not every moment.
+            string sig = Signature(c);
+            if (sig != shot.Sig) { shot.Sig = sig; shot.ChangedAt = Time.time; return; }
+            if (shot.ChangedAt < 0f || Time.time - shot.ChangedAt < 0.6f) return;
+            shot.ChangedAt = -99f;
             try { Render(c, shot); }
             catch (Exception e) { Plugin.Instance?.Warn("Could not take a companion's portrait: " + e.Message); shot.At = Time.time + 30f; }
         }

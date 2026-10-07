@@ -314,11 +314,11 @@ namespace AICompanion
             if (Toggle("Follow me", order == Order.Follow)) _pending = () => Change(z => z.Set(Keys.Order, (int)Order.Follow));
             if (Toggle("Stay here", order == Order.Stay)) _pending = () => Change(z => z.Set(Keys.Order, (int)Order.Stay));
             if (Toggle("Guard this spot", order == Order.Guard)) _pending = () => Change(z => { z.Set(Keys.Order, (int)Order.Guard); z.Set(Keys.Post, c.transform.position); });
-            if (Toggle("Gather", order == Order.Gather)) _pending = () => StartGathering(c);
+            if (Toggle("Live at home", order == Order.Gather)) _pending = () => StartGathering(c);
             GUILayout.EndHorizontal();
             GUILayout.Label(order switch
             {
-                Order.Gather => "Gathers around its bed (or where it was told) on the jobs ticked in the Work tab, and fights what comes near.",
+                Order.Gather => "Lives its own life at home: gathers with the tools it has, stores what it finds in its chests, repairs and upgrades its gear at its workbench, eats, and fights what comes near. Tell it to follow you for an adventure.",
                 Order.Stay => "Stays where it is, and fights what comes near.",
                 Order.Guard => "Stays by the spot it was given, and goes back to it after a fight.",
                 _ => "Follows you, and catches up if it falls far behind (after a portal or a boat ride).",
@@ -445,7 +445,6 @@ namespace AICompanion
             {
                 z.Set(Keys.Order, (int)Order.Gather);
                 if (!z.GetBool(Keys.HasBed, false)) z.Set(Keys.Post, c.transform.position);
-                if (z.GetInt(Keys.Jobs, 0) == 0) z.Set(Keys.Jobs, (int)(Job.Wood | Job.Stone | Job.Forage));
             });
         }
 
@@ -456,10 +455,10 @@ namespace AICompanion
             bool gathering = Companion.OrderOf(c) == Order.Gather;
             Section("Gathering");
             GUILayout.BeginHorizontal();
-            if (!gathering) { if (GUILayout.Button("Start gathering", _buttonOn, GUILayout.Width(160), GUILayout.Height(30))) _pending = () => StartGathering(c); }
+            if (!gathering) { if (GUILayout.Button("Live at home", _buttonOn, GUILayout.Width(160), GUILayout.Height(30))) _pending = () => StartGathering(c); }
             else
             {
-                GUILayout.Label("Gathering", _good, GUILayout.Width(90));
+                GUILayout.Label("Living at home", _good, GUILayout.Width(120));
                 if (GUILayout.Button("Stop: follow me", _button, GUILayout.Width(150), GUILayout.Height(28))) _pending = () => Change(z => z.Set(Keys.Order, (int)Order.Follow));
             }
             GUILayout.EndHorizontal();
@@ -470,6 +469,8 @@ namespace AICompanion
                 _pending = () => { Vector3 here = Player.m_localPlayer.transform.position; Change(z => z.Set(Keys.Post, here)); };
 
             Section("Jobs: what it gathers, with the tools in its bag");
+            GUILayout.Label(jobs == Job.None ? $"None ticked: it decides for itself (now: {(Work.AutoJobs(c) == Job.None ? "nothing, it has no tools and enough food" : Work.AutoJobs(c).ToString())}). Tick jobs to choose for it."
+                                             : "Ticked: it does only these. Untick them all to let it decide for itself.", _dim);
             foreach (Job job in new[] { Job.Wood, Job.Stone, Job.Ore, Job.Forage, Job.Loot })
             {
                 bool on = (jobs & job) != 0;

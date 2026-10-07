@@ -23,13 +23,14 @@ namespace AICompanion
     /// </summary>
     internal static class Work
     {
-        internal enum Kind { None, Hit, Pick, PickUp, Store }
+        internal enum Kind { None, Hit, Pick, PickUp, Store, Upgrade }
 
         internal class Task
         {
             public Kind Kind;
             public Component Target;
             public Job Job;
+            public ItemDrop.ItemData Item;   // what it is upgrading
             public float Started, LastClose;
         }
 
@@ -37,6 +38,19 @@ namespace AICompanion
         private static readonly Func<BaseAI, Vector3, bool> HavePath = AccessTools.MethodDelegate<Func<BaseAI, Vector3, bool>>(AccessTools.Method(typeof(BaseAI), "HavePath"));
 
         public static Job JobsOf(Component c) => (Job)(Companion.Zdo(c)?.GetInt(Keys.Jobs, 0) ?? 0);
+
+        /// <summary>
+        /// What it does at home when you have not told it (no jobs ticked): wood with an axe, stone and ore with a pickaxe, and forage when it
+        /// is low on food. It always picks up what its own work drops.
+        /// </summary>
+        public static Job AutoJobs(Humanoid h)
+        {
+            Job j = Job.None;
+            if (Axe(h) != null) j |= Job.Wood;
+            if (Pickaxe(h) != null) j |= Job.Stone | Job.Ore;
+            if (h.GetInventory().GetAllItems().Where(Food.IsFood).Sum(f => f.m_stack) < 10) j |= Job.Forage;
+            return j;
+        }
         public static int RadiusOf(Component c) => Companion.Zdo(c)?.GetInt(Keys.Radius, 30) ?? 30;
 
         /// <summary>Where it works around: its bed, else where it was told to gather (or stand).</summary>
@@ -73,9 +87,9 @@ namespace AICompanion
         {
             Humanoid me = st.Body;
             Job jobs = JobsOf(me);
+            if (jobs == Job.None) jobs = AutoJobs(me); // living at home: it decides for itself what to do with what it has
             Vector3 center = Center(me);
             float radius = RadiusOf(me);
-            if (jobs == Job.None) { st.WorkTool = null; Go(center, moveTo, stop, me); Brain.Status(st, "gathering: tick some jobs in its menu (Work tab)"); return; }
 
             if (st.Task != null && !Valid(st, st.Task)) st.Task = null;
             if (st.Task == null && Time.time >= st.NextWorkLook)
@@ -142,6 +156,14 @@ namespace AICompanion
                     Store(st, (Container)t.Target);
                     st.Task = null;
                     break;
+
+                case Kind.Upgrade:
+                    if (dist > 2.6f) { moveTo(at, 1.8f, dist > 8f); break; }
+                    t.LastClose = Time.time;
+                    stop();
+                    Upgrades.Do(st, t.Item, (CraftingStation)t.Target);
+                    st.Task = null;
+                    break;
             }
             if (st.Task != null) Brain.Status(st, Describe(st.Task));
         }
@@ -161,6 +183,7 @@ namespace AICompanion
                 Kind.Pick => "picking " + what,
                 Kind.PickUp => "picking up " + what,
                 Kind.Store => "taking things to its chest",
+                Kind.Upgrade => $"upgrading its {Localization.instance.Localize(t.Item?.m_shared.m_name ?? "")} at the {Localization.instance.Localize(((CraftingStation)t.Target).m_name)}",
                 _ => "gathering",
             };
         }
@@ -225,14 +248,22 @@ namespace AICompanion
                 if (inv.GetEmptySlots() == 0) { st.WorkNote = "its bag is full: give it a chest (Home tab) or empty its bag"; return null; }
             }
 
-            // 2. What its own work dropped (or anything, with Loot ticked).
+            // 2. Better gear: an upgrade at its workbench (or forge...) when it has the materials, in its bag or its chests.
+            if (Time.time >= st.NextUpgradeLook)
+            {
+                st.NextUpgradeLook = Time.time + 30f;
+                var up = Upgrades.Find(me, center, radius);
+                if (up != null) { Task u = New(Kind.Upgrade, up.Value.Value, Job.None); u.Item = up.Value.Key; return u; }
+            }
+
+            // 3. What its own work dropped (or anything, with Loot ticked).
             ItemDrop loot = ItemDrops().Where(d => d != null && Vector3.Distance(d.transform.position, center) < radius && !Skipped(st, d)
                     && ((jobs & Job.Loot) != 0 || (st.Wanted.Contains(Utils.GetPrefabName(d.gameObject)) && Vector3.Distance(d.transform.position, st.WorkSpot) < 10f))
                     && inv.CanAddItem(d.m_itemData))
                 .OrderBy(d => Vector3.Distance(d.transform.position, me.transform.position)).FirstOrDefault();
             if (loot != null) return New(Kind.PickUp, loot, Job.Loot);
 
-            // 3. Something to work on.
+            // 4. Something to work on.
             ItemDrop.ItemData axe = Axe(me), pick = Pickaxe(me);
             var seen = new HashSet<GameObject>();
             Task best = null;
@@ -316,7 +347,7 @@ namespace AICompanion
             foreach (DropTable.DropData d in drops.m_drops) if (d.m_item != null) st.Wanted.Add(d.m_item.name);
         }
 
-        private static bool IsOre(DropTable drops) => drops?.m_drops != null && drops.m_drops.Any(d => d.m_item != null && OreWords.Any(w => d.m_item.name.Contains(w)));
+        internal static bool IsOre(DropTable drops) => drops?.m_drops != null && drops.m_drops.Any(d => d.m_item != null && OreWords.Any(w => d.m_item.name.Contains(w)));
 
         private static readonly AccessTools.FieldRef<List<ItemDrop>> Instances = AccessTools.StaticFieldRefAccess<List<ItemDrop>>(AccessTools.Field(typeof(ItemDrop), "s_instances"));
         private static IEnumerable<ItemDrop> ItemDrops() => Instances() ?? new List<ItemDrop>();
@@ -382,6 +413,84 @@ namespace AICompanion
             if ((jobs & Job.Wood) != 0 && item.m_shared.m_damages.m_chop > 0f && item.IsWeapon() && Axe(me) == null) return true;
             if ((jobs & (Job.Stone | Job.Ore)) != 0 && item.m_shared.m_damages.m_pickaxe > 0f && Pickaxe(me) == null) return true;
             return false;
+        }
+    }
+
+    /// <summary>
+    /// Upgrading its gear as a player does: an item it keeps (weapon, armour, shield, tool) goes up a quality level at a station of the kind it
+    /// is made at, of the level the game asks for that quality, paying the game's own materials for that level, from its bag first and then
+    /// its chests near the station. It does this while living at home.
+    /// </summary>
+    internal static class Upgrades
+    {
+        private static readonly AccessTools.FieldRef<List<CraftingStation>> Stations = AccessTools.StaticFieldRefAccess<List<CraftingStation>>(AccessTools.Field(typeof(CraftingStation), "m_allStations"));
+
+        private static bool Upgradable(Humanoid me, ItemDrop.ItemData i)
+        {
+            var t = i.m_shared.m_itemType;
+            bool gear = i.IsWeapon() || Work.IsTool(i) || t == ItemDrop.ItemData.ItemType.Shield || t == ItemDrop.ItemData.ItemType.Helmet || t == ItemDrop.ItemData.ItemType.Chest
+                        || t == ItemDrop.ItemData.ItemType.Legs || t == ItemDrop.ItemData.ItemType.Shoulder;
+            return gear && i.m_quality < i.m_shared.m_maxQuality;
+        }
+
+        private static List<Container> ChestsNear(Humanoid me, Vector3 at) => Home.Chests(me).Where(c => c != null && !c.IsInUse() && Vector3.Distance(c.transform.position, at) < 25f).ToList();
+
+        private static int Have(Humanoid me, List<Container> chests, string name) => me.GetInventory().CountItems(name) + chests.Sum(c => c.GetInventory().CountItems(name));
+
+        /// <summary>Something it can upgrade now, and where (null if nothing).</summary>
+        public static KeyValuePair<ItemDrop.ItemData, CraftingStation>? Find(Humanoid me, Vector3 center, float radius)
+        {
+            List<CraftingStation> stations = (Stations() ?? new List<CraftingStation>()).Where(s => s != null && Vector3.Distance(s.transform.position, center) < radius + 10f).ToList();
+            if (stations.Count == 0) return null;
+            foreach (ItemDrop.ItemData item in me.GetInventory().GetAllItems().Where(i => Upgradable(me, i)).OrderByDescending(i => me.IsItemEquiped(i)))
+            {
+                Recipe recipe = ObjectDB.instance?.GetRecipe(item);
+                if (recipe == null || recipe.m_craftingStation == null) continue;
+                int next = item.m_quality + 1;
+                CraftingStation station = stations.FirstOrDefault(s => s.m_name == recipe.m_craftingStation.m_name && s.GetLevel() >= recipe.GetRequiredStationLevel(next));
+                if (station == null) continue;
+                List<Container> chests = ChestsNear(me, station.transform.position);
+                if (recipe.m_resources.All(r => r.m_resItem == null || Have(me, chests, r.m_resItem.m_itemData.m_shared.m_name) >= r.GetAmount(next)))
+                    return new KeyValuePair<ItemDrop.ItemData, CraftingStation>(item, station);
+            }
+            return null;
+        }
+
+        public static void Do(BrainState st, ItemDrop.ItemData item, CraftingStation station)
+        {
+            Humanoid me = st.Body;
+            Recipe recipe = ObjectDB.instance?.GetRecipe(item);
+            if (recipe == null || !me.GetInventory().ContainsItem(item) || item.m_quality >= item.m_shared.m_maxQuality) return;
+            int next = item.m_quality + 1;
+            List<Container> chests = ChestsNear(me, station.transform.position);
+            if (!recipe.m_resources.All(r => r.m_resItem == null || Have(me, chests, r.m_resItem.m_itemData.m_shared.m_name) >= r.GetAmount(next))) return; // something went meanwhile
+            foreach (Piece.Requirement r in recipe.m_resources)
+            {
+                if (r.m_resItem == null) continue;
+                string name = r.m_resItem.m_itemData.m_shared.m_name;
+                int left = r.GetAmount(next);
+                int fromBag = Mathf.Min(left, me.GetInventory().CountItems(name));
+                if (fromBag > 0) { me.GetInventory().RemoveItem(name, fromBag); left -= fromBag; }
+                foreach (Container chest in chests)
+                {
+                    if (left <= 0) break;
+                    int take = Mathf.Min(left, chest.GetInventory().CountItems(name));
+                    if (take <= 0) continue;
+                    ZNetView v = chest.GetComponent<ZNetView>();
+                    if (v != null && !v.IsOwner()) v.ClaimOwnership();
+                    chest.GetInventory().RemoveItem(name, take);
+                    left -= take;
+                }
+            }
+            item.m_quality = next;
+            item.m_durability = item.GetMaxDurability();
+            Companion.SaveBag(me);
+            station.m_craftItemEffects.Create(station.transform.position, Quaternion.identity);
+            string what = Localization.instance.Localize(item.m_shared.m_name);
+            st.Remember($"upgraded its {what} to level {next}");
+            Plugin.Instance?.Note($"{Companion.NameOf(me)} upgraded its {what} to level {next} at {station.transform.position:F0}");
+            if (Companion.Master(me) == Player.m_localPlayer) Plugin.Tell($"{Companion.NameOf(me)} upgraded their {what} to level {next}");
+            Portraits.Dirty(me);
         }
     }
 }

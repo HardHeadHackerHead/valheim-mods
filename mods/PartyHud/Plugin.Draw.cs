@@ -297,7 +297,8 @@ namespace PartyHud
         private float DrawCompanion(Member m, float x, float y)
         {
             bool compact = _compact.Value;
-            float indent = compact ? 14f : 20f, w = PanelWidth - indent, height = compact ? 30f : 48f;
+            bool food = _showFood.Value && m.FoodKnown && !compact;
+            float indent = compact ? 14f : 20f, w = PanelWidth - indent, height = compact ? 30f : (food ? 58f : 48f);
             float px = x + indent;
             bool dead = m.MaxHp <= 0f || m.Hp <= 0.5f;
             float hpFrac = m.MaxHp > 0f ? Mathf.Clamp01(m.Hp / m.MaxHp) : 0f;
@@ -319,7 +320,7 @@ namespace PartyHud
             RoundedOutline(panel, edge, PanelRadius);
 
             float pic = compact ? 20f : 36f;
-            var portrait = new Rect(px + 5f, y + (height - pic) / 2f, pic, pic);
+            var portrait = new Rect(px + 5f, food ? y + 4f : y + (height - pic) / 2f, pic, pic);
             Rounded(portrait, dead ? new Color(0.25f, 0.25f, 0.25f) : CompanionColor * 0.8f, 4f);
             // Its face, when the AICompanion mod has a picture of it (it takes one of companions near you); otherwise its initial.
             Texture face = null;
@@ -329,6 +330,25 @@ namespace PartyHud
             else
                 Text(portrait, string.IsNullOrEmpty(m.Name) ? "?" : m.Name.Substring(0, 1).ToUpperInvariant(), compact ? _nameCompactStyle : _nameStyle, Color.white);
             RoundedOutline(portrait, new Color(0f, 0f, 0f, 0.85f), 4f);
+
+            // Its three food slots under its picture, as for players: what it is eating and how long each has left (empty: hungry).
+            if (food)
+            {
+                const float slot = 10f, gap = 3f;
+                for (int i = 0; i < 3; i++)
+                {
+                    var cell = new Rect(portrait.x + i * (slot + gap), portrait.yMax + 4f, slot, slot);
+                    Rounded(cell, new Color(0f, 0f, 0f, 0.55f), 2f);
+                    if (i < m.Foods.Count && m.Foods[i].Icon != null && m.Foods[i].Icon.texture != null)
+                    {
+                        Texture2D tex = m.Foods[i].Icon.texture;
+                        Rect sr = m.Foods[i].Icon.textureRect;
+                        GUI.DrawTextureWithTexCoords(cell, tex, new Rect(sr.x / tex.width, sr.y / tex.height, sr.width / tex.width, sr.height / tex.height));
+                        Rounded(new Rect(cell.x, cell.yMax + 1f, slot * Mathf.Clamp01(m.Foods[i].Fraction), 1.5f), m.Foods[i].Fraction < 0.2f ? new Color(1f, 0.45f, 0.35f) : new Color(0.55f, 0.9f, 0.45f), 1f);
+                    }
+                    else RoundedOutline(cell, new Color(0.45f, 0.4f, 0.3f, 0.5f), 2f);
+                }
+            }
 
             float bx = portrait.xMax + 6f, bw = px + w - 7f - bx;
             Text(new Rect(bx, y + 2f, bw - 58f, compact ? 13f : 15f), m.Name ?? "?", compact ? _nameCompactStyle : _nameStyle, dead ? Dim : new Color(0.8f, 0.95f, 0.9f));

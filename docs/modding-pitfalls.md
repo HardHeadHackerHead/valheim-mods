@@ -34,6 +34,19 @@ Every time a world loads, the game gives each object a new `ZDOID` (`ZDO.Load` s
 object across restarts, store your own random id on it (PortalHub's `dh_pid` in `mods/PortalHub/Plugin.Net.cs`), or use the game's
 connections (`ZDO.SetConnection`), which it re-links by hash when the world loads.
 
+## Fill a tombstone with the game's own move
+
+A tombstone's (or cargo crate's) container is only a few slots big until the game fills it: `Inventory.MoveInventoryToGrave(original)`
+resizes the grave to the bag it empties and moves everything at once. Adding items one by one with `AddItem` fits only the small default
+size, and the rest is lost (AICompanion 0.3.0 lost a fallen companion's armour this way). The move also skips items flagged `m_equipped`:
+unequip and clear the flag first.
+
+## A container saves only when items come and go
+
+A `Container` writes its inventory to its ZDO when an item is added or removed (`Inventory.m_onChanged`). Changing an item in place (its
+quality after an upgrade, its durability after a repair or wear) does not save it, and the change is lost the next time the object is made
+from its ZDO (its area reloading, a hot reload). After changing items in place, invoke `inventory.m_onChanged` on the game that owns it.
+
 ## Check every default key against the game's
 
 Valheim reads its own keys whatever a mod does: GearSlots' quick slot 4 on V also flipped the game's auto-pickup toggle (V), and the

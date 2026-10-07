@@ -26,7 +26,7 @@ namespace PartyHud
     {
         public const string Guid = "com.dhack.partyhud";
         public const string Name = "PartyHud";
-        public const string Version = "1.7.1";
+        public const string Version = "1.7.2";
 
         private ConfigEntry<bool> _enabled, _showSelf, _showPortraits, _showDistance, _hideInMenus, _avoidShipHud, _compact, _onLeft, _showArrow, _showEffects, _showFood, _showCompanions;
         private ConfigEntry<float> _offsetX, _offsetY, _scale, _opacity;
@@ -222,6 +222,8 @@ namespace PartyHud
                     Hp = ParseFloat(f[3]), MaxHp = ParseFloat(f[4]),
                     St = f.Length > 10 ? ParseFloat(f[9]) : 0f, MaxSt = f.Length > 10 ? ParseFloat(f[10]) : 0f,
                     Effects = f.Length > 11 ? ToEffects(ParseEffects(f[11]), 0f) : new List<Effect>(),
+                    FoodKnown = f.Length > 12 && f[12] != "-",
+                    Foods = f.Length > 12 && f[12] != "-" ? ToFoods(ParseFoods(f[12]), 0f) : new List<FoodSlot>(),
                     Pos = pos, HasPos = true, Distance = Vector3.Distance(me.transform.position, pos),
                 });
             }

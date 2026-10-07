@@ -24,13 +24,14 @@ namespace AICompanion
     {
         public const string Guid = "com.dhack.aicompanion";
         public const string Name = "AICompanion";
-        public const string Version = "0.3.0";
+        public const string Version = "0.4.0";
 
         internal static Plugin Instance;
         internal static ConfigEntry<string> ApiKey, Endpoint, Model;
         internal static ConfigEntry<bool> UseJev, ShowDecisions, LogToFile;
         internal static ConfigEntry<float> DecisionSeconds, MinConfidence, Timeout, PricePerMillion, EngageRange, RespawnSeconds, BaseHealth, BaseStamina, StartingSkill;
         internal static ConfigEntry<KeyboardShortcut> MenuKey;
+        internal static ConfigEntry<AwayMode> WhileAway;
 
         private Harmony _harmony;
 
@@ -42,6 +43,7 @@ namespace AICompanion
             BaseHealth = Config.Bind("Companion", "BaseHealth", 25f, new ConfigDescription("Its health without food (a player's is 25). Food adds to it, as it does for you: feed it.", new AcceptableValueRange<float>(5f, 500f)));
             BaseStamina = Config.Bind("Companion", "BaseStamina", 75f, new ConfigDescription("Its stamina without food (a player's is 75). Food adds to it.", new AcceptableValueRange<float>(10f, 500f)));
             StartingSkill = Config.Bind("Companion", "StartingSkill", 0f, new ConfigDescription("The level a new companion starts its skills at (a new player: 0). Skills rise as it fights, as yours do.", new AcceptableValueRange<float>(0f, 100f)));
+            WhileAway = Config.Bind("Companion", "WhileAway", AwayMode.Mild, "A companion living at home goes on with its life while nobody is near: when you come back it catches up on its gathering. Mild: it also meets the creatures of its biome now and then, fights them off and keeps what they drop (it never falls while you are away). Off: work only.");
             RespawnSeconds = Config.Bind("Companion", "RespawnSeconds", 30f, new ConfigDescription("After falling, a companion wakes in its bed (or beside you, without one) this many seconds later. Its gear stays in its tombstone, as a player's.", new AcceptableValueRange<float>(5f, 600f)));
             EngageRange = Config.Bind("Companion", "EngageRange", 20f, new ConfigDescription("Enemies this close to the companion or to you (metres) start a fight.", new AcceptableValueRange<float>(5f, 50f)));
             ShowDecisions = Config.Bind("Companion", "ShowDecisions", true, "Show what the companion decided above its head (e.g. \"attack Greyling, Jev 87%\").");

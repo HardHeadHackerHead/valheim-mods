@@ -101,6 +101,19 @@ namespace AICompanion
             s.NextTick = 0f;
         }
 
+        /// <summary>Time that passed while nobody was near (CatchUp): its foods burn down, and it eats from its bag as they do.</summary>
+        public static void PassTime(Humanoid c, BrainState st, float seconds)
+        {
+            State s = Of(c);
+            for (float t = 0f; t < seconds; t += 60f)
+            {
+                foreach (Meal m in s.Meals) m.Time -= 60f * Game.m_foodRate;
+                s.Meals.RemoveAll(m => m.Time <= 0f);
+                TryEat(c, s, st);
+            }
+            s.NextTick = 0f;
+        }
+
         /// <summary>A fallen companion has eaten nothing (as a player after death).</summary>
         public static void Clear(Humanoid c) { if (States.TryGetValue(c, out State s)) s.Meals.Clear(); }
 
@@ -290,6 +303,7 @@ namespace AICompanion
             }
             if (fixedItems.Count > 0)
             {
+                Companion.SaveBag(me);
                 station.m_repairItemDoneEffects.Create(station.transform.position, Quaternion.identity);
                 st.Remember($"repaired {string.Join(", ", fixedItems)} at the {Localization.instance.Localize(station.m_name)}");
                 Plugin.Instance?.Note($"{Companion.NameOf(me)} repaired {string.Join(", ", fixedItems)}");

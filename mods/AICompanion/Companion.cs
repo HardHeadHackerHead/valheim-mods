@@ -156,28 +156,49 @@ namespace AICompanion
         }
 
         /// <summary>It fell: everything it carried goes into a crate where it stood (the game's own floating cargo crate), so nothing is lost.</summary>
+        /// <summary>
+        /// Save its bag now. The bag (its gear chest) saves itself when items come and go, but not when an item itself changes: an upgrade, a
+        /// repair, wear. Without this those were lost whenever the companion was made again from its save (its area reloading, a new body).
+        /// </summary>
+        public static void SaveBag(Humanoid c)
+        {
+            if (c != null && c.GetComponent<ZNetView>() is ZNetView v && v.IsValid() && v.IsOwner()) c.GetInventory().m_onChanged?.Invoke();
+        }
+
         public static void DropGear(Humanoid c)
         {
             Container gear = c.GetComponent<Container>();
             Inventory inv = gear != null ? gear.GetInventory() : null;
             if (inv == null || inv.NrOfItems() == 0) return;
             c.UnequipAllItems();
-            // A tombstone like a player's (its player can take everything back with one E), else the game's cargo crate.
-            GameObject tombPrefab = ZNetScene.instance.GetPrefab("Player")?.GetComponent<Player>()?.m_tombstone ?? ZNetScene.instance.GetPrefab("CargoCrate");
+            foreach (ItemDrop.ItemData item in inv.GetAllItems()) item.m_equipped = false; // (the game leaves equipped items out of a grave)
+            int carried = inv.NrOfItems();
+
+            // A tombstone like a player's: its player can take everything back with one E. The game's own move (MoveInventoryToGrave) makes
+            // the tombstone as big as the bag it empties: adding items one by one only fitted the tombstone's own 4 slots, and the rest was lost.
+            GameObject scenePlayer = ZNetScene.instance.GetPrefab("Player");
+            Player playerPrefab = scenePlayer != null ? scenePlayer.GetComponent<Player>() : null;
+            GameObject tombPrefab = playerPrefab != null && playerPrefab.m_tombstone != null ? playerPrefab.m_tombstone : ZNetScene.instance.GetPrefab("CargoCrate");
             GameObject tomb = tombPrefab != null ? Object.Instantiate(tombPrefab, c.GetCenterPoint(), c.transform.rotation) : null;
-            tomb?.GetComponent<TombStone>()?.Setup(NameOf(c), MasterId(c));
-            Container crate = tomb != null ? tomb.GetComponent<Container>() : null;
-            if (crate != null) crate.GetComponent<ZNetView>().GetZDO().Set(Net.CrateKey, NameOf(c));
-            int moved = 0, dropped = 0;
+            Container grave = tomb != null ? tomb.GetComponent<Container>() : null;
+            if (grave != null)
+            {
+                grave.GetInventory().MoveInventoryToGrave(inv);
+                tomb.GetComponent<TombStone>()?.Setup(NameOf(c), MasterId(c));
+                grave.GetComponent<ZNetView>().GetZDO().Set(Net.CrateKey, NameOf(c));
+            }
+
+            // Anything still in the bag (no grave could be made): on the ground beside it, never lost.
+            int dropped = 0;
             foreach (ItemDrop.ItemData item in inv.GetAllItems().ToList())
             {
-                item.m_equipped = false;
-                if (crate != null && crate.GetInventory().AddItem(item)) { moved++; continue; }
-                ItemDrop.DropItem(item, item.m_stack, c.transform.position + Vector3.up, Quaternion.identity);
+                ItemDrop.DropItem(item, item.m_stack, c.transform.position + Vector3.up + Random.insideUnitSphere * 0.5f, Quaternion.identity);
                 dropped++;
             }
-            inv.RemoveAll();
-            Plugin.Instance?.Note($"{NameOf(c)} fell at {c.transform.position:F0}: {moved} item stacks put in a crate, {dropped} dropped on the ground");
+            if (dropped > 0) inv.RemoveAll();
+            int saved = grave != null ? grave.GetInventory().NrOfItems() : 0;
+            Plugin.Instance?.Note($"{NameOf(c)} fell at {c.transform.position:F0}: {saved} of {carried} item stacks in their tombstone" + (dropped > 0 ? $", {dropped} dropped beside it" : ""));
+            if (saved + dropped < carried) Plugin.Instance?.Warn($"{carried - saved - dropped} item stacks of {NameOf(c)} could not be placed");
         }
 
         // ---- gear ----------------------------------------------------------------------------------------
