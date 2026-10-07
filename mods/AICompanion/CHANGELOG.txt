@@ -1,3 +1,7 @@
+Fix: riding along in a boat it no longer rocks or damages it. Held in place on deck it still pushed against the boat as a solid body: the boat rolled, nearly capsized, steered badly and took impact damage. A passenger now collides with nothing until it steps off.
+
+Fix: a bed up on chests (not on the floor) was never reached: it stood on the chests over the bed, or below it, "going to bed" all night. It now gets in when it can reach the bed as a player would: beside it within reach, from above or below, and after trying for a while from a few metres away. Getting up it steps down onto the floor beside the bed (not left standing on a bed up on chests with no way down), and one already stuck on a bed hops down.
+
 Fix: an errand (or something you pointed at) sent at night waited behind its bedtime: it stood by your food chest "going to bed". What you send it to do now comes first, and it goes to bed after.
 
 Errands: one click on its menu (Orders tab) sends it to do something now, near its home, and then it carries on with what it was doing: Put things away, Restock food, Check for better gear, Repair its gear, Repair the base, Feed the fires, Cook. It says what it is off to do, or why it cannot ("My food slots are full", "Nothing in your chests beats what I have"). Sent on an errand it may use your chests for food and gear even with those settings off. The same in chat: "Rádvar, restock", "gear up", "put away", "repair your gear", "repair the base", "feed the fires", "cook". Repair its gear fixes everything worn at all, not only what is half gone.

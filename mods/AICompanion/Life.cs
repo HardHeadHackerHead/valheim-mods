@@ -357,7 +357,8 @@ namespace AICompanion
     /// <summary>
     /// Riding along: when its player boards a boat (on deck, steering or sitting), a companion following it gets on too, takes a free seat
     /// (sitting as a player does) or a spot on deck, and rides there until its player gets off; then it steps off beside it. The game has no
-    /// seat for anyone but players, so it is held in place on the moving boat each frame.
+    /// seat for anyone but players, so it is held in place on the moving boat each frame. While it rides it collides with nothing: held in
+    /// place as a solid body it shoved the boat (it rocked and nearly capsized, steered badly and took impact damage, as from a rock).
     /// </summary>
     internal static class Ride
     {
@@ -373,7 +374,12 @@ namespace AICompanion
             Ship ship = Companion.OrderOf(me) == Order.Follow ? ShipOf(master) : null;
             if (ship == null)
             {
-                if (st.Riding == null) return false;
+                if (st.Riding == null)
+                {
+                    Rigidbody b = me.GetComponent<Rigidbody>();
+                    if (b != null && !b.detectCollisions) b.detectCollisions = true; // (left riding by a reload: solid again)
+                    return false;
+                }
                 if (Time.time - st.RideLastSeen < 1.5f) { Hold(st); return true; } // a moment's grace (stepping about on deck)
                 Off(st, master);
                 return false;
@@ -395,7 +401,7 @@ namespace AICompanion
             st.DeckSpot = ship.transform.InverseTransformPoint(master.transform.position) + new Vector3(-0.8f, 0f, -0.8f);
             if (seat != null) { Taken[seat] = me; Anim(me)?.SetBool(seat.m_attachAnimation, true); }
             Rigidbody body = me.GetComponent<Rigidbody>();
-            if (body != null) { body.linearVelocity = Vector3.zero; body.isKinematic = true; }
+            if (body != null) { body.linearVelocity = Vector3.zero; body.isKinematic = true; body.detectCollisions = false; } // a passenger, not a weight pushing on the deck
             st.Ai.StopMoving();
             st.Remember("boarded the boat");
             Plugin.Instance?.Note($"{Companion.NameOf(me)} boarded {Utils.GetPrefabName(ship.gameObject)}{(seat != null ? " and sat down" : "")}");
@@ -420,7 +426,7 @@ namespace AICompanion
             Humanoid me = st.Body;
             if (st.Seat != null) { Anim(me)?.SetBool(st.Seat.m_attachAnimation, false); Taken.Remove(st.Seat); }
             Rigidbody body = me.GetComponent<Rigidbody>();
-            if (body != null) body.isKinematic = false;
+            if (body != null) { body.isKinematic = false; body.detectCollisions = true; }
             st.Riding = null;
             st.Seat = null;
             if (master != null && master.IsOnGround()) Brain.TeleportBehind(me, master, "stepped off the boat beside");
@@ -428,7 +434,7 @@ namespace AICompanion
 
         public static void Forget()
         {
-            foreach (var kv in Taken) if (kv.Value != null) { Rigidbody b = kv.Value.GetComponent<Rigidbody>(); if (b != null) b.isKinematic = false; }
+            foreach (var kv in Taken) if (kv.Value != null) { Rigidbody b = kv.Value.GetComponent<Rigidbody>(); if (b != null) { b.isKinematic = false; b.detectCollisions = true; } }
             Taken.Clear();
         }
     }

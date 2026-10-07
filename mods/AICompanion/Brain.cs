@@ -66,7 +66,8 @@ namespace AICompanion
         public float PathUntil, NextPathTry, PathProgressAt, PathBest;
         public readonly Dictionary<Door, float> OpenedDoors = new Dictionary<Door, float>(); // doors it opened, to shut behind it
         public bool SwingMissed;
-        public float NextRefillLook, NextArmoryLook;
+        public float NextRefillLook, NextArmoryLook, BedSince;   // BedSince: when it set off for bed (Sleep)
+        public Vector3 BedFrom;                                     // where it climbed into bed from (it gets out there)
         public float NextDeliver, NextTidy, NextStockLook;   // what is yours to your chests; tidying its own; its stock list (Work)
         public Dictionary<string, int> StockCaps;
         public float MissionSince, MissionBest, MissionAskSince, MissionReadySince;                                       // its mission: headway, waiting on you (Missions)
