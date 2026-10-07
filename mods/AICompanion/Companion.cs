@@ -303,6 +303,7 @@ namespace AICompanion
             if (c.IsItemEquiped(item)) c.UnequipItem(item, false);
             item.m_equipped = false;
             mine.MoveItemToThis(its, item);
+            Activity.Log(c, $"you took its {Localization.instance.Localize(item.m_shared.m_name)}");
             return true;
         }
 
@@ -318,6 +319,7 @@ namespace AICompanion
             if (p.IsItemEquiped(item)) p.UnequipItem(item, false);
             item.m_equipped = false;
             its.MoveItemToThis(mine, item);
+            Activity.Log(c, $"you gave it {Localization.instance.Localize(item.m_shared.m_name)} (into its bag)");
             return true;
         }
 

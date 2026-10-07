@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
@@ -144,7 +145,13 @@ namespace AICompanion
             Container chest = go.GetComponentInParent<Container>();
             if (chest != null && Home.IsChest(chest))
             {
-                if (Work.Ordered(w, Work.Kind.Store, chest)) { Talk.Say(who, "I'll put my things in there."); MarkTask(w, who, "putting my things in here"); return true; }
+                bool sorts = AppDomain.CurrentDomain.GetData("DHack.QoL.StackInventory") != null; // (QualityOfLife: into the right chests around it)
+                if (Work.Ordered(w, Work.Kind.Store, chest))
+                {
+                    Talk.Say(who, sorts ? "I'll sort my things into your chests." : "I'll put my things in there.");
+                    MarkTask(w, who, sorts ? "sorting my things into the chests here" : "putting my things in here");
+                    return true;
+                }
             }
 
             // Something to work: a tree, log, rock, ore, a plant (the part of the world you hit, not what it sits in: a rock in a ruin).

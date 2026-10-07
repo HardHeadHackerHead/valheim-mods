@@ -702,7 +702,8 @@ namespace AICompanion
 
             if (Mine && p != null)
             {
-                var giveable = p.GetInventory().GetAllItems().Where(i => !p.IsItemEquiped(i) && Gear.IsGear(i)).ToList();
+                var yours = AppDomain.CurrentDomain.GetData("DHack.GearSlots.IsGear") as Func<ItemDrop.ItemData, bool>; // your own gear slots (GearSlots)
+                var giveable = p.GetInventory().GetAllItems().Where(i => !p.IsItemEquiped(i) && !i.m_equipped && !(yours?.Invoke(i) ?? false) && Gear.IsGear(i)).ToList();
                 BeginCard("Give it gear from your inventory");
                 if (giveable.Count == 0) Note("Weapons, shields, bows, arrows, axes, pickaxes, hammers and armour you are not wearing show here.", _dim);
                 else

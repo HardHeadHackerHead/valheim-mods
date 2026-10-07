@@ -10,7 +10,7 @@ A viking companion who plays like a player: comes on your adventures, lives its 
 - It hunts, cooks on your cooking stations, keeps its fires burning, repairs its gear and your base, sleeps in its bed at night, and sorts what it brings home into the right chests (with QualityOfLife).
 - While you are away it catches up on all of it, and tells you what it did when you return.
 - Needs like a player: food for health and stamina, skills that rise, stamina, carry weight, weather, rest.
-- Its gear has slots of its own (weapons, shield, bow and arrows, axe, pickaxe, hammer, armour): change them from its menu from anywhere. When it falls it keeps its gear; only its bag goes into a tombstone, which it goes back for.
+- Its gear has slots of its own (weapons, shield, bow and arrows, axe, pickaxe, hammer, armour, and three food slots it keeps filled): change them from its menu from anywhere. When it falls it keeps its gear; only its bag goes into a tombstone, which it goes back for.
 - Its bag shows beside your inventory: drag items between you. Hotbar keys give it food, potions or gear.
 - Between jobs it acts like a person: sits by the fire or in a chair, gets out of the rain, takes a stroll, sits with you when you rest, waves when you come back, cheers after a big fight and answers your emotes.
 - A journal of its life, small talk that fits the moment, and chat messages about what it is up to.

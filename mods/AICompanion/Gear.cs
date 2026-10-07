@@ -6,7 +6,7 @@ using UnityEngine;
 
 namespace AICompanion
 {
-    internal enum GearKind { Weapon, Spare, Shield, Bow, Ammo, Axe, Pickaxe, Hammer, Head, Chest, Legs, Cape, Belt }
+    internal enum GearKind { Weapon, Spare, Shield, Bow, Ammo, Axe, Pickaxe, Hammer, Head, Chest, Legs, Cape, Belt, Food }
 
     /// <summary>
     /// Its gear in a place of its own (as GearSlots gives you): two rows of named slots under its bag (weapon, spare weapon, shield, bow,
@@ -37,6 +37,9 @@ namespace AICompanion
             new Slot { Kind = GearKind.Legs,    Label = "Legs",    X = 2, Y = 5 },
             new Slot { Kind = GearKind.Cape,    Label = "Cape",    X = 3, Y = 5 },
             new Slot { Kind = GearKind.Belt,    Label = "Belt",    X = 4, Y = 5 },
+            new Slot { Kind = GearKind.Food,    Label = "Food",    X = 5, Y = 5 },
+            new Slot { Kind = GearKind.Food,    Label = "Food",    X = 6, Y = 5 },
+            new Slot { Kind = GearKind.Food,    Label = "Food",    X = 7, Y = 5 },
         };
 
         /// <summary>What its worn gear resists (a wolf cape: frost...), as a player's armour does, plus its status effects (meads).</summary>
@@ -80,6 +83,7 @@ namespace AICompanion
                 case GearKind.Legs: return t == ItemDrop.ItemData.ItemType.Legs;
                 case GearKind.Cape: return t == ItemDrop.ItemData.ItemType.Shoulder;
                 case GearKind.Belt: return t == ItemDrop.ItemData.ItemType.Utility && i.m_shared.m_maxStackSize <= 1;
+                case GearKind.Food: return Food.IsFood(i);
             }
             return false;
         }
@@ -126,7 +130,8 @@ namespace AICompanion
             if (!IsCompanion(inv)) return false;
             Grow(inv); // (a companion already about when the mod was updated)
             bool moved = false;
-            foreach (Slot s in All.OrderBy(x => x.Kind == GearKind.Weapon ? 1 : x.Kind == GearKind.Spare ? 2 : x.Kind == GearKind.Ammo ? 3 : 0))
+            moved |= ArrangeFood(inv);
+            foreach (Slot s in All.Where(x => x.Kind != GearKind.Food).OrderBy(x => x.Kind == GearKind.Weapon ? 1 : x.Kind == GearKind.Spare ? 2 : x.Kind == GearKind.Ammo ? 3 : 0))
             {
                 ItemDrop.ItemData current = In(h, s);
                 if (current != null && !Fits(s, current)) { if (ToBag(inv, current)) { moved = true; current = null; } else continue; }
@@ -142,6 +147,76 @@ namespace AICompanion
             }
             if (moved) Companion.SaveBag(h);
             return moved;
+        }
+
+        private static float Worth(ItemDrop.ItemData i) => i.m_shared.m_food + i.m_shared.m_foodStamina + i.m_shared.m_foodEitr;
+        private static IEnumerable<Slot> FoodSlots => All.Where(s => s.Kind == GearKind.Food);
+
+        /// <summary>
+        /// Its three food slots: its three best different foods (as a player keeps three to eat), each stack topped up from the same food in its
+        /// bag; a better food in its bag takes the place of the weakest. It eats from them (the best first) as a player does.
+        /// </summary>
+        private static bool ArrangeFood(Inventory inv)
+        {
+            bool moved = false;
+            var slots = FoodSlots.ToList();
+            // Something else in a food slot (moved there by hand): into the bag.
+            foreach (Slot s in slots)
+            {
+                ItemDrop.ItemData there = inv.GetItemAt(s.X, s.Y);
+                if (there != null && !Food.IsFood(there) && ToBag(inv, there)) moved = true;
+            }
+            // The three best different foods it has.
+            var best = inv.GetAllItems().Where(Food.IsFood).GroupBy(i => i.m_shared.m_name).OrderByDescending(g => Worth(g.First())).Take(slots.Count).Select(g => g.Key).ToList();
+            foreach (Slot s in slots)
+            {
+                ItemDrop.ItemData there = inv.GetItemAt(s.X, s.Y);
+                if (there == null || best.Contains(there.m_shared.m_name)) continue;
+                if (ToBag(inv, there)) moved = true; // (a weaker one: out, for a better)
+            }
+            foreach (string name in best)
+            {
+                if (slots.Any(s => inv.GetItemAt(s.X, s.Y)?.m_shared.m_name == name)) continue;
+                Slot free = slots.FirstOrDefault(s => inv.GetItemAt(s.X, s.Y) == null);
+                ItemDrop.ItemData from = inv.GetAllItems().Where(i => !InSlot(i) && i.m_shared.m_name == name).OrderByDescending(i => i.m_stack).FirstOrDefault();
+                if (free == null || from == null) continue;
+                from.m_gridPos = new Vector2i(free.X, free.Y);
+                moved = true;
+            }
+            // Topped up from the bag.
+            foreach (Slot s in slots)
+            {
+                ItemDrop.ItemData there = inv.GetItemAt(s.X, s.Y);
+                if (there == null || there.m_stack >= there.m_shared.m_maxStackSize) continue;
+                foreach (ItemDrop.ItemData more in inv.GetAllItems().Where(i => !InSlot(i) && i.m_shared.m_name == there.m_shared.m_name && i.m_quality == there.m_quality).ToList())
+                {
+                    int n = Mathf.Min(more.m_stack, there.m_shared.m_maxStackSize - there.m_stack);
+                    if (n <= 0) break;
+                    there.m_stack += n;
+                    more.m_stack -= n;
+                    if (more.m_stack <= 0) inv.RemoveItem(more);
+                    moved = true;
+                }
+            }
+            return moved;
+        }
+
+        /// <summary>Its food slots running low (fewer than three foods, or under five of one): it would take food from its chests.</summary>
+        public static bool FoodLow(Humanoid h)
+        {
+            var food = FoodSlots.Select(s => In(h, s)).Where(i => i != null).ToList();
+            return food.Count < 3 || food.Any(i => i.m_stack < 5);
+        }
+
+        /// <summary>From its chest: food it would put in its food slots (a food it has too little of, or a new one while a slot is free or weaker).</summary>
+        public static bool WantsFood(Humanoid h, ItemDrop.ItemData item)
+        {
+            if (!Food.IsFood(item)) return false;
+            var food = FoodSlots.Select(s => In(h, s)).Where(i => i != null).ToList();
+            ItemDrop.ItemData same = food.FirstOrDefault(i => i.m_shared.m_name == item.m_shared.m_name);
+            int carried = h.GetInventory().GetAllItems().Where(i => i.m_shared.m_name == item.m_shared.m_name).Sum(i => i.m_stack);
+            if (same != null) return carried < Mathf.Min(10, same.m_shared.m_maxStackSize);
+            return food.Count < 3 || food.Any(i => Worth(i) < Worth(item));
         }
 
         private static bool ToBag(Inventory inv, ItemDrop.ItemData item)
@@ -179,8 +254,21 @@ namespace AICompanion
             if (fits.Count == 0) { why = "That isn't gear."; return false; }
             if (!Companion.Write(c, _ => { })) { why = "Someone is going through its things."; return false; }
             Slot slot = fits.FirstOrDefault(s => In(c, s) == null) ?? fits[0];
+            if (fits[0].Kind == GearKind.Food)
+            {
+                Slot same = fits.FirstOrDefault(s => In(c, s) is ItemDrop.ItemData f && f.m_shared.m_name == item.m_shared.m_name && f.m_stack + item.m_stack <= f.m_shared.m_maxStackSize);
+                slot = same ?? fits.FirstOrDefault(s => In(c, s) == null);
+                if (slot == null) // its food slots are full of other food: into its bag (it moves the best into its slots itself)
+                {
+                    if (!its.CanAddItem(item)) { why = $"{Companion.NameOf(c)}'s bag is full."; return false; }
+                    its.MoveItemToThis(mine, item);
+                    Companion.SaveBag(c);
+                    Activity.Log(c, $"you gave it {Localization.instance.Localize(item.m_shared.m_name)} (into its bag)");
+                    return true;
+                }
+            }
             ItemDrop.ItemData old = In(c, slot);
-            if (old != null)
+            if (old != null && old.m_shared.m_name != item.m_shared.m_name)
             {
                 if (c.IsItemEquiped(old)) c.UnequipItem(old, false);
                 old.m_equipped = false;
@@ -192,9 +280,10 @@ namespace AICompanion
             }
             if (p.IsItemEquiped(item)) p.UnequipItem(item, false);
             item.m_equipped = false;
-            if (!its.MoveItemToThis(mine, item, item.m_stack, slot.X, slot.Y)) { why = "It didn't fit."; return false; }
+            if (!its.MoveItemToThis(mine, item, item.m_stack, slot.X, slot.Y)) { why = "It didn't fit."; Activity.Log(c, $"could not take {Localization.instance.Localize(item.m_shared.m_name)} into its {slot.Label.ToLowerInvariant()} slot"); return false; }
             Brain.Get(c).NextGear = 0f; // wear it now
             Companion.SaveBag(c);
+            Activity.Log(c, $"you gave it {Localization.instance.Localize(item.m_shared.m_name)}: into its {slot.Label.ToLowerInvariant()} slot");
             return true;
         }
 
@@ -250,25 +339,84 @@ namespace AICompanion
         }
     }
 
-    /// <summary>Its bag beside your inventory shows the bag only (the gear rows are its menu's): the grid is drawn as if it had four rows.</summary>
+    /// <summary>
+    /// Its bag and gear beside your inventory: the two gear rows a little apart under the bag, each slot labelled (as your GearSlots panel),
+    /// the unused cells hidden.
+    /// </summary>
     [HarmonyPatch(typeof(InventoryGrid), "UpdateGui")]
     internal static class InventoryGrid_UpdateGui_Bag
     {
-        private static readonly AccessTools.FieldRef<Inventory, int> Height = AccessTools.FieldRefAccess<Inventory, int>("m_height");
-        private static readonly AccessTools.FieldRef<InventoryGrid, Inventory> Inv = AccessTools.FieldRefAccess<InventoryGrid, Inventory>("m_inventory");
+        private static readonly AccessTools.FieldRef<InventoryGrid, List<InventoryElement>> Elements = AccessTools.FieldRefAccess<InventoryGrid, List<InventoryElement>>("m_elements");
+        public const float Gap = 14f;
+        private static readonly HashSet<int> Shifted = new HashSet<int>();
 
-        private static void Prefix(InventoryGrid __instance, out int __state)
+        private static void Postfix(InventoryGrid __instance)
         {
-            __state = -1;
-            Inventory inv = Inv(__instance);
-            if (!BagPanel.IsBagGrid(__instance) || !Gear.IsCompanion(inv) || inv.GetHeight() <= Gear.BagRows) return;
-            __state = Height(inv);
-            Height(inv) = Gear.BagRows;
+            if (!BagPanel.IsBagGrid(__instance) || !Gear.IsCompanion(__instance.GetInventory())) return;
+            foreach (InventoryElement e in Elements(__instance))
+            {
+                if (e == null || e.Position.y < Gear.BagRows) continue;
+                Gear.Slot slot = Gear.At(e.Position.x, e.Position.y);
+                if (slot == null) { if (e.gameObject.activeSelf) e.gameObject.SetActive(false); continue; }
+                if (Shifted.Add(e.GetInstanceID())) (e.transform as RectTransform).anchoredPosition += new Vector2(0f, -Gap);
+                bool empty = __instance.GetInventory().GetItemAt(slot.X, slot.Y) == null;
+                TMPro.TMP_Text label = Label(e);
+                if (label != null) { label.text = slot.Label; label.enabled = empty; }
+            }
         }
 
-        private static void Finalizer(InventoryGrid __instance, int __state) // (even if the drawing throws: never left at four rows)
+        /// <summary>The slot's name written faintly at the bottom of the cell, as your GearSlots panel does (made once per cell).</summary>
+        private static TMPro.TMP_Text Label(InventoryElement e)
         {
-            if (__state > 0) Height(Inv(__instance)) = __state;
+            Transform have = e.transform.Find("CompanionSlotLabel");
+            if (have != null) return have.GetComponent<TMPro.TMP_Text>();
+            TMPro.TMP_Text font = e.m_amount;
+            if (font == null) return null;
+            var go = new GameObject("CompanionSlotLabel", typeof(RectTransform));
+            go.transform.SetParent(e.transform, false);
+            var t = go.AddComponent<TMPro.TextMeshProUGUI>();
+            t.font = font.font;
+            t.fontSharedMaterial = font.fontSharedMaterial;
+            t.fontSize = 11f;
+            t.color = new Color(1f, 1f, 1f, 0.4f);
+            t.alignment = TMPro.TextAlignmentOptions.Bottom;
+            t.raycastTarget = false;
+            t.enableWordWrapping = false;
+            var rt = t.rectTransform;
+            rt.anchorMin = Vector2.zero; rt.anchorMax = Vector2.one; rt.offsetMin = new Vector2(0f, 4f); rt.offsetMax = Vector2.zero;
+            return t;
+        }
+
+        public static void Forget() => Shifted.Clear();
+    }
+
+    /// <summary>Into one of its gear slots only what belongs there (a helmet in the helmet slot...), as your GearSlots does.</summary>
+    [HarmonyPatch(typeof(InventoryGrid), nameof(InventoryGrid.DropItem))]
+    internal static class InventoryGrid_DropItem_Gear
+    {
+        private static bool Prefix(InventoryGrid __instance, Inventory fromInventory, ItemDrop.ItemData item, Vector2i pos, ref bool __result)
+        {
+            Inventory target = __instance.GetInventory();
+            if (Gear.IsCompanion(target) && pos.y >= Gear.BagRows)
+            {
+                Gear.Slot slot = Gear.At(pos.x, pos.y);
+                if (slot == null || !Gear.Fits(slot, item)) return Refuse(item, slot, out __result);
+            }
+            // Out of one of its gear slots onto something that would be swapped back into it: that has to belong there too.
+            if (Gear.IsCompanion(fromInventory) && item.m_gridPos.y >= Gear.BagRows)
+            {
+                Gear.Slot origin = Gear.At(item.m_gridPos.x, item.m_gridPos.y);
+                ItemDrop.ItemData other = target.GetItemAt(pos.x, pos.y);
+                if (origin != null && other != null && other != item && !Gear.Fits(origin, other)) return Refuse(other, origin, out __result);
+            }
+            return true;
+        }
+
+        private static bool Refuse(ItemDrop.ItemData item, Gear.Slot slot, out bool result)
+        {
+            result = false;
+            Player.m_localPlayer?.Message(MessageHud.MessageType.Center, slot == null ? "That isn't a gear slot" : $"{Localization.instance.Localize(item.m_shared.m_name)} doesn't go in the {slot.Label.ToLowerInvariant()} slot");
+            return false;
         }
     }
 }

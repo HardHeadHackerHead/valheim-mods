@@ -37,7 +37,7 @@ namespace AICompanion
                 if (!_panel.gameObject.activeSelf) _panel.gameObject.SetActive(true);
                 if (_shown != c) { _shown = c; _placedFor = Vector2.zero; }
                 _grid.UpdateInventory(c.GetInventory(), null, DragItem(gui));
-                if (_name != null) _name.text = $"{Companion.NameOf(c)}'s bag";
+                if (_name != null) _name.text = $"{Companion.NameOf(c)}'s bag and gear";
                 if (_weight != null) _weight.text = $"{Carry.Weight(c):0}/{Carry.Max(c):0}";
                 var size = new Vector2(Screen.width, Screen.height);
                 if (_placedFor != size) { Place(gui); _placedFor = size; }
@@ -83,6 +83,10 @@ namespace AICompanion
             _grid.m_onRightClick = TakeToYou;
             _name = Find(copy, gui.m_container, gui.m_containerName);
             _weight = Find(copy, gui.m_container, gui.m_containerWeight);
+            // Room for its two gear rows (and the gap above them) under the bag: the chest panel is made for four rows.
+            float extra = (Gear.Rows - Gear.BagRows) * _grid.m_elementSpace + InventoryGrid_UpdateGui_Bag.Gap;
+            _panel.sizeDelta += new Vector2(0f, extra);
+            InventoryGrid_UpdateGui_Bag.Forget();
             copy.SetActive(true);
             Plugin.Instance?.Note("Companion bag panel made beside the inventory");
             return true;
@@ -139,6 +143,7 @@ namespace AICompanion
         }
 
         public static bool IsBagGrid(InventoryGrid grid) => grid != null && grid == _grid;
+        public static Humanoid Shown => _shown;
 
         public static void Destroy()
         {
@@ -151,5 +156,59 @@ namespace AICompanion
     internal static class InventoryGui_Update_Bag
     {
         private static void Postfix(InventoryGui __instance) => BagPanel.Tick(__instance);
+    }
+}
+
+namespace AICompanion
+{
+    /// <summary>
+    /// Ctrl-click (the game's quick move) with its bag beside your inventory: from its bag into yours, from yours to it (gear into its slot,
+    /// the rest into its bag), as with an open chest. Without its panel showing, the game's own (drop on the ground).
+    /// </summary>
+    [HarmonyPatch(typeof(InventoryGui), "OnSelectedItem")]
+    internal static class InventoryGui_OnSelectedItem_QuickMove
+    {
+        private static readonly AccessTools.FieldRef<InventoryGui, GameObject> DragGo = AccessTools.FieldRefAccess<InventoryGui, GameObject>("m_dragGo");
+        private static readonly AccessTools.FieldRef<InventoryGui, Container> Open = AccessTools.FieldRefAccess<InventoryGui, Container>("m_currentContainer");
+
+        private static bool Prefix(InventoryGui __instance, InventoryGrid grid, ItemDrop.ItemData item, InventoryGrid.Modifier mod)
+        {
+            Humanoid c = BagPanel.Shown;
+            Player p = Player.m_localPlayer;
+            if (mod != InventoryGrid.Modifier.Move || item == null || c == null || p == null || Open(__instance) != null || DragGo(__instance) != null) return true;
+            string why;
+            if (BagPanel.IsBagGrid(grid)) { if (!Companion.Take(c, p, item, out why) && why != null) p.Message(MessageHud.MessageType.Center, why); return false; }
+            if (grid == __instance.m_playerGrid) { if (!Companion.Give(c, p, item, out why) && why != null) p.Message(MessageHud.MessageType.Center, why); return false; }
+            return true;
+        }
+    }
+}
+
+namespace AICompanion
+{
+    /// <summary>
+    /// Dragging out of its bag: the inventory screen cancels, every frame, any drag that is not from your own inventory when no chest is open
+    /// (InventoryGui.UpdateContainer), so an item picked up in its bag panel was dropped again at once and nothing could be taken out. That one
+    /// check is let off for a drag from its bag while its panel shows; closing the inventory, a right-click and the rest still cancel.
+    /// </summary>
+    [HarmonyPatch(typeof(InventoryGui), "UpdateContainer")]
+    internal static class InventoryGui_UpdateContainer_Bag
+    {
+        internal static bool Inside;
+        private static void Prefix() => Inside = true;
+        private static void Finalizer() => Inside = false;
+    }
+
+    [HarmonyPatch(typeof(InventoryGui), "SetupDragItem")]
+    internal static class InventoryGui_SetupDragItem_Bag
+    {
+        private static readonly AccessTools.FieldRef<InventoryGui, Inventory> DragFrom = AccessTools.FieldRefAccess<InventoryGui, Inventory>("m_dragInventory");
+
+        private static bool Prefix(InventoryGui __instance, ItemDrop.ItemData item)
+        {
+            if (item != null || !InventoryGui_UpdateContainer_Bag.Inside) return true;
+            Inventory from = DragFrom(__instance);
+            return !(BagPanel.Shown != null && from != null && from == BagPanel.Shown.GetInventory()); // (its bag, its panel showing: keep the drag)
+        }
     }
 }

@@ -25,8 +25,8 @@ namespace AICompanion
         public static WearNTear Damaged(Humanoid me, Vector3 at, float range, Func<Component, bool> allowed)
         {
             return Physics.OverlapSphere(at, range, Pieces).Select(c => c.GetComponentInParent<WearNTear>()).Where(w => w != null).Distinct()
-                .Where(w => w.GetHealthPercentage() < 0.9f && allowed(w) && Repairable(w))
-                .OrderBy(w => Vector3.Distance(w.transform.position, me.transform.position)).FirstOrDefault();
+                .Where(w => w.GetHealthPercentage() < 0.9f && Repairable(w))
+                .OrderBy(w => Vector3.Distance(w.transform.position, me.transform.position)).FirstOrDefault(w => allowed(w)); // (nearest first: the costly checks only as far as needed)
         }
 
         private static bool Repairable(WearNTear w)

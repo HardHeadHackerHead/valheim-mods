@@ -103,8 +103,26 @@ namespace AICompanion
             int moved = stack(me.GetInventory(), me.transform.position, 30f, i => Keeps(me, i) || Companion.Worn(me).Contains(i));
             if (moved <= 0) return 0;
             Companion.SaveBag(me);
-            st.Remember($"sorted {moved} things into your chests");
+            st.Remember($"sorted {moved} thing{(moved == 1 ? "" : "s")} into your chests");
             Plugin.Instance?.Note($"{Companion.NameOf(me)} sorted {moved} items into the chests near {me.transform.position:F0} (QualityOfLife)");
+            return moved;
+        }
+
+        /// <summary>
+        /// You pointed it at a chest: there, with QualityOfLife, what it carries (not its gear, food or tools) goes into the right chests around
+        /// it by your chest rules (as your "Stack to chests"), and only the rest into the chest you pointed at. How many it sorted.
+        /// </summary>
+        public static int SortAt(BrainState st, Container chest)
+        {
+            Humanoid me = st.Body;
+            var stack = QolStack;
+            if (stack == null || chest == null) return 0;
+            int moved = stack(me.GetInventory(), chest.transform.position, 20f, i => Keeps(me, i) || Companion.Worn(me).Contains(i));
+            if (moved <= 0) return 0;
+            Companion.SaveBag(me);
+            st.Remember($"sorted {moved} thing{(moved == 1 ? "" : "s")} into your chests");
+            Talk.Mention(me, $"Sorted {moved} thing{(moved == 1 ? "" : "s")} into the right chests.");
+            Plugin.Instance?.Note($"{Companion.NameOf(me)} sorted {moved} items into the chests near {chest.transform.position:F0} (QualityOfLife)");
             return moved;
         }
 
@@ -370,7 +388,15 @@ namespace AICompanion
             Task t = st.Task;
             Vector3 at = Point(t.Target, me.transform.position);
             float dist = Flat(at, me.transform.position);
-            if (Time.time - t.Started > (t.Trip ? 240f : 60f) || (dist > 3f && Time.time - t.LastClose > (t.Trip ? 120f : 20f))) { Skip(st, t.Target, "could not get to it"); return; }
+            if (Time.time - t.Started > (t.Trip ? 240f : 60f) || (dist > 3f && Time.time - t.LastClose > (t.Trip ? 120f : 20f)))
+            {
+                // A piece it could not get to: the rest of that wall too (a stake wall outside your walls: one stake after another, for ever).
+                if (t.Kind == Kind.Mend)
+                    foreach (Collider col in Physics.OverlapSphere(t.Target.transform.position, 6f, LayerMask.GetMask("piece", "piece_nonsolid")))
+                        if (col.GetComponentInParent<WearNTear>() is WearNTear near && near != t.Target) st.Skipped[near.gameObject.GetInstanceID()] = Time.time + 600f;
+                Skip(st, t.Target, "could not get to it");
+                return;
+            }
 
             switch (t.Kind)
             {
@@ -434,12 +460,13 @@ namespace AICompanion
                     if (dist > 2f) { moveTo(at, 1.2f, dist > 8f); break; }
                     t.LastClose = Time.time;
                     stop();
+                    if (t.Ordered) SortAt(st, (Container)t.Target); // you pointed at the chest: your "Stack to chests" from there first
                     Store(st, (Container)t.Target);
                     st.Task = null;
                     break;
 
                 case Kind.Craft:
-                    if (dist > 2.6f) { moveTo(at, 1.8f, dist > 8f); break; }
+                    if (dist > 2.6f && !CanReachOver(t, dist)) { moveTo(at, 1.8f, dist > 8f); break; }
                     t.LastClose = Time.time;
                     stop();
                     Upgrades.Craft(st, t.Recipe, (CraftingStation)t.Target, t.ForGoal);
@@ -454,7 +481,9 @@ namespace AICompanion
                     break;
 
                 case Kind.Mend:
-                    if (dist > 2.6f) { moveTo(at, 1.6f, dist > 8f); break; }
+                    // A hammer reaches a few metres, as yours does: it stands back (out of a stake wall's reach), and when it cannot get nearer
+                    // after a while (the piece behind a wall, up on the roof) it repairs it from where it is, close enough.
+                    if (dist > 4.5f && !(dist < 6.5f && Time.time - t.Started > 8f)) { moveTo(at, 3.2f, dist > 8f); break; }
                     t.LastClose = Time.time;
                     stop();
                     lookAt(at + Vector3.up);
@@ -494,7 +523,7 @@ namespace AICompanion
                     break;
 
                 case Kind.Upgrade:
-                    if (dist > 2.6f) { moveTo(at, 1.8f, dist > 8f); break; }
+                    if (dist > 2.6f && !CanReachOver(t, dist)) { moveTo(at, 1.8f, dist > 8f); break; }
                     t.LastClose = Time.time;
                     stop();
                     Upgrades.Do(st, t.Item, (CraftingStation)t.Target);
@@ -559,6 +588,9 @@ namespace AICompanion
             }
             t.HealthAt = health;
         }
+
+        /// <summary>A station it cannot get right up to (against a wall, in a cramped corner): after a while, within a few metres, it reaches over.</summary>
+        private static bool CanReachOver(Task t, float dist) => dist < 6f && Time.time - t.Started > 8f;
 
         private static void Go(Vector3 center, Action<Vector3, float, bool> moveTo, Action stop, Humanoid me)
         {
@@ -714,6 +746,14 @@ namespace AICompanion
                 }
                 if (Food.Meals(me).Count == 0) Talk.Tell(me, "I'm out of food and there's none in my chests. I'll forage and hunt, but some cooked meat would help.", "nofood", 20f);
             }
+            // Its food slots running low: more from its chests, when they have some it would take.
+            if (!hungry && Gear.FoodLow(me) && Time.time >= st.NextRefillLook)
+            {
+                st.NextRefillLook = Time.time + 120f;
+                Container larder = Home.Chests(me).Where(c => !c.IsInUse() && !Skipped(st, c) && c.GetInventory().GetAllItems().Any(i => Gear.WantsFood(me, i)))
+                                       .OrderBy(c => Vector3.Distance(c.transform.position, me.transform.position)).FirstOrDefault(c => Brain.CanReach(me, c.transform.position));
+                if (larder != null) { st.Remember("went to its chest to fill its food slots"); return New(Kind.Store, larder, Job.None); }
+            }
 
             // Its fires: the ones under cooking stations and by its bed, topped up before they go out (wood from its bag or its chests).
             if (Time.time >= st.NextFireLook)
@@ -727,7 +767,7 @@ namespace AICompanion
             if (Time.time >= st.NextMendLook)
             {
                 st.NextMendLook = Time.time + 20f;
-                WearNTear damaged = Mending.Damaged(me, center, radius, c => !Skipped(st, c));
+                WearNTear damaged = Mending.Damaged(me, center, radius, c => !Skipped(st, c) && Brain.CanReach(me, c.transform.position, 4f)); // (somewhere to stand within a hammer's reach of it)
                 if (damaged != null)
                 {
                     if (Mending.Hammer(me) == null) Mending.MakeHammer(st);
@@ -1163,6 +1203,7 @@ namespace AICompanion
                 return bow != null && item.m_shared.m_ammoType == bow.m_shared.m_ammoType && have.Where(a => a.m_shared.m_name == item.m_shared.m_name).Sum(a => a.m_stack) < 40;
             }
             if (Food.IsFood(item)) return have.Where(Food.IsFood).Sum(f => f.m_stack) < 10;
+            if (Gear.WantsFood(me, item)) return true; // for its food slots
             if (IsCookable(item)) return have.Where(Food.IsFood).Sum(f => f.m_stack) < 10 && have.Where(IsCookable).Sum(f => f.m_stack) < 10; // to cook for itself
             if (type == ItemDrop.ItemData.ItemType.Consumable && Companion.Useful(me, item)) return Companion.HealingPotions(me).Sum(p => p.m_stack) < 3;
             if ((jobs & Job.Wood) != 0 && item.m_shared.m_damages.m_chop > 0f && item.IsWeapon() && Axe(me) == null) return true;

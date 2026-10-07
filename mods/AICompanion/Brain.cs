@@ -61,7 +61,8 @@ namespace AICompanion
         public TombStone GraveOrdered, GraveOn;
         public readonly List<ItemDrop> PickQueue = new List<ItemDrop>();
         public Work.Area Area;
-        public bool SwingMissed; // its last swing at what it works on touched something else, or nothing (Attack_DoMeleeAttack_Log) // the patch of trees (rocks, plants) you pointed it at // things you pointed it at to pick up (Work.OrderPickUp)
+        public bool SwingMissed;
+        public float NextRefillLook; // its food slots: when it next looks in its chests for more (Work) // its last swing at what it works on touched something else, or nothing (Attack_DoMeleeAttack_Log) // the patch of trees (rocks, plants) you pointed it at // things you pointed it at to pick up (Work.OrderPickUp)
         public float WokeAt = -999f; // up after a fall (Tactics.Careful) // the tombstone you pointed it at; the one it is going to (Grave)
         public Work.Task Task;                                      // gathering
         public CraftingStation RepairAt;                            // repairs
@@ -234,12 +235,12 @@ namespace AICompanion
         }
 
         /// <summary>Can it walk there (straight, or through a door)? For choosing where to go: a chest behind your stakes is not worth trying.</summary>
-        internal static bool CanReach(Humanoid me, Vector3 to)
+        internal static bool CanReach(Humanoid me, Vector3 to, float near = 2.5f)
         {
             BaseAI ai = me.GetComponent<BaseAI>();
             Pathfinding pf = Pathfinding.instance;
             if (ai == null || pf == null) return true;
-            if (!pf.FindValidPoint(out Vector3 goal, to, 2.5f, ai.m_pathAgentType)) return false;
+            if (!pf.FindValidPoint(out Vector3 goal, to, near, ai.m_pathAgentType)) return false;
             return pf.HavePath(me.transform.position, goal, ai.m_pathAgentType) || PlanDoor(ai, me.transform.position, to) != null;
         }
 
