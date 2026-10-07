@@ -529,6 +529,7 @@ namespace AICompanion
             me.transform.position = pos;
             Rigidbody body = me.GetComponent<Rigidbody>();
             if (body != null) { body.position = pos; body.linearVelocity = Vector3.zero; }
+            Companion.Zdo(me)?.SetPosition(pos); // (its saved place too: from somewhere nobody is (its bed, after a fall), the game left it there, unloaded)
             Get(me).Remember($"{how} {master.GetPlayerName()}");
             Plugin.Instance?.Note($"{Companion.NameOf(me)} {how} {master.GetPlayerName()}");
         }

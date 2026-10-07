@@ -1,3 +1,5 @@
+Stack to chests (and companions sorting into your chests) no longer puts anything into a chest a companion has taken as its own: its chest held wood, so all the wood went there.
+
 Companions (AICompanion) can sort what they bring home into your chests by the same rules as Stack to chests: a chest assigned that item, then its category, then one already holding it.
 
 New: the camera zooms out much further: up to 20 m on foot (the game stops at 6) and 40 m while steering a boat. Each scroll step grows as you zoom out, so it only takes a few notches. Camera, MaxDistance and MaxDistanceBoat set the limits; FarZoom switches it off.

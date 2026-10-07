@@ -1,3 +1,5 @@
+Fix: after a fall far from home it woke in its bed, hopped to you, and the game left it at its bed, unloaded (the hop moved it but not its saved place); now it arrives beside you.
+
 Smarter about its chest: it keeps exactly what its next upgrades and its mission need (added up), not stacks of it (it put 50 wood and 130 stone in its chest because some of its upgrades use them). It puts in only what is still missing, a part of a stack if that is all, and the rest goes to your chests; what its chest holds beyond that it takes out down to the exact amount. Working a patch, it picks up only what that work drops (wood and resin from trees, stone from rocks), not whatever lies about.
 
 It fights (and chops and mines) in combos as a player does: the next blow the moment the last ends, so its weapon's chain carries on to its strong last blow (it paused a moment between blows, and the game started the chain over every time). It breaks a combo to block or roll, and keeps its weapon's special and its hit-and-run for after the last blow.

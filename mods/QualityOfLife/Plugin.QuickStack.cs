@@ -113,7 +113,7 @@ namespace QualityOfLife
             {
                 if (c == null || ContainerRegistry.InUse(c)) continue; // (a chest you have open is handled by the game's own button)
                 if (c.GetInventory() == null || (c.transform.position - here).sqrMagnitude > max) continue;
-                if (!Usable(c)) continue;
+                if (!Usable(c) || CompanionsOwn(c)) continue;
                 _stackChests.Add(c);
             }
             _stackChests.Sort((a, b) =>
@@ -279,9 +279,15 @@ namespace QualityOfLife
         /// For other mods (AICompanion, through AppDomain "DHack.QoL.StackInventory"): put the items of an inventory that <paramref name="keep"/>
         /// does not protect into the chests within <paramref name="radius"/> of <paramref name="here"/>, by the same rules as Stack to chests
         /// (a chest assigned that item, then its category, then a chest already holding it; nearest first). Only chests: never a cart's,
-        /// a ship's, a tombstone or a companion's bag, never one someone has open or a ward keeps you out of. The same lost-item check as
+        /// a ship's, a tombstone, a companion's bag or a companion's own chest, never one someone has open or a ward keeps you out of. The same lost-item check as
         /// your own stacking. Returns how many items moved.
         /// </summary>
+        /// <summary>
+        /// A chest an AICompanion companion has taken as its own (it keeps its food and materials there): never stacked into, by you or by a
+        /// companion sorting its things (its chest held wood, so all the wood went there, and it carried it back out).
+        /// </summary>
+        private static bool CompanionsOwn(Container c) => c.GetComponent<ZNetView>() is ZNetView v && v.IsValid() && v.GetZDO().GetLong("dhc_home", 0L) != 0L;
+
         internal static int StackInventory(Inventory inventory, Vector3 here, float radius, Func<ItemDrop.ItemData, bool> keep)
         {
             if (inventory == null || Game.instance == null) return 0;
@@ -289,7 +295,7 @@ namespace QualityOfLife
             List<Container> chests = ContainerRegistry.Alive()
                 .Where(c => c != null && c.GetInventory() != null && c.GetInventory() != inventory && !ContainerRegistry.InUse(c)
                             && (c.transform.position - here).sqrMagnitude <= max && c.GetComponentInParent<Piece>() != null
-                            && c.GetComponentInParent<Vagon>() == null && c.GetComponentInParent<Ship>() == null && c.GetComponent<TombStone>() == null && Usable(c))
+                            && c.GetComponentInParent<Vagon>() == null && c.GetComponentInParent<Ship>() == null && c.GetComponent<TombStone>() == null && Usable(c) && !CompanionsOwn(c))
                 .OrderBy(c => (c.transform.position - here).sqrMagnitude).ToList();
             if (chests.Count == 0) return 0;
             foreach (Container c in chests) ContainerRegistry.Reload(c);
