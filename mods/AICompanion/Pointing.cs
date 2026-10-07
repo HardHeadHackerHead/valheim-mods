@@ -33,6 +33,53 @@ namespace AICompanion
             Plugin.Tell(mine.Count == 1 ? $"{Companion.NameOf(mine[0])} comes back to you" : "Your companions come back to you");
         }
 
+        /// <summary>The ground, or a floor you built: somewhere to go and wait.</summary>
+        private static bool IsGround(RaycastHit hit) =>
+            hit.collider.GetComponentInParent<Heightmap>() != null || hit.collider.GetComponentInParent<Piece>() != null || LayerMask.LayerToName(hit.collider.gameObject.layer) == "terrain";
+
+        /// <summary>The job it was just given, marked on its target for as long as it is on it.</summary>
+        private static void MarkTask(BrainState st, Humanoid who, string doing)
+        {
+            Work.Task t = st.Task;
+            if (t?.Target == null) return;
+            Marks.Put(t.Target, who, doing, () => st.Task == t && t.Target != null);
+        }
+
+        /// <summary>The workable part of the world the ray hit (a tree, log, rock, ore vein, plant), however deep it sits in its object.</summary>
+        private static GameObject WorkObject(Collider col)
+        {
+            Component c = col.GetComponentInParent<TreeLog>() as Component ?? col.GetComponentInParent<TreeBase>() as Component
+                          ?? col.GetComponentInParent<MineRock5>() as Component ?? col.GetComponentInParent<MineRock>() as Component
+                          ?? col.GetComponentInParent<Pickable>() as Component ?? col.GetComponentInParent<Destructible>() as Component;
+            return c != null ? c.gameObject : null;
+        }
+
+        /// <summary>Why it cannot work that (no axe, too weak a pickaxe, a crop...), or null when it is nothing it works.</summary>
+        private static string WhyNot(Humanoid who, GameObject go)
+        {
+            if (go == null || go.GetComponent<Piece>() != null) return null;
+            ItemDrop.ItemData axe = Work.Axe(who), pick = Work.Pickaxe(who);
+            int treeTier = go.GetComponent<TreeBase>()?.m_minToolTier ?? go.GetComponent<TreeLog>()?.m_minToolTier ?? -1;
+            int rockTier = go.GetComponent<MineRock5>()?.m_minToolTier ?? go.GetComponent<MineRock>()?.m_minToolTier ?? -1;
+            Destructible des = go.GetComponent<Destructible>();
+            if (des != null)
+            {
+                DropTable drops = go.GetComponent<DropOnDestroyed>()?.m_dropWhenDestroyed;
+                if (drops == null || drops.m_drops.Count == 0) return "There's nothing worth getting from that.";
+                bool wood = des.m_destructibleType == DestructibleType.Tree || des.m_damages.m_chop != HitData.DamageModifier.Immune && des.m_damages.m_pickaxe == HitData.DamageModifier.Immune;
+                if (wood) treeTier = des.m_minToolTier; else rockTier = des.m_minToolTier;
+            }
+            if (treeTier >= 0) return axe == null ? "I need an axe for that. Give me one (my Gear tab)." : "My axe isn't good enough for that tree. I need a better one.";
+            if (rockTier >= 0) return pick == null ? "I need a pickaxe for that. Give me one (my Gear tab)." : "My pickaxe can't break that. I need a better one.";
+            Pickable p = go.GetComponent<Pickable>();
+            if (p != null)
+            {
+                if (Companion.Zdo(p)?.GetBool(ZDOVars.s_picked, false) ?? false) return "There's nothing to pick there yet.";
+                return "That's a crop. I leave your fields to you.";
+            }
+            return null;
+        }
+
         private static Humanoid Nearest(System.Collections.Generic.List<Humanoid> mine, Vector3 at) => mine.OrderBy(c => Vector3.Distance(c.transform.position, at)).First();
 
         private static bool Handle(Player p, System.Collections.Generic.List<Humanoid> mine, RaycastHit hit, Character ch)
@@ -50,6 +97,8 @@ namespace AICompanion
                     st.NextAsk = 0f;
                     Talk.Say(c, "On it!");
                 }
+                BrainState first = Brain.Get(mine[0]);
+                Marks.Put(ch, mine[0], mine.Count == 1 ? "going for this" : "going for this (all of us)", () => first.Focus == ch && Time.time < first.FocusUntil && !ch.IsDead());
                 Plugin.Tell($"{(mine.Count == 1 ? Companion.NameOf(mine[0]) : "Your companions")} go for the {Localization.instance.Localize(ch.m_name)}");
                 return true;
             }
@@ -58,10 +107,28 @@ namespace AICompanion
             TombStone tomb = go.GetComponentInParent<TombStone>();
             long tombOf = tomb != null ? Companion.Zdo(tomb)?.GetLong(Grave.OfKey, 0L) ?? 0L : 0L;
             Humanoid owner = tombOf != 0L ? mine.FirstOrDefault(c => Companion.IdOf(c) == tombOf) : null;
-            if (owner != null) { Grave.Fetch(Brain.Get(owner), tomb); Talk.Say(owner, "My things! I'll get them."); return true; }
+            if (owner != null)
+            {
+                BrainState os = Brain.Get(owner);
+                Grave.Fetch(os, tomb);
+                Talk.Say(owner, "My things! I'll get them.");
+                Marks.Put(tomb, owner, "getting my things back", () => os.GraveOrdered == tomb || os.GraveOn == tomb);
+                return true;
+            }
 
             Humanoid who = Nearest(mine, hit.point);
             BrainState w = Brain.Get(who);
+
+            // Things lying on the ground (the one you pointed at, or right beside where you pointed): it picks up all of them there.
+            ItemDrop item = hit.collider.GetComponentInParent<ItemDrop>();
+            Vector3 heap = item != null ? item.transform.position : hit.point;
+            if ((item != null || IsGround(hit)) && Work.OrderPickUp(w, heap, item != null ? 3f : 1.5f))
+            {
+                Talk.Say(who, "I'll pick those up.");
+                Marks.PutSpot(heap, who, "picking these up", () => w.PickQueue.Count > 0 || (w.Task != null && w.Task.Kind == Work.Kind.PickUp && w.Task.Ordered));
+                return true;
+            }
+            Activity.Log(who, $"you pointed at {Utils.GetPrefabName(go)} ({hit.collider.name}, layer {LayerMask.LayerToName(hit.collider.gameObject.layer)}, {hit.distance:0} m)");
 
             // A free bed: its bed now.
             Bed bed = go.GetComponentInParent<Bed>();
@@ -69,24 +136,50 @@ namespace AICompanion
 
             // A cart: it pulls it (again: it lets go).
             Vagon cart = go.GetComponentInParent<Vagon>();
-            if (cart != null) { Carts.Toggle(w, cart); return true; }
+            if (cart != null) { Carts.Toggle(w, cart); if (w.Cart == cart) Marks.Put(cart, who, "pulling this", () => w.Cart == cart); return true; }
 
             // One of your chests: put its things there.
             Container chest = go.GetComponentInParent<Container>();
             if (chest != null && Home.IsChest(chest))
             {
-                if (Work.Ordered(w, Work.Kind.Store, chest)) { Talk.Say(who, "I'll put my things in there."); return true; }
+                if (Work.Ordered(w, Work.Kind.Store, chest)) { Talk.Say(who, "I'll put my things in there."); MarkTask(w, who, "putting my things in here"); return true; }
             }
 
-            // Something to work: a tree, log, rock, ore, a plant.
-            Work.Task work = Work.Workable(w, go);
-            if (work != null) { Work.Ordered(w, work); Talk.Say(who, work.Kind == Work.Kind.Pick ? "I'll pick that." : "On it."); return true; }
+            // Something to work: a tree, log, rock, ore, a plant (the part of the world you hit, not what it sits in: a rock in a ruin).
+            GameObject thing = WorkObject(hit.collider) ?? go;
+            Work.Task work = Work.Workable(w, thing);
+            if (work != null && Work.Ordered(w, work))
+            {
+                string doing = work.Kind == Work.Kind.Pick ? "picking this" : work.Job == Job.Wood ? "chopping this" : "mining this";
+                Talk.Say(who, work.Kind == Work.Kind.Pick ? "I'll pick that." : "On it.");
+                MarkTask(w, who, doing);
+                return true;
+            }
+            // Something it would work if it could: it says why, rather than walking off to wait there.
+            string why = WhyNot(who, thing);
+            if (why != null)
+            {
+                Talk.Say(who, why);
+                Plugin.Tell($"{Companion.NameOf(who)}: {why}");
+                return true;
+            }
 
-            // The ground (or anything else): go there and wait.
+            // Something that is neither the ground nor a floor you built (a boulder that cannot be mined, scenery): nothing to do with it.
+            if (!IsGround(hit))
+            {
+                string name = Utils.GetPrefabName(go).ToLowerInvariant();
+                string what = name.Contains("rock") || name.Contains("stone") || name.Contains("boulder") ? "That rock can't be mined." : "I can't do anything with that.";
+                Talk.Say(who, what);
+                Plugin.Tell($"{Companion.NameOf(who)}: {what} (Point at the ground for it to wait there.)");
+                return true;
+            }
+
+            // The ground: go there and wait.
             Vector3 spot = hit.point;
             if (Companion.Write(who, z => { z.Set(Keys.Order, (int)Order.Guard); z.Set(Keys.Post, spot); }))
             {
                 w.ManualOrderAt = Time.time;
+                Marks.PutSpot(spot, who, "waiting here", () => who != null && Companion.OrderOf(who) == Order.Guard && Vector3.Distance(Companion.Zdo(who).GetVec3(Keys.Post, Vector3.zero), spot) < 0.5f);
                 Talk.Say(who, "I'll wait there.");
                 Plugin.Tell($"{Companion.NameOf(who)} waits there. Press {Plugin.CommandKey.Value} at the sky to call them back.");
             }

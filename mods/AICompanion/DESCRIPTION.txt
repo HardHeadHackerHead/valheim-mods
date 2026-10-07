@@ -1,7 +1,7 @@
 A viking companion who plays like a player: comes on your adventures, lives its own life at home, and gets better as it goes.
 
 - Press J to summon your companion or open its menu (E on it too). Hold J: your companions come with you, or go home.
-- Point and press H: at an enemy (they attack it), a tree, rock or plant (it works it), your chest (it puts its things in), a cart (it pulls it), the ground (it waits there), the sky (it comes back).
+- Point and press H: at an enemy (they attack it), a tree, rock or plant (it works it, and the thing glows with a note above it while it does), your chest (it puts its things in), a cart (it pulls it), the ground (it waits there), the sky (it comes back).
 - "Let it decide": it reads what you are doing. It fights beside you, mines or chops beside you, and keeps close while you explore; where a place is too dangerous for its gear it tells you and only defends.
 - It fights like a player: timed parries (it learns each creature's swing), rolls out of sweeps and shots, joins in on what you are hitting and gets round behind it, pulls enemies off you when you are hurt, sneaks up for backstabs, uses weapon specials, hits and steps back against heavy hitters, drinks the right mead, remembers what has killed it, kites with its bow (leading moving targets, allowing for arrow drop), and fights bosses with care (flanking, keeping its distance, drinking early).
 - Follows you through portals, into crypts and caves, onto boats and through doors; it steers round stakes and fires, jumps streams and gets itself unstuck.

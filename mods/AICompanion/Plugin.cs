@@ -16,7 +16,7 @@ namespace AICompanion
     {
         public const string Guid = "com.dhack.aicompanion";
         public const string Name = "AICompanion";
-        public const string Version = "0.10.9";
+        public const string Version = "0.11.3";
 
         internal static Plugin Instance;
         internal static ConfigEntry<bool> ShowDecisions;
@@ -105,6 +105,7 @@ namespace AICompanion
             Passing.Forget();
             Defense.Forget();
             Banter.Forget();
+            Marks.Forget();
             BagPanel.Destroy();
             Container_Load_Companion.Forget();
             _harmony?.UnpatchSelf();
@@ -126,6 +127,7 @@ namespace AICompanion
             UpdateMenu(player);
             MenuKeyPressed(player);
             if (!MenuOpen && Home.AssignFor == null && !TypingOrBusy() && CommandKey.Value.IsDown()) Pointing.Command(player);
+            Marks.Tick(); // what you pointed it at glows, with a line above it
         }
 
         private float _keyDownAt = -1f;

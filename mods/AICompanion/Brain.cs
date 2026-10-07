@@ -59,6 +59,7 @@ namespace AICompanion
         public int YourEmoteId = int.MinValue;
         public Vector3 YouWere, IdleAt, LookAroundAt;
         public TombStone GraveOrdered, GraveOn;
+        public readonly List<ItemDrop> PickQueue = new List<ItemDrop>(); // things you pointed it at to pick up (Work.OrderPickUp)
         public float WokeAt = -999f; // up after a fall (Tactics.Careful) // the tombstone you pointed it at; the one it is going to (Grave)
         public Work.Task Task;                                      // gathering
         public CraftingStation RepairAt;                            // repairs
@@ -453,7 +454,7 @@ namespace AICompanion
                     if (master == null) { st.Ai.StopMoving(); SetStatus(st, "waiting for " + (Companion.Zdo(me).GetString(Keys.MasterName, "its friend"))); break; }
                     float d = Vector3.Distance(master.transform.position, me.transform.position);
                     // You pointed at something for it to do (Pointing): that first.
-                    if (Time.time < st.CommandUntil && st.Task != null)
+                    if (Time.time < st.CommandUntil && (st.Task != null || st.PickQueue.Count > 0))
                     {
                         if (Work.RunOrdered(st, master, dt, (p, dd, run) => MoveTo(st.Ai, dt, p, dd, run), () => st.Ai.StopMoving(), p => LookAt(st.Ai, p))) break;
                         st.CommandUntil = 0f;

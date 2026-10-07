@@ -35,6 +35,7 @@ namespace AICompanion
             }
             st.MasterGoneSince = 0f;
             if (order != Order.Follow) return;
+            if (Time.time < st.CommandUntil && (st.Task != null || st.PickQueue.Count > 0)) return; // what you pointed it at first, then home
 
             Inventory inv = me.GetInventory();
             string need, topic, ask;

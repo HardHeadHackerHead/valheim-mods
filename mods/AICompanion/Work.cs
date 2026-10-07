@@ -36,6 +36,7 @@ namespace AICompanion
             public bool Edible;              // food (or raw food to cook), when it forages
             public bool Trip;                // beyond its home's radius, for its goal
             public bool WasTree;             // a standing tree (it steps clear when it falls)
+            public bool Ordered;             // you pointed it at this (Pointing)
             public Vector3 Pos;
             public float Closer = 1f;        // how much closer than usual it stands (it steps in when its swings do nothing)
             public int Swings;
@@ -158,6 +159,7 @@ namespace AICompanion
             if (Time.time >= st.NextLoanLook) { st.NextLoanLook = Time.time + 30f; Loans.Return(st); } // food it borrowed and did not need
 
             if (st.Task != null && !Valid(st, st.Task)) Drop(st);
+            if (st.Task == null) NextQueued(st); // things you pointed it at to pick up
             if (st.Task == null && Time.time >= st.NextWorkLook)
             {
                 st.NextWorkLook = Time.time + 1.5f;
@@ -222,6 +224,7 @@ namespace AICompanion
             Order order = Companion.OrderOf(me);
             if ((order == Order.Stay || order == Order.Guard) && !Companion.Write(me, z => z.Set(Keys.Order, (int)Order.Follow))) return false;
             t.Started = t.LastClose = Time.time;
+            t.Ordered = true;
             st.Task = t;
             st.Helping = false;
             st.CommandUntil = Time.time + 120f;
@@ -231,11 +234,37 @@ namespace AICompanion
 
         public static bool Ordered(BrainState st, Kind kind, Component target) => Ordered(st, New(kind, target, Job.None));
 
+        /// <summary>You pointed at things lying on the ground: everything there (within the radius), nearest first. False when nothing lies there.</summary>
+        public static bool OrderPickUp(BrainState st, Vector3 at, float radius)
+        {
+            var drops = new HashSet<ItemDrop>();
+            foreach (Collider col in Physics.OverlapSphere(at, radius, ~0, QueryTriggerInteraction.Collide))
+            {
+                ItemDrop d = col.GetComponentInParent<ItemDrop>();
+                if (d != null && d.m_itemData != null && d.GetComponent<Piece>() == null && d.m_itemData.m_shared.m_itemType != ItemDrop.ItemData.ItemType.None) drops.Add(d);
+            }
+            if (drops.Count == 0) return false;
+            List<ItemDrop> order = drops.OrderBy(d => Vector3.Distance(d.transform.position, at)).ToList();
+            st.PickQueue.Clear();
+            st.PickQueue.AddRange(order.Skip(1));
+            return Ordered(st, New(Kind.PickUp, order[0], Job.Loot));
+        }
+
+        /// <summary>The next of the things you pointed it at to pick up, when it has finished one. False when there are none left.</summary>
+        public static bool NextQueued(BrainState st)
+        {
+            st.PickQueue.RemoveAll(d => d == null);
+            if (st.PickQueue.Count == 0) return false;
+            ItemDrop next = st.PickQueue[0];
+            st.PickQueue.RemoveAt(0);
+            return Ordered(st, New(Kind.PickUp, next, Job.Loot));
+        }
+
         /// <summary>Following you: carry on with a task you pointed at. False when it is done (or gone).</summary>
         public static bool RunOrdered(BrainState st, Player master, float dt, Action<Vector3, float, bool> moveTo, Action stop, Action<Vector3> lookAt)
         {
             if (Clearing(st, moveTo)) return true;
-            if (st.Task == null || !Valid(st, st.Task)) { Drop(st); return Time.time < st.ClearUntil; }
+            if (st.Task == null || !Valid(st, st.Task)) { Drop(st); if (NextQueued(st)) return true; return Time.time < st.ClearUntil; }
             Execute(st, master, dt, moveTo, stop, lookAt);
             return st.Task != null;
         }
@@ -815,12 +844,12 @@ namespace AICompanion
                 Pickable p = go.GetComponent<Pickable>();
                 // Only what grows back by itself (wild berries, mushrooms, thistle...): planted crops do not, and are never touched.
                 bool wanted = p != null && p.m_itemPrefab != null && st.Goal != null && st.Goal.Wants(p.m_itemPrefab.name);
-                if (p != null && p.m_itemPrefab != null && !(Companion.Zdo(p)?.GetBool(ZDOVars.s_picked, false) ?? true) && (p.m_respawnTimeMinutes > 0f || wanted)
+                if (p != null && p.m_itemPrefab != null && !(Companion.Zdo(p)?.GetBool(ZDOVars.s_picked, false) ?? true) && (p.m_respawnTimeMinutes > 0f || wanted || ordered) // (pointed at: a stone, a flint on the shore)
                     && !Goals.IsCrop(Utils.GetPrefabName(p.gameObject)) && !(Heightmap.FindHeightmap(p.transform.position)?.IsCultivated(p.transform.position) ?? false))
                 {
                     ItemDrop.ItemData item = p.m_itemPrefab.GetComponent<ItemDrop>()?.m_itemData;
                     bool edible = item != null && (Food.IsFood(item) || IsCookable(item));
-                    if (st.Hungry && !edible) return null; // hungry: berries and mushrooms, not dandelions
+                    if (st.Hungry && !edible && !ordered) return null; // hungry: berries and mushrooms, not dandelions
                     Task t = New(Kind.Pick, p, Job.Forage);
                     t.Edible = edible;
                     return t;
