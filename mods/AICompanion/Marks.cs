@@ -33,7 +33,7 @@ namespace AICompanion
             if (target == null || who == null) return;
             GameObject go = target.gameObject;
             foreach (Mark old in All.Where(m => m.Go == go).ToList()) Clear(old);
-            var mark = new Mark { Go = go, Active = active, Text = $"{Companion.NameOf(who)}: {doing}", Until = Time.time + 180f, Height = HeightOf(go) };
+            var mark = new Mark { Go = go, Active = active, Text = doing != null ? $"{Companion.NameOf(who)}: {doing}" : null, Until = Time.time + 900f, Height = HeightOf(go) };
             All.Add(mark);
         }
 
@@ -68,7 +68,7 @@ namespace AICompanion
                 if (!on) { Clear(m); continue; }
                 if (m.Spot) { Light l = m.Go.GetComponent<Light>(); if (l != null) l.intensity = 1.5f + 6f * (pulse - 0.1f); }
                 else MaterialMan.instance?.SetValue(m.Go, Emission, Glow * pulse);
-                if (Time.time >= m.NextLine && Chat.instance != null)
+                if (m.Text != null && Time.time >= m.NextLine && Chat.instance != null)
                 {
                     m.NextLine = Time.time + 5f;
                     Chat.instance.SetNpcText(m.Go, Vector3.up * m.Height, 40f, 6f, "", m.Text, false);

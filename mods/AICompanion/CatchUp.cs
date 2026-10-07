@@ -67,8 +67,8 @@ namespace AICompanion
             Vector3 at = center + new Vector3(r.x, 0f, r.y);
             if (ZoneSystem.instance != null && ZoneSystem.instance.GetSolidHeight(at, out float h)) at.y = h + 0.5f;
             Inventory inv = me.GetInventory();
-            var worn = new HashSet<ItemDrop.ItemData>(Companion.Worn(me).Where(i => inv.ContainsItem(i)));
-            foreach (ItemDrop.ItemData i in inv.GetAllItems()) i.m_equipped = worn.Contains(i); // it keeps what it wears: the move leaves it out
+            var worn = new HashSet<ItemDrop.ItemData>(inv.GetAllItems().Where(Gear.InSlot));
+            foreach (ItemDrop.ItemData i in inv.GetAllItems()) i.m_equipped = worn.Contains(i); // it keeps its gear slots: the move leaves them out
             bool any = inv.NrOfItems() > worn.Count;
             if (any)
             {

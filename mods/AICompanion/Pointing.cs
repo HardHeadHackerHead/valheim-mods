@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
 
@@ -29,7 +30,7 @@ namespace AICompanion
                 return;
             }
             // Nothing: back to you.
-            foreach (Humanoid c in mine) if (Home.Follow(c)) Talk.Say(c, "Coming!");
+            foreach (Humanoid c in mine) { Brain.Get(c).Area = null; if (Home.Follow(c)) Talk.Say(c, "Coming!"); }
             Plugin.Tell(mine.Count == 1 ? $"{Companion.NameOf(mine[0])} comes back to you" : "Your companions come back to you");
         }
 
@@ -118,6 +119,7 @@ namespace AICompanion
 
             Humanoid who = Nearest(mine, hit.point);
             BrainState w = Brain.Get(who);
+            w.Area = null; // (a new order: the patch it was working is left)
 
             // Things lying on the ground (the one you pointed at, or right beside where you pointed): it picks up all of them there.
             ItemDrop item = hit.collider.GetComponentInParent<ItemDrop>();
@@ -150,8 +152,14 @@ namespace AICompanion
             Work.Task work = Work.Workable(w, thing);
             if (work != null && Work.Ordered(w, work))
             {
+                // Its job now: this and the like of it around here (the trees about, the rocks, the bushes), each shown.
+                List<Component> patch = Work.OrderArea(w, work);
+                Work.Area area = w.Area;
+                foreach (Component c in patch) { Component cc = c; Marks.Put(cc, who, null, () => w.Area == area && cc != null); }
                 string doing = work.Kind == Work.Kind.Pick ? "picking this" : work.Job == Job.Wood ? "chopping this" : "mining this";
-                Talk.Say(who, work.Kind == Work.Kind.Pick ? "I'll pick that." : "On it.");
+                int more = patch.Count(c => c != work.Target);
+                Talk.Say(who, more == 0 ? (work.Kind == Work.Kind.Pick ? "I'll pick that." : "On it.")
+                    : work.Kind == Work.Kind.Pick ? "I'll pick everything around here." : work.Job == Job.Wood ? "I'll chop these trees down." : "I'll mine these rocks.");
                 MarkTask(w, who, doing);
                 return true;
             }

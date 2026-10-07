@@ -339,3 +339,46 @@ namespace AICompanion
         }
     }
 }
+
+namespace AICompanion
+{
+    /// <summary>
+    /// A swing of a companion's that missed what it was working on (its activity log, at most every 2 s): where the swing started and pointed,
+    /// and what it hit instead (a bush in the way), or "nothing". For finding out why its swings at a tree or a rock do no harm.
+    /// </summary>
+    [HarmonyLib.HarmonyPatch(typeof(Attack), "DoMeleeAttack")]
+    internal static class Attack_DoMeleeAttack_Log
+    {
+        internal static System.Collections.Generic.List<string> Hits;
+        private static float _next;
+        private static readonly HarmonyLib.AccessTools.FieldRef<Attack, Humanoid> Who = HarmonyLib.AccessTools.FieldRefAccess<Attack, Humanoid>("m_character");
+
+        private static void Prefix(Attack __instance) { Hits = Companion.Is(Who(__instance)) ? new System.Collections.Generic.List<string>() : null; }
+
+        private static void Postfix(Attack __instance)
+        {
+            if (Hits == null) return;
+            Humanoid me = Who(__instance);
+            Work.Task task = Brain.Get(me)?.Task;
+            string aimedAt = task?.Target != null ? Utils.GetPrefabName(task.Target.gameObject) : null;
+            bool missed = aimedAt != null && !Hits.Any(h => h.StartsWith(aimedAt + " "));
+            if (missed && UnityEngine.Time.time >= _next)
+            {
+                _next = UnityEngine.Time.time + 2f;
+                UnityEngine.Vector3 look = me.GetLookDir();
+                Activity.Log(me, $"swing at the {aimedAt} missed ({__instance.m_attackAnimation}, range {__instance.m_attackRange:0.0}, height {__instance.m_attackHeight:0.0}, angle {__instance.m_attackAngle:0}, ray {__instance.m_attackRayWidth:0.00}, terrain {__instance.m_hitTerrain}) " +
+                                 $"from {me.transform.position:F1} facing {me.transform.forward:F2} looking {look:F2}: hit {(Hits.Count == 0 ? "nothing" : string.Join(", ", Hits))}");
+            }
+            Hits = null;
+        }
+    }
+
+    [HarmonyLib.HarmonyPatch(typeof(Attack), "AddHitPoint")]
+    internal static class Attack_AddHitPoint_Log
+    {
+        private static void Prefix(UnityEngine.GameObject go, float distance)
+        {
+            if (Attack_DoMeleeAttack_Log.Hits != null && go != null && Attack_DoMeleeAttack_Log.Hits.Count < 6) Attack_DoMeleeAttack_Log.Hits.Add($"{Utils.GetPrefabName(go)} at {distance:0.0} m");
+        }
+    }
+}

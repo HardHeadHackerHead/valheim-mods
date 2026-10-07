@@ -121,7 +121,7 @@ namespace AICompanion
             // inventory (Patches: Container_Awake), so what you put in is what it can wear and wield.
             Container gear = go.AddComponent<Container>();
             gear.m_name = "Companion";
-            gear.m_width = 8; gear.m_height = 4;
+            gear.m_width = Gear.Width; gear.m_height = Gear.Rows; // its bag (four rows) and its gear slots (two: Gear)
             gear.m_privacy = Container.PrivacySetting.Public;
             gear.m_checkGuardStone = false;
             gear.m_autoDestroyEmpty = false;

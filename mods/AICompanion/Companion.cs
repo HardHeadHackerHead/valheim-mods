@@ -180,8 +180,8 @@ namespace AICompanion
         public const string KeptKey = "dhc_kept";
 
         /// <summary>
-        /// It fell: what it wore and held (weapon, shield, armour, cape, belt, the arrows in its quiver) it keeps, and wakes wearing; everything
-        /// else it carried (what it gathered and looted on the way) goes into a tombstone where it fell. The kept gear is written to its save
+        /// It fell: what is in its gear slots (Gear: weapons, shield, bow and arrows, axe, pickaxe, hammer, armour, cape, belt) it keeps, and
+        /// wakes with; everything in its bag (what it gathered and looted on the way) goes into a tombstone where it fell. The kept gear is written to its save
         /// ("dhc_kept", the game's own item format) for its player's game to put back on it when it wakes (Profile.Kept). Returns how many
         /// stacks went into the tombstone (0: no tombstone).
         /// </summary>
@@ -190,7 +190,7 @@ namespace AICompanion
             Container gear = c.GetComponent<Container>();
             Inventory inv = gear != null ? gear.GetInventory() : null;
             if (inv == null || inv.NrOfItems() == 0) { Zdo(c)?.Set(KeptKey, ""); return 0; }
-            var worn = new HashSet<ItemDrop.ItemData>(Worn(c).Where(i => inv.ContainsItem(i)));
+            var worn = new HashSet<ItemDrop.ItemData>(inv.GetAllItems().Where(Gear.InSlot)); // its gear slots
             foreach (ItemDrop.ItemData item in inv.GetAllItems()) item.m_equipped = worn.Contains(item); // the game's move leaves equipped items out
             Zdo(c)?.Set(KeptKey, Pack(worn));
             int carried = inv.NrOfItems() - worn.Count;
@@ -235,7 +235,7 @@ namespace AICompanion
         public static string Pack(IEnumerable<ItemDrop.ItemData> items)
         {
             var temp = new Inventory("kept", null, 8, 4);
-            foreach (ItemDrop.ItemData i in items) { ItemDrop.ItemData copy = i.Clone(); copy.m_equipped = false; temp.AddItem(copy); }
+            foreach (ItemDrop.ItemData i in items.Take(32)) { ItemDrop.ItemData copy = i.Clone(); copy.m_equipped = false; temp.AddItem(copy); }
             if (temp.NrOfItems() == 0) return "";
             var pkg = new ZPackage();
             temp.Save(pkg);
@@ -269,6 +269,7 @@ namespace AICompanion
         public static void ShareInventory(Container gear)
         {
             Humanoid h = gear.GetComponent<Humanoid>();
+            Gear.Grow(gear.GetInventory()); // (one from before its gear slots: two rows more)
             if (h != null && HumanoidInventory != null) HumanoidInventory.SetValue(h, gear.GetInventory());
         }
 
@@ -305,10 +306,11 @@ namespace AICompanion
             return true;
         }
 
-        /// <summary>Move an item from the player to the companion (true if it fit).</summary>
+        /// <summary>Move an item from the player to the companion (true if it fit): gear into its gear slot, the rest into its bag.</summary>
         public static bool Give(Humanoid c, Player p, ItemDrop.ItemData item, out string why)
         {
             why = null;
+            if (Gear.IsGear(item)) return Gear.Put(c, p, item, out why);
             if (!Write(c, _ => { })) { why = "Someone has its gear open."; return false; }
             Inventory mine = p.GetInventory(), its = c.GetInventory();
             if (!mine.ContainsItem(item)) return false;
@@ -330,7 +332,7 @@ namespace AICompanion
 
         public static bool HasAmmoFor(Humanoid h, ItemDrop.ItemData weapon) => weapon != null && (IsStaff(weapon) ? Eitr.Get(h) >= weapon.m_shared.m_attack.m_attackEitr : h.GetInventory().GetAmmoItem(weapon.m_shared.m_ammoType) != null);
 
-        private static bool IsMelee(ItemDrop.ItemData item) =>
+        internal static bool IsMelee(ItemDrop.ItemData item) =>
             item.IsWeapon() && !IsRanged(item) && item.m_shared.m_skillType != Skills.SkillType.Pickaxes && item.m_shared.m_skillType != Skills.SkillType.Unarmed
             && item.m_shared.m_attack != null && item.m_shared.m_attack.m_attackType != Attack.AttackType.Projectile;
 
@@ -372,6 +374,7 @@ namespace AICompanion
         {
             if (h.InAttack()) return;
             Inventory inv = h.GetInventory();
+            if (h.GetComponent<ZNetView>()?.IsOwner() ?? false) Gear.Arrange(h); // the best it has into its gear slots
             foreach (ItemDrop.ItemData worn in Worn(h).ToList())
                 if (!inv.ContainsItem(worn)) h.UnequipItem(worn, false);
 

@@ -672,33 +672,39 @@ namespace AICompanion
             Player p = Player.m_localPlayer;
             if (Event.current.type == EventType.Repaint) _hover = "";
 
-            BeginCard("Wearing");
-            GUILayout.BeginHorizontal();
-            foreach (var slot in Companion.Slots(c))
+            // Its gear: slots of their own (Gear), kept when it falls; changed from here, wherever it is.
+            BeginCard("Its gear  (kept when it falls)");
+            foreach (int row in new[] { 4, 5 })
             {
-                GUILayout.BeginVertical(GUILayout.Width(70));
-                ItemCell(GUILayoutUtility.GetRect(52f, 52f, GUILayout.Width(52), GUILayout.Height(52)), slot.Value, true, null);
-                GUILayout.Label(slot.Key, _small, GUILayout.Width(66));
-                GUILayout.EndVertical();
+                GUILayout.BeginHorizontal();
+                foreach (Gear.Slot slot in Gear.All.Where(s => s.Y == row))
+                {
+                    GUILayout.BeginVertical(GUILayout.Width(60));
+                    ItemDrop.ItemData inSlot = Gear.In(c, slot);
+                    Rect cell = GUILayoutUtility.GetRect(52f, 52f, GUILayout.Width(52), GUILayout.Height(52));
+                    ItemCell(cell, inSlot, inSlot != null && c.IsItemEquiped(inSlot),
+                        inSlot != null && Mine ? () => _pending = () => { if (!Companion.Take(_shown, Player.m_localPlayer, inSlot, out string why) && why != null) _note = why; } : (Action)null);
+                    if (inSlot == null) GUI.Label(new Rect(cell.x, cell.y + 17f, cell.width, 18f), "empty", _small);
+                    GUILayout.Label(slot.Label, _small, GUILayout.Width(58));
+                    GUILayout.EndVertical();
+                }
+                GUILayout.EndHorizontal();
             }
-            GUILayout.EndHorizontal();
-            Note("It wears the best armour it has, and holds the weapon it fights with (a shield beside a one-handed weapon).", _dim);
+            Note(string.IsNullOrEmpty(_hover) ? (Mine ? "Click a piece of gear to take it back. It moves the best it has into these slots by itself." : "Point at a piece to see what it is.") : _hover, string.IsNullOrEmpty(_hover) ? _dim : _bold);
             EndCard();
 
             Inventory its = c.GetInventory();
-            BeginCard($"Its bag  ({its.NrOfItems()} of {its.GetWidth() * its.GetHeight()} slots, weight {Carry.Weight(c):0} of {Carry.Max(c):0})");
+            BeginCard($"Its bag  ({Gear.BagCount(its)} of {its.GetWidth() * Gear.BagRows} slots, weight {Carry.Weight(c):0} of {Carry.Max(c):0})");
             if (Carry.Over(c)) Note("Too heavy: it cannot run until it puts something down.", _warn);
-            Grid(its, its.GetWidth(), its.GetHeight(), item => { if (Mine) _pending = () => { if (!Companion.Take(_shown, Player.m_localPlayer, item, out string why) && why != null) _note = why; }; });
-            Note(string.IsNullOrEmpty(_hover) ? (Mine ? "Click an item to take it. Point at one to see what it is." : "Point at an item to see what it is.") : _hover, string.IsNullOrEmpty(_hover) ? _dim : _bold);
-            if (Mine) Note("Easier: open your own inventory (Tab) near it. Its bag shows beside yours; drag items between them, right-click to take.", _good);
-            if (Mine && GUILayout.Button("Open it as a chest (drag items around)", _button, GUILayout.Height(28))) _pending = OpenGear;
+            Grid(its, its.GetWidth(), Mathf.Min(Gear.BagRows, its.GetHeight()), null); // (look only: its bag is changed beside it)
+            Note("What it carries goes into its tombstone when it falls. To give or take from its bag, open your inventory (Tab) next to it: its bag shows beside yours.", _dim);
             EndCard();
 
             if (Mine && p != null)
             {
-                var giveable = p.GetInventory().GetAllItems().Where(i => !p.IsItemEquiped(i) && Companion.Useful(c, i)).ToList();
-                BeginCard("Give from your inventory");
-                if (giveable.Count == 0) Note("Weapons, armour, shields, arrows, tools, food and healing potions you are not wearing show here.", _dim);
+                var giveable = p.GetInventory().GetAllItems().Where(i => !p.IsItemEquiped(i) && Gear.IsGear(i)).ToList();
+                BeginCard("Give it gear from your inventory");
+                if (giveable.Count == 0) Note("Weapons, shields, bows, arrows, axes, pickaxes, hammers and armour you are not wearing show here.", _dim);
                 else
                 {
                     int per = Mathf.Max(1, Mathf.FloorToInt((Inner - 30f) / 58f));
@@ -713,7 +719,7 @@ namespace AICompanion
                         }
                         GUILayout.EndHorizontal();
                     }
-                    Note("Click to give.", _dim);
+                    Note("Click to give: it goes into its gear slot (what was there goes into its bag).", _dim);
                 }
                 EndCard();
             }
@@ -745,7 +751,7 @@ namespace AICompanion
                 for (int x = 0; x < width; x++)
                 {
                     ItemDrop.ItemData item = inv.GetItemAt(x, y);
-                    ItemCell(GUILayoutUtility.GetRect(52f, 52f, GUILayout.Width(52), GUILayout.Height(52)), item, _shown != null && item != null && _shown.IsItemEquiped(item), item != null ? () => click(item) : (Action)null);
+                    ItemCell(GUILayoutUtility.GetRect(52f, 52f, GUILayout.Width(52), GUILayout.Height(52)), item, _shown != null && item != null && _shown.IsItemEquiped(item), item != null && click != null ? () => click(item) : (Action)null);
                 }
                 GUILayout.EndHorizontal();
             }

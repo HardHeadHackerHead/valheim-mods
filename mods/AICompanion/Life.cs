@@ -264,18 +264,6 @@ namespace AICompanion
         public static void Forget() => Next.Clear();
     }
 
-    /// <summary>What its worn gear resists (a wolf cape: frost...), as a player's armour does, plus its status effects (meads).</summary>
-    internal static class Gear
-    {
-        public static HitData.DamageModifiers Modifiers(Humanoid c)
-        {
-            var mods = new HitData.DamageModifiers();
-            foreach (ItemDrop.ItemData item in Companion.Worn(c)) mods.Apply(item.m_shared.m_damageModifiers);
-            c.GetSEMan().ApplyDamageMods(ref mods);
-            return mods;
-        }
-    }
-
     /// <summary>
     /// Repairs, as a player makes them: when something it wears or works with is worn below half, and a station that can repair it is within
     /// 30 m (the one it is made at, at a high enough level: the game's rule), it walks there and repairs it, for free as the game does.

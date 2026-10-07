@@ -159,7 +159,7 @@ namespace AICompanion
             if (Time.time >= st.NextLoanLook) { st.NextLoanLook = Time.time + 30f; Loans.Return(st); } // food it borrowed and did not need
 
             if (st.Task != null && !Valid(st, st.Task)) Drop(st);
-            if (st.Task == null) NextQueued(st); // things you pointed it at to pick up
+            if (st.Task == null && !NextQueued(st)) NextInArea(st); // things you pointed it at to pick up; the patch you pointed it at
             if (st.Task == null && Time.time >= st.NextWorkLook)
             {
                 st.NextWorkLook = Time.time + 1.5f;
@@ -250,6 +250,100 @@ namespace AICompanion
             return Ordered(st, New(Kind.PickUp, order[0], Job.Loot));
         }
 
+        // ---- a patch of work you pointed it at ------------------------------------------------------------
+
+        /// <summary>You pointed at a tree (rock, plant): the ones around it too, worked through nearest first, and what they drop picked up.</summary>
+        internal class Area
+        {
+            public Vector3 Center;
+            public float Radius = 12f, Until;
+            public Job Job;
+            public int Done;
+            public readonly List<Component> Marked = new List<Component>();
+        }
+
+        /// <summary>Starts a patch around the thing you pointed at (its task is already ordered). What it will work there, for showing.</summary>
+        public static List<Component> OrderArea(BrainState st, Task first)
+        {
+            var area = new Area { Center = first.Target.transform.position, Until = Time.time + 900f,
+                                  Job = first.Kind == Kind.Pick ? Job.Forage : first.Job == Job.Wood ? Job.Wood : Job.Stone | Job.Ore };
+            st.Area = area;
+            area.Marked.AddRange(AreaTasks(st, area).OrderBy(t => Flat(t.Target.transform.position, area.Center)).Take(8).Select(t => t.Target));
+            return area.Marked;
+        }
+
+        private static IEnumerable<Task> AreaTasks(BrainState st, Area a)
+        {
+            ItemDrop.ItemData axe = Axe(st.Body), pick = Pickaxe(st.Body);
+            var seen = new HashSet<GameObject>();
+            foreach (Collider col in Physics.OverlapSphere(a.Center, a.Radius, ~0, QueryTriggerInteraction.Collide))
+            {
+                GameObject go = col.attachedRigidbody != null ? col.attachedRigidbody.gameObject : col.transform.root.gameObject;
+                if (!seen.Add(go)) continue;
+                Task t = Consider(st, go, a.Job, axe, pick, true);
+                if (t == null || (t.Kind != Kind.Hit && t.Kind != Kind.Pick) || Skipped(st, t.Target) || ClaimedByOther(st, t.Target)) continue;
+                yield return t;
+            }
+        }
+
+        public static void EndArea(BrainState st, string say)
+        {
+            if (st.Area == null) return;
+            st.Area = null;
+            if (say != null) Talk.Tell(st.Body, say);
+        }
+
+        /// <summary>
+        /// Working a patch: first what came down (the wood, stone or berries lying there), then the nearest thing left (fallen logs before
+        /// standing trees). Bag full: near home, to its chest and back; out with you, it stops and says so. Out with you, the patch is left when
+        /// you go on (40 m). False when there is nothing more to do there.
+        /// </summary>
+        public static bool NextInArea(BrainState st)
+        {
+            Area a = st.Area;
+            if (a == null) return false;
+            Humanoid me = st.Body;
+            Player master = Companion.Master(me);
+            if (Time.time > a.Until) { EndArea(st, null); return false; }
+            if (Companion.OrderOf(me) == Order.Follow && master != null && Flat(master.transform.position, a.Center) > 40f) { EndArea(st, null); return false; }
+            Inventory inv = me.GetInventory();
+            if (inv.GetEmptySlots() == 0 || Carry.Over(me))
+            {
+                Vector3 home = Center(me);
+                bool nearHome = Companion.Zdo(me).GetBool(Keys.HasBed, false) && Flat(a.Center, home) < RadiusOf(me) + 40f;
+                Container chest = nearHome ? Home.Chests(me).Where(c => !c.IsInUse() && HasRoom(c, me) && !Skipped(st, c)).OrderBy(c => Vector3.Distance(c.transform.position, me.transform.position)).FirstOrDefault() : null;
+                if (chest != null)
+                {
+                    Talk.Mention(me, "My bag's full. I'll put this away and come back.", "areafull", 2f);
+                    a.Until = Time.time + 900f;
+                    return Ordered(st, New(Kind.Store, chest, Job.None));
+                }
+                EndArea(st, "My bag is full. Take some of it, or send me home to put it away.");
+                return false;
+            }
+            ItemDrop drop = null;
+            float best = float.MaxValue;
+            foreach (Collider col in Physics.OverlapSphere(a.Center, a.Radius + 4f, ~0, QueryTriggerInteraction.Collide))
+            {
+                ItemDrop d = col.GetComponentInParent<ItemDrop>();
+                if (d == null || d.m_itemData == null || d.GetComponent<Piece>() != null || Skipped(st, d)) continue;
+                float dd = Vector3.Distance(d.transform.position, me.transform.position);
+                if (dd < best) { best = dd; drop = d; }
+            }
+            if (drop != null) return Ordered(st, New(Kind.PickUp, drop, Job.Loot));
+            Task next = AreaTasks(st, a).OrderBy(t => Vector3.Distance(t.Target.transform.position, me.transform.position) + Priority(t)).FirstOrDefault();
+            if (next == null)
+            {
+                EndArea(st, a.Done > 0 ? (a.Job == Job.Wood ? "That's the trees here done." : a.Job == Job.Forage ? "That's everything picked here." : "That's the rocks here done.") : null);
+                return false;
+            }
+            a.Done++;
+            Claim(st, next);
+            if (!Ordered(st, next)) return false;
+            Marks.Put(next.Target, me, next.Kind == Kind.Pick ? "picking this" : next.Job == Job.Wood ? "chopping this" : "mining this", () => st.Task == next && next.Target != null);
+            return true;
+        }
+
         /// <summary>The next of the things you pointed it at to pick up, when it has finished one. False when there are none left.</summary>
         public static bool NextQueued(BrainState st)
         {
@@ -264,7 +358,7 @@ namespace AICompanion
         public static bool RunOrdered(BrainState st, Player master, float dt, Action<Vector3, float, bool> moveTo, Action stop, Action<Vector3> lookAt)
         {
             if (Clearing(st, moveTo)) return true;
-            if (st.Task == null || !Valid(st, st.Task)) { Drop(st); if (NextQueued(st)) return true; return Time.time < st.ClearUntil; }
+            if (st.Task == null || !Valid(st, st.Task)) { Drop(st); if (NextQueued(st) || NextInArea(st)) return true; return Time.time < st.ClearUntil; }
             Execute(st, master, dt, moveTo, stop, lookAt);
             return st.Task != null;
         }
@@ -317,9 +411,16 @@ namespace AICompanion
                     if (dist > reach) { moveTo(at, reach * 0.5f, dist > 8f); break; }
                     t.LastClose = Time.time;
                     stop();
+                    // A level swing, as a player swings: at the trunk (or rock) at the height its swing starts from, lower only for what is
+                    // shorter than that (a sapling, a small rock). Looking down at it from its eyes tilted the swing into the ground, which the
+                    // swing hits first and stops at (Attack.DoMeleeAttack): close to a small tree it never touched the tree.
                     float tall = size.size.y > 0.01f ? size.max.y - at.y : 2f;
-                    Vector3 aim = at + Vector3.up * Mathf.Clamp(tall * 0.5f, 0.25f, t.Job == Job.Wood ? 1f : 0.6f);
+                    float swingHeight = tool.m_shared.m_attack?.m_attackHeight ?? 1f;
+                    Vector3 swingFrom = new Vector3(me.transform.position.x, me.transform.position.y + swingHeight, me.transform.position.z);
+                    Vector3 aim = new Vector3(at.x, Mathf.Min(swingFrom.y, at.y + Mathf.Max(0.25f, tall * 0.6f)), at.z);
                     lookAt(aim);
+                    Vector3 level = aim - swingFrom;
+                    if (level.sqrMagnitude > 0.01f) me.SetLookDir(level.normalized, 0f);
                     if (!me.IsItemEquiped(tool) || me.InAttack() || !st.Ai.IsLookingAt(aim, 25f)) break;
                     float cost = tool.m_shared.m_attack?.m_attackStamina ?? 0f;
                     if (Stamina.Get(me) < cost + 1f) { Brain.Status(st, "catching its breath"); break; }
@@ -410,7 +511,7 @@ namespace AICompanion
         {
             Humanoid me = st.Body;
             float far = Flat(center, me.transform.position);
-            if (far < radius + 60f || Time.time < st.TripUntil) { st.TripStart = 0f; return false; }
+            if (far < radius + 60f || Time.time < st.TripUntil || st.Area != null) { st.TripStart = 0f; return false; } // (not while working a patch you pointed it at)
             if (st.TripStart == 0f) { st.TripStart = Time.time; st.Task = null; st.Remember("set off home"); }
             moveTo(center, 2f, true);
             Brain.Status(st, "heading home");
@@ -450,7 +551,7 @@ namespace AICompanion
             float health = Companion.Zdo(t.Target)?.GetFloat(ZDOVars.s_health, -1f) ?? -1f;
             if (t.HealthAt >= 0f && health >= 0f && health >= t.HealthAt - 0.01f && t.Closer > 0.35f)
             {
-                t.Closer = Mathf.Max(0.35f, t.Closer * 0.6f);
+                t.Closer = Mathf.Max(0.6f, t.Closer * 0.75f); // (not right into it: too close, it swings past)
                 st.Remember($"its swings missed the {Hoverable(t.Target)}: it steps in closer");
             }
             t.HealthAt = health;
@@ -509,9 +610,11 @@ namespace AICompanion
 
         private static Vector3 Point(Component c, Vector3 from)
         {
-            // A standing tree: the surface of its trunk (the nearest of its colliders' real shapes close to its foot; the bounds take in the whole
-            // crown, and it stopped short and swung at air). A trunk it cannot measure: its middle.
-            if (c is TreeBase)
+            // A standing tree (a full one, or a small one or sapling, which the game makes a plain destructible): the surface of its trunk (the
+            // nearest of its colliders' real shapes close to its foot; the bounds take in the whole crown, and it stopped 4 m short and swung at
+            // air). A trunk it cannot measure (one mesh for the whole tree): a hand's breadth out from its foot, towards it.
+            if (c is TreeBase || c is Destructible des && (des.m_destructibleType == DestructibleType.Tree
+                || des.m_damages.m_chop != HitData.DamageModifier.Immune && des.m_damages.m_pickaxe == HitData.DamageModifier.Immune))
             {
                 Vector3 foot = c.transform.position, nearest = foot;
                 float bestD = float.MaxValue;
@@ -523,6 +626,7 @@ namespace AICompanion
                     float dd = (p - from).sqrMagnitude;
                     if (dd < bestD) { bestD = dd; nearest = p; }
                 }
+                if (bestD == float.MaxValue) { Vector3 toMe = from - foot; toMe.y = 0f; if (toMe.sqrMagnitude > 0.01f) nearest = foot + toMe.normalized * 0.25f; }
                 nearest.y = foot.y;
                 return nearest;
             }
@@ -980,7 +1084,7 @@ namespace AICompanion
         // ---- its chests --------------------------------------------------------------------------------------
 
         /// <summary>What it keeps on itself: anything it wears or could use (weapons, armour, shields, tools, ammo, healing potions).</summary>
-        public static bool Keeps(Humanoid h, ItemDrop.ItemData i) => h.IsItemEquiped(i) || Companion.Useful(h, i) || IsTool(i) || IsCookable(i) || Mending.IsHammer(i);
+        public static bool Keeps(Humanoid h, ItemDrop.ItemData i) => Gear.InSlot(i) || h.IsItemEquiped(i) || Companion.Useful(h, i) || IsTool(i) || IsCookable(i) || Mending.IsHammer(i);
 
         private static bool HasRoom(Container chest, Humanoid h) =>
             chest.GetInventory().HaveEmptySlot() || h.GetInventory().GetAllItems().Any(i => !Keeps(h, i) && chest.GetInventory().CanAddItem(i, 1));

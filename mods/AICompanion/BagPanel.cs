@@ -138,6 +138,8 @@ namespace AICompanion
             if (_panel != null && _panel.gameObject.activeSelf) _panel.gameObject.SetActive(false);
         }
 
+        public static bool IsBagGrid(InventoryGrid grid) => grid != null && grid == _grid;
+
         public static void Destroy()
         {
             if (_panel != null) UnityEngine.Object.Destroy(_panel.gameObject);
