@@ -31,21 +31,28 @@ namespace AICompanion
 
     internal static class Goals
     {
-        private class Source { public Job Job; public int Tier; public string Creature; }
+        private class Source { public Job Job; public int Tier; public string Creature, Prefab; }
 
         private static Dictionary<string, List<Source>> _sources;   // item prefab name -> what drops it
         private static Dictionary<string, ItemDrop> _smeltedFrom;   // bar prefab name -> the ore a smelter makes it from
+        private static HashSet<string> _crops;                     // what your planted crops grow into: never picked
         private static Dictionary<string, float> _unfindable;      // the companion being planned for: what is not near its home
 
         private static readonly HashSet<string> Prey = new HashSet<string> { "Deer", "Boar", "Neck", "Hare" };
 
-        public static void Forget() { _sources = null; _smeltedFrom = null; }
+        public static void Forget() { _sources = null; _smeltedFrom = null; _crops = null; }
 
         private static void Learn()
         {
             if (_sources != null || ZNetScene.instance == null) return;
             _sources = new Dictionary<string, List<Source>>();
             _smeltedFrom = new Dictionary<string, ItemDrop>();
+            _crops = new HashSet<string>();
+            foreach (GameObject prefab in ZNetScene.instance.m_prefabs)
+            {
+                Plant plant = prefab != null ? prefab.GetComponent<Plant>() : null;
+                if (plant?.m_grownPrefabs != null) foreach (GameObject grown in plant.m_grownPrefabs) if (grown != null) _crops.Add(grown.name);
+            }
             foreach (GameObject prefab in ZNetScene.instance.m_prefabs)
             {
                 if (prefab == null) continue;
@@ -66,7 +73,7 @@ namespace AICompanion
                 MineRock5 rock5 = prefab.GetComponent<MineRock5>();
                 if (rock5 != null) Add(rock5.m_dropItems, Work.IsOre(rock5.m_dropItems) ? Job.Ore : Job.Stone, rock5.m_minToolTier);
                 Pickable pick = prefab.GetComponent<Pickable>();
-                if (pick != null && pick.m_respawnTimeMinutes > 0f && pick.m_itemPrefab != null) AddOne(pick.m_itemPrefab.name, new Source { Job = Job.Forage });
+                if (pick != null && pick.m_itemPrefab != null && !_crops.Contains(prefab.name)) AddOne(pick.m_itemPrefab.name, new Source { Job = Job.Forage, Prefab = prefab.name }); // (flint on the shore grows back or not)
                 CharacterDrop cd = prefab.GetComponent<CharacterDrop>();
                 if (cd != null && Prey.Contains(prefab.name))
                     foreach (CharacterDrop.Drop d in cd.m_drops) if (d?.m_prefab != null) AddOne(d.m_prefab.name, new Source { Job = Job.Hunt, Creature = prefab.name });
@@ -98,6 +105,16 @@ namespace AICompanion
             bool armed = Companion.BestMelee(me) != null || Companion.BestRanged(me) != null;
             return list.Any(s => s.Job == Job.Forage || (s.Job == Job.Hunt && armed) || (s.Job == Job.Wood && axe >= s.Tier) || ((s.Job == Job.Stone || s.Job == Job.Ore) && pick >= s.Tier));
         }
+
+        /// <summary>The wild pickables (not crops) that give this item: "Pickable_Flint" for flint.</summary>
+        public static IEnumerable<string> PickablesFor(string item)
+        {
+            Learn();
+            return _sources != null && _sources.TryGetValue(item, out List<Source> list) ? list.Where(s => s.Prefab != null).Select(s => s.Prefab).Distinct() : Enumerable.Empty<string>();
+        }
+
+        /// <summary>A pickable your crops grow into (never picked by it).</summary>
+        public static bool IsCrop(string prefab) { Learn(); return _crops != null && _crops.Contains(prefab); }
 
         /// <summary>The jobs that get what the goal is missing, and the creatures to hunt for it.</summary>
         public static Job JobsFor(Goal g, out HashSet<string> creatures)

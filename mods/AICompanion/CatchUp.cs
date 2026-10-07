@@ -252,6 +252,10 @@ namespace AICompanion
                 }
             }
 
+            // 4b. What its goal still needs and nothing near home has: a trip further out, through the saved world (it is not loaded): flint on
+            //     a shore 300 m off, and the like.
+            string trip = fellTo == null ? AwayTrip(me, center, radius, got, ref budget) : null;
+
             // 5. Into its chests (and its bag); then it cooks what it hunted and picked.
             int total = got.Values.Sum();
             int stored = Store(me, got);
@@ -296,6 +300,7 @@ namespace AICompanion
             if (cooked > 0) did.Add($"cooked {cooked} meal{(cooked == 1 ? "" : "s")}");
             if (made.Count > 0) did.Add(string.Join(", ", made));
             if (repaired > 0) did.Add($"repaired {repaired} thing{(repaired == 1 ? "" : "s")}");
+            if (trip != null) did.Add(trip);
             if (did.Count == 0 && fellTo == null && fromYou == null) return;
             string items = string.Join(", ", got.OrderByDescending(kv => kv.Value).Take(8).Select(kv => $"{kv.Value} {kv.Key}"));
             string line = $"While you were away ({Mathf.RoundToInt(away / 60f)} min) {Companion.NameOf(me)} {(did.Count > 0 ? string.Join(", ", did) : "rested at home")}" +
@@ -310,6 +315,65 @@ namespace AICompanion
             DebugLog.Add(new DecisionRecord { When = DateTime.Now, Companion = Companion.NameOf(me), Outcome = "— " + line + " —" });
             if (Companion.Master(me) == Player.m_localPlayer) Player.m_localPlayer.Message(MessageHud.MessageType.Center, line);
             Talk.Tell(me, line);
+        }
+
+        /// <summary>
+        /// A trip while you were away for what its goal still needs: the wild pickables that give it (never crops), anywhere within 400 m of
+        /// home in the world as saved, nearest first. Each one picked is marked picked in the world (when its area loads, the game hides or
+        /// removes it, as if picked there). The walk there and back takes its time. What it did ("went 260 m south for 4 flint"), or null.
+        /// </summary>
+        private static string AwayTrip(Humanoid me, Vector3 center, float radius, Dictionary<string, int> got, ref float budget)
+        {
+            if (budget < 300f || ZDOMan.instance == null) return null;
+            Goal g = Goals.Pick(me, center, radius); // (what it still needs, near home or not)
+            if (g == null || g.Raw.Count == 0) return null;
+            var brought = new Dictionary<string, int>();
+            float farthest = 0f;
+            Vector3 farWay = Vector3.zero;
+            var list = new List<ZDO>();
+            foreach (var need in g.Raw)
+            {
+                int left = need.Value;
+                GameObject item = ObjectDB.instance.GetItemPrefab(need.Key);
+                if (item == null) continue;
+                foreach (string source in Goals.PickablesFor(need.Key))
+                {
+                    if (left <= 0) break;
+                    GameObject sourcePrefab = ZNetScene.instance.GetPrefab(source);
+                    Pickable kind = sourcePrefab != null ? sourcePrefab.GetComponent<Pickable>() : null;
+                    if (kind == null) continue;
+                    list.Clear();
+                    int index = 0;
+                    for (int guard = 0; guard < 1000 && !ZDOMan.instance.GetAllZDOsWithPrefabIterative(source, list, ref index); guard++) { }
+                    foreach (ZDO z in list.Where(z => z != null && !z.GetBool(ZDOVars.s_picked, false) && Vector3.Distance(z.GetPosition(), center) < 400f)
+                                          .OrderBy(z => Vector3.Distance(z.GetPosition(), center)))
+                    {
+                        if (left <= 0 || budget <= 0f) break;
+                        Vector3 at = z.GetPosition();
+                        ZNetView loaded = ZNetScene.instance.FindInstance(z);
+                        if (loaded != null) { if (loaded.GetComponent<Pickable>() == null) continue; loaded.InvokeRPC(ZNetView.Everybody, "RPC_SetPicked", true); }
+                        else
+                        {
+                            z.SetOwner(ZDOMan.GetSessionID());
+                            z.Set(ZDOVars.s_picked, true);
+                            z.Set(ZDOVars.s_pickedTime, ZNet.instance.GetTime().Ticks);
+                        }
+                        int n = Mathf.Max(1, kind.m_amount);
+                        Add(got, item, n);
+                        string name = Localization.instance.Localize(item.GetComponent<ItemDrop>().m_itemData.m_shared.m_name).ToLowerInvariant();
+                        brought[name] = (brought.TryGetValue(name, out int had) ? had : 0) + n;
+                        left -= n;
+                        budget -= 20f;
+                        float d = Vector3.Distance(at, center);
+                        if (d > farthest) { farthest = d; farWay = at - center; }
+                    }
+                }
+            }
+            if (brought.Count == 0) return null;
+            budget -= farthest * 2f / 3f; // there and back, at a walk
+            string[] names = { "north", "north-east", "east", "south-east", "south", "south-west", "west", "north-west" };
+            string dir = names[Mathf.FloorToInt(((Mathf.Atan2(farWay.x, farWay.z) * Mathf.Rad2Deg + 360f + 22.5f) % 360f) / 45f) % 8];
+            return $"went {farthest:0} m {dir} for {string.Join(", ", brought.Select(kv => $"{kv.Value} {kv.Key}"))}";
         }
 
         private static float Hours(float seconds) => seconds / (EnvMan.instance != null ? EnvMan.instance.m_dayLengthSec / 24f : 75f); // in-game hours

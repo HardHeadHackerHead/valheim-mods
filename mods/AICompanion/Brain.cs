@@ -81,6 +81,7 @@ namespace AICompanion
         public readonly Dictionary<string, float> Unfindable = new Dictionary<string, float>(); // what its goal needs and is not near home, until when
         public Goal Goal;                                           // what it is working toward (Goals)
         public string GoalSaid;
+        public float NextTripLook, TripUntil;                       // a trip beyond its home's radius for its goal (Work)
         public float NextFoodLook, NextNeedLook, MasterGoneSince, TripStart;      // looking after itself (Needs), the trip home (Work)
         public readonly HashSet<string> Wanted = new HashSet<string>();                  // what its work drops (to pick up)
         public readonly Dictionary<int, float> Skipped = new Dictionary<int, float>();    // things it gave up on, until when

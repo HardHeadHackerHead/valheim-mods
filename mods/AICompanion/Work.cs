@@ -34,6 +34,7 @@ namespace AICompanion
             public Recipe Recipe;            // what it is crafting
             public bool ForGoal;             // toward its goal (Goals)
             public bool Edible;              // food (or raw food to cook), when it forages
+            public bool Trip;                // beyond its home's radius, for its goal
             public float Started, LastClose;
         }
 
@@ -140,7 +141,7 @@ namespace AICompanion
             Task t = st.Task;
             Vector3 at = Point(t.Target, me.transform.position);
             float dist = Flat(at, me.transform.position);
-            if (Time.time - t.Started > 60f || (dist > 3f && Time.time - t.LastClose > 20f)) { Skip(st, t.Target, "could not get to it"); return; }
+            if (Time.time - t.Started > (t.Trip ? 240f : 60f) || (dist > 3f && Time.time - t.LastClose > (t.Trip ? 120f : 20f))) { Skip(st, t.Target, "could not get to it"); return; }
 
             switch (t.Kind)
             {
@@ -220,7 +221,8 @@ namespace AICompanion
                 case Kind.Hunt:
                     var prey = (Character)t.Target;
                     if (prey == null || prey.IsDead()) { st.Task = null; break; }
-                    if (Companion.BestRanged(me) == null && Vector3.Distance(prey.transform.position, me.transform.position) > 30f) { Skip(st, prey, "it outran it", 3f); break; } // no bow: no catching a deer
+                    if (Companion.BestRanged(me) == null && Harmless.Contains(Utils.GetPrefabName(prey.gameObject)) && Vector3.Distance(prey.transform.position, me.transform.position) > 30f)
+                    { Skip(st, prey, "it outran it", 3f); break; } // no bow: no catching a deer (a boar comes at it)
                     t.LastClose = Time.time;
                     st.WorkTool = Companion.BestRanged(me) ?? Companion.BestMelee(me);
                     Brain.Strike(st, prey, Time.deltaTime);
@@ -244,11 +246,12 @@ namespace AICompanion
         private static bool TravelHome(BrainState st, Vector3 center, float radius, Action<Vector3, float, bool> moveTo)
         {
             Humanoid me = st.Body;
-            if (Flat(center, me.transform.position) < radius + 60f) { st.TripStart = 0f; return false; }
+            float far = Flat(center, me.transform.position);
+            if (far < radius + 60f || Time.time < st.TripUntil) { st.TripStart = 0f; return false; }
             if (st.TripStart == 0f) { st.TripStart = Time.time; st.Task = null; st.Remember("set off home"); }
             moveTo(center, 2f, true);
             Brain.Status(st, "heading home");
-            if (Time.time - st.TripStart < 8f) return true;
+            if (Time.time - st.TripStart < (far > 250f ? 8f : 45f)) return true; // from an adventure far away it is home soon; nearby it walks
             st.TripStart = 0f;
             Vector3 pos = center + Vector3.up * 0.2f;
             me.transform.position = pos;
@@ -449,12 +452,36 @@ namespace AICompanion
                 var missing = new List<string>();
                 if ((jobs & Job.Wood) != 0 && axe == null) missing.Add("an axe");
                 if ((jobs & (Job.Stone | Job.Ore)) != 0 && pick == null) missing.Add("a pickaxe");
-                st.WorkNote = missing.Count > 0 ? $"needs {string.Join(" and ", missing)} for its jobs" : $"nothing left to gather within {radius:0} m";
+                st.WorkNote = st.Goal != null && st.Goal.Raw.Count > 0 && !goalSeen ? $"looking for {string.Join(" or ", st.Goal.Names.Values)} for its {st.Goal.What} (none near home)"
+                            : missing.Count > 0 ? $"needs {string.Join(" and ", missing)} for its jobs" : $"nothing left to gather within {radius:0} m";
             }
-            if (st.Goal != null && st.Goal.Raw.Count > 0 && !goalSeen && JobsOf(me) == Job.None && !goalPrey.Any())
+            // Nothing near home for its goal: a trip for it, as far as the world is loaded around you (about 170 m from home), when it is fit.
+            bool searched = false;
+            if (st.Goal != null && st.Goal.Raw.Count > 0 && !goalSeen && JobsOf(me) == Job.None && !st.Weak && !st.Hungry && me.GetHealthPercentage() > 0.6f
+                && (Time.time >= st.NextTripLook || Time.time < st.TripUntil))
+            {
+                st.NextTripLook = Time.time + 20f;
+                Task trip = FindTrip(st, center, radius, jobs | goalJobs, axe, pick);
+                searched = trip == null;
+                if (trip != null)
+                {
+                    bool starting = Time.time >= st.TripUntil;
+                    st.TripUntil = Time.time + 300f;
+                    if (starting)
+                    {
+                        Vector3 way = trip.Target.transform.position - center;
+                        string names = string.Join(" and ", st.Goal.Names.Values);
+                        Talk.Tell(me, $"Nothing near home has {names}, so I'm going to get some, {Flat(trip.Target.transform.position, center):0} m {Compass(way)} of home.", "trip:" + st.Goal.What, 10f);
+                        st.Remember($"set off on a trip for {names}");
+                    }
+                    return trip;
+                }
+                if (Time.time < st.TripUntil) { st.TripUntil = 0f; st.Remember("came back from its trip"); } // done (or nothing more out there): home
+            }
+            if (searched && st.Goal != null && st.Goal.Raw.Count > 0 && !goalSeen && JobsOf(me) == Job.None && !goalPrey.Any())
             {
                 // Nothing near home drops what its goal needs: those things count as "ask for them" for ten minutes, so it picks a goal it can do.
-                Talk.Tell(me, $"I can't find any {string.Join(" or ", st.Goal.Names.Values)} within {radius:0} m of home for my {st.Goal.What}.", "far:" + st.Goal.What, 30f);
+                Talk.Tell(me, $"I can't find any {string.Join(" or ", st.Goal.Names.Values)} around here for my {st.Goal.What}, even further out. I'll look while you're away, or bring me some.", "far:" + st.Goal.What, 30f);
                 foreach (string item in st.Goal.Raw.Keys) st.Unfindable[item] = Time.time + 600f;
                 st.NextUpgradeLook = 0f;
             }
@@ -508,7 +535,9 @@ namespace AICompanion
             {
                 Pickable p = go.GetComponent<Pickable>();
                 // Only what grows back by itself (wild berries, mushrooms, thistle...): planted crops do not, and are never touched.
-                if (p != null && p.m_respawnTimeMinutes > 0f && !(Companion.Zdo(p)?.GetBool(ZDOVars.s_picked, false) ?? true) && p.m_itemPrefab != null)
+                bool wanted = p != null && p.m_itemPrefab != null && st.Goal != null && st.Goal.Wants(p.m_itemPrefab.name);
+                if (p != null && p.m_itemPrefab != null && !(Companion.Zdo(p)?.GetBool(ZDOVars.s_picked, false) ?? true) && (p.m_respawnTimeMinutes > 0f || wanted)
+                    && !Goals.IsCrop(Utils.GetPrefabName(p.gameObject)) && !(Heightmap.FindHeightmap(p.transform.position)?.IsCultivated(p.transform.position) ?? false))
                 {
                     ItemDrop.ItemData item = p.m_itemPrefab.GetComponent<ItemDrop>()?.m_itemData;
                     bool edible = item != null && (Food.IsFood(item) || IsCookable(item));
@@ -519,6 +548,38 @@ namespace AICompanion
                 }
             }
             return null;
+        }
+
+        /// <summary>
+        /// The nearest thing beyond its home's radius (out to about 170 m, as far as the world around you is loaded) that drops what its goal
+        /// needs: a fallen log, a rock, flint on the shore.
+        /// </summary>
+        private static Task FindTrip(BrainState st, Vector3 center, float radius, Job jobs, ItemDrop.ItemData axe, ItemDrop.ItemData pick)
+        {
+            Humanoid me = st.Body;
+            var seen = new HashSet<GameObject>();
+            Task best = null;
+            float bestDist = float.MaxValue;
+            foreach (Collider col in Physics.OverlapSphere(center, 170f, ~0, QueryTriggerInteraction.Collide))
+            {
+                GameObject go = col.attachedRigidbody != null ? col.attachedRigidbody.gameObject : col.transform.root.gameObject;
+                if (!seen.Add(go)) continue;
+                Task t = Consider(st, go, jobs, axe, pick);
+                if (t == null || Skipped(st, t.Target) || !Drops(t.Target).Any(st.Goal.Wants)) continue;
+                float d = Vector3.Distance(t.Target.transform.position, me.transform.position);
+                if (d >= bestDist) continue;
+                bestDist = d;
+                best = t;
+            }
+            if (best != null) { best.Trip = true; best.ForGoal = true; }
+            return best;
+        }
+
+        private static string Compass(Vector3 way)
+        {
+            string[] names = { "north", "north-east", "east", "south-east", "south", "south-west", "west", "north-west" };
+            float angle = (Mathf.Atan2(way.x, way.z) * Mathf.Rad2Deg + 360f + 22.5f) % 360f;
+            return names[Mathf.FloorToInt(angle / 45f) % 8];
         }
 
         /// <summary>The item prefab names something drops when worked (a tree, a rock, a plant).</summary>
