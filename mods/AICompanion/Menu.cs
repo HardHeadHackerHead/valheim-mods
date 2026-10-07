@@ -16,10 +16,12 @@ namespace AICompanion
     /// </summary>
     public partial class Plugin
     {
-        private enum Tab { Overview, Orders, Inventory, Brain, Debug }
+        private enum Tab { Overview, Orders, Looks, Work, Home, Inventory, Brain, Debug }
 
         internal static bool MenuOpen;
         private Humanoid _shown;          // null: the summon panel
+        private long _rebind;             // a companion being remade (new body): show it again when it is back
+        private float _rebindUntil;
         private Tab _tab = Tab.Overview;
         private Rect _rect;
         private bool _placed;
@@ -58,6 +60,13 @@ namespace AICompanion
             _pending = null;
             run?.Invoke();
             if (!MenuOpen) return;
+            if (_rebind != 0L && _shown == null)
+            {
+                Humanoid back = Companion.All().FirstOrDefault(h => Companion.IdOf(h) == _rebind);
+                if (back != null) { _shown = back; _rebind = 0L; }
+                else if (Time.time > _rebindUntil) _rebind = 0L;
+                return;
+            }
             if (_shown != null && (_shown.IsDead() || Vector3.Distance(_shown.transform.position, player.transform.position) > 100f)) CloseMenu();
             else if (Menu.IsVisible() || InventoryGui.IsVisible()) CloseMenu();
         }
@@ -96,7 +105,8 @@ namespace AICompanion
             Rounded(new Rect(0, 0, w, h), new Color(0.07f, 0.06f, 0.05f, 0.98f), 9f);
             Outline(new Rect(0, 0, w, h), new Color(0.62f, 0.47f, 0.22f, 1f), 9f);
             GUILayout.BeginArea(new Rect(16f, 12f, w - 32f, h - 24f));
-            if (_shown == null) DrawSummon(); else DrawCompanion();
+            if (_shown == null && _rebind != 0L) GUILayout.Label("Changing its body…", _title);
+            else if (_shown == null) DrawSummon(); else DrawCompanion();
             GUILayout.EndArea();
             GUI.DragWindow(new Rect(0, 0, w, 40f));
         }
@@ -108,6 +118,30 @@ namespace AICompanion
             GUILayout.FlexibleSpace();
             if (GUILayout.Button("Close", _button, GUILayout.Width(80), GUILayout.Height(28))) CloseMenu();
             GUILayout.EndHorizontal();
+            Player me = Player.m_localPlayer;
+            List<Profile> mine = me != null ? Profile.Here(me) : new List<Profile>();
+            if (mine.Count > 0)
+            {
+                foreach (Profile prof in mine)
+                {
+                    GUILayout.Space(6);
+                    if (prof.Dead)
+                    {
+                        double left = Mathf.Max(0f, (float)(prof.DiedAt + RespawnSeconds.Value - ZNet.instance.GetTimeSeconds()));
+                        GUILayout.Label($"{prof.Name} has fallen, and wakes {(prof.HasBed ? "in their bed" : "beside you")} in {left:0} s.", _warn);
+                        GUILayout.Label("Their gear is in their tombstone where they fell (the skull on your map).", _dim);
+                        if (GUILayout.Button($"Wake {prof.Name} now", _buttonOn, GUILayout.Height(30))) { Profile p2 = prof; _pending = () => { Humanoid c = Home.Respawn(Player.m_localPlayer, p2); if (c != null) OpenMenuFor(Player.m_localPlayer, c); }; }
+                    }
+                    else
+                    {
+                        float far = me != null ? Vector3.Distance(me.transform.position, prof.LastSeen) : 0f;
+                        GUILayout.Label($"{prof.Name} is out in the world, last seen {far:0} m from here.", _text);
+                        GUILayout.Label("They are not loaded where you are. Go to them, or let them go to summon someone new.", _dim);
+                        if (GUILayout.Button($"Let {prof.Name} go (forget them)", _button, GUILayout.Height(28))) { long id = prof.Id; _pending = () => Profile.Forget(Player.m_localPlayer, id); }
+                    }
+                }
+                return;
+            }
             GUILayout.Label("You have no companion here. Summon one: a viking who follows you and fights beside you. Give it weapons, armour and potions in its Inventory tab.", _dim);
             GUILayout.Space(10);
             GUILayout.BeginHorizontal();
@@ -120,7 +154,7 @@ namespace AICompanion
                 {
                     Player p = Player.m_localPlayer;
                     Humanoid c = p != null ? Companion.Summon(p, _nameField.Trim()) : null;
-                    if (c != null) { OpenMenuFor(p, c); _tab = Tab.Inventory; }
+                    if (c != null) { OpenMenuFor(p, c); _tab = Tab.Looks; }
                 };
             GUILayout.Space(6);
             GUILayout.Label(string.IsNullOrEmpty(ApiKey.Value) ? "No Jev key yet: it fights with the built-in brain until you add one (Brain tab)." : "Jev key set: Jev decides how it fights.", _dim);
@@ -130,6 +164,7 @@ namespace AICompanion
         {
             Humanoid c = _shown;
             GUILayout.BeginHorizontal();
+            Face(GUILayoutUtility.GetRect(48f, 48f, GUILayout.Width(48), GUILayout.Height(48)), c, 6f);
             if (Mine)
             {
                 _nameField = GUILayout.TextField(_nameField ?? "", 24, _field, GUILayout.Width(200), GUILayout.Height(28));
@@ -162,6 +197,9 @@ namespace AICompanion
             {
                 case Tab.Overview: DrawOverview(c); break;
                 case Tab.Orders: DrawOrders(c); break;
+                case Tab.Looks: DrawLooks(c); break;
+                case Tab.Work: DrawWork(c); break;
+                case Tab.Home: DrawHome(c); break;
                 case Tab.Inventory: DrawInventory(c); break;
                 case Tab.Brain: DrawBrain(c); break;
             }
@@ -182,6 +220,33 @@ namespace AICompanion
             Stat("Fights", owner ? st.Fights.ToString() : "-");
             Stat("Potions drunk", owner ? st.Potions.ToString() : "-");
             GUILayout.EndHorizontal();
+
+            Section("Food");
+            if (!owner) GUILayout.Label("Known on the game that runs it.", _dim);
+            else
+            {
+                List<Food.Meal> meals = Food.Meals(c);
+                GUILayout.BeginHorizontal();
+                for (int i = 0; i < 3; i++)
+                {
+                    Rect r = GUILayoutUtility.GetRect(44f, 44f, GUILayout.Width(44), GUILayout.Height(44));
+                    Rounded(r, new Color(0.13f, 0.11f, 0.09f, 1f), 4f);
+                    Outline(r, new Color(0.35f, 0.28f, 0.18f, 1f), 4f);
+                    if (i >= meals.Count) continue;
+                    DrawIcon(new Rect(r.x + 5f, r.y + 5f, r.width - 10f, r.height - 10f), meals[i].Item.GetIcon());
+                    Rounded(new Rect(r.x + 3f, r.yMax - 5f, (r.width - 6f) * meals[i].Fraction, 3f), meals[i].Fraction < 0.2f ? new Color(1f, 0.45f, 0.35f) : new Color(0.55f, 0.9f, 0.45f), 1f);
+                }
+                GUILayout.Space(10);
+                GUILayout.Label(meals.Count == 0 ? $"Hungry: only {BaseHealth.Value:0} health and {BaseStamina.Value:0} stamina, and it does not heal. Give it food (Inventory tab): it eats by itself."
+                                                 : string.Join(", ", meals.Select(m => $"{Localization.instance.Localize(m.Item.m_shared.m_name)} ({Mathf.CeilToInt(m.Time / 60f)} min)")) + ". It eats again when a food is half gone.", meals.Count == 0 ? _warn : _dim);
+                GUILayout.EndHorizontal();
+            }
+
+            Section("Skills");
+            var skills = Skill.All(c).Take(8).ToList();
+            if (!owner) GUILayout.Label("Known on the game that runs it.", _dim);
+            else if (skills.Count == 0) GUILayout.Label("No skills yet: they rise as its hits land, and make it hit harder (as yours do). It loses 5% when it falls.", _dim);
+            else GUILayout.Label(string.Join("   ", skills.Select(kv => $"{Localization.instance.Localize("$skill_" + kv.Key.ToString().ToLower())} {kv.Value:0}")), _text);
 
             Section("In a fight");
             if (!owner) GUILayout.Label("Its brain runs on the game of the player nearest to it, so the details are there.", _dim);
@@ -249,9 +314,11 @@ namespace AICompanion
             if (Toggle("Follow me", order == Order.Follow)) _pending = () => Change(z => z.Set(Keys.Order, (int)Order.Follow));
             if (Toggle("Stay here", order == Order.Stay)) _pending = () => Change(z => z.Set(Keys.Order, (int)Order.Stay));
             if (Toggle("Guard this spot", order == Order.Guard)) _pending = () => Change(z => { z.Set(Keys.Order, (int)Order.Guard); z.Set(Keys.Post, c.transform.position); });
+            if (Toggle("Gather", order == Order.Gather)) _pending = () => StartGathering(c);
             GUILayout.EndHorizontal();
             GUILayout.Label(order switch
             {
+                Order.Gather => "Gathers around its bed (or where it was told) on the jobs ticked in the Work tab, and fights what comes near.",
                 Order.Stay => "Stays where it is, and fights what comes near.",
                 Order.Guard => "Stays by the spot it was given, and goes back to it after a fight.",
                 _ => "Follows you, and catches up if it falls far behind (after a portal or a boat ride).",
@@ -288,6 +355,186 @@ namespace AICompanion
             if (Mine && GUILayout.Button("Send home", _button, GUILayout.Width(120), GUILayout.Height(30)))
                 _pending = () => { if (Companion.Dismiss(c, out string why)) CloseMenu(); else _note = why; };
             GUILayout.Label("Sends it away for good (only with its bag empty, so nothing is lost). Summon another with " + MenuKey.Value + ".", _dim);
+        }
+
+        // ---- Looks --------------------------------------------------------------------------------------------
+
+        private void Face(Rect r, Humanoid c, float radius)
+        {
+            Rounded(r, new Color(0.16f, 0.2f, 0.19f), radius);
+            Texture face = Portraits.Get(Companion.IdOf(c));
+            if (face != null && Event.current.type == EventType.Repaint)
+                GUI.DrawTexture(r, face, ScaleMode.ScaleAndCrop, true, 0f, Color.white, Vector4.zero, new Vector4(radius, radius, radius, radius));
+            Outline(r, new Color(0.45f, 0.75f, 0.68f, 0.9f), radius);
+        }
+
+        private void Rebind(Humanoid c) { _rebind = Companion.IdOf(c); _rebindUntil = Time.time + 5f; }
+
+        private void LooksChange(Action<Humanoid> change)
+        {
+            if (!Mine) { _note = "Only its owner can change how it looks."; return; }
+            Humanoid c = _shown;
+            if (!Companion.Write(c, _ => change(c))) _note = "Someone has its gear open; try again in a moment.";
+        }
+
+        private void DrawLooks(Humanoid c)
+        {
+            GUILayout.BeginHorizontal();
+            Face(GUILayoutUtility.GetRect(150f, 150f, GUILayout.Width(150), GUILayout.Height(150)), c, 8f);
+            GUILayout.Space(10);
+            GUILayout.BeginVertical();
+            GUILayout.Label("How it looks", _text);
+            GUILayout.Label("Like making a character: everyone sees the same, and it wakes looking the same after it falls. It changes as you click (turn round to watch it).", _dim);
+            GUILayout.Space(6);
+            GUILayout.BeginHorizontal();
+            if (GUILayout.Button("Randomise", _button, GUILayout.Width(110), GUILayout.Height(28))) _pending = () => { Rebind(c); LooksChange(Looks.Randomise); };
+            if (GUILayout.Button("Look like me", _button, GUILayout.Width(120), GUILayout.Height(28))) _pending = () => { Rebind(c); LooksChange(h => Looks.CopyFrom(h, Player.m_localPlayer)); };
+            GUILayout.EndHorizontal();
+            GUILayout.EndVertical();
+            GUILayout.EndHorizontal();
+
+            Section("Body");
+            int model = Looks.Model(c);
+            GUILayout.BeginHorizontal();
+            if (Toggle("Body 1", model == 0)) _pending = () => { Rebind(c); LooksChange(h => Looks.SetModel(h, 0)); };
+            if (Toggle("Body 2", model == 1)) _pending = () => { Rebind(c); LooksChange(h => Looks.SetModel(h, 1)); };
+            GUILayout.EndHorizontal();
+
+            List<ItemDrop> hairs = Looks.Hairs(), beards = Looks.Beards();
+            Section("Hair");
+            Picker("Style", Looks.StyleName(Looks.Hair(c), hairs), () => LooksChange(h => Looks.SetHair(h, Looks.Step(Looks.Hair(h), hairs, -1))), () => LooksChange(h => Looks.SetHair(h, Looks.Step(Looks.Hair(h), hairs, 1))));
+            float tone = Looks.HairTone(c), shade = Looks.HairShade(c);
+            float newTone = Slider("Colour", tone), newShade = Slider("Shade", shade);
+            if (Mathf.Abs(newTone - tone) > 0.005f || Mathf.Abs(newShade - shade) > 0.005f) { float t = newTone, l = newShade; _pending = () => LooksChange(h => Looks.SetHairColor(h, t, l)); }
+
+            if (model == 0)
+            {
+                Section("Beard");
+                Picker("Style", Looks.StyleName(Looks.Beard(c), beards), () => LooksChange(h => Looks.SetBeard(h, Looks.Step(Looks.Beard(h), beards, -1))), () => LooksChange(h => Looks.SetBeard(h, Looks.Step(Looks.Beard(h), beards, 1))));
+            }
+
+            Section("Skin");
+            float skin = Looks.SkinTone(c), newSkin = Slider("Tone", skin);
+            if (Mathf.Abs(newSkin - skin) > 0.005f) { float t = newSkin; _pending = () => LooksChange(h => Looks.SetSkin(h, t)); }
+        }
+
+        private void Picker(string label, string value, Action prev, Action next)
+        {
+            GUILayout.BeginHorizontal();
+            GUILayout.Label(label, _text, GUILayout.Width(80));
+            if (GUILayout.Button("<", _button, GUILayout.Width(36), GUILayout.Height(26))) _pending = prev;
+            GUILayout.Label(value, _text, GUILayout.Width(110));
+            if (GUILayout.Button(">", _button, GUILayout.Width(36), GUILayout.Height(26))) _pending = next;
+            GUILayout.EndHorizontal();
+        }
+
+        private float Slider(string label, float value)
+        {
+            GUILayout.BeginHorizontal();
+            GUILayout.Label(label, _text, GUILayout.Width(80));
+            float v = GUILayout.HorizontalSlider(value, 0f, 1f, GUILayout.Width(300), GUILayout.Height(20));
+            GUILayout.EndHorizontal();
+            return v;
+        }
+
+        // ---- Work ---------------------------------------------------------------------------------------------
+
+        private void StartGathering(Humanoid c)
+        {
+            Change(z =>
+            {
+                z.Set(Keys.Order, (int)Order.Gather);
+                if (!z.GetBool(Keys.HasBed, false)) z.Set(Keys.Post, c.transform.position);
+                if (z.GetInt(Keys.Jobs, 0) == 0) z.Set(Keys.Jobs, (int)(Job.Wood | Job.Stone | Job.Forage));
+            });
+        }
+
+        private void DrawWork(Humanoid c)
+        {
+            BrainState st = Brain.Get(c);
+            Job jobs = Work.JobsOf(c);
+            bool gathering = Companion.OrderOf(c) == Order.Gather;
+            Section("Gathering");
+            GUILayout.BeginHorizontal();
+            if (!gathering) { if (GUILayout.Button("Start gathering", _buttonOn, GUILayout.Width(160), GUILayout.Height(30))) _pending = () => StartGathering(c); }
+            else
+            {
+                GUILayout.Label("Gathering", _good, GUILayout.Width(90));
+                if (GUILayout.Button("Stop: follow me", _button, GUILayout.Width(150), GUILayout.Height(28))) _pending = () => Change(z => z.Set(Keys.Order, (int)Order.Follow));
+            }
+            GUILayout.EndHorizontal();
+            bool bed = Companion.Zdo(c).GetBool(Keys.HasBed, false);
+            Vector3 center = Work.Center(c);
+            GUILayout.Label(bed ? "Works around its bed." : $"Works around where it was told to gather ({center.x:0}, {center.z:0}).", _dim);
+            if (!bed && GUILayout.Button("Gather around where I stand", _button, GUILayout.Width(220), GUILayout.Height(26)))
+                _pending = () => { Vector3 here = Player.m_localPlayer.transform.position; Change(z => z.Set(Keys.Post, here)); };
+
+            Section("Jobs: what it gathers, with the tools in its bag");
+            foreach (Job job in new[] { Job.Wood, Job.Stone, Job.Ore, Job.Forage, Job.Loot })
+            {
+                bool on = (jobs & job) != 0;
+                GUILayout.BeginHorizontal();
+                if (GUILayout.Button((on ? "☑ " : "☐ ") + job, on ? _buttonOn : _button, GUILayout.Width(110), GUILayout.Height(26)))
+                { Job pick = job; _pending = () => Change(z => z.Set(Keys.Jobs, z.GetInt(Keys.Jobs, 0) ^ (int)pick)); }
+                string tool = Work.ToolFor(c, job);
+                string what = job == Job.Wood ? $"logs, stumps, trees  ·  {tool}"
+                    : job == Job.Stone ? $"rocks  ·  {tool}"
+                    : job == Job.Ore ? $"copper, tin, iron, silver deposits  ·  {tool}"
+                    : job == Job.Forage ? "wild berries, mushrooms, flowers, thistle (never your crops)"
+                    : "anything on the ground (also what you drop!)";
+                GUILayout.Label(what, tool.StartsWith("no ") ? _warn : _dim);
+                GUILayout.EndHorizontal();
+            }
+            GUILayout.Label("A better axe or pickaxe lets it work harder trees and ores (the game's tool tiers). It picks up what its own work drops.", _dim);
+            int radius = Work.RadiusOf(c);
+            Stepper("Works within", $"{radius} m", () => Change(z => z.Set(Keys.Radius, Mathf.Clamp(radius - 5, 10, 80))), () => Change(z => z.Set(Keys.Radius, Mathf.Clamp(radius + 5, 10, 80))));
+
+            Section("Its chests");
+            int chests = Home.Chests(c).Count;
+            GUILayout.Label(chests > 0 ? $"{chests} chest{(chests == 1 ? "" : "s")} nearby: it puts away what it gathers when its bag fills, and takes better gear, arrows and potions."
+                                       : "No chest yet: give it one in the Home tab, or it stops when its bag is full.", chests > 0 ? _dim : _warn);
+
+            Section("This session");
+            if (st.Gathered.Count == 0) GUILayout.Label("Nothing gathered yet.", _dim);
+            else GUILayout.Label(string.Join(", ", st.Gathered.OrderByDescending(kv => kv.Value).Select(kv => $"{kv.Value} {kv.Key}")), _text);
+        }
+
+        // ---- Home ---------------------------------------------------------------------------------------------
+
+        private void DrawHome(Humanoid c)
+        {
+            ZDO z = Companion.Zdo(c);
+            Player p = Player.m_localPlayer;
+            Section("Its bed");
+            if (z.GetBool(Keys.HasBed, false))
+            {
+                Vector3 bed = z.GetVec3(Keys.BedPos, Vector3.zero);
+                GUILayout.Label($"Sleeps at ({bed.x:0}, {bed.z:0}), {Vector3.Distance(bed, p.transform.position):0} m from you. It wakes there after falling, and gathers around it.", _good);
+                if (Mine && GUILayout.Button("Let its bed go", _button, GUILayout.Width(140), GUILayout.Height(26)))
+                    _pending = () =>
+                    {
+                        Bed b = Home.BedOf(c);
+                        if (b != null) Home.ToggleBed(b, c); else Change(cz => cz.Set(Keys.HasBed, false));
+                    };
+            }
+            else GUILayout.Label("No bed: it wakes beside you after falling. Give it a bed nobody sleeps in.", _warn);
+
+            Section("Its chests");
+            List<Container> chests = Home.Chests(c);
+            if (chests.Count == 0) GUILayout.Label("None nearby. It keeps what it gathers in them, and takes better armour, weapons, arrows and potions from them.", _dim);
+            foreach (Container ch in chests)
+            {
+                Inventory inv = ch.GetInventory();
+                GUILayout.Label($"  {Localization.instance.Localize(ch.m_name)} at ({ch.transform.position.x:0}, {ch.transform.position.z:0}):  {inv.NrOfItems()}/{inv.GetWidth() * inv.GetHeight()} slots", _dim);
+            }
+
+            GUILayout.Space(8);
+            if (Mine && GUILayout.Button("Assign a bed and chests…", _buttonOn, GUILayout.Width(230), GUILayout.Height(32)))
+                _pending = () => { Home.StartAssign(c); CloseMenu(); };
+            GUILayout.Label("Closes this menu: then press E on a bed or a chest to give it to " + Companion.NameOf(c) + " (E again takes it back). " + MenuKey.Value + " or Esc when done.", _dim);
+
+            Section("When it falls");
+            GUILayout.Label($"Like a player: its gear stays in its tombstone where it fell (you can take it all with one E, and a skull marks it on everyone's map), and it wakes {RespawnSeconds.Value:0} s later in its bed, or beside you without one, with nothing in its hands.", _dim);
         }
 
         // ---- Inventory ---------------------------------------------------------------------------------------

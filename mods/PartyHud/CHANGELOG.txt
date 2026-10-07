@@ -1,3 +1,5 @@
+New: a companion's row shows a little picture of its face (AICompanion 0.3.0 takes it) instead of its initial.
+
 New: with the AICompanion mod installed, each player's companion shows under them in the panel: its name, health, how far away it is and which way, and what it is doing (or that it has fallen), its stamina, and its buffs (a boss power, meads). General, ShowCompanions turns it off.
 
 Three food slots under each player's picture show what they are eating, with a line for how long each has left (red when nearly gone). The arrow and buff icons are as in 1.5.0.

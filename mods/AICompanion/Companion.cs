@@ -5,7 +5,7 @@ using UnityEngine;
 
 namespace AICompanion
 {
-    public enum Order { Follow, Stay, Guard }
+    public enum Order { Follow, Stay, Guard, Gather }
     public enum Style { Aggressive, Balanced, Defensive, Passive }
 
     /// <summary>
@@ -15,7 +15,8 @@ namespace AICompanion
     internal static class Keys
     {
         public const string Master = "dhc_master", MasterName = "dhc_mastername", Name = "dhc_name", Order = "dhc_order", Post = "dhc_post",
-            Style = "dhc_style", Retreat = "dhc_retreat", Potions = "dhc_potions", Protect = "dhc_protect", UseJev = "dhc_usejev", Status = "dhc_status", Id = "dhc_id", Kills = "dhc_kills";
+            Style = "dhc_style", Retreat = "dhc_retreat", Potions = "dhc_potions", Protect = "dhc_protect", UseJev = "dhc_usejev", Status = "dhc_status", Id = "dhc_id", Kills = "dhc_kills",
+            Jobs = "dhc_jobs", Radius = "dhc_radius", HasBed = "dhc_hasbed", BedPos = "dhc_bedpos";
     }
 
     internal static class Companion
@@ -131,24 +132,14 @@ namespace AICompanion
             zdo.Set(Keys.Protect, true);
             zdo.Set(Keys.UseJev, true);
             Dress(c);
-            p.m_customData["dhc_name"] = NameOf(c); // remembered, so a fallen companion comes back with the same name
+            p.m_customData["dhc_name"] = NameOf(c);
+            Profile.Save(p, Profile.Of(c)); // who it is, so it can wake in its bed after falling
             Plugin.Instance?.Note($"{p.GetPlayerName()} summoned the companion {NameOf(c)} at {pos:F0}");
             return c;
         }
 
         /// <summary>A look of its own: man or woman, skin and hair colour (the game picks the hair and beard for player-like NPCs).</summary>
-        private static void Dress(Humanoid c)
-        {
-            VisEquipment vis = c.GetComponent<VisEquipment>();
-            if (vis == null) return;
-            int model = Random.Range(0, 2);
-            vis.SetModel(model);
-            float skin = Random.Range(0.45f, 1f);
-            vis.SetSkinColor(new Vector3(skin, skin * Random.Range(0.85f, 0.95f), skin * Random.Range(0.7f, 0.85f)));
-            Vector3[] hair = { new Vector3(0.95f, 0.8f, 0.5f), new Vector3(0.55f, 0.35f, 0.2f), new Vector3(0.25f, 0.15f, 0.1f), new Vector3(0.75f, 0.35f, 0.15f), new Vector3(0.1f, 0.1f, 0.1f) };
-            vis.SetHairColor(hair[Random.Range(0, hair.Length)]);
-            if (model == 1) { vis.SetBeardItem(0); Zdo(c).Set(ZDOVars.s_noBeard, true); } // the second model is the woman
-        }
+        private static void Dress(Humanoid c) => Looks.Randomise(c, true);
 
         /// <summary>Send it home: only with its gear taken out first, so nothing can be lost.</summary>
         public static bool Dismiss(Humanoid c, out string why)
@@ -158,6 +149,7 @@ namespace AICompanion
             ZNetView view = c.GetComponent<ZNetView>();
             if (!view.IsOwner()) view.ClaimOwnership();
             Plugin.Instance?.Note($"The companion {NameOf(c)} was sent home");
+            if (Player.m_localPlayer != null) Profile.Forget(Player.m_localPlayer, IdOf(c));
             view.Destroy();
             why = null;
             return true;
@@ -170,8 +162,11 @@ namespace AICompanion
             Inventory inv = gear != null ? gear.GetInventory() : null;
             if (inv == null || inv.NrOfItems() == 0) return;
             c.UnequipAllItems();
-            GameObject cratePrefab = ZNetScene.instance.GetPrefab("CargoCrate");
-            Container crate = cratePrefab != null ? Object.Instantiate(cratePrefab, c.transform.position + Vector3.up * 0.5f, c.transform.rotation).GetComponent<Container>() : null;
+            // A tombstone like a player's (its player can take everything back with one E), else the game's cargo crate.
+            GameObject tombPrefab = ZNetScene.instance.GetPrefab("Player")?.GetComponent<Player>()?.m_tombstone ?? ZNetScene.instance.GetPrefab("CargoCrate");
+            GameObject tomb = tombPrefab != null ? Object.Instantiate(tombPrefab, c.GetCenterPoint(), c.transform.rotation) : null;
+            tomb?.GetComponent<TombStone>()?.Setup(NameOf(c), MasterId(c));
+            Container crate = tomb != null ? tomb.GetComponent<Container>() : null;
             if (crate != null) crate.GetComponent<ZNetView>().GetZDO().Set(Net.CrateKey, NameOf(c));
             int moved = 0, dropped = 0;
             foreach (ItemDrop.ItemData item in inv.GetAllItems().ToList())
@@ -209,7 +204,8 @@ namespace AICompanion
             var t = i.m_shared.m_itemType;
             return IsMelee(i) || IsRanged(i) || t == ItemDrop.ItemData.ItemType.Shield || t == ItemDrop.ItemData.ItemType.Helmet || t == ItemDrop.ItemData.ItemType.Chest
                 || t == ItemDrop.ItemData.ItemType.Legs || t == ItemDrop.ItemData.ItemType.Shoulder || t == ItemDrop.ItemData.ItemType.Ammo
-                || (t == ItemDrop.ItemData.ItemType.Consumable && i.m_shared.m_consumeStatusEffect is SE_Stats se && (se.m_healthOverTime > 0f || se.m_healthUpFront > 0f) && i.m_shared.m_food <= 0f);
+                || (t == ItemDrop.ItemData.ItemType.Consumable && i.m_shared.m_consumeStatusEffect is SE_Stats se && (se.m_healthOverTime > 0f || se.m_healthUpFront > 0f) && i.m_shared.m_food <= 0f)
+                || Food.IsFood(i);
         }
 
         /// <summary>Move an item from the companion to the player (true if it fit). The companion must be ours and its gear closed.</summary>
@@ -264,7 +260,7 @@ namespace AICompanion
         /// took it out) is taken off first. Equipped items are not flagged as equipped in the inventory, so an item you take out never
         /// arrives in yours marked as worn.
         /// </summary>
-        public static void Maintain(Humanoid h, bool wantRanged)
+        public static void Maintain(Humanoid h, bool wantRanged, ItemDrop.ItemData tool = null)
         {
             if (h.InAttack()) return;
             Inventory inv = h.GetInventory();
@@ -278,7 +274,7 @@ namespace AICompanion
                 if (best != null) Equip(h, best);
             }
 
-            ItemDrop.ItemData weapon = wantRanged ? BestRanged(h) ?? BestMelee(h) : BestMelee(h) ?? BestRanged(h);
+            ItemDrop.ItemData weapon = tool != null && inv.ContainsItem(tool) ? tool : wantRanged ? BestRanged(h) ?? BestMelee(h) : BestMelee(h) ?? BestRanged(h);
             if (weapon != null) Equip(h, weapon);
             if (weapon != null && IsRanged(weapon))
             {

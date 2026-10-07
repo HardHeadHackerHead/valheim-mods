@@ -51,7 +51,26 @@ namespace AICompanion
         public readonly List<string> History = new List<string>(); // newest first, for the menu
         public bool InCombat, Asking;
         public int Fights, Potions, JevCalls, BuiltInCalls;     // this session, for the Overview tab
+        public float FightStart, Taken, Dealt, LastHealth;       // this fight, for its summary
+        public int FightKills, FightDecisions;
+        public Work.Task Task;                                      // gathering
+        public CraftingStation RepairAt;                            // repairs
+        public float NextRepairLook, RepairSince;
+        public Ship Riding;                                         // riding along
+        public Chair Seat;
+        public Vector3 DeckSpot;
+        public float RideLastSeen;
+        public ItemDrop.ItemData WorkTool;
+        public string WorkNote;
+        public Vector3 WorkSpot;
+        public float NextWorkLook, NextDoorLook;
+        public readonly HashSet<string> Wanted = new HashSet<string>();                  // what its work drops (to pick up)
+        public readonly Dictionary<int, float> Skipped = new Dictionary<int, float>();    // things it gave up on, until when
+        public readonly Dictionary<string, int> Gathered = new Dictionary<string, int>(); // this session, for the Work tab
         public float NextEnemyScan, NextGear, NextAsk, LastAsk, HealthAtAsk = 1f;
+        public float NextStuckCheck, StuckDistance = float.MaxValue;
+        public Vector3 StuckFrom;
+        public int StuckFor;
         public int EnemyCountAtAsk;
         public string Status = "";
 
@@ -82,7 +101,8 @@ namespace AICompanion
         private static readonly Dictionary<Humanoid, BrainState> States = new Dictionary<Humanoid, BrainState>();
 
         private static readonly Func<BaseAI, float, Vector3, float, bool, bool> MoveToRaw = AccessTools.MethodDelegate<Func<BaseAI, float, Vector3, float, bool, bool>>(AccessTools.Method(typeof(BaseAI), "MoveTo"));
-        private static readonly Action<BaseAI, Vector3> LookAt = AccessTools.MethodDelegate<Action<BaseAI, Vector3>>(AccessTools.Method(typeof(BaseAI), "LookAt"));
+        private static readonly Func<BaseAI, Vector3, bool> HavePath = AccessTools.MethodDelegate<Func<BaseAI, Vector3, bool>>(AccessTools.Method(typeof(BaseAI), "HavePath"));
+        private static readonly Action<BaseAI, Vector3> LookAt =AccessTools.MethodDelegate<Action<BaseAI, Vector3>>(AccessTools.Method(typeof(BaseAI), "LookAt"));
         private static readonly Action<BaseAI, float> Regenerate = AccessTools.MethodDelegate<Action<BaseAI, float>>(AccessTools.Method(typeof(BaseAI), "UpdateRegeneration"));
         private static readonly AccessTools.FieldRef<BaseAI, float> TimeSinceHurt = AccessTools.FieldRefAccess<BaseAI, float>("m_timeSinceHurt");
         private static readonly AccessTools.FieldRef<Character, bool> Blocking = AccessTools.FieldRefAccess<Character, bool>("m_blocking");
@@ -97,6 +117,8 @@ namespace AICompanion
             foreach (BrainState st in States.Values) if (st.Body != null) Blocking(st.Body) = false;
             States.Clear();
         }
+
+        public static void Forget(Humanoid h) { if (h != null) States.Remove(h); }
 
         public static BrainState Get(Humanoid h)
         {
@@ -114,30 +136,43 @@ namespace AICompanion
         {
             ZNetView view = ai.GetComponent<ZNetView>();
             if (view == null || !view.IsValid() || !view.IsOwner()) return false;
-            Regenerate(ai, dt);
-            TimeSinceHurt(ai) += dt;
-            Stamina.Tick(ai.GetComponent<Humanoid>(), dt);
+            TimeSinceHurt(ai) += dt;           // (no free healing: food heals it, as it heals a player)
+            Humanoid body = ai.GetComponent<Humanoid>();
+            Stamina.Tick(body, dt);
+            Weather.Tick(body);
 
             Humanoid me = ai.GetComponent<Humanoid>();
             BrainState st = Get(me);
             Player master = Companion.Master(me);
             Container gear = me.GetComponent<Container>();
 
-            if (Time.time >= st.NextGear) { st.NextGear = Time.time + 0.5f; Companion.Maintain(me, st.Current.Ranged); }
+            Food.Tick(me, st);
+            if (Ride.Tick(st, master)) return true; // on a boat with its player: it sits and rides
+            if (Time.time >= st.NextGear) { st.NextGear = Time.time + 0.5f; Companion.Maintain(me, st.Current.Ranged, st.InCombat ? null : st.WorkTool); }
             if (gear != null && gear.IsInUse()) { ai.StopMoving(); Blocking(me) = false; SetStatus(st, "waiting while you sort its gear"); return true; }
 
             if (Time.time >= st.NextEnemyScan) { st.NextEnemyScan = Time.time + 0.25f; ScanEnemies(st, master); }
             st.Enemies.RemoveAll(e => e == null || e.IsDead()); // killed or gone since the last look (a destroyed one throws on .transform)
 
+            if (Time.time >= st.NextDoorLook) { st.NextDoorLook = Time.time + 0.4f; OpenDoorAhead(me); }
+            if (Companion.OrderOf(me) != Order.Gather) { st.Task = null; st.WorkTool = null; }
+
             if (st.Enemies.Count == 0)
             {
-                if (st.InCombat) { st.InCombat = false; st.Labels.Clear(); st.Remember("fight over"); }
+                if (st.InCombat) { st.InCombat = false; st.Labels.Clear(); Summarise(st, "fight over"); }
                 Blocking(me) = false;
                 Peaceful(st, master, dt);
                 return true;
             }
 
-            if (!st.InCombat) { st.InCombat = true; st.NextAsk = 0f; st.Fights++; }
+            if (!st.InCombat)
+            {
+                st.InCombat = true; st.NextAsk = 0f; st.Fights++;
+                st.FightStart = Time.time; st.Taken = st.Dealt = 0f; st.FightKills = st.FightDecisions = 0; st.LastHealth = me.GetHealth();
+            }
+            float hp = me.GetHealth();
+            if (hp < st.LastHealth) st.Taken += st.LastHealth - hp;
+            st.LastHealth = hp;
             MaybeDecide(st, master);
             Fight(st, master, dt);
             return true;
@@ -148,11 +183,15 @@ namespace AICompanion
         private static void Peaceful(BrainState st, Player master, float dt)
         {
             Humanoid me = st.Body;
+            if (Repair.Tick(st, (p, dd, run) => MoveTo(st.Ai, dt, p, dd, run), () => st.Ai.StopMoving())) return;
             switch (Companion.OrderOf(me))
             {
                 case Order.Stay:
                     st.Ai.StopMoving();
                     SetStatus(st, "staying here");
+                    break;
+                case Order.Gather:
+                    Work.Tick(st, master, dt, (p, dd, run) => MoveTo(st.Ai, dt, p, dd, run), () => st.Ai.StopMoving(), p => LookAt(st.Ai, p));
                     break;
                 case Order.Guard:
                     Vector3 post = Companion.Zdo(me).GetVec3(Keys.Post, me.transform.position);
@@ -164,21 +203,65 @@ namespace AICompanion
                     if (master == null) { st.Ai.StopMoving(); SetStatus(st, "waiting for " + (Companion.Zdo(me).GetString(Keys.MasterName, "its friend"))); break; }
                     float d = Vector3.Distance(master.transform.position, me.transform.position);
                     if (d > 60f && !master.IsAttached() && master.IsOnGround()) { TeleportBehind(me, master); break; } // left behind (a portal, a boat ride)
-                    if (d > 3.5f) MoveTo(st.Ai, dt, master.transform.position, 2.5f, d > 8f);
-                    else st.Ai.StopMoving();
+                    if (d > 3.5f)
+                    {
+                        MoveTo(st.Ai, dt, master.transform.position, 2.5f, d > 8f);
+                        if (Stuck(st, master, d) && master.IsOnGround() && !master.IsAttached()) { TeleportBehind(me, master, "hopped over to"); break; }
+                    }
+                    else { st.Ai.StopMoving(); st.StuckFor = 0; }
                     SetStatus(st, "following " + master.GetPlayerName());
                     break;
             }
         }
 
-        internal static void TeleportBehind(Humanoid me, Player master)
+        /// <summary>
+        /// Following but getting no closer (a wall of sharpened stakes, a fence, a gap it cannot path over): true after about three seconds, or
+        /// sooner when the pathfinder says there is no way at all. Checked once a second.
+        /// </summary>
+        private static bool Stuck(BrainState st, Player master, float d)
         {
-            Vector3 pos = master.transform.position - master.transform.forward * 2.5f;
-            if (ZoneSystem.instance != null && ZoneSystem.instance.GetSolidHeight(pos, out float h)) pos.y = Mathf.Max(pos.y, h);
+            if (Time.time < st.NextStuckCheck) return false;
+            st.NextStuckCheck = Time.time + 1f;
+            Vector3 here = st.Body.transform.position;
+            bool noProgress = Vector3.Distance(here, st.StuckFrom) < 0.75f; // pressed against something (trailing a running player still moves it)
+            st.StuckFrom = here;
+            st.StuckDistance = d;
+            st.StuckFor = noProgress ? st.StuckFor + 1 : 0;
+            bool noWay = d > 6f && !HavePath(st.Ai, master.transform.position);
+            if (st.StuckFor >= 3 || (noWay && st.StuckFor >= 1)) { st.StuckFor = 0; return true; }
+            return false;
+        }
+
+        /// <summary>Put it on a free spot beside the player (behind, beside or in front, on the same level, nothing solid in the way).</summary>
+        internal static void TeleportBehind(Humanoid me, Player master, string how = "caught up with")
+        {
+            Vector3 pos = FreeSpotNear(master);
             me.transform.position = pos;
             Rigidbody body = me.GetComponent<Rigidbody>();
             if (body != null) { body.position = pos; body.linearVelocity = Vector3.zero; }
-            Plugin.Instance?.Note($"{Companion.NameOf(me)} caught up with {master.GetPlayerName()}");
+            Get(me).Remember($"{how} {master.GetPlayerName()}");
+            Plugin.Instance?.Note($"{Companion.NameOf(me)} {how} {master.GetPlayerName()}");
+        }
+
+        private static readonly int Solid = LayerMask.GetMask("Default", "static_solid", "Default_small", "piece", "vehicle");
+
+        private static Vector3 FreeSpotNear(Player master)
+        {
+            Transform t = master.transform;
+            Vector3[] offsets = { -t.forward * 1.8f, -t.right * 1.6f, t.right * 1.6f, (-t.forward - t.right).normalized * 2f, (-t.forward + t.right).normalized * 2f, t.forward * 1.8f };
+            foreach (Vector3 o in offsets)
+            {
+                Vector3 p = t.position + o;
+                if (ZoneSystem.instance != null && ZoneSystem.instance.GetSolidHeight(p, out float h))
+                {
+                    if (Mathf.Abs(h - t.position.y) > 1.2f) continue; // a different level (a wall top, a ditch)
+                    p.y = h;
+                }
+                else p.y = t.position.y;
+                if (Physics.CheckCapsule(p + Vector3.up * 0.6f, p + Vector3.up * 1.6f, 0.35f, Solid)) continue; // something in the way
+                return p;
+            }
+            return t.position - t.forward * 0.8f;
         }
 
         // ---- the fight ----------------------------------------------------------------------------------
@@ -230,9 +313,51 @@ namespace AICompanion
             else Apply(st, fallback);
         }
 
+        private static readonly int PieceMask = LayerMask.GetMask("piece", "piece_nonsolid", "Default");
+
+        /// <summary>A closed door right in front of it while it walks: open it, as a player would (not a locked one, not behind a ward it lacks).</summary>
+        private static void OpenDoorAhead(Humanoid me)
+        {
+            Rigidbody body = me.GetComponent<Rigidbody>();
+            if (body == null || body.linearVelocity.sqrMagnitude < 0.25f) return;
+            foreach (Collider col in Physics.OverlapSphere(me.transform.position + me.transform.forward * 1.1f + Vector3.up, 0.9f, PieceMask))
+            {
+                Door door = col.GetComponentInParent<Door>();
+                if (door == null || door.m_keyItem != null) continue;
+                ZDO z = Companion.Zdo(door);
+                if (z == null || z.GetInt(ZDOVars.s_state, 0) != 0) continue;
+                door.Interact(me, false, false);
+                return;
+            }
+        }
+
+        internal static Character TargetOf(Character enemy) => enemy != null && enemy.GetBaseAI() is MonsterAI m ? m.GetTargetCreature() : null;
+
+        /// <summary>
+        /// The player's rules are rules, not advice: below the fall-back health it falls back (and below half of that it flees), whatever Jev
+        /// said; a passive companion never attacks. Code stays in control; Jev decides within these limits.
+        /// </summary>
+        private static void Enforce(BrainState st, Decision d)
+        {
+            Humanoid me = st.Body;
+            Style style = Companion.StyleOf(me);
+            float health = me.GetHealthPercentage();
+            float retreat = Companion.RetreatOf(me) / 100f * (style == Style.Aggressive ? 0.5f : 1f);
+            bool fighting = d.Action == Tactic.Attack || d.Action == Tactic.DefendPlayer;
+            string rule = null;
+            if (health < retreat * 0.5f && d.Action != Tactic.Flee) { d.Action = Tactic.Flee; rule = $"rule: flee below {retreat * 50f:0}% health"; }
+            else if (health < retreat && fighting) { d.Action = Tactic.Retreat; rule = $"rule: fall back below {retreat * 100f:0}% health"; }
+            else if (style == Style.Passive && fighting) { d.Action = Tactic.Retreat; rule = "rule: passive, does not attack"; }
+            if (rule == null) return;
+            d.Note = string.IsNullOrEmpty(d.Note) ? rule : d.Note + "; " + rule;
+            if (d.Action != Tactic.Attack) d.Drink |= Companion.Potions(me) && Companion.HealingPotions(me).Count > 0;
+        }
+
         private static void Apply(BrainState st, Decision d)
         {
+            Enforce(st, d);
             d.Time = Time.time;
+            st.FightDecisions++;
             bool changed = d.Action != st.Current.Action || d.Target != st.Current.Target || d.Ranged != st.Current.Ranged;
             st.Current = d;
             if (d.Drink && Companion.Drink(st.Body)) { st.Remember("drank a healing potion"); st.Potions++; }
@@ -265,12 +390,32 @@ namespace AICompanion
             if (health < retreat) { d.Action = Tactic.Retreat; d.Note = "hurt"; return d; }
             if (Stamina.Get(me) < Stamina.Max(me) * 0.15f && nearest != null && Vector3.Distance(nearest.transform.position, me.transform.position) < 6f)
             { d.Action = Tactic.BackOff; d.Note = "out of breath"; return d; }
-            Character onMaster = master != null && Companion.Protect(me) ? st.Enemies.FirstOrDefault(e => e.GetBaseAI() is MonsterAI m && m.GetTargetCreature() == master) : null;
             d.Action = Tactic.Attack;
-            d.Target = onMaster ?? nearest;
+            d.Target = PickTarget(st, master);
             Character t = d.Target;
             d.Ranged = Companion.BestRanged(me) != null && t != null && (Companion.BestMelee(me) == null || Vector3.Distance(t.transform.position, me.transform.position) > 10f);
             return d;
+        }
+
+        /// <summary>
+        /// Whom the built-in brain hits: keep the current target while it is alive and still fighting (switching every round wastes swings);
+        /// otherwise finish the weakest enemy that is on it, then whoever is on the player (if it protects the player), then whoever is on it,
+        /// and only then the nearest. Never one that is attacking no one while others are hitting it.
+        /// </summary>
+        private static Character PickTarget(BrainState st, Player master)
+        {
+            Humanoid me = st.Body;
+            float Dist(Character e) => Vector3.Distance(e.transform.position, me.transform.position);
+            Character current = st.Current.Target;
+            if (current != null && !current.IsDead() && st.Enemies.Contains(current) && Dist(current) < 6f && TargetOf(current) != null) return current;
+            var onMe = st.Enemies.Where(e => TargetOf(e) == me && Dist(e) < 5f).ToList();
+            if (onMe.Count > 0) return onMe.OrderBy(e => e.GetHealthPercentage()).ThenBy(Dist).First();
+            if (master != null && Companion.Protect(me))
+            {
+                Character onMaster = st.Enemies.Where(e => TargetOf(e) == master).OrderBy(e => Vector3.Distance(e.transform.position, master.transform.position)).FirstOrDefault();
+                if (onMaster != null) return onMaster;
+            }
+            return st.Enemies.Where(e => TargetOf(e) == me).OrderBy(Dist).FirstOrDefault() ?? st.Enemies.FirstOrDefault();
         }
 
         private static void Fight(BrainState st, Player master, float dt)
@@ -284,10 +429,13 @@ namespace AICompanion
                     Strike(st, d.Target != null && !d.Target.IsDead() && st.Enemies.Contains(d.Target) ? d.Target : nearest, dt);
                     break;
                 case Tactic.DefendPlayer:
-                    Character threat = master == null ? nearest : st.Enemies.OrderBy(e => Vector3.Distance(e.transform.position, master.transform.position)).First();
-                    if (master != null && Vector3.Distance(me.transform.position, master.transform.position) > 8f && Vector3.Distance(threat.transform.position, master.transform.position) > 6f)
+                    // Whoever is after the player first, else whoever is after the companion, else the nearest. It only runs to the player when
+                    // nothing is on itself: running off with enemies hitting its back is how it died while the player circled.
+                    Character onMaster = master == null ? null : st.Enemies.Where(e => TargetOf(e) == master).OrderBy(e => Vector3.Distance(e.transform.position, master.transform.position)).FirstOrDefault();
+                    Character onMe = st.Enemies.Where(e => TargetOf(e) == me).OrderBy(e => Vector3.Distance(e.transform.position, me.transform.position)).FirstOrDefault();
+                    if (onMaster != null && onMe == null && Vector3.Distance(me.transform.position, master.transform.position) > 12f)
                     { Blocking(me) = false; MoveTo(st.Ai, dt, master.transform.position, 3f, true); }
-                    else Strike(st, threat, dt);
+                    else Strike(st, onMaster ?? onMe ?? nearest, dt);
                     break;
                 case Tactic.BackOff:
                     Guarded(st, nearest, me.transform.position + (me.transform.position - nearest.transform.position).normalized * 4f, false, dt);
@@ -346,6 +494,17 @@ namespace AICompanion
             else st.Ai.StopMoving();
             if (threat != null && close) LookAt(st.Ai, threat.GetCenterPoint());
         }
+
+        /// <summary>One line for the log, the menu and the Debug tab: how long, damage taken and dealt, kills, decisions.</summary>
+        internal static void Summarise(BrainState st, string how)
+        {
+            string line = $"{how} after {Time.time - st.FightStart:0} s: took {st.Taken:0} damage, dealt {st.Dealt:0}, {st.FightKills} kill{(st.FightKills == 1 ? "" : "s")}, {st.FightDecisions} decisions";
+            st.Remember(line);
+            Plugin.Instance?.Note($"{Companion.NameOf(st.Body)}: {line}");
+            DebugLog.Add(new DecisionRecord { When = DateTime.Now, Companion = Companion.NameOf(st.Body), Outcome = "— " + line + " —" });
+        }
+
+        internal static void Status(BrainState st, string status) => SetStatus(st, status);
 
         private static void SetStatus(BrainState st, string status)
         {

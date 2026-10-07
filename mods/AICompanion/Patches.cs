@@ -106,6 +106,35 @@ namespace AICompanion
         }
     }
 
+    // Damage a companion deals, for its fight summary (counted on the game that runs the enemy, which is usually its own).
+    [HarmonyPatch(typeof(Character), "RPC_Damage")]
+    internal static class Character_RPC_Damage_Dealt
+    {
+        private static void Prefix(Character __instance, out float __state) => __state = __instance.GetHealth();
+
+        private static void Postfix(Character __instance, HitData hit, float __state)
+        {
+            Character attacker = hit?.GetAttacker();
+            if (attacker == null || attacker == __instance || !Companion.Is(attacker)) return;
+            float done = __state - Mathf.Max(0f, __instance.GetHealth());
+            if (done > 0f && Brain.Get(attacker as Humanoid) is BrainState st) st.Dealt += done;
+        }
+    }
+
+    // Player-built things that hurt whoever touches them (sharpened stakes, spike traps) leave companions alone, as they leave players alone.
+    [HarmonyPatch(typeof(Aoe), "ShouldHit")]
+    internal static class Aoe_ShouldHit
+    {
+        private static void Postfix(Aoe __instance, Collider collider, ref bool __result)
+        {
+            if (!__result || collider == null) return;
+            Character c = collider.GetComponentInParent<Character>();
+            if (c == null || !Companion.Is(c)) return;
+            Piece piece = __instance.GetComponentInParent<Piece>();
+            if (piece != null && piece.IsPlacedByPlayer()) __result = false;
+        }
+    }
+
     // It falls: its gear goes into a crate where it stood. (And a kill of its own is counted, on the game that runs it.)
     [HarmonyPatch(typeof(Character), nameof(Character.OnDeath))]
     internal static class Character_OnDeath
@@ -119,18 +148,26 @@ namespace AICompanion
             {
                 ZDO z = Companion.Zdo(killer);
                 z.Set(Keys.Kills, z.GetInt(Keys.Kills, 0) + 1);
-                Brain.Get(killer as Humanoid)?.Remember("killed " + Localization.instance.Localize(__instance.m_name));
+                BrainState ks = Brain.Get(killer as Humanoid);
+                if (ks != null) { ks.FightKills++; ks.Remember("killed " + Localization.instance.Localize(__instance.m_name)); }
             }
             if (!(__instance is Humanoid h) || !Companion.Is(h)) return;
+            BrainState st = Brain.Get(h);
+            if (st != null && st.InCombat) { st.Taken += Mathf.Max(0f, st.LastHealth); Brain.Summarise(st, "fell"); }
             ZNetView view = h.GetComponent<ZNetView>();
             if (!view.IsOwner()) return;
             try
             {
                 Plugin.Instance?.Note($"{Companion.NameOf(h)} fell at {h.transform.position:F0} (killed by {LastHit(h)?.GetAttacker()?.m_name ?? "?"}, carrying {h.GetInventory().NrOfItems()} item stacks)");
                 Companion.DropGear(h);
-                Net.AnnounceFall(h, h.transform.position);
                 Player master = Companion.Master(h);
-                if (master == Player.m_localPlayer) Plugin.Tell($"{Companion.NameOf(h)} has fallen. Their gear is in a crate where they fell (the skull on your map). Press {Plugin.MenuKey.Value} to summon them again.");
+                if (master == Player.m_localPlayer)
+                {
+                    Home.MarkDead(master, Companion.IdOf(h), h.transform.position, h);
+                    bool bed = Companion.Zdo(h).GetBool(Keys.HasBed, false);
+                    Plugin.Tell($"{Companion.NameOf(h)} has fallen. Their gear is in their tombstone (the skull on your map). They wake {(bed ? "in their bed" : "beside you")} in {Plugin.RespawnSeconds.Value:0} s.");
+                }
+                Net.AnnounceFall(h, h.transform.position);
             }
             catch (System.Exception e) { Plugin.Instance?.Warn("Could not put the fallen companion's gear in a crate: " + e); }
         }
@@ -150,6 +187,31 @@ namespace AICompanion
                 if (pin.m_iconElement == null || !Net.IsLivePin(pin)) continue;
                 pin.m_iconElement.color = Net.PinColor;
                 if (pin.m_NamePinData != null && pin.m_NamePinData.PinNameText != null) pin.m_NamePinData.PinNameText.color = Net.PinColor;
+            }
+        }
+    }
+
+    // Through a portal with its player: a companion following within 25 m goes too (unless it carries what portals refuse, like ore).
+    [HarmonyPatch(typeof(Player), nameof(Player.TeleportTo))]
+    internal static class Player_TeleportTo
+    {
+        private static void Postfix(Player __instance, Vector3 pos, Quaternion rot, bool __result)
+        {
+            if (!__result || __instance != Player.m_localPlayer) return;
+            foreach (Humanoid c in Companion.All())
+            {
+                if (!Companion.IsMine(c, __instance) || Companion.OrderOf(c) != Order.Follow) continue;
+                if (Vector3.Distance(c.transform.position, __instance.transform.position) > 25f) continue;
+                if (!c.IsTeleportable(false)) { Plugin.Tell($"{Companion.NameOf(c)} cannot go through: they carry something the portal refuses"); continue; }
+                ZNetView view = c.GetComponent<ZNetView>();
+                if (!view.IsOwner()) view.ClaimOwnership();
+                Vector3 to = pos - rot * Vector3.forward * 2f;
+                c.transform.position = to;
+                Rigidbody body = c.GetComponent<Rigidbody>();
+                if (body != null) { body.position = to; body.linearVelocity = Vector3.zero; }
+                view.GetZDO().SetPosition(to); // it is unloaded here at once; it appears there when you arrive
+                Brain.Get(c)?.Remember("came through the portal");
+                Plugin.Instance?.Note($"{Companion.NameOf(c)} goes through the portal with {__instance.GetPlayerName()}");
             }
         }
     }

@@ -22,7 +22,7 @@ namespace AICompanion
         private const string MarkerSuffix = " fell here";
 
         private class Seen { public string Line; public float At; public string Master; }
-        private class Fallen { public string Name, Master; public Vector3 Pos; public float At; }
+        private class Fallen { public string Name, Master; public Vector3 Pos; public float At; public long Id, MasterId; }
 
         private static readonly Dictionary<long, Seen> Remote = new Dictionary<long, Seen>();
         private static readonly List<Fallen> RecentlyFallen = new List<Fallen>();
@@ -185,7 +185,8 @@ namespace AICompanion
                 }
                 foreach (var kv in Remote.Where(kv => Time.time - kv.Value.At < 5f && !have.Contains(kv.Key) && online.Contains(kv.Value.Master)))
                     lines.Add(kv.Value.Line);
-                RecentlyFallen.RemoveAll(f => Time.time - f.At > 600f || lines.Any(l => l.Split('|')[2] == f.Master));
+                // (not in the first seconds: the fallen companion itself is still listed for a moment as it dies)
+                RecentlyFallen.RemoveAll(f => Time.time - f.At > 600f || (Time.time - f.At > 10f && lines.Any(l => l.Split('|')[2] == f.Master)));
                 foreach (Fallen f in RecentlyFallen.Where(f => online.Contains(f.Master)))
                     lines.Add(string.Join("|", (-Math.Abs((long)(f.Name + f.Master).GetStableHashCode())).ToString(CultureInfo.InvariantCulture), Clean(f.Name), Clean(f.Master),
                         "0", "1", F(f.Pos.x), F(f.Pos.y), F(f.Pos.z), "fallen", "0", "1", ""));
@@ -199,7 +200,9 @@ namespace AICompanion
         /// <summary>Called on the game that ran the companion when it fell, after its gear went into the crate.</summary>
         public static void AnnounceFall(Humanoid c, Vector3 pos)
         {
-            Send(RpcFallen, string.Join("|", Clean(Companion.NameOf(c)), Clean(Companion.Zdo(c).GetString(Keys.MasterName, "")), F(pos.x), F(pos.y), F(pos.z)));
+            // "name|master|x|y|z|id|masterId": the marker for everyone, and for its player's game the news that it must wake it later
+            Send(RpcFallen, string.Join("|", Clean(Companion.NameOf(c)), Clean(Companion.Zdo(c).GetString(Keys.MasterName, "")), F(pos.x), F(pos.y), F(pos.z),
+                Companion.IdOf(c).ToString(CultureInfo.InvariantCulture), Companion.MasterId(c).ToString(CultureInfo.InvariantCulture)));
         }
 
         private static void OnFallen(long sender, string payload)
@@ -208,9 +211,13 @@ namespace AICompanion
             if (f.Length < 5) return;
             var pos = new Vector3(P(f[2]), P(f[3]), P(f[4]));
             AddMarker(pos, f[0]);
+            if (f.Length >= 7 && long.TryParse(f[5], NumberStyles.Integer, CultureInfo.InvariantCulture, out long id) && long.TryParse(f[6], NumberStyles.Integer, CultureInfo.InvariantCulture, out long masterId)
+                && Player.m_localPlayer != null && Player.m_localPlayer.GetPlayerID() == masterId)
+                Home.MarkDead(Player.m_localPlayer, id, pos); // ours, run by another player's game (or our own): it wakes in its bed later
             if (f[1] == "") return; // a marker re-sent for a player who just joined
             RecentlyFallen.RemoveAll(x => x.Name == f[0] && x.Master == f[1]);
-            RecentlyFallen.Add(new Fallen { Name = f[0], Master = f[1], Pos = pos, At = Time.time });
+            RecentlyFallen.Add(new Fallen { Name = f[0], Master = f[1], Pos = pos, At = Time.time,
+                Id = f.Length >= 7 && long.TryParse(f[5], out long fid) ? fid : 0L, MasterId = f.Length >= 7 && long.TryParse(f[6], out long fm) ? fm : 0L });
             if (Player.m_localPlayer != null && f[1] != Player.m_localPlayer.GetPlayerName())
                 Player.m_localPlayer.Message(MessageHud.MessageType.TopLeft, $"{f[1]}'s companion {f[0]} has fallen (marked on your map)");
         }
@@ -262,6 +269,9 @@ namespace AICompanion
                 string name = pin.m_name.Substring(0, pin.m_name.Length - MarkerSuffix.Length);
                 Send(RpcFallen, string.Join("|", Clean(name), "", F(pin.m_pos.x), F(pin.m_pos.y), F(pin.m_pos.z)));
             }
+            foreach (Fallen f in RecentlyFallen.Where(x => x.Id != 0L))
+                Send(RpcFallen, string.Join("|", Clean(f.Name), Clean(f.Master), F(f.Pos.x), F(f.Pos.y), F(f.Pos.z),
+                    f.Id.ToString(CultureInfo.InvariantCulture), f.MasterId.ToString(CultureInfo.InvariantCulture)));
         }
     }
 }

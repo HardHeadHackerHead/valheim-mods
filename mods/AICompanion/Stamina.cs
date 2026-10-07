@@ -21,7 +21,7 @@ namespace AICompanion
         private class Pool { public float Value, LastUse = -99f, LastSave = -99f, Saved = -1f; public bool Winded; }
         private static readonly Dictionary<Character, Pool> Pools = new Dictionary<Character, Pool>();
 
-        public static float Max(Character c) => Plugin.MaxStamina.Value;
+        public static float Max(Character c) => Food.MaxStamina(c);
 
         private static Pool Of(Character c)
         {

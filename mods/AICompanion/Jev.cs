@@ -63,6 +63,7 @@ namespace AICompanion
                     ["bow"] = ranged != null ? $"{Loc(ranged)} with {me.GetInventory().CountItems(me.GetInventory().GetAmmoItem(ranged.m_shared.m_ammoType).m_shared.m_name)} arrows" : "none",
                     ["has_shield"] = Companion.Shield(me) != null,
                     ["healing_potions"] = potions,
+                    ["foods_eaten"] = Food.Meals(me).Count,
                     ["effects"] = new JArray(me.GetSEMan().GetStatusEffects().Where(se => se != null && se.m_icon != null).Select(se => Localization.instance.Localize(se.m_name))),
                     ["doing_now"] = st.Current.Describe(st.Label),
                 },
@@ -85,7 +86,20 @@ namespace AICompanion
 
             var questions = new JObject
             {
-                ["action"] = new JObject { ["type"] = "choice", ["instructions"] = "What should the companion do for the next couple of seconds?", ["criteria"] = Actions },
+                ["action"] = new JObject
+                {
+                    ["type"] = "choice",
+                    ["instructions"] = new JObject
+                    {
+                        ["question"] = "What should the companion do for the next couple of seconds?",
+                        ["guidance"] = new JArray(
+                            "Enemies attacking the companion must be fought (attack), unless it should fall back.",
+                            "Choose defend_player only when enemies are attacking the player and none are attacking the companion.",
+                            "Fall back (back_off or retreat_to_player) when its health is near the retreat rule or its stamina is very low.",
+                            "Flee only when it is about to die. Without armour or a weapon, many enemies at once are dangerous."),
+                    },
+                    ["criteria"] = Actions,
+                },
             };
             if (enemies.Count > 1)
             {
@@ -127,7 +141,9 @@ namespace AICompanion
             fallback.Response = d.Response; fallback.Answers = d.Answers;
             JObject act = answers?["action"] as JObject;
             string choice = (string)act?["choice"] ?? "";
-            d.Confidence = (float?)act?["confidence"] ?? 0f;
+            // How sure it is = the probability of its pick (e.g. "attack 41%" when the others are 28, 24, 6, 1). Jev's own "confidence" figure
+            // runs much lower than that (22% for the same answer), which made us overrule clear favourites.
+            d.Confidence = (float?)act?["probabilities"]?[choice] ?? (float?)act?["confidence"] ?? 0f;
             d.Action = choice switch
             {
                 "attack" => Tactic.Attack, "defend_player" => Tactic.DefendPlayer, "back_off" => Tactic.BackOff,
@@ -142,6 +158,7 @@ namespace AICompanion
             {
                 fallback.Note = $"Jev unsure ({d.Confidence * 100f:0}% {choice})";
                 fallback.Drink |= d.Drink;
+                if (answers?["target"] is JObject tq && ((float?)tq["probabilities"]?[(string)tq["choice"]] ?? 0f) >= 0.4f && d.Target != null) fallback.Target = d.Target; // its target pick was clear
                 done(fallback);
                 yield break;
             }

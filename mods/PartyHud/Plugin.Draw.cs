@@ -318,10 +318,16 @@ namespace PartyHud
             if (low) edge = Color.Lerp(edge, new Color(1f, 0.25f, 0.2f, 1f), 0.5f + 0.5f * Mathf.Sin(Time.unscaledTime * 6f));
             RoundedOutline(panel, edge, PanelRadius);
 
-            float pic = compact ? 18f : 28f;
+            float pic = compact ? 20f : 36f;
             var portrait = new Rect(px + 5f, y + (height - pic) / 2f, pic, pic);
             Rounded(portrait, dead ? new Color(0.25f, 0.25f, 0.25f) : CompanionColor * 0.8f, 4f);
-            Text(portrait, string.IsNullOrEmpty(m.Name) ? "?" : m.Name.Substring(0, 1).ToUpperInvariant(), compact ? _nameCompactStyle : _nameStyle, Color.white);
+            // Its face, when the AICompanion mod has a picture of it (it takes one of companions near you); otherwise its initial.
+            Texture face = null;
+            if (AppDomain.CurrentDomain.GetData("DHack.CompanionPortrait") is Func<long, Texture> faces) { try { face = faces(m.Id); } catch (Exception) { } }
+            if (face != null)
+                GUI.DrawTexture(portrait, face, ScaleMode.ScaleAndCrop, true, 0f, dead ? new Color(0.45f, 0.45f, 0.45f, 1f) : Color.white, Vector4.zero, Radii(4f));
+            else
+                Text(portrait, string.IsNullOrEmpty(m.Name) ? "?" : m.Name.Substring(0, 1).ToUpperInvariant(), compact ? _nameCompactStyle : _nameStyle, Color.white);
             RoundedOutline(portrait, new Color(0f, 0f, 0f, 0.85f), 4f);
 
             float bx = portrait.xMax + 6f, bw = px + w - 7f - bx;

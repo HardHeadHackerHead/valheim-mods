@@ -32,7 +32,7 @@ namespace AICompanion
                 MethodInfo register = found.GetType().GetMethod("RegisterCommand", BindingFlags.Public | BindingFlags.Static);
                 if (register == null) return;
                 register.Invoke(null, new object[] { Name, "companion",
-                    "companion status | summon [name] | order <follow|stay|guard> | style <aggressive|balanced|defensive|passive> | jevtest | decide | menu [overview|orders|inventory|brain|debug|close] | send-home: your companion (JSON)",
+                    "companion status | summon [name] | order <follow|stay|guard> | style <aggressive|balanced|defensive|passive> | jevtest | decide | menu [tab|close] | list | remove <id> | send-home: your companion (JSON)",
                     (Func<string[], Action<JObject>, Action<string>, IEnumerator>)CmdCompanion });
                 Logger.LogInfo("Claude Tools found: companion command added");
             }
@@ -49,6 +49,7 @@ namespace AICompanion
         {
             Player p = Player.m_localPlayer;
             if (p == null) { error("no player in the world"); yield break; }
+            args = args.Skip(1).ToArray(); // (the first word is the command's own name)
             string sub = args.Length > 0 ? args[0].ToLowerInvariant() : "status";
             Humanoid c = Companion.MineNear(p, 200f);
 
@@ -65,6 +66,36 @@ namespace AICompanion
                 string result = null;
                 yield return Jev.Test(r => result = r);
                 output(new JObject { ["jev"] = result, ["key"] = Mask(ApiKey.Value) });
+                yield break;
+            }
+            if (sub == "list")
+            {
+                var all = new JArray();
+                foreach (Humanoid h in Companion.All())
+                    all.Add(new JObject
+                    {
+                        ["id"] = Companion.IdOf(h).ToString(), ["name"] = Companion.NameOf(h), ["mine"] = Companion.IsMine(h, p),
+                        ["order"] = Companion.OrderOf(h).ToString(), ["status"] = Companion.StatusOf(h), ["items"] = h.GetInventory().NrOfItems(),
+                        ["distance"] = Math.Round(Vector3.Distance(h.transform.position, p.transform.position), 1),
+                        ["position"] = new JArray(Math.Round(h.transform.position.x), Math.Round(h.transform.position.y), Math.Round(h.transform.position.z)),
+                    });
+                output(new JObject { ["companions"] = all, ["profiles"] = new JArray(Profile.Here(p).Select(x => $"{x.Id} {x.Name}{(x.Dead ? " (fallen)" : "")}")) });
+                yield break;
+            }
+            if (sub == "remove")
+            {
+                // A leftover companion (from before only one could be summoned): its gear goes into a tombstone, then it is gone for good.
+                Humanoid extra = args.Length > 1 ? Companion.All().FirstOrDefault(h => Companion.IdOf(h).ToString() == args[1]) : null;
+                if (extra == null) { error("remove <id> (see: companion list)"); yield break; }
+                if (!Companion.IsMine(extra, p)) { error("that companion is not yours"); yield break; }
+                ZNetView view = extra.GetComponent<ZNetView>();
+                if (!view.IsOwner()) view.ClaimOwnership();
+                int items = extra.GetInventory().NrOfItems();
+                if (items > 0) Companion.DropGear(extra);
+                Profile.Forget(p, Companion.IdOf(extra));
+                Logger.LogInfo($"Removed the companion {Companion.NameOf(extra)} ({Companion.IdOf(extra)}) at {extra.transform.position:F0}; {items} item stacks went to a tombstone");
+                ZNetScene.instance.Destroy(extra.gameObject);
+                output(new JObject { ["removed"] = args[1], ["items_to_tombstone"] = items });
                 yield break;
             }
             if (c == null) { error("you have no companion within 200 m (try: companion summon)"); yield break; }

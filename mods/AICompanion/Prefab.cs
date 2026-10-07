@@ -79,7 +79,7 @@ namespace AICompanion
             h.m_name = "Companion";
             h.m_group = "dhack_companion";
             h.m_faction = Character.Faction.Players;
-            h.m_health = Plugin.Health.Value;
+            h.m_health = Plugin.BaseHealth.Value; // food adds to it (Food)
             h.m_regenAllHPTime = 300f;
             h.m_walkSpeed = 1.6f; h.m_runSpeed = 7f; h.m_speed = 4f; h.m_crouchSpeed = 2f;
             h.m_turnSpeed = 300f; h.m_runTurnSpeed = 300f; h.m_acceleration = 1f;

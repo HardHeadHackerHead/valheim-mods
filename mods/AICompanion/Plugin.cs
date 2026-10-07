@@ -24,12 +24,12 @@ namespace AICompanion
     {
         public const string Guid = "com.dhack.aicompanion";
         public const string Name = "AICompanion";
-        public const string Version = "0.2.0";
+        public const string Version = "0.3.0";
 
         internal static Plugin Instance;
         internal static ConfigEntry<string> ApiKey, Endpoint, Model;
         internal static ConfigEntry<bool> UseJev, ShowDecisions, LogToFile;
-        internal static ConfigEntry<float> DecisionSeconds, MinConfidence, Timeout, PricePerMillion, Health, EngageRange, MaxStamina;
+        internal static ConfigEntry<float> DecisionSeconds, MinConfidence, Timeout, PricePerMillion, EngageRange, RespawnSeconds, BaseHealth, BaseStamina, StartingSkill;
         internal static ConfigEntry<KeyboardShortcut> MenuKey;
 
         private Harmony _harmony;
@@ -39,8 +39,10 @@ namespace AICompanion
             Instance = this;
             MenuKey = Config.Bind("General", "MenuKey", new KeyboardShortcut(KeyCode.J),
                 "Opens your companion's menu (or, if you have none here, the menu to summon one). E on the companion opens it too.");
-            Health = Config.Bind("Companion", "Health", 150f, new ConfigDescription("The companion's health. Its armour (what you give it to wear) protects it like a player's.", new AcceptableValueRange<float>(25f, 2000f)));
-            MaxStamina = Config.Bind("Companion", "Stamina", 100f, new ConfigDescription("The companion's stamina. Swings and blocks cost what they cost you, running drains it, and it comes back when it rests a moment.", new AcceptableValueRange<float>(25f, 500f)));
+            BaseHealth = Config.Bind("Companion", "BaseHealth", 25f, new ConfigDescription("Its health without food (a player's is 25). Food adds to it, as it does for you: feed it.", new AcceptableValueRange<float>(5f, 500f)));
+            BaseStamina = Config.Bind("Companion", "BaseStamina", 75f, new ConfigDescription("Its stamina without food (a player's is 75). Food adds to it.", new AcceptableValueRange<float>(10f, 500f)));
+            StartingSkill = Config.Bind("Companion", "StartingSkill", 0f, new ConfigDescription("The level a new companion starts its skills at (a new player: 0). Skills rise as it fights, as yours do.", new AcceptableValueRange<float>(0f, 100f)));
+            RespawnSeconds = Config.Bind("Companion", "RespawnSeconds", 30f, new ConfigDescription("After falling, a companion wakes in its bed (or beside you, without one) this many seconds later. Its gear stays in its tombstone, as a player's.", new AcceptableValueRange<float>(5f, 600f)));
             EngageRange = Config.Bind("Companion", "EngageRange", 20f, new ConfigDescription("Enemies this close to the companion or to you (metres) start a fight.", new AcceptableValueRange<float>(5f, 50f)));
             ShowDecisions = Config.Bind("Companion", "ShowDecisions", true, "Show what the companion decided above its head (e.g. \"attack Greyling, Jev 87%\").");
 
@@ -58,6 +60,7 @@ namespace AICompanion
             _harmony.PatchAll();
             if (ZNetScene.instance != null) Prefab.Register(ZNetScene.instance); // hot reload while in a world
             Net.Start();
+            Portraits.Start();
 
             Logger.LogInfo($"{Name} {Version} loaded (menu: {MenuKey.Value}, Jev key {(string.IsNullOrEmpty(ApiKey.Value) ? "not set" : "set")})");
             if (Player.m_localPlayer != null && Chat.instance != null)
@@ -69,8 +72,14 @@ namespace AICompanion
             CloseMenu();
             UnregisterClaudeCommands();
             Net.Stop();
+            Home.Stop();
+            Portraits.Stop();
             Brain.Forget();
             Stamina.Forget();
+            Food.Forget();
+            Skill.Forget();
+            Weather.Forget();
+            Ride.Forget();
             _harmony?.UnpatchSelf();
             Prefab.Unregister();
             DestroyMenuResources();
@@ -84,6 +93,8 @@ namespace AICompanion
             Net.Update(player);
             if (player == null) { if (MenuOpen) CloseMenu(); return; }
             Companion.KeepOwnership(player);
+            Home.Tick(player);
+            Portraits.Tick();
             UpdateMenu(player);
             if (!MenuOpen && MenuKey.Value.IsDown() && !TypingOrBusy()) OpenMenuFor(player, Companion.MineNear(player, 100f));
         }
