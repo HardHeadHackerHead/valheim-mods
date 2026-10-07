@@ -106,6 +106,13 @@ namespace AICompanion
             return list.Any(s => s.Job == Job.Forage || (s.Job == Job.Hunt && armed) || (s.Job == Job.Wood && axe >= s.Tier) || ((s.Job == Job.Stone || s.Job == Job.Ore) && pick >= s.Tier));
         }
 
+        /// <summary>Something that work of that kind drops (wood and resin from trees, stone and ore from rocks, berries from bushes).</summary>
+        public static bool DroppedBy(string item, Job job)
+        {
+            Learn();
+            return _sources != null && _sources.TryGetValue(item, out List<Source> list) && list.Any(s => (s.Job & job) != 0);
+        }
+
         /// <summary>The wild pickables (not crops) that give this item: "Pickable_Flint" for flint.</summary>
         public static IEnumerable<string> PickablesFor(string item)
         {

@@ -249,6 +249,7 @@ namespace AICompanion
                 ["position"] = $"{c.transform.position:F0}",
                 ["home"] = $"{center:F0}, {Vector3.Distance(center, c.transform.position):0} m away, radius {Work.RadiusOf(c)}",
                 ["bed_spot"] = Home.BedOf(c) is Bed bd ? $"{bd.GetSpawnPoint():F1}, {Vector3.Distance(bd.GetSpawnPoint(), c.transform.position):0.0} m away, safe {Steer.Safe(bd.GetSpawnPoint(), c)}, path {Brain.CanReach(c, bd.GetSpawnPoint())}" : "none",
+                ["bag_room"] = $"{c.GetInventory().GetEmptySlots()} free slots, {Carry.Weight(c):0}/{Carry.Max(c):0} kg, full {Work.BagFull(c)}, stock: {string.Join(", ", Work.StockCaps(Brain.Get(c)).Select(kv => $"{L(kv.Key)} {kv.Value}"))}",
                 ["between_jobs"] = $"{Brain.Get(c).IdlePlan}, sitting {Brain.Get(c).Sitting}, chair {(Brain.Get(c).SitChair != null)}, asleep {Brain.Get(c).Asleep}",
                 ["task"] = t == null ? null : $"{t.Kind} {(t.Target != null ? Utils.GetPrefabName(t.Target.gameObject) : "-")} at {(t.Target != null ? Vector3.Distance(t.Target.transform.position, c.transform.position) : 0f):0.0} m for {Time.time - t.Started:0} s{(t.ForGoal ? " (for goal)" : "")}",
                 ["work_note"] = st.WorkNote,

@@ -100,7 +100,7 @@ namespace AICompanion
             Humanoid me = st.Body;
             var stack = QolStack;
             if (stack == null || !Stows(me) || Flat(Center(me), me.transform.position) > RadiusOf(me)) return 0;
-            int moved = stack(me.GetInventory(), me.transform.position, 30f, i => Keeps(me, i) || Companion.Worn(me).Contains(i) || IsStock(st, i)); // (its stock: for its own chests)
+            int moved = stack(me.GetInventory(), me.transform.position, 30f, i => Keeps(me, i) || Companion.Worn(me).Contains(i) || IsStock(st, i) && StillWanted(st, i) > 0); // (its stock, while its chests still want it)
             if (moved <= 0) return 0;
             Companion.SaveBag(me);
             st.Remember($"sorted {moved} thing{(moved == 1 ? "" : "s")} into your chests");
@@ -117,7 +117,7 @@ namespace AICompanion
             Humanoid me = st.Body;
             var stack = QolStack;
             if (stack == null || chest == null) return 0;
-            int moved = stack(me.GetInventory(), chest.transform.position, 20f, i => Keeps(me, i) || Companion.Worn(me).Contains(i) || IsStock(st, i)); // (its stock: for its own chests)
+            int moved = stack(me.GetInventory(), chest.transform.position, 20f, i => Keeps(me, i) || Companion.Worn(me).Contains(i) || IsStock(st, i) && StillWanted(st, i) > 0); // (its stock, while its chests still want it)
             if (moved <= 0) return 0;
             Companion.SaveBag(me);
             st.Remember($"sorted {moved} thing{(moved == 1 ? "" : "s")} into your chests");
@@ -353,14 +353,14 @@ namespace AICompanion
                 {
                     a.Until = Time.time + 900f;
                     Talk.Mention(me, "My bag's full. I'll put this away and come back.", "areafull", 2f);
-                    bool yoursToGive = Stows(me) && inv.GetAllItems().Any(i => !Keeps(me, i) && !IsStock(st, i));
+                    bool yoursToGive = Stows(me) && inv.GetAllItems().Any(i => YoursToGive(st, i));
                     if (yoursToGive)
                     {
                         if (SortHome(st) > 0 && !BagFull(me)) return NextInArea(st);
                         Container yours = YourChests(me, home, RadiusOf(me) + 20f).Where(c => HasRoom(c, me) && !Skipped(st, c)).Take(6).FirstOrDefault(c => Brain.CanReach(me, c.transform.position));
                         if (yours != null) return Ordered(st, New(Kind.Store, yours, Job.None), false);
                     }
-                    var stock = inv.GetAllItems().Where(i => !Keeps(me, i) && (!Stows(me) || IsStock(st, i) && Stocked(me, i.m_shared.m_name) < StockCap(st, i))).Select(i => i.m_shared.m_name).ToList(); // (stock its chests still keep room for: else no trip, or round it would go)
+                    var stock = inv.GetAllItems().Where(i => !Keeps(me, i) && (!Stows(me) || IsStock(st, i) && StillWanted(st, i) > 0)).Select(i => i.m_shared.m_name).ToList(); // (stock its chests still want: else no trip, or round it would go)
                     Container own = stock.Count == 0 ? null : Home.Chests(me).Where(c => !c.IsInUse() && HasRoom(c, me) && !Skipped(st, c))
                         .OrderByDescending(c => c.GetInventory().GetAllItems().Count(i => stock.Contains(i.m_shared.m_name))).ThenBy(c => Vector3.Distance(c.transform.position, me.transform.position)).FirstOrDefault();
                     if (own != null) return Ordered(st, New(Kind.Store, own, Job.None), false);
@@ -374,6 +374,7 @@ namespace AICompanion
             {
                 ItemDrop d = col.GetComponentInParent<ItemDrop>();
                 if (d == null || d.m_itemData == null || d.GetComponent<Piece>() != null || Skipped(st, d)) continue;
+                if (!Goals.DroppedBy(Utils.GetPrefabName(d.gameObject), a.Job)) continue; // (what the trees, rocks or plants there drop: not stone lying about)
                 float dd = Vector3.Distance(d.transform.position, me.transform.position);
                 if (dd < best) { best = dd; drop = d; }
             }
@@ -752,7 +753,7 @@ namespace AICompanion
             //    materials for its next upgrades and its goal) into its own chests, when its bag is full: the chest of its own that already
             //    holds most of it. Putting things in your chests switched off (Home tab): everything into its own.
             bool full = BagFull(me) || inv.GetAllItems().Count(i => !Keeps(me, i)) >= 18;
-            bool yoursToGive = Stows(me) && inv.GetAllItems().Any(i => !Keeps(me, i) && !IsStock(st, i));
+            bool yoursToGive = Stows(me) && inv.GetAllItems().Any(i => YoursToGive(st, i));
             if (yoursToGive && (full || Time.time >= st.NextDeliver))
             {
                 st.NextDeliver = Time.time + 120f;
@@ -762,7 +763,7 @@ namespace AICompanion
             }
             if (full)
             {
-                var stock = inv.GetAllItems().Where(i => !Keeps(me, i) && (!Stows(me) || IsStock(st, i) && Stocked(me, i.m_shared.m_name) < StockCap(st, i))).Select(i => i.m_shared.m_name).ToList(); // (stock its chests still keep room for: else no trip, or round it would go)
+                var stock = inv.GetAllItems().Where(i => !Keeps(me, i) && (!Stows(me) || IsStock(st, i) && StillWanted(st, i) > 0)).Select(i => i.m_shared.m_name).ToList(); // (stock its chests still want: else no trip, or round it would go)
                 Container chest = Home.Chests(me).Where(c => !c.IsInUse() && Vector3.Distance(c.transform.position, center) < radius + 40f && HasRoom(c, me) && !Skipped(st, c))
                                      .OrderByDescending(c => c.GetInventory().GetAllItems().Count(i => stock.Contains(i.m_shared.m_name)))
                                      .ThenBy(c => Vector3.Distance(c.transform.position, me.transform.position)).FirstOrDefault(c => Brain.CanReach(me, c.transform.position));
@@ -1208,25 +1209,31 @@ namespace AICompanion
         // ---- its stock: what its own chests are for ----------------------------------------------------------
 
         /// <summary>
-        /// What it keeps in its own chests, and how much (by the item's name): the materials the next upgrade of each piece in its gear slots
-        /// needs and what its goal still needs (twice that, at least 10), food (40 of each) and raw food to cook (20), healing potions (10),
-        /// arrows (100). Everything else it finds is yours: it goes into your chests. Worked out every 15 s.
+        /// What it keeps in its own chests, and how many (by the item's name): exactly what the next upgrade of each piece in its gear slots
+        /// needs, added up, and what its mission needs (a piece it makes: its recipe; on the way: the ore and such it still gathers). Food (40
+        /// of each), raw food to cook (20), healing potions (10) and arrows (100) besides. Everything else, and anything beyond that, is yours.
+        /// Worked out every 15 s.
         /// </summary>
         public static Dictionary<string, int> StockCaps(BrainState st)
         {
             if (st.StockCaps != null && Time.time < st.NextStockLook) return st.StockCaps;
             st.NextStockLook = Time.time + 15f;
             var caps = new Dictionary<string, int>();
-            void Want(string name, int n) { if (name != null && n > 0) caps[name] = Mathf.Max(caps.TryGetValue(name, out int had) ? had : 0, Mathf.Max(10, n * 2)); }
+            void Add(string name, int n) { if (name != null && n > 0) caps[name] = (caps.TryGetValue(name, out int had) ? had : 0) + n; }
             Humanoid me = st.Body;
             foreach (ItemDrop.ItemData item in me.GetInventory().GetAllItems().Where(i => Gear.InSlot(i) && Upgrades.Upgradable(i)))
             {
                 Recipe r = ObjectDB.instance?.GetRecipe(item);
-                foreach (Piece.Requirement q in Upgrades.Needs(r)) Want(q.m_resItem.m_itemData.m_shared.m_name, q.GetAmount(item.m_quality + 1));
+                foreach (Piece.Requirement q in Upgrades.Needs(r)) Add(q.m_resItem.m_itemData.m_shared.m_name, q.GetAmount(item.m_quality + 1));
             }
-            if (st.Goal != null)
-                foreach (var kv in st.Goal.Raw)
-                    Want(ObjectDB.instance?.GetItemPrefab(kv.Key)?.GetComponent<ItemDrop>()?.m_itemData.m_shared.m_name, kv.Value);
+            Goal g = st.Goal;
+            if (g?.Recipe != null) foreach (Piece.Requirement q in Upgrades.Needs(g.Recipe)) Add(q.m_resItem.m_itemData.m_shared.m_name, q.GetAmount(1));
+            if (g != null)
+                foreach (var kv in g.Raw) // (what it gathers on the way: copper ore for the bronze)
+                {
+                    string name = ObjectDB.instance?.GetItemPrefab(kv.Key)?.GetComponent<ItemDrop>()?.m_itemData.m_shared.m_name;
+                    if (name != null && !caps.ContainsKey(name)) Add(name, kv.Value);
+                }
             return st.StockCaps = caps;
         }
 
@@ -1250,7 +1257,37 @@ namespace AICompanion
 
         /// <summary>One of its own chests holding something that is not its stock (or more than it keeps): worth a tidy.</summary>
         private static bool Messy(BrainState st, Container c) =>
-            c.GetInventory().GetAllItems().Any(i => !IsStock(st, i) || Stocked(st.Body, i.m_shared.m_name) > StockCap(st, i) + i.m_shared.m_maxStackSize);
+            c.GetInventory().GetAllItems().Any(i => !IsStock(st, i) || Stocked(st.Body, i.m_shared.m_name) > StockCap(st, i));
+
+        /// <summary>How many more of it its own chests should take (what it keeps, less what they hold).</summary>
+        private static int StillWanted(BrainState st, ItemDrop.ItemData i) => Mathf.Max(0, StockCap(st, i) - Stocked(st.Body, i.m_shared.m_name));
+
+        /// <summary>Something it carries that is yours: not its stock, or more of it than its chests still want.</summary>
+        private static bool YoursToGive(BrainState st, ItemDrop.ItemData i)
+        {
+            if (Keeps(st.Body, i)) return false;
+            if (!IsStock(st, i)) return true;
+            int carried = st.Body.GetInventory().GetAllItems().Where(x => x.m_shared.m_name == i.m_shared.m_name && !Keeps(st.Body, x)).Sum(x => x.m_stack);
+            return carried > StillWanted(st, i);
+        }
+
+        /// <summary>Part of a stack from one inventory into another (all of it when n covers it). How many it moved.</summary>
+        private static int MovePart(Inventory from, Inventory to, ItemDrop.ItemData item, int n)
+        {
+            if (n <= 0) return 0;
+            if (n >= item.m_stack)
+            {
+                if (!to.CanAddItem(item)) return 0;
+                int all = item.m_stack;
+                to.MoveItemToThis(from, item);
+                return all;
+            }
+            ItemDrop.ItemData part = item.Clone();
+            part.m_stack = n;
+            if (!to.CanAddItem(part) || !to.AddItem(part)) return 0;
+            from.RemoveItem(item, n);
+            return n;
+        }
 
         /// <summary>What it keeps on itself: anything it wears or could use (weapons, armour, shields, tools, ammo, healing potions).</summary>
         public static bool Keeps(Humanoid h, ItemDrop.ItemData i) => Gear.InSlot(i) || h.IsItemEquiped(i) || Companion.Useful(h, i) || IsTool(i) || IsCookable(i) || Mending.IsHammer(i);
@@ -1273,15 +1310,20 @@ namespace AICompanion
             int put = 0, took = 0, tidied = 0;
             bool yours = Home.IdOn(chest) == 0L; // a chest of its player's: it only puts things in
             bool stows = Stows(me);
-            foreach (ItemDrop.ItemData item in mine.GetAllItems().Where(i => !Keeps(me, i)).ToList())
+            foreach (ItemDrop.ItemData item in mine.GetAllItems().Where(i => !Keeps(me, i)).OrderBy(i => i.m_stack).ToList())
             {
-                bool stock = IsStock(st, item);
-                // Into your chest: what is yours (its stock stays with it, for its own chests). Into its own: its stock, up to what it
-                // keeps (the rest is yours); everything, when it may not put things in yours.
-                bool goes = yours ? !stock : !stows || (stock && Stocked(me, item.m_shared.m_name) < StockCap(st, item));
-                if (!goes || !its.CanAddItem(item)) continue;
-                its.MoveItemToThis(mine, item);
-                put++;
+                if (item.m_stack <= 0 || !mine.ContainsItem(item)) continue;
+                // Into its own chest: of its stock exactly what its chests still want (part of a stack, if that is all); everything, when it
+                // may not put things in yours. Into yours: what is yours, and of its stock what it carries beyond what its chests still want.
+                int n;
+                if (!yours) n = !stows ? item.m_stack : IsStock(st, item) ? Mathf.Min(item.m_stack, StillWanted(st, item)) : 0;
+                else if (!IsStock(st, item)) n = item.m_stack;
+                else
+                {
+                    int carried = mine.GetAllItems().Where(x => x.m_shared.m_name == item.m_shared.m_name && !Keeps(me, x)).Sum(x => x.m_stack);
+                    n = Mathf.Min(item.m_stack, carried - StillWanted(st, item));
+                }
+                if (MovePart(mine, its, item, n) > 0) put++;
             }
             Job jobs = JobsOf(me);
             if (!yours)
@@ -1291,15 +1333,14 @@ namespace AICompanion
                     if (!mine.HaveEmptySlot() && !mine.CanAddItem(item)) break;
                     if (Wants(me, item, jobs)) { item.m_equipped = false; mine.MoveItemToThis(its, item); took++; }
                 }
-                // Tidy: what in its chest is yours (not its stock, or more than it keeps) comes out, for your chests.
+                // Tidy: what in its chest is yours (not its stock, or more of it than it keeps) comes out, down to the exact amount, for yours.
                 if (stows)
-                    foreach (ItemDrop.ItemData item in its.GetAllItems().ToList())
+                    foreach (ItemDrop.ItemData item in its.GetAllItems().OrderBy(i => i.m_stack).ToList())
                     {
-                        if (mine.GetEmptySlots() <= 2) break;
-                        bool over = Stocked(me, item.m_shared.m_name) - item.m_stack >= StockCap(st, item); // (without this stack it still has all it keeps)
-                        if (IsStock(st, item) && !over) continue;
-                        mine.MoveItemToThis(its, item);
-                        tidied++;
+                        if (mine.GetEmptySlots() <= 2 || Carry.Weight(me) > Carry.Max(me) * 0.8f) break;
+                        int extra = IsStock(st, item) ? Stocked(me, item.m_shared.m_name) - StockCap(st, item) : item.m_stack;
+                        if (item.m_shared.m_weight > 0f) extra = Mathf.Min(extra, Mathf.FloorToInt((Carry.Max(me) * 0.9f - Carry.Weight(me)) / item.m_shared.m_weight)); // (no more than it can carry: the rest next time)
+                        if (MovePart(its, mine, item, Mathf.Min(item.m_stack, extra)) > 0) tidied++;
                     }
             }
             if (put + took + tidied > 0)
