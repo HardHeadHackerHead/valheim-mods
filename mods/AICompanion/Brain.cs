@@ -86,6 +86,11 @@ namespace AICompanion
         public string GoalSaid;
         public float NextTripLook, TripUntil;                       // a trip beyond its home's radius for its goal (Work)
         public float NextFireLook;
+        public float NextReadLook;                                  // "let it decide" (Following): what you are doing, and how it fights
+        public Doing Doing;
+        public bool DefendOnly, Outmatched, Helping;
+        public Style AutoStyle = Style.Balanced;
+        public string AutoNote = "";
         public float NextFoodLook, NextNeedLook, MasterGoneSince, TripStart;      // looking after itself (Needs), the trip home (Work)
         public readonly HashSet<string> Wanted = new HashSet<string>();                  // what its work drops (to pick up)
         public readonly Dictionary<int, float> Skipped = new Dictionary<int, float>();    // things it gave up on, until when
@@ -317,6 +322,7 @@ namespace AICompanion
             if (Companion.OrderOf(me) == Order.Gather && Time.time >= st.NextStamp) { st.NextStamp = Time.time + 5f; CatchUp.Stamp(me); }
             Food.Tick(me, st);
             Activity.Tick(st);
+            Following.Tick(st, master);
             if (Time.time >= st.NextBagSave) { st.NextBagSave = Time.time + 30f; Companion.SaveBag(me); } // wear from fighting and working
             if (Ride.Tick(st, master)) return true; // on a boat with its player: it sits and rides
             Loot.PassBy(st);                         // what is on its list, as it goes by
@@ -328,7 +334,7 @@ namespace AICompanion
             st.Enemies.RemoveAll(e => e == null || e.IsDead()); // killed or gone since the last look (a destroyed one throws on .transform)
 
             if (Time.time >= st.NextDoorLook) { st.NextDoorLook = Time.time + 0.4f; OpenDoorAhead(me); }
-            if (Companion.OrderOf(me) != Order.Gather) { st.Task = null; st.WorkTool = null; }
+            if (Companion.OrderOf(me) != Order.Gather && !(Companion.OrderOf(me) == Order.Follow && st.Helping)) { st.Task = null; st.WorkTool = null; }
 
             if (st.Enemies.Count == 0)
             {
@@ -379,6 +385,10 @@ namespace AICompanion
                 default:
                     if (master == null) { st.Ai.StopMoving(); SetStatus(st, "waiting for " + (Companion.Zdo(me).GetString(Keys.MasterName, "its friend"))); break; }
                     float d = Vector3.Distance(master.transform.position, me.transform.position);
+                    // You are mining or chopping: it works the rocks or trees near you (Following, "let it decide").
+                    if (Companion.Chosen(me) == Style.Auto && (st.Doing == Doing.Mining || st.Doing == Doing.Chopping) && d < 25f
+                        && Work.Help(st, master, dt, (p, dd, run) => MoveTo(st.Ai, dt, p, dd, run), () => st.Ai.StopMoving(), p => LookAt(st.Ai, p), st.Doing == Doing.Mining ? Job.Stone | Job.Ore : Job.Wood))
+                        break;
                     if (d > 60f && !master.IsAttached() && master.IsOnGround()) { TeleportBehind(me, master); break; } // left behind (a portal, a boat ride)
                     if (d > 3.5f)
                     {
@@ -386,7 +396,7 @@ namespace AICompanion
                         if (Stuck(st, master, d) && master.IsOnGround() && !master.IsAttached()) { TeleportBehind(me, master, "hopped over to"); break; }
                     }
                     else { st.Ai.StopMoving(); st.StuckFor = 0; }
-                    SetStatus(st, "following " + master.GetPlayerName());
+                    SetStatus(st, "following " + master.GetPlayerName() + (string.IsNullOrEmpty(st.AutoNote) || Companion.Chosen(me) != Style.Auto ? "" : $" ({st.AutoNote})"));
                     break;
             }
         }
@@ -471,6 +481,8 @@ namespace AICompanion
                 bool home = Companion.OrderOf(me) == Order.Gather && Vector3.Distance(c.transform.position, Work.Center(me)) < Mathf.Min(Work.RadiusOf(me), 30f)
                             && theirs != null && (theirs == me || theirs.IsPlayer() || Companion.Is(theirs));
                 if (st.Weak && TargetOf(c) != me && TargetOf(c) != master && !home) continue; // badly hurt: it keeps clear, it does not pick fights
+                // Travelling with you, helping you work, or outmatched: only what is after you or it (or right on top of you).
+                if (Following.DefendOnly(me) && TargetOf(c) != me && TargetOf(c) != master && toMe > 3f && toMaster > 4f) continue;
                 if (toMe < limit || toMaster < limit || home) st.Enemies.Add(c);
             }
             st.Enemies.Sort((a, b) => Vector3.Distance(a.transform.position, me.transform.position).CompareTo(Vector3.Distance(b.transform.position, me.transform.position)));

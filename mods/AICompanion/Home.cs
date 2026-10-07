@@ -266,7 +266,12 @@ namespace AICompanion
             Profile.Save(p, prof);
             string where = prof.HasBed ? $"in {(prof.Model == 1 ? "her" : "his")} bed" : "beside you";
             Plugin.Tell($"{prof.Name} wakes up {where}");
-            if (prof.HasGrave) Talk.Tell(c, "I'm up. I'll go and get my things from my tombstone.", "woke", 0.5f);
+            if (prof.HasGrave)
+            {
+                float far = Vector3.Distance(prof.DiedPos, pos);
+                Talk.Tell(c, far < 80f ? "I'm up. I'll go and get my things from my tombstone."
+                    : $"I'm up. My things are in my tombstone {far:0} m {Work.Compass(prof.DiedPos - pos)} of here (the skull on your map). Take me near it and I'll pick everything up.", "woke", 0.5f);
+            }
             Plugin.Instance?.Note($"{prof.Name} woke {where} at {pos:F0}");
             return c;
         }

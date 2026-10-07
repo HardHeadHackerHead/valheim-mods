@@ -50,7 +50,9 @@ namespace AICompanion
             [Heightmap.Biome.Plains] = 280f, [Heightmap.Biome.Mistlands] = 350f, [Heightmap.Biome.AshLands] = 450f,
         };
 
-        private static float Power(Humanoid me)
+        public static float ThreatOf(Heightmap.Biome b) => Threat.TryGetValue(b, out float t) ? t : 100f;
+
+        internal static float Power(Humanoid me)
         {
             ItemDrop.ItemData w = Companion.BestMelee(me) ?? Companion.BestRanged(me);
             float weapon = w != null ? w.GetDamage().GetTotalDamage() * Mathf.Lerp(0.4f, 1f, Skill.Get(me, w.m_shared.m_skillType) / 100f) * 3f : 5f;

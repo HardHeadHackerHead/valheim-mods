@@ -6,7 +6,7 @@ using UnityEngine;
 namespace AICompanion
 {
     public enum Order { Follow, Stay, Guard, Gather }
-    public enum Style { Aggressive, Balanced, Defensive, Passive }
+    public enum Style { Aggressive, Balanced, Defensive, Passive, Auto }
 
     /// <summary>
     /// A companion's saved settings, in its ZDO so they travel with it and every player sees the same. Only the ZDO's owner writes them
@@ -57,7 +57,10 @@ namespace AICompanion
         public static bool IsMine(Component c, Player p) => p != null && MasterId(c) == p.GetPlayerID();
         public static string NameOf(Component c) { string n = Zdo(c)?.GetString(Keys.Name, ""); return string.IsNullOrEmpty(n) ? "Companion" : n; }
         public static Order OrderOf(Component c) => (Order)(Zdo(c)?.GetInt(Keys.Order, 0) ?? 0);
-        public static Style StyleOf(Component c) => (Style)(Zdo(c)?.GetInt(Keys.Style, 1) ?? 1);
+        /// <summary>The style it fights with right now (what "let it decide" worked out, or the one you picked).</summary>
+        public static Style StyleOf(Component c) => c is Humanoid h ? Following.Effective(h) : Chosen(c);
+        /// <summary>The style you picked (Auto: let it decide).</summary>
+        public static Style Chosen(Component c) => (Style)(Zdo(c)?.GetInt(Keys.Style, (int)Style.Auto) ?? (int)Style.Auto);
         public static int RetreatOf(Component c) => Zdo(c)?.GetInt(Keys.Retreat, 30) ?? 30;
         public static bool Potions(Component c) => Zdo(c)?.GetBool(Keys.Potions, true) ?? true;
         public static bool Protect(Component c) => Zdo(c)?.GetBool(Keys.Protect, true) ?? true;
@@ -134,7 +137,8 @@ namespace AICompanion
             zdo.Set(Keys.MasterName, p.GetPlayerName());
             zdo.Set(Keys.Name, string.IsNullOrEmpty(name) ? "Rádvar" : name);
             zdo.Set(Keys.Order, (int)Order.Follow);
-            zdo.Set(Keys.Style, (int)Style.Balanced);
+            zdo.Set(Keys.Style, (int)Style.Auto);
+            zdo.Set(Following.MigratedKey, true);
             zdo.Set(Keys.Retreat, 30);
             zdo.Set(Keys.Potions, true);
             zdo.Set(Keys.Protect, true);

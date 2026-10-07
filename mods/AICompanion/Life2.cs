@@ -285,8 +285,22 @@ namespace AICompanion
             return UnityEngine.Object.FindObjectsByType<Fireplace>(FindObjectsSortMode.None)
                 .Where(f => f != null && !f.m_infiniteFuel && f.m_canRefill && f.m_fuelItem != null && Vector3.Distance(f.transform.position, center) < radius
                             && (Vector3.Distance(f.transform.position, center) < 10f || stoves.Any(s => Vector3.Distance(s.transform.position, f.transform.position) < 3f))
-                            && Fuel(f) < f.m_maxFuel * 0.4f && Have(me, f.m_fuelItem) > 0)
+                            && Fuel(f) < f.m_maxFuel * 0.4f && Spare(me, f.m_fuelItem) > 0)
                 .OrderBy(f => Vector3.Distance(f.transform.position, center)).FirstOrDefault(); // (its own fires, by its bed: it gets there, or gives up after a while)
+        }
+
+        /// <summary>Fuel it can spare: what it has, less what its goal needs (a club is six wood) and five to keep.</summary>
+        private static int Spare(Humanoid me, ItemDrop fuel)
+        {
+            Goal g = Brain.Get(me)?.Goal;
+            int needed = 0;
+            if (g != null)
+            {
+                Recipe r = g.Recipe ?? (g.Item != null ? ObjectDB.instance?.GetRecipe(g.Item) : null);
+                int quality = g.Item != null ? g.Item.m_quality + 1 : 1;
+                if (r != null) needed = Upgrades.Needs(r).Where(q => q.m_resItem != null && q.m_resItem.m_itemData.m_shared.m_name == fuel.m_itemData.m_shared.m_name).Sum(q => q.GetAmount(quality));
+            }
+            return Have(me, fuel) - needed - 5;
         }
 
         private static float Fuel(Fireplace f) => Companion.Zdo(f)?.GetFloat(ZDOVars.s_fuel, 0f) ?? 0f;
@@ -304,7 +318,7 @@ namespace AICompanion
             ZNetView view = f.GetComponent<ZNetView>();
             if (view == null || !view.IsValid() || f.m_fuelItem == null) return;
             string name = f.m_fuelItem.m_itemData.m_shared.m_name;
-            int want = Mathf.Min(6, Mathf.FloorToInt(f.m_maxFuel - Fuel(f)));
+            int want = Mathf.Min(Mathf.Min(6, Spare(me, f.m_fuelItem)), Mathf.FloorToInt(f.m_maxFuel - Fuel(f)));
             int added = 0;
             for (int i = 0; i < want; i++)
             {

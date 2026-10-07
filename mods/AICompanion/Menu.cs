@@ -484,9 +484,11 @@ namespace AICompanion
             EndCard();
 
             BeginCard("How it fights");
+            Style style = Companion.Chosen(c);
+            if (GUILayout.Button("Let it decide (recommended)", style == Style.Auto ? _buttonOn : _button, GUILayout.Width(Inner - 34f), GUILayout.Height(34)))
+                _pending = () => Change(z => z.Set(Keys.Style, (int)Style.Auto));
             GUILayout.BeginHorizontal();
-            Style style = Companion.StyleOf(c);
-            foreach (Style s in (Style[])Enum.GetValues(typeof(Style)))
+            foreach (Style s in new[] { Style.Aggressive, Style.Balanced, Style.Defensive, Style.Passive })
                 if (Choice(s.ToString(), style == s, 4)) { Style pick = s; _pending = () => Change(z => z.Set(Keys.Style, (int)pick)); }
             GUILayout.EndHorizontal();
             Note(style switch
@@ -494,8 +496,10 @@ namespace AICompanion
                 Style.Aggressive => "Presses the attack and falls back only when badly hurt.",
                 Style.Defensive => "Stays close to you, fights what comes near, and falls back early.",
                 Style.Passive => "Never starts a fight; keeps by your side and keeps safe.",
-                _ => "Fights what threatens you or it, and falls back when hurt.",
+                Style.Balanced => "Fights what threatens you or it, and falls back when hurt.",
+                _ => "Reads what you are doing: fights beside you, helps you mine or chop, keeps close and only defends you while you travel, and where a place is too dangerous for its gear it tells you and only defends.",
             }, _text);
+            if (style == Style.Auto && !string.IsNullOrEmpty(Brain.Get(c)?.AutoNote)) Note("Right now: " + Brain.Get(c).AutoNote + ".", _good);
             GUILayout.Space(4);
             int retreat = Companion.RetreatOf(c);
             Stepper("Falls back below", $"{retreat}% health", () => Change(z => z.Set(Keys.Retreat, Mathf.Clamp(retreat - 5, 0, 90))), () => Change(z => z.Set(Keys.Retreat, Mathf.Clamp(retreat + 5, 0, 90))));

@@ -1,3 +1,4 @@
+using System.Linq;
 using System.Collections.Generic;
 using HarmonyLib;
 using UnityEngine;
@@ -224,7 +225,12 @@ namespace AICompanion
             try
             {
                 int carried = h.GetInventory().NrOfItems();
-                string by = LastHit(h)?.GetAttacker() is Character k ? Localization.instance.Localize(k.m_name) : st != null && Time.time - st.LastHurtAt < 5f ? st.LastHurtBy : "?";
+                string by = LastHit(h)?.GetAttacker() is Character k ? Localization.instance.Localize(k.m_name) : st != null && Time.time - st.LastHurtAt < 5f ? st.LastHurtBy : null;
+                if (by == null) // poison, fire, frost: damage over time comes with no attacker
+                {
+                    StatusEffect dot = h.GetSEMan().GetStatusEffects().FirstOrDefault(se => se is SE_Poison || se is SE_Burning);
+                    by = dot != null ? Localization.instance.Localize(dot.m_name).ToLowerInvariant() : LastHit(h) != null ? LastHit(h).m_hitType.ToString().ToLowerInvariant() : "?";
+                }
                 Plugin.Instance?.Note($"{Companion.NameOf(h)} fell at {h.transform.position:F0} (killed by {by}, carrying {carried} item stacks)");
                 if (st != null) Activity.Log(h, $"FELL at {h.transform.position:F0}, killed by {by}. " + Activity.Vitals(h, st));
                 Companion.DropGear(h);

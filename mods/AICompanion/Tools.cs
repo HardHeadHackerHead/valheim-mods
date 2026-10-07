@@ -181,7 +181,7 @@ namespace AICompanion
                 ["armor"] = Math.Round(Companion.Armor(c), 1),
                 ["owner_here"] = c.GetComponent<ZNetView>().IsOwner(),
                 ["order"] = Companion.OrderOf(c).ToString(),
-                ["style"] = Companion.StyleOf(c).ToString(),
+                ["style"] = $"{Companion.Chosen(c)} (fighting as {Companion.StyleOf(c)})",
                 ["status"] = Companion.StatusOf(c),
                 ["worn"] = new JArray(Companion.Worn(c).Select(i => Localization.instance.Localize(i.m_shared.m_name))),
                 ["items"] = c.GetInventory().NrOfItems(),

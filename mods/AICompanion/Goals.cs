@@ -225,8 +225,7 @@ namespace AICompanion
             if (g == null) return null;
             foreach (var step in g.Steps)
             {
-                List<Container> chests = step.Value == null ? new List<Container>() // made on the spot, from its bag
-                    : Home.Chests(me).Where(c => c != null && Vector3.Distance(c.transform.position, step.Value.transform.position) < 25f).ToList(); // as Upgrades.Craft pays
+                List<Container> chests = Upgrades.ChestsNear(me, step.Value != null ? step.Value.transform.position : me.transform.position); // as Upgrades.Craft pays
                 if (Upgrades.Needs(step.Key).All(q => q.m_resItem == null || Have(me, chests, q.m_resItem) >= q.GetAmount(1))) return step;
             }
             return null;

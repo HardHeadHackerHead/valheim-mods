@@ -29,6 +29,7 @@ namespace AICompanion
             ("defensive", "Fight defensively, stay close and careful.", new[] { "defensive", "careful", "be careful", "stay close" }, "I'll be careful."),
             ("passive", "Avoid fighting.", new[] { "passive", "don't fight", "dont fight", "no fighting", "peace" }, "I won't start anything."),
             ("balanced", "Fight normally.", new[] { "balanced", "normal", "fight normally" }, "As usual, then."),
+            ("auto", "Decide for itself how to fight and help, by what the player is doing.", new[] { "your call", "decide", "up to you", "auto", "use your judgement", "use your judgment" }, "I'll read the situation."),
             ("grave", "Go and get its things back from its tombstone.", new[] { "grave", "tombstone", "your stuff", "your things", "your gear" }, "I'll go get my things."),
         };
 
@@ -123,6 +124,7 @@ namespace AICompanion
                 case "defensive": ok = Companion.Write(c, z => z.Set(Keys.Style, (int)Style.Defensive)); break;
                 case "passive": ok = Companion.Write(c, z => z.Set(Keys.Style, (int)Style.Passive)); break;
                 case "balanced": ok = Companion.Write(c, z => z.Set(Keys.Style, (int)Style.Balanced)); break;
+                case "auto": ok = Companion.Write(c, z => z.Set(Keys.Style, (int)Style.Auto)); break;
                 case "grave":
                     if (!Grave.Has(c)) { Say(c, "I have nothing lying in a grave."); return; }
                     Brain.Get(c).NextGraveLook = 0f;

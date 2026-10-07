@@ -140,7 +140,49 @@ namespace AICompanion
                 if (st.Task == null) st.WorkTool = null;
             }
             if (st.Task == null) { Go(center, moveTo, stop, me); Brain.Status(st, st.WorkNote ?? "nothing left to gather here"); return; }
+            Execute(st, master, dt, moveTo, stop, lookAt);
+        }
 
+        /// <summary>
+        /// Out with you, you mining or chopping (Following): the rocks, ore or trees near you that its tools can work, nearest to you first,
+        /// worked as it works at home (and what drops picked up). False when there is nothing for it to help with (then it follows), or you
+        /// have gone on (more than 25 m).
+        /// </summary>
+        public static bool Help(BrainState st, Player master, float dt, Action<Vector3, float, bool> moveTo, Action stop, Action<Vector3> lookAt, Job job)
+        {
+            Humanoid me = st.Body;
+            st.Helping = false;
+            if (Vector3.Distance(me.transform.position, master.transform.position) > 25f) { st.Task = null; return false; }
+            if (st.Task != null && (st.Task.Kind != Kind.Hit || !Valid(st, st.Task) || Flat(st.Task.Target.transform.position, master.transform.position) > 20f)) st.Task = null;
+            if (st.Task == null && Time.time >= st.NextWorkLook)
+            {
+                st.NextWorkLook = Time.time + 1f;
+                ItemDrop.ItemData axe = Axe(me), pick = Pickaxe(me);
+                if ((job == Job.Wood && axe == null) || ((job & (Job.Stone | Job.Ore)) != 0 && pick == null)) return false; // no tool: it guards you and picks up
+                var seen = new HashSet<GameObject>();
+                Task best = null;
+                float bestD = float.MaxValue;
+                foreach (Collider col in Physics.OverlapSphere(master.transform.position, 15f, ~0, QueryTriggerInteraction.Collide))
+                {
+                    GameObject go = col.attachedRigidbody != null ? col.attachedRigidbody.gameObject : col.transform.root.gameObject;
+                    if (!seen.Add(go)) continue;
+                    Task t = Consider(st, go, job, axe, pick);
+                    if (t == null || t.Kind != Kind.Hit || Skipped(st, t.Target)) continue;
+                    float d = Vector3.Distance(t.Target.transform.position, master.transform.position);
+                    if (d < bestD) { bestD = d; best = t; }
+                }
+                st.Task = best;
+            }
+            if (st.Task == null) { st.WorkTool = null; return false; }
+            st.Helping = true;
+            Execute(st, master, dt, moveTo, stop, lookAt);
+            return true;
+        }
+
+        /// <summary>Carrying out its task, wherever it was chosen (at home, or helping you).</summary>
+        private static void Execute(BrainState st, Player master, float dt, Action<Vector3, float, bool> moveTo, Action stop, Action<Vector3> lookAt)
+        {
+            Humanoid me = st.Body;
             Task t = st.Task;
             Vector3 at = Point(t.Target, me.transform.position);
             float dist = Flat(at, me.transform.position);
@@ -254,7 +296,7 @@ namespace AICompanion
                     st.Task = null;
                     break;
             }
-            if (st.Task != null) Brain.Status(st, Describe(st.Task) + (st.Task.ForGoal && st.Goal != null ? $" for its {st.Goal.What}" : ""));
+            if (st.Task != null) Brain.Status(st, Describe(st.Task) + (st.Helping ? " to help you" : st.Task.ForGoal && st.Goal != null ? $" for its {st.Goal.What}" : ""));
         }
 
         /// <summary>
@@ -669,7 +711,7 @@ namespace AICompanion
             return best;
         }
 
-        private static string Compass(Vector3 way)
+        internal static string Compass(Vector3 way)
         {
             string[] names = { "north", "north-east", "east", "south-east", "south", "south-west", "west", "north-west" };
             float angle = (Mathf.Atan2(way.x, way.z) * Mathf.Rad2Deg + 360f + 22.5f) % 360f;
@@ -857,7 +899,7 @@ namespace AICompanion
             return gear && i.m_quality < i.m_shared.m_maxQuality;
         }
 
-        private static List<Container> ChestsNear(Humanoid me, Vector3 at) => Home.Chests(me).Where(c => c != null && !c.IsInUse() && Vector3.Distance(c.transform.position, at) < 25f).ToList();
+        internal static List<Container> ChestsNear(Humanoid me, Vector3 at) => Home.Chests(me).Where(c => c != null && !c.IsInUse() && Vector3.Distance(c.transform.position, at) < 25f).ToList();
 
         private static int Have(Humanoid me, List<Container> chests, string name) => me.GetInventory().CountItems(name) + chests.Sum(c => c.GetInventory().CountItems(name));
 
@@ -895,7 +937,7 @@ namespace AICompanion
                 if (!WorthMaking(me, r.m_item.m_itemData)) continue;
                 CraftingStation station = r.m_craftingStation == null ? null : stations.FirstOrDefault(s => s.m_name == r.m_craftingStation.m_name && s.GetLevel() >= Mathf.Max(1, r.m_minStationLevel));
                 if (station == null && r.m_craftingStation != null) continue;
-                List<Container> chests = station != null ? ChestsNear(me, station.transform.position) : new List<Container>();
+                List<Container> chests = ChestsNear(me, station != null ? station.transform.position : me.transform.position); // (no station: its chests near it)
                 if (Upgrades.Needs(r).All(q => q.m_resItem == null || Have(me, chests, q.m_resItem.m_itemData.m_shared.m_name) >= q.GetAmount(1)))
                     return new KeyValuePair<Recipe, CraftingStation>(r, station);
             }
@@ -930,7 +972,7 @@ namespace AICompanion
         {
             Humanoid me = st.Body;
             if (r == null || (!forGoal && !WorthMaking(me, r.m_item.m_itemData))) return null;
-            List<Container> chests = station != null ? ChestsNear(me, station.transform.position) : new List<Container>();
+            List<Container> chests = ChestsNear(me, station != null ? station.transform.position : me.transform.position); // (no station: its chests near it)
             if (!Upgrades.Needs(r).All(q => q.m_resItem == null || Have(me, chests, q.m_resItem.m_itemData.m_shared.m_name) >= q.GetAmount(1))) return null;
             if (!me.GetInventory().HaveEmptySlot()) return null;
             Pay(me, chests, r, 1);
