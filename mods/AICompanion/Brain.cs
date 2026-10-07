@@ -61,6 +61,9 @@ namespace AICompanion
         public TombStone GraveOrdered, GraveOn;
         public readonly List<ItemDrop> PickQueue = new List<ItemDrop>();
         public Work.Area Area;
+        public List<Vector3> Path; public Vector3? PathTo; public int PathIndex;                    // its own way (Wayfinding), when the game finds none
+        public float PathUntil, NextPathTry, PathProgressAt, PathBest;
+        public readonly Dictionary<Door, float> OpenedDoors = new Dictionary<Door, float>(); // doors it opened, to shut behind it
         public bool SwingMissed;
         public float NextRefillLook;
         public float NextDeliver, NextTidy, NextStockLook;   // what is yours to your chests; tidying its own; its stock list (Work)
@@ -201,7 +204,7 @@ namespace AICompanion
                     if (!plan.Through)
                     {
                         if (Utils.DistanceXZ(plan.Near, pos) > 1.2f) { MoveToRaw(ai, dt, plan.Near, 0.8f, canRun); if (c.GetMoveDir().sqrMagnitude > 0.01f) return false; }
-                        if ((Companion.Zdo(plan.Door)?.GetInt(ZDOVars.s_state, 0) ?? 0) == 0 && plan.Door.m_keyItem == null) plan.Door.Interact(h, false, false);
+                        if ((Companion.Zdo(plan.Door)?.GetInt(ZDOVars.s_state, 0) ?? 0) == 0 && plan.Door.m_keyItem == null) { plan.Door.Interact(h, false, false); Opened(st, plan.Door); }
                         plan.Through = true;
                     }
                     if (Utils.DistanceXZ(plan.Far, pos) > 1f)
@@ -216,6 +219,9 @@ namespace AICompanion
                     return false;
                 }
             }
+            // The game finds no way at all (its walk map is empty here, as in some big bases): its own way-finding, round the stakes and through
+            // the doors.
+            if (st != null && Wayfinding.Follow(st, h, point, canRun)) return false;
             // Stakes or fire about: straight only when the way is short and every step of it is clear of them (it got hurt walking blind).
             if (h != null && Steer.HazardsNear(h) > 0 && !ClearLine(h, pos, point)) return result;
             Vector3 to = point;
@@ -255,6 +261,52 @@ namespace AICompanion
         /// A door within 30 m that it can walk to from here, and from whose other side it can walk to the spot (the pathfinding's own check,
         /// as if the door were open): the one with the shortest way round. Null when there is none.
         /// </summary>
+        /// <summary>For finding out why it cannot get somewhere (companion path): the direct way, and each door around with its two sides.</summary>
+        internal static List<string> PathReport(Humanoid me, Vector3 to)
+        {
+            var lines = new List<string>();
+            BaseAI ai = me.GetComponent<BaseAI>();
+            Pathfinding pf = Pathfinding.instance;
+            if (ai == null || pf == null) { lines.Add("no pathfinding"); return lines; }
+            var agent = ai.m_pathAgentType;
+            Vector3 from = me.transform.position;
+            bool goalOk = pf.FindValidPoint(out Vector3 goal, to, 2.5f, agent);
+            bool fromOk = pf.FindValidPoint(out Vector3 start, from, 1.5f, agent);
+            lines.Add($"from {from:F1} (navmesh point {(fromOk ? start.ToString("F1") : "NONE")}) to {to:F1} (navmesh point {(goalOk ? goal.ToString("F1") : "NONE")}), agent {agent}");
+            // The walk map itself: its tiles, whether one is being built, this spot's tile, and the nearest walkable point within 10 m.
+            try
+            {
+                var tr = HarmonyLib.Traverse.Create(pf);
+                var tiles = tr.Field("m_tiles").GetValue() as System.Collections.IDictionary;
+                object op = tr.Field("m_buildOperation").GetValue();
+                int x = Mathf.FloorToInt((from.x + 16f) / 32f), y = Mathf.FloorToInt((from.z + 16f) / 32f);
+                object mine = null;
+                if (tiles != null) foreach (System.Collections.DictionaryEntry e in tiles) { var k = (Vector3Int)e.Key; if (k.x == x && k.y == y && k.z == (int)agent) mine = e.Value; }
+                string tileInfo = mine == null ? "none" : $"built {HarmonyLib.Traverse.Create(mine).Field("m_buildTime").GetValue()}, poked {HarmonyLib.Traverse.Create(mine).Field("m_pokeTime").GetValue()}, now {Time.time:0.0}";
+                var settings = HarmonyLib.Traverse.Create(pf).Method("GetSettings", agent).GetValue();
+                var filter = new UnityEngine.AI.NavMeshQueryFilter { agentTypeID = (int)HarmonyLib.Traverse.Create(settings).Field("m_agentType").GetValue(), areaMask = (int)HarmonyLib.Traverse.Create(settings).Field("m_areaMask").GetValue() };
+                bool near = UnityEngine.AI.NavMesh.SamplePosition(from, out UnityEngine.AI.NavMeshHit hit, 10f, filter);
+                lines.Add($"walk map: {tiles?.Count ?? -1} tiles, building {(op is AsyncOperation ao ? (ao.isDone ? "no" : $"yes {ao.progress:0.00}") : "no")}, its tile {tileInfo}; nearest walkable within 10 m: {(near ? $"{hit.position:F1} ({Vector3.Distance(hit.position, from):0.0} m)" : "none")}");
+            }
+            catch (Exception ex) { lines.Add("walk map: " + ex.Message); }
+            lines.Add($"direct path: {pf.HavePath(from, goalOk ? goal : to, agent)}; door plan: {(PlanDoor(ai, from, to) is DoorPlan dp ? $"through the door at {dp.Door.transform.position:F0}" + (dp.Next != null ? $" then {dp.Next.Door.transform.position:F0}" : "") : "none")}");
+            int n = Physics.OverlapSphereNonAlloc(from, 40f, DoorHits, PieceMask);
+            var seen = new HashSet<Door>();
+            for (int i = 0; i < n; i++)
+            {
+                Door door = DoorHits[i].GetComponentInParent<Door>();
+                if (door == null || !seen.Add(door)) continue;
+                bool aOk = pf.FindValidPoint(out Vector3 a, door.transform.position + door.transform.forward * 1.6f, 1.5f, agent);
+                bool bOk = pf.FindValidPoint(out Vector3 b, door.transform.position - door.transform.forward * 1.6f, 1.5f, agent);
+                string side(bool ok, Vector3 p) => ok ? $"{p:F1} reach {pf.HavePath(from, p, agent)}, to bed {pf.HavePath(p, goalOk ? goal : to, agent)}" : "no navmesh";
+                lines.Add($"{Utils.GetPrefabName(door.gameObject)} at {door.transform.position:F1} ({Vector3.Distance(door.transform.position, from):0} m, {((Companion.Zdo(door)?.GetInt(ZDOVars.s_state, 0) ?? 0) == 0 ? "shut" : "open")}{(door.m_keyItem != null ? ", locked" : "")}): side A {side(aOk, a)}; side B {side(bOk, b)}");
+            }
+            if (seen.Count == 0) lines.Add("no doors within 40 m");
+            var own = Wayfinding.Find(me, from, to);
+            lines.Add(own == null ? "its own way-finding: no way found" : $"its own way-finding: {own.Count} steps, by {string.Join(" ", own.Where((_, i) => i % Mathf.Max(1, own.Count / 8) == 0).Select(q => $"({q.x:0},{q.z:0})"))}");
+            return lines;
+        }
+
         private static DoorPlan PlanDoor(BaseAI ai, Vector3 from, Vector3 to)
         {
             Pathfinding pf = Pathfinding.instance;
@@ -388,7 +440,7 @@ namespace AICompanion
             foreach (Character e in st.Enemies) if (e != null && e.IsDead()) Loot.AddSpot(st, e.transform.position); // its drops, in a moment
             st.Enemies.RemoveAll(e => e == null || e.IsDead()); // killed or gone since the last look (a destroyed one throws on .transform)
 
-            if (Time.time >= st.NextDoorLook) { st.NextDoorLook = Time.time + 0.4f; OpenDoorAhead(me); }
+            if (Time.time >= st.NextDoorLook) { st.NextDoorLook = Time.time + 0.4f; OpenDoorAhead(me); CloseBehind(st); }
             if (Companion.OrderOf(me) != Order.Gather && !(Companion.OrderOf(me) == Order.Follow && (st.Helping || Time.time < st.CommandUntil || st.Area != null))) { st.Task = null; st.WorkTool = null; }
 
             if (st.Enemies.Count > 0 && st.Asleep) Sleep.Wake(st, "something came");
@@ -617,6 +669,42 @@ namespace AICompanion
         private static readonly int PieceMask = LayerMask.GetMask("piece", "piece_nonsolid", "Default");
 
         /// <summary>A closed door right in front of it while it walks: open it, as a player would (not a locked one, not behind a ward it lacks).</summary>
+        /// <summary>A door it opened: it shuts it behind itself (Close Behind).</summary>
+        private static void Opened(BrainState st, Door door)
+        {
+            if (st == null || door == null) return;
+            if (!st.OpenedDoors.ContainsKey(door)) Activity.Log(st.Body, $"opened the {Localization.instance.Localize(door.m_name).ToLowerInvariant()} at {door.transform.position:F0}");
+            st.OpenedDoors[door] = Time.time;
+        }
+
+        /// <summary>
+        /// Shutting the doors it opened behind itself, as a player does (the base stays shut to greydwarfs): once it is through and a couple
+        /// of metres on, unless you (or anyone) are about to come through after it, someone is in the doorway, or it is fighting there. A door
+        /// that was already open when it came it leaves as it was.
+        /// </summary>
+        private static void CloseBehind(BrainState st)
+        {
+            if (st.OpenedDoors.Count == 0) return;
+            Humanoid me = st.Body;
+            foreach (Door door in st.OpenedDoors.Keys.ToList())
+            {
+                float since = st.OpenedDoors[door];
+                if (door == null || Time.time - since > 60f) { st.OpenedDoors.Remove(door); continue; } // (long gone, or left open on purpose)
+                ZDO z = Companion.Zdo(door);
+                if (z == null || z.GetInt(ZDOVars.s_state, 0) == 0) { st.OpenedDoors.Remove(door); continue; } // shut already
+                Vector3 at = door.transform.position;
+                if (Time.time - since < 1.2f || Utils.DistanceXZ(at, me.transform.position) < 2.5f) continue;   // still going through
+                if (Utils.DistanceXZ(at, me.transform.position) > 12f) { st.OpenedDoors.Remove(door); continue; } // (gone on: left as it is)
+                bool someone = Player.GetAllPlayers().Any(p => p != null && Utils.DistanceXZ(p.transform.position, at) < 5f)
+                               || Companion.All().Any(c => c != me && Utils.DistanceXZ(c.transform.position, at) < 2.5f)
+                               || st.Enemies.Any(e => e != null && Utils.DistanceXZ(e.transform.position, at) < 6f);
+                if (someone) continue;
+                door.Interact(me, false, false); // (shut)
+                st.OpenedDoors.Remove(door);
+                Activity.Log(me, $"shut the {Localization.instance.Localize(door.m_name).ToLowerInvariant()} behind it");
+            }
+        }
+
         private static void OpenDoorAhead(Humanoid me)
         {
             // Where it means to go (pressed against a shut door it is not moving at all, and the door must open then most of all).
@@ -630,6 +718,7 @@ namespace AICompanion
                 ZDO z = Companion.Zdo(door);
                 if (z == null || z.GetInt(ZDOVars.s_state, 0) != 0) continue;
                 door.Interact(me, false, false);
+                Opened(Get(me), door);
                 return;
             }
         }

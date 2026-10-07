@@ -187,6 +187,17 @@ namespace AICompanion
             return owner == null ? aoe.GetComponentInParent<Character>() == null : owner != me && !owner.IsPlayer() && !Companion.Is(owner);
         }
 
+        /// <summary>Its body there would touch nothing hurtful (its own width, not a metre round: a door in a wall of stakes is a way through).</summary>
+        public static bool Clear(Vector3 feet, Humanoid me, float radius = 0.45f)
+        {
+            foreach (Collider col in Physics.OverlapCapsule(feet + Vector3.up * 0.3f, feet + Vector3.up * 1.5f, radius, ~0, QueryTriggerInteraction.Collide))
+            {
+                Aoe aoe = col.GetComponent<Aoe>() ?? col.GetComponentInParent<Aoe>();
+                if (aoe != null && Dangerous(aoe, me)) return false;
+            }
+            return true;
+        }
+
         /// <summary>Is this spot free of hurtful things? (for putting it beside its player)</summary>
         public static bool Safe(Vector3 feet, Humanoid me)
         {

@@ -3,4 +3,8 @@
     <AssemblyName>AICompanion</AssemblyName>
     <RootNamespace>AICompanion</RootNamespace>
   </PropertyGroup>
+  <ItemGroup>
+    <!-- The game's walk map (NavMesh), for finding out why a path fails (Brain.PathReport). -->
+    <Reference Include="UnityEngine.AIModule"><HintPath>$(ManagedDir)/UnityEngine.AIModule.dll</HintPath><Private>false</Private></Reference>
+  </ItemGroup>
 </Project>

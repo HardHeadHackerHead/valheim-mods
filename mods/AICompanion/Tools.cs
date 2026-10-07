@@ -165,6 +165,21 @@ namespace AICompanion
                     Decision got = Brain.BuiltIn(st, Companion.Master(c));
                     output(new JObject { ["decision"] = got.Describe(st.Label), ["note"] = got.Note });
                     yield break;
+                case "map":
+                {
+                    Bed mb = Home.BedOf(c);
+                    int r = args.Length > 1 && int.TryParse(args[1], out int rr2) ? Mathf.Clamp(rr2, 5, 40) : 20;
+                    Vector3 to = args.Length > 2 && args[2] == "me" ? p.transform.position : mb != null ? mb.GetSpawnPoint() : Work.Center(c);
+                    output(new JObject { ["map"] = new JArray(Wayfinding.Map(c, to, p.transform.position, r)) });
+                    yield break;
+                }
+                case "path":
+                {
+                    Bed pb = Home.BedOf(c);
+                    Vector3 to = args.Length > 1 && args[1] == "me" ? p.transform.position : args.Length > 1 && args[1] == "home" ? Work.Center(c) : pb != null ? pb.GetSpawnPoint() : Work.Center(c);
+                    output(new JObject { ["path"] = new JArray(Brain.PathReport(c, to)) });
+                    yield break;
+                }
                 case "emote":
                     if (args.Length < 2) { error("companion emote <wave|cheer|thumbsup|sit|stand|...>"); yield break; }
                     {
