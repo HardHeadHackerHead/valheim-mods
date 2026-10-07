@@ -48,3 +48,4 @@ The `quadflow` CLI is pre-authorized via `Bash(quadflow:*)`. Invoke it from any 
 The `quadflow` CLI is installed. No context modules are currently enabled for this project. Enable one with `quadflow context enable <module>`, or fetch a module's docs on demand with `quadflow docs <module>`.
 
 <!-- quadflow:modules:end -->
+

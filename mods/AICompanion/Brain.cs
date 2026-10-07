@@ -73,6 +73,9 @@ namespace AICompanion
         public Vector3 CookedAt;
         public float NextPassBy;
         public Brain.DoorPlan Door;                                 // the way through a door, when the pathfinding knows none (Brain.MoveTo)
+        public Character StallOn;                                   // a fight going nowhere (Brain.Strike): whom, since when, its health then
+        public float StallSince, StallHealth;
+        public readonly Dictionary<Character, float> LeaveAlone = new Dictionary<Character, float>(); // creatures it could not get at, until when
         public float BlockUntil;                                    // holding its block a moment after a swing (Brain.Strike)
         public Character Blocker;
         public float NextSnapshot, LastHurtAt, GraveSince, GraveBest = float.MaxValue;                     // the activity log (Activity)
@@ -82,6 +85,7 @@ namespace AICompanion
         public Goal Goal;                                           // what it is working toward (Goals)
         public string GoalSaid;
         public float NextTripLook, TripUntil;                       // a trip beyond its home's radius for its goal (Work)
+        public float NextFireLook;
         public float NextFoodLook, NextNeedLook, MasterGoneSince, TripStart;      // looking after itself (Needs), the trip home (Work)
         public readonly HashSet<string> Wanted = new HashSet<string>();                  // what its work drops (to pick up)
         public readonly Dictionary<int, float> Skipped = new Dictionary<int, float>();    // things it gave up on, until when
@@ -320,6 +324,7 @@ namespace AICompanion
             if (gear != null && gear.IsInUse()) { ai.StopMoving(); Blocking(me) = false; SetStatus(st, "waiting while you sort its gear"); return true; }
 
             if (Time.time >= st.NextEnemyScan) { st.NextEnemyScan = Time.time + 0.25f; ScanEnemies(st, master); }
+            foreach (Character e in st.Enemies) if (e != null && e.IsDead()) Loot.AddSpot(st, e.transform.position); // its drops, in a moment
             st.Enemies.RemoveAll(e => e == null || e.IsDead()); // killed or gone since the last look (a destroyed one throws on .transform)
 
             if (Time.time >= st.NextDoorLook) { st.NextDoorLook = Time.time + 0.4f; OpenDoorAhead(me); }
@@ -449,6 +454,7 @@ namespace AICompanion
             {
                 if (c == null || c == me || c.IsDead() || c.IsPlayer() || !BaseAI.IsEnemy(me, c)) continue;
                 if (c.GetComponent<BaseAI>() == null) continue;
+                if (st.LeaveAlone.TryGetValue(c, out float until) && Time.time < until && TargetOf(c) != me && TargetOf(c) != master) continue; // could not get at it
                 // Harmless animals (deer, hares) are not a fight: it hunts them when hunting (Work), unless one turns on it or you.
                 if (c.GetFaction() == Character.Faction.AnimalsVeg && TargetOf(c) != me && TargetOf(c) != master) continue;
                 // What it is hunting, and animals that never fight back (deer, hares: running away "targets" it), are prey, not a fight.
@@ -698,6 +704,19 @@ namespace AICompanion
             Humanoid me = st.Body;
             Blocking(me) = false;
             if (target == null) return;
+            // A fight going nowhere: 20 s without hurting it, and it is not after anyone (behind a fence or a rock, up a slope it cannot climb):
+            // it leaves it alone for two minutes rather than swing at the fence all day.
+            if (st.StallOn != target || target.GetHealth() < st.StallHealth - 0.1f) { st.StallOn = target; st.StallSince = Time.time; st.StallHealth = target.GetHealth(); }
+            else if (Time.time - st.StallSince > 20f && TargetOf(target) != me && TargetOf(target) != Companion.Master(me))
+            {
+                st.LeaveAlone[target] = Time.time + 120f;
+                foreach (Character gone in st.LeaveAlone.Keys.Where(k => k == null).ToList()) st.LeaveAlone.Remove(gone);
+                st.Enemies.Remove(target);
+                st.Remember($"could not get at {Localization.instance.Localize(target.m_name)} (20 s without a hit): left it alone");
+                if (st.Task != null && st.Task.Target == target) st.Task = null;
+                st.StallOn = null;
+                return;
+            }
             ItemDrop.ItemData weapon = me.GetCurrentWeapon();
             bool ranged = Companion.IsRanged(weapon) && Companion.HasAmmoFor(me, weapon);
             float reach = ranged ? 30f : Mathf.Max(1.2f, (weapon?.m_shared.m_attack?.m_attackRange ?? 1.5f) * 0.9f);

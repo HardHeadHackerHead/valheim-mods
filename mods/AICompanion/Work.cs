@@ -23,7 +23,7 @@ namespace AICompanion
     /// </summary>
     internal static class Work
     {
-        internal enum Kind { None, Hit, Pick, PickUp, Store, Upgrade, Craft, Hunt, Cook, Fetch }
+        internal enum Kind { None, Hit, Pick, PickUp, Store, Upgrade, Craft, Hunt, Cook, Fetch, Fuel }
 
         internal class Task
         {
@@ -219,6 +219,14 @@ namespace AICompanion
                     if (Time.time - t.Started > 240f || !Kitchen.Cook(st, (CookingStation)t.Target)) st.Task = null; // done (what it cooked lies at its feet: it picks it up next)
                     break;
 
+                case Kind.Fuel:
+                    if (dist > 2f) { moveTo(at, 1.2f, dist > 8f); break; }
+                    t.LastClose = Time.time;
+                    stop();
+                    Fires.Feed(st, (Fireplace)t.Target);
+                    st.Task = null;
+                    break;
+
                 case Kind.Fetch:
                     if (dist > 2f) { moveTo(at, 1.2f, dist > 8f); break; }
                     t.LastClose = Time.time;
@@ -229,6 +237,7 @@ namespace AICompanion
 
                 case Kind.Hunt:
                     var prey = (Character)t.Target;
+                    if (prey != null && prey.IsDead()) Loot.AddSpot(st, prey.transform.position); // its meat and hide, in a moment
                     if (prey == null || prey.IsDead()) { st.Task = null; break; }
                     if (Companion.BestRanged(me) == null && Harmless.Contains(Utils.GetPrefabName(prey.gameObject)) && Vector3.Distance(prey.transform.position, me.transform.position) > 30f)
                     { Skip(st, prey, "it outran it", 3f); break; } // no bow: no catching a deer (a boar comes at it)
@@ -320,6 +329,7 @@ namespace AICompanion
                 Kind.Craft => $"making a {Localization.instance.Localize(t.Recipe?.m_item?.m_itemData.m_shared.m_name ?? "")} at the {Localization.instance.Localize(((CraftingStation)t.Target).m_name)}",
                 Kind.Cook => "cooking",
                 Kind.Fetch => "getting something to eat from your chest",
+                Kind.Fuel => "putting wood on the fire",
                 Kind.Hunt => "hunting " + Localization.instance.Localize(((Character)t.Target)?.m_name ?? ""),
                 Kind.Upgrade => $"upgrading its {Localization.instance.Localize(t.Item?.m_shared.m_name ?? "")} at the {Localization.instance.Localize(((CraftingStation)t.Target).m_name)}",
                 _ => "gathering",
@@ -427,6 +437,14 @@ namespace AICompanion
                 if (Food.Meals(me).Count == 0) Talk.Tell(me, "I'm out of food and there's none in my chests. I'll forage and hunt, but some cooked meat would help.", "nofood", 20f);
             }
 
+            // Its fires: the ones under cooking stations and by its bed, topped up before they go out (wood from its bag or its chests).
+            if (Time.time >= st.NextFireLook)
+            {
+                st.NextFireLook = Time.time + 20f;
+                Fireplace fire = Fires.Low(me, center, radius);
+                if (fire != null) return New(Kind.Fuel, fire, Job.None);
+            }
+
             // 2. Better gear: an upgrade at its workbench (or forge...) when it has the materials, in its bag or its chests; else what it is
             //    working toward (Goals), and the in-between materials for it it can make now.
             if (Time.time >= st.NextUpgradeLook)
@@ -473,6 +491,7 @@ namespace AICompanion
                 // For its goal, and fit, further out too: a hunting trip, as far as the world around you is loaded (about 170 m).
                 bool fit = forGoal && !st.Weak && me.GetHealthPercentage() > 0.6f;
                 Character Find(float range) => Character.GetAllCharacters().Where(ch => ch != null && !ch.IsDead() && !ch.IsTamed() && kinds.Contains(Utils.GetPrefabName(ch.gameObject))
+                        && !(st.LeaveAlone.TryGetValue(ch, out float until) && Time.time < until)
                         && (!Harmless.Contains(Utils.GetPrefabName(ch.gameObject)) || Vector3.Distance(ch.transform.position, me.transform.position) < reachable) // boars come at it: only runners need a bow
                         && Vector3.Distance(ch.transform.position, center) < range && !Skipped(st, ch))
                     .OrderBy(ch => Vector3.Distance(ch.transform.position, me.transform.position)).FirstOrDefault();

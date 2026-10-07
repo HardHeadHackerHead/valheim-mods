@@ -181,7 +181,7 @@ namespace AICompanion
                 if (!d.CanPickup(false)) { d.RequestOwn(); continue; }
                 string name = Localization.instance.Localize(d.m_itemData.m_shared.m_name);
                 int n = d.m_itemData.m_stack;
-                if (me.Pickup(d.gameObject, false, false)) st.Gathered[name] = (st.Gathered.TryGetValue(name, out int had) ? had : 0) + n;
+                if (me.Pickup(d.gameObject, false, false)) { st.Gathered[name] = (st.Gathered.TryGetValue(name, out int had) ? had : 0) + n; Activity.Log(me, $"picked up {n} {name} on the way"); }
             }
         }
 
@@ -211,11 +211,21 @@ namespace AICompanion
             foreach (Humanoid c in Companion.All())
             {
                 if (!c.GetComponent<ZNetView>().IsOwner() || Vector3.Distance(c.transform.position, pos) > 25f || !On(c)) continue;
-                BrainState st = Brain.Get(c);
-                var spot = new Spot { Pos = pos, At = Time.time };
-                foreach (ItemDrop d in Drops()) if (d != null && Vector3.Distance(d.transform.position, pos) < 8f) spot.Before.Add(d.GetInstanceID());
-                st.LootSpots.Add(spot);
+                AddSpot(Brain.Get(c), pos);
             }
+        }
+
+        /// <summary>
+        /// A creature fell here (one it was fighting or hunting, or one that died near it): what drops here in the next moments it picks up.
+        /// Its own brain notices its enemies and prey dying (Brain, Work), on whichever game runs it, so it does not depend on the game that
+        /// ran the creature telling it. What was lying there already is left alone.
+        /// </summary>
+        public static void AddSpot(BrainState st, Vector3 pos)
+        {
+            if (st == null || !On(st.Body) || st.LootSpots.Any(s => Vector3.Distance(s.Pos, pos) < 2f && Time.time - s.At < 5f)) return;
+            var spot = new Spot { Pos = pos, At = Time.time };
+            foreach (ItemDrop d in Drops()) if (d != null && Vector3.Distance(d.transform.position, pos) < 10f) spot.Before.Add(d.GetInstanceID());
+            st.LootSpots.Add(spot);
         }
 
         /// <summary>True while it is picking up loot.</summary>
@@ -241,12 +251,12 @@ namespace AICompanion
                 foreach (Spot s in st.LootSpots)
                 {
                     float fromSpot = Vector3.Distance(d.transform.position, s.Pos);
-                    if (fromSpot > 6f || s.Before.Contains(d.GetInstanceID())) continue;
+                    if (fromSpot > 8f || s.Before.Contains(d.GetInstanceID())) continue; // (a body can slide or roll a little)
                     float dist = Vector3.Distance(d.transform.position, me.transform.position);
                     if (dist < best) { best = dist; next = d; }
                 }
             }
-            if (next == null) { if (st.LootSpots.All(s => Time.time - s.At > 3f)) st.LootSpots.Clear(); return false; } // (drops appear a moment after death)
+            if (next == null) { st.LootSpots.RemoveAll(s => Time.time - s.At > 20f); return false; } // (many creatures drop their loot from the body a few seconds after they die: it waits for it)
             if (Carry.Weight(me) + next.m_itemData.GetWeight() > Carry.Max(me)) { st.LootDrops.RemoveAll(kv => kv.Key == next); return false; } // too heavy to carry more
             if (best > 1.2f) { moveTo(next.transform.position, 0.5f, best > 6f); Brain.Status(st, "picking up the loot"); return true; }
             if (!next.CanPickup(false)) { next.RequestOwn(); return true; }
@@ -262,6 +272,59 @@ namespace AICompanion
     /// Cooking its own food at home, as a player does: raw food it has (in its bag, or fetched from its chests) goes on a cooking station near
     /// its home (a spit over a fire, an oven with fuel), and it stays by it and takes each piece off when it is done, before it burns.
     /// </summary>
+    /// <summary>
+    /// Keeping its fires going, as a player feeds the hearth: the fires under cooking stations near home and the ones by its bed (within 10 m),
+    /// when they are below 40% of their fuel, get a few logs of their fuel (wood) from its bag, then its own chests. Never your torches or
+    /// sconces elsewhere, never a fire that needs no fuel.
+    /// </summary>
+    internal static class Fires
+    {
+        public static Fireplace Low(Humanoid me, Vector3 center, float radius)
+        {
+            List<CookingStation> stoves = UnityEngine.Object.FindObjectsByType<CookingStation>(FindObjectsSortMode.None).Where(s => Vector3.Distance(s.transform.position, center) < radius).ToList();
+            return UnityEngine.Object.FindObjectsByType<Fireplace>(FindObjectsSortMode.None)
+                .Where(f => f != null && !f.m_infiniteFuel && f.m_canRefill && f.m_fuelItem != null && Vector3.Distance(f.transform.position, center) < radius
+                            && (Vector3.Distance(f.transform.position, center) < 10f || stoves.Any(s => Vector3.Distance(s.transform.position, f.transform.position) < 3f))
+                            && Fuel(f) < f.m_maxFuel * 0.4f && Have(me, f.m_fuelItem) > 0)
+                .OrderBy(f => Vector3.Distance(f.transform.position, center)).FirstOrDefault(); // (its own fires, by its bed: it gets there, or gives up after a while)
+        }
+
+        private static float Fuel(Fireplace f) => Companion.Zdo(f)?.GetFloat(ZDOVars.s_fuel, 0f) ?? 0f;
+
+        private static int Have(Humanoid me, ItemDrop fuel)
+        {
+            string name = fuel.m_itemData.m_shared.m_name;
+            return me.GetInventory().CountItems(name) + Home.Chests(me).Sum(c => c.GetInventory().CountItems(name));
+        }
+
+        /// <summary>At the fire: up to six logs (or what it takes to fill it), from its bag first, then its chests.</summary>
+        public static void Feed(BrainState st, Fireplace f)
+        {
+            Humanoid me = st.Body;
+            ZNetView view = f.GetComponent<ZNetView>();
+            if (view == null || !view.IsValid() || f.m_fuelItem == null) return;
+            string name = f.m_fuelItem.m_itemData.m_shared.m_name;
+            int want = Mathf.Min(6, Mathf.FloorToInt(f.m_maxFuel - Fuel(f)));
+            int added = 0;
+            for (int i = 0; i < want; i++)
+            {
+                if (me.GetInventory().CountItems(name) > 0) me.GetInventory().RemoveItem(name, 1);
+                else
+                {
+                    Container chest = Home.Chests(me).FirstOrDefault(c => !c.IsInUse() && c.GetInventory().CountItems(name) > 0);
+                    if (chest == null) break;
+                    ZNetView cv = chest.GetComponent<ZNetView>();
+                    if (cv != null && !cv.IsOwner()) cv.ClaimOwnership();
+                    chest.GetInventory().RemoveItem(name, 1);
+                }
+                view.InvokeRPC("RPC_AddFuel");
+                added++;
+            }
+            if (added == 0) return;
+            st.Remember($"put {added} {Localization.instance.Localize(name).ToLowerInvariant()} on the fire");
+        }
+    }
+
     internal static class Kitchen
     {
         private static readonly System.Reflection.MethodInfo HaveDone = AccessTools.Method(typeof(CookingStation), "HaveDoneItem");
@@ -314,6 +377,22 @@ namespace AICompanion
             return done;
         }
 
+        /// <summary>For the debug dump: every cooking station near home, how far, fire lit, a free spot, food of its on it.</summary>
+        public static IEnumerable<string> Describe(Humanoid me, Vector3 center, float radius) =>
+            UnityEngine.Object.FindObjectsByType<CookingStation>(FindObjectsSortMode.None).Where(s => Vector3.Distance(s.transform.position, center) < radius + 60f)
+                .OrderBy(s => Vector3.Distance(s.transform.position, center))
+                .Select(s => $"{Localization.instance.Localize(s.m_name)} at {s.transform.position:F0}: {Vector3.Distance(s.transform.position, center):0} m from home, {Vector3.Distance(s.transform.position, me.transform.position):0} m from it, " +
+                             $"fire {(!s.m_requireFire ? "not needed" : (bool)FireLit.Invoke(s, null) ? "lit" : "OUT")}, free spot {((int)FreeSlot.Invoke(s, null) >= 0 ? "yes" : "no")}, " +
+                             $"cooks its food {me.GetInventory().GetAllItems().Any(i => Raw(s, i))}, reachable {Brain.CanReach(me, s.transform.position)}, " + FireUnder(s));
+
+        private static string FireUnder(CookingStation s)
+        {
+            Fireplace f = UnityEngine.Object.FindObjectsByType<Fireplace>(FindObjectsSortMode.None).OrderBy(x => Vector3.Distance(x.transform.position, s.transform.position)).FirstOrDefault();
+            if (f == null) return "no fireplace";
+            float fuel = Companion.Zdo(f)?.GetFloat(ZDOVars.s_fuel, 0f) ?? 0f;
+            return $"nearest fire {Utils.GetPrefabName(f.gameObject)} {Vector3.Distance(f.transform.position, s.transform.position):0.0} m off (flat {Vector2.Distance(new Vector2(f.transform.position.x, f.transform.position.z), new Vector2(s.transform.position.x, s.transform.position.z)):0.0}), fuel {fuel:0.#}/{f.m_maxFuel:0}, burning {f.IsBurning()}";
+        }
+
         internal static bool Usable(CookingStation s) => s != null && (!s.m_requireFire || (bool)FireLit.Invoke(s, null));
 
         /// <summary>A station near home it could cook on with what it carries (null if none).</summary>
@@ -323,7 +402,7 @@ namespace AICompanion
             if (raw.Count == 0) return null;
             return UnityEngine.Object.FindObjectsOfType<CookingStation>()
                 .Where(s => Vector3.Distance(s.transform.position, center) < radius + 10f && Usable(s) && raw.Any(i => Raw(s, i)) && (int)FreeSlot.Invoke(s, null) >= 0)
-                .OrderBy(s => Vector3.Distance(s.transform.position, me.transform.position)).FirstOrDefault();
+                .OrderBy(s => Vector3.Distance(s.transform.position, center)).FirstOrDefault(); // its own, by its bed, before the far ones
         }
 
         /// <summary>At the station: put raw food on, take done food off. Returns false when it has nothing left to cook or wait for.</summary>
