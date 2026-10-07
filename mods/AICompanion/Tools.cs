@@ -102,6 +102,22 @@ namespace AICompanion
 
             switch (sub)
             {
+                case "hazards": output(new JObject { ["around_you"] = Steer.Around(p.transform.position, args.Length > 1 && float.TryParse(args[1], out float rr) ? rr : 40f) }); yield break;
+                case "home": Home.GoHome(c); break;
+                case "follow": Home.Follow(c); break;
+                case "toggle": Home.ToggleAll(p); break;
+                case "goal":
+                    BrainState gs = Brain.Get(c);
+                    gs.Goal = Goals.Pick(c, Work.Center(c), Work.RadiusOf(c));
+                    Goal g = gs.Goal;
+                    output(g == null ? new JObject { ["goal"] = null } : new JObject
+                    {
+                        ["goal"] = g.What, ["station"] = g.Station != null ? Localization.instance.Localize(g.Station.m_name) : null, ["gather"] = g.RawText(),
+                        ["steps"] = new JArray(g.Steps.Select(s => s.Key.m_item.name)), ["smelt"] = new JArray(g.Smelt), ["ask"] = new JArray(g.Ask), ["jobs"] = Goals.JobsFor(g, out _).ToString(),
+                        ["recipe"] = g.Recipe != null ? g.Recipe.name + ": " + string.Join(", ", g.Recipe.m_resources.Where(q => q.m_resItem != null).Select(q => $"{q.GetAmount(1)} {q.m_resItem.name}")) : null,
+                        ["recipes_for_item"] = g.Recipe != null ? new JArray(ObjectDB.instance.m_recipes.Where(r => r != null && r.m_item == g.Recipe.m_item).Select(r => $"{r.name} enabled={r.m_enabled}: " + string.Join(", ", r.m_resources.Where(q => q.m_resItem != null).Select(q => $"{q.GetAmount(1)} {q.m_resItem.name}")))) : null,
+                    });
+                    yield break;
                 case "order":
                     if (args.Length < 2 || !Enum.TryParse(args[1], true, out Order order)) { error("order <follow|stay|guard>"); yield break; }
                     Companion.Write(c, z => { z.Set(Keys.Order, (int)order); if (order == Order.Guard) z.Set(Keys.Post, c.transform.position); });
@@ -153,6 +169,9 @@ namespace AICompanion
                 ["in_combat"] = st.InCombat,
                 ["enemies"] = new JArray(st.Enemies.Select(e => st.Label(e))),
                 ["history"] = new JArray(st.History),
+                ["goal"] = st.Goal?.What,
+                ["hazards_near"] = Steer.HazardsNear(c),
+                ["bed"] = Companion.Zdo(c).GetBool(Keys.HasBed, false), ["chests"] = Home.Chests(c).Count,
                 ["jev"] = new JObject { ["key"] = Mask(ApiKey.Value), ["decisions_today"] = Jev.Decisions, ["failures_today"] = Jev.Failures, ["last_ms"] = Mathf.RoundToInt(Jev.LastMs), ["last_error"] = Jev.LastError, ["cost_usd"] = Math.Round(Jev.Cost, 5) },
             };
         }

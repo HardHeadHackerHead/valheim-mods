@@ -32,6 +32,7 @@ namespace AICompanion
             public Job Job;
             public ItemDrop.ItemData Item;   // what it is upgrading
             public Recipe Recipe;            // what it is crafting
+            public bool ForGoal;             // toward its goal (Goals)
             public float Started, LastClose;
         }
 
@@ -110,6 +111,7 @@ namespace AICompanion
             if (jobs == Job.None) jobs = AutoJobs(me); // living at home: it decides for itself what to do with what it has
             Vector3 center = Center(me);
             float radius = RadiusOf(me);
+            if (TravelHome(st, center, radius, moveTo)) return;
 
             if (st.Task != null && !Valid(st, st.Task)) st.Task = null;
             if (st.Task == null && Time.time >= st.NextWorkLook)
@@ -181,7 +183,7 @@ namespace AICompanion
                     if (dist > 2.6f) { moveTo(at, 1.8f, dist > 8f); break; }
                     t.LastClose = Time.time;
                     stop();
-                    Upgrades.Craft(st, t.Recipe, (CraftingStation)t.Target);
+                    Upgrades.Craft(st, t.Recipe, (CraftingStation)t.Target, t.ForGoal);
                     st.Task = null;
                     break;
 
@@ -208,7 +210,30 @@ namespace AICompanion
                     st.Task = null;
                     break;
             }
-            if (st.Task != null) Brain.Status(st, Describe(st.Task));
+            if (st.Task != null) Brain.Status(st, Describe(st.Task) + (st.Task.ForGoal && st.Goal != null ? $" for its {st.Goal.What}" : ""));
+        }
+
+        /// <summary>
+        /// Sent home from far away (an adventure, another island): it sets off toward home, and a few seconds later it is there, as a player
+        /// would recall home. Its area may not be loaded then: it carries on there, and catches up when someone comes back (CatchUp).
+        /// </summary>
+        private static bool TravelHome(BrainState st, Vector3 center, float radius, Action<Vector3, float, bool> moveTo)
+        {
+            Humanoid me = st.Body;
+            if (Flat(center, me.transform.position) < radius + 60f) { st.TripStart = 0f; return false; }
+            if (st.TripStart == 0f) { st.TripStart = Time.time; st.Task = null; st.Remember("set off home"); }
+            moveTo(center, 2f, true);
+            Brain.Status(st, "heading home");
+            if (Time.time - st.TripStart < 8f) return true;
+            st.TripStart = 0f;
+            Vector3 pos = center + Vector3.up * 0.2f;
+            me.transform.position = pos;
+            Rigidbody body = me.GetComponent<Rigidbody>();
+            if (body != null) { body.position = pos; body.linearVelocity = Vector3.zero; }
+            Companion.Zdo(me)?.SetPosition(pos);
+            st.Remember("got home");
+            Plugin.Instance?.Note($"{Companion.NameOf(me)} went home to {pos:F0}");
+            return true;
         }
 
         private static void Go(Vector3 center, Action<Vector3, float, bool> moveTo, Action stop, Humanoid me)
@@ -294,7 +319,19 @@ namespace AICompanion
                 if (inv.GetEmptySlots() == 0) { st.WorkNote = "its bag is full: give it a chest (Home tab) or empty its bag"; return null; }
             }
 
-            // 2. Better gear: an upgrade at its workbench (or forge...) when it has the materials, in its bag or its chests.
+            // Out of food: fetch some from its chests (it eats by itself).
+            bool hungry = !inv.GetAllItems().Any(Food.IsFood);
+            if (hungry && Time.time >= st.NextFoodLook)
+            {
+                st.NextFoodLook = Time.time + 20f;
+                Container pantry = Home.Chests(me).Where(c => !c.IsInUse() && c.GetInventory().GetAllItems().Any(i => Food.IsFood(i) || IsCookable(i)))
+                                       .OrderBy(c => Vector3.Distance(c.transform.position, me.transform.position)).FirstOrDefault();
+                if (pantry != null) return New(Kind.Store, pantry, Job.None);
+                if (Food.Meals(me).Count == 0) Talk.Tell(me, "I'm out of food and there's none in my chests. I'll forage and hunt, but some cooked meat would help.", "nofood", 20f);
+            }
+
+            // 2. Better gear: an upgrade at its workbench (or forge...) when it has the materials, in its bag or its chests; else what it is
+            //    working toward (Goals), and the in-between materials for it it can make now.
             if (Time.time >= st.NextUpgradeLook)
             {
                 st.NextUpgradeLook = Time.time + 30f;
@@ -302,7 +339,15 @@ namespace AICompanion
                 if (up != null) { Task u = New(Kind.Upgrade, up.Value.Value, Job.None); u.Item = up.Value.Key; return u; }
                 var craft = Upgrades.FindCraft(me, center, radius);
                 if (craft != null) { Task t2 = New(Kind.Craft, craft.Value.Value, Job.None); t2.Recipe = craft.Value.Key; return t2; }
+                st.Goal = Goals.Pick(me, center, radius);
+                Goals.Announce(st, st.Goal);
+                var step = Goals.StepReady(me, st.Goal);
+                if (step != null) { Task t3 = New(Kind.Craft, step.Value.Value, Job.None); t3.Recipe = step.Value.Key; t3.ForGoal = true; return t3; }
             }
+
+            // What its goal needs decides its jobs too, when you have not ticked any.
+            Job goalJobs = Goals.JobsFor(st.Goal, out HashSet<string> goalPrey);
+            if (JobsOf(me) == Job.None) jobs |= goalJobs & ~Job.Loot;
 
             // Its own meals: raw food it carries goes on a cooking station near home.
             if ((jobs & Job.Cook) != 0)
@@ -316,13 +361,14 @@ namespace AICompanion
                 }
             }
 
-            // Hunting: deer and boar near home, for meat and hides (with its bow if it has one).
+            // Hunting: deer and boar near home, for meat and hides (with its bow if it has one); for its goal, the animals that drop what it needs.
             if ((jobs & Job.Hunt) != 0)
             {
-                Character prey = Character.GetAllCharacters().Where(ch => ch != null && !ch.IsDead() && !ch.IsTamed() && Prey.Contains(Utils.GetPrefabName(ch.gameObject))
+                bool forGoal = goalPrey.Count > 0;
+                Character prey = Character.GetAllCharacters().Where(ch => ch != null && !ch.IsDead() && !ch.IsTamed() && (forGoal ? goalPrey : Prey).Contains(Utils.GetPrefabName(ch.gameObject))
                         && Vector3.Distance(ch.transform.position, center) < radius && !Skipped(st, ch))
                     .OrderBy(ch => Vector3.Distance(ch.transform.position, me.transform.position)).FirstOrDefault();
-                if (prey != null) return New(Kind.Hunt, prey, Job.Hunt);
+                if (prey != null) { Task h = New(Kind.Hunt, prey, Job.Hunt); h.ForGoal = forGoal; return h; }
             }
 
             // 3. What its own work dropped (or anything, with Loot ticked).
@@ -343,7 +389,8 @@ namespace AICompanion
                 if (!seen.Add(go)) continue;
                 Task t = Consider(st, go, jobs, axe, pick);
                 if (t == null || Skipped(st, t.Target)) continue;
-                float score = Vector3.Distance(t.Target.transform.position, me.transform.position) + Priority(t);
+                t.ForGoal = st.Goal != null && Drops(t.Target).Any(st.Goal.Wants);
+                float score = Vector3.Distance(t.Target.transform.position, me.transform.position) + Priority(t) - (t.ForGoal ? 60f : 0f); // what its goal needs first
                 if (score < bestScore) { bestScore = score; best = t; }
             }
             if (best == null)
@@ -353,6 +400,9 @@ namespace AICompanion
                 if ((jobs & (Job.Stone | Job.Ore)) != 0 && pick == null) missing.Add("a pickaxe");
                 st.WorkNote = missing.Count > 0 ? $"needs {string.Join(" and ", missing)} for its jobs" : $"nothing left to gather within {radius:0} m";
             }
+            if (st.Goal != null && st.Goal.Raw.Count > 0 && (best == null || !best.ForGoal) && JobsOf(me) == Job.None)
+                Talk.Tell(me, $"I can't find any {string.Join(" or ", st.Goal.Names.Values)} within {radius:0} m of home for my {st.Goal.What}. Let me go further (Home tab), or bring me some.", "far:" + st.Goal.What, 30f);
+            if (best == null && inv.GetEmptySlots() == 0) Talk.Tell(me, "My bag is full and none of my chests has room. Give me another chest (Home tab).", "full", 15f);
             return best;
         }
 
@@ -405,6 +455,16 @@ namespace AICompanion
                 if (p != null && p.m_respawnTimeMinutes > 0f && !(Companion.Zdo(p)?.GetBool(ZDOVars.s_picked, false) ?? true) && p.m_itemPrefab != null) return New(Kind.Pick, p, Job.Forage);
             }
             return null;
+        }
+
+        /// <summary>The item prefab names something drops when worked (a tree, a rock, a plant).</summary>
+        private static IEnumerable<string> Drops(Component c)
+        {
+            GameObject go = c.gameObject;
+            if (go.GetComponent<Pickable>() is Pickable p) return p.m_itemPrefab != null ? new[] { p.m_itemPrefab.name } : new string[0];
+            DropTable t = go.GetComponent<TreeBase>()?.m_dropWhenDestroyed ?? go.GetComponent<TreeLog>()?.m_dropWhenDestroyed ?? go.GetComponent<MineRock>()?.m_dropItems
+                          ?? go.GetComponent<MineRock5>()?.m_dropItems ?? go.GetComponent<DropOnDestroyed>()?.m_dropWhenDestroyed;
+            return t?.m_drops?.Where(d => d.m_item != null).Select(d => d.m_item.name) ?? Enumerable.Empty<string>();
         }
 
         private static Task Wood(BrainState st, Component c, DropTable drops) { Want(st, drops); return New(Kind.Hit, c, Job.Wood); }
@@ -495,7 +555,18 @@ namespace AICompanion
     {
         private static readonly AccessTools.FieldRef<List<CraftingStation>> Stations = AccessTools.StaticFieldRefAccess<List<CraftingStation>>(AccessTools.Field(typeof(CraftingStation), "m_allStations"));
 
-        private static bool Upgradable(Humanoid me, ItemDrop.ItemData i)
+        public static List<CraftingStation> StationsNear(Vector3 center, float range) =>
+            (Stations() ?? new List<CraftingStation>()).Where(s => s != null && !s.m_upgrader && Vector3.Distance(s.transform.position, center) < range).ToList();
+
+        /// <summary>
+        /// What a recipe needs at an ordinary station (workbench, forge...), as the game counts it (Player.HaveRequirementItems): items marked
+        /// as upgrader resources (the battle idols) are only for the upgrader stations, and are left out. For recipes where any one ingredient
+        /// will do, it pays them all (never less than the game asks).
+        /// </summary>
+        public static IEnumerable<Piece.Requirement> Needs(Recipe r) =>
+            r == null ? Enumerable.Empty<Piece.Requirement>() : r.m_resources.Where(q => q.m_resItem != null && !q.m_upgraderResource);
+
+        public static bool Upgradable(ItemDrop.ItemData i)
         {
             var t = i.m_shared.m_itemType;
             bool gear = i.IsWeapon() || Work.IsTool(i) || t == ItemDrop.ItemData.ItemType.Shield || t == ItemDrop.ItemData.ItemType.Helmet || t == ItemDrop.ItemData.ItemType.Chest
@@ -510,9 +581,9 @@ namespace AICompanion
         /// <summary>Something it can upgrade now, and where (null if nothing).</summary>
         public static KeyValuePair<ItemDrop.ItemData, CraftingStation>? Find(Humanoid me, Vector3 center, float radius)
         {
-            List<CraftingStation> stations = (Stations() ?? new List<CraftingStation>()).Where(s => s != null && Vector3.Distance(s.transform.position, center) < radius + 10f).ToList();
+            List<CraftingStation> stations = StationsNear(center, radius + 10f);
             if (stations.Count == 0) return null;
-            foreach (ItemDrop.ItemData item in me.GetInventory().GetAllItems().Where(i => Upgradable(me, i)).OrderByDescending(i => me.IsItemEquiped(i)))
+            foreach (ItemDrop.ItemData item in me.GetInventory().GetAllItems().Where(Upgradable).OrderByDescending(i => me.IsItemEquiped(i)))
             {
                 Recipe recipe = ObjectDB.instance?.GetRecipe(item);
                 if (recipe == null || recipe.m_craftingStation == null) continue;
@@ -520,7 +591,7 @@ namespace AICompanion
                 CraftingStation station = stations.FirstOrDefault(s => s.m_name == recipe.m_craftingStation.m_name && s.GetLevel() >= recipe.GetRequiredStationLevel(next));
                 if (station == null) continue;
                 List<Container> chests = ChestsNear(me, station.transform.position);
-                if (recipe.m_resources.All(r => r.m_resItem == null || Have(me, chests, r.m_resItem.m_itemData.m_shared.m_name) >= r.GetAmount(next)))
+                if (Upgrades.Needs(recipe).All(r => r.m_resItem == null || Have(me, chests, r.m_resItem.m_itemData.m_shared.m_name) >= r.GetAmount(next)))
                     return new KeyValuePair<ItemDrop.ItemData, CraftingStation>(item, station);
             }
             return null;
@@ -534,7 +605,7 @@ namespace AICompanion
         public static KeyValuePair<Recipe, CraftingStation>? FindCraft(Humanoid me, Vector3 center, float radius)
         {
             if (ObjectDB.instance == null) return null;
-            List<CraftingStation> stations = (Stations() ?? new List<CraftingStation>()).Where(s => s != null && Vector3.Distance(s.transform.position, center) < radius + 10f).ToList();
+            List<CraftingStation> stations = StationsNear(center, radius + 10f);
             if (stations.Count == 0) return null;
             foreach (Recipe r in ObjectDB.instance.m_recipes)
             {
@@ -543,13 +614,13 @@ namespace AICompanion
                 CraftingStation station = stations.FirstOrDefault(s => s.m_name == r.m_craftingStation.m_name && s.GetLevel() >= Mathf.Max(1, r.m_minStationLevel));
                 if (station == null) continue;
                 List<Container> chests = ChestsNear(me, station.transform.position);
-                if (r.m_resources.All(q => q.m_resItem == null || Have(me, chests, q.m_resItem.m_itemData.m_shared.m_name) >= q.GetAmount(1)))
+                if (Upgrades.Needs(r).All(q => q.m_resItem == null || Have(me, chests, q.m_resItem.m_itemData.m_shared.m_name) >= q.GetAmount(1)))
                     return new KeyValuePair<Recipe, CraftingStation>(r, station);
             }
             return null;
         }
 
-        private static bool WorthMaking(Humanoid me, ItemDrop.ItemData made)
+        public static bool WorthMaking(Humanoid me, ItemDrop.ItemData made)
         {
             var have = me.GetInventory().GetAllItems();
             var t = made.m_shared.m_itemType;
@@ -572,12 +643,12 @@ namespace AICompanion
             return false;
         }
 
-        public static void Craft(BrainState st, Recipe r, CraftingStation station)
+        public static void Craft(BrainState st, Recipe r, CraftingStation station, bool forGoal = false)
         {
             Humanoid me = st.Body;
-            if (r == null || !WorthMaking(me, r.m_item.m_itemData)) return;
+            if (r == null || (!forGoal && !WorthMaking(me, r.m_item.m_itemData))) return;
             List<Container> chests = ChestsNear(me, station.transform.position);
-            if (!r.m_resources.All(q => q.m_resItem == null || Have(me, chests, q.m_resItem.m_itemData.m_shared.m_name) >= q.GetAmount(1))) return;
+            if (!Upgrades.Needs(r).All(q => q.m_resItem == null || Have(me, chests, q.m_resItem.m_itemData.m_shared.m_name) >= q.GetAmount(1))) return;
             if (!me.GetInventory().HaveEmptySlot()) return;
             Pay(me, chests, r, 1);
             me.GetInventory().AddItem(r.m_item.gameObject.name, Mathf.Max(1, r.m_amount), 1, 0, 0L, Companion.NameOf(me), false);
@@ -586,12 +657,12 @@ namespace AICompanion
             st.Remember($"made a {what}");
             st.NextGear = 0f;
             Plugin.Instance?.Note($"{Companion.NameOf(me)} made a {what} at {station.transform.position:F0}");
-            if (Companion.Master(me) == Player.m_localPlayer) Plugin.Tell($"{Companion.NameOf(me)} made a {what}");
+            Talk.Tell(me, forGoal ? $"I made {Mathf.Max(1, r.m_amount)} {what.ToLowerInvariant()} for my {st.Goal?.What}." : st.Goal != null && st.Goal.Recipe == r ? $"I made my {what.ToLowerInvariant()}!" : $"I made a {what.ToLowerInvariant()}.");
         }
 
         private static void Pay(Humanoid me, List<Container> chests, Recipe r, int quality)
         {
-            foreach (Piece.Requirement q in r.m_resources)
+            foreach (Piece.Requirement q in Upgrades.Needs(r))
             {
                 if (q.m_resItem == null) continue;
                 string name = q.m_resItem.m_itemData.m_shared.m_name;
@@ -618,8 +689,8 @@ namespace AICompanion
             if (recipe == null || !me.GetInventory().ContainsItem(item) || item.m_quality >= item.m_shared.m_maxQuality) return;
             int next = item.m_quality + 1;
             List<Container> chests = ChestsNear(me, station.transform.position);
-            if (!recipe.m_resources.All(r => r.m_resItem == null || Have(me, chests, r.m_resItem.m_itemData.m_shared.m_name) >= r.GetAmount(next))) return; // something went meanwhile
-            foreach (Piece.Requirement r in recipe.m_resources)
+            if (!Upgrades.Needs(recipe).All(r => r.m_resItem == null || Have(me, chests, r.m_resItem.m_itemData.m_shared.m_name) >= r.GetAmount(next))) return; // something went meanwhile
+            foreach (Piece.Requirement r in Upgrades.Needs(recipe))
             {
                 if (r.m_resItem == null) continue;
                 string name = r.m_resItem.m_itemData.m_shared.m_name;
@@ -644,7 +715,7 @@ namespace AICompanion
             string what = Localization.instance.Localize(item.m_shared.m_name);
             st.Remember($"upgraded its {what} to level {next}");
             Plugin.Instance?.Note($"{Companion.NameOf(me)} upgraded its {what} to level {next} at {station.transform.position:F0}");
-            if (Companion.Master(me) == Player.m_localPlayer) Plugin.Tell($"{Companion.NameOf(me)} upgraded their {what} to level {next}");
+            Talk.Tell(me, $"I upgraded my {what} to level {next}.");
             Portraits.Dirty(me);
         }
     }

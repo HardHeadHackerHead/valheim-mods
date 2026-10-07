@@ -40,7 +40,12 @@ namespace AICompanion
         private static bool Prefix(MonsterAI __instance, float dt, ref bool __result)
         {
             if (!Companion.Is(__instance)) return true;
-            try { __result = Brain.Update(__instance, dt); }
+            try
+            {
+                __result = Brain.Update(__instance, dt);
+                Humanoid me = __instance.GetComponent<Humanoid>();
+                if (__instance.GetComponent<ZNetView>().IsOwner()) Steer.Tick(me, Brain.Get(me)); // watching where it walks
+            }
             catch (System.Exception e)
             {
                 __result = true;

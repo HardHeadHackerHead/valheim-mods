@@ -8,7 +8,7 @@ namespace AICompanion
     /// <summary>
     /// The companion's menu (J, or E on it), styled like the game's own windows (its Averia font, dark wood, gold headings), in six tabs:
     ///   Status - what it is doing, its health, food and rest, its record, skills, effects and recent events;
-    ///   Orders - what it does (follow, stay, guard, live at home), how it fights, its habits, sending it home;
+    ///   Orders - come with me or go home (and stay, guard, come here), how it fights, its habits, sending it away;
     ///   Home   - its bed and chests, living at home (where and what it gathers), what it gathered, what happens while you are away;
     ///   Gear   - what it wears, its bag, giving it things, and what it picks up off the ground;
     ///   Looks  - body, hair, beard, skin and hair colour;
@@ -25,7 +25,7 @@ namespace AICompanion
         private float _rebindUntil;
         private Tab _tab = Tab.Status;
         private Rect _rect;
-        private bool _placed, _renaming, _showLog, _showJson;
+        private bool _placed, _renaming, _showLog, _showJson, _showAdvanced;
         private Action _pending;          // button actions run in Update, not in the middle of drawing
         private string _nameField = "", _note = "", _testResult = "", _hover = "";
         private Vector2 _scroll, _logScroll, _jsonScroll;
@@ -174,7 +174,7 @@ namespace AICompanion
                 return;
             }
             GUILayout.Label(mine.Count == 0 ? "Summon a companion" : "Summon another companion", _h2);
-            Note("A viking who follows you, fights beside you, and can live a life of their own at your base. You choose how they look next.", _dim);
+            Note("A viking who comes on adventures with you and, when you send them home, lives a life of their own at your base. They take a free bed and empty chests near them by themselves. You choose how they look next.", _dim);
             GUILayout.Space(4);
             GUILayout.BeginHorizontal();
             GUILayout.Label("Name", _bold, GUILayout.Width(60));
@@ -186,7 +186,11 @@ namespace AICompanion
                 {
                     Player p = Player.m_localPlayer;
                     Humanoid c = p != null ? Companion.Summon(p, _nameField.Trim()) : null;
-                    if (c != null) { OpenMenuFor(p, c); _tab = Tab.Looks; }
+                    if (c == null) return;
+                    OpenMenuFor(p, c);
+                    _tab = Tab.Looks;
+                    string took = Home.SetUp(c);
+                    Talk.Tell(c, took != null ? $"Hello! {took}" : "Hello! Give me a bed and a chest and I'll make my home here.");
                 };
             Note(string.IsNullOrEmpty(ApiKey.Value) ? "No Jev key yet: they fight with the built-in brain until you add one (Brain tab)." : "Jev decides how they fight (your key is set).", _dim);
             EndCard();
@@ -287,13 +291,7 @@ namespace AICompanion
             }
             else Note($"Not fighting. It acts when an enemy comes within {EngageRange.Value:0} m of it or you.", _dim);
             GUILayout.Space(4);
-            GUILayout.BeginHorizontal();
-            Order order = Companion.OrderOf(c);
-            if (Choice("Follow me", order == Order.Follow, 4)) _pending = () => Change(z => z.Set(Keys.Order, (int)Order.Follow));
-            if (Choice("Stay here", order == Order.Stay, 4)) _pending = () => Change(z => z.Set(Keys.Order, (int)Order.Stay));
-            if (Choice("Live at home", order == Order.Gather, 4)) _pending = () => StartGathering(c);
-            if (Choice("Come here", false, 4)) _pending = ComeHere;
-            GUILayout.EndHorizontal();
+            OrderButtons(c);
             EndCard();
 
             BeginCard("Food and rest");
@@ -374,11 +372,37 @@ namespace AICompanion
             EndCard();
         }
 
+        /// <summary>The two orders that matter (come with me, go home), big; stay, guard and come here small beneath them.</summary>
+        private void OrderButtons(Humanoid c)
+        {
+            Order order = Companion.OrderOf(c);
+            float half = (Inner - 28f) / 2f - 6f;
+            GUILayout.BeginHorizontal();
+            if (GUILayout.Button("Come with me", order == Order.Follow ? _buttonOn : _button, GUILayout.Width(half), GUILayout.Height(40))) _pending = () => GiveOrder(h => Home.Follow(h));
+            if (GUILayout.Button("Go home", order == Order.Gather ? _buttonOn : _button, GUILayout.Width(half), GUILayout.Height(40))) _pending = () => GiveOrder(h => Home.GoHome(h));
+            GUILayout.EndHorizontal();
+            GUILayout.BeginHorizontal();
+            GUILayout.Label("More", _dim, GUILayout.Width(52), GUILayout.Height(28));
+            float third = (Inner - 28f - 58f) / 3f - 6f;
+            if (GUILayout.Button("Stay here", order == Order.Stay ? _buttonOn : _button, GUILayout.Width(third), GUILayout.Height(28))) _pending = () => Change(z => z.Set(Keys.Order, (int)AICompanion.Order.Stay));
+            if (GUILayout.Button("Guard this spot", order == Order.Guard ? _buttonOn : _button, GUILayout.Width(third), GUILayout.Height(28)))
+                _pending = () => Change(z => { z.Set(Keys.Order, (int)AICompanion.Order.Guard); z.Set(Keys.Post, c.transform.position); });
+            if (GUILayout.Button("Come here", _button, GUILayout.Width(third), GUILayout.Height(28))) _pending = ComeHere;
+            GUILayout.EndHorizontal();
+            Note($"Or hold {MenuKey.Value} anywhere: all your companions near you come with you, or go home.", _dim);
+        }
+
+        private void GiveOrder(Func<Humanoid, bool> order)
+        {
+            if (!Commandable) { _note = "Only its owner can give it orders (unless they let friends do so)."; return; }
+            if (!order(_shown)) _note = "Someone has its things open. Try again in a moment.";
+        }
+
         private void ComeHere()
         {
             Player p = Player.m_localPlayer;
             if (p == null || _shown == null) return;
-            Change(z => z.Set(Keys.Order, (int)Order.Follow));
+            GiveOrder(h => Home.Follow(h));
             if (Commandable && Vector3.Distance(p.transform.position, _shown.transform.position) > 15f && _shown.GetComponent<ZNetView>().IsOwner()) Brain.TeleportBehind(_shown, p);
         }
 
@@ -388,20 +412,13 @@ namespace AICompanion
         {
             Order order = Companion.OrderOf(c);
             BeginCard("What it does");
-            GUILayout.BeginHorizontal();
-            if (Choice("Follow me", order == Order.Follow, 2)) _pending = () => Change(z => z.Set(Keys.Order, (int)Order.Follow));
-            if (Choice("Live at home", order == Order.Gather, 2)) _pending = () => StartGathering(c);
-            GUILayout.EndHorizontal();
-            GUILayout.BeginHorizontal();
-            if (Choice("Stay here", order == Order.Stay, 2)) _pending = () => Change(z => z.Set(Keys.Order, (int)Order.Stay));
-            if (Choice("Guard this spot", order == Order.Guard, 2)) _pending = () => Change(z => { z.Set(Keys.Order, (int)Order.Guard); z.Set(Keys.Post, c.transform.position); });
-            GUILayout.EndHorizontal();
+            OrderButtons(c);
             Note(order switch
             {
-                Order.Gather => "Lives its own life at home: gathers with its tools, stores what it finds in its chests, hunts, cooks, repairs and makes better gear, and defends the place. Set it up in the Home tab.",
-                Order.Stay => "Stays where it is and fights what comes near.",
-                Order.Guard => "Stays by this spot, fights what comes near, and goes back to it after a fight.",
-                _ => "Goes on adventures with you: follows you through portals and on boats, fights beside you, and picks up the loot.",
+                AICompanion.Order.Gather => "Lives its own life at home: works toward better gear (gathers what it needs, makes and upgrades it at your workbench and forge), stores what it finds in its chests, eats, cooks, repairs and defends the place.",
+                AICompanion.Order.Stay => "Stays where it is and fights what comes near.",
+                AICompanion.Order.Guard => "Stays by this spot, fights what comes near, and goes back to it after a fight.",
+                _ => "Goes on adventures with you: follows you through portals and on boats, fights beside you, and picks up the loot. When its bag is full, its gear wears out or its food runs out, it tells you (and goes home by itself when home is near).",
             }, _text);
             EndCard();
 
@@ -422,6 +439,9 @@ namespace AICompanion
             int retreat = Companion.RetreatOf(c);
             Stepper("Falls back below", $"{retreat}% health", () => Change(z => z.Set(Keys.Retreat, Mathf.Clamp(retreat - 5, 0, 90))), () => Change(z => z.Set(Keys.Retreat, Mathf.Clamp(retreat + 5, 0, 90))));
             Note("Below half of that it runs. These are rules, whatever Jev says.", _dim);
+            Stepper("Fights enemies within", $"{EngageRange.Value:0} m", () => { EngageRange.Value = Mathf.Clamp(EngageRange.Value - 5f, 5f, 50f); SaveSettings(); },
+                    () => { EngageRange.Value = Mathf.Clamp(EngageRange.Value + 5f, 5f, 50f); SaveSettings(); });
+            Note("Of it or you (all your companions). Living at home it also fights anything that comes into its home.", _dim);
             bool potions = Companion.Potions(c), protect = Companion.Protect(c);
             if (Check("Drinks healing potions when hurt", potions)) _pending = () => Change(z => z.Set(Keys.Potions, !potions));
             if (Check("Protects you first (goes for what attacks you)", protect)) _pending = () => Change(z => z.Set(Keys.Protect, !protect));
@@ -430,6 +450,8 @@ namespace AICompanion
             BeginCard("Habits");
             bool loot = Loot.On(c), friends = Companion.Zdo(c).GetBool(Keys.Friends, false);
             if (Check("Picks things up off the ground (what, in the Gear tab)", loot)) _pending = () => Change(z => z.Set(Loot.Key, !loot));
+            bool chatty = Talk.Chatty(c);
+            if (Check("Tells you in chat what it is up to (what it makes, what it needs)", chatty)) _pending = () => Change(z => z.Set(Talk.ChattyKey, !chatty));
             if (Mine && Check("Friends can give it orders", friends)) _pending = () => Companion.Write(c, z => z.Set(Keys.Friends, !friends));
             EndCard();
 
@@ -449,15 +471,6 @@ namespace AICompanion
         }
 
         // ==== Home =========================================================================================
-
-        private void StartGathering(Humanoid c)
-        {
-            Change(z =>
-            {
-                z.Set(Keys.Order, (int)Order.Gather);
-                if (!z.GetBool(Keys.HasBed, false)) z.Set(Keys.Post, c.transform.position);
-            });
-        }
 
         private void DrawHome(Humanoid c)
         {
@@ -481,33 +494,40 @@ namespace AICompanion
                 Note($"{Loc(ch.m_name)}: {inv.NrOfItems()} of {inv.GetWidth() * inv.GetHeight()} slots used", _text);
             }
             GUILayout.Space(4);
+            if (Mine && (!bed || chests.Count == 0) && GUILayout.Button(bed ? "Take the empty chests beside its bed" : "Find it a free bed (and empty chests beside it)", _buttonOn, GUILayout.Height(32)))
+                _pending = () => { string took = Home.SetUp(c); if (took != null) Talk.Tell(c, took); else _note = bed ? "No empty chest within 8 m of its bed." : "No free bed within 40 m of it (nobody sleeps in it, no companion has it)."; };
             if (Mine)
             {
                 GUILayout.BeginHorizontal();
-                if (GUILayout.Button("Assign bed and chests", _buttonOn, GUILayout.Height(32))) _pending = () => { Home.StartAssign(c); CloseMenu(); };
+                if (GUILayout.Button("Choose bed and chests", _button, GUILayout.Height(32))) _pending = () => { Home.StartAssign(c); CloseMenu(); };
                 if (bed && GUILayout.Button("Let its bed go", _button, GUILayout.Width(150), GUILayout.Height(32)))
                     _pending = () => { Bed b = Home.BedOf(c); if (b != null) Home.ToggleBed(b, c); else Change(cz => cz.Set(Keys.HasBed, false)); };
                 GUILayout.EndHorizontal();
-                Note($"Closes this menu. Then press E on a bed or a chest to give it to {Companion.NameOf(c)}, E again to take it back. {MenuKey.Value} or Esc when done.", _dim);
+                Note($"Choosing closes this menu: then E on a bed or a chest gives it to {Companion.NameOf(c)}, E again takes it back. {MenuKey.Value} or Esc when done. Going home takes a free bed and empty chests near it by itself.", _dim);
             }
             EndCard();
 
-            bool living = Companion.OrderOf(c) == Order.Gather;
-            BeginCard("Living at home");
-            GUILayout.BeginHorizontal();
-            if (living)
-            {
-                GUILayout.Label("It lives at home now.", _good);
-                GUILayout.FlexibleSpace();
-                if (GUILayout.Button("Follow me instead", _button, GUILayout.Width(170), GUILayout.Height(30))) _pending = () => Change(cz => cz.Set(Keys.Order, (int)Order.Follow));
-            }
+            bool living = Companion.OrderOf(c) == AICompanion.Order.Gather;
+            BeginCard("Working toward");
+            Goal goal = st.Goal;
+            if (!c.GetComponent<ZNetView>().IsOwner()) Note("Shows on the game that runs it.", _dim);
+            else if (goal == null) Note(living ? "Nothing to work toward right now: nothing better to make or upgrade at the stations near its home. Build a workbench (and a forge) near its bed, or give it better tools." : "It picks something to work toward when it goes home.", _dim);
             else
             {
-                GUILayout.Label("It is not living at home.", _dim);
-                GUILayout.FlexibleSpace();
-                if (GUILayout.Button("Live at home", _buttonOn, GUILayout.Width(170), GUILayout.Height(30))) _pending = () => StartGathering(c);
+                Note(Capital(goal.What) + (goal.Station != null ? $", at the {Loc(goal.Station.m_name).ToLowerInvariant()}" : ""), _bold);
+                if (goal.Raw.Count > 0) Note("Gathering: " + goal.RawText(), _text);
+                if (goal.Steps.Count > 0) Note("Then makes: " + string.Join(", ", goal.Steps.Select(s => Loc(s.Key.m_item.m_itemData.m_shared.m_name).ToLowerInvariant())), _text);
+                if (goal.Smelt.Count > 0) Note($"{Capital(string.Join(" and ", goal.Smelt))} need{(goal.Smelt.Count == 1 ? "s" : "")} smelting: it puts the ore in its chest for you (or FeedFromChests) to smelt.", _dim);
+                if (goal.Ask.Count > 0) Note("Needs from you: " + string.Join(", ", goal.Ask) + ". Put it in its chest.", _warn);
             }
-            GUILayout.EndHorizontal();
+            EndCard();
+
+            BeginCard("Living at home");
+            if (!living)
+            {
+                Note("It is not living at home now.", _dim);
+                if (GUILayout.Button("Go home", _buttonOn, GUILayout.Width(170), GUILayout.Height(30))) _pending = () => GiveOrder(h => Home.GoHome(h));
+            }
             Vector3 center = Work.Center(c);
             Note(bed ? "It lives around its bed." : $"With no bed it lives around where it was told to ({center.x:0}, {center.z:0}).", _dim);
             if (!bed && Commandable && GUILayout.Button("Live around where I stand", _button, GUILayout.Width(230), GUILayout.Height(28)))
@@ -517,11 +537,11 @@ namespace AICompanion
             EndCard();
 
             Job jobs = Work.JobsOf(c);
-            BeginCard("What it does at home");
+            BeginCard("Jobs (optional)");
             Job auto = Work.AutoJobs(c);
             Note(jobs == Job.None
-                ? "Nothing ticked: it decides for itself with what it has. Right now: " + (auto == Job.None ? "nothing (no tools, and enough food)." : JobNames(auto) + ".")
-                : "It does only what is ticked. Untick everything to let it decide for itself.", _text);
+                ? "Nothing ticked: it decides for itself, gathering what its goal needs and what its tools allow. Right now: " + (auto == Job.None && goal == null ? "nothing (no tools, and enough food)." : JobNames(auto | Goals.JobsFor(goal, out _)) + ".")
+                : "It does only what is ticked (still preferring what its goal needs). Untick everything to let it decide for itself.", _text);
             foreach (Job job in new[] { Job.Wood, Job.Stone, Job.Ore, Job.Forage, Job.Hunt, Job.Cook, Job.Loot })
             {
                 bool on = (jobs & job) != 0;
@@ -800,7 +820,7 @@ namespace AICompanion
             GUILayout.Label(Mask(key), _text, GUILayout.Width(180));
             if (GUILayout.Button("Paste", _button, GUILayout.Height(28))) _pending = PasteKey;
             if (GUILayout.Button("Test", _button, GUILayout.Height(28))) _pending = () => { _testResult = "Testing…"; StartCoroutine(Jev.Test(r => _testResult = r)); };
-            if (!string.IsNullOrEmpty(key) && GUILayout.Button("Remove", _button, GUILayout.Height(28))) _pending = () => { ApiKey.Value = ""; Config.Save(); _testResult = "Key removed."; };
+            if (!string.IsNullOrEmpty(key) && GUILayout.Button("Remove", _button, GUILayout.Height(28))) _pending = () => { ApiKey.Value = ""; SaveSettings(); _testResult = "Key removed."; };
             GUILayout.EndHorizontal();
             if (!string.IsNullOrEmpty(_testResult)) Note(_testResult, _testResult.StartsWith("Connected") ? _good : _text);
             Note("Copy your key from console.typesafe.ai, then press Paste. It stays in your own settings file.", _dim);
@@ -809,20 +829,23 @@ namespace AICompanion
             BeginCard("Who decides");
             bool usesJev = Companion.UsesJev(c);
             if (Check("This companion asks Jev how to fight", usesJev)) _pending = () => Change(z => z.Set(Keys.UseJev, !usesJev));
-            if (Check("Jev on for all my companions", UseJev.Value)) _pending = () => { UseJev.Value = !UseJev.Value; Config.Save(); };
-            if (Check("Show its decisions above its head", ShowDecisions.Value)) _pending = () => { ShowDecisions.Value = !ShowDecisions.Value; Config.Save(); };
+            if (Check("Jev on for all my companions", UseJev.Value)) _pending = () => { UseJev.Value = !UseJev.Value; SaveSettings(); };
+            if (Check("Show its decisions above its head", ShowDecisions.Value)) _pending = () => { ShowDecisions.Value = !ShowDecisions.Value; SaveSettings(); };
             Note("Without Jev (or when Jev is unsure) a simple built-in brain fights: it keeps its target, finishes the weakest, protects you, and falls back when hurt.", _dim);
             EndCard();
 
-            BeginCard("Tuning");
-            Stepper("Asks Jev every", $"{DecisionSeconds.Value:0.0} s", () => { DecisionSeconds.Value = Mathf.Clamp(DecisionSeconds.Value - 0.5f, 0.5f, 10f); Config.Save(); },
-                    () => { DecisionSeconds.Value = Mathf.Clamp(DecisionSeconds.Value + 0.5f, 0.5f, 10f); Config.Save(); });
+            BeginCard("Advanced");
+            if (GUILayout.Button(_showAdvanced ? "Hide" : "Show Jev's tuning", _button, GUILayout.Width(200), GUILayout.Height(28))) _pending = () => _showAdvanced = !_showAdvanced;
+            if (_showAdvanced)
+            {
+            Stepper("Asks Jev every", $"{DecisionSeconds.Value:0.0} s", () => { DecisionSeconds.Value = Mathf.Clamp(DecisionSeconds.Value - 0.5f, 0.5f, 10f); SaveSettings(); },
+                    () => { DecisionSeconds.Value = Mathf.Clamp(DecisionSeconds.Value + 0.5f, 0.5f, 10f); SaveSettings(); });
             Note("And at once when something big happens: a new enemy, its target dead, a big hit.", _dim);
-            Stepper("Trusts Jev from", $"{MinConfidence.Value * 100f:0}% sure", () => { MinConfidence.Value = Mathf.Clamp01(MinConfidence.Value - 0.05f); Config.Save(); },
-                    () => { MinConfidence.Value = Mathf.Clamp01(MinConfidence.Value + 0.05f); Config.Save(); });
+            Stepper("Trusts Jev from", $"{MinConfidence.Value * 100f:0}% sure", () => { MinConfidence.Value = Mathf.Clamp01(MinConfidence.Value - 0.05f); SaveSettings(); },
+                    () => { MinConfidence.Value = Mathf.Clamp01(MinConfidence.Value + 0.05f); SaveSettings(); });
             Note("Less sure than this, and the built-in brain decides that moment.", _dim);
-            Stepper("Fights enemies within", $"{EngageRange.Value:0} m", () => { EngageRange.Value = Mathf.Clamp(EngageRange.Value - 5f, 5f, 50f); Config.Save(); },
-                    () => { EngageRange.Value = Mathf.Clamp(EngageRange.Value + 5f, 5f, 50f); Config.Save(); });
+            if (Check("Also write every Jev request to a file (BepInEx/AICompanion/jev-decisions.jsonl)", LogToFile.Value)) _pending = () => { LogToFile.Value = !LogToFile.Value; SaveSettings(); };
+            }
             EndCard();
 
             BeginCard("Decision log");
@@ -832,7 +855,6 @@ namespace AICompanion
             if (GUILayout.Button("Ask Jev now", _button, GUILayout.Height(28)))
                 _pending = () => { BrainState bs = Brain.Get(c); if (bs.InCombat) bs.NextAsk = 0f; else _note = "It only asks during a fight."; };
             GUILayout.EndHorizontal();
-            if (Check("Also write every Jev request to a file (BepInEx/AICompanion/jev-decisions.jsonl)", LogToFile.Value)) _pending = () => { LogToFile.Value = !LogToFile.Value; Config.Save(); };
             if (_showLog) DrawLog();
             EndCard();
         }
@@ -888,7 +910,7 @@ namespace AICompanion
             string text = (GUIUtility.systemCopyBuffer ?? "").Trim();
             if (text.Length < 10 || text.Contains(" ") || text.Contains("\n")) { _testResult = "The clipboard does not hold a key. Copy it from console.typesafe.ai first."; return; }
             ApiKey.Value = text;
-            Config.Save();
+            SaveSettings();
             Jev.BlockedUntil = 0f; Jev.InRow = 0; Jev.LastError = "";
             _testResult = "Key saved (" + Mask(text) + "). Press Test to check it.";
         }

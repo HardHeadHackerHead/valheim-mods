@@ -61,12 +61,106 @@ namespace AICompanion
             long owner = z.GetLong(ZDOVars.s_owner, 0L);
             if (owner != 0L) { Plugin.Tell($"That bed is {z.GetString(ZDOVars.s_ownerName, "someone")}'s. Give {Companion.NameOf(c)} a bed nobody sleeps in."); return; }
             if (z.GetLong(HomeKey, 0L) != 0L) { Plugin.Tell($"That bed is {z.GetString(HomeName, "another companion")}'s"); return; }
-            foreach (Bed old in Object.FindObjectsOfType<Bed>()) if (old != bed && IdOn(old) == id) { Claim(old); Companion.Zdo(old).Set(HomeKey, 0L); }
+            GiveBed(bed, c);
+            Plugin.Tell($"This is {Companion.NameOf(c)}'s bed now: {Companion.NameOf(c)} wakes here after falling");
+        }
+
+        private static bool FreeBed(Bed b) { ZDO z = Companion.Zdo(b); return z != null && z.GetLong(ZDOVars.s_owner, 0L) == 0L && z.GetLong(HomeKey, 0L) == 0L; }
+
+        private static void GiveBed(Bed bed, Humanoid c)
+        {
+            long id = Companion.IdOf(c);
+            foreach (Bed old in Object.FindObjectsOfType<Bed>()) if (old != bed && IdOn(old) == id) { Claim(old); Companion.Zdo(old).Set(HomeKey, 0L); Companion.Zdo(old).Set(HomeName, ""); }
+            ZDO z = Companion.Zdo(bed);
             Claim(bed); z.Set(HomeKey, id); z.Set(HomeName, Companion.NameOf(c));
             Vector3 spot = bed.GetSpawnPoint();
             Companion.Write(c, cz => { cz.Set(Keys.HasBed, true); cz.Set(Keys.BedPos, spot); });
-            Plugin.Tell($"This is {Companion.NameOf(c)}'s bed now: {Companion.NameOf(c)} wakes here after falling");
             Plugin.Instance?.Note($"{Companion.NameOf(c)} was given the bed at {spot:F0}");
+        }
+
+        private static void GiveChest(Container chest, Humanoid c)
+        {
+            Claim(chest);
+            Companion.Zdo(chest).Set(HomeKey, Companion.IdOf(c));
+            Companion.Zdo(chest).Set(HomeName, Companion.NameOf(c));
+            _chestCache.Clear();
+        }
+
+        /// <summary>
+        /// Setting up home in one step: with no bed it takes the nearest free bed (nobody sleeps in it, no companion has it) within 40 m, and
+        /// with no chests the empty chests (up to two) within 8 m of its bed. What it took, in its own words ("I've taken ..."), or null.
+        /// Change them in the Home tab as before.
+        /// </summary>
+        public static string SetUp(Humanoid c)
+        {
+            ZDO z = Companion.Zdo(c);
+            if (z == null) return null;
+            var took = new List<string>();
+            Vector3 from = c.transform.position;
+            Bed bed = null;
+            if (!z.GetBool(Keys.HasBed, false))
+            {
+                bed = Object.FindObjectsOfType<Bed>().Where(b => FreeBed(b) && Vector3.Distance(b.transform.position, from) < 40f)
+                            .OrderBy(b => Vector3.Distance(b.transform.position, from)).FirstOrDefault();
+                if (bed != null) { GiveBed(bed, c); took.Add($"the free bed {Vector3.Distance(bed.transform.position, from):0} m from here"); }
+            }
+            else bed = BedOf(c);
+            if (bed != null && Chests(c).Count == 0)
+            {
+                Vector3 at = bed.transform.position;
+                List<Container> empty = Object.FindObjectsOfType<Container>()
+                    .Where(x => IsChest(x) && IdOn(x) == 0L && !x.IsInUse() && x.GetInventory().NrOfItems() == 0 && Vector3.Distance(x.transform.position, at) < 8f)
+                    .OrderBy(x => Vector3.Distance(x.transform.position, at)).Take(2).ToList();
+                foreach (Container ch in empty) GiveChest(ch, c);
+                if (empty.Count > 0) took.Add(empty.Count == 1 ? "the empty chest beside it" : "the two empty chests beside it");
+            }
+            return took.Count == 0 ? null : $"I've taken {string.Join(" and ", took)}. Change them in my Home tab.";
+        }
+
+        // ---- the two orders ----------------------------------------------------------------------------------
+
+        /// <summary>Come with me: it follows you on your adventure.</summary>
+        public static bool Follow(Humanoid c)
+        {
+            bool ok = Companion.Write(c, z => z.Set(Keys.Order, (int)Order.Follow));
+            if (ok) Brain.Get(c).Remember("you called it to come with you");
+            return ok;
+        }
+
+        /// <summary>
+        /// Go home and live there: to its bed (it takes a free one near it the first time, and empty chests beside it), or, with no bed
+        /// anywhere, around where it stands. Far from home, it sets off and is there a few seconds later (Work: TravelHome).
+        /// </summary>
+        public static bool GoHome(Humanoid c, bool quiet = false)
+        {
+            string setUp = Companion.Zdo(c)?.GetBool(Keys.HasBed, false) == true && Chests(c).Count > 0 ? null : SetUp(c);
+            bool ok = Companion.Write(c, z =>
+            {
+                z.Set(Keys.Order, (int)Order.Gather);
+                if (!z.GetBool(Keys.HasBed, false)) z.Set(Keys.Post, c.transform.position);
+            });
+            if (!ok) return false;
+            Brain.Get(c).Remember("you sent it home");
+            bool bed = Companion.Zdo(c).GetBool(Keys.HasBed, false);
+            if (setUp != null) Talk.Tell(c, setUp);
+            else if (!bed && !quiet) Talk.Tell(c, "There's no free bed near here, so I'll live around this spot. Give me a bed in my Home tab and I'll make it my home.", "nobed", 10f);
+            return true;
+        }
+
+        /// <summary>Holding the menu key: your companions near you all come with you, or (when any of them is with you already) all go home.</summary>
+        public static void ToggleAll(Player p)
+        {
+            var near = Companion.All().Where(c => Companion.IsMine(c, p) && !c.IsDead() && Vector3.Distance(c.transform.position, p.transform.position) < 100f).ToList();
+            if (near.Count == 0) { Plugin.Tell("None of your companions is near. Go to them, or summon one (tap " + Plugin.MenuKey.Value + ")."); return; }
+            bool home = near.Any(c => Companion.OrderOf(c) == Order.Follow);
+            foreach (Humanoid c in near)
+            {
+                if (home) { if (GoHome(c, true)) Talk.Say(c, "Heading home."); }
+                else if (Follow(c)) Talk.Say(c, "Right behind you.");
+            }
+            string names = string.Join(" and ", near.Select(Companion.NameOf));
+            Plugin.Tell(home ? $"{names} {(near.Count == 1 ? "goes" : "go")} home. Hold {Plugin.MenuKey.Value} again to call {(near.Count == 1 ? "them" : "them all")} back."
+                             : $"{names} {(near.Count == 1 ? "comes" : "come")} with you");
         }
 
         /// <summary>E on a chest while assigning: it becomes one of the companion's chests, or stops being one.</summary>
@@ -172,6 +266,7 @@ namespace AICompanion
             Profile.Save(p, prof);
             string where = prof.HasBed ? $"in {(prof.Model == 1 ? "her" : "his")} bed" : "beside you";
             Plugin.Tell($"{prof.Name} wakes up {where}");
+            if (prof.HasGrave) Talk.Tell(c, "I'm up. I'll go and get my things from my tombstone.", "woke", 0.5f);
             Plugin.Instance?.Note($"{prof.Name} woke {where} at {pos:F0}");
             return c;
         }

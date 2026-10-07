@@ -103,7 +103,7 @@ namespace AICompanion
             st.NextGear = 0f; // wear it again now
             st.Remember(left == 0 ? $"got all its things back from its tombstone ({took})" : $"took {took} things from its tombstone; {left} did not fit");
             Plugin.Instance?.Note($"{Companion.NameOf(me)} took {took} item stacks back from its tombstone ({left} left)");
-            if (Companion.Master(me) == Player.m_localPlayer) Plugin.Tell($"{Companion.NameOf(me)} got their things back from their tombstone");
+            Talk.Tell(me, "Got my things back from my tombstone.");
             st.NextGraveLook = Time.time + (left > 0 ? 30f : 2f);
             return false;
         }

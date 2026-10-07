@@ -17,7 +17,7 @@ namespace AICompanion
     /// </summary>
     internal static class Net
     {
-        private const string RpcStats = "DHack_CompanionStats", RpcFallen = "DHack_CompanionFallen", RpcCleared = "DHack_CompanionGearTaken";
+        private const string RpcStats = "DHack_CompanionStats", RpcFallen = "DHack_CompanionFallen", RpcCleared = "DHack_CompanionGearTaken", RpcSays = "DHack_CompanionSays";
         public const string CrateKey = "dhc_fallen";
         private const string MarkerSuffix = " fell here";
 
@@ -59,6 +59,7 @@ namespace AICompanion
                 rpc.Register<string>(RpcStats, OnStats);
                 rpc.Register<string>(RpcFallen, OnFallen);
                 rpc.Register<string>(RpcCleared, OnCleared);
+                rpc.Register<string>(RpcSays, OnSays);
             }
             if (me == null) return;
 
@@ -117,7 +118,21 @@ namespace AICompanion
         {
             if (ZRoutedRpc.instance == null) return;
             var table = AccessTools.Field(typeof(ZRoutedRpc), "m_functions").GetValue(ZRoutedRpc.instance) as IDictionary;
-            foreach (string name in new[] { RpcStats, RpcFallen, RpcCleared }) table?.Remove(name.GetStableHashCode());
+            foreach (string name in new[] { RpcStats, RpcFallen, RpcCleared, RpcSays }) table?.Remove(name.GetStableHashCode());
+        }
+
+        /// <summary>A companion's words for its player, from the game running it: "masterId|name|text".</summary>
+        public static void SendSays(long masterId, string name, string text)
+        {
+            if (masterId == 0L || ZNet.instance == null || ZNet.instance.GetPlayerList().Count < 2) return;
+            Send(RpcSays, masterId.ToString(CultureInfo.InvariantCulture) + "|" + Clean(name) + "|" + text.Replace('\n', ' '));
+        }
+
+        private static void OnSays(long sender, string payload)
+        {
+            string[] f = payload.Split(new[] { '|' }, 3);
+            if (f.Length < 3 || !long.TryParse(f[0], NumberStyles.Integer, CultureInfo.InvariantCulture, out long master)) return;
+            if (Player.m_localPlayer != null && Player.m_localPlayer.GetPlayerID() == master) Talk.ToChat(f[1], f[2]);
         }
 
         private static void Send(string rpc, string payload)

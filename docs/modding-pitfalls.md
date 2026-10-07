@@ -59,3 +59,11 @@ V auto-pickup, X sit, C walk, Q auto-run and previous tab, G radial menu, F fors
 
 These bugs only show on a fresh launch. Before releasing a mod that registers prefabs or changes the player, quit the game fully,
 start it again, and check the log for `Missing prefab hash` and `invalid positioned items`.
+
+## Count a recipe's cost as the game does
+
+Since the battle idols arrived, a recipe's `m_resources` also lists items marked `m_upgraderResource` (the flint axe lists 1
+`Upgrader1Weapon`). The game counts a requirement only when that flag matches the station's `m_upgrader` (see
+`Player.HaveRequirementItems`, `ConsumeResources`): at a workbench or forge the idols are left out, at an upgrader station only they count.
+Code that reads `m_resources` directly thinks every recipe needs an idol, so nothing can be made (AICompanion 0.5.0's companion never
+crafted or upgraded). Filter them out as AICompanion's `Upgrades.Needs` does.

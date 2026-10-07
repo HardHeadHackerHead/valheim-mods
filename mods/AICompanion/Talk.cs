@@ -1,5 +1,6 @@
 using System;
 using System.Collections;
+using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using HarmonyLib;
@@ -110,14 +111,14 @@ namespace AICompanion
             bool ok = true;
             switch (intent)
             {
-                case "follow": ok = Companion.Write(c, z => z.Set(Keys.Order, (int)Order.Follow)); break;
+                case "follow": ok = Home.Follow(c); break;
                 case "come":
-                    ok = Companion.Write(c, z => z.Set(Keys.Order, (int)Order.Follow));
+                    ok = Home.Follow(c);
                     if (ok && Vector3.Distance(c.transform.position, me.transform.position) > 15f) Brain.TeleportBehind(c, me, "came to");
                     break;
                 case "stay": ok = Companion.Write(c, z => z.Set(Keys.Order, (int)Order.Stay)); break;
                 case "guard": ok = Companion.Write(c, z => { z.Set(Keys.Order, (int)Order.Guard); z.Set(Keys.Post, c.transform.position); }); break;
-                case "home": ok = Companion.Write(c, z => { z.Set(Keys.Order, (int)Order.Gather); if (!z.GetBool(Keys.HasBed, false)) z.Set(Keys.Post, c.transform.position); }); break;
+                case "home": ok = Home.GoHome(c, true); break;
                 case "aggressive": ok = Companion.Write(c, z => z.Set(Keys.Style, (int)Style.Aggressive)); break;
                 case "defensive": ok = Companion.Write(c, z => z.Set(Keys.Style, (int)Style.Defensive)); break;
                 case "passive": ok = Companion.Write(c, z => z.Set(Keys.Style, (int)Style.Passive)); break;
@@ -133,10 +134,51 @@ namespace AICompanion
             Plugin.Instance?.Note($"{me.GetPlayerName()} told {Companion.NameOf(c)} \"{said}\" -> {intent}");
         }
 
-        private static void Say(Humanoid c, string text)
+        /// <summary>Words above its head (on this game).</summary>
+        internal static void Say(Humanoid c, string text)
         {
-            if (Chat.instance != null) Chat.instance.SetNpcText(c.gameObject, Vector3.up * 2.3f, 30f, 4f, "", text, false);
+            if (c != null && Chat.instance != null) Chat.instance.SetNpcText(c.gameObject, Vector3.up * 2.3f, 30f, 5f, "", text, false);
         }
+
+        // ---- telling its player what it is up to ----------------------------------------------------------------
+
+        public const string ChattyKey = "dhc_chatty";
+        public static bool Chatty(Component c) => Companion.Zdo(c)?.GetBool(ChattyKey, true) ?? true;
+
+        private static readonly Dictionary<string, float> LastSaid = new Dictionary<string, float>();
+        private static readonly AccessTools.FieldRef<Chat, float> HideTimer =
+            AccessTools.Field(typeof(Chat), "m_hideTimer") != null ? AccessTools.FieldRefAccess<Chat, float>("m_hideTimer") : null;
+
+        /// <summary>
+        /// It tells its player something in chat ("Rádvar: my bag is full, I'm taking it home"), and says it above its head. With a topic,
+        /// not again about the same thing for that many minutes. Its player sees it wherever they are (the game running it may be another
+        /// player's: then it goes over the network). Off with "Tells you what it is up to" in its Orders tab.
+        /// </summary>
+        public static void Tell(Humanoid c, string text, string topic = null, float minutes = 0f)
+        {
+            if (c == null || string.IsNullOrEmpty(text)) return;
+            if (topic != null)
+            {
+                string key = Companion.IdOf(c) + ":" + topic;
+                if (LastSaid.TryGetValue(key, out float at) && Time.time - at < minutes * 60f) return;
+                LastSaid[key] = Time.time;
+            }
+            Say(c, text);
+            if (!Chatty(c)) return;
+            Player local = Player.m_localPlayer;
+            if (local != null && Companion.IsMine(c, local)) ToChat(Companion.NameOf(c), text);
+            else Net.SendSays(Companion.MasterId(c), Companion.NameOf(c), text);
+        }
+
+        /// <summary>A line in the chat window from a companion, shown even when the window was hidden.</summary>
+        public static void ToChat(string name, string text)
+        {
+            if (Chat.instance == null) return;
+            Chat.instance.AddString(name, text, Talker.Type.Normal);
+            if (HideTimer != null) HideTimer(Chat.instance) = 0f;
+        }
+
+        public static void Forget() => LastSaid.Clear();
     }
 
     [HarmonyPatch(typeof(Chat), nameof(Chat.SendText))]

@@ -72,6 +72,9 @@ namespace AICompanion
         public readonly List<KeyValuePair<ItemDrop, float>> LootDrops = new List<KeyValuePair<ItemDrop, float>>(); // what the world dropped near it
         public Vector3 CookedAt;
         public float NextPassBy;
+        public Goal Goal;                                           // what it is working toward (Goals)
+        public string GoalSaid;
+        public float NextFoodLook, NextNeedLook, MasterGoneSince, TripStart;      // looking after itself (Needs), the trip home (Work)
         public readonly HashSet<string> Wanted = new HashSet<string>();                  // what its work drops (to pick up)
         public readonly Dictionary<int, float> Skipped = new Dictionary<int, float>();    // things it gave up on, until when
         public readonly Dictionary<string, int> Gathered = new Dictionary<string, int>(); // this session, for the Work tab
@@ -200,6 +203,7 @@ namespace AICompanion
             if (Loot.Tick(st, (p, dd, run) => MoveTo(st.Ai, dt, p, dd, run))) return;                          // what the fight dropped
             if (Grave.Tick(st, (p, dd, run) => MoveTo(st.Ai, dt, p, dd, run), () => st.Ai.StopMoving())) return; // its things back
             if (Repair.Tick(st, (p, dd, run) => MoveTo(st.Ai, dt, p, dd, run), () => st.Ai.StopMoving())) return;
+            Needs.Tick(st, master);                                                                               // a full bag, worn gear, no food
             switch (Companion.OrderOf(me))
             {
                 case Order.Stay:
@@ -275,6 +279,7 @@ namespace AICompanion
                 }
                 else p.y = t.position.y;
                 if (Physics.CheckCapsule(p + Vector3.up * 0.6f, p + Vector3.up * 1.6f, 0.35f, Solid)) continue; // something in the way
+                if (!Steer.Safe(p, null)) continue;                                                                // never onto the stakes
                 return p;
             }
             return t.position - t.forward * 0.8f;
@@ -298,7 +303,11 @@ namespace AICompanion
                 float toMaster = master != null ? Vector3.Distance(c.transform.position, master.transform.position) : float.MaxValue;
                 float limit = style == Style.Defensive ? range * 0.6f : range;
                 // Living at home it defends its home: anything that comes within its radius (a raid on the base), not only what is near it.
-                bool home = Companion.OrderOf(me) == Order.Gather && Vector3.Distance(c.transform.position, Work.Center(me)) < Work.RadiusOf(me);
+                // Only what is out to hurt someone (it has a target, or is alerted): not every boar and neck grazing within its home, which
+                // kept it fighting all day.
+                BaseAI their = c.GetComponent<BaseAI>();
+                bool home = Companion.OrderOf(me) == Order.Gather && Vector3.Distance(c.transform.position, Work.Center(me)) < Work.RadiusOf(me)
+                            && (TargetOf(c) != null || (their != null && their.IsAlerted()));
                 if (toMe < limit || toMaster < limit || home) st.Enemies.Add(c);
             }
             st.Enemies.Sort((a, b) => Vector3.Distance(a.transform.position, me.transform.position).CompareTo(Vector3.Distance(b.transform.position, me.transform.position)));
