@@ -1,3 +1,5 @@
+chests (the chests around you: contents, QualityOfLife assignment, whose) and chestrule (set a chest's assignment, nothing in it touched).
+
 New: render (a picture of any piece, item or creature on its own, with its real materials, from any angle or close up, without placing it), inspect (what an object is made of), errors (new errors since the last check) and waitfor (wait until a rebuilt mod has reloaded).
 
 First version: the request mailbox (BepInEx/claude/requests), pictures, surveys, status, inventory, nearby, looking, mods, settings, log, messages and map pins, and commands added by other mods (BuildOrders adds its blueprint commands).

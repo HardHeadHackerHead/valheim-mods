@@ -479,6 +479,14 @@ namespace QualityOfLife
                 {
                     var undo = new Rect(x, y, 80f * scale, h);
                     if (StackButton(undo, "Undo")) { Player p = player; _pending = () => UndoStack(p); }
+                    x = undo.xMax + 6f * scale;
+                }
+
+                // Sort chests: everything in the chests around you goes to the chest assigned it (only when some chest is assigned something).
+                if (AnyAssignedChest())
+                {
+                    var sortChests = new Rect(x, y, 110f * scale, h);
+                    if (StackButton(sortChests, "Sort chests")) { Player p = player; _pending = () => SortChests(p); }
                 }
 
                 if (Event.current.type == EventType.Repaint)

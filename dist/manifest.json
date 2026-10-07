@@ -55,9 +55,9 @@
                  {
                      "guid":  "com.dhack.claudetools",
                      "name":  "ClaudeTools",
-                     "version":  "1.1.0",
+                     "version":  "1.1.1",
                      "description":  "Lets an AI assistant like Claude Code see your game and help you, through files on your computer: no network port, and it never moves your character or presses keys.\n\nHow it works\n- The assistant writes a request (a text file of commands) into BepInEx/claude/requests. While you are in a world, the game carries it out and writes the answer next to it. Pictures go to BepInEx/claude/shots.\n- It can take pictures (your view, a separate camera anywhere, all round a place, straight down), survey the ground, and find out your status, inventory, what is nearby, what you are looking at, which mods are running, their settings and the log. It can show you a message and put a pin on your map.\n- Other mods add their own commands. With BuildOrders, the assistant can design blueprints, place them, photograph and check them.\n- F12 saves a screenshot for the assistant; Ctrl+F12 surveys the ground where you look.\n- The assistant\u0027s guide is written to BepInEx/claude/CLAUDE.md: start Claude Code in that folder (or in BepInEx/blueprints to design builds).\n\nRequests are off until you switch AllowRequests on (BepInEx/config/com.dhack.claudetools.cfg). Changing mods\u0027 settings by request needs AllowConfigChanges as well. Only switch requests on while you work with an assistant.",
-                     "notes":  "New: render (a picture of any piece, item or creature on its own, with its real materials, from any angle or close up, without placing it), inspect (what an object is made of), errors (new errors since the last check) and waitfor (wait until a rebuilt mod has reloaded).",
+                     "notes":  "chests (the chests around you: contents, QualityOfLife assignment, whose) and chestrule (set a chest\u0027s assignment, nothing in it touched).",
                      "restart":  "",
                      "cover":  "ClaudeTools.cover.png",
                      "files":  [
@@ -146,9 +146,9 @@
                  {
                      "guid":  "com.dhack.qualityoflife",
                      "name":  "QualityOfLife",
-                     "version":  "1.6.1",
+                     "version":  "1.7.0",
                      "description":  "Small controls that make the game nicer to play, each with its own switch.\r\n\r\nWhat is in it\r\n- Q: build a quick set from items you hover in your inventory; outside the inventory it swaps to the set and back.\r\n- B: jump into construction mode with your hammer, and back to what you had.\r\n- Sort: a button under your inventory joins split stacks and puts everything in order (hotbar and gear slots stay put).\r\n- Stack to chests: a button under your inventory moves matching items into nearby chests, with Undo and sounds.\r\n- K opens the chest assignment menu (choose what each chest receives); L locks items so they are never stacked.\r\n- Boat push: tap or hold P next to a boat to shove it where you look (gentle, with a speed cap).\r\n- Far zoom: scroll the camera out to 20 m on foot and 40 m on a boat (the game stops at 6); the steps grow as you zoom out.\r\nKeys are configurable. Q and B work while you are running.",
-                     "notes":  "Stack to chests (and companions sorting into your chests) no longer puts anything into a chest a companion has taken as its own: its chest held wood, so all the wood went there.",
+                     "notes":  "Looking at a chest now shows what it receives by name (\"Receives: Wood, Finewood\" and up to three more on the line below, then \"+N more\") instead of \"2 items\".",
                      "restart":  "",
                      "cover":  "QualityOfLife.cover.png",
                      "files":  [

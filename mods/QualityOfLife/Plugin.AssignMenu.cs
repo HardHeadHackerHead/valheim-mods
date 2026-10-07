@@ -164,7 +164,7 @@ namespace QualityOfLife
             foreach (string c in Categories.All.Where(rules.Categories.Contains)) chips.Add(new KeyValuePair<string, Color>(c, CategoryChip));
 
             // Individual items: show a few by name, then "+N more" so a long list can't take over the screen.
-            List<string> names = rules.Items.Select(n => Localization.instance.Localize(n)).OrderBy(n => n, StringComparer.OrdinalIgnoreCase).ToList();
+            List<string> names = rules.Items.Select(ItemDisplayName).OrderBy(n => n, StringComparer.OrdinalIgnoreCase).ToList();
             foreach (string n in names.Take(6)) chips.Add(new KeyValuePair<string, Color>(n, ItemChip));
             if (names.Count > 6) chips.Add(new KeyValuePair<string, Color>($"+{names.Count - 6} more", ItemChip));
             return chips;
@@ -216,9 +216,16 @@ namespace QualityOfLife
                 string text = "";
                 if (!rules.IsEmpty)
                 {
+                    // Its categories, then its items by name: two on the first line, up to three more on the next, then "+N more".
                     var parts = new List<string>(Categories.All.Where(rules.Categories.Contains));
-                    if (rules.Items.Count > 0) parts.Add(rules.Items.Count == 1 ? "1 item" : $"{rules.Items.Count} items");
-                    text = "\n<color=#F2C75A>Receives:</color> " + string.Join(", ", parts.ToArray());
+                    parts.AddRange(rules.Items.Select(ItemDisplayName).OrderBy(n => n, StringComparer.OrdinalIgnoreCase));
+                    const int firstLine = 2, shown = 5;
+                    text = "\n<color=#F2C75A>Receives:</color> " + string.Join(", ", parts.Take(firstLine).ToArray());
+                    if (parts.Count > firstLine)
+                    {
+                        text += ",\n" + string.Join(", ", parts.Skip(firstLine).Take(shown - firstLine).ToArray());
+                        if (parts.Count > shown) text += $" <color=#BBBBBB>+{parts.Count - shown} more</color>";
+                    }
                 }
                 plugin._hoverChest = chest;
                 plugin._hoverText = text;
@@ -226,6 +233,15 @@ namespace QualityOfLife
                 return text;
             }
             catch (Exception) { return ""; }
+        }
+
+        /// <summary>An item's name as the game shows it; an item the game has no name for (not in this version) gets a tidied form of its key.</summary>
+        private static string ItemDisplayName(string itemName)
+        {
+            string shown = Localization.instance.Localize(itemName);
+            if (!string.IsNullOrEmpty(shown) && !shown.Contains("[")) return shown;
+            string plain = (itemName ?? "").Replace("$item_", "").Replace("$", "").Replace('_', ' ').Trim();
+            return plain.Length > 0 ? char.ToUpperInvariant(plain[0]) + plain.Substring(1) : itemName;
         }
 
         private Container _hoverChest;

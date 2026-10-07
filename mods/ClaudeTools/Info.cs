@@ -124,6 +124,53 @@ namespace ClaudeTools
                 return null;
             });
 
+            // Chests and their QualityOfLife assignments ("Stack to chests" rules, the K menu): looked at, and set, without touching what is in them.
+            int rulesKey = "DHack_StackRules".GetStableHashCode();
+            Builtin("chests", "chests [radius]: the chests around the player: where, what is in them (by name and by the game's item name), their assignment (QualityOfLife), whose", (a, output, error) =>
+            {
+                Player p = Player.m_localPlayer;
+                Vector3 me = p.transform.position;
+                float radius = Mathf.Clamp(F(a, 1, 15f), 2f, 60f);
+                var list = new JArray();
+                foreach (Container c in UnityEngine.Object.FindObjectsByType<Container>(FindObjectsSortMode.None)
+                             .Where(c => c != null && c.GetComponentInParent<Piece>() != null && c.GetComponent<TombStone>() == null && Vector3.Distance(c.transform.position, me) <= radius)
+                             .OrderBy(c => Vector3.Distance(c.transform.position, me)))
+                {
+                    ZNetView v = c.GetComponent<ZNetView>();
+                    ZDO z = v != null && v.IsValid() ? v.GetZDO() : null;
+                    var contents = c.GetInventory().GetAllItems().GroupBy(i => i.m_shared.m_name)
+                        .Select(g => $"{Localization.instance.Localize(g.Key)} x{g.Sum(i => i.m_stack)} ({g.Key})").ToArray();
+                    list.Add(new JObject
+                    {
+                        ["chest"] = Utils.GetPrefabName(c.gameObject), ["position"] = Vec(c.transform.position), ["distance"] = Math.Round(Vector3.Distance(c.transform.position, me), 1),
+                        ["slots"] = $"{c.GetInventory().NrOfItems()}/{c.GetInventory().GetWidth() * c.GetInventory().GetHeight()}",
+                        ["rule"] = z?.GetString(rulesKey, "") ?? "", ["companions"] = (z?.GetLong("dhc_home", 0L) ?? 0L) != 0L ? z.GetString("dhc_homename", "a companion's") : "",
+                        ["contents"] = new JArray(contents),
+                    });
+                }
+                output(new JObject { ["radius"] = radius, ["chests"] = list });
+                return null;
+            });
+
+            Builtin("chestrule", "chestrule <x> <y> <z> <rule>: set the QualityOfLife assignment of the chest at x,y,z (\"C=Food,Tools|I=$item_wood\"; \"-\" clears it). Only the assignment: nothing in the chest is touched", (a, output, error) =>
+            {
+                if (a.Length < 5) { error("chestrule <x> <y> <z> <rule>   (rule: C=<categories>|I=<item names>, or - to clear)"); return null; }
+                var at = new Vector3(F(a, 1, 0f), F(a, 2, 0f), F(a, 3, 0f));
+                string rule = string.Join(" ", a.Skip(4)).Trim();
+                if (rule == "-") rule = "";
+                Container c = UnityEngine.Object.FindObjectsByType<Container>(FindObjectsSortMode.None)
+                    .Where(k => k != null && k.GetComponentInParent<Piece>() != null && Vector3.Distance(k.transform.position, at) < 0.5f)
+                    .OrderBy(k => Vector3.Distance(k.transform.position, at)).FirstOrDefault(); // (exactly that one: chests stacked on each other share x and z)
+                if (c == null) { error($"no chest at {at}"); return null; }
+                if (c.IsInUse()) { error("someone has that chest open"); return null; }
+                ZNetView v = c.GetComponent<ZNetView>();
+                if (v == null || !v.IsValid()) { error("that chest is not ready"); return null; }
+                if (!v.IsOwner()) v.ClaimOwnership();
+                v.GetZDO().Set(rulesKey, rule);
+                output(new JObject { ["chest"] = Utils.GetPrefabName(c.gameObject), ["position"] = Vec(c.transform.position), ["rule"] = rule });
+                return null;
+            });
+
             Builtin("looking", "looking: what the player's crosshair is on (name, kind, distance, health)", (a, output, error) =>
             {
                 if (GameCamera.instance == null) { error("no camera"); return null; }
