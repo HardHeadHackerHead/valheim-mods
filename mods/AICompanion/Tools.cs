@@ -107,6 +107,11 @@ namespace AICompanion
                     yield break;
                 case "archery":
                     var arrows = new JArray();
+                    foreach (string name in new[] { "AxeStone", "AxeFlint", "AxeBronze", "PickaxeAntler", "Club" })
+                    {
+                        Attack m = ObjectDB.instance.GetItemPrefab(name)?.GetComponent<ItemDrop>()?.m_itemData.m_shared.m_attack;
+                        if (m != null) arrows.Add($"{name}: range {m.m_attackRange:0.##}, height {m.m_attackHeight:0.##}, ray width {m.m_attackRayWidth:0.##}, angle {m.m_attackAngle:0}, offset {m.m_attackOffset:0.##}, type {m.m_attackType}, origin '{m.m_attackOriginJoint}'");
+                    }
                     foreach (string name in new[] { "Bow", "BowFineWood", "ArrowWood", "ArrowFlint", "ArrowFire", "ArrowBronze" })
                     {
                         GameObject go = ObjectDB.instance.GetItemPrefab(name);
@@ -230,6 +235,7 @@ namespace AICompanion
                 ["effects"] = new JArray(c.GetSEMan().GetStatusEffects().Where(se => se != null).Select(se => L(se.m_name))),
                 ["hazards_near"] = Steer.HazardsNear(c),
                 ["move"] = Move(c, t?.Target),
+                ["slots"] = new JArray(Companion.Worn(c).Select(i => $"{L(i.m_shared.m_name)} (in bag: {c.GetInventory().ContainsItem(i)}, flag {i.m_equipped}, game says equipped: {c.IsItemEquiped(i)})")),
                 ["bag"] = new JArray(c.GetInventory().GetAllItems().Select(i => $"{L(i.m_shared.m_name)} x{i.m_stack}{(Companion.Worn(c).Contains(i) ? " (worn)" : "")}{(i.m_shared.m_useDurability && i.GetMaxDurability() > 0f ? $" {i.m_durability / i.GetMaxDurability() * 100f:0}%" : "")}")),
                 ["chests"] = new JArray(Home.Chests(c).Select(ch => $"{Vector3.Distance(ch.transform.position, center):0} m from home: {ch.GetInventory().NrOfItems()} stacks: " + string.Join(", ", ch.GetInventory().GetAllItems().Take(12).Select(i => $"{L(i.m_shared.m_name)} x{i.m_stack}")))),
                 ["cooking_near_home"] = new JArray(UnityEngine.Object.FindObjectsByType<CookingStation>(FindObjectsSortMode.None).Where(s => Vector3.Distance(s.transform.position, center) < Work.RadiusOf(c) + 10f).Select(s => $"{L(s.m_name)} {Vector3.Distance(s.transform.position, center):0} m from home")),

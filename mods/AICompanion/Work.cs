@@ -35,6 +35,9 @@ namespace AICompanion
             public bool ForGoal;             // toward its goal (Goals)
             public bool Edible;              // food (or raw food to cook), when it forages
             public bool Trip;                // beyond its home's radius, for its goal
+            public float Closer = 1f;        // how much closer than usual it stands (it steps in when its swings do nothing)
+            public int Swings;
+            public float HealthAt = -1f;     // the target's health when it last checked its swings
             public float Started, LastClose;
         }
 
@@ -173,18 +176,24 @@ namespace AICompanion
                     ItemDrop.ItemData tool = t.Job == Job.Wood ? Axe(me) : Pickaxe(me);
                     if (tool == null) { st.Task = null; break; }
                     st.WorkTool = tool;
-                    float reach = Mathf.Max(1.1f, (tool.m_shared.m_attack?.m_attackRange ?? 1.5f) * 0.75f) + (t.Target is TreeBase ? 0.4f : 0f); // (to a trunk's middle)
-                    if (dist > reach) { moveTo(at, reach * 0.7f, dist > 8f); break; }
+                    // How close, by what it is: well inside its swing (axes reach 2.2 m, pickaxes 1.8, to the surface), closer for small things
+                    // (a sapling, a stump, a small rock), and closer still when its swings do nothing (Closer). Aimed at the middle of its height:
+                    // a waist-high swing passes over a sapling.
+                    Bounds size = Size(t.Target);
+                    float big = Mathf.InverseLerp(0.6f, 3f, Mathf.Max(size.size.x, size.size.z, size.size.y * 0.5f));
+                    float reach = Mathf.Lerp(0.6f, Mathf.Min(1.3f, (tool.m_shared.m_attack?.m_attackRange ?? 1.8f) * 0.6f), big) * t.Closer;
+                    if (dist > reach) { moveTo(at, reach * 0.5f, dist > 8f); break; }
                     t.LastClose = Time.time;
                     stop();
-                    Vector3 aim = at + Vector3.up * (t.Job == Job.Wood ? 1f : 0.4f);
+                    float tall = size.size.y > 0.01f ? size.max.y - at.y : 2f;
+                    Vector3 aim = at + Vector3.up * Mathf.Clamp(tall * 0.5f, 0.25f, t.Job == Job.Wood ? 1f : 0.6f);
                     lookAt(aim);
                     if (!me.IsItemEquiped(tool) || me.InAttack() || !st.Ai.IsLookingAt(aim, 25f)) break;
                     float cost = tool.m_shared.m_attack?.m_attackStamina ?? 0f;
                     if (Stamina.Get(me) < cost + 1f) { Brain.Status(st, "catching its breath"); break; }
                     if (me.GetTimeSinceLastAttack() < 0.5f) break;
                     st.WorkSpot = at;
-                    me.StartAttack(null, false);
+                    if (me.StartAttack(null, false)) Missing(st, t);
                     break;
 
                 case Kind.Store:
@@ -263,6 +272,36 @@ namespace AICompanion
             return true;
         }
 
+        /// <summary>The size of what it works on (its solid colliders together).</summary>
+        private static Bounds Size(Component c)
+        {
+            Bounds b = new Bounds(c.transform.position, Vector3.zero);
+            bool any = false;
+            foreach (Collider col in c.GetComponentsInChildren<Collider>())
+            {
+                if (col == null || !col.enabled || col.isTrigger) continue;
+                if (!any) { b = col.bounds; any = true; } else b.Encapsulate(col.bounds);
+            }
+            return b;
+        }
+
+        /// <summary>
+        /// Every third swing: did the last three do anything? (its health, kept by the game in its save, went down) When not, it stands closer
+        /// next time (down to a third of the usual), until its blows land.
+        /// </summary>
+        private static void Missing(BrainState st, Task t)
+        {
+            t.Swings++;
+            if (t.Swings % 3 != 1) return;
+            float health = Companion.Zdo(t.Target)?.GetFloat(ZDOVars.s_health, -1f) ?? -1f;
+            if (t.HealthAt >= 0f && health >= 0f && health >= t.HealthAt - 0.01f && t.Closer > 0.35f)
+            {
+                t.Closer = Mathf.Max(0.35f, t.Closer * 0.6f);
+                st.Remember($"its swings missed the {Hoverable(t.Target)}: it steps in closer");
+            }
+            t.HealthAt = health;
+        }
+
         private static void Go(Vector3 center, Action<Vector3, float, bool> moveTo, Action stop, Humanoid me)
         {
             if (Flat(center, me.transform.position) > 4f) moveTo(center, 2f, Flat(center, me.transform.position) > 12f);
@@ -313,8 +352,23 @@ namespace AICompanion
 
         private static Vector3 Point(Component c, Vector3 from)
         {
-            // A standing tree: its trunk (the bounds of its colliders take in the whole crown, and it stopped short of the trunk and swung at air).
-            if (c is TreeBase) return c.transform.position;
+            // A standing tree: the surface of its trunk (the nearest of its colliders' real shapes close to its foot; the bounds take in the whole
+            // crown, and it stopped short and swung at air). A trunk it cannot measure: its middle.
+            if (c is TreeBase)
+            {
+                Vector3 foot = c.transform.position, nearest = foot;
+                float bestD = float.MaxValue;
+                foreach (Collider col in c.GetComponentsInChildren<Collider>())
+                {
+                    if (col == null || !col.enabled || col.isTrigger || col is MeshCollider m && !m.convex) continue;
+                    Vector3 p = col.ClosestPoint(from);
+                    if (Flat(p, foot) > 1.5f) continue; // a branch or the crown, not the trunk
+                    float dd = (p - from).sqrMagnitude;
+                    if (dd < bestD) { bestD = dd; nearest = p; }
+                }
+                nearest.y = foot.y;
+                return nearest;
+            }
             Collider best = null;
             float d = float.MaxValue;
             foreach (Collider col in c.GetComponentsInChildren<Collider>())
@@ -416,11 +470,32 @@ namespace AICompanion
                 bool forGoal = goalPrey.Count > 0 && !st.Hungry;
                 HashSet<string> kinds = st.Weak ? Harmless : forGoal ? goalPrey : Prey;
                 float reachable = Companion.BestRanged(me) != null ? float.MaxValue : 25f; // without a bow only what it can get to before it runs
-                Character prey = Character.GetAllCharacters().Where(ch => ch != null && !ch.IsDead() && !ch.IsTamed() && kinds.Contains(Utils.GetPrefabName(ch.gameObject))
+                // For its goal, and fit, further out too: a hunting trip, as far as the world around you is loaded (about 170 m).
+                bool fit = forGoal && !st.Weak && me.GetHealthPercentage() > 0.6f;
+                Character Find(float range) => Character.GetAllCharacters().Where(ch => ch != null && !ch.IsDead() && !ch.IsTamed() && kinds.Contains(Utils.GetPrefabName(ch.gameObject))
                         && (!Harmless.Contains(Utils.GetPrefabName(ch.gameObject)) || Vector3.Distance(ch.transform.position, me.transform.position) < reachable) // boars come at it: only runners need a bow
-                        && Vector3.Distance(ch.transform.position, center) < radius && !Skipped(st, ch))
+                        && Vector3.Distance(ch.transform.position, center) < range && !Skipped(st, ch))
                     .OrderBy(ch => Vector3.Distance(ch.transform.position, me.transform.position)).FirstOrDefault();
-                if (prey != null) { Task h = New(Kind.Hunt, prey, Job.Hunt); h.ForGoal = forGoal; return h; }
+                Character prey = Find(radius);
+                bool trip = false;
+                if (prey == null && fit) { prey = Find(170f); trip = prey != null; }
+                if (prey != null)
+                {
+                    Task h = New(Kind.Hunt, prey, Job.Hunt);
+                    h.ForGoal = forGoal;
+                    h.Trip = trip;
+                    if (trip)
+                    {
+                        if (Time.time >= st.TripUntil)
+                        {
+                            string what = Localization.instance.Localize(prey.m_name).ToLowerInvariant();
+                            Talk.Tell(me, $"No {what} near home, so I'm going hunting for one, {Flat(prey.transform.position, center):0} m {Compass(prey.transform.position - center)} of home, for my {st.Goal?.What}.", "hunt:" + what, 10f);
+                            st.Remember($"went hunting {what} further out");
+                        }
+                        st.TripUntil = Time.time + 180f;
+                    }
+                    return h;
+                }
             }
 
             // 3. What its own work dropped (or anything, with Loot ticked).
