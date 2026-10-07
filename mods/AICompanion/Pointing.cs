@@ -10,19 +10,22 @@ namespace AICompanion
     ///   an enemy -> every companion of yours near you goes for it;     a tree, log, rock or ore -> it works it;   a plant -> it picks it;
     ///   one of your chests -> it puts what it carries in there;        its tombstone -> it goes for its things;   a free bed -> its bed now;
     ///   a cart -> it pulls it (again: it lets go);                      the ground -> it goes there and waits;    the sky (nothing) -> back to you.
-    /// The companion nearest to the spot does it (all of them for an enemy). Up to 50 m, from where you look.
+    /// The companion nearest to the spot does it (all of them for an enemy). Up to 150 m, from where you look.
     /// </summary>
     internal static class Pointing
     {
         private static readonly int Mask = LayerMask.GetMask("Default", "static_solid", "Default_small", "piece", "piece_nonsolid", "terrain", "vehicle",
                                                              "character", "character_net", "character_ghost", "character_noenv", "hitbox", "item");
 
+        /// <summary>How far you can point (about as far as the world around you is loaded).</summary>
+        public const float Reach = 150f;
+
         public static void Command(Player p)
         {
             var mine = Companion.All().Where(c => Companion.CanCommand(c, p) && !c.IsDead() && Vector3.Distance(c.transform.position, p.transform.position) < 60f).ToList();
             if (mine.Count == 0) { Plugin.Tell("No companion of yours near you."); return; }
             Transform eye = GameCamera.instance != null ? GameCamera.instance.transform : p.transform;
-            RaycastHit[] hits = Physics.RaycastAll(eye.position, eye.forward, 50f, Mask, QueryTriggerInteraction.Ignore).OrderBy(h => h.distance).ToArray();
+            RaycastHit[] hits = Physics.RaycastAll(eye.position, eye.forward, Reach, Mask, QueryTriggerInteraction.Ignore).OrderBy(h => h.distance).ToArray();
             foreach (RaycastHit hit in hits)
             {
                 Character ch = hit.collider.GetComponentInParent<Character>();

@@ -35,7 +35,7 @@ namespace AICompanion
             }
             st.MasterGoneSince = 0f;
             if (order != Order.Follow) return;
-            if (Time.time < st.CommandUntil && (st.Task != null || st.PickQueue.Count > 0)) return; // what you pointed it at first, then home
+            if ((Time.time < st.CommandUntil || st.Area != null) && (st.Task != null || st.PickQueue.Count > 0 || st.Area != null) && me.GetHealthPercentage() > 0.4f) return; // what you pointed it at first (the whole patch), then home; badly hurt: home now
 
             Inventory inv = me.GetInventory();
             string need, topic, ask;
@@ -46,7 +46,7 @@ namespace AICompanion
             else if (!inv.GetAllItems().Any(Food.IsFood) && Food.Meals(me).Count == 0) { need = "I'm out of food"; topic = "food"; ask = "Give me something to eat (my Gear tab)."; }
             else return;
 
-            bool homeNear = bed && Vector3.Distance(z.GetVec3(Keys.BedPos, me.transform.position), me.transform.position) < 200f;
+            bool homeNear = Work.HasHome(me) && Vector3.Distance(Work.Center(me), me.transform.position) < 200f;
             if (homeNear)
             {
                 if (!Home.GoHome(me, true, false)) return;

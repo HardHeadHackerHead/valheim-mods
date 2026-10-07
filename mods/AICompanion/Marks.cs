@@ -71,7 +71,7 @@ namespace AICompanion
                 if (m.Text != null && Time.time >= m.NextLine && Chat.instance != null)
                 {
                     m.NextLine = Time.time + 5f;
-                    Chat.instance.SetNpcText(m.Go, Vector3.up * m.Height, 40f, 6f, "", m.Text, false);
+                    Chat.instance.SetNpcText(m.Go, Vector3.up * m.Height, Pointing.Reach, 6f, "", m.Text, false); // (seen as far as you can point)
                 }
             }
         }

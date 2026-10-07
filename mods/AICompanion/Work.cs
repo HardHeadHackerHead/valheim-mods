@@ -100,7 +100,7 @@ namespace AICompanion
             Humanoid me = st.Body;
             var stack = QolStack;
             if (stack == null || !Stows(me) || Flat(Center(me), me.transform.position) > RadiusOf(me)) return 0;
-            int moved = stack(me.GetInventory(), me.transform.position, 30f, i => Keeps(me, i) || Companion.Worn(me).Contains(i));
+            int moved = stack(me.GetInventory(), me.transform.position, 30f, i => Keeps(me, i) || Companion.Worn(me).Contains(i) || IsStock(st, i)); // (its stock: for its own chests)
             if (moved <= 0) return 0;
             Companion.SaveBag(me);
             st.Remember($"sorted {moved} thing{(moved == 1 ? "" : "s")} into your chests");
@@ -117,7 +117,7 @@ namespace AICompanion
             Humanoid me = st.Body;
             var stack = QolStack;
             if (stack == null || chest == null) return 0;
-            int moved = stack(me.GetInventory(), chest.transform.position, 20f, i => Keeps(me, i) || Companion.Worn(me).Contains(i));
+            int moved = stack(me.GetInventory(), chest.transform.position, 20f, i => Keeps(me, i) || Companion.Worn(me).Contains(i) || IsStock(st, i)); // (its stock: for its own chests)
             if (moved <= 0) return 0;
             Companion.SaveBag(me);
             st.Remember($"sorted {moved} thing{(moved == 1 ? "" : "s")} into your chests");
@@ -136,12 +136,22 @@ namespace AICompanion
         public static int RadiusOf(Component c) => Companion.Zdo(c)?.GetInt(Keys.Radius, 30) ?? 30;
 
         /// <summary>Where it works around: its bed, else where it was told to gather (or stand).</summary>
+        public const string HomeSetKey = "dhc_homeset", HomeSpotKey = "dhc_homespot";
+
+        /// <summary>
+        /// The middle of its home: where you set it (its home tab: your base, wherever its bed is), else its bed, else where it was told to
+        /// live. It stores, works, sorts and goes home there; its bed stays where it sleeps and wakes.
+        /// </summary>
         public static Vector3 Center(Humanoid c)
         {
             ZDO z = Companion.Zdo(c);
+            if (z.GetBool(HomeSetKey, false)) return z.GetVec3(HomeSpotKey, c.transform.position);
             if (z.GetBool(Keys.HasBed, false)) return z.GetVec3(Keys.BedPos, c.transform.position);
             return z.GetVec3(Keys.Post, c.transform.position);
         }
+
+        /// <summary>A home of its own: a bed, or a home you set.</summary>
+        public static bool HasHome(Component c) { ZDO z = Companion.Zdo(c); return z != null && (z.GetBool(Keys.HasBed, false) || z.GetBool(HomeSetKey, false)); }
 
         // ---- tools ---------------------------------------------------------------------------------------------
 
@@ -235,7 +245,7 @@ namespace AICompanion
         public static Task Workable(BrainState st, GameObject go) => go == null ? null : Consider(st, go, Job.Wood | Job.Stone | Job.Ore | Job.Forage, Axe(st.Body), Pickaxe(st.Body), true);
 
         /// <summary>A task you gave it by pointing: it does that next (following you, or at home). Standing or guarding, it comes along for it.</summary>
-        public static bool Ordered(BrainState st, Task t)
+        public static bool Ordered(BrainState st, Task t, bool fromYou = true)
         {
             if (t == null || t.Target == null) return false;
             Humanoid me = st.Body;
@@ -246,7 +256,7 @@ namespace AICompanion
             st.Task = t;
             st.Helping = false;
             st.CommandUntil = Time.time + 120f;
-            st.Remember($"you pointed: {Describe(t)}");
+            st.Remember(fromYou ? $"you pointed: {Describe(t)}" : $"next in the patch: {Describe(t)}");
             return true;
         }
 
@@ -273,8 +283,8 @@ namespace AICompanion
         /// <summary>You pointed at a tree (rock, plant): the ones around it too, worked through nearest first, and what they drop picked up.</summary>
         internal class Area
         {
-            public Vector3 Center;
-            public float Radius = 12f, Until;
+            public Vector3 Center, YouAt; // the patch; where you stood when you pointed at it
+            public float Radius = 12f, Until, YouAwaySince;
             public Job Job;
             public int Done;
             public readonly List<Component> Marked = new List<Component>();
@@ -285,6 +295,8 @@ namespace AICompanion
         {
             var area = new Area { Center = first.Target.transform.position, Until = Time.time + 900f,
                                   Job = first.Kind == Kind.Pick ? Job.Forage : first.Job == Job.Wood ? Job.Wood : Job.Stone | Job.Ore };
+            Player you = Companion.Master(st.Body);
+            area.YouAt = you != null ? you.transform.position : area.Center;
             st.Area = area;
             area.Marked.AddRange(AreaTasks(st, area).OrderBy(t => Flat(t.Target.transform.position, area.Center)).Take(8).Select(t => t.Target));
             return area.Marked;
@@ -323,18 +335,35 @@ namespace AICompanion
             Humanoid me = st.Body;
             Player master = Companion.Master(me);
             if (Time.time > a.Until) { EndArea(st, null); return false; }
-            if (Companion.OrderOf(me) == Order.Follow && master != null && Flat(master.transform.position, a.Center) > 40f) { EndArea(st, null); return false; }
-            Inventory inv = me.GetInventory();
-            if (inv.GetEmptySlots() == 0 || Carry.Over(me))
+            // You went on (more than 60 m from where you pointed, for 20 s): it comes with you. Not a fight nearby, nor stepping about.
+            if (Companion.OrderOf(me) == Order.Follow && master != null && Flat(master.transform.position, a.YouAt) > 60f)
             {
+                if (a.YouAwaySince == 0f) a.YouAwaySince = Time.time;
+                else if (Time.time - a.YouAwaySince > 20f) { EndArea(st, null); return false; }
+            }
+            else a.YouAwaySince = 0f;
+            Inventory inv = me.GetInventory();
+            if (BagFull(me))
+            {
+                // A full bag near home: what is yours into your chests (sorted at once with QualityOfLife, else to one of yours), its stock
+                // into its own; then back to the patch. Out in the world: it stops and says so.
                 Vector3 home = Center(me);
-                bool nearHome = Companion.Zdo(me).GetBool(Keys.HasBed, false) && Flat(a.Center, home) < RadiusOf(me) + 40f;
-                Container chest = nearHome ? Home.Chests(me).Where(c => !c.IsInUse() && HasRoom(c, me) && !Skipped(st, c)).OrderBy(c => Vector3.Distance(c.transform.position, me.transform.position)).FirstOrDefault() : null;
-                if (chest != null)
+                bool nearHome = HasHome(me) && Flat(a.Center, home) < RadiusOf(me) + 40f;
+                if (nearHome)
                 {
-                    Talk.Mention(me, "My bag's full. I'll put this away and come back.", "areafull", 2f);
                     a.Until = Time.time + 900f;
-                    return Ordered(st, New(Kind.Store, chest, Job.None));
+                    Talk.Mention(me, "My bag's full. I'll put this away and come back.", "areafull", 2f);
+                    bool yoursToGive = Stows(me) && inv.GetAllItems().Any(i => !Keeps(me, i) && !IsStock(st, i));
+                    if (yoursToGive)
+                    {
+                        if (SortHome(st) > 0 && !BagFull(me)) return NextInArea(st);
+                        Container yours = YourChests(me, home, RadiusOf(me) + 20f).Where(c => HasRoom(c, me) && !Skipped(st, c)).Take(6).FirstOrDefault(c => Brain.CanReach(me, c.transform.position));
+                        if (yours != null) return Ordered(st, New(Kind.Store, yours, Job.None), false);
+                    }
+                    var stock = inv.GetAllItems().Where(i => !Keeps(me, i) && (!Stows(me) || IsStock(st, i) && Stocked(me, i.m_shared.m_name) < StockCap(st, i))).Select(i => i.m_shared.m_name).ToList(); // (stock its chests still keep room for: else no trip, or round it would go)
+                    Container own = stock.Count == 0 ? null : Home.Chests(me).Where(c => !c.IsInUse() && HasRoom(c, me) && !Skipped(st, c))
+                        .OrderByDescending(c => c.GetInventory().GetAllItems().Count(i => stock.Contains(i.m_shared.m_name))).ThenBy(c => Vector3.Distance(c.transform.position, me.transform.position)).FirstOrDefault();
+                    if (own != null) return Ordered(st, New(Kind.Store, own, Job.None), false);
                 }
                 EndArea(st, "My bag is full. Take some of it, or send me home to put it away.");
                 return false;
@@ -348,7 +377,7 @@ namespace AICompanion
                 float dd = Vector3.Distance(d.transform.position, me.transform.position);
                 if (dd < best) { best = dd; drop = d; }
             }
-            if (drop != null) return Ordered(st, New(Kind.PickUp, drop, Job.Loot));
+            if (drop != null) return Ordered(st, New(Kind.PickUp, drop, Job.Loot), false);
             Task next = AreaTasks(st, a).OrderBy(t => Vector3.Distance(t.Target.transform.position, me.transform.position) + Priority(t)).FirstOrDefault();
             if (next == null)
             {
@@ -357,7 +386,7 @@ namespace AICompanion
             }
             a.Done++;
             Claim(st, next);
-            if (!Ordered(st, next)) return false;
+            if (!Ordered(st, next, false)) return false;
             Marks.Put(next.Target, me, next.Kind == Kind.Pick ? "picking this" : next.Job == Job.Wood ? "chopping this" : "mining this", () => st.Task == next && next.Target != null);
             return true;
         }
@@ -378,7 +407,9 @@ namespace AICompanion
             if (Clearing(st, moveTo)) return true;
             if (st.Task == null || !Valid(st, st.Task)) { Drop(st); if (NextQueued(st) || NextInArea(st)) return true; return Time.time < st.ClearUntil; }
             Execute(st, master, dt, moveTo, stop, lookAt);
-            return st.Task != null;
+            // (one done, more to do: still busy. A frame of "nothing to do" between two pick-ups let following you take over, and from a far
+            // patch it hopped back to you each time.)
+            return st.Task != null || st.Area != null || st.PickQueue.Count > 0;
         }
 
         /// <summary>Carrying out its task, wherever it was chosen (at home, or helping you).</summary>
@@ -388,7 +419,7 @@ namespace AICompanion
             Task t = st.Task;
             Vector3 at = Point(t.Target, me.transform.position);
             float dist = Flat(at, me.transform.position);
-            if (Time.time - t.Started > (t.Trip ? 240f : 60f) || (dist > 3f && Time.time - t.LastClose > (t.Trip ? 120f : 20f)))
+            if (Time.time - t.Started > (t.Trip ? 240f : t.Ordered ? 180f : 60f) || (dist > 3f && Time.time - t.LastClose > (t.Trip || t.Ordered ? 120f : 20f))) // (pointed at from far off: the walk there)
             {
                 // A piece it could not get to: the rest of that wall too (a stake wall outside your walls: one stake after another, for ever).
                 if (t.Kind == Kind.Mend)
@@ -716,16 +747,34 @@ namespace AICompanion
             // Back home: what it brought goes straight into your chests (QualityOfLife), once it is in.
             if (st.SortWhenHome && Flat(center, me.transform.position) < radius * 0.8f) { st.SortWhenHome = false; SortHome(st); }
 
-            // 1. A full bag goes to its chests first (sorted into yours at once, with QualityOfLife).
-            if ((inv.GetEmptySlots() <= 1 || inv.GetAllItems().Count(i => !Keeps(me, i)) >= 18 || Carry.Weight(me) > Carry.Max(me) * 0.9f) && SortHome(st) > 0) return null;
-            if (inv.GetEmptySlots() <= 1 || inv.GetAllItems().Count(i => !Keeps(me, i)) >= 18 || Carry.Weight(me) > Carry.Max(me) * 0.9f)
+            // 1. What it carries. What is yours (all it finds that its gear and its goal do not need) goes into your chests: sorted at once
+            //    with QualityOfLife, else into one of yours with room; when its bag is full, or every two minutes. Its stock (food, the
+            //    materials for its next upgrades and its goal) into its own chests, when its bag is full: the chest of its own that already
+            //    holds most of it. Putting things in your chests switched off (Home tab): everything into its own.
+            bool full = BagFull(me) || inv.GetAllItems().Count(i => !Keeps(me, i)) >= 18;
+            bool yoursToGive = Stows(me) && inv.GetAllItems().Any(i => !Keeps(me, i) && !IsStock(st, i));
+            if (yoursToGive && (full || Time.time >= st.NextDeliver))
             {
+                st.NextDeliver = Time.time + 120f;
+                if (SortHome(st) > 0) return null;
+                Container yours = YourChests(me, center, radius + 20f).Where(c => HasRoom(c, me) && !Skipped(st, c)).Take(6).FirstOrDefault(c => Brain.CanReach(me, c.transform.position));
+                if (yours != null) return New(Kind.Store, yours, Job.None);
+            }
+            if (full)
+            {
+                var stock = inv.GetAllItems().Where(i => !Keeps(me, i) && (!Stows(me) || IsStock(st, i) && Stocked(me, i.m_shared.m_name) < StockCap(st, i))).Select(i => i.m_shared.m_name).ToList(); // (stock its chests still keep room for: else no trip, or round it would go)
                 Container chest = Home.Chests(me).Where(c => !c.IsInUse() && Vector3.Distance(c.transform.position, center) < radius + 40f && HasRoom(c, me) && !Skipped(st, c))
-                                     .OrderBy(c => Vector3.Distance(c.transform.position, me.transform.position)).FirstOrDefault(c => Brain.CanReach(me, c.transform.position));
-                if (chest == null && Stows(me))
-                    chest = YourChests(me, center, radius + 20f).Where(c => HasRoom(c, me) && !Skipped(st, c)).Take(6).FirstOrDefault(c => Brain.CanReach(me, c.transform.position));
-                if (chest != null) return New(Kind.Store, chest, Job.None);
-                if (inv.GetEmptySlots() == 0) { st.WorkNote = "its bag is full: give it a chest (Home tab) or empty its bag"; return null; }
+                                     .OrderByDescending(c => c.GetInventory().GetAllItems().Count(i => stock.Contains(i.m_shared.m_name)))
+                                     .ThenBy(c => Vector3.Distance(c.transform.position, me.transform.position)).FirstOrDefault(c => Brain.CanReach(me, c.transform.position));
+                if (chest != null && stock.Count > 0) return New(Kind.Store, chest, Job.None);
+                if (inv.GetEmptySlots() == 0) { st.WorkNote = Stows(me) ? "its bag is full: give it a chest (Home tab) or room in yours" : "its bag is full: give it a chest (Home tab) or empty its bag"; return null; }
+            }
+            // Its own chests holding what is yours (from before, or more than it keeps): a tidy now and then, what is yours to your chests.
+            if (Stows(me) && Time.time >= st.NextTidy)
+            {
+                st.NextTidy = Time.time + 600f;
+                Container messy = Home.Chests(me).Where(c => !c.IsInUse() && !Skipped(st, c) && Messy(st, c)).FirstOrDefault(c => Brain.CanReach(me, c.transform.position));
+                if (messy != null) return New(Kind.Store, messy, Job.None);
             }
 
             // Hungry: no food on it and fewer than two meals in it. A player only heals from food, and so does it: hungry, food comes before
@@ -753,6 +802,11 @@ namespace AICompanion
                 Container larder = Home.Chests(me).Where(c => !c.IsInUse() && !Skipped(st, c) && c.GetInventory().GetAllItems().Any(i => Gear.WantsFood(me, i)))
                                        .OrderBy(c => Vector3.Distance(c.transform.position, me.transform.position)).FirstOrDefault(c => Brain.CanReach(me, c.transform.position));
                 if (larder != null) { st.Remember("went to its chest to fill its food slots"); return New(Kind.Store, larder, Job.None); }
+                if (UsesPantry(me)) // allowed: from your chests (food only)
+                {
+                    Container yours = YourFood(me, center, radius, c => !Skipped(st, c));
+                    if (yours != null) { st.Remember("went to your chest for food for its food slots"); return New(Kind.Fetch, yours, Job.None); }
+                }
             }
 
             // Its fires: the ones under cooking stations and by its bed, topped up before they go out (wood from its bag or its chests).
@@ -788,6 +842,7 @@ namespace AICompanion
                 if (craft != null) { Task t2 = New(Kind.Craft, craft.Value.Value, Job.None); t2.Recipe = craft.Value.Key; return t2; }
                 foreach (string gone in st.Unfindable.Where(kv => kv.Value < Time.time).Select(kv => kv.Key).ToList()) st.Unfindable.Remove(gone);
                 st.Goal = Goals.Pick(me, center, radius, st);
+                Missions.Track(st, st.Goal, st.Candidates); // (kept to, done, or given up)
                 Goals.Announce(st, st.Goal);
                 var step = Goals.StepReady(me, st.Goal);
                 if (step != null && step.Value.Value == null) { Upgrades.Craft(st, step.Value.Key, null, true); step = null; }
@@ -823,6 +878,7 @@ namespace AICompanion
                 bool fit = forGoal && !st.Weak && me.GetHealthPercentage() > 0.6f;
                 Character Find(float range) => Character.GetAllCharacters().Where(ch => ch != null && !ch.IsDead() && !ch.IsTamed() && kinds.Contains(Utils.GetPrefabName(ch.gameObject))
                         && !(st.LeaveAlone.TryGetValue(ch, out float until) && Time.time < until)
+                        && (Companion.BestRanged(me) != null || !(ch.IsSwimming() || ch.InWater())) // (a neck in its pond: no reaching it with an axe)
                         && (!Harmless.Contains(Utils.GetPrefabName(ch.gameObject)) || Vector3.Distance(ch.transform.position, me.transform.position) < reachable) // boars come at it: only runners need a bow
                         && Vector3.Distance(ch.transform.position, center) < range && !Skipped(st, ch))
                     .OrderBy(ch => Vector3.Distance(ch.transform.position, me.transform.position)).FirstOrDefault();
@@ -1138,13 +1194,62 @@ namespace AICompanion
         private static void TakeFood(BrainState st, Container chest)
         {
             Humanoid me = st.Body;
-            string list = TakeFoodFrom(me, chest, 5);
+            bool starving = Food.Meals(me).Count == 0;
+            string list = TakeFoodFrom(me, chest, starving ? 5 : 10);
             if (list == null) { Skip(st, chest, "no room for the food", 5f); return; }
-            st.Remember($"took {list} from your chest to eat");
-            Talk.Tell(me, $"I had nothing to eat, so I took {list} from your chest. Thanks!");
+            st.Remember($"took {list} from your chest {(starving ? "to eat" : "for its food slots")}");
+            if (starving) Talk.Tell(me, $"I had nothing to eat, so I took {list} from your chest. Thanks!");
+            else Talk.Mention(me, $"Took {list} from your chest for later.");
         }
 
         // ---- its chests --------------------------------------------------------------------------------------
+
+        // ---- its stock: what its own chests are for ----------------------------------------------------------
+
+        /// <summary>
+        /// What it keeps in its own chests, and how much (by the item's name): the materials the next upgrade of each piece in its gear slots
+        /// needs and what its goal still needs (twice that, at least 10), food (40 of each) and raw food to cook (20), healing potions (10),
+        /// arrows (100). Everything else it finds is yours: it goes into your chests. Worked out every 15 s.
+        /// </summary>
+        public static Dictionary<string, int> StockCaps(BrainState st)
+        {
+            if (st.StockCaps != null && Time.time < st.NextStockLook) return st.StockCaps;
+            st.NextStockLook = Time.time + 15f;
+            var caps = new Dictionary<string, int>();
+            void Want(string name, int n) { if (name != null && n > 0) caps[name] = Mathf.Max(caps.TryGetValue(name, out int had) ? had : 0, Mathf.Max(10, n * 2)); }
+            Humanoid me = st.Body;
+            foreach (ItemDrop.ItemData item in me.GetInventory().GetAllItems().Where(i => Gear.InSlot(i) && Upgrades.Upgradable(i)))
+            {
+                Recipe r = ObjectDB.instance?.GetRecipe(item);
+                foreach (Piece.Requirement q in Upgrades.Needs(r)) Want(q.m_resItem.m_itemData.m_shared.m_name, q.GetAmount(item.m_quality + 1));
+            }
+            if (st.Goal != null)
+                foreach (var kv in st.Goal.Raw)
+                    Want(ObjectDB.instance?.GetItemPrefab(kv.Key)?.GetComponent<ItemDrop>()?.m_itemData.m_shared.m_name, kv.Value);
+            return st.StockCaps = caps;
+        }
+
+        /// <summary>How many of it its own chests keep (0: none, it is yours).</summary>
+        public static int StockCap(BrainState st, ItemDrop.ItemData i)
+        {
+            if (Food.IsFood(i)) return 40;
+            if (IsCookable(i)) return 20;
+            if (i.m_shared.m_itemType == ItemDrop.ItemData.ItemType.Ammo) return 100;
+            if (i.m_shared.m_itemType == ItemDrop.ItemData.ItemType.Consumable && Companion.Useful(st.Body, i)) return 10; // healing potions
+            return StockCaps(st).TryGetValue(i.m_shared.m_name, out int n) ? n : 0;
+        }
+
+        public static bool IsStock(BrainState st, ItemDrop.ItemData i) => StockCap(st, i) > 0;
+
+        /// <summary>Its bag full: at most one slot free, or nine tenths of what it can carry.</summary>
+        public static bool BagFull(Humanoid me) => me.GetInventory().GetEmptySlots() <= 1 || Carry.Weight(me) > Carry.Max(me) * 0.9f;
+
+        /// <summary>How many of it its own chests hold now.</summary>
+        private static int Stocked(Humanoid me, string name) => Home.Chests(me).Sum(c => c.GetInventory().GetAllItems().Where(i => i.m_shared.m_name == name).Sum(i => i.m_stack));
+
+        /// <summary>One of its own chests holding something that is not its stock (or more than it keeps): worth a tidy.</summary>
+        private static bool Messy(BrainState st, Container c) =>
+            c.GetInventory().GetAllItems().Any(i => !IsStock(st, i) || Stocked(st.Body, i.m_shared.m_name) > StockCap(st, i) + i.m_shared.m_maxStackSize);
 
         /// <summary>What it keeps on itself: anything it wears or could use (weapons, armour, shields, tools, ammo, healing potions).</summary>
         public static bool Keeps(Humanoid h, ItemDrop.ItemData i) => Gear.InSlot(i) || h.IsItemEquiped(i) || Companion.Useful(h, i) || IsTool(i) || IsCookable(i) || Mending.IsHammer(i);
@@ -1164,26 +1269,44 @@ namespace AICompanion
             if (chest.m_checkGuardStone && !PrivateArea.CheckAccess(chest.transform.position, 0f, false)) { Skip(st, chest, "it is behind a ward", 5f); return; }
             if (!view.IsOwner()) view.ClaimOwnership();
             Inventory mine = me.GetInventory(), its = chest.GetInventory();
-            int put = 0, took = 0;
+            int put = 0, took = 0, tidied = 0;
+            bool yours = Home.IdOn(chest) == 0L; // a chest of its player's: it only puts things in
+            bool stows = Stows(me);
             foreach (ItemDrop.ItemData item in mine.GetAllItems().Where(i => !Keeps(me, i)).ToList())
             {
-                if (!its.CanAddItem(item)) continue;
+                bool stock = IsStock(st, item);
+                // Into your chest: what is yours (its stock stays with it, for its own chests). Into its own: its stock, up to what it
+                // keeps (the rest is yours); everything, when it may not put things in yours.
+                bool goes = yours ? !stock : !stows || (stock && Stocked(me, item.m_shared.m_name) < StockCap(st, item));
+                if (!goes || !its.CanAddItem(item)) continue;
                 its.MoveItemToThis(mine, item);
                 put++;
             }
-            bool yours = Home.IdOn(chest) == 0L; // a chest of its player's: it only puts things in
             Job jobs = JobsOf(me);
             if (!yours)
+            {
                 foreach (ItemDrop.ItemData item in its.GetAllItems().ToList())
                 {
                     if (!mine.HaveEmptySlot() && !mine.CanAddItem(item)) break;
                     if (Wants(me, item, jobs)) { item.m_equipped = false; mine.MoveItemToThis(its, item); took++; }
                 }
-            if (put + took > 0)
-            {
-                st.Remember(yours ? $"put away {put} things in your chest" : $"at its chest: put away {put}, took {took}");
-                Plugin.Instance?.Note($"{Companion.NameOf(me)} put away {put} and took {took} at its chest {chest.transform.position:F0}");
+                // Tidy: what in its chest is yours (not its stock, or more than it keeps) comes out, for your chests.
+                if (stows)
+                    foreach (ItemDrop.ItemData item in its.GetAllItems().ToList())
+                    {
+                        if (mine.GetEmptySlots() <= 2) break;
+                        bool over = Stocked(me, item.m_shared.m_name) - item.m_stack >= StockCap(st, item); // (without this stack it still has all it keeps)
+                        if (IsStock(st, item) && !over) continue;
+                        mine.MoveItemToThis(its, item);
+                        tidied++;
+                    }
             }
+            if (put + took + tidied > 0)
+            {
+                st.Remember(yours ? $"put away {put} things in your chest" : $"at its chest: put away {put}, took {took}" + (tidied > 0 ? $", took out {tidied} that are yours" : ""));
+                Plugin.Instance?.Note($"{Companion.NameOf(me)} put away {put}, took {took}, took out {tidied} at {(yours ? "your" : "its")} chest {chest.transform.position:F0}");
+            }
+            if (tidied > 0) { st.NextDeliver = 0f; SortHome(st); } // (straight into your chests, with QualityOfLife; else on its next round)
         }
 
         private static bool Wants(Humanoid me, ItemDrop.ItemData item, Job jobs)

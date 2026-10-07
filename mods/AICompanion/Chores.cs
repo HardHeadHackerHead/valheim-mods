@@ -119,6 +119,7 @@ namespace AICompanion
         public static int Return(BrainState st)
         {
             Humanoid me = st.Body;
+            if (Work.UsesPantry(me)) return 0; // allowed to take food from your chests: it keeps what it took (to fill its food slots)
             Inventory inv = me.GetInventory();
             List<ItemDrop.ItemData> borrowed = inv.GetAllItems().Where(i => i.m_customData != null && i.m_customData.ContainsKey(Tag)).ToList();
             if (borrowed.Count == 0) return 0;

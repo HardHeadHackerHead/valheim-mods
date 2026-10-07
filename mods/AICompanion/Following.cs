@@ -33,7 +33,7 @@ namespace AICompanion
         {
             Humanoid me = st.Body;
             ZDO z = Companion.Zdo(me);
-            if (master == null || !AutoHome(me) || !z.GetBool(Keys.HasBed, false) || st.InCombat) return;
+            if (master == null || !AutoHome(me) || !Work.HasHome(me) || st.InCombat) return;
             Vector3 home = Work.Center(me);
             float radius = Work.RadiusOf(me);
             float youFromHome = Vector3.Distance(master.transform.position, home), meFromHome = Vector3.Distance(me.transform.position, home);

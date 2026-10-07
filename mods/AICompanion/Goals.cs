@@ -166,7 +166,17 @@ namespace AICompanion
                 var g = new Goal { Recipe = r, Station = at, What = Loc(r.m_item.m_itemData.m_shared.m_name) };
                 if (Build(me, chests, stations, g, r, 1)) goals.Add(g);
             }
-            return goals.OrderBy(g => g.Ask.Count > 0 ? 1 : 0).ThenBy(g => g.Ask.Count).ThenBy(g => g.Cost).FirstOrDefault();
+            // Its mission first, while it is still among them (it sticks to what it set out to do); never one it gave up within the hour.
+            var ranked = goals.Where(g => st == null || !Missions.Blocked(st, Missions.KeyOf(g)))
+                              .OrderBy(g => g.Ask.Count > 0 ? 1 : 0).ThenBy(g => g.Ask.Count).ThenBy(g => g.Cost).ToList();
+            if (st != null)
+            {
+                string mission = Missions.Current(me)?.Key;
+                Goal kept = mission != null ? ranked.FirstOrDefault(g => Missions.KeyOf(g) == mission) : null;
+                if (kept != null) { ranked.Remove(kept); ranked.Insert(0, kept); }
+                st.Candidates = ranked.Take(4).ToList();
+            }
+            return ranked.FirstOrDefault();
         }
 
         /// <summary>Fills in what the goal is missing; false when nothing is (then Upgrades makes it at once) .</summary>

@@ -90,7 +90,7 @@ namespace AICompanion
         {
             Humanoid me = st.Body;
             ZDO z = Companion.Zdo(me);
-            if (z == null || !z.GetBool(Keys.HasBed, false)) return null;
+            if (z == null || !Work.HasHome(me)) return null;
             Vector3 home = Work.Center(me);
             float radius = Work.RadiusOf(me) + 10f;
             bool following = Companion.OrderOf(me) != Order.Gather;

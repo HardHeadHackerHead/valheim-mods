@@ -584,23 +584,45 @@ namespace AICompanion
             Note("The chests at home that are not a companion's.", _dim);
             bool stow = Work.Stows(c), pantry = Work.UsesPantry(c);
             if (Check("Puts what it gathers into your chests when its own are full (or it has none). It never takes anything out.", stow)) _pending = () => Change(z => z.Set(Work.StowKey, !stow));
-            if (Check("Takes a little food from your chests when it has nothing to eat (and tells you what it took)", pantry)) _pending = () => Change(z => z.Set(Work.PantryKey, !pantry));
-            if (!pantry) Note("Off: when it runs out of food it forages, hunts and asks you in chat.", _dim);
+            if (Check("Takes food from your chests to keep its food slots filled (food only, never anything else)", pantry)) _pending = () => Change(z => z.Set(Work.PantryKey, !pantry));
+            Note(pantry ? "On: when its food slots run low it takes food from your chests at home (and says what it took). Materials for its gear it only ever takes from its own chests."
+                        : "Off: it eats from its own chests, forages, hunts and cooks, and asks you in chat when it runs out. It never takes anything from your chests.", _dim);
             EndCard();
 
             bool living = Companion.OrderOf(c) == AICompanion.Order.Gather;
-            BeginCard("Working toward");
+            BeginCard("Missions");
             Goal goal = st.Goal;
+            List<Mission> missions = Missions.All(c);
+            Mission current = missions.LastOrDefault(m => m.Status == "active");
             if (!c.GetComponent<ZNetView>().IsOwner()) Note("Shows on the game that runs it.", _dim);
-            else if (goal == null) Note(living ? "Nothing to work toward right now: nothing better to make or upgrade at the stations near its home. Build a workbench (and a forge) near its bed, or give it better tools." : "It picks something to work toward when it goes home.", _dim);
+            else if (goal == null) Note(living ? "No mission right now: nothing better to make or upgrade at the stations near its home. Build a workbench (and a forge) near its home, or give it better tools." : "It sets itself a mission when it goes home.", _dim);
             else
             {
+                if (current != null && current.StartCost > 0)
+                {
+                    float done = Mathf.Clamp01(1f - current.Cost / (float)current.StartCost);
+                    Note($"Mission since day {current.Day}: {Mathf.RoundToInt(done * 100f)}% of the way", _dim);
+                    Rect bar = GUILayoutUtility.GetRect(Inner, 8f, GUILayout.Height(8));
+                    Rounded(bar, new Color(0.2f, 0.2f, 0.2f), 3f);
+                    Rounded(new Rect(bar.x, bar.y, bar.width * done, bar.height), ColGood, 3f);
+                }
                 Note(Capital(goal.What) + (goal.Station != null ? $", at the {Loc(goal.Station.m_name).ToLowerInvariant()}" : ""), _bold);
                 if (goal.Raw.Count > 0) Note("Gathering: " + goal.RawText(), _text);
                 if (goal.Steps.Count > 0) Note("Then makes: " + string.Join(", ", goal.Steps.Select(s => Loc(s.Key.m_item.m_itemData.m_shared.m_name).ToLowerInvariant())), _text);
                 if (goal.Smelt.Count > 0) Note($"{Capital(string.Join(" and ", goal.Smelt))} need{(goal.Smelt.Count == 1 ? "s" : "")} smelting: it puts the ore in its chest for you (or FeedFromChests) to smelt.", _dim);
                 if (goal.Ask.Count > 0) Note("Needs from you: " + string.Join(", ", goal.Ask) + ". Put it in its chest.", _warn);
+                var next = st.Candidates.Where(g => g != goal).Take(2).Select(g => g.What).ToList();
+                if (next.Count > 0) Note("After that: " + string.Join(", then ", next) + ".", _dim);
             }
+            var past = missions.Where(m => m.Status != "active").Reverse().Take(5).ToList();
+            if (past.Count > 0)
+            {
+                GUILayout.Space(4);
+                Note("Lately:", _dim);
+                foreach (Mission m in past)
+                    Note(m.Status == "done" ? $"Done: {m.What} ({m.Why})" : $"Gave up: {m.What}: {m.Why}", m.Status == "done" ? _good : _text);
+            }
+            Note("It sets its own missions (its next piece of better gear) and sticks to them; it decides for itself when to give one up, and says why.", _dim);
             EndCard();
 
             BeginCard("Living at home");
@@ -610,9 +632,19 @@ namespace AICompanion
                 if (GUILayout.Button("Go home", _buttonOn, GUILayout.Width(170), GUILayout.Height(30))) _pending = () => GiveOrder(h => Home.GoHome(h));
             }
             Vector3 center = Work.Center(c);
-            Note(bed ? "It lives around its bed." : $"With no bed it lives around where it was told to ({center.x:0}, {center.z:0}).", _dim);
-            if (!bed && Commandable && GUILayout.Button("Live around where I stand", _button, GUILayout.Width(230), GUILayout.Height(28)))
-                _pending = () => { Vector3 at = Player.m_localPlayer.transform.position; Change(cz => cz.Set(Keys.Post, at)); };
+            bool homeSet = z.GetBool(Work.HomeSetKey, false);
+            Note(homeSet ? $"Its home is the area you set, {Vector3.Distance(center, p.transform.position):0} m from you: it stores its things, works, sorts into your chests and comes home there. Its bed is where it sleeps."
+                : bed ? "Its home is around its bed. Set it to your base instead if its bed is off to one side."
+                : $"With no bed it lives around where it was told to ({center.x:0}, {center.z:0}).", _dim);
+            if (Commandable)
+            {
+                GUILayout.BeginHorizontal();
+                if (GUILayout.Button("Make this its home (where I stand)", _buttonOn, GUILayout.Height(30)))
+                    _pending = () => { Vector3 at = Player.m_localPlayer.transform.position; Change(cz => { cz.Set(Work.HomeSpotKey, at); cz.Set(Work.HomeSetKey, true); cz.Set(Keys.Post, at); }); };
+                if (homeSet && GUILayout.Button(bed ? "Back to around its bed" : "Clear", _button, GUILayout.Width(190), GUILayout.Height(30)))
+                    _pending = () => Change(cz => cz.Set(Work.HomeSetKey, false));
+                GUILayout.EndHorizontal();
+            }
             int radius = Work.RadiusOf(c);
             Stepper("Goes as far as", $"{radius} m", () => Change(cz => cz.Set(Keys.Radius, Mathf.Clamp(radius - 5, 10, 80))), () => Change(cz => cz.Set(Keys.Radius, Mathf.Clamp(radius + 5, 10, 80))));
             EndCard();

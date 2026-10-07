@@ -62,7 +62,12 @@ namespace AICompanion
         public readonly List<ItemDrop> PickQueue = new List<ItemDrop>();
         public Work.Area Area;
         public bool SwingMissed;
-        public float NextRefillLook; // its food slots: when it next looks in its chests for more (Work) // its last swing at what it works on touched something else, or nothing (Attack_DoMeleeAttack_Log) // the patch of trees (rocks, plants) you pointed it at // things you pointed it at to pick up (Work.OrderPickUp)
+        public float NextRefillLook;
+        public float NextDeliver, NextTidy, NextStockLook;   // what is yours to your chests; tidying its own; its stock list (Work)
+        public Dictionary<string, int> StockCaps;
+        public float MissionSince, MissionBest, MissionAskSince, MissionReadySince;                                       // its mission: headway, waiting on you (Missions)
+        public readonly Dictionary<string, float> DroppedUntil = new Dictionary<string, float>();      // missions it gave up, until when
+        public List<Goal> Candidates = new List<Goal>();                                                // its mission, then what would come next // its food slots: when it next looks in its chests for more (Work) // its last swing at what it works on touched something else, or nothing (Attack_DoMeleeAttack_Log) // the patch of trees (rocks, plants) you pointed it at // things you pointed it at to pick up (Work.OrderPickUp)
         public float WokeAt = -999f; // up after a fall (Tactics.Careful) // the tombstone you pointed it at; the one it is going to (Grave)
         public Work.Task Task;                                      // gathering
         public CraftingStation RepairAt;                            // repairs
@@ -384,7 +389,7 @@ namespace AICompanion
             st.Enemies.RemoveAll(e => e == null || e.IsDead()); // killed or gone since the last look (a destroyed one throws on .transform)
 
             if (Time.time >= st.NextDoorLook) { st.NextDoorLook = Time.time + 0.4f; OpenDoorAhead(me); }
-            if (Companion.OrderOf(me) != Order.Gather && !(Companion.OrderOf(me) == Order.Follow && (st.Helping || Time.time < st.CommandUntil))) { st.Task = null; st.WorkTool = null; }
+            if (Companion.OrderOf(me) != Order.Gather && !(Companion.OrderOf(me) == Order.Follow && (st.Helping || Time.time < st.CommandUntil || st.Area != null))) { st.Task = null; st.WorkTool = null; }
 
             if (st.Enemies.Count > 0 && st.Asleep) Sleep.Wake(st, "something came");
             Character boss = st.Enemies.FirstOrDefault(e => e != null && e.IsBoss());
@@ -457,7 +462,7 @@ namespace AICompanion
                     if (master == null) { st.Ai.StopMoving(); SetStatus(st, "waiting for " + (Companion.Zdo(me).GetString(Keys.MasterName, "its friend"))); break; }
                     float d = Vector3.Distance(master.transform.position, me.transform.position);
                     // You pointed at something for it to do (Pointing): that first.
-                    if (Time.time < st.CommandUntil && (st.Task != null || st.PickQueue.Count > 0 || st.Area != null))
+                    if ((Time.time < st.CommandUntil || st.Area != null) && (st.Task != null || st.PickQueue.Count > 0 || st.Area != null)) // (a patch you gave it: back to it after a fight, however long)
                     {
                         if (Work.RunOrdered(st, master, dt, (p, dd, run) => MoveTo(st.Ai, dt, p, dd, run), () => st.Ai.StopMoving(), p => LookAt(st.Ai, p))) break;
                         st.CommandUntil = 0f;
@@ -466,7 +471,7 @@ namespace AICompanion
                     if (Companion.Chosen(me) == Style.Auto && (st.Doing == Doing.Mining || st.Doing == Doing.Chopping) && d < 25f
                         && Work.Help(st, master, dt, (p, dd, run) => MoveTo(st.Ai, dt, p, dd, run), () => st.Ai.StopMoving(), p => LookAt(st.Ai, p), st.Doing == Doing.Mining ? Job.Stone | Job.Ore : Job.Wood))
                         break;
-                    if (d > 60f && !master.IsAttached() && master.IsOnGround()) { TeleportBehind(me, master); break; } // left behind (a portal, a boat ride)
+                    if (d > 60f && !master.IsAttached() && master.IsOnGround() && st.Area == null) { TeleportBehind(me, master); break; } // left behind (a portal, a boat ride); not from a patch you sent it to
                     if (Time.time < st.SideStepUntil) { MoveTo(st.Ai, dt, st.SideStepTo, 0.4f, false); break; } // getting unstuck: a step aside
                     if (d < 8f && st.Cart == null && Idle.WithYou(st, master, d, (p, dd, run) => MoveTo(st.Ai, dt, p, dd, run), p => LookAt(st.Ai, p))) break; // you stopped: it faces you, sits with you
                     if (d > 3.5f)
@@ -835,6 +840,9 @@ namespace AICompanion
             else if (Time.time - st.StallSince > 20f && TargetOf(target) != me && TargetOf(target) != Companion.Master(me))
             {
                 st.LeaveAlone[target] = Time.time + 120f;
+                string kind = Utils.GetPrefabName(target.gameObject);
+                foreach (Character like in Character.GetAllCharacters().Where(c => c != null && c != target && Utils.GetPrefabName(c.gameObject) == kind && Vector3.Distance(c.transform.position, target.transform.position) < 15f))
+                    st.LeaveAlone[like] = Time.time + 120f; // (the others in that pond, behind that fence: no better)
                 foreach (Character gone in st.LeaveAlone.Keys.Where(k => k == null).ToList()) st.LeaveAlone.Remove(gone);
                 st.Enemies.Remove(target);
                 st.Remember($"could not get at {Localization.instance.Localize(target.m_name)} (20 s without a hit): left it alone");
