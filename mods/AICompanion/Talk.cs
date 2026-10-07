@@ -12,8 +12,7 @@ namespace AICompanion
 {
     /// <summary>
     /// Talking to a companion in chat: start a message with its name ("Rádvar, follow me", "Rádvar go home", "rádvar: be careful") and it
-    /// does what you ask, and answers above its head. With a Jev key, Jev understands the message (a choice between the things it can do);
-    /// without one, plain words do (follow, stay, guard, home, come here, aggressive, careful, passive, your things). The message still goes
+    /// does what you ask, and answers above its head. Plain words do (follow, stay, guard, home, come here, aggressive, careful, passive, your things). The message still goes
     /// to chat as usual. Your own companions, or another player's that lets friends give it orders.
     /// </summary>
     internal static class Talk
@@ -45,8 +44,7 @@ namespace AICompanion
                 if (!StartsWithName(t, name)) continue;
                 string rest = t.Substring(name.Length).TrimStart(',', ':', ' ', '!', '.').Trim();
                 if (rest.Length == 0) { Say(c, "Yes?"); return; }
-                if (!string.IsNullOrEmpty(Plugin.ApiKey.Value) && Plugin.UseJev.Value) Plugin.Instance.StartCoroutine(AskJev(c, me, rest));
-                else Do(c, me, ByWords(rest), rest);
+                Do(c, me, ByWords(rest), rest);
                 return;
             }
         }
@@ -67,42 +65,6 @@ namespace AICompanion
             string r = rest.ToLowerInvariant();
             foreach (var i in Intents) if (i.words.Any(w => r.Contains(w))) return i.id;
             return null;
-        }
-
-        private static IEnumerator AskJev(Humanoid c, Player me, string rest)
-        {
-            var criteria = new JObject();
-            foreach (var i in Intents) criteria[i.id] = i.meaning;
-            criteria["none"] = "None of these (small talk, or something it cannot do).";
-            var body = new JObject
-            {
-                ["state"] = new JObject { ["player_says_to_companion"] = rest, ["companion"] = Companion.NameOf(c), ["doing_now"] = Companion.StatusOf(c) },
-                ["model"] = Plugin.Model.Value,
-                ["questions"] = new JObject { ["intent"] = new JObject { ["type"] = "choice", ["instructions"] = "What is the player asking the companion to do?", ["criteria"] = criteria } },
-            };
-            string intent = null;
-            using (var req = new UnityWebRequest(Plugin.Endpoint.Value, "POST"))
-            {
-                req.uploadHandler = new UploadHandlerRaw(Encoding.UTF8.GetBytes(body.ToString(Newtonsoft.Json.Formatting.None)));
-                req.downloadHandler = new DownloadHandlerBuffer();
-                req.SetRequestHeader("Content-Type", "application/json");
-                req.SetRequestHeader("Authorization", "Bearer " + Plugin.ApiKey.Value.Trim());
-                req.timeout = Mathf.CeilToInt(Plugin.Timeout.Value);
-                yield return req.SendWebRequest();
-                if (req.result == UnityWebRequest.Result.Success)
-                {
-                    try
-                    {
-                        JObject a = JObject.Parse(req.downloadHandler.text)["answers"]?["intent"] as JObject;
-                        string choice = (string)a?["choice"];
-                        float p = (float?)a?["probabilities"]?[choice ?? ""] ?? 0f;
-                        if (choice != null && choice != "none" && p >= 0.3f) intent = choice;
-                    }
-                    catch (Exception) { }
-                }
-            }
-            if (c == null) yield break;
-            Do(c, me, intent ?? ByWords(rest), rest);
         }
 
         private static void Do(Humanoid c, Player me, string intent, string said)
@@ -127,7 +89,7 @@ namespace AICompanion
                 case "auto": ok = Companion.Write(c, z => z.Set(Keys.Style, (int)Style.Auto)); break;
                 case "grave":
                     if (!Grave.Has(c)) { Say(c, "I have nothing lying in a grave."); return; }
-                    Brain.Get(c).NextGraveLook = 0f;
+                    Grave.Fetch(Brain.Get(c), null);
                     break;
             }
             if (!ok) { Say(c, "Not now, someone is going through my things."); return; }
@@ -174,6 +136,25 @@ namespace AICompanion
             Player local = Player.m_localPlayer;
             if (local != null && Companion.IsMine(c, local)) ToChat(Companion.NameOf(c), text);
             else Net.SendSays(Companion.MasterId(c), Companion.NameOf(c), text);
+        }
+
+        /// <summary>
+        /// What it is up to that you need not be told in chat (its goal, a hunting trip, materials made on the way): above its head and in its
+        /// activity log only. Chat is for what needs you (it is out of food, its bag is full, it needs something it cannot get) and the big
+        /// moments (new gear, falling, what it did while you were away).
+        /// </summary>
+        public static void Mention(Humanoid c, string text, string topic = null, float minutes = 0f)
+        {
+            if (c == null || string.IsNullOrEmpty(text)) return;
+            if (Hush) { Activity.Log(c, "(away) " + text); return; }
+            if (topic != null)
+            {
+                string key = Companion.IdOf(c) + ":" + topic;
+                if (LastSaid.TryGetValue(key, out float at) && Time.time - at < minutes * 60f) return;
+                LastSaid[key] = Time.time;
+            }
+            Say(c, text);
+            Activity.Log(c, "said: " + text);
         }
 
         /// <summary>A line in the chat window from a companion, shown even when the window was hidden.</summary>

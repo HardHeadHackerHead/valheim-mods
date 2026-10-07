@@ -64,7 +64,6 @@ namespace AICompanion
         public static int RetreatOf(Component c) => Zdo(c)?.GetInt(Keys.Retreat, 30) ?? 30;
         public static bool Potions(Component c) => Zdo(c)?.GetBool(Keys.Potions, true) ?? true;
         public static bool Protect(Component c) => Zdo(c)?.GetBool(Keys.Protect, true) ?? true;
-        public static bool UsesJev(Component c) => Zdo(c)?.GetBool(Keys.UseJev, true) ?? true;
         public static string StatusOf(Component c) => Zdo(c)?.GetString(Keys.Status, "") ?? "";
 
         /// <summary>The player it serves, if that player is in the world right now.</summary>
@@ -101,7 +100,7 @@ namespace AICompanion
 
         private static float _nextClaim;
 
-        /// <summary>Your companions run on your game while you are near them, so Jev is asked with your key. Never while its gear is open.</summary>
+        /// <summary>Your companions run on your game while you are near them (their brain, their bag). Never while its gear is open.</summary>
         public static void KeepOwnership(Player p)
         {
             if (Time.time < _nextClaim) return;
@@ -142,8 +141,9 @@ namespace AICompanion
             zdo.Set(Keys.Retreat, 30);
             zdo.Set(Keys.Potions, true);
             zdo.Set(Keys.Protect, true);
-            zdo.Set(Keys.UseJev, true);
             Dress(c);
+            Journal.Started(c);
+            Journal.Add(c, $"Joined {p.GetPlayerName()}.");
             p.m_customData["dhc_name"] = NameOf(c);
             Profile.Save(p, Profile.Of(c)); // who it is, so it can wake in its bed after falling
             Plugin.Instance?.Note($"{p.GetPlayerName()} summoned the companion {NameOf(c)} at {pos:F0}");
@@ -177,14 +177,29 @@ namespace AICompanion
             if (c != null && c.GetComponent<ZNetView>() is ZNetView v && v.IsValid() && v.IsOwner()) c.GetInventory().m_onChanged?.Invoke();
         }
 
-        public static void DropGear(Humanoid c)
+        public const string KeptKey = "dhc_kept";
+
+        /// <summary>
+        /// It fell: what it wore and held (weapon, shield, armour, cape, belt, the arrows in its quiver) it keeps, and wakes wearing; everything
+        /// else it carried (what it gathered and looted on the way) goes into a tombstone where it fell. The kept gear is written to its save
+        /// ("dhc_kept", the game's own item format) for its player's game to put back on it when it wakes (Profile.Kept). Returns how many
+        /// stacks went into the tombstone (0: no tombstone).
+        /// </summary>
+        public static int DropGear(Humanoid c)
         {
             Container gear = c.GetComponent<Container>();
             Inventory inv = gear != null ? gear.GetInventory() : null;
-            if (inv == null || inv.NrOfItems() == 0) return;
-            c.UnequipAllItems();
-            foreach (ItemDrop.ItemData item in inv.GetAllItems()) item.m_equipped = false; // (the game leaves equipped items out of a grave)
-            int carried = inv.NrOfItems();
+            if (inv == null || inv.NrOfItems() == 0) { Zdo(c)?.Set(KeptKey, ""); return 0; }
+            var worn = new HashSet<ItemDrop.ItemData>(Worn(c).Where(i => inv.ContainsItem(i)));
+            foreach (ItemDrop.ItemData item in inv.GetAllItems()) item.m_equipped = worn.Contains(item); // the game's move leaves equipped items out
+            Zdo(c)?.Set(KeptKey, Pack(worn));
+            int carried = inv.NrOfItems() - worn.Count;
+            if (carried <= 0)
+            {
+                Plugin.Instance?.Note($"{NameOf(c)} fell at {c.transform.position:F0} carrying only its gear ({worn.Count}): no tombstone");
+                foreach (ItemDrop.ItemData item in inv.GetAllItems()) item.m_equipped = false;
+                return 0;
+            }
 
             // A tombstone like a player's: its player can take everything back with one E. The game's own move (MoveInventoryToGrave) makes
             // the tombstone as big as the bag it empties: adding items one by one only fitted the tombstone's own 4 slots, and the rest was lost.
@@ -201,17 +216,51 @@ namespace AICompanion
                 grave.GetComponent<ZNetView>().GetZDO().Set(Grave.OfKey, IdOf(c));
             }
 
-            // Anything still in the bag (no grave could be made): on the ground beside it, never lost.
+            // Anything still in the bag besides its gear (no grave could be made): on the ground beside it, never lost.
             int dropped = 0;
-            foreach (ItemDrop.ItemData item in inv.GetAllItems().ToList())
+            foreach (ItemDrop.ItemData item in inv.GetAllItems().Where(i => !worn.Contains(i)).ToList())
             {
                 ItemDrop.DropItem(item, item.m_stack, c.transform.position + Vector3.up + Random.insideUnitSphere * 0.5f, Quaternion.identity);
                 dropped++;
             }
-            if (dropped > 0) inv.RemoveAll();
+            foreach (ItemDrop.ItemData item in inv.GetAllItems().Where(i => !worn.Contains(i)).ToList()) inv.RemoveItem(item); // (what was dropped)
+            foreach (ItemDrop.ItemData item in inv.GetAllItems()) item.m_equipped = false;
             int saved = grave != null ? grave.GetInventory().NrOfItems() : 0;
-            Plugin.Instance?.Note($"{NameOf(c)} fell at {c.transform.position:F0}: {saved} of {carried} item stacks in their tombstone" + (dropped > 0 ? $", {dropped} dropped beside it" : ""));
+            Plugin.Instance?.Note($"{NameOf(c)} fell at {c.transform.position:F0}: kept its gear ({worn.Count}), {saved} of {carried} item stacks in their tombstone" + (dropped > 0 ? $", {dropped} dropped beside it" : ""));
             if (saved + dropped < carried) Plugin.Instance?.Warn($"{carried - saved - dropped} item stacks of {NameOf(c)} could not be placed");
+            return saved;
+        }
+
+        /// <summary>Items in the game's own save format (as a chest keeps them), as text.</summary>
+        public static string Pack(IEnumerable<ItemDrop.ItemData> items)
+        {
+            var temp = new Inventory("kept", null, 8, 4);
+            foreach (ItemDrop.ItemData i in items) { ItemDrop.ItemData copy = i.Clone(); copy.m_equipped = false; temp.AddItem(copy); }
+            if (temp.NrOfItems() == 0) return "";
+            var pkg = new ZPackage();
+            temp.Save(pkg);
+            return System.Convert.ToBase64String(pkg.GetArray());
+        }
+
+        /// <summary>Put packed items back into a companion's bag (it wears them again by itself). How many stacks.</summary>
+        public static int Unpack(Humanoid c, string packed)
+        {
+            if (string.IsNullOrEmpty(packed)) return 0;
+            try
+            {
+                var temp = new Inventory("kept", null, 8, 4);
+                temp.Load(new ZPackage(System.Convert.FromBase64String(packed)));
+                int n = 0;
+                foreach (ItemDrop.ItemData item in temp.GetAllItems().ToList())
+                {
+                    item.m_equipped = false;
+                    if (c.GetInventory().AddItem(item)) n++;
+                    else ItemDrop.DropItem(item, item.m_stack, c.transform.position + Vector3.up, Quaternion.identity); // never lost
+                }
+                SaveBag(c);
+                return n;
+            }
+            catch (System.Exception e) { Plugin.Instance?.Warn("Could not give the companion its gear back: " + e.Message); return 0; }
         }
 
         // ---- gear ----------------------------------------------------------------------------------------
@@ -286,6 +335,28 @@ namespace AICompanion
             && item.m_shared.m_attack != null && item.m_shared.m_attack.m_attackType != Attack.AttackType.Projectile;
 
         public static ItemDrop.ItemData BestMelee(Humanoid h) => h.GetInventory().GetAllItems().Where(IsMelee).OrderByDescending(i => i.GetDamage().GetTotalDamage()).FirstOrDefault();
+
+        /// <summary>
+        /// The melee weapon that does the most harm to this creature, by its resistances and weaknesses (a club for skeletons, which blunt
+        /// breaks; never a weapon it shrugs off). Without a target: the hardest-hitting one.
+        /// </summary>
+        public static ItemDrop.ItemData BestMeleeAgainst(Humanoid h, Character target)
+        {
+            if (target == null) return BestMelee(h);
+            HitData.DamageModifiers mods = target.GetDamageModifiers(null);
+            return h.GetInventory().GetAllItems().Where(IsMelee).OrderByDescending(i => Effective(i.GetDamage(), mods)).FirstOrDefault();
+        }
+
+        private static float Factor(HitData.DamageModifier m) => m switch
+        {
+            HitData.DamageModifier.Immune => 0f, HitData.DamageModifier.Ignore => 0f, HitData.DamageModifier.VeryResistant => 0.25f,
+            HitData.DamageModifier.Resistant => 0.5f, HitData.DamageModifier.Weak => 1.5f, HitData.DamageModifier.VeryWeak => 2f, _ => 1f,
+        };
+
+        private static float Effective(HitData.DamageTypes d, HitData.DamageModifiers m) =>
+            d.m_blunt * Factor(m.m_blunt) + d.m_slash * Factor(m.m_slash) + d.m_pierce * Factor(m.m_pierce) + d.m_fire * Factor(m.m_fire)
+            + d.m_frost * Factor(m.m_frost) + d.m_lightning * Factor(m.m_lightning) + d.m_poison * Factor(m.m_poison) + d.m_spirit * Factor(m.m_spirit)
+            + d.m_chop * Factor(m.m_chop) * 0.2f + d.m_pickaxe * Factor(m.m_pickaxe) * 0.2f;
         public static ItemDrop.ItemData BestRanged(Humanoid h) => h.GetInventory().GetAllItems().Where(i => IsRanged(i) && HasAmmoFor(h, i)).OrderByDescending(i => i.GetDamage().GetTotalDamage()).FirstOrDefault();
 
         public static List<ItemDrop.ItemData> HealingPotions(Humanoid h) =>
@@ -297,7 +368,7 @@ namespace AICompanion
         /// took it out) is taken off first. Equipped items are not flagged as equipped in the inventory, so an item you take out never
         /// arrives in yours marked as worn.
         /// </summary>
-        public static void Maintain(Humanoid h, bool wantRanged, ItemDrop.ItemData tool = null)
+        public static void Maintain(Humanoid h, bool wantRanged, ItemDrop.ItemData tool = null, Character against = null)
         {
             if (h.InAttack()) return;
             Inventory inv = h.GetInventory();
@@ -312,7 +383,7 @@ namespace AICompanion
                 if (best != null) Equip(h, best);
             }
 
-            ItemDrop.ItemData weapon = tool != null && inv.ContainsItem(tool) ? tool : wantRanged ? BestRanged(h) ?? BestMelee(h) : BestMelee(h) ?? BestRanged(h);
+            ItemDrop.ItemData weapon = tool != null && inv.ContainsItem(tool) ? tool : wantRanged ? BestRanged(h) ?? BestMeleeAgainst(h, against) : BestMeleeAgainst(h, against) ?? BestRanged(h);
             if (weapon != null) Equip(h, weapon);
             if (weapon != null && IsRanged(weapon))
             {

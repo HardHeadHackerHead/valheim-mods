@@ -243,11 +243,11 @@ namespace AICompanion
                 st.GoalSaid = g.What;
                 string need = g.Raw.Count > 0 ? $" I still need {g.RawText()}." : "";
                 string smelt = g.Smelt.Count > 0 ? $" ({string.Join(" and ", g.Smelt)} need{(g.Smelt.Count == 1 ? "s" : "")} a smelter: I'll put the ore in my chest.)" : "";
-                Talk.Tell(me, $"I'm working toward a {g.What}.{need}{smelt}", "goal:" + g.What, 30f);
+                Talk.Mention(me, $"I'm working toward a {g.What}.{need}{smelt}", "goal:" + g.What, 30f); // (its menu shows it: not for chat)
                 st.Remember($"working toward a {g.What}");
             }
             if (g.Ask.Count > 0)
-                Talk.Tell(me, $"For my {g.What} I need {string.Join(" and ", g.Ask)}, and I can't get that myself. Do you have any? Put it in my chest or give it to me.", "ask:" + g.What, 20f);
+                Talk.Tell(me, $"For my {g.What} I need {string.Join(" and ", g.Ask)}, and I can't get that myself. Do you have any? Put it in my chest or give it to me.", "ask:" + g.What, 60f);
         }
 
         private static string Loc(string s) => Localization.instance.Localize(s).ToLowerInvariant();

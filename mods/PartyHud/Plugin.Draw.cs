@@ -380,7 +380,7 @@ namespace PartyHud
                 }
             }
             if (!compact && !string.IsNullOrEmpty(m.Status))
-                Text(new Rect(bx, y + 35f, bw - iconsWidth, 12f), dead ? "fallen: gear in a crate (skull on the map)" : m.Status, _headerStyle, Dim);
+                Text(new Rect(bx, y + 35f, bw - iconsWidth, 12f), dead ? "fallen: its things in a tombstone (skull on the map)" : m.Status, _headerStyle, Dim);
             GUI.color = Color.white;
             return height;
         }

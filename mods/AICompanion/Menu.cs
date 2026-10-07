@@ -13,12 +13,12 @@ namespace AICompanion
     ///   Home   - its bed and chests, living at home (where and what it gathers), what it gathered, what happens while you are away;
     ///   Gear   - what it wears, its bag, giving it things, and what it picks up off the ground;
     ///   Looks  - body, hair, beard, skin and hair colour;
-    ///   Brain  - Jev (key, test, cost), who decides, tuning, and the decision log.
+    ///   Journal - its life so far: days with you, kills, parries, bosses, deaths, gear made, and the moments worth remembering.
     /// With no companion of yours nearby it shows the summon panel.
     /// </summary>
     public partial class Plugin
     {
-        private enum Tab { Status, Stats, Orders, Home, Gear, Looks, Brain }
+        private enum Tab { Status, Stats, Orders, Home, Gear, Looks, Journal }
 
         internal static bool MenuOpen;
         private Humanoid _shown;          // null: the summon panel
@@ -30,8 +30,6 @@ namespace AICompanion
         private Action _pending;          // button actions run in Update, not in the middle of drawing
         private string _nameField = "", _note = "", _testResult = "", _hover = "";
         private Vector2 _scroll, _logScroll, _jsonScroll;
-        private DecisionRecord _picked;
-        private int _filter;              // decision log: 0 all, 1 Jev, 2 built-in, 3 failed
         private readonly List<Texture2D> _textures = new List<Texture2D>();
         private GUIStyle _statNum, _title, _h2, _text, _bold, _dim, _small, _good, _warn, _bad, _mono, _button, _buttonOn, _tab0, _tab1, _check, _field, _card, _row, _rowOn, _num;
 
@@ -193,7 +191,6 @@ namespace AICompanion
                     string took = Home.SetUp(c);
                     Talk.Tell(c, took != null ? $"Hello! {took}" : "Hello! Give me a bed and a chest and I'll make my home here.");
                 };
-            Note(string.IsNullOrEmpty(ApiKey.Value) ? "No Jev key yet: they fight with the built-in brain until you add one (Brain tab)." : "Jev decides how they fight (your key is set).", _dim);
             EndCard();
         }
 
@@ -268,7 +265,7 @@ namespace AICompanion
                 case Tab.Home: DrawHome(c); break;
                 case Tab.Gear: DrawGear(c); break;
                 case Tab.Looks: DrawLooks(c); break;
-                case Tab.Brain: DrawBrain(c); break;
+                case Tab.Journal: DrawJournal(c); break;
             }
             GUILayout.EndVertical();
             GUILayout.EndScrollView();
@@ -288,7 +285,6 @@ namespace AICompanion
             {
                 Note("Fighting: " + string.Join(", ", st.Enemies.Where(e => e != null).Select(st.Label)), _bold);
                 Note(Capital(d.Describe(st.Label)), _good);
-                if (d.FromJev) Bar($"Jev is {d.Confidence * 100f:0}% sure", d.Confidence, new Color(0.3f, 0.6f, 0.52f), 18f);
                 if (!string.IsNullOrEmpty(d.Note)) Note(Capital(d.Note), _dim);
             }
             else Note($"Not fighting. It acts when an enemy comes within {EngageRange.Value:0} m of it or you.", _dim);
@@ -412,7 +408,16 @@ namespace AICompanion
             if (melee != null) Note($"{Loc(melee.m_shared.m_name)}: {Damage(c, melee)} damage a hit (with its {Loc("$skill_" + melee.m_shared.m_skillType.ToString().ToLower())} skill)", _text);
             else Note("No weapon: it fights with its fists.", _warn);
             if (bow != null) Note($"{Loc(bow.m_shared.m_name)}: {Damage(c, bow)} damage a shot", _text);
-            Note(shield != null ? $"Blocks with its {Loc(shield.m_shared.m_name)} when something swings at it, then hits back." : melee != null ? "Blocks with its weapon when something swings at it (a shield blocks far better)." : "Nothing to block with.", _dim);
+            Note(shield != null ? $"Blocks with its {Loc(shield.m_shared.m_name)} just before a swing lands (a parry, once it has seen that creature swing), then hits back; steps aside from sweeps, shots and hits too hard to block." : melee != null ? "Blocks with its weapon when something swings at it (a shield blocks far better); steps aside from what it cannot block." : "Nothing to block with: it steps aside instead.", _dim);
+            if (here && st.Parries + st.Blocks > 0) Note($"This session: {st.Parries} parries, {st.Blocks} blocks.", _text);
+            var tally = Journal.Tally(c);
+            var feared = tally.Where(kv => kv.Key.StartsWith("killedby:")).Select(kv => kv.Key.Substring(9).ToLowerInvariant()).ToList();
+            if (feared.Count > 0) Note("Careful with: " + string.Join(", ", feared) + " (they have killed it before: it uses its bow on them and keeps its distance).", _dim);
+            EndCard();
+
+            BeginCard("Its last fights");
+            if (!here || st.FightLog.Count == 0) Note(here ? "None yet this session." : "Shows on the game that runs it.", _dim);
+            else foreach (string f in st.FightLog) Note(f, _text);
             EndCard();
 
             BeginCard("Resistances");
@@ -503,7 +508,7 @@ namespace AICompanion
             GUILayout.Space(4);
             int retreat = Companion.RetreatOf(c);
             Stepper("Falls back below", $"{retreat}% health", () => Change(z => z.Set(Keys.Retreat, Mathf.Clamp(retreat - 5, 0, 90))), () => Change(z => z.Set(Keys.Retreat, Mathf.Clamp(retreat + 5, 0, 90))));
-            Note("Below half of that it runs. These are rules, whatever Jev says.", _dim);
+            Note("Below half of that it runs.", _dim);
             Stepper("Fights enemies within", $"{EngageRange.Value:0} m", () => { EngageRange.Value = Mathf.Clamp(EngageRange.Value - 2f, 4f, 50f); SaveSettings(); },
                     () => { EngageRange.Value = Mathf.Clamp(EngageRange.Value + 2f, 4f, 50f); SaveSettings(); });
             Note("Of it or you (all your companions). Living at home it also fights anything that comes into its home.", _dim);
@@ -515,6 +520,9 @@ namespace AICompanion
             BeginCard("Habits");
             bool loot = Loot.On(c), friends = Companion.Zdo(c).GetBool(Keys.Friends, false);
             if (Check("Picks things up off the ground (what, in the Gear tab)", loot)) _pending = () => Change(z => z.Set(Loot.Key, !loot));
+            bool autoHome = Following.AutoHome(c);
+            if (Check("Comes along when you head out, and lives at home again when you're back (with a bed)", autoHome)) _pending = () => Change(z => z.Set(Following.AutoHomeKey, !autoHome));
+            if (Check("Shows what it decides in a fight above its head", ShowDecisions.Value)) _pending = () => { ShowDecisions.Value = !ShowDecisions.Value; SaveSettings(); };
             bool chatty = Talk.Chatty(c);
             if (Check("Tells you in chat what it is up to (what it makes, what it needs)", chatty)) _pending = () => Change(z => z.Set(Talk.ChattyKey, !chatty));
             if (Mine && Check("Friends can give it orders", friends)) _pending = () => Companion.Write(c, z => z.Set(Keys.Friends, !friends));
@@ -682,6 +690,7 @@ namespace AICompanion
             if (Carry.Over(c)) Note("Too heavy: it cannot run until it puts something down.", _warn);
             Grid(its, its.GetWidth(), its.GetHeight(), item => { if (Mine) _pending = () => { if (!Companion.Take(_shown, Player.m_localPlayer, item, out string why) && why != null) _note = why; }; });
             Note(string.IsNullOrEmpty(_hover) ? (Mine ? "Click an item to take it. Point at one to see what it is." : "Point at an item to see what it is.") : _hover, string.IsNullOrEmpty(_hover) ? _dim : _bold);
+            if (Mine) Note("Easier: open your own inventory (Tab) near it. Its bag shows beside yours; drag items between them, right-click to take.", _good);
             if (Mine && GUILayout.Button("Open it as a chest (drag items around)", _button, GUILayout.Height(28))) _pending = OpenGear;
             EndCard();
 
@@ -876,116 +885,41 @@ namespace AICompanion
             return v;
         }
 
-        // ==== Brain ========================================================================================
+        // ==== Journal ======================================================================================
 
-        private void DrawBrain(Humanoid c)
+        private void DrawJournal(Humanoid c)
         {
-            BeginCard("Jev");
-            bool jevOn = UseJev.Value && Companion.UsesJev(c);
-            string key = ApiKey.Value;
-            string light = !jevOn ? "Off: the built-in brain decides." : string.IsNullOrEmpty(key) ? "No key yet: the built-in brain decides." :
-                !string.IsNullOrEmpty(Jev.LastError) ? "Problem: " + Jev.LastError : Jev.Decisions > 0 ? $"Connected. Last answer in {Jev.LastMs:0} ms." : "Key set; it is asked in the next fight.";
-            Note(light, !jevOn || string.IsNullOrEmpty(key) || !string.IsNullOrEmpty(Jev.LastError) ? _warn : _good);
-            Note($"Today: {Jev.Decisions} answers, {Jev.Failures} failed, about ${Jev.Cost:0.0000}.", _dim);
-            GUILayout.Space(4);
+            var tally = Journal.Tally(c);
+            int T(string k) => tally.TryGetValue(k, out int n) ? n : 0;
+            BeginCard("Its saga");
             GUILayout.BeginHorizontal();
-            GUILayout.Label("API key", _bold, GUILayout.Width(80));
-            GUILayout.Label(Mask(key), _text, GUILayout.Width(180));
-            if (GUILayout.Button("Paste", _button, GUILayout.Height(28))) _pending = PasteKey;
-            if (GUILayout.Button("Test", _button, GUILayout.Height(28))) _pending = () => { _testResult = "Testing…"; StartCoroutine(Jev.Test(r => _testResult = r)); };
-            if (!string.IsNullOrEmpty(key) && GUILayout.Button("Remove", _button, GUILayout.Height(28))) _pending = () => { ApiKey.Value = ""; SaveSettings(); _testResult = "Key removed."; };
+            Stat("Days with you", Journal.DaysWithYou(c).ToString());
+            Stat("Kills", T("kills").ToString());
+            Stat("Parries", T("parries").ToString());
+            Stat("Falls", T("deaths").ToString());
             GUILayout.EndHorizontal();
-            if (!string.IsNullOrEmpty(_testResult)) Note(_testResult, _testResult.StartsWith("Connected") ? _good : _text);
-            Note("Copy your key from console.typesafe.ai, then press Paste. It stays in your own settings file.", _dim);
+            var kills = tally.Where(kv => kv.Key.StartsWith("kill:")).OrderByDescending(kv => kv.Value).Take(6).Select(kv => $"{kv.Value} {kv.Key.Substring(5).ToLowerInvariant()}").ToList();
+            if (kills.Count > 0) Note("Most slain: " + string.Join(", ", kills), _text);
+            var bosses = tally.Where(kv => kv.Key.StartsWith("boss:")).Select(kv => kv.Key.Substring(5)).ToList();
+            Note(bosses.Count > 0 ? "Bosses: " + string.Join(", ", bosses) : "No boss yet.", bosses.Count > 0 ? _good : _dim);
+            Note($"Gear made: {T("made")}   Upgrades: {T("upgraded")}   Trips: {T("trips")}", _text);
+            var lands = tally.Where(kv => kv.Key.StartsWith("place:") && kv.Key != "place:dungeon").Select(kv => kv.Key.Substring(6)).ToList();
+            if (lands.Count > 0) Note("Has seen: " + string.Join(", ", lands) + (T("place:dungeon") > 0 ? $", and {T("place:dungeon")} dungeon{(T("place:dungeon") == 1 ? "" : "s")}" : ""), _dim);
             EndCard();
 
-            BeginCard("Who decides");
-            bool usesJev = Companion.UsesJev(c);
-            if (Check("This companion asks Jev how to fight", usesJev)) _pending = () => Change(z => z.Set(Keys.UseJev, !usesJev));
-            if (Check("Jev on for all my companions", UseJev.Value)) _pending = () => { UseJev.Value = !UseJev.Value; SaveSettings(); };
-            if (Check("Show its decisions above its head", ShowDecisions.Value)) _pending = () => { ShowDecisions.Value = !ShowDecisions.Value; SaveSettings(); };
-            Note("Without Jev (or when Jev is unsure) a simple built-in brain fights: it keeps its target, finishes the weakest, protects you, and falls back when hurt.", _dim);
-            EndCard();
-
-            BeginCard("Advanced");
-            if (GUILayout.Button(_showAdvanced ? "Hide" : "Show Jev's tuning", _button, GUILayout.Width(200), GUILayout.Height(28))) _pending = () => _showAdvanced = !_showAdvanced;
-            if (_showAdvanced)
+            BeginCard("Moments");
+            var entries = Journal.Entries(c);
+            if (entries.Count == 0) Note("Nothing written yet: its first kills, parries, trips and the gear it makes will show here.", _dim);
+            foreach (string e in Enumerable.Reverse(entries).Take(40))
             {
-            Stepper("Asks Jev every", $"{DecisionSeconds.Value:0.0} s", () => { DecisionSeconds.Value = Mathf.Clamp(DecisionSeconds.Value - 0.5f, 0.5f, 10f); SaveSettings(); },
-                    () => { DecisionSeconds.Value = Mathf.Clamp(DecisionSeconds.Value + 0.5f, 0.5f, 10f); SaveSettings(); });
-            Note("And at once when something big happens: a new enemy, its target dead, a big hit.", _dim);
-            Stepper("Trusts Jev from", $"{MinConfidence.Value * 100f:0}% sure", () => { MinConfidence.Value = Mathf.Clamp01(MinConfidence.Value - 0.05f); SaveSettings(); },
-                    () => { MinConfidence.Value = Mathf.Clamp01(MinConfidence.Value + 0.05f); SaveSettings(); });
-            Note("Less sure than this, and the built-in brain decides that moment.", _dim);
-            if (Check("Also write every Jev request to a file (BepInEx/AICompanion/jev-decisions.jsonl)", LogToFile.Value)) _pending = () => { LogToFile.Value = !LogToFile.Value; SaveSettings(); };
+                int bar = e.IndexOf('|');
+                string day = bar > 0 ? e.Substring(0, bar) : "?", text = bar > 0 ? e.Substring(bar + 1) : e;
+                GUILayout.BeginHorizontal();
+                GUILayout.Label($"Day {day}", _dim, GUILayout.Width(70));
+                GUILayout.Label(text, _text, GUILayout.MaxWidth(Inner - 110f));
+                GUILayout.EndHorizontal();
             }
             EndCard();
-
-            BeginCard("Decision log");
-            Note(DebugLog.Summary(), _dim);
-            GUILayout.BeginHorizontal();
-            if (GUILayout.Button(_showLog ? "Hide the log" : "Show the log", _button, GUILayout.Height(28))) _pending = () => _showLog = !_showLog;
-            if (GUILayout.Button("Ask Jev now", _button, GUILayout.Height(28)))
-                _pending = () => { BrainState bs = Brain.Get(c); if (bs.InCombat) bs.NextAsk = 0f; else _note = "It only asks during a fight."; };
-            GUILayout.EndHorizontal();
-            if (_showLog) DrawLog();
-            EndCard();
-        }
-
-        private void DrawLog()
-        {
-            GUILayout.BeginHorizontal();
-            string[] filters = { "All", "Jev", "Built-in", "Failed" };
-            for (int i = 0; i < filters.Length; i++) if (Choice(filters[i], _filter == i, 5)) { int f = i; _pending = () => _filter = f; }
-            if (Choice("Clear", false, 5)) _pending = () => { DebugLog.Records.Clear(); _picked = null; };
-            GUILayout.EndHorizontal();
-
-            IEnumerable<DecisionRecord> shown = DebugLog.Records;
-            if (_filter == 1) shown = shown.Where(r => r.FromJev);
-            else if (_filter == 2) shown = shown.Where(r => !r.FromJev);
-            else if (_filter == 3) shown = shown.Where(r => r.Failed);
-            var list = shown.Take(100).ToList();
-            _logScroll = GUILayout.BeginScrollView(_logScroll, false, true, GUIStyle.none, GUI.skin.verticalScrollbar, GUILayout.Height(220f));
-            if (list.Count == 0) Note("No decisions yet: they appear here during a fight.", _dim);
-            foreach (DecisionRecord r in list)
-            {
-                string src = r.FromJev ? $"Jev, {r.Ms:0} ms" : r.Failed ? "failed, built-in" : r.AskedJev ? "unsure, built-in" : "built-in";
-                if (GUILayout.Button($"{r.When:HH:mm:ss}   {r.Outcome}   ({src})", r == _picked ? _rowOn : _row, GUILayout.Width(Inner - 50f)))
-                { DecisionRecord pick = r; _pending = () => { _picked = _picked == pick ? null : pick; _jsonScroll = Vector2.zero; }; }
-            }
-            GUILayout.EndScrollView();
-
-            if (_picked == null) { Note("Click a decision to see Jev's answers and the exact request.", _dim); return; }
-            DecisionRecord p = _picked;
-            Note($"{p.When:HH:mm:ss}  {p.Companion}: {p.Outcome}", _bold);
-            if (!string.IsNullOrEmpty(p.Enemies)) Note("Enemies: " + p.Enemies, _dim);
-            if (!string.IsNullOrEmpty(p.Note)) Note("Why: " + p.Note, _warn);
-            if (p.Failed) Note("Error: " + p.Error, _bad);
-            foreach (string a in p.Answers) Note(a, _mono);
-            if (!p.AskedJev) { Note("The built-in brain decided this without asking Jev (no key, Jev off, or its target had just died).", _dim); return; }
-            GUILayout.BeginHorizontal();
-            if (GUILayout.Button(_showJson ? "Hide JSON" : "Show JSON", _button, GUILayout.Height(28))) _pending = () => _showJson = !_showJson;
-            if (GUILayout.Button("Copy request", _button, GUILayout.Height(28))) _pending = () => { GUIUtility.systemCopyBuffer = p.Request; _note = "Request copied."; };
-            if (!string.IsNullOrEmpty(p.Response) && GUILayout.Button("Copy answer", _button, GUILayout.Height(28))) _pending = () => { GUIUtility.systemCopyBuffer = p.Response; _note = "Answer copied."; };
-            GUILayout.EndHorizontal();
-            if (_showJson)
-            {
-                _jsonScroll = GUILayout.BeginScrollView(_jsonScroll, false, true, GUIStyle.none, GUI.skin.verticalScrollbar, GUILayout.Height(300f));
-                Note("Sent to Jev", _bold);
-                Note(p.Request, _mono);
-                if (!string.IsNullOrEmpty(p.Response)) { Note("Jev's answer", _bold); Note(p.Response, _mono); }
-                GUILayout.EndScrollView();
-            }
-        }
-
-        private void PasteKey()
-        {
-            string text = (GUIUtility.systemCopyBuffer ?? "").Trim();
-            if (text.Length < 10 || text.Contains(" ") || text.Contains("\n")) { _testResult = "The clipboard does not hold a key. Copy it from console.typesafe.ai first."; return; }
-            ApiKey.Value = text;
-            SaveSettings();
-            Jev.BlockedUntil = 0f; Jev.InRow = 0; Jev.LastError = "";
-            _testResult = "Key saved (" + Mask(text) + "). Press Test to check it.";
         }
 
         // ==== pieces =======================================================================================

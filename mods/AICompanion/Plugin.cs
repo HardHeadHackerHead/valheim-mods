@@ -7,30 +7,21 @@ using UnityEngine;
 namespace AICompanion
 {
     /// <summary>
-    /// A viking companion who follows you and fights beside you. The mod does the fighting itself (moving, swinging, blocking, at full
-    /// speed); in a fight, about once a second, it asks Jev (TypeSafe's decision model, with your API key) what to do: attack whom, defend
-    /// you, back off, fall back, flee, bow or melee, drink a potion. Without a key, or if Jev does not answer in time, a simple built-in
-    /// brain decides instead, so it never stands idle.
-    ///
-    /// Split across files: Plugin.cs (setup, settings, keys), Prefab.cs (the companion's body, made from the player's), Companion.cs (its
-    /// saved settings, gear, summoning and death), Brain.cs (what it does each frame), Jev.cs (asking Jev), Menu.cs (its menu, J or E),
-    /// Patches.cs (the game hooks), Tools.cs (commands for Claude Tools).
-    ///
-    /// Nothing of ours is put on the companion itself (only the game's own components), so a hot reload simply hands the companions
-    /// already in the world to the new code.
+    /// A viking companion who plays like a player: follows you and fights beside you (its own brain: Brain, Defense, Archery, Steer), lives its
+    /// own life at home (Work, Goals, Home, Mending, CatchUp), and keeps a journal (Journal). Nothing of ours is put on the companion itself
+    /// (only the game's own components), so a hot reload simply hands the companions already in the world to the new code.
     /// </summary>
     [BepInPlugin(Guid, Name, Version)]
     public partial class Plugin : BaseUnityPlugin
     {
         public const string Guid = "com.dhack.aicompanion";
         public const string Name = "AICompanion";
-        public const string Version = "0.7.0";
+        public const string Version = "0.10.9";
 
         internal static Plugin Instance;
-        internal static ConfigEntry<string> ApiKey, Endpoint, Model;
-        internal static ConfigEntry<bool> UseJev, ShowDecisions, LogToFile;
-        internal static ConfigEntry<float> DecisionSeconds, MinConfidence, Timeout, PricePerMillion, EngageRange, RespawnSeconds, BaseHealth, BaseStamina, StartingSkill;
-        internal static ConfigEntry<KeyboardShortcut> MenuKey;
+        internal static ConfigEntry<bool> ShowDecisions;
+        internal static ConfigEntry<float> EngageRange, RespawnSeconds, BaseHealth, BaseStamina, StartingSkill;
+        internal static ConfigEntry<KeyboardShortcut> MenuKey, CommandKey;
         internal static ConfigEntry<AwayMode> WhileAway;
         internal static ConfigEntry<int> MaxCompanions;
 
@@ -56,18 +47,18 @@ namespace AICompanion
         private void Awake()
         {
             Instance = this;
-            // Only four settings in the mod's own file (and the mod manager): the menu key, how many companions, life while you are away, and
-            // the Jev key. Everything else is changed in the companion's menu, where it is explained, and kept in a second file the manager does
+            // Only a few settings in the mod's own file (and the mod manager): the menu and command keys, how many companions, and life while you
+            // are away. Everything else is changed in the companion's menu, where it is explained, and kept in a second file the manager does
             // not list (com.dhack.aicompanion.more.cfg). Values set before 0.6.0 move over by themselves.
             MenuKey = Config.Bind("General", "MenuKey", new KeyboardShortcut(KeyCode.J),
                 "Tap: your companion's menu (or the summon panel). Hold: all your companions near you come with you, or go home. E on a companion opens its menu too.");
+            CommandKey = Config.Bind("General", "CommandKey", new KeyboardShortcut(KeyCode.H),
+                "Point at something and press it: an enemy (they attack it), a tree, rock or plant (it works it), your chest (it puts its things in), its tombstone, a free bed (its bed), the ground (it waits there), or the sky (it comes back).");
             MaxCompanions = Config.Bind("Companion", "MaxCompanions", 3, new ConfigDescription(
                 "How many companions each player can have.", new AcceptableValueRange<int>(1, 10)));
             WhileAway = Config.Bind("Companion", "WhileAway", AwayMode.Mild,
                 "What a companion living at home does while nobody is near. It always catches up on its work when you come back. " +
                 "Mild: it also fights off a few creatures and keeps their drops, and never falls. Real: those fights can go badly and it can fall. Off: work only.");
-            ApiKey = Config.Bind("Jev", "ApiKey", "",
-                "Your Jev key from console.typesafe.ai (easiest: copy it and press Paste in the companion's Brain tab). Optional: without one a built-in brain fights. Only the companion's owner needs one; it stays on your PC.");
 
             _more = new ConfigFile(System.IO.Path.Combine(Paths.ConfigPath, Guid + ".more.cfg"), true);
             EngageRange = More("Companion", "FightRange", 12f, "It fights enemies that come this close (in metres) to it or to you. In the menu: Orders.", new AcceptableValueRange<float>(5f, 50f));
@@ -77,14 +68,6 @@ namespace AICompanion
             BaseHealth = More("Companion", "BaseHealth", 25f, "Its health before food, as a player's (25).", new AcceptableValueRange<float>(5f, 500f));
             BaseStamina = More("Companion", "BaseStamina", 75f, "Its stamina before food, as a player's (75).", new AcceptableValueRange<float>(10f, 500f));
             StartingSkill = More("Companion", "StartingSkill", 0f, "The skill level a new companion starts at (a new player: 0).", new AcceptableValueRange<float>(0f, 100f));
-            UseJev = More("Jev", "Enabled", true, "Let Jev decide how companions fight (with a key). In the menu: Brain.");
-            DecisionSeconds = More("Jev", "DecisionSeconds", 1.5f, "How often Jev is asked during a fight, in seconds. In the menu: Brain, Advanced.", new AcceptableValueRange<float>(0.5f, 10f));
-            MinConfidence = More("Jev", "MinConfidence", 0.3f, "Less sure than this (0 to 1), and the built-in brain decides that moment. In the menu: Brain, Advanced.", new AcceptableValueRange<float>(0f, 1f));
-            LogToFile = More("Jev", "LogToFile", false, "Write every Jev request and answer to BepInEx/AICompanion/jev-decisions.jsonl. In the menu: Brain, Advanced.");
-            Timeout = More("Jev", "TimeoutSeconds", 4f, "Give up waiting for an answer after this many seconds.", new AcceptableValueRange<float>(1f, 20f));
-            Endpoint = More("Jev", "Endpoint", "https://api.typesafe.ai/v1/systemone", "TypeSafe's address for Jev. Leave as it is.");
-            Model = More("Jev", "Model", "jev-latest", "Which Jev model to ask. Leave as it is.");
-            PricePerMillion = More("Jev", "PricePerMillionTokens", 0.042f, "Jev's price per million tokens in US dollars, for the cost shown in the menu.");
             foreach (string gone in new[] { "Health", "Stamina" }) { Config.Bind("Companion", gone, 0f, ""); Config.Remove(new ConfigDefinition("Companion", gone)); } // from 0.1.0
             Config.Save();   // without the settings that moved
 
@@ -94,7 +77,7 @@ namespace AICompanion
             Net.Start();
             Portraits.Start();
 
-            Logger.LogInfo($"{Name} {Version} loaded (menu: {MenuKey.Value}, Jev key {(string.IsNullOrEmpty(ApiKey.Value) ? "not set" : "set")})");
+            Logger.LogInfo($"{Name} {Version} loaded (menu: {MenuKey.Value}, commands: {CommandKey.Value})");
             if (Player.m_localPlayer != null && Chat.instance != null)
                 Chat.instance.AddString("[Mod]", $"{Name} v{Version} reloaded", Talker.Type.Normal);
         }
@@ -106,6 +89,7 @@ namespace AICompanion
             Net.Stop();
             Home.Stop();
             Portraits.Stop();
+            Idle.Forget();  // (up from its chair, before its brain is forgotten)
             Brain.Forget();
             Stamina.Forget();
             Food.Forget();
@@ -119,6 +103,9 @@ namespace AICompanion
             Steer.Forget();
             Activity.Forget();
             Passing.Forget();
+            Defense.Forget();
+            Banter.Forget();
+            BagPanel.Destroy();
             Container_Load_Companion.Forget();
             _harmony?.UnpatchSelf();
             Prefab.Unregister();
@@ -138,6 +125,7 @@ namespace AICompanion
             Portraits.Tick();
             UpdateMenu(player);
             MenuKeyPressed(player);
+            if (!MenuOpen && Home.AssignFor == null && !TypingOrBusy() && CommandKey.Value.IsDown()) Pointing.Command(player);
         }
 
         private float _keyDownAt = -1f;

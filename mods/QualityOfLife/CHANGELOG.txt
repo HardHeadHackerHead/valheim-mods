@@ -1,3 +1,5 @@
+Companions (AICompanion) can sort what they bring home into your chests by the same rules as Stack to chests: a chest assigned that item, then its category, then one already holding it.
+
 New: the camera zooms out much further: up to 20 m on foot (the game stops at 6) and 40 m while steering a boat. Each scroll step grows as you zoom out, so it only takes a few notches. Camera, MaxDistance and MaxDistanceBoat set the limits; FarZoom switches it off.
 
 Fix: the quick-set key (Q) also triggered the game's auto-run and previous-tab keys. The game's keys are now unbound (once, and you are told in chat); bind them again in Settings, Controls if you want them.

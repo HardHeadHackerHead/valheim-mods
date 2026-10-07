@@ -29,7 +29,7 @@ namespace AICompanion
                 else if (Time.time - st.MasterGoneSince > 60f && bed)
                 {
                     st.MasterGoneSince = 0f;
-                    if (Home.GoHome(me, true)) { st.Remember("its player left, so it went home"); Plugin.Instance?.Note($"{Companion.NameOf(me)} went home: its player left"); }
+                    if (Home.GoHome(me, true, false)) { st.Remember("its player left, so it went home"); Plugin.Instance?.Note($"{Companion.NameOf(me)} went home: its player left"); }
                 }
                 return;
             }
@@ -48,7 +48,7 @@ namespace AICompanion
             bool homeNear = bed && Vector3.Distance(z.GetVec3(Keys.BedPos, me.transform.position), me.transform.position) < 200f;
             if (homeNear)
             {
-                if (!Home.GoHome(me, true)) return;
+                if (!Home.GoHome(me, true, false)) return;
                 Talk.Tell(me, $"{need}, so I'm going home to sort it out. Hold {Plugin.MenuKey.Value} to call me back.", "need:" + topic, 3f);
                 st.Remember($"went home by itself ({need.ToLowerInvariant()})");
             }

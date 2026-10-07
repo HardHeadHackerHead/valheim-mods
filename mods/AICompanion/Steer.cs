@@ -57,7 +57,10 @@ namespace AICompanion
             State s = Of(me);
             // Deep water is out of bounds too, unless it is with you and you are in it (swimming after you, or to your boat).
             Player master = Companion.Master(me);
-            s.AvoidWater = !(Companion.OrderOf(me) == Order.Follow && master != null && (master.IsSwimming() || master.IsAttached() || master.transform.position.y < ZoneSystem.instance.m_waterLevel));
+            bool youInWater = Companion.OrderOf(me) == Order.Follow && master != null && (master.IsSwimming() || master.IsAttached() || master.transform.position.y < ZoneSystem.instance.m_waterLevel);
+            bool tired = Stamina.Get(me) < Stamina.Max(me) * 0.3f;
+            s.AvoidWater = !youInWater || tired && !master.IsAttached();
+            if (youInWater && tired && !master.IsAttached()) Talk.Tell(me, "I'm too tired to swim that far. I'll wait on the bank.", "swim", 2f);
             Vector3 pos = me.transform.position;
             if (Time.time >= s.NextScan) { s.NextScan = Time.time + 0.3f; Scan(me, s, pos); }
             Vector3 dir = me.GetMoveDir();
@@ -83,6 +86,17 @@ namespace AICompanion
             }
 
             if (Clear(s, pos, dir)) { Jump(me, s, pos, dir); return; }
+
+            // A stream: jump it (narrow water with dry, level ground just beyond), rather than wade or turn back.
+            if (s.AvoidWater && Deep(pos + dir * 1.5f) && !Deep(pos + dir * 3.2f) && !Deep(pos + dir * 3.8f) && !Drop(pos, pos + dir * 3.5f)
+                && !s.Near.Any(h => Hurts(h, pos + dir * 3.5f, 0.4f)) && me.IsOnGround() && Time.time >= s.NextJump)
+            {
+                s.NextJump = Time.time + 1.5f;
+                me.SetMoveDir(dir);
+                me.SetRun(Stamina.CanRun(me));
+                me.Jump(false);
+                return;
+            }
 
             // Round it: the side it chose a moment ago first, then the other.
             float first = Time.time < s.SideUntil ? s.Side : 1f;
@@ -120,12 +134,14 @@ namespace AICompanion
         /// <summary>Water deeper than about a metre (it would have to swim).</summary>
         private static bool Deep(Vector3 at)
         {
+            if (at.y > 3000f) return false; // inside a dungeon
             if (ZoneSystem.instance == null || !ZoneSystem.instance.GetSolidHeight(at, out float ground)) return false;
             return ground < ZoneSystem.instance.m_waterLevel - 1f;
         }
 
         private static bool Drop(Vector3 from, Vector3 to)
         {
+            if (from.y > 3000f) return false; // inside a dungeon (built high above the world): the world's ground means nothing there
             if (ZoneSystem.instance == null || !ZoneSystem.instance.GetSolidHeight(to, out float ground)) return false;
             if (ground < ZoneSystem.instance.m_waterLevel - 0.5f) return false; // into water: no harm
             return from.y - ground > 3.5f;

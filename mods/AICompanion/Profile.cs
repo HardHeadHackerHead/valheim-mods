@@ -18,12 +18,15 @@ namespace AICompanion
         public long Id, World;
         public string Name = "Rádvar";
         public int Order, Style = 1, Retreat = 30, Kills, Jobs, Radius = 30, Model;
-        public bool Potions = true, Protect = true, UseJev = true, Loot = true, Friends, Pantry, Chatty = true, Stow = true;
+        public bool Potions = true, Protect = true, UseJev = true, Loot = true, Friends, Pantry, Chatty = true, Stow = true, AutoHome = true;
         public int PickList = (int)AICompanion.Loot.Default;
         public Vector3 Skin = Vector3.one, HairColor = Vector3.one;
         public int Hair, Beard;
         public float SkinT = 0.3f, HairT = 0.5f, HairL = 0.8f;
         public string Skills = "";
+        public string Kept = "";
+        public string JournalText = "", TallyText = "";
+        public int Since = -1;   // the day it joined (Journal)   // the gear it wore when it fell, to put back on when it wakes (Companion.Pack)
         public bool HasBed;
         public Vector3 Bed, LastSeen;
         public bool Dead, HasGrave;
@@ -81,7 +84,7 @@ namespace AICompanion
                 Hair = z.GetInt(ZDOVars.s_hairItem, 0), Beard = z.GetInt(ZDOVars.s_beardItem, 0),
                 SkinT = Looks.SkinTone(c), HairT = Looks.HairTone(c), HairL = Looks.HairShade(c), Skills = z.GetString(Skill.Key, ""),
                 HasBed = z.GetBool(Keys.HasBed, false), Bed = z.GetVec3(Keys.BedPos, Vector3.zero), LastSeen = c.transform.position,
-                HasGrave = z.GetBool(Grave.HasKey, false), DiedPos = z.GetVec3(Grave.PosKey, Vector3.zero), Loot = z.GetBool(AICompanion.Loot.Key, true), Friends = z.GetBool(Keys.Friends, false), Pantry = z.GetBool(Work.PantryKey, false), Stow = z.GetBool(Work.StowKey, true), Chatty = z.GetBool(Talk.ChattyKey, true), PickList = z.GetInt(AICompanion.Loot.ListKey, (int)AICompanion.Loot.Default),
+                HasGrave = z.GetBool(Grave.HasKey, false), DiedPos = z.GetVec3(Grave.PosKey, Vector3.zero), Loot = z.GetBool(AICompanion.Loot.Key, true), Friends = z.GetBool(Keys.Friends, false), Kept = z.GetString(Companion.KeptKey, ""), JournalText = z.GetString(Journal.EntriesKey, ""), TallyText = z.GetString(Journal.TallyKey, ""), Since = z.GetInt(Journal.SinceKey, -1), Pantry = z.GetBool(Work.PantryKey, false), Stow = z.GetBool(Work.StowKey, true), AutoHome = z.GetBool(Following.AutoHomeKey, true), Chatty = z.GetBool(Talk.ChattyKey, true), PickList = z.GetInt(AICompanion.Loot.ListKey, (int)AICompanion.Loot.Default),
             };
         }
 
@@ -97,7 +100,7 @@ namespace AICompanion
             z.Set(Keys.HasBed, HasBed); z.Set(Keys.BedPos, Bed);
             z.Set(Skill.Key, Skills ?? "");
             z.Set(Grave.HasKey, HasGrave); z.Set(Grave.PosKey, DiedPos);
-            z.Set(AICompanion.Loot.Key, Loot); z.Set(Keys.Friends, Friends); z.Set(AICompanion.Loot.ListKey, PickList); z.Set(Work.PantryKey, Pantry); z.Set(Work.StowKey, Stow); z.Set(Talk.ChattyKey, Chatty);
+            z.Set(AICompanion.Loot.Key, Loot); z.Set(Keys.Friends, Friends); z.Set(AICompanion.Loot.ListKey, PickList); z.Set(Work.PantryKey, Pantry); z.Set(Work.StowKey, Stow); z.Set(Journal.EntriesKey, JournalText ?? ""); z.Set(Journal.TallyKey, TallyText ?? ""); z.Set(Journal.SinceKey, Since); z.Set(Following.AutoHomeKey, AutoHome); z.Set(Talk.ChattyKey, Chatty);
             VisEquipment vis = c.GetComponent<VisEquipment>();
             if (vis == null) return;
             vis.SetModel(Model);
@@ -121,7 +124,7 @@ namespace AICompanion
             ["model"] = Model, ["skin"] = V(Skin), ["haircolor"] = V(HairColor), ["hair"] = Hair, ["beard"] = Beard,
             ["skint"] = SkinT, ["hairt"] = HairT, ["hairl"] = HairL, ["skills"] = Skills ?? "",
             ["hasbed"] = HasBed, ["bed"] = V(Bed), ["seen"] = V(LastSeen),
-            ["dead"] = Dead, ["diedat"] = DiedAt, ["diedpos"] = V(DiedPos), ["grave"] = HasGrave, ["loot"] = Loot, ["friends"] = Friends, ["pick"] = PickList, ["pantry"] = Pantry, ["stow"] = Stow, ["chatty"] = Chatty,
+            ["dead"] = Dead, ["diedat"] = DiedAt, ["diedpos"] = V(DiedPos), ["grave"] = HasGrave, ["loot"] = Loot, ["friends"] = Friends, ["pick"] = PickList, ["pantry"] = Pantry, ["stow"] = Stow, ["autohome"] = AutoHome, ["kept"] = Kept ?? "", ["journal"] = JournalText ?? "", ["tally"] = TallyText ?? "", ["since"] = Since, ["chatty"] = Chatty,
         };
 
         private static Profile FromJson(JObject o) => new Profile
@@ -135,7 +138,7 @@ namespace AICompanion
             SkinT = (float?)o["skint"] ?? 0.3f, HairT = (float?)o["hairt"] ?? 0.5f, HairL = (float?)o["hairl"] ?? 0.8f, Skills = (string)o["skills"] ?? "",
             HasBed = (bool?)o["hasbed"] ?? false, Bed = V(o["bed"]), LastSeen = V(o["seen"]),
             Dead = (bool?)o["dead"] ?? false, DiedAt = (double?)o["diedat"] ?? 0, DiedPos = V(o["diedpos"]),
-            HasGrave = (bool?)o["grave"] ?? false, Loot = (bool?)o["loot"] ?? true, Friends = (bool?)o["friends"] ?? false, Pantry = (bool?)o["pantry"] ?? false, Stow = (bool?)o["stow"] ?? true, Chatty = (bool?)o["chatty"] ?? true, PickList = (int?)o["pick"] ?? (int)AICompanion.Loot.Default,
+            HasGrave = (bool?)o["grave"] ?? false, Loot = (bool?)o["loot"] ?? true, Friends = (bool?)o["friends"] ?? false, Kept = (string)o["kept"] ?? "", JournalText = (string)o["journal"] ?? "", TallyText = (string)o["tally"] ?? "", Since = (int?)o["since"] ?? -1, Pantry = (bool?)o["pantry"] ?? false, Stow = (bool?)o["stow"] ?? true, AutoHome = (bool?)o["autohome"] ?? true, Chatty = (bool?)o["chatty"] ?? true, PickList = (int?)o["pick"] ?? (int)AICompanion.Loot.Default,
         };
     }
 }

@@ -119,19 +119,21 @@ namespace AICompanion
 
         // ---- the two orders ----------------------------------------------------------------------------------
 
-        /// <summary>Come with me: it follows you on your adventure.</summary>
-        public static bool Follow(Humanoid c)
+        /// <summary>Come with me: it follows you on your adventure. (Automatic: it decided itself, Following.)</summary>
+        public static bool Follow(Humanoid c, bool manual = true)
         {
             bool ok = Companion.Write(c, z => z.Set(Keys.Order, (int)Order.Follow));
-            if (ok) Brain.Get(c).Remember("you called it to come with you");
-            return ok;
+            if (!ok) return false;
+            BrainState st = Brain.Get(c);
+            if (manual) { st.ManualOrderAt = Time.time; st.Outing = false; st.Remember("you called it to come with you"); }
+            return true;
         }
 
         /// <summary>
         /// Go home and live there: to its bed (it takes a free one near it the first time, and empty chests beside it), or, with no bed
         /// anywhere, around where it stands. Far from home, it sets off and is there a few seconds later (Work: TravelHome).
         /// </summary>
-        public static bool GoHome(Humanoid c, bool quiet = false)
+        public static bool GoHome(Humanoid c, bool quiet = false, bool manual = true)
         {
             string setUp = Companion.Zdo(c)?.GetBool(Keys.HasBed, false) == true && Chests(c).Count > 0 ? null : SetUp(c);
             bool ok = Companion.Write(c, z =>
@@ -140,7 +142,10 @@ namespace AICompanion
                 if (!z.GetBool(Keys.HasBed, false)) z.Set(Keys.Post, c.transform.position);
             });
             if (!ok) return false;
-            Brain.Get(c).Remember("you sent it home");
+            BrainState st = Brain.Get(c);
+            st.Outing = false;
+            st.SortWhenHome = true; // what it brought back goes into your chests when it is there (Work.SortHome)
+            if (manual) { st.ManualOrderAt = Time.time; st.Remember("you sent it home"); }
             bool bed = Companion.Zdo(c).GetBool(Keys.HasBed, false);
             if (setUp != null) Talk.Tell(c, setUp);
             else if (!bed && !quiet) Talk.Tell(c, "There's no free bed near here, so I'll live around this spot. Give me a bed in my Home tab and I'll make it my home.", "nobed", 10f);
@@ -235,7 +240,7 @@ namespace AICompanion
         }
 
         /// <summary>On its player's game when it fell (directly, or told by the game that ran it).</summary>
-        public static void MarkDead(Player p, long id, Vector3 where, Humanoid body = null, bool grave = true)
+        public static void MarkDead(Player p, long id, Vector3 where, Humanoid body = null, bool grave = true, string kept = null)
         {
             Profile known = Profile.Find(p, id);
             if (known != null && known.Dead && ZNet.instance.GetTimeSeconds() - known.DiedAt < 60.0) return; // already counted (we are told twice)
@@ -246,6 +251,7 @@ namespace AICompanion
             prof.DiedAt = ZNet.instance.GetTimeSeconds();
             prof.DiedPos = where;
             prof.HasGrave = grave;   // it goes back for its things when it wakes
+            if (kept != null) prof.Kept = kept; // (told by the game that ran it)
             Profile.Save(p, prof);
             Plugin.Instance?.Note($"{prof.Name} will wake {(prof.HasBed ? "in their bed" : "beside you")} in {Plugin.RespawnSeconds.Value:0} s");
         }
@@ -262,15 +268,21 @@ namespace AICompanion
             z.Set(Keys.Master, p.GetPlayerID());
             z.Set(Keys.MasterName, p.GetPlayerName());
             prof.ApplyTo(c);
+            int kept = Companion.Unpack(c, prof.Kept); // the gear it wore when it fell
+            if (kept > 0) Plugin.Instance?.Note($"{prof.Name} woke wearing its gear ({kept})");
+            prof.Kept = "";
+            Companion.Zdo(c)?.Set(Companion.KeptKey, "");
             prof.Dead = false;
             Profile.Save(p, prof);
             string where = prof.HasBed ? $"in {(prof.Model == 1 ? "her" : "his")} bed" : "beside you";
             Plugin.Tell($"{prof.Name} wakes up {where}");
+            Brain.Get(c).WokeAt = Time.time; // up after a fall: careful for a while (Tactics.Careful)
             if (prof.HasGrave)
             {
                 float far = Vector3.Distance(prof.DiedPos, pos);
-                Talk.Tell(c, far < 80f ? "I'm up. I'll go and get my things from my tombstone."
-                    : $"I'm up. My things are in my tombstone {far:0} m {Work.Compass(prof.DiedPos - pos)} of here (the skull on your map). Take me near it and I'll pick everything up.", "woke", 0.5f);
+                bool atHome = prof.HasBed && Vector3.Distance(prof.DiedPos, Work.Center(c)) < Work.RadiusOf(c) + 10f; // (Grave: it fetches those itself)
+                Talk.Tell(c, atHome ? "I'm up. I'll go and get my things from my tombstone."
+                    : $"I'm up. My things are in my tombstone {far:0} m {Work.Compass(prof.DiedPos - pos)} of here (the skull on your map). Point me at it when we're there, or open it near me, and I'll take them back.", "woke", 0.5f);
             }
             Plugin.Instance?.Note($"{prof.Name} woke {where} at {pos:F0}");
             return c;

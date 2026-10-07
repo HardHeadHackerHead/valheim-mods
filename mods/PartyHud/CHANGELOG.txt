@@ -1,3 +1,5 @@
+A fallen companion's row says its things are in a tombstone (they keep the gear they wore since AICompanion 0.8), not "gear in a crate".
+
 New: a companion's row shows its three food slots under its picture, as players' rows do (empty slots: it is hungry and does not heal).
 
 New: a companion's row shows a little picture of its face (AICompanion 0.3.0 takes it) instead of its initial.

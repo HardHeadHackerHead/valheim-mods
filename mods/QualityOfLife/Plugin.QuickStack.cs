@@ -275,6 +275,66 @@ namespace QualityOfLife
             return before - item.m_stack; // part of it fitted: what's left stays in your inventory
         }
 
+        /// <summary>
+        /// For other mods (AICompanion, through AppDomain "DHack.QoL.StackInventory"): put the items of an inventory that <paramref name="keep"/>
+        /// does not protect into the chests within <paramref name="radius"/> of <paramref name="here"/>, by the same rules as Stack to chests
+        /// (a chest assigned that item, then its category, then a chest already holding it; nearest first). Only chests: never a cart's,
+        /// a ship's, a tombstone or a companion's bag, never one someone has open or a ward keeps you out of. The same lost-item check as
+        /// your own stacking. Returns how many items moved.
+        /// </summary>
+        internal static int StackInventory(Inventory inventory, Vector3 here, float radius, Func<ItemDrop.ItemData, bool> keep)
+        {
+            if (inventory == null || Game.instance == null) return 0;
+            float max = radius * radius;
+            List<Container> chests = ContainerRegistry.Alive()
+                .Where(c => c != null && c.GetInventory() != null && c.GetInventory() != inventory && !ContainerRegistry.InUse(c)
+                            && (c.transform.position - here).sqrMagnitude <= max && c.GetComponentInParent<Piece>() != null
+                            && c.GetComponentInParent<Vagon>() == null && c.GetComponentInParent<Ship>() == null && c.GetComponent<TombStone>() == null && Usable(c))
+                .OrderBy(c => (c.transform.position - here).sqrMagnitude).ToList();
+            if (chests.Count == 0) return 0;
+            foreach (Container c in chests) ContainerRegistry.Reload(c);
+            var rules = chests.ToDictionary(c => c, c => ChestRules.Read(c));
+
+            int Total(string itemName) => inventory.CountItems(itemName) + chests.Sum(c => c.GetInventory().CountItems(itemName));
+            var totalsBefore = new Dictionary<string, int>();
+            foreach (ItemDrop.ItemData item in inventory.GetAllItems())
+                if ((keep == null || !keep(item)) && !totalsBefore.ContainsKey(item.m_shared.m_name)) totalsBefore[item.m_shared.m_name] = Total(item.m_shared.m_name);
+
+            int moved = 0;
+            var where = new List<string>();
+            foreach (ItemDrop.ItemData item in inventory.GetAllItems().ToList())
+            {
+                if ((keep != null && keep(item)) || item.m_shared.m_questItem) continue;
+                int before = item.m_stack;
+                string name = item.m_shared.m_name, category = Categories.Of(item.m_shared);
+                var steps = new Func<Container, bool>[]
+                {
+                    c => rules[c].WantsItem(name),
+                    c => rules[c].WantsCategory(category),
+                    c => c.GetInventory().ContainsItemByName(name),
+                };
+                foreach (Func<Container, bool> wants in steps)
+                {
+                    foreach (Container c in chests)
+                    {
+                        if (!inventory.ContainsItem(item)) break;
+                        if (!wants(c)) continue;
+                        int n = Deposit(c, inventory, item);
+                        if (n > 0) where.Add($"{n} {Localization.instance.Localize(name)} in a chest {Vector3.Distance(here, c.transform.position):0} m away");
+                    }
+                    if (!inventory.ContainsItem(item)) break;
+                }
+                moved += before - (inventory.ContainsItem(item) ? item.m_stack : 0);
+            }
+            if (where.Count > 0) Instance?.Logger.LogInfo("Stacked for a companion: " + string.Join("; ", where.ToArray()));
+            foreach (var kv in totalsBefore)
+            {
+                int now = Total(kv.Key);
+                if (now < kv.Value) Instance?.Logger.LogError($"STACK LOST ITEMS (companion): {Localization.instance.Localize(kv.Key)} had {kv.Value} before and {now} after");
+            }
+            return moved;
+        }
+
         // ---- undo ---------------------------------------------------------------------------------
 
         /// <summary>One stack (or part of one) that was moved into a chest.</summary>

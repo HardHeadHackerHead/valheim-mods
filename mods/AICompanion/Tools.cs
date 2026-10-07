@@ -32,7 +32,7 @@ namespace AICompanion
                 MethodInfo register = found.GetType().GetMethod("RegisterCommand", BindingFlags.Public | BindingFlags.Static);
                 if (register == null) return;
                 register.Invoke(null, new object[] { Name, "companion",
-                    "companion status | summon [name] | order <follow|stay|guard> | style <aggressive|balanced|defensive|passive> | jevtest | decide | menu [tab|close] | list | remove <id> | send-home: your companion (JSON)",
+                    "companion status | summon [name] | order <follow|stay|guard> | style <aggressive|balanced|defensive|passive> | decide | menu [tab|close] | list | remove <id> | send-home: your companion (JSON)",
                     (Func<string[], Action<JObject>, Action<string>, IEnumerator>)CmdCompanion });
                 Logger.LogInfo("Claude Tools found: companion command added");
             }
@@ -59,13 +59,6 @@ namespace AICompanion
                 c = Companion.Summon(p, args.Length > 1 ? string.Join(" ", args.Skip(1)) : null);
                 yield return new WaitForSeconds(1f);
                 output(Describe(c));
-                yield break;
-            }
-            if (sub == "jevtest")
-            {
-                string result = null;
-                yield return Jev.Test(r => result = r);
-                output(new JObject { ["jev"] = result, ["key"] = Mask(ApiKey.Value) });
                 yield break;
             }
             if (sub == "list")
@@ -121,6 +114,27 @@ namespace AICompanion
                     }
                     output(new JObject { ["archery"] = arrows });
                     yield break;
+                case "sort":
+                    var bagBefore = c.GetInventory().GetAllItems().Select(i => $"{Localization.instance.Localize(i.m_shared.m_name)} x{i.m_stack}").ToList();
+                    int sorted = Work.SortHome(Brain.Get(c));
+                    output(new JObject { ["qol_installed"] = AppDomain.CurrentDomain.GetData("DHack.QoL.StackInventory") != null, ["moved"] = sorted, ["bag_before"] = new JArray(bagBefore),
+                                         ["bag_after"] = new JArray(c.GetInventory().GetAllItems().Select(i => $"{Localization.instance.Localize(i.m_shared.m_name)} x{i.m_stack}")) });
+                    yield break;
+                case "catchup":
+                    float secs = args.Length > 1 && float.TryParse(args[1], out float sv) ? sv : 600f;
+                    string failed = CatchUp.Test(Brain.Get(c), secs);
+                    output(new JObject { ["catchup_seconds"] = secs, ["error"] = failed, ["history"] = new JArray(Brain.Get(c).History.Take(2)) });
+                    yield break;
+                case "packtest":
+                    var wornNow = Companion.Worn(c).ToList();
+                    string packed = Companion.Pack(wornNow);
+                    var back = new Inventory("test", null, 8, 4);
+                    if (!string.IsNullOrEmpty(packed)) back.Load(new ZPackage(System.Convert.FromBase64String(packed)));
+                    string Sig(ItemDrop.ItemData i) => $"{i.m_dropPrefab?.name ?? i.m_shared.m_name} q{i.m_quality} d{i.m_durability:0.#} x{i.m_stack}";
+                    var before = wornNow.Select(Sig).OrderBy(x => x).ToList();
+                    var after = back.GetAllItems().Select(Sig).OrderBy(x => x).ToList();
+                    output(new JObject { ["worn"] = new JArray(before), ["restored"] = new JArray(after), ["same"] = before.SequenceEqual(after), ["packed_chars"] = packed.Length });
+                    yield break;
                 case "hazards": output(new JObject { ["around_you"] = Steer.Around(p.transform.position, args.Length > 1 && float.TryParse(args[1], out float rr) ? rr : 40f) }); yield break;
                 case "home": Home.GoHome(c); break;
                 case "follow": Home.Follow(c); break;
@@ -148,9 +162,20 @@ namespace AICompanion
                 case "decide":
                     BrainState st = Brain.Get(c);
                     if (st.Enemies.Count == 0) { error("no enemies near it, so there is nothing to decide"); yield break; }
-                    Decision got = null;
-                    yield return Jev.Decide(st, Companion.Master(c), Brain.BuiltIn(st, Companion.Master(c)), d => got = d);
-                    output(new JObject { ["decision"] = got?.Describe(st.Label), ["note"] = got?.Note, ["ms"] = Mathf.RoundToInt(Jev.LastMs) });
+                    Decision got = Brain.BuiltIn(st, Companion.Master(c));
+                    output(new JObject { ["decision"] = got.Describe(st.Label), ["note"] = got.Note });
+                    yield break;
+                case "emote":
+                    if (args.Length < 2) { error("companion emote <wave|cheer|thumbsup|sit|stand|...>"); yield break; }
+                    {
+                        BrainState es = Brain.Get(c);
+                        string em = args[1].ToLowerInvariant();
+                        bool ok = true;
+                        if (em == "sit") { Idle.SitDown(es); es.SitKeep = Time.time + 10f; } // (10 s, then the brain takes over again)
+                        else if (em == "stand") Idle.Stand(es);
+                        else ok = Idle.Emote(es, em);
+                        output(new JObject { ["emote"] = em, ["played"] = ok, ["sitting"] = es.Sitting, ["plan"] = es.IdlePlan.ToString() });
+                    }
                     yield break;
                 case "menu":
                     if (args.Length > 1 && args[1].ToLowerInvariant() == "close") { CloseMenu(); output(new JObject { ["menu"] = "closed" }); yield break; }
@@ -191,7 +216,6 @@ namespace AICompanion
                 ["goal"] = st.Goal?.What,
                 ["hazards_near"] = Steer.HazardsNear(c),
                 ["bed"] = Companion.Zdo(c).GetBool(Keys.HasBed, false), ["chests"] = Home.Chests(c).Count,
-                ["jev"] = new JObject { ["key"] = Mask(ApiKey.Value), ["decisions_today"] = Jev.Decisions, ["failures_today"] = Jev.Failures, ["last_ms"] = Mathf.RoundToInt(Jev.LastMs), ["last_error"] = Jev.LastError, ["cost_usd"] = Math.Round(Jev.Cost, 5) },
             };
         }
     
@@ -224,6 +248,8 @@ namespace AICompanion
                 ["status"] = st.Status,
                 ["position"] = $"{c.transform.position:F0}",
                 ["home"] = $"{center:F0}, {Vector3.Distance(center, c.transform.position):0} m away, radius {Work.RadiusOf(c)}",
+                ["bed_spot"] = Home.BedOf(c) is Bed bd ? $"{bd.GetSpawnPoint():F1}, {Vector3.Distance(bd.GetSpawnPoint(), c.transform.position):0.0} m away, safe {Steer.Safe(bd.GetSpawnPoint(), c)}, path {Brain.CanReach(c, bd.GetSpawnPoint())}" : "none",
+                ["between_jobs"] = $"{Brain.Get(c).IdlePlan}, sitting {Brain.Get(c).Sitting}, chair {(Brain.Get(c).SitChair != null)}, asleep {Brain.Get(c).Asleep}",
                 ["task"] = t == null ? null : $"{t.Kind} {(t.Target != null ? Utils.GetPrefabName(t.Target.gameObject) : "-")} at {(t.Target != null ? Vector3.Distance(t.Target.transform.position, c.transform.position) : 0f):0.0} m for {Time.time - t.Started:0} s{(t.ForGoal ? " (for goal)" : "")}",
                 ["work_note"] = st.WorkNote,
                 ["jobs"] = Work.JobsOf(c) == Job.None ? "auto: " + Work.AutoJobs(c) : Work.JobsOf(c).ToString(),

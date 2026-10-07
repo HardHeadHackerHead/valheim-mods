@@ -20,7 +20,7 @@ namespace QualityOfLife
     {
         public const string Guid = "com.dhack.qualityoflife";
         public const string Name = "QualityOfLife";
-        public const string Version = "1.5.3";
+        public const string Version = "1.6.0";
 
         private ConfigEntry<bool> _quickSetEnabled, _showBadges, _hammerEnabled, _showMessages;
         private ConfigEntry<KeyboardShortcut> _quickSetKey, _hammerKey;
@@ -45,6 +45,7 @@ namespace QualityOfLife
 
             // The buttons under the inventory take this much room (UI pixels); other mods that put a panel there (GearSlots) keep clear of it.
             AppDomain.CurrentDomain.SetData("DHack.QoL.UnderInventoryHeight", 36f);
+            AppDomain.CurrentDomain.SetData("DHack.QoL.StackInventory", (Func<Inventory, Vector3, float, Func<ItemDrop.ItemData, bool>, int>)StackInventory); // for AICompanion
 
             _harmony = new Harmony(Guid); // keeps the game from reacting to clicks while the assign menu is open, and tracks chests
             _harmony.PatchAll();
@@ -67,6 +68,7 @@ namespace QualityOfLife
         {
             if (_running != null) StopCoroutine(_running);
             AppDomain.CurrentDomain.SetData("DHack.QoL.UnderInventoryHeight", null);
+            AppDomain.CurrentDomain.SetData("DHack.QoL.StackInventory", null);
             RulesWindowOpen = false;
             ContainerRegistry.Clear();
             if (Instance == this) Instance = null;

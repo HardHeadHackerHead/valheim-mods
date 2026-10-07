@@ -209,7 +209,8 @@ namespace AICompanion
                 l.Progress = 0f;
                 string skill = Localization.instance.Localize("$skill_" + type.ToString().ToLower());
                 Brain.Get(c)?.Remember($"{skill} skill: {(int)l.Value}");
-                if (Companion.Master(c) == Player.m_localPlayer) Plugin.Tell($"{Companion.NameOf(c)}'s {skill} skill: {(int)l.Value}");
+                Journal.Skill(c, skill, (int)l.Value);
+                if (Companion.Master(c) == Player.m_localPlayer) Plugin.Tell($"{Companion.NameOf(c)}'s {skill} skill: {(int)l.Value}"); // (top left, out of the chat's way)
             }
             Companion.Zdo(c)?.Set(Key, Write(map));
         }
@@ -399,7 +400,8 @@ namespace AICompanion
             Quaternion rot = st.Seat != null ? st.Seat.m_attachPoint.rotation : Quaternion.LookRotation(Vector3.ProjectOnPlane(t.forward, Vector3.up), Vector3.up);
             me.transform.SetPositionAndRotation(pos, rot);
             Rigidbody body = me.GetComponent<Rigidbody>();
-            if (body != null) { body.position = pos; body.rotation = rot; body.linearVelocity = Vector3.zero; }
+            if (body != null) { body.position = pos; body.rotation = rot; } // (kinematic: no velocity to clear)
+            if (st.Seat != null) Anim(me)?.SetBool(st.Seat.m_attachAnimation, true); // kept up (free when already set)
             Brain.Status(st, "riding along");
         }
 

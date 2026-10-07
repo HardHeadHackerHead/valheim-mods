@@ -7,9 +7,9 @@ using UnityEngine;
 namespace AICompanion
 {
     /// <summary>
-    /// Getting its things back, as a player does: after it falls and wakes, it remembers where its tombstone is, and when the tombstone is near
-    /// (around its home, or near you while it follows you) it walks there, takes everything back and wears its gear again. A tombstone it
-    /// cannot find where it should be (someone emptied it) is forgotten.
+    /// Getting its things back, as a player does: every tombstone of its around its home (from any number of falls there) it walks to, takes
+    /// everything back from and wears its gear again, one after another. Those from falls out with you it leaves for you to bring back
+    /// (point at one, or open it near it, and it takes its things). Its last fall's is remembered for the map and its menu.
     /// </summary>
     internal static class Grave
     {
@@ -46,7 +46,7 @@ namespace AICompanion
                 item.m_equipped = false;
                 if (theirs.CanAddItem(item)) { theirs.MoveItemToThis(its, item); gave++; } else left++;
             }
-            if (left == 0) Companion.Write(owner, cz => cz.Set(HasKey, false));
+            if (left == 0) { Companion.Write(owner, cz => cz.Set(HasKey, false)); Net.Recovered(tomb.transform.position); }
             BrainState st = Brain.Get(owner);
             st.NextGear = 0f;
             st.Remember($"you gave it its things back from its tombstone ({gave})");
@@ -58,33 +58,73 @@ namespace AICompanion
         public static bool Has(Component c) => Companion.Zdo(c)?.GetBool(HasKey, false) ?? false;
         public static Vector3 Pos(Component c) => Companion.Zdo(c)?.GetVec3(PosKey, Vector3.zero) ?? Vector3.zero;
 
+        /// <summary>Its own tombstone (marked with its id; older ones by its name and its player).</summary>
+        private static bool IsMine(TombStone t, Humanoid me, long id, long master, string name)
+        {
+            ZDO z = Companion.Zdo(t);
+            if (z == null) return false;
+            long of = z.GetLong(OfKey, 0L);
+            return of != 0L ? of == id : z.GetLong(ZDOVars.s_owner, 0L) == master && z.GetString(Net.CrateKey, "") == name;
+        }
+
+        private static IEnumerable<TombStone> Mine(Humanoid me)
+        {
+            long id = Companion.IdOf(me), master = Companion.MasterId(me);
+            string name = Companion.NameOf(me);
+            return UnityEngine.Object.FindObjectsOfType<TombStone>().Where(t => IsMine(t, me, id, master, name));
+        }
+
+        /// <summary>The tombstone from its last fall (where it remembers falling), if it is about.</summary>
         private static TombStone Find(Humanoid me)
         {
             Vector3 at = Pos(me);
-            long master = Companion.MasterId(me);
-            string name = Companion.NameOf(me);
-            return UnityEngine.Object.FindObjectsOfType<TombStone>().FirstOrDefault(t =>
-            {
-                ZDO z = Companion.Zdo(t);
-                return z != null && Vector3.Distance(t.transform.position, at) < 12f && z.GetLong(ZDOVars.s_owner, 0L) == master && z.GetString(Net.CrateKey, "") == name;
-            });
+            return Mine(me).FirstOrDefault(t => Vector3.Distance(t.transform.position, at) < 12f);
         }
 
-        /// <summary>True while it is going to its grave or emptying it (the rest of its peaceful behaviour waits).</summary>
+        /// <summary>
+        /// The next tombstone to empty: one you pointed it at (anywhere), else the nearest of its tombstones around its home (all of them, from
+        /// every fall there, one after another). Out with you it leaves the ones from falls on the way for you to bring back (open one near it
+        /// and it takes its things), and only goes for those at home when it is there with you (within 40 m of it).
+        /// </summary>
+        private static TombStone Next(BrainState st)
+        {
+            Humanoid me = st.Body;
+            ZDO z = Companion.Zdo(me);
+            if (z == null || !z.GetBool(Keys.HasBed, false)) return null;
+            Vector3 home = Work.Center(me);
+            float radius = Work.RadiusOf(me) + 10f;
+            bool following = Companion.OrderOf(me) != Order.Gather;
+            return Mine(me).Where(t => Full(t) && Vector3.Distance(t.transform.position, home) < radius && (!following || Vector3.Distance(t.transform.position, me.transform.position) < 40f))
+                           .OrderBy(t => Vector3.Distance(t.transform.position, me.transform.position)).FirstOrDefault();
+        }
+
+        private static bool Full(TombStone t) => t != null && (t.GetComponent<Container>()?.GetInventory()?.NrOfItems() ?? 0) > 0;
+
+        /// <summary>You pointed at its tombstone (or asked for its things): it goes and gets them, wherever it is.</summary>
+        public static void Fetch(BrainState st, TombStone tomb)
+        {
+            st.GraveOrdered = tomb != null ? tomb : Find(st.Body);
+            st.NextGraveLook = 0f;
+        }
+
+        /// <summary>True while it is going to a tombstone or emptying it (the rest of its peaceful behaviour waits).</summary>
         public static bool Tick(BrainState st, Action<Vector3, float, bool> moveTo, Action stop)
         {
             Humanoid me = st.Body;
-            if (!Has(me) || Time.time < st.NextGraveLook) return false;
-            Vector3 at = Pos(me);
-            float far = Vector3.Distance(at, me.transform.position);
-            if (far > 80f) { st.NextGraveLook = Time.time + 5f; return false; } // too far: when it (or you with it) comes near
-            TombStone tomb = Find(me);
+            if (Time.time < st.NextGraveLook) return false;
+            if (st.GraveOrdered != null && !Full(st.GraveOrdered)) st.GraveOrdered = null;
+            TombStone tomb = st.GraveOrdered ?? (Full(st.GraveOn) ? st.GraveOn : null); // (on its way: no search every frame)
             if (tomb == null)
             {
-                if (far < 30f) { Companion.Write(me, z => z.Set(HasKey, false)); st.Remember("its tombstone is gone (someone emptied it)"); }
-                st.NextGraveLook = Time.time + 5f;
-                return false;
+                if (Has(me) && Vector3.Distance(Pos(me), me.transform.position) < 30f && Find(me) == null)
+                {
+                    Companion.Write(me, z => z.Set(HasKey, false)); // its last one is gone (someone emptied it)
+                    st.Remember("its tombstone is gone (someone emptied it)");
+                }
+                tomb = Next(st);
+                if (tomb == null) { st.GraveOn = null; st.NextGraveLook = Time.time + 5f; return false; }
             }
+            if (st.GraveOn != tomb) { st.GraveOn = tomb; st.GraveBest = float.MaxValue; st.GraveSince = Time.time; }
             float d = Vector3.Distance(tomb.transform.position, me.transform.position);
             if (d > 2.2f)
             {
@@ -94,6 +134,7 @@ namespace AICompanion
                 if (stuck && d >= 8f)
                 {
                     st.GraveBest = float.MaxValue;
+                    st.GraveOrdered = null; st.GraveOn = null;
                     st.NextGraveLook = Time.time + 30f;
                     st.Remember("could not find a way to its tombstone; it tries again soon");
                     return false;
@@ -113,11 +154,14 @@ namespace AICompanion
                 item.m_equipped = false;
                 if (mine.CanAddItem(item)) { mine.MoveItemToThis(its, item); took++; } else left++;
             }
-            if (left == 0) Companion.Write(me, z => z.Set(HasKey, false)); // the game removes the empty tombstone itself
+            if (left == 0 && Vector3.Distance(tomb.transform.position, Pos(me)) < 12f) Companion.Write(me, z => z.Set(HasKey, false)); // (its last fall's; the game removes the empty tombstone itself)
+            if (st.GraveOrdered == tomb) st.GraveOrdered = null;
+            if (left == 0) { st.GraveOn = null; Net.Recovered(tomb.transform.position); } // (the next one is looked for afresh; its skull off the map)
             st.NextGear = 0f; // wear it again now
             st.Remember(left == 0 ? $"got all its things back from its tombstone ({took})" : $"took {took} things from its tombstone; {left} did not fit");
             Plugin.Instance?.Note($"{Companion.NameOf(me)} took {took} item stacks back from its tombstone ({left} left)");
-            Talk.Tell(me, "Got my things back from my tombstone.");
+            int more = left == 0 ? Next(st) is TombStone n && n != tomb ? 1 : 0 : 0;
+            Talk.Mention(me, more > 0 ? "Got those back. There's another one of mine around here." : "Got my things back from my tombstone.");
             st.NextGraveLook = Time.time + (left > 0 ? 30f : 2f);
             return false;
         }

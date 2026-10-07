@@ -67,9 +67,9 @@ namespace AICompanion
             Vector3 at = center + new Vector3(r.x, 0f, r.y);
             if (ZoneSystem.instance != null && ZoneSystem.instance.GetSolidHeight(at, out float h)) at.y = h + 0.5f;
             Inventory inv = me.GetInventory();
-            me.UnequipAllItems();
-            foreach (ItemDrop.ItemData i in inv.GetAllItems()) i.m_equipped = false;
-            bool any = inv.NrOfItems() > 0;
+            var worn = new HashSet<ItemDrop.ItemData>(Companion.Worn(me).Where(i => inv.ContainsItem(i)));
+            foreach (ItemDrop.ItemData i in inv.GetAllItems()) i.m_equipped = worn.Contains(i); // it keeps what it wears: the move leaves it out
+            bool any = inv.NrOfItems() > worn.Count;
             if (any)
             {
                 GameObject scene = ZNetScene.instance.GetPrefab("Player");
@@ -83,6 +83,8 @@ namespace AICompanion
                     tomb.GetComponent<ZNetView>().GetZDO().Set(Grave.OfKey, Companion.IdOf(me));
                 }
             }
+            foreach (ItemDrop.ItemData i in inv.GetAllItems()) i.m_equipped = false;
+            Companion.SaveBag(me);
             ZDO z = Companion.Zdo(me);
             z.Set(Grave.HasKey, any);
             z.Set(Grave.PosKey, at);
@@ -110,6 +112,17 @@ namespace AICompanion
             Plugin.Instance.StartCoroutine(Run(st, Mathf.Min(away, MaxAway), away));
         }
 
+        internal static string Stage = ""; // the step of a catch-up it is on (for the log, if one goes wrong)
+
+        /// <summary>Claude Tools: a catch-up of this many seconds now, as if it had been away; what went wrong, or null.</summary>
+        internal static string Test(BrainState st, float seconds)
+        {
+            Talk.Hush = true;
+            try { Day(st, seconds, seconds); return null; }
+            catch (Exception e) { return $"at {Stage}: {e}"; }
+            finally { Talk.Hush = false; }
+        }
+
         private static IEnumerator Run(BrainState st, float seconds, float away)
         {
             yield return new WaitForSeconds(3f); // let the trees, rocks and chests around it finish loading
@@ -117,7 +130,7 @@ namespace AICompanion
             if (me == null || me.IsDead()) yield break;
             Talk.Hush = true; // what it did goes into one report, not a chat line for each thing
             try { Day(st, seconds, away); }
-            catch (Exception e) { Plugin.Instance?.Warn("Companion catch-up: " + e); }
+            catch (Exception e) { Plugin.Instance?.Warn($"Companion catch-up (at {Stage}): " + e); }
             finally { Talk.Hush = false; }
         }
 
@@ -139,10 +152,12 @@ namespace AICompanion
             Vector3 center = Work.Center(me);
             float radius = Work.RadiusOf(me);
 
+            Stage = "food";
             // 1. Something to eat for the time away.
             int cooked = Kitchen.CookAll(me, center, radius);
             string fromYou = Provision(me, center, radius);
 
+            Stage = "creatures";
             // 2. Creatures that came by (Mild: it always comes through).
             if (Plugin.WhileAway.Value != AwayMode.Off)
             {
@@ -177,6 +192,7 @@ namespace AICompanion
                 }
             }
 
+            Stage = "hunting";
             // 3. Hunting: when hungry, or when its goal needs hides and the like (and it has something to hunt with).
             bool hungry = !me.GetInventory().GetAllItems().Any(Food.IsFood);
             st.Goal = fellTo == null ? Goals.Pick(me, center, radius, st) : null;
@@ -185,6 +201,7 @@ namespace AICompanion
             if (fellTo == null && (Companion.BestRanged(me) != null || Companion.BestMelee(me) != null) && (hungry || goalPrey.Count > 0))
                 Hunt(me, got, hunted, goalPrey, ref budget, seconds);
 
+            Stage = "gathering";
             // 4. Gathering, at a player's pace, on what is really there: what its goal needs first, food first when hungry.
             Job jobs = Work.JobsOf(me);
             if (jobs == Job.None) jobs = Work.AutoJobs(me) | (goalJobs & ~(Job.Loot | Job.Hunt));
@@ -254,15 +271,20 @@ namespace AICompanion
                 }
             }
 
+            Stage = "trip";
             // 4b. What its goal still needs and nothing near home has: a trip further out, through the saved world (it is not loaded): flint on
             //     a shore 300 m off, and the like.
             string trip = fellTo == null ? AwayTrip(me, center, radius, got, ref budget) : null;
+            if (trip != null) Journal.Trip(me, $"While you were away it {trip}.");
 
+            Stage = "storing";
             // 5. Into its chests (and its bag); then it cooks what it hunted and picked.
             int total = got.Values.Sum();
             int stored = Store(me, got);
+            Work.SortHome(st); // (with QualityOfLife: what it carries into your chests by your rules)
             cooked += Kitchen.CookAll(me, center, radius);
 
+            Stage = "crafting";
             // 6. Making and upgrading gear: what is ready, and its goal's in-between materials (bronze), as long as there is material.
             var made = new List<string>();
             for (int round = 0; round < 12 && fellTo == null; round++)
@@ -281,9 +303,12 @@ namespace AICompanion
                 made.Add(done);
             }
 
-            // 7. Repairs at its stations, as a player would before heading out again.
+            Stage = "repairs";
+            // 7. Repairs at its stations, as a player would before heading out again; and your base, with its hammer.
             int repaired = Repair.All(me, center, radius);
+            int mended = Mending.Hammer(me) != null ? Mending.FixAll(st, center, radius) : 0;
 
+            Stage = "time";
             // 8. The time passing: its food burns down and it eats from its bag; fed, it heals as a player does. Then food on it for later.
             Food.PassTime(me, st, seconds);
             if (Food.Meals(me).Count > 0 && fellTo == null) me.Heal(me.GetMaxHealth(), false);
@@ -292,6 +317,7 @@ namespace AICompanion
             Companion.SaveBag(me); // its tools' and armour's wear, and what it made
             Portraits.Dirty(me);
 
+            Stage = "report";
             // The report.
             var did = new List<string>();
             if (felled > 0) did.Add($"felled {felled} tree{(felled == 1 ? "" : "s")}");
@@ -302,6 +328,7 @@ namespace AICompanion
             if (cooked > 0) did.Add($"cooked {cooked} meal{(cooked == 1 ? "" : "s")}");
             if (made.Count > 0) did.Add(string.Join(", ", made));
             if (repaired > 0) did.Add($"repaired {repaired} thing{(repaired == 1 ? "" : "s")}");
+            if (mended > 0) did.Add($"repaired {mended} damaged piece{(mended == 1 ? "" : "s")} of your base");
             if (trip != null) did.Add(trip);
             if (did.Count == 0 && fellTo == null && fromYou == null) return;
             string items = string.Join(", ", got.OrderByDescending(kv => kv.Value).Take(8).Select(kv => $"{kv.Value} {kv.Key}"));
@@ -314,8 +341,8 @@ namespace AICompanion
             Talk.Hush = false;
             st.Remember(line);
             Plugin.Instance?.Note(line);
-            DebugLog.Add(new DecisionRecord { When = DateTime.Now, Companion = Companion.NameOf(me), Outcome = "— " + line + " —" });
-            if (Companion.Master(me) == Player.m_localPlayer) Player.m_localPlayer.Message(MessageHud.MessageType.Center, line);
+            Player master = Companion.Master(me);
+            if (master != null && master == Player.m_localPlayer) master.Message(MessageHud.MessageType.Center, line); // (its player not here: both were null, and equal)
             Talk.Tell(me, line);
         }
 

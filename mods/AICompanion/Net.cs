@@ -225,7 +225,8 @@ namespace AICompanion
         {
             // "name|master|x|y|z|id|masterId": the marker for everyone, and for its player's game the news that it must wake it later
             Send(RpcFallen, string.Join("|", Clean(Companion.NameOf(c)), Clean(Companion.Zdo(c).GetString(Keys.MasterName, "")), F(pos.x), F(pos.y), F(pos.z),
-                Companion.IdOf(c).ToString(CultureInfo.InvariantCulture), Companion.MasterId(c).ToString(CultureInfo.InvariantCulture), grave ? "1" : "0"));
+                Companion.IdOf(c).ToString(CultureInfo.InvariantCulture), Companion.MasterId(c).ToString(CultureInfo.InvariantCulture), grave ? "1" : "0",
+                Companion.Zdo(c)?.GetString(Companion.KeptKey, "") ?? "")); // (its gear, for its player's game to put back on it)
         }
 
         private static void OnFallen(long sender, string payload)
@@ -236,7 +237,7 @@ namespace AICompanion
             AddMarker(pos, f[0]);
             if (f.Length >= 7 && long.TryParse(f[5], NumberStyles.Integer, CultureInfo.InvariantCulture, out long id) && long.TryParse(f[6], NumberStyles.Integer, CultureInfo.InvariantCulture, out long masterId)
                 && Player.m_localPlayer != null && Player.m_localPlayer.GetPlayerID() == masterId)
-                Home.MarkDead(Player.m_localPlayer, id, pos, null, f.Length < 8 || f[7] == "1"); // ours, run by another game (or ours): it wakes in its bed later
+                Home.MarkDead(Player.m_localPlayer, id, pos, null, f.Length < 8 || f[7] == "1", f.Length >= 9 ? f[8] : null); // ours, run by another game (or ours): it wakes in its bed later
             if (f[1] == "") return; // a marker re-sent for a player who just joined
             RecentlyFallen.RemoveAll(x => x.Name == f[0] && x.Master == f[1]);
             RecentlyFallen.Add(new Fallen { Name = f[0], Master = f[1], Pos = pos, At = Time.time,
@@ -249,7 +250,7 @@ namespace AICompanion
         {
             string[] f = (payload ?? "").Split('|');
             if (f.Length < 3) return;
-            RemoveMarkersNear(new Vector3(P(f[0]), P(f[1]), P(f[2])));
+            RemoveMarkersNear(new Vector3(P(f[0]), P(f[1]), P(f[2])), 8f);
         }
 
         private static readonly AccessTools.FieldRef<Minimap, List<Minimap.PinData>> Pins = AccessTools.FieldRefAccess<Minimap, List<Minimap.PinData>>("m_pins");
@@ -264,9 +265,25 @@ namespace AICompanion
             Minimap.instance.AddPin(pos, Minimap.PinType.Death, name + MarkerSuffix, true, false, 0L); // saved with this player's map of the world
         }
 
-        private static void RemoveMarkersNear(Vector3 pos)
+        private static void RemoveMarkersNear(Vector3 pos, float within = 4f)
         {
-            foreach (Minimap.PinData pin in Markers().Where(p => Vector3.Distance(p.m_pos, pos) < 4f).ToList()) Minimap.instance.RemovePin(pin);
+            if (Minimap.instance == null) return;
+            foreach (Minimap.PinData pin in Markers().Where(p => Vector3.Distance(p.m_pos, pos) < within).ToList()) Minimap.instance.RemovePin(pin);
+        }
+
+        /// <summary>
+        /// Its tombstone there was emptied (it took its things back, or you gave them to it): the skull comes off the map at once, here and for
+        /// everyone, wherever you are (before, only once you came near and found it gone).
+        /// </summary>
+        public static void Recovered(Vector3 tomb)
+        {
+            RecentlyFallen.RemoveAll(f => Vector3.Distance(f.Pos, tomb) < 8f);
+            foreach (Minimap.PinData pin in Markers().Where(p => Vector3.Distance(p.m_pos, tomb) < 8f).ToList())
+            {
+                Minimap.instance.RemovePin(pin);
+                Send(RpcCleared, $"{F(pin.m_pos.x)}|{F(pin.m_pos.y)}|{F(pin.m_pos.z)}");
+            }
+            Send(RpcCleared, $"{F(tomb.x)}|{F(tomb.y)}|{F(tomb.z)}"); // (others' maps: their skull may sit a little off this one)
         }
 
         /// <summary>Near a marker whose crate is gone (emptied, so the game removed it): take the marker off, here and for everyone.</summary>

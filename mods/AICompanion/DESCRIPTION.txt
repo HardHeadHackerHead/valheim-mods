@@ -1,23 +1,19 @@
-A viking companion who follows you and fights beside you, with an AI deciding how it fights.
+A viking companion who plays like a player: comes on your adventures, lives its own life at home, and gets better as it goes.
 
-- Press J to summon your companion (or open its menu); E on it opens the menu too.
-- The mod does the fighting itself: moving, swinging, blocking and shooting at full speed with the game's own animations.
-- In a fight it asks Jev (TypeSafe's decision model) about once a second: attack whom, defend you, back off, fall back to you, flee, bow or melee, drink a potion. Paste your Jev API key (console.typesafe.ai) in its menu. It costs about 12 cents an hour of fighting.
-- No key, no internet, or Jev unsure: a built-in brain decides, so it never stands idle.
-- Its menu: health and what it is doing, orders (follow, stay, guard a spot), fighting style (aggressive, balanced, defensive, passive), when to fall back, potions, its last decisions and how sure Jev was.
-- It has stamina like you: swings, blocks and running cost it, and with none it cannot swing or run and its guard breaks.
-- Your boss power (Forsaken power) reaches it too when it is within 10 m of you.
-- Lives like a player: it needs food for health and stamina, its skills rise as it fights, the weather wets and chills it, and it repairs its gear at a workbench.
-- Rides along on your boat, in a seat.
-- Choose how it looks (body, hair, beard, skin, hair colour, or copy yours); its face shows in the party panel.
-- Like a player: food, skills, rested, carry weight, eitr and staffs; it recovers its own tombstone, picks up loot, hunts, cooks and crafts its own gear.
-- Talk to it in chat: "Rádvar, follow me", "Rádvar go home". Up to 3 companions each.
-- Lives its own life at home: gathers, stores what it finds, repairs and upgrades its gear, and catches up on all that while you are away. Tell it to follow you for an adventure.
-- A home like a player's: give it a bed (it wakes there after falling) and chests (it keeps what it gathers there and takes better gear from them).
-- Gather: it chops wood, mines stone and ore, and picks wild berries and mushrooms around its bed, with the tools you give it.
-- It follows you through portals and opens doors.
-- Give it weapons, armour, arrows and healing potions (Open its inventory): it wears the best and its armour protects it.
-- If it falls, its gear goes into a tombstone, marked with a skull on everyone's map, and it wakes in its bed 30 s later.
-- It shows on the minimap and the big map (a teal player icon with its name), for everyone with the mod.
-- With PartyHud, your companion shows in the party panel under you: health, distance, direction and what it is doing.
-- Multiplayer: it belongs to whoever summoned it, and its brain runs on their game. Everyone in the world needs the mod (the host too), or the game deletes saved companions.
+- Press J to summon your companion or open its menu (E on it too). Hold J: your companions come with you, or go home.
+- Point and press H: at an enemy (they attack it), a tree, rock or plant (it works it), your chest (it puts its things in), a cart (it pulls it), the ground (it waits there), the sky (it comes back).
+- "Let it decide": it reads what you are doing. It fights beside you, mines or chops beside you, and keeps close while you explore; where a place is too dangerous for its gear it tells you and only defends.
+- It fights like a player: timed parries (it learns each creature's swing), rolls out of sweeps and shots, joins in on what you are hitting and gets round behind it, pulls enemies off you when you are hurt, sneaks up for backstabs, uses weapon specials, hits and steps back against heavy hitters, drinks the right mead, remembers what has killed it, kites with its bow (leading moving targets, allowing for arrow drop), and fights bosses with care (flanking, keeping its distance, drinking early).
+- Follows you through portals, into crypts and caves, onto boats and through doors; it steers round stakes and fires, jumps streams and gets itself unstuck.
+- Home and away by itself: when you head out it comes along; back home it lives there again. It takes a free bed and empty chests by itself.
+- At home it works toward better gear: picks its next upgrade, gathers exactly what it needs (trips further out when nothing near has it), makes bronze and the like, crafts and upgrades at your workbench and forge.
+- It hunts, cooks on your cooking stations, keeps its fires burning, repairs its gear and your base, sleeps in its bed at night, and sorts what it brings home into the right chests (with QualityOfLife).
+- While you are away it catches up on all of it, and tells you what it did when you return.
+- Needs like a player: food for health and stamina, skills that rise, stamina, carry weight, weather, rest.
+- When it falls it keeps the gear it wore; only its haul goes into a tombstone, which it goes back for.
+- Its bag shows beside your inventory: drag items between you. Hotbar keys give it food, potions or gear.
+- Between jobs it acts like a person: sits by the fire or in a chair, gets out of the rain, takes a stroll, sits with you when you rest, waves when you come back, cheers after a big fight and answers your emotes.
+- A journal of its life, small talk that fits the moment, and chat messages about what it is up to.
+- Its menu: status, stats and every skill, orders, home, gear, looks and journal. Talk to it in chat: "Rádvar, follow me", "Rádvar go home".
+- With PartyHud it shows in the party panel (face, health, food); it shows on the map, and where it fell is marked for everyone.
+- Multiplayer: it belongs to whoever summoned it. Everyone in the world needs the mod (the host too), or the game deletes saved companions.

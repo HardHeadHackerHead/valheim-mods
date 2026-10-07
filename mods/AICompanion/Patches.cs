@@ -158,6 +158,7 @@ namespace AICompanion
             BrainState st = Brain.Get(h);
             st.LastHurtBy = by;
             st.LastHurtAt = Time.time;
+            if (attacker != null) Journal.Count(h, "hurtby:" + by, Mathf.CeilToInt(lost)); // (Tactics.Feared)
             Activity.Log(h, $"hurt {lost:0.#} by {by}  (hp {Mathf.Max(0f, h.GetHealth()):0}/{h.GetMaxHealth():0}, doing: {st.Status})");
         }
     }
@@ -216,6 +217,7 @@ namespace AICompanion
                 z.Set(Keys.Kills, z.GetInt(Keys.Kills, 0) + 1);
                 BrainState ks = Brain.Get(killer as Humanoid);
                 if (ks != null) { ks.FightKills++; ks.Remember("killed " + Localization.instance.Localize(__instance.m_name)); }
+                Journal.Kill(killer as Humanoid, __instance);
             }
             if (!(__instance is Humanoid h) || !Companion.Is(h)) return;
             BrainState st = Brain.Get(h);
@@ -224,7 +226,7 @@ namespace AICompanion
             if (!view.IsOwner()) return;
             try
             {
-                int carried = h.GetInventory().NrOfItems();
+                int carried = h.GetInventory().NrOfItems() - Companion.Worn(h).Count(i => h.GetInventory().ContainsItem(i)); // (its gear it keeps)
                 string by = LastHit(h)?.GetAttacker() is Character k ? Localization.instance.Localize(k.m_name) : st != null && Time.time - st.LastHurtAt < 5f ? st.LastHurtBy : null;
                 if (by == null) // poison, fire, frost: damage over time comes with no attacker
                 {
@@ -233,13 +235,14 @@ namespace AICompanion
                 }
                 Plugin.Instance?.Note($"{Companion.NameOf(h)} fell at {h.transform.position:F0} (killed by {by}, carrying {carried} item stacks)");
                 if (st != null) Activity.Log(h, $"FELL at {h.transform.position:F0}, killed by {by}. " + Activity.Vitals(h, st));
-                Companion.DropGear(h);
+                Journal.Fell(h, by, h.transform.position);
+                carried = Companion.DropGear(h);
                 Player master = Companion.Master(h);
                 if (master == Player.m_localPlayer)
                 {
                     Home.MarkDead(master, Companion.IdOf(h), h.transform.position, h, carried > 0);
                     bool bed = Companion.Zdo(h).GetBool(Keys.HasBed, false);
-                    Plugin.Tell($"{Companion.NameOf(h)} has fallen. Their gear is in their tombstone (the skull on your map). They wake {(bed ? "in their bed" : "beside you")} in {Plugin.RespawnSeconds.Value:0} s.");
+                    Plugin.Tell($"{Companion.NameOf(h)} has fallen. They keep the gear they wore; {(carried > 0 ? "what they carried is in their tombstone (the skull on your map)" : "they carried nothing else")}. They wake {(bed ? "in their bed" : "beside you")} in {Plugin.RespawnSeconds.Value:0} s.");
                 }
                 Net.AnnounceFall(h, h.transform.position, carried > 0);
             }
@@ -269,14 +272,15 @@ namespace AICompanion
     [HarmonyPatch(typeof(Player), nameof(Player.TeleportTo))]
     internal static class Player_TeleportTo
     {
-        private static void Postfix(Player __instance, Vector3 pos, Quaternion rot, bool __result)
+        private static void Postfix(Player __instance, Vector3 pos, Quaternion rot, bool distantTeleport, bool __result)
         {
             if (!__result || __instance != Player.m_localPlayer) return;
+            bool dungeon = !distantTeleport && pos.y > 3000f; // a crypt or cave entrance: the dungeon is built high above the world
             foreach (Humanoid c in Companion.All())
             {
                 if (!Companion.IsMine(c, __instance) || Companion.OrderOf(c) != Order.Follow) continue;
                 if (Vector3.Distance(c.transform.position, __instance.transform.position) > 25f) continue;
-                if (!c.IsTeleportable(false)) { Plugin.Tell($"{Companion.NameOf(c)} cannot go through: they carry something the portal refuses"); continue; }
+                if (distantTeleport && !c.IsTeleportable(false)) { Plugin.Tell($"{Companion.NameOf(c)} cannot go through: they carry something the portal refuses"); continue; }
                 ZNetView view = c.GetComponent<ZNetView>();
                 if (!view.IsOwner()) view.ClaimOwnership();
                 Vector3 to = pos - rot * Vector3.forward * 2f;
@@ -284,8 +288,9 @@ namespace AICompanion
                 Rigidbody body = c.GetComponent<Rigidbody>();
                 if (body != null) { body.position = to; body.linearVelocity = Vector3.zero; }
                 view.GetZDO().SetPosition(to); // it is unloaded here at once; it appears there when you arrive
-                Brain.Get(c)?.Remember("came through the portal");
-                Plugin.Instance?.Note($"{Companion.NameOf(c)} goes through the portal with {__instance.GetPlayerName()}");
+                Brain.Get(c)?.Remember(dungeon ? "went into the dungeon with you" : pos.y > 3000f || c.transform.position.y > 3000f ? "came out with you" : "came through the portal");
+                Plugin.Instance?.Note($"{Companion.NameOf(c)} goes {(dungeon ? "into the dungeon" : "through")} with {__instance.GetPlayerName()}");
+                if (dungeon) { Journal.Place(c, "dungeon", true); Banter.Dungeon(c); }
             }
         }
     }
