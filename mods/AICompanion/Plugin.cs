@@ -24,7 +24,7 @@ namespace AICompanion
     {
         public const string Guid = "com.dhack.aicompanion";
         public const string Name = "AICompanion";
-        public const string Version = "0.4.0";
+        public const string Version = "0.5.0";
 
         internal static Plugin Instance;
         internal static ConfigEntry<string> ApiKey, Endpoint, Model;
@@ -32,31 +32,50 @@ namespace AICompanion
         internal static ConfigEntry<float> DecisionSeconds, MinConfidence, Timeout, PricePerMillion, EngageRange, RespawnSeconds, BaseHealth, BaseStamina, StartingSkill;
         internal static ConfigEntry<KeyboardShortcut> MenuKey;
         internal static ConfigEntry<AwayMode> WhileAway;
+        internal static ConfigEntry<int> MaxCompanions;
 
         private Harmony _harmony;
 
         private void Awake()
         {
             Instance = this;
+            // Settings, in the order they show (the names stay the same, so nobody loses what they set). Most are also in the menu.
             MenuKey = Config.Bind("General", "MenuKey", new KeyboardShortcut(KeyCode.J),
-                "Opens your companion's menu (or, if you have none here, the menu to summon one). E on the companion opens it too.");
-            BaseHealth = Config.Bind("Companion", "BaseHealth", 25f, new ConfigDescription("Its health without food (a player's is 25). Food adds to it, as it does for you: feed it.", new AcceptableValueRange<float>(5f, 500f)));
-            BaseStamina = Config.Bind("Companion", "BaseStamina", 75f, new ConfigDescription("Its stamina without food (a player's is 75). Food adds to it.", new AcceptableValueRange<float>(10f, 500f)));
-            StartingSkill = Config.Bind("Companion", "StartingSkill", 0f, new ConfigDescription("The level a new companion starts its skills at (a new player: 0). Skills rise as it fights, as yours do.", new AcceptableValueRange<float>(0f, 100f)));
-            WhileAway = Config.Bind("Companion", "WhileAway", AwayMode.Mild, "A companion living at home goes on with its life while nobody is near: when you come back it catches up on its gathering. Mild: it also meets the creatures of its biome now and then, fights them off and keeps what they drop (it never falls while you are away). Off: work only.");
-            RespawnSeconds = Config.Bind("Companion", "RespawnSeconds", 30f, new ConfigDescription("After falling, a companion wakes in its bed (or beside you, without one) this many seconds later. Its gear stays in its tombstone, as a player's.", new AcceptableValueRange<float>(5f, 600f)));
-            EngageRange = Config.Bind("Companion", "EngageRange", 20f, new ConfigDescription("Enemies this close to the companion or to you (metres) start a fight.", new AcceptableValueRange<float>(5f, 50f)));
-            ShowDecisions = Config.Bind("Companion", "ShowDecisions", true, "Show what the companion decided above its head (e.g. \"attack Greyling, Jev 87%\").");
+                "Opens your companion's menu (or the summon panel when you have none nearby). E on a companion opens it too.");
+            MaxCompanions = Config.Bind("Companion", "MaxCompanions", 3, new ConfigDescription(
+                "How many companions each player can have.", new AcceptableValueRange<int>(1, 10)));
+            WhileAway = Config.Bind("Companion", "WhileAway", AwayMode.Mild,
+                "What a companion living at home does while nobody is near. It always catches up on its work when you come back. " +
+                "Mild: it also fights off a few creatures and keeps their drops, and never falls. Real: those fights can go badly and it can fall. Off: work only.");
+            RespawnSeconds = Config.Bind("Companion", "RespawnSeconds", 30f, new ConfigDescription(
+                "Seconds after falling before it wakes in its bed (or beside you, without a bed).", new AcceptableValueRange<float>(5f, 600f)));
+            EngageRange = Config.Bind("Companion", "EngageRange", 20f, new ConfigDescription(
+                "It fights enemies that come this close (in metres) to it or to you. Also in its menu.", new AcceptableValueRange<float>(5f, 50f)));
+            ShowDecisions = Config.Bind("Companion", "ShowDecisions", true,
+                "Show what it decides in a fight above its head, such as \"attack Greyling, Jev 87%\". Also in its menu.");
+            BaseHealth = Config.Bind("Companion", "BaseHealth", 25f, new ConfigDescription(
+                "Its health before food, as a player's (25). Food adds to it.", new AcceptableValueRange<float>(5f, 500f)));
+            BaseStamina = Config.Bind("Companion", "BaseStamina", 75f, new ConfigDescription(
+                "Its stamina before food, as a player's (75). Food adds to it.", new AcceptableValueRange<float>(10f, 500f)));
+            StartingSkill = Config.Bind("Companion", "StartingSkill", 0f, new ConfigDescription(
+                "The skill level a new companion starts at (a new player: 0). Its skills rise as it fights.", new AcceptableValueRange<float>(0f, 100f)));
 
-            ApiKey = Config.Bind("Jev", "ApiKey", "", "Your TypeSafe API key for Jev (from console.typesafe.ai). Only the companion's owner needs one; it stays in this file on your PC.");
-            UseJev = Config.Bind("Jev", "Enabled", true, "Ask Jev how to fight. Off: the built-in brain decides (no key needed).");
-            Endpoint = Config.Bind("Jev", "Endpoint", "https://api.typesafe.ai/v1/systemone", "TypeSafe's decision endpoint.");
-            Model = Config.Bind("Jev", "Model", "jev-latest", "The Jev model to ask.");
-            DecisionSeconds = Config.Bind("Jev", "DecisionSeconds", 1.5f, new ConfigDescription("How often to ask Jev during a fight (it is also asked at once when something big happens).", new AcceptableValueRange<float>(0.5f, 10f)));
-            MinConfidence = Config.Bind("Jev", "MinConfidence", 0.3f, new ConfigDescription("If Jev is less sure than this about what to do, the built-in brain decides that round.", new AcceptableValueRange<float>(0f, 1f)));
-            Timeout = Config.Bind("Jev", "TimeoutSeconds", 4f, new ConfigDescription("Give up on an answer after this long (the companion keeps doing what it was doing meanwhile).", new AcceptableValueRange<float>(1f, 20f)));
-            LogToFile = Config.Bind("Jev", "LogToFile", false, "Write every Jev request and answer to BepInEx/AICompanion/jev-decisions.jsonl (one line each), for tuning the questions.");
-            PricePerMillion = Config.Bind("Jev", "PricePerMillionTokens", 0.042f, "For the cost shown in the menu: Jev's price per million input tokens, in US dollars (output is free).");
+            UseJev = Config.Bind("Jev", "Enabled", true,
+                "Let Jev decide how companions fight. Off, or without a key, a simple built-in brain fights. Also in the menu.");
+            ApiKey = Config.Bind("Jev", "ApiKey", "",
+                "Your Jev key from console.typesafe.ai (easiest: copy it and press Paste in the companion's Brain tab). Only the companion's owner needs one; it stays on your PC.");
+            DecisionSeconds = Config.Bind("Jev", "DecisionSeconds", 1.5f, new ConfigDescription(
+                "How often Jev is asked during a fight, in seconds (also at once when something big happens). Also in the menu.", new AcceptableValueRange<float>(0.5f, 10f)));
+            MinConfidence = Config.Bind("Jev", "MinConfidence", 0.3f, new ConfigDescription(
+                "When Jev is less sure than this (0 to 1) about what to do, the built-in brain decides that moment. Also in the menu.", new AcceptableValueRange<float>(0f, 1f)));
+            LogToFile = Config.Bind("Jev", "LogToFile", false,
+                "Write every Jev request and answer to BepInEx/AICompanion/jev-decisions.jsonl, for tuning. Also in the menu.");
+            Timeout = Config.Bind("Jev", "TimeoutSeconds", 4f, new ConfigDescription(
+                "Advanced: give up waiting for an answer after this many seconds (it keeps doing what it was doing).", new AcceptableValueRange<float>(1f, 20f)));
+            Endpoint = Config.Bind("Jev", "Endpoint", "https://api.typesafe.ai/v1/systemone", "Advanced: TypeSafe's address for Jev. Leave as it is.");
+            Model = Config.Bind("Jev", "Model", "jev-latest", "Advanced: which Jev model to ask. Leave as it is.");
+            PricePerMillion = Config.Bind("Jev", "PricePerMillionTokens", 0.042f,
+                "Advanced: Jev's price per million tokens in US dollars, only for the cost shown in the menu.");
 
             _harmony = new Harmony(Guid);
             _harmony.PatchAll();
@@ -79,6 +98,8 @@ namespace AICompanion
             Brain.Forget();
             Stamina.Forget();
             Food.Forget();
+            Eitr.Forget();
+            Rest.Forget();
             Skill.Forget();
             Weather.Forget();
             Ride.Forget();

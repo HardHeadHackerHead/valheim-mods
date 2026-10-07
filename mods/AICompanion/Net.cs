@@ -152,6 +152,7 @@ namespace AICompanion
         {
             if (!c.GetComponent<ZNetView>().IsOwner()) return "";
             var parts = new List<string>();
+            if (Rest.IsRested(c)) parts.Add(SEMan.s_statusEffectRested + ":" + F(Rest.Left(c)));
             foreach (StatusEffect se in c.GetSEMan().GetStatusEffects())
             {
                 if (se == null || se.m_icon == null) continue;
@@ -205,11 +206,11 @@ namespace AICompanion
         // ---- markers where a companion fell ---------------------------------------------------------------
 
         /// <summary>Called on the game that ran the companion when it fell, after its gear went into the crate.</summary>
-        public static void AnnounceFall(Humanoid c, Vector3 pos)
+        public static void AnnounceFall(Humanoid c, Vector3 pos, bool grave)
         {
             // "name|master|x|y|z|id|masterId": the marker for everyone, and for its player's game the news that it must wake it later
             Send(RpcFallen, string.Join("|", Clean(Companion.NameOf(c)), Clean(Companion.Zdo(c).GetString(Keys.MasterName, "")), F(pos.x), F(pos.y), F(pos.z),
-                Companion.IdOf(c).ToString(CultureInfo.InvariantCulture), Companion.MasterId(c).ToString(CultureInfo.InvariantCulture)));
+                Companion.IdOf(c).ToString(CultureInfo.InvariantCulture), Companion.MasterId(c).ToString(CultureInfo.InvariantCulture), grave ? "1" : "0"));
         }
 
         private static void OnFallen(long sender, string payload)
@@ -220,7 +221,7 @@ namespace AICompanion
             AddMarker(pos, f[0]);
             if (f.Length >= 7 && long.TryParse(f[5], NumberStyles.Integer, CultureInfo.InvariantCulture, out long id) && long.TryParse(f[6], NumberStyles.Integer, CultureInfo.InvariantCulture, out long masterId)
                 && Player.m_localPlayer != null && Player.m_localPlayer.GetPlayerID() == masterId)
-                Home.MarkDead(Player.m_localPlayer, id, pos); // ours, run by another player's game (or our own): it wakes in its bed later
+                Home.MarkDead(Player.m_localPlayer, id, pos, null, f.Length < 8 || f[7] == "1"); // ours, run by another game (or ours): it wakes in its bed later
             if (f[1] == "") return; // a marker re-sent for a player who just joined
             RecentlyFallen.RemoveAll(x => x.Name == f[0] && x.Master == f[1]);
             RecentlyFallen.Add(new Fallen { Name = f[0], Master = f[1], Pos = pos, At = Time.time,

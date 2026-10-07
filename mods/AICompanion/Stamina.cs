@@ -62,7 +62,7 @@ namespace AICompanion
         {
             Pool p = Of(c);
             if (p.Winded && p.Value > Max(c) * 0.33f) p.Winded = false;
-            return !p.Winded && p.Value > 5f;
+            return !p.Winded && p.Value > 5f && !(c is Humanoid h && Carry.Over(h)); // over its carry weight it cannot run, as a player
         }
 
         /// <summary>Every frame on the game that runs it: running costs, standing still (after a pause) brings it back.</summary>
@@ -82,6 +82,7 @@ namespace AICompanion
             {
                 float mult = 1f;
                 c.GetSEMan().ModifyStaminaRegen(ref mult);
+                if (Rest.IsRested(c)) mult *= Rest.Mult;
                 p.Value = Mathf.Min(Max(c), p.Value + Regen * mult * dt * (c.IsBlocking() ? 0.5f : 1f));
             }
             Save(c, p, false);

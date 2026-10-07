@@ -145,6 +145,7 @@ namespace AICompanion
 
         private static void Prefix(Character __instance)
         {
+            Loot.Died(__instance); // a companion near it picks up what it drops
             Character killer = LastHit(__instance)?.GetAttacker();
             if (killer != null && killer != __instance && Companion.Is(killer) && killer.GetComponent<ZNetView>().IsOwner())
             {
@@ -160,16 +161,17 @@ namespace AICompanion
             if (!view.IsOwner()) return;
             try
             {
-                Plugin.Instance?.Note($"{Companion.NameOf(h)} fell at {h.transform.position:F0} (killed by {LastHit(h)?.GetAttacker()?.m_name ?? "?"}, carrying {h.GetInventory().NrOfItems()} item stacks)");
+                int carried = h.GetInventory().NrOfItems();
+                Plugin.Instance?.Note($"{Companion.NameOf(h)} fell at {h.transform.position:F0} (killed by {LastHit(h)?.GetAttacker()?.m_name ?? "?"}, carrying {carried} item stacks)");
                 Companion.DropGear(h);
                 Player master = Companion.Master(h);
                 if (master == Player.m_localPlayer)
                 {
-                    Home.MarkDead(master, Companion.IdOf(h), h.transform.position, h);
+                    Home.MarkDead(master, Companion.IdOf(h), h.transform.position, h, carried > 0);
                     bool bed = Companion.Zdo(h).GetBool(Keys.HasBed, false);
                     Plugin.Tell($"{Companion.NameOf(h)} has fallen. Their gear is in their tombstone (the skull on your map). They wake {(bed ? "in their bed" : "beside you")} in {Plugin.RespawnSeconds.Value:0} s.");
                 }
-                Net.AnnounceFall(h, h.transform.position);
+                Net.AnnounceFall(h, h.transform.position, carried > 0);
             }
             catch (System.Exception e) { Plugin.Instance?.Warn("Could not put the fallen companion's gear in a crate: " + e); }
         }

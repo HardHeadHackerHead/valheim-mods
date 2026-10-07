@@ -16,7 +16,7 @@ namespace AICompanion
     {
         public const string Master = "dhc_master", MasterName = "dhc_mastername", Name = "dhc_name", Order = "dhc_order", Post = "dhc_post",
             Style = "dhc_style", Retreat = "dhc_retreat", Potions = "dhc_potions", Protect = "dhc_protect", UseJev = "dhc_usejev", Status = "dhc_status", Id = "dhc_id", Kills = "dhc_kills",
-            Jobs = "dhc_jobs", Radius = "dhc_radius", HasBed = "dhc_hasbed", BedPos = "dhc_bedpos";
+            Jobs = "dhc_jobs", Radius = "dhc_radius", HasBed = "dhc_hasbed", BedPos = "dhc_bedpos", Friends = "dhc_friends";
     }
 
     internal static class Companion
@@ -77,6 +77,9 @@ namespace AICompanion
         public static Humanoid MineNear(Player p, float range) =>
             All().Where(c => IsMine(c, p) && Vector3.Distance(c.transform.position, p.transform.position) < range)
                  .OrderBy(c => Vector3.Distance(c.transform.position, p.transform.position)).FirstOrDefault();
+
+        /// <summary>Its owner, or anyone when its owner lets friends give it orders (Orders tab).</summary>
+        public static bool CanCommand(Component c, Player p) => IsMine(c, p) || (Zdo(c)?.GetBool(Keys.Friends, false) ?? false);
 
         /// <summary>Change a setting: take the companion over first (only an owner's writes stick). False if someone has its gear open.</summary>
         public static bool Write(Humanoid c, System.Action<ZDO> change)
@@ -186,6 +189,7 @@ namespace AICompanion
                 grave.GetInventory().MoveInventoryToGrave(inv);
                 tomb.GetComponent<TombStone>()?.Setup(NameOf(c), MasterId(c));
                 grave.GetComponent<ZNetView>().GetZDO().Set(Net.CrateKey, NameOf(c));
+                grave.GetComponent<ZNetView>().GetZDO().Set(Grave.OfKey, IdOf(c));
             }
 
             // Anything still in the bag (no grave could be made): on the ground beside it, never lost.
@@ -260,10 +264,13 @@ namespace AICompanion
         public static IEnumerable<ItemDrop.ItemData> Worn(Humanoid h) =>
             new[] { Right(h), Left(h), Helmet(h), Chest(h), Legs(h), Shoulder(h), Utility(h), Ammo(h) }.Where(i => i != null);
 
-        public static bool IsRanged(ItemDrop.ItemData item) => item != null && item.m_shared.m_attack != null && item.m_shared.m_attack.m_attackType == Attack.AttackType.Projectile
+        public static bool IsStaff(ItemDrop.ItemData item) => item != null && item.m_shared.m_attack != null && item.m_shared.m_attack.m_attackType == Attack.AttackType.Projectile
+            && string.IsNullOrEmpty(item.m_shared.m_ammoType) && item.m_shared.m_attack.m_attackEitr > 0f && item.m_shared.m_skillType == Skills.SkillType.ElementalMagic;
+
+        public static bool IsRanged(ItemDrop.ItemData item) => IsStaff(item) || item != null && item.m_shared.m_attack != null && item.m_shared.m_attack.m_attackType == Attack.AttackType.Projectile
             && !string.IsNullOrEmpty(item.m_shared.m_ammoType);
 
-        public static bool HasAmmoFor(Humanoid h, ItemDrop.ItemData weapon) => weapon != null && h.GetInventory().GetAmmoItem(weapon.m_shared.m_ammoType) != null;
+        public static bool HasAmmoFor(Humanoid h, ItemDrop.ItemData weapon) => weapon != null && (IsStaff(weapon) ? Eitr.Get(h) >= weapon.m_shared.m_attack.m_attackEitr : h.GetInventory().GetAmmoItem(weapon.m_shared.m_ammoType) != null);
 
         private static bool IsMelee(ItemDrop.ItemData item) =>
             item.IsWeapon() && !IsRanged(item) && item.m_shared.m_skillType != Skills.SkillType.Pickaxes && item.m_shared.m_skillType != Skills.SkillType.Unarmed

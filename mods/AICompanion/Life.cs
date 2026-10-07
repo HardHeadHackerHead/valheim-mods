@@ -45,6 +45,8 @@ namespace AICompanion
 
         public static float MaxHealth(Humanoid c) => Plugin.BaseHealth.Value + Of(c).Meals.Sum(m => m.Item.m_shared.m_food * Curve(m));
 
+        public static float MaxEitr(Humanoid c) => Of(c).Meals.Sum(m => m.Item.m_shared.m_foodEitr * Curve(m));
+
         public static float MaxStamina(Character c)
         {
             ZNetView v = c.GetComponent<ZNetView>();
@@ -74,6 +76,7 @@ namespace AICompanion
                 {
                     float mult = 1f;
                     c.GetSEMan().ModifyHealthRegen(ref mult);
+                    if (Rest.IsRested(c)) mult *= Rest.Mult;
                     c.Heal(regen * mult, true);
                 }
             }
@@ -205,6 +208,7 @@ namespace AICompanion
         }
 
         public static void Forget() { Levels.Clear(); _defs = null; }
+        public static void Forget(Humanoid c) => Levels.Remove(c);
     }
 
     /// <summary>
@@ -233,6 +237,7 @@ namespace AICompanion
             if (frost == HitData.DamageModifier.Resistant || frost == HitData.DamageModifier.VeryResistant || frost == HitData.DamageModifier.SlightlyResistant || cozy) { freezing = false; cold = false; }
 
             if (rain && !underRoof && !ShieldGenerator.IsInsideShield(pos)) se.AddStatusEffect(SEMan.s_statusEffectWet, true);
+            Rest.Update(c, shelter, fire);
             if (shelter) se.AddStatusEffect(SEMan.s_statusEffectShelter); else se.RemoveStatusEffect(SEMan.s_statusEffectShelter);
             if (fire) se.AddStatusEffect(SEMan.s_statusEffectCampFire); else se.RemoveStatusEffect(SEMan.s_statusEffectCampFire);
             if (freezing) { if (!se.RemoveStatusEffect(SEMan.s_statusEffectCold, true)) se.AddStatusEffect(SEMan.s_statusEffectFreezing); }

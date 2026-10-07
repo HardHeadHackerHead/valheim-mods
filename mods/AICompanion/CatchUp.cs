@@ -41,6 +41,54 @@ namespace AICompanion
             [Heightmap.Biome.Plains] = 2f, [Heightmap.Biome.Mistlands] = 2f, [Heightmap.Biome.AshLands] = 3f,
         };
 
+        // How hard the creatures of each biome are, for Real (compared with its weapon, skill, armour and health).
+        private static readonly System.Collections.Generic.Dictionary<Heightmap.Biome, float> Threat = new System.Collections.Generic.Dictionary<Heightmap.Biome, float>
+        {
+            [Heightmap.Biome.Meadows] = 40f, [Heightmap.Biome.BlackForest] = 90f, [Heightmap.Biome.Swamp] = 160f, [Heightmap.Biome.Mountain] = 200f,
+            [Heightmap.Biome.Plains] = 280f, [Heightmap.Biome.Mistlands] = 350f, [Heightmap.Biome.AshLands] = 450f,
+        };
+
+        private static float Power(Humanoid me)
+        {
+            ItemDrop.ItemData w = Companion.BestMelee(me) ?? Companion.BestRanged(me);
+            float weapon = w != null ? w.GetDamage().GetTotalDamage() * Mathf.Lerp(0.4f, 1f, Skill.Get(me, w.m_shared.m_skillType) / 100f) * 3f : 5f;
+            return weapon + Companion.Armor(me) * 2f + me.GetMaxHealth();
+        }
+
+        /// <summary>Real: it lost a fight while you were away. As a player: its things into a tombstone where it fell (near home: it goes back for
+        /// them), its food gone, 5% off its skills; it woke at home.</summary>
+        private static Vector3 Fall(Humanoid me, Vector3 center, float radius)
+        {
+            Vector2 r = UnityEngine.Random.insideUnitCircle * radius * 0.6f;
+            Vector3 at = center + new Vector3(r.x, 0f, r.y);
+            if (ZoneSystem.instance != null && ZoneSystem.instance.GetSolidHeight(at, out float h)) at.y = h + 0.5f;
+            Inventory inv = me.GetInventory();
+            me.UnequipAllItems();
+            foreach (ItemDrop.ItemData i in inv.GetAllItems()) i.m_equipped = false;
+            bool any = inv.NrOfItems() > 0;
+            if (any)
+            {
+                GameObject scene = ZNetScene.instance.GetPrefab("Player");
+                GameObject tombPrefab = scene != null ? scene.GetComponent<Player>()?.m_tombstone : null;
+                if (tombPrefab != null)
+                {
+                    GameObject tomb = UnityEngine.Object.Instantiate(tombPrefab, at, Quaternion.identity);
+                    tomb.GetComponent<Container>().GetInventory().MoveInventoryToGrave(inv);
+                    tomb.GetComponent<TombStone>()?.Setup(Companion.NameOf(me), Companion.MasterId(me));
+                    tomb.GetComponent<ZNetView>().GetZDO().Set(Net.CrateKey, Companion.NameOf(me));
+                    tomb.GetComponent<ZNetView>().GetZDO().Set(Grave.OfKey, Companion.IdOf(me));
+                }
+            }
+            ZDO z = Companion.Zdo(me);
+            z.Set(Grave.HasKey, any);
+            z.Set(Grave.PosKey, at);
+            z.Set(Skill.Key, Skill.AfterDeath(z.GetString(Skill.Key, "")));
+            Skill.Forget(me);
+            Food.Clear(me);
+            if (any) Net.AnnounceFall(me, at, true);
+            return at;
+        }
+
         /// <summary>Every few seconds while it lives at home on this game: "it was here and working at this world time".</summary>
         public static void Stamp(Humanoid c) => Companion.Zdo(c)?.Set(LastKey, (long)ZNet.instance.GetTimeSeconds());
 
@@ -67,6 +115,7 @@ namespace AICompanion
             var notes = new List<string>();
             float budget = seconds;
             int felled = 0, mined = 0, picked = 0, fights = 0;
+            string fellTo = null;
 
             // Encounters first take some of the time (Mild: it always comes through).
             if (Plugin.WhileAway.Value != AwayMode.Off)
@@ -82,6 +131,18 @@ namespace AICompanion
                     if (go == null) continue;
                     fights++;
                     budget -= 60f;
+                    if (Plugin.WhileAway.Value == AwayMode.Real)
+                    {
+                        float threat = Threat.TryGetValue(biome, out float th) ? th : 100f;
+                        float power = Power(me);
+                        if (UnityEngine.Random.value > power / (power + threat * 0.4f))
+                        {
+                            fellTo = Localization.instance.Localize(go.GetComponent<Character>()?.m_name ?? prefab);
+                            Fall(me, Work.Center(me), Work.RadiusOf(me));
+                            budget = 0f; // the rest of the time it was making its way back home
+                            break;
+                        }
+                    }
                     CharacterDrop drops = go.GetComponent<CharacterDrop>();
                     if (drops != null)
                         foreach (CharacterDrop.Drop d in drops.m_drops)
@@ -169,7 +230,7 @@ namespace AICompanion
 
             int stored = Store(me, got);
             Companion.SaveBag(me); // its tools' and armour's wear
-            if (felled + mined + picked + fights == 0) yield break;
+            if (felled + mined + picked + fights == 0 && fellTo == null) yield break;
             var did = new List<string>();
             if (felled > 0) did.Add($"felled {felled} tree{(felled == 1 ? "" : "s")}");
             if (mined > 0) did.Add($"mined {mined} rock{(mined == 1 ? "" : "s")}");
@@ -177,7 +238,8 @@ namespace AICompanion
             if (fights > 0) did.Add($"fought off {fights} creature{(fights == 1 ? "" : "s")} ({string.Join(", ", notes.Where(n => !n.Contains("full")).Take(3))})");
             string items = string.Join(", ", got.OrderByDescending(kv => kv.Value).Take(8).Select(kv => $"{kv.Value} {kv.Key}"));
             string line = $"While you were away ({Mathf.RoundToInt(away / 60f)} min) {Companion.NameOf(me)} {string.Join(", ", did)}" + (items.Length > 0 ? $": {items}" : "") +
-                          (stored < got.Values.Sum() ? " (kept the rest in their bag)" : "") + (notes.Any(n => n.Contains("full")) ? ". Their chests are full." : ".");
+                          (stored < got.Values.Sum() ? " (kept the rest in their bag)" : "") + (notes.Any(n => n.Contains("full")) ? ". Their chests are full." : ".") +
+                          (fellTo != null ? $" Then they fell to a {fellTo} and woke at home; their things are in their tombstone nearby (they will go and get them)." : "");
             st.Remember(line);
             Plugin.Instance?.Note(line);
             DebugLog.Add(new DecisionRecord { When = DateTime.Now, Companion = Companion.NameOf(me), Outcome = "— " + line + " —" });
@@ -259,5 +321,5 @@ namespace AICompanion
         }
     }
 
-    public enum AwayMode { Off, Mild }
+    public enum AwayMode { Off, Mild, Real }
 }

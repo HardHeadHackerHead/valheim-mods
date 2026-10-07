@@ -141,7 +141,7 @@ namespace AICompanion
         }
 
         /// <summary>On its player's game when it fell (directly, or told by the game that ran it).</summary>
-        public static void MarkDead(Player p, long id, Vector3 where, Humanoid body = null)
+        public static void MarkDead(Player p, long id, Vector3 where, Humanoid body = null, bool grave = true)
         {
             Profile known = Profile.Find(p, id);
             if (known != null && known.Dead && ZNet.instance.GetTimeSeconds() - known.DiedAt < 60.0) return; // already counted (we are told twice)
@@ -151,6 +151,7 @@ namespace AICompanion
             prof.Skills = Skill.AfterDeath(prof.Skills); // a player's death penalty: 5% off every skill
             prof.DiedAt = ZNet.instance.GetTimeSeconds();
             prof.DiedPos = where;
+            prof.HasGrave = grave;   // it goes back for its things when it wakes
             Profile.Save(p, prof);
             Plugin.Instance?.Note($"{prof.Name} will wake {(prof.HasBed ? "in their bed" : "beside you")} in {Plugin.RespawnSeconds.Value:0} s");
         }

@@ -7,7 +7,7 @@ using UnityEngine;
 namespace AICompanion
 {
     [Flags]
-    public enum Job { None = 0, Wood = 1, Stone = 2, Ore = 4, Forage = 8, Loot = 16 }
+    public enum Job { None = 0, Wood = 1, Stone = 2, Ore = 4, Forage = 8, Loot = 16, Hunt = 32, Cook = 64 }
 
     /// <summary>
     /// Gathering, as a player does it: with the order "Gather" it works within its radius of home (its bed, or where it was told to gather)
@@ -23,7 +23,7 @@ namespace AICompanion
     /// </summary>
     internal static class Work
     {
-        internal enum Kind { None, Hit, Pick, PickUp, Store, Upgrade }
+        internal enum Kind { None, Hit, Pick, PickUp, Store, Upgrade, Craft, Hunt, Cook }
 
         internal class Task
         {
@@ -31,10 +31,28 @@ namespace AICompanion
             public Component Target;
             public Job Job;
             public ItemDrop.ItemData Item;   // what it is upgrading
+            public Recipe Recipe;            // what it is crafting
             public float Started, LastClose;
         }
 
         private static readonly string[] OreWords = { "Ore", "Scrap", "Flametal" };
+        private static readonly HashSet<string> Prey = new HashSet<string> { "Deer", "Boar", "Neck", "Hare" };
+        private static HashSet<string> _cookable;
+
+        /// <summary>Raw food some cooking station can cook (raw meat, fish, dough...): it keeps it to cook, and fetches it from its chests.</summary>
+        public static bool IsCookable(ItemDrop.ItemData i)
+        {
+            if (_cookable == null && ZNetScene.instance != null)
+            {
+                _cookable = new HashSet<string>();
+                foreach (GameObject prefab in ZNetScene.instance.m_prefabs)
+                {
+                    CookingStation s = prefab != null ? prefab.GetComponent<CookingStation>() : null;
+                    if (s != null) foreach (CookingStation.ItemConversion c in s.m_conversion) if (c.m_from != null) _cookable.Add(c.m_from.m_itemData.m_shared.m_name);
+                }
+            }
+            return _cookable != null && _cookable.Contains(i.m_shared.m_name);
+        }
         private static readonly Func<BaseAI, Vector3, bool> HavePath = AccessTools.MethodDelegate<Func<BaseAI, Vector3, bool>>(AccessTools.Method(typeof(BaseAI), "HavePath"));
 
         public static Job JobsOf(Component c) => (Job)(Companion.Zdo(c)?.GetInt(Keys.Jobs, 0) ?? 0);
@@ -48,7 +66,9 @@ namespace AICompanion
             Job j = Job.None;
             if (Axe(h) != null) j |= Job.Wood;
             if (Pickaxe(h) != null) j |= Job.Stone | Job.Ore;
-            if (h.GetInventory().GetAllItems().Where(Food.IsFood).Sum(f => f.m_stack) < 10) j |= Job.Forage;
+            bool hungry = h.GetInventory().GetAllItems().Where(Food.IsFood).Sum(f => f.m_stack) < 10;
+            if (hungry) j |= Job.Forage | Job.Cook;
+            if (hungry && (Companion.BestRanged(h) != null || Companion.BestMelee(h) != null)) j |= Job.Hunt;
             return j;
         }
         public static int RadiusOf(Component c) => Companion.Zdo(c)?.GetInt(Keys.Radius, 30) ?? 30;
@@ -157,6 +177,29 @@ namespace AICompanion
                     st.Task = null;
                     break;
 
+                case Kind.Craft:
+                    if (dist > 2.6f) { moveTo(at, 1.8f, dist > 8f); break; }
+                    t.LastClose = Time.time;
+                    stop();
+                    Upgrades.Craft(st, t.Recipe, (CraftingStation)t.Target);
+                    st.Task = null;
+                    break;
+
+                case Kind.Cook:
+                    if (dist > 2.2f) { moveTo(at, 1.5f, dist > 8f); break; }
+                    t.LastClose = Time.time;
+                    stop();
+                    if (Time.time - t.Started > 240f || !Kitchen.Cook(st, (CookingStation)t.Target)) st.Task = null; // done (what it cooked lies at its feet: it picks it up next)
+                    break;
+
+                case Kind.Hunt:
+                    var prey = (Character)t.Target;
+                    if (prey == null || prey.IsDead()) { st.Task = null; break; }
+                    t.LastClose = Time.time;
+                    st.WorkTool = Companion.BestRanged(me) ?? Companion.BestMelee(me);
+                    Brain.Strike(st, prey, Time.deltaTime);
+                    break;
+
                 case Kind.Upgrade:
                     if (dist > 2.6f) { moveTo(at, 1.8f, dist > 8f); break; }
                     t.LastClose = Time.time;
@@ -183,6 +226,9 @@ namespace AICompanion
                 Kind.Pick => "picking " + what,
                 Kind.PickUp => "picking up " + what,
                 Kind.Store => "taking things to its chest",
+                Kind.Craft => $"making a {Localization.instance.Localize(t.Recipe?.m_item?.m_itemData.m_shared.m_name ?? "")} at the {Localization.instance.Localize(((CraftingStation)t.Target).m_name)}",
+                Kind.Cook => "cooking",
+                Kind.Hunt => "hunting " + Localization.instance.Localize(((Character)t.Target)?.m_name ?? ""),
                 Kind.Upgrade => $"upgrading its {Localization.instance.Localize(t.Item?.m_shared.m_name ?? "")} at the {Localization.instance.Localize(((CraftingStation)t.Target).m_name)}",
                 _ => "gathering",
             };
@@ -240,7 +286,7 @@ namespace AICompanion
             st.WorkNote = null;
 
             // 1. A full bag goes to its chests first.
-            if (inv.GetEmptySlots() <= 1 || inv.GetAllItems().Count(i => !Keeps(me, i)) >= 18)
+            if (inv.GetEmptySlots() <= 1 || inv.GetAllItems().Count(i => !Keeps(me, i)) >= 18 || Carry.Weight(me) > Carry.Max(me) * 0.9f)
             {
                 Container chest = Home.Chests(me).Where(c => !c.IsInUse() && Vector3.Distance(c.transform.position, center) < radius + 40f && HasRoom(c, me))
                                      .OrderBy(c => Vector3.Distance(c.transform.position, me.transform.position)).FirstOrDefault();
@@ -254,6 +300,29 @@ namespace AICompanion
                 st.NextUpgradeLook = Time.time + 30f;
                 var up = Upgrades.Find(me, center, radius);
                 if (up != null) { Task u = New(Kind.Upgrade, up.Value.Value, Job.None); u.Item = up.Value.Key; return u; }
+                var craft = Upgrades.FindCraft(me, center, radius);
+                if (craft != null) { Task t2 = New(Kind.Craft, craft.Value.Value, Job.None); t2.Recipe = craft.Value.Key; return t2; }
+            }
+
+            // Its own meals: raw food it carries goes on a cooking station near home.
+            if ((jobs & Job.Cook) != 0)
+            {
+                CookingStation stove = Kitchen.Find(me, center, radius);
+                if (stove != null)
+                {
+                    foreach (CookingStation.ItemConversion conv in stove.m_conversion) if (conv.m_to != null) st.Wanted.Add(conv.m_to.name);
+                    st.WorkSpot = stove.transform.position;
+                    return New(Kind.Cook, stove, Job.Cook);
+                }
+            }
+
+            // Hunting: deer and boar near home, for meat and hides (with its bow if it has one).
+            if ((jobs & Job.Hunt) != 0)
+            {
+                Character prey = Character.GetAllCharacters().Where(ch => ch != null && !ch.IsDead() && !ch.IsTamed() && Prey.Contains(Utils.GetPrefabName(ch.gameObject))
+                        && Vector3.Distance(ch.transform.position, center) < radius && !Skipped(st, ch))
+                    .OrderBy(ch => Vector3.Distance(ch.transform.position, me.transform.position)).FirstOrDefault();
+                if (prey != null) return New(Kind.Hunt, prey, Job.Hunt);
             }
 
             // 3. What its own work dropped (or anything, with Loot ticked).
@@ -355,7 +424,7 @@ namespace AICompanion
         // ---- its chests --------------------------------------------------------------------------------------
 
         /// <summary>What it keeps on itself: anything it wears or could use (weapons, armour, shields, tools, ammo, healing potions).</summary>
-        public static bool Keeps(Humanoid h, ItemDrop.ItemData i) => h.IsItemEquiped(i) || Companion.Useful(h, i) || IsTool(i);
+        public static bool Keeps(Humanoid h, ItemDrop.ItemData i) => h.IsItemEquiped(i) || Companion.Useful(h, i) || IsTool(i) || IsCookable(i);
 
         private static bool HasRoom(Container chest, Humanoid h) =>
             chest.GetInventory().HaveEmptySlot() || h.GetInventory().GetAllItems().Any(i => !Keeps(h, i) && chest.GetInventory().CanAddItem(i, 1));
@@ -409,6 +478,7 @@ namespace AICompanion
                 return bow != null && item.m_shared.m_ammoType == bow.m_shared.m_ammoType && have.Where(a => a.m_shared.m_name == item.m_shared.m_name).Sum(a => a.m_stack) < 40;
             }
             if (Food.IsFood(item)) return have.Where(Food.IsFood).Sum(f => f.m_stack) < 10;
+            if (IsCookable(item)) return have.Where(Food.IsFood).Sum(f => f.m_stack) < 10 && have.Where(IsCookable).Sum(f => f.m_stack) < 10; // to cook for itself
             if (type == ItemDrop.ItemData.ItemType.Consumable && Companion.Useful(me, item)) return Companion.HealingPotions(me).Sum(p => p.m_stack) < 3;
             if ((jobs & Job.Wood) != 0 && item.m_shared.m_damages.m_chop > 0f && item.IsWeapon() && Axe(me) == null) return true;
             if ((jobs & (Job.Stone | Job.Ore)) != 0 && item.m_shared.m_damages.m_pickaxe > 0f && Pickaxe(me) == null) return true;
@@ -454,6 +524,91 @@ namespace AICompanion
                     return new KeyValuePair<ItemDrop.ItemData, CraftingStation>(item, station);
             }
             return null;
+        }
+
+        /// <summary>
+        /// Something new worth making, and where (null if nothing): armour better than what it has for that slot, a better shield, a better
+        /// weapon, an axe or pickaxe of a higher tier, a bow when it has none, or arrows for its bow when it is low; at a station of the
+        /// recipe's kind and level near home, with all the materials in its bag and its chests.
+        /// </summary>
+        public static KeyValuePair<Recipe, CraftingStation>? FindCraft(Humanoid me, Vector3 center, float radius)
+        {
+            if (ObjectDB.instance == null) return null;
+            List<CraftingStation> stations = (Stations() ?? new List<CraftingStation>()).Where(s => s != null && Vector3.Distance(s.transform.position, center) < radius + 10f).ToList();
+            if (stations.Count == 0) return null;
+            foreach (Recipe r in ObjectDB.instance.m_recipes)
+            {
+                if (r == null || !r.m_enabled || r.m_item == null || r.m_craftingStation == null) continue;
+                if (!WorthMaking(me, r.m_item.m_itemData)) continue;
+                CraftingStation station = stations.FirstOrDefault(s => s.m_name == r.m_craftingStation.m_name && s.GetLevel() >= Mathf.Max(1, r.m_minStationLevel));
+                if (station == null) continue;
+                List<Container> chests = ChestsNear(me, station.transform.position);
+                if (r.m_resources.All(q => q.m_resItem == null || Have(me, chests, q.m_resItem.m_itemData.m_shared.m_name) >= q.GetAmount(1)))
+                    return new KeyValuePair<Recipe, CraftingStation>(r, station);
+            }
+            return null;
+        }
+
+        private static bool WorthMaking(Humanoid me, ItemDrop.ItemData made)
+        {
+            var have = me.GetInventory().GetAllItems();
+            var t = made.m_shared.m_itemType;
+            if (t == ItemDrop.ItemData.ItemType.Helmet || t == ItemDrop.ItemData.ItemType.Chest || t == ItemDrop.ItemData.ItemType.Legs || t == ItemDrop.ItemData.ItemType.Shoulder)
+                return made.GetArmor() > have.Where(i => i.m_shared.m_itemType == t).Select(i => i.GetArmor()).DefaultIfEmpty(0f).Max() + 1f;
+            if (t == ItemDrop.ItemData.ItemType.Shield)
+                return made.m_shared.m_blockPower > have.Where(i => i.m_shared.m_itemType == t).Select(i => i.m_shared.m_blockPower).DefaultIfEmpty(0f).Max() + 1f;
+            if (made.m_shared.m_damages.m_chop > 0f && made.IsWeapon() && made.m_shared.m_skillType == Skills.SkillType.Axes)
+                return made.m_shared.m_toolTier > (Work.Axe(me)?.m_shared.m_toolTier ?? -1);
+            if (made.m_shared.m_damages.m_pickaxe > 0f)
+                return made.m_shared.m_toolTier > (Work.Pickaxe(me)?.m_shared.m_toolTier ?? -1);
+            if (t == ItemDrop.ItemData.ItemType.Ammo)
+            {
+                ItemDrop.ItemData bow = have.FirstOrDefault(i => Companion.IsRanged(i) && !Companion.IsStaff(i));
+                return bow != null && made.m_shared.m_ammoType == bow.m_shared.m_ammoType && have.Where(a => a.m_shared.m_ammoType == bow.m_shared.m_ammoType && a.m_shared.m_itemType == t).Sum(a => a.m_stack) < 20;
+            }
+            if (Companion.IsRanged(made) && !Companion.IsStaff(made)) return !have.Any(i => Companion.IsRanged(i) && !Companion.IsStaff(i));
+            if (made.IsWeapon() && !Work.IsTool(made) && made.m_shared.m_skillType != Skills.SkillType.Unarmed && made.m_shared.m_attack != null && made.m_shared.m_attack.m_attackType != Attack.AttackType.Projectile)
+                return made.GetDamage().GetTotalDamage() > (Companion.BestMelee(me)?.GetDamage().GetTotalDamage() ?? 0f) + 2f;
+            return false;
+        }
+
+        public static void Craft(BrainState st, Recipe r, CraftingStation station)
+        {
+            Humanoid me = st.Body;
+            if (r == null || !WorthMaking(me, r.m_item.m_itemData)) return;
+            List<Container> chests = ChestsNear(me, station.transform.position);
+            if (!r.m_resources.All(q => q.m_resItem == null || Have(me, chests, q.m_resItem.m_itemData.m_shared.m_name) >= q.GetAmount(1))) return;
+            if (!me.GetInventory().HaveEmptySlot()) return;
+            Pay(me, chests, r, 1);
+            me.GetInventory().AddItem(r.m_item.gameObject.name, Mathf.Max(1, r.m_amount), 1, 0, 0L, Companion.NameOf(me), false);
+            station.m_craftItemEffects.Create(station.transform.position, Quaternion.identity);
+            string what = Localization.instance.Localize(r.m_item.m_itemData.m_shared.m_name);
+            st.Remember($"made a {what}");
+            st.NextGear = 0f;
+            Plugin.Instance?.Note($"{Companion.NameOf(me)} made a {what} at {station.transform.position:F0}");
+            if (Companion.Master(me) == Player.m_localPlayer) Plugin.Tell($"{Companion.NameOf(me)} made a {what}");
+        }
+
+        private static void Pay(Humanoid me, List<Container> chests, Recipe r, int quality)
+        {
+            foreach (Piece.Requirement q in r.m_resources)
+            {
+                if (q.m_resItem == null) continue;
+                string name = q.m_resItem.m_itemData.m_shared.m_name;
+                int left = q.GetAmount(quality);
+                int fromBag = Mathf.Min(left, me.GetInventory().CountItems(name));
+                if (fromBag > 0) { me.GetInventory().RemoveItem(name, fromBag); left -= fromBag; }
+                foreach (Container chest in chests)
+                {
+                    if (left <= 0) break;
+                    int take = Mathf.Min(left, chest.GetInventory().CountItems(name));
+                    if (take <= 0) continue;
+                    ZNetView v = chest.GetComponent<ZNetView>();
+                    if (v != null && !v.IsOwner()) v.ClaimOwnership();
+                    chest.GetInventory().RemoveItem(name, take);
+                    left -= take;
+                }
+            }
         }
 
         public static void Do(BrainState st, ItemDrop.ItemData item, CraftingStation station)

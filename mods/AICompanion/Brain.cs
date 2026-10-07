@@ -65,8 +65,13 @@ namespace AICompanion
         public Vector3 WorkSpot;
         public float NextWorkLook, NextDoorLook, NextUpgradeLook, YieldUntil;
         public Vector3 YieldTo;
+        public Player YieldFrom;
         public bool CaughtUp;                                       // living at home while nobody was there (CatchUp)
-        public float NextStamp, NextBagSave;
+        public float NextStamp, NextBagSave, NextGraveLook;
+        public readonly List<Loot.Spot> LootSpots = new List<Loot.Spot>();   // where creatures fell, for picking up their drops
+        public readonly List<KeyValuePair<ItemDrop, float>> LootDrops = new List<KeyValuePair<ItemDrop, float>>(); // what the world dropped near it
+        public Vector3 CookedAt;
+        public float NextPassBy;
         public readonly HashSet<string> Wanted = new HashSet<string>();                  // what its work drops (to pick up)
         public readonly Dictionary<int, float> Skipped = new Dictionary<int, float>();    // things it gave up on, until when
         public readonly Dictionary<string, int> Gathered = new Dictionary<string, int>(); // this session, for the Work tab
@@ -117,7 +122,7 @@ namespace AICompanion
 
         public static void Forget()
         {
-            foreach (BrainState st in States.Values) if (st.Body != null) Blocking(st.Body) = false;
+            foreach (BrainState st in States.Values) if (st.Body != null) { Blocking(st.Body) = false; if (st.YieldFrom != null) IgnoreBumps(st.Body, st.YieldFrom, false); }
             States.Clear();
         }
 
@@ -142,6 +147,7 @@ namespace AICompanion
             TimeSinceHurt(ai) += dt;           // (no free healing: food heals it, as it heals a player)
             Humanoid body = ai.GetComponent<Humanoid>();
             Stamina.Tick(body, dt);
+            Eitr.Tick(body, dt);
             Weather.Tick(body);
 
             Humanoid me = ai.GetComponent<Humanoid>();
@@ -154,6 +160,7 @@ namespace AICompanion
             Food.Tick(me, st);
             if (Time.time >= st.NextBagSave) { st.NextBagSave = Time.time + 30f; Companion.SaveBag(me); } // wear from fighting and working
             if (Ride.Tick(st, master)) return true; // on a boat with its player: it sits and rides
+            Loot.PassBy(st);                         // what is on its list, as it goes by
             if (Time.time >= st.NextGear) { st.NextGear = Time.time + 0.5f; Companion.Maintain(me, st.Current.Ranged, st.InCombat ? null : st.WorkTool); }
             if (gear != null && gear.IsInUse()) { ai.StopMoving(); Blocking(me) = false; SetStatus(st, "waiting while you sort its gear"); return true; }
 
@@ -190,6 +197,8 @@ namespace AICompanion
         {
             Humanoid me = st.Body;
             if (MakeWay(st, dt)) return;
+            if (Loot.Tick(st, (p, dd, run) => MoveTo(st.Ai, dt, p, dd, run))) return;                          // what the fight dropped
+            if (Grave.Tick(st, (p, dd, run) => MoveTo(st.Ai, dt, p, dd, run), () => st.Ai.StopMoving())) return; // its things back
             if (Repair.Tick(st, (p, dd, run) => MoveTo(st.Ai, dt, p, dd, run), () => st.Ai.StopMoving())) return;
             switch (Companion.OrderOf(me))
             {
@@ -283,10 +292,14 @@ namespace AICompanion
             {
                 if (c == null || c == me || c.IsDead() || c.IsPlayer() || !BaseAI.IsEnemy(me, c)) continue;
                 if (c.GetComponent<BaseAI>() == null) continue;
+                // Harmless animals (deer, hares) are not a fight: it hunts them when hunting (Work), unless one turns on it or you.
+                if (c.GetFaction() == Character.Faction.AnimalsVeg && TargetOf(c) != me && TargetOf(c) != master) continue;
                 float toMe = Vector3.Distance(c.transform.position, me.transform.position);
                 float toMaster = master != null ? Vector3.Distance(c.transform.position, master.transform.position) : float.MaxValue;
                 float limit = style == Style.Defensive ? range * 0.6f : range;
-                if (toMe < limit || toMaster < limit) st.Enemies.Add(c);
+                // Living at home it defends its home: anything that comes within its radius (a raid on the base), not only what is near it.
+                bool home = Companion.OrderOf(me) == Order.Gather && Vector3.Distance(c.transform.position, Work.Center(me)) < Work.RadiusOf(me);
+                if (toMe < limit || toMaster < limit || home) st.Enemies.Add(c);
             }
             st.Enemies.Sort((a, b) => Vector3.Distance(a.transform.position, me.transform.position).CompareTo(Vector3.Distance(b.transform.position, me.transform.position)));
         }
@@ -339,31 +352,49 @@ namespace AICompanion
         }
 
         /// <summary>
-        /// A player walking into it: it steps aside, out of the way, as a person would (the side away from where the player is heading).
-        /// True while it is stepping aside.
+        /// A player walking into it, or bumping it: it gets out of the way at once. A shove (the game's own knock-back) sends it aside the moment
+        /// you touch it, it then runs about 3 m clear to the side it is already on, and for that moment you and it do not collide, so you are
+        /// never stopped by it. True while it is clearing the way.
         /// </summary>
         private static bool MakeWay(BrainState st, float dt)
         {
             Humanoid me = st.Body;
             if (Time.time < st.YieldUntil)
             {
-                MoveToRaw(st.Ai, dt, st.YieldTo, 0.3f, false);
+                MoveToRaw(st.Ai, dt, st.YieldTo, 0.4f, true);
                 return true;
             }
+            if (st.YieldFrom != null) { IgnoreBumps(me, st.YieldFrom, false); st.YieldFrom = null; }
             foreach (Player p in Player.GetAllPlayers())
             {
                 if (p == null) continue;
                 Vector3 toMe = me.transform.position - p.transform.position; toMe.y = 0f;
-                if (toMe.magnitude > 1.6f) continue;
+                float d = toMe.magnitude;
+                if (d > 2.5f) continue;
                 Vector3 v = p.GetVelocity(); v.y = 0f;
-                if (v.magnitude < 1f || Vector3.Dot(v.normalized, toMe.normalized) < 0.5f) continue;
-                Vector3 side = Vector3.Cross(Vector3.up, v.normalized);
-                if (Vector3.Dot(side, toMe) < 0f) side = -side; // step to the side it is already on
-                st.YieldTo = me.transform.position + side * 1.8f + v.normalized * 0.4f;
-                st.YieldUntil = Time.time + 0.9f;
+                bool walkingInto = v.magnitude > 0.5f && Vector3.Dot(v.normalized, toMe.normalized) > 0.3f;
+                bool touching = d < 1.1f;
+                if (!walkingInto && !touching) continue;
+                Vector3 dir = v.magnitude > 0.5f ? v.normalized : (d > 0.01f ? toMe.normalized : me.transform.forward);
+                Vector3 side = Vector3.Cross(Vector3.up, dir);
+                if (Vector3.Dot(side, toMe) < 0f) side = -side; // to the side it is already on
+                st.YieldTo = me.transform.position + side * 3f + dir * 1f;
+                st.YieldUntil = Time.time + 1.2f;
+                if (d < 1.6f) me.ApplyPushback(side * 0.8f + dir * 0.2f, 90f); // the shove: out of the way now, not in a moment
+                IgnoreBumps(me, p, true);
+                st.YieldFrom = p;
+                MoveToRaw(st.Ai, dt, st.YieldTo, 0.4f, true);
                 return true;
             }
             return false;
+        }
+
+        /// <summary>Let a player pass through it (or not) while it clears the way.</summary>
+        private static void IgnoreBumps(Humanoid me, Player p, bool ignore)
+        {
+            if (me == null || p == null) return;
+            Collider mine = me.GetComponent<CapsuleCollider>(), theirs = p.GetComponent<CapsuleCollider>();
+            if (mine != null && theirs != null) Physics.IgnoreCollision(mine, theirs, ignore);
         }
 
         internal static Character TargetOf(Character enemy) => enemy != null && enemy.GetBaseAI() is MonsterAI m ? m.GetTargetCreature() : null;
@@ -490,7 +521,7 @@ namespace AICompanion
         }
 
         /// <summary>Close in on a target and hit it (or shoot it from a distance with a bow).</summary>
-        private static void Strike(BrainState st, Character target, float dt)
+        internal static void Strike(BrainState st, Character target, float dt)
         {
             Humanoid me = st.Body;
             Blocking(me) = false;

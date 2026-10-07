@@ -208,6 +208,9 @@ namespace AICompanion
             string sig = Signature(c);
             if (sig != shot.Sig) { shot.Sig = sig; shot.ChangedAt = Time.time; return; }
             if (shot.ChangedAt < 0f || Time.time - shot.ChangedAt < 0.6f) return;
+            // A proper front-on face: only while it stands still, not swinging, not in a fight (else it waits; the old picture stays).
+            Rigidbody body = c.GetComponent<Rigidbody>();
+            if ((body != null && body.linearVelocity.magnitude > 0.3f) || c.InAttack() || (c.GetComponent<ZNetView>().IsOwner() && Brain.Get(c).InCombat)) return;
             shot.ChangedAt = -99f;
             try { Render(c, shot); }
             catch (Exception e) { Plugin.Instance?.Warn("Could not take a companion's portrait: " + e.Message); shot.At = Time.time + 30f; }

@@ -14,3 +14,4 @@ How it works
 - Nothing is created from nothing: every item comes out of a chest or your inventory, and a station that is full is left alone.
 
 Settings: range (default 15 m), auto-feed on or off, how often it tops up, how near you must be for it to run, and the Fill limit.
+- Shield generators keep their fuel, ballistas reload themselves, and sap extractors empty into a chest, all from nearby chests.

@@ -23,12 +23,13 @@ namespace FeedFromChests
     {
         public const string Guid = "com.dhack.feedfromchests";
         public const string Name = "FeedFromChests";
-        public const string Version = "1.4.1";
+        public const string Version = "1.5.0";
 
         internal static Plugin Instance;
 
         private ConfigEntry<bool> _enabled, _autoFeed, _alwaysOpenMenu, _stationAuto, _takeOffCooked, _refuelLights, _refuelFires, _collectHoney;
         private ConfigEntry<int> _keepFuel;
+        private ConfigEntry<bool> _fuelShields, _reloadBallistas, _collectSap;
         internal int KeepFuel => Mathf.Max(0, _keepFuel.Value);
         private ConfigEntry<float> _radius, _autoInterval, _autoRange, _outputRadius, _autoRadius;
         private ConfigEntry<int> _fillLimit;
@@ -74,6 +75,12 @@ namespace FeedFromChests
                 "so they never sit full: a full hive stops making honey. With no such chest within OutputRadius the honey stays in the hive.");
             _refuelFires = Config.Bind("Fires", "RefuelCampfires", false,
                 "The same for fires that burn wood (campfires, hearths, bonfires): keep them topped up with wood from nearby chests.");
+            _fuelShields = Config.Bind("Defenses", "FuelShieldGenerators", true,
+                "Shield generators near you take their fuel (bones and the like) from chests within FeedRadius as they have room, so the shield never runs dry. All of them at once.");
+            _reloadBallistas = Config.Bind("Defenses", "ReloadBallistas", true,
+                "Ballistas near you are reloaded from chests within FeedRadius: with the ammo they hold, or when empty the first ammo they take that the chests have.");
+            _collectSap = Config.Bind("Defenses", "CollectSap", true,
+                "Sap extractors near you empty themselves into a chest assigned to sap or Materials (K), else one that already holds sap, so they never sit full.");
             _keepFuel = Config.Bind("Fires", "KeepFuel", 10,
                 "Torches and fires never take the last of a fuel: this many of it (resin, coal, wood...) always stay in the chests, for crafting.");
 
@@ -170,6 +177,7 @@ namespace FeedFromChests
             if (_stationAuto.Value && !_filling) Cooking.Tick(this, player, _autoRange.Value, _takeOffCooked.Value); // spits: done food off, raw food on
             if (!_filling) Lights.Tick(this, player, _autoRange.Value, _refuelLights.Value, _refuelFires.Value);   // torches keep themselves lit
             if (!_filling && _collectHoney.Value) Hives.Tick(this, player, _autoRange.Value, _outputRadius.Value); // hives never sit full
+            if (!_filling) Defenses.Tick(this, player, _autoRange.Value, _autoRadius.Value, _outputRadius.Value, _fuelShields.Value, _reloadBallistas.Value, _collectSap.Value);
             if (_stationAuto.Value && !_filling) Ferment.Tick(this, player, _autoRange.Value);                    // fermenters reload and tap themselves
 
             if (MenuOpen) UpdateMenu(player);
