@@ -18,7 +18,7 @@ namespace AICompanion
     internal static class Steer
     {
         private class Hazard { public Collider Col; public Vector3 Center; public float Radius; }
-        private class State { public float NextScan, NextJump, NextMoveCheck, Side, SideUntil, PressedSince = -1f; public Vector3 LastPos; public readonly List<Hazard> Near = new List<Hazard>(); }
+        private class State { public float NextScan, NextJump, NextMoveCheck, Side, SideUntil, PressedSince = -1f; public bool AvoidWater; public Vector3 LastPos; public readonly List<Hazard> Near = new List<Hazard>(); }
 
         private static readonly Dictionary<Humanoid, State> States = new Dictionary<Humanoid, State>();
         private static readonly AccessTools.FieldRef<Aoe, Character> Owner = AccessTools.FieldRefAccess<Aoe, Character>("m_owner");
@@ -40,6 +40,8 @@ namespace AICompanion
             return string.Join(", ", found.GroupBy(kv => Utils.GetPrefabName(kv.Key.transform.root.gameObject)).Select(g => $"{g.Count()} {g.Key}")) + $"; nearest {found.Values.Min():0.0} m";
         }
 
+        public static string Debug(Humanoid h) => h != null && States.TryGetValue(h, out State s) ? $"{s.Near.Count} hazards, pressed {(s.PressedSince >= 0f ? Time.time - s.PressedSince : 0f):0.0} s, avoid water {s.AvoidWater}" : "-";
+
         public static int HazardsNear(Humanoid h) => h != null && States.TryGetValue(h, out State s) ? s.Near.Count : 0;
 
         private static State Of(Humanoid h)
@@ -53,6 +55,9 @@ namespace AICompanion
         {
             if (me == null || me.IsDead() || st.Riding != null || me.IsSwimming()) return;
             State s = Of(me);
+            // Deep water is out of bounds too, unless it is with you and you are in it (swimming after you, or to your boat).
+            Player master = Companion.Master(me);
+            s.AvoidWater = !(Companion.OrderOf(me) == Order.Follow && master != null && (master.IsSwimming() || master.IsAttached() || master.transform.position.y < ZoneSystem.instance.m_waterLevel));
             Vector3 pos = me.transform.position;
             if (Time.time >= s.NextScan) { s.NextScan = Time.time + 0.3f; Scan(me, s, pos); }
             Vector3 dir = me.GetMoveDir();
@@ -109,7 +114,14 @@ namespace AICompanion
                 Vector3 p = pos + dir * d;
                 foreach (Hazard h in s.Near) if (Hurts(h, p, 0.5f)) return false;
             }
-            return !Drop(pos, pos + dir * 1.2f);
+            return !Drop(pos, pos + dir * 1.2f) && !(s.AvoidWater && Deep(pos + dir * 1.5f));
+        }
+
+        /// <summary>Water deeper than about a metre (it would have to swim).</summary>
+        private static bool Deep(Vector3 at)
+        {
+            if (ZoneSystem.instance == null || !ZoneSystem.instance.GetSolidHeight(at, out float ground)) return false;
+            return ground < ZoneSystem.instance.m_waterLevel - 1f;
         }
 
         private static bool Drop(Vector3 from, Vector3 to)

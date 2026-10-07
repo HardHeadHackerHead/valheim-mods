@@ -154,9 +154,12 @@ namespace AICompanion
         /// not again about the same thing for that many minutes. Its player sees it wherever they are (the game running it may be another
         /// player's: then it goes over the network). Off with "Tells you what it is up to" in its Orders tab.
         /// </summary>
+        public static bool Hush; // catching up (CatchUp): one report at the end, not a line for each thing
+
         public static void Tell(Humanoid c, string text, string topic = null, float minutes = 0f)
         {
             if (c == null || string.IsNullOrEmpty(text)) return;
+            if (Hush) { Activity.Log(c, "(away) " + text); return; }
             if (topic != null)
             {
                 string key = Companion.IdOf(c) + ":" + topic;
@@ -164,6 +167,7 @@ namespace AICompanion
                 LastSaid[key] = Time.time;
             }
             Say(c, text);
+            Activity.Log(c, "said: " + text);
             if (!Chatty(c)) return;
             Player local = Player.m_localPlayer;
             if (local != null && Companion.IsMine(c, local)) ToChat(Companion.NameOf(c), text);

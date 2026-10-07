@@ -102,6 +102,20 @@ namespace AICompanion
 
             switch (sub)
             {
+                case "debug":
+                    output(Debug(c, args.Length > 1 && int.TryParse(args[1], out int lines) ? lines : 60));
+                    yield break;
+                case "archery":
+                    var arrows = new JArray();
+                    foreach (string name in new[] { "Bow", "BowFineWood", "ArrowWood", "ArrowFlint", "ArrowFire", "ArrowBronze" })
+                    {
+                        GameObject go = ObjectDB.instance.GetItemPrefab(name);
+                        Attack at = go?.GetComponent<ItemDrop>()?.m_itemData.m_shared.m_attack;
+                        Projectile pr = at?.m_attackProjectile != null ? at.m_attackProjectile.GetComponent<Projectile>() : null;
+                        arrows.Add($"{name}: vel {at?.m_projectileVel:0.#} (min {at?.m_projectileVelMin:0.#}), accuracy {at?.m_projectileAccuracy:0.#} (min {at?.m_projectileAccuracyMin:0.#}), launch angle {at?.m_launchAngle:0.#}, projectile {(at?.m_attackProjectile != null ? at.m_attackProjectile.name : "-")}, gravity {pr?.m_gravity:0.##}, drag {pr?.m_drag:0.###}");
+                    }
+                    output(new JObject { ["archery"] = arrows });
+                    yield break;
                 case "hazards": output(new JObject { ["around_you"] = Steer.Around(p.transform.position, args.Length > 1 && float.TryParse(args[1], out float rr) ? rr : 40f) }); yield break;
                 case "home": Home.GoHome(c); break;
                 case "follow": Home.Follow(c); break;
@@ -175,5 +189,56 @@ namespace AICompanion
                 ["jev"] = new JObject { ["key"] = Mask(ApiKey.Value), ["decisions_today"] = Jev.Decisions, ["failures_today"] = Jev.Failures, ["last_ms"] = Mathf.RoundToInt(Jev.LastMs), ["last_error"] = Jev.LastError, ["cost_usd"] = Math.Round(Jev.Cost, 5) },
             };
         }
-    }
+    
+        private static readonly System.Func<BaseAI, Vector3, bool> HavePath = HarmonyLib.AccessTools.MethodDelegate<System.Func<BaseAI, Vector3, bool>>(HarmonyLib.AccessTools.Method(typeof(BaseAI), "HavePath"));
+
+        /// <summary>Its legs: where it means to go, how fast it goes, on the ground, a path to its task, what is in front of it.</summary>
+        private static string Move(Humanoid c, Component target)
+        {
+            Rigidbody body = c.GetComponent<Rigidbody>();
+            Vector3 dir = c.GetMoveDir();
+            string path = target != null ? (HavePath(c.GetComponent<BaseAI>(), target.transform.position) ? "path yes" : "path NO") : "no target";
+            string ahead = "";
+            if (dir.sqrMagnitude > 0.01f && Physics.Raycast(c.transform.position + Vector3.up * 0.8f, dir.normalized, out RaycastHit hit, 2f, LayerMask.GetMask("Default", "static_solid", "Default_small", "piece", "terrain", "vehicle")))
+                ahead = $", blocked {hit.distance:0.0} m ahead by {Utils.GetPrefabName(hit.collider.transform.root.gameObject)}";
+            return $"dir {dir.x:0.00},{dir.z:0.00} (|{dir.magnitude:0.00}|), speed {(body != null ? body.linearVelocity.magnitude : 0f):0.00}, ground {c.IsOnGround()}, run {c.IsRunning()}, {path}{ahead}, stamina {Stamina.Get(c):0} (last used {Stamina.UsedBy(c)}), steer: {Steer.Debug(c)}";
+        }
+
+        /// <summary>Everything about a companion, for finding out why it does what it does (Claude Tools: companion debug [lines]).</summary>
+        private static JObject Debug(Humanoid c, int lines)
+        {
+            BrainState st = Brain.Get(c);
+            ZDO z = Companion.Zdo(c);
+            Vector3 center = Work.Center(c);
+            string L(string s) => Localization.instance.Localize(s ?? "");
+            Work.Task t = st.Task;
+            var o = new JObject
+            {
+                ["vitals"] = Activity.Vitals(c, st),
+                ["runs_here"] = c.GetComponent<ZNetView>().IsOwner(),
+                ["status"] = st.Status,
+                ["position"] = $"{c.transform.position:F0}",
+                ["home"] = $"{center:F0}, {Vector3.Distance(center, c.transform.position):0} m away, radius {Work.RadiusOf(c)}",
+                ["task"] = t == null ? null : $"{t.Kind} {(t.Target != null ? Utils.GetPrefabName(t.Target.gameObject) : "-")} at {(t.Target != null ? Vector3.Distance(t.Target.transform.position, c.transform.position) : 0f):0.0} m for {Time.time - t.Started:0} s{(t.ForGoal ? " (for goal)" : "")}",
+                ["work_note"] = st.WorkNote,
+                ["jobs"] = Work.JobsOf(c) == Job.None ? "auto: " + Work.AutoJobs(c) : Work.JobsOf(c).ToString(),
+                ["skipped"] = st.Skipped.Count(kv => kv.Value > Time.time),
+                ["in_combat"] = st.InCombat,
+                ["enemies"] = new JArray(st.Enemies.Where(e => e != null).Select(e => $"{st.Label(e)} {Vector3.Distance(e.transform.position, c.transform.position):0} m, hp {e.GetHealth():0}/{e.GetMaxHealth():0}, targets {(Brain.TargetOf(e) != null ? L(Brain.TargetOf(e).m_name) : "-")}")),
+                ["decision"] = st.Current.Describe(st.Label) + (string.IsNullOrEmpty(st.Current.Note) ? "" : " - " + st.Current.Note),
+                ["rested"] = Rest.IsRested(c),
+                ["effects"] = new JArray(c.GetSEMan().GetStatusEffects().Where(se => se != null).Select(se => L(se.m_name))),
+                ["hazards_near"] = Steer.HazardsNear(c),
+                ["move"] = Move(c, t?.Target),
+                ["bag"] = new JArray(c.GetInventory().GetAllItems().Select(i => $"{L(i.m_shared.m_name)} x{i.m_stack}{(c.IsItemEquiped(i) ? " (worn)" : "")}{(i.m_shared.m_useDurability && i.GetMaxDurability() > 0f ? $" {i.m_durability / i.GetMaxDurability() * 100f:0}%" : "")}")),
+                ["chests"] = new JArray(Home.Chests(c).Select(ch => $"{Vector3.Distance(ch.transform.position, center):0} m from home: {ch.GetInventory().NrOfItems()} stacks: " + string.Join(", ", ch.GetInventory().GetAllItems().Take(12).Select(i => $"{L(i.m_shared.m_name)} x{i.m_stack}")))),
+                ["cooking_near_home"] = new JArray(UnityEngine.Object.FindObjectsByType<CookingStation>(FindObjectsSortMode.None).Where(s => Vector3.Distance(s.transform.position, center) < Work.RadiusOf(c) + 10f).Select(s => $"{L(s.m_name)} {Vector3.Distance(s.transform.position, center):0} m from home")),
+                ["stations_near_home"] = new JArray(Upgrades.StationsNear(center, Work.RadiusOf(c) + 10f).Select(s => $"{L(s.m_name)} level {s.GetLevel()}, {Vector3.Distance(s.transform.position, center):0} m from home")),
+                ["goal"] = st.Goal == null ? null : $"{st.Goal.What}: gather {st.Goal.RawText()}; ask {string.Join(", ", st.Goal.Ask)}; steps {string.Join(", ", st.Goal.Steps.Select(s => s.Key.m_item.name))}",
+                ["last_hurt"] = string.IsNullOrEmpty(st.LastHurtBy) ? null : $"{st.LastHurtBy}, {Time.time - st.LastHurtAt:0} s ago",
+                ["activity"] = new JArray(Activity.Recent(c, lines)),
+            };
+            return o;
+        }
+}
 }

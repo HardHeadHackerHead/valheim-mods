@@ -86,7 +86,21 @@ namespace AICompanion
                 return false;
             }
             float d = Vector3.Distance(tomb.transform.position, me.transform.position);
-            if (d > 2.2f) { moveTo(tomb.transform.position, 1.5f, d > 6f); Brain.Status(st, "going to get its things back from its tombstone"); return true; }
+            if (d > 2.2f)
+            {
+                // Getting no closer (no path the last few metres: furniture, a bed, a wall): close by, it reaches over; further, it tries later.
+                if (st.GraveBest - d > 0.3f) { st.GraveBest = d; st.GraveSince = Time.time; }
+                bool stuck = Time.time - st.GraveSince > 6f;
+                if (stuck && d >= 8f)
+                {
+                    st.GraveBest = float.MaxValue;
+                    st.NextGraveLook = Time.time + 30f;
+                    st.Remember("could not find a way to its tombstone; it tries again soon");
+                    return false;
+                }
+                if (!stuck) { moveTo(tomb.transform.position, 1.5f, d > 6f); Brain.Status(st, "going to get its things back from its tombstone"); return true; }
+            }
+            st.GraveBest = float.MaxValue;
             stop();
             Container grave = tomb.GetComponent<Container>();
             ZNetView view = tomb.GetComponent<ZNetView>();
@@ -268,7 +282,39 @@ namespace AICompanion
             return false;
         }
 
-        private static bool Usable(CookingStation s) => s != null && (!s.m_requireFire || (bool)FireLit.Invoke(s, null));
+        /// <summary>
+        /// Catching up (CatchUp): its raw food (in its bag and its chests) cooked on a working cooking station near home, as if it had stood
+        /// there turning it (up to twenty). The cooked food goes into its bag. Returns how many.
+        /// </summary>
+        public static int CookAll(Humanoid me, Vector3 center, float radius)
+        {
+            CookingStation stove = UnityEngine.Object.FindObjectsByType<CookingStation>(FindObjectsSortMode.None)
+                .Where(s => Vector3.Distance(s.transform.position, center) < radius + 10f && Usable(s)).OrderBy(s => Vector3.Distance(s.transform.position, center)).FirstOrDefault();
+            if (stove == null) return 0;
+            int done = 0;
+            var sources = new List<Inventory> { me.GetInventory() };
+            foreach (Container c in Home.Chests(me).Where(c => !c.IsInUse()))
+            {
+                ZNetView v = c.GetComponent<ZNetView>();
+                if (v != null && !v.IsOwner()) v.ClaimOwnership();
+                sources.Add(c.GetInventory());
+            }
+            foreach (Inventory inv in sources)
+                foreach (ItemDrop.ItemData raw in inv.GetAllItems().ToList())
+                {
+                    CookingStation.ItemConversion conv = stove.m_conversion.FirstOrDefault(c => c.m_from != null && c.m_to != null && c.m_from.m_itemData.m_shared.m_name == raw.m_shared.m_name);
+                    if (conv == null) continue;
+                    int n = Mathf.Min(raw.m_stack, 20 - done);
+                    if (n <= 0) return done;
+                    if (!me.GetInventory().CanAddItem(conv.m_to.gameObject, n)) continue;
+                    inv.RemoveItem(raw, n);
+                    me.GetInventory().AddItem(conv.m_to.gameObject, n);
+                    done += n;
+                }
+            return done;
+        }
+
+        internal static bool Usable(CookingStation s) => s != null && (!s.m_requireFire || (bool)FireLit.Invoke(s, null));
 
         /// <summary>A station near home it could cook on with what it carries (null if none).</summary>
         public static CookingStation Find(Humanoid me, Vector3 center, float radius)

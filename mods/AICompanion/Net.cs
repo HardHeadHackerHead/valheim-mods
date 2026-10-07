@@ -159,7 +159,7 @@ namespace AICompanion
         private static string FoodsText(Humanoid c)
         {
             if (!c.GetComponent<ZNetView>().IsOwner()) return "-";
-            return string.Join(",", Food.Meals(c).Select(m => Utils.GetPrefabName(m.Item.m_dropPrefab) + ":" + F(Mathf.Max(0f, m.Time)) + ":" + F(m.Item.m_shared.m_foodBurnTime)));
+            return string.Join(",", Food.Meals(c).Where(m => m.Item.m_dropPrefab != null).Select(m => Utils.GetPrefabName(m.Item.m_dropPrefab) + ":" + F(Mathf.Max(0f, m.Time)) + ":" + F(m.Item.m_shared.m_foodBurnTime)));
         }
 
         /// <summary>Its status effects with a picture (a boss power, meads, wet...): "namehash:seconds left,..." (only known to the game that runs it).</summary>

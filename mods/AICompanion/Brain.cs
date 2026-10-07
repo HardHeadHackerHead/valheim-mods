@@ -72,6 +72,13 @@ namespace AICompanion
         public readonly List<KeyValuePair<ItemDrop, float>> LootDrops = new List<KeyValuePair<ItemDrop, float>>(); // what the world dropped near it
         public Vector3 CookedAt;
         public float NextPassBy;
+        public Brain.DoorPlan Door;                                 // the way through a door, when the pathfinding knows none (Brain.MoveTo)
+        public float BlockUntil;                                    // holding its block a moment after a swing (Brain.Strike)
+        public Character Blocker;
+        public float NextSnapshot, LastHurtAt, GraveSince, GraveBest = float.MaxValue;                     // the activity log (Activity)
+        public string LastHurtBy = "";
+        public bool Hungry, Weak;                                   // no food in it or on it; and badly hurt with no food (Work)
+        public readonly Dictionary<string, float> Unfindable = new Dictionary<string, float>(); // what its goal needs and is not near home, until when
         public Goal Goal;                                           // what it is working toward (Goals)
         public string GoalSaid;
         public float NextFoodLook, NextNeedLook, MasterGoneSince, TripStart;      // looking after itself (Needs), the trip home (Work)
@@ -97,6 +104,7 @@ namespace AICompanion
 
         public void Remember(string line)
         {
+            Activity.Log(Body, "» " + line);
             History.Insert(0, line);
             if (History.Count > 8) History.RemoveAt(History.Count - 1);
         }
@@ -119,9 +127,151 @@ namespace AICompanion
         private static readonly AccessTools.FieldRef<Character, bool> Blocking = AccessTools.FieldRefAccess<Character, bool>("m_blocking");
         private static readonly AccessTools.FieldRef<Humanoid, float> DrawTime = AccessTools.FieldRefAccess<Humanoid, float>("m_attackDrawTime");
 
-        /// <summary>The game's MoveTo, but it only runs while it has the stamina for it.</summary>
-        private static bool MoveTo(BaseAI ai, float dt, Vector3 point, float dist, bool run) =>
-            MoveToRaw(ai, dt, point, dist, run && Stamina.CanRun(ai.GetComponent<Character>()));
+        /// <summary>
+        /// The game's MoveTo (it only runs while it has the stamina for it). Where the game's pathfinding finds no way (inside a house with the
+        /// door shut, a yard of stakes, a gap it does not know), the game simply stops it: then it walks as a player would, to the nearest door
+        /// on its way (it opens it when it gets there), else straight at the spot; watching its step (Steer) keeps it off what hurts and jumps
+        /// what is low, and the stuck checks take over at a real wall.
+        /// </summary>
+        private static bool MoveTo(BaseAI ai, float dt, Vector3 point, float dist, bool run)
+        {
+            Character c = ai.GetComponent<Character>();
+            bool canRun = run && Stamina.CanRun(c);
+            bool result = MoveToRaw(ai, dt, point, dist, canRun);
+            Vector3 pos = c.transform.position;
+            if (Utils.DistanceXZ(point, pos) <= Mathf.Max(dist, 0.75f) || c.GetMoveDir().sqrMagnitude > 0.01f) return result; // arrived, or on its way
+            // Through a door: the game's pathfinding takes a shut door for a wall, so it finds no way out of (or into) a house or a gated yard.
+            Humanoid h = c as Humanoid;
+            BrainState st = h != null ? Get(h) : null;
+            if (st != null)
+            {
+                DoorPlan plan = st.Door != null && Time.time < st.Door.Until && Vector3.Distance(st.Door.Target, point) < 4f ? st.Door : st.Door = PlanDoor(ai, pos, point);
+                if (plan != null)
+                {
+                    if (!plan.Through)
+                    {
+                        if (Utils.DistanceXZ(plan.Near, pos) > 1.2f) { MoveToRaw(ai, dt, plan.Near, 0.8f, canRun); if (c.GetMoveDir().sqrMagnitude > 0.01f) return false; }
+                        if ((Companion.Zdo(plan.Door)?.GetInt(ZDOVars.s_state, 0) ?? 0) == 0 && plan.Door.m_keyItem == null) plan.Door.Interact(h, false, false);
+                        plan.Through = true;
+                    }
+                    if (Utils.DistanceXZ(plan.Far, pos) > 1f)
+                    {
+                        Vector3 step = plan.Far - pos;
+                        step.y = 0f;
+                        c.SetMoveDir(step.normalized);
+                        c.SetLookDir(step.normalized, 0f);
+                        return false;
+                    }
+                    st.Door = plan.Next; // through: the next door, or the pathfinding takes over from this side
+                    return false;
+                }
+            }
+            if (h != null && Steer.HazardsNear(h) > 0) return result; // stakes or fire about: no walking straight at it (it got hurt that way)
+            Vector3 to = point;
+            Vector3 dir = to - pos;
+            dir.y = 0f;
+            if (dir.sqrMagnitude < 0.01f) return result;
+            dir.Normalize();
+            c.SetMoveDir(dir);
+            c.SetRun(canRun);
+            c.SetLookDir(dir, 0f);
+            return false;
+        }
+
+        /// <summary>Can it walk there (straight, or through a door)? For choosing where to go: a chest behind your stakes is not worth trying.</summary>
+        internal static bool CanReach(Humanoid me, Vector3 to)
+        {
+            BaseAI ai = me.GetComponent<BaseAI>();
+            Pathfinding pf = Pathfinding.instance;
+            if (ai == null || pf == null) return true;
+            if (!pf.FindValidPoint(out Vector3 goal, to, 2.5f, ai.m_pathAgentType)) return false;
+            return pf.HavePath(me.transform.position, goal, ai.m_pathAgentType) || PlanDoor(ai, me.transform.position, to) != null;
+        }
+
+        internal class DoorPlan { public Door Door; public Vector3 Near, Far, Target; public float Until; public bool Through; public DoorPlan Next; }
+
+        /// <summary>
+        /// A door within 30 m that it can walk to from here, and from whose other side it can walk to the spot (the pathfinding's own check,
+        /// as if the door were open): the one with the shortest way round. Null when there is none.
+        /// </summary>
+        private static DoorPlan PlanDoor(BaseAI ai, Vector3 from, Vector3 to)
+        {
+            Pathfinding pf = Pathfinding.instance;
+            if (pf == null) return null;
+            Pathfinding.AgentType agent = ai.m_pathAgentType;
+            if (!pf.FindValidPoint(out Vector3 goal, to, 2.5f, agent)) goal = to;
+            // The doors around, each with a walkable spot on either side.
+            var doors = new List<KeyValuePair<Door, Vector3[]>>();
+            var seen = new HashSet<Door>();
+            int n = Physics.OverlapSphereNonAlloc(from, 40f, DoorHits, PieceMask);
+            for (int i = 0; i < n; i++)
+            {
+                Door door = DoorHits[i].GetComponentInParent<Door>();
+                if (door == null || door.m_keyItem != null || !seen.Add(door)) continue;
+                if (!pf.FindValidPoint(out Vector3 a, door.transform.position + door.transform.forward * 1.6f, 1.5f, agent)) continue;
+                if (!pf.FindValidPoint(out Vector3 b, door.transform.position - door.transform.forward * 1.6f, 1.5f, agent)) continue;
+                doors.Add(new KeyValuePair<Door, Vector3[]>(door, new[] { a, b }));
+            }
+            doors.Sort((x, y) => Vector3.Distance(x.Key.transform.position, from).CompareTo(Vector3.Distance(y.Key.transform.position, from)));
+            if (doors.Count > 10) doors.RemoveRange(10, doors.Count - 10);
+
+            // One door: reach its near side, and from its far side reach the spot.
+            DoorPlan best = null;
+            float bestCost = float.MaxValue;
+            var firsts = new List<DoorPlan>();
+            foreach (var d in doors)
+            {
+                Vector3 near = Side(d.Value, from, true), far = Side(d.Value, from, false);
+                if (!pf.HavePath(from, near, agent)) continue;
+                var step = new DoorPlan { Door = d.Key, Near = near, Far = far, Target = to, Until = Time.time + 20f };
+                firsts.Add(step);
+                float cost = Vector3.Distance(from, near) + Vector3.Distance(far, goal);
+                if (cost < bestCost && pf.HavePath(far, goal, agent)) { bestCost = cost; best = step; }
+            }
+            if (best != null) return best;
+
+            // Two doors (out of the house, then through the gate).
+            foreach (DoorPlan first in firsts)
+                foreach (var d in doors)
+                {
+                    if (d.Key == first.Door) continue;
+                    Vector3 near = Side(d.Value, first.Far, true), far = Side(d.Value, first.Far, false);
+                    float cost = Vector3.Distance(from, first.Near) + Vector3.Distance(first.Far, near) + Vector3.Distance(far, goal);
+                    if (cost >= bestCost || !pf.HavePath(first.Far, near, agent) || !pf.HavePath(far, goal, agent)) continue;
+                    bestCost = cost;
+                    best = new DoorPlan { Door = first.Door, Near = first.Near, Far = first.Far, Target = to, Until = Time.time + 30f,
+                                          Next = new DoorPlan { Door = d.Key, Near = near, Far = far, Target = to, Until = Time.time + 30f } };
+                }
+            return best;
+        }
+
+        /// <summary>The side of a door nearer to (or further from) a spot.</summary>
+        private static Vector3 Side(Vector3[] sides, Vector3 from, bool near) =>
+            (Vector3.Distance(sides[0], from) < Vector3.Distance(sides[1], from)) == near ? sides[0] : sides[1];
+
+        private static readonly Collider[] DoorHits = new Collider[128];
+
+        /// <summary>A closed door within 12 m that lies towards the spot (no further off than a right angle), the nearest.</summary>
+        private static Door DoorOnTheWay(Vector3 from, Vector3 to)
+        {
+            Vector3 way = to - from;
+            way.y = 0f;
+            Door best = null;
+            float bestDist = float.MaxValue;
+            int n = Physics.OverlapSphereNonAlloc(from, 12f, DoorHits, PieceMask);
+            for (int i = 0; i < n; i++)
+            {
+                Door door = DoorHits[i].GetComponentInParent<Door>();
+                if (door == null || door.m_keyItem != null) continue;
+                Vector3 toDoor = door.transform.position - from;
+                toDoor.y = 0f;
+                float d = toDoor.magnitude;
+                if (d < 1f || d >= bestDist || Vector3.Angle(way, toDoor) > 90f) continue;
+                if ((Companion.Zdo(door)?.GetInt(ZDOVars.s_state, 0) ?? 0) != 0) continue; // open already: walk on through
+                best = door; bestDist = d;
+            }
+            return best;
+        }
 
         public static void Forget()
         {
@@ -161,6 +311,7 @@ namespace AICompanion
             if (!st.CaughtUp) CatchUp.OnArrive(st);
             if (Companion.OrderOf(me) == Order.Gather && Time.time >= st.NextStamp) { st.NextStamp = Time.time + 5f; CatchUp.Stamp(me); }
             Food.Tick(me, st);
+            Activity.Tick(st);
             if (Time.time >= st.NextBagSave) { st.NextBagSave = Time.time + 30f; Companion.SaveBag(me); } // wear from fighting and working
             if (Ride.Tick(st, master)) return true; // on a boat with its player: it sits and rides
             Loot.PassBy(st);                         // what is on its list, as it goes by
@@ -299,15 +450,20 @@ namespace AICompanion
                 if (c.GetComponent<BaseAI>() == null) continue;
                 // Harmless animals (deer, hares) are not a fight: it hunts them when hunting (Work), unless one turns on it or you.
                 if (c.GetFaction() == Character.Faction.AnimalsVeg && TargetOf(c) != me && TargetOf(c) != master) continue;
+                // What it is hunting, and animals that never fight back (deer, hares: running away "targets" it), are prey, not a fight.
+                if (st.Task != null && st.Task.Kind == Work.Kind.Hunt && st.Task.Target == c) continue;
+                string kind = Utils.GetPrefabName(c.gameObject);
+                if (kind == "Deer" || kind == "Hare") continue;
                 float toMe = Vector3.Distance(c.transform.position, me.transform.position);
                 float toMaster = master != null ? Vector3.Distance(c.transform.position, master.transform.position) : float.MaxValue;
                 float limit = style == Style.Defensive ? range * 0.6f : range;
                 // Living at home it defends its home: anything that comes within its radius (a raid on the base), not only what is near it.
-                // Only what is out to hurt someone (it has a target, or is alerted): not every boar and neck grazing within its home, which
-                // kept it fighting all day.
-                BaseAI their = c.GetComponent<BaseAI>();
-                bool home = Companion.OrderOf(me) == Order.Gather && Vector3.Distance(c.transform.position, Work.Center(me)) < Work.RadiusOf(me)
-                            && (TargetOf(c) != null || (their != null && their.IsAlerted()));
+                // Defending its home: what is attacking it, you or another player within 30 m of home. Not everything that has noticed
+                // something somewhere in its home (it ran off across the base to every greydwarf).
+                Character theirs = TargetOf(c);
+                bool home = Companion.OrderOf(me) == Order.Gather && Vector3.Distance(c.transform.position, Work.Center(me)) < Mathf.Min(Work.RadiusOf(me), 30f)
+                            && theirs != null && (theirs == me || theirs.IsPlayer() || Companion.Is(theirs));
+                if (st.Weak && TargetOf(c) != me && TargetOf(c) != master && !home) continue; // badly hurt: it keeps clear, it does not pick fights
                 if (toMe < limit || toMaster < limit || home) st.Enemies.Add(c);
             }
             st.Enemies.Sort((a, b) => Vector3.Distance(a.transform.position, me.transform.position).CompareTo(Vector3.Distance(b.transform.position, me.transform.position)));
@@ -347,9 +503,11 @@ namespace AICompanion
         /// <summary>A closed door right in front of it while it walks: open it, as a player would (not a locked one, not behind a ward it lacks).</summary>
         private static void OpenDoorAhead(Humanoid me)
         {
-            Rigidbody body = me.GetComponent<Rigidbody>();
-            if (body == null || body.linearVelocity.sqrMagnitude < 0.25f) return;
-            foreach (Collider col in Physics.OverlapSphere(me.transform.position + me.transform.forward * 1.1f + Vector3.up, 0.9f, PieceMask))
+            // Where it means to go (pressed against a shut door it is not moving at all, and the door must open then most of all).
+            Vector3 dir = me.GetMoveDir();
+            dir.y = 0f;
+            if (dir.sqrMagnitude < 0.01f) return;
+            foreach (Collider col in Physics.OverlapSphere(me.transform.position + dir.normalized * 1.1f + Vector3.up, 0.9f, PieceMask))
             {
                 Door door = col.GetComponentInParent<Door>();
                 if (door == null || door.m_keyItem != null) continue;
@@ -519,14 +677,28 @@ namespace AICompanion
                     Vector3 to = master != null ? master.transform.position : me.transform.position + (me.transform.position - nearest.transform.position).normalized * 6f;
                     Guarded(st, nearest, to, Vector3.Distance(to, me.transform.position) > 6f, dt);
                     break;
-                default: // flee: away from them all, towards the player when there is one
+                default: // flee: to safety (its home, living there; you, following), else away from them all, never into the sea
                     Blocking(me) = false;
+                    Vector3? safe = SafePlace(me, master);
+                    if (safe.HasValue && Vector3.Distance(safe.Value, me.transform.position) > 3f) { MoveTo(st.Ai, dt, safe.Value, 2f, true); break; }
                     Vector3 away = Vector3.zero;
                     foreach (Character e in st.Enemies) away += (me.transform.position - e.transform.position).normalized;
                     Vector3 dir = away.normalized + (master != null ? (master.transform.position - me.transform.position).normalized * 0.5f : Vector3.zero);
-                    MoveTo(st.Ai, dt, me.transform.position + dir.normalized * 10f, 0f, true);
+                    Vector3 off = me.transform.position + dir.normalized * 10f;
+                    if (safe.HasValue && Vector3.Distance(off, safe.Value) > 12f) off = safe.Value; // keep near safety, not run off for ever
+                    MoveTo(st.Ai, dt, off, 0f, true);
                     break;
             }
+        }
+
+        /// <summary>Where it is safe: its home when it lives there (inside your walls and stakes), you when it is with you.</summary>
+        private static Vector3? SafePlace(Humanoid me, Player master)
+        {
+            Order order = Companion.OrderOf(me);
+            if (order == Order.Gather) return Work.Center(me);
+            if (master != null && order == Order.Follow) return master.transform.position;
+            if (order == Order.Guard || order == Order.Stay) return Companion.Zdo(me)?.GetVec3(Keys.Post, me.transform.position);
+            return null;
         }
 
         /// <summary>Close in on a target and hit it (or shoot it from a distance with a bow).</summary>
@@ -537,22 +709,50 @@ namespace AICompanion
             if (target == null) return;
             ItemDrop.ItemData weapon = me.GetCurrentWeapon();
             bool ranged = Companion.IsRanged(weapon) && Companion.HasAmmoFor(me, weapon);
-            float reach = ranged ? 22f : Mathf.Max(1.2f, (weapon?.m_shared.m_attack?.m_attackRange ?? 1.5f) * 0.9f);
+            float reach = ranged ? 30f : Mathf.Max(1.2f, (weapon?.m_shared.m_attack?.m_attackRange ?? 1.5f) * 0.9f);
             float dist = Vector3.Distance(target.transform.position, me.transform.position) - target.GetRadius();
             Vector3 aim = target.GetCenterPoint();
+
+            // An enemy swinging at it within reach: up with the shield (or the weapon, as players block with it), facing the blow, then hit
+            // back when the swing is done. The game does the rest (block power, stamina, a parry when the timing is right, Blocking skill).
+            if (!ranged && !me.InAttack() && Companion.CanBlock(me) && Stamina.Get(me) > 8f)
+            {
+                Character swinging = st.Enemies.FirstOrDefault(e => e != null && !e.IsDead() && e.InAttack() && TargetOf(e) == me
+                                                                    && Vector3.Distance(e.transform.position, me.transform.position) < 4.5f + e.GetRadius());
+                if (swinging != null || Time.time < st.BlockUntil)
+                {
+                    if (swinging != null) { st.BlockUntil = Time.time + 0.35f; st.Blocker = swinging; }
+                    Character facing = st.Blocker != null && !st.Blocker.IsDead() ? st.Blocker : target;
+                    st.Ai.StopMoving();
+                    LookAt(st.Ai, facing.GetCenterPoint());
+                    Blocking(me) = true;
+                    return;
+                }
+            }
 
             if (ranged && dist < 4f) { MoveTo(st.Ai, dt, me.transform.position + (me.transform.position - target.transform.position).normalized * 4f, 0f, true); return; }
             if (dist > reach || (ranged && !st.Ai.CanSeeTarget(target))) { MoveTo(st.Ai, dt, target.transform.position, ranged ? reach * 0.7f : reach * 0.6f, dist > 5f); return; }
 
             st.Ai.StopMoving();
-            LookAt(st.Ai, aim);
+            Vector3 lookAt = aim;
+            if (ranged)
+            {
+                // Where the arrow has to go: ahead of a moving target, and above it for the drop (Archery: the game's arrow speed and gravity).
+                Vector3? shot = Archery.Aim(me, weapon, target);
+                if (shot == null) { MoveTo(st.Ai, dt, target.transform.position, 8f, dist > 12f); return; } // out of its reach: closer
+                me.SetLookDir(shot.Value, 0f);
+                lookAt = me.transform.position + new Vector3(shot.Value.x, 0f, shot.Value.z) * 10f; // its body turns that way
+                LookAt(st.Ai, lookAt);
+                me.SetLookDir(shot.Value, 0f);
+            }
+            else LookAt(st.Ai, aim);
             float cost = weapon?.m_shared.m_attack?.m_attackStamina ?? 0f;
             if (!me.InAttack() && cost > 0f && Stamina.Get(me) < cost + 0.1f)
             {
                 Guarded(st, target, me.transform.position + (me.transform.position - target.transform.position).normalized * 3f, false, dt);
                 return;
             }
-            if (me.InAttack() || !st.Ai.IsLookingAt(aim, ranged ? 6f : 25f)) return;
+            if (me.InAttack() || !st.Ai.IsLookingAt(ranged ? lookAt : aim, ranged ? 4f : 25f)) return;
             if (me.GetTimeSinceLastAttack() < (ranged ? 1.6f : 0.35f)) return;
             if (ranged) DrawTime(me) = 10f; // a full draw: the AI has no hold-the-button, and an undrawn bow does no damage
             me.StartAttack(target, false);
@@ -585,6 +785,7 @@ namespace AICompanion
         {
             if (st.Status == status) return;
             st.Status = status;
+            Activity.Log(st.Body, $"now: {status}  (hp {st.Body.GetHealth():0}/{st.Body.GetMaxHealth():0})");
             Companion.Zdo(st.Body)?.Set(Keys.Status, status);
         }
     }

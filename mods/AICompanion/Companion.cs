@@ -107,7 +107,12 @@ namespace AICompanion
             {
                 if (!IsMine(c, p)) continue;
                 ZNetView view = c.GetComponent<ZNetView>();
-                if (view.IsOwner() || Vector3.Distance(c.transform.position, p.transform.position) > 64f) continue;
+                if (view.IsOwner()) continue;
+                // Near you it runs on your game. Further away too, when nobody runs it (the game that did has left): else it stood frozen
+                // wherever it was (once in the sea, where it had fled).
+                long owner = view.GetZDO().GetOwner();
+                bool orphan = owner == 0L || ZNet.instance == null || ZNet.instance.GetPeer(owner) == null;
+                if (!orphan && Vector3.Distance(c.transform.position, p.transform.position) > 64f) continue;
                 Container gear = c.GetComponent<Container>();
                 if (gear != null && gear.IsInUse()) continue;
                 view.ClaimOwnership();
@@ -296,9 +301,10 @@ namespace AICompanion
                 if (!inv.ContainsItem(worn)) h.UnequipItem(worn, false);
 
             List<ItemDrop.ItemData> items = inv.GetAllItems();
-            foreach (ItemDrop.ItemData.ItemType type in new[] { ItemDrop.ItemData.ItemType.Helmet, ItemDrop.ItemData.ItemType.Chest, ItemDrop.ItemData.ItemType.Legs, ItemDrop.ItemData.ItemType.Shoulder })
+            foreach (ItemDrop.ItemData.ItemType type in new[] { ItemDrop.ItemData.ItemType.Helmet, ItemDrop.ItemData.ItemType.Chest, ItemDrop.ItemData.ItemType.Legs, ItemDrop.ItemData.ItemType.Shoulder, ItemDrop.ItemData.ItemType.Utility })
             {
-                ItemDrop.ItemData best = items.Where(i => i.m_shared.m_itemType == type).OrderByDescending(i => i.GetArmor()).FirstOrDefault();
+                ItemDrop.ItemData best = items.Where(i => i.m_shared.m_itemType == type && (type != ItemDrop.ItemData.ItemType.Utility || i.m_shared.m_maxStackSize <= 1))
+                                              .OrderByDescending(i => i.GetArmor()).ThenByDescending(i => i.m_quality).FirstOrDefault();
                 if (best != null) Equip(h, best);
             }
 
@@ -309,7 +315,8 @@ namespace AICompanion
                 ItemDrop.ItemData ammo = inv.GetAmmoItem(weapon.m_shared.m_ammoType);
                 if (ammo != null && ammo.m_shared.m_itemType == ItemDrop.ItemData.ItemType.Ammo) Equip(h, ammo);
             }
-            if (weapon != null && weapon.m_shared.m_itemType == ItemDrop.ItemData.ItemType.OneHandedWeapon)
+            // A shield beside a one-handed weapon, or on its own with bare fists (as a player can).
+            if (weapon == null || weapon.m_shared.m_itemType == ItemDrop.ItemData.ItemType.OneHandedWeapon)
             {
                 ItemDrop.ItemData shield = items.Where(i => i.m_shared.m_itemType == ItemDrop.ItemData.ItemType.Shield).OrderByDescending(i => i.m_shared.m_blockPower).FirstOrDefault();
                 if (shield != null) Equip(h, shield);
@@ -328,7 +335,15 @@ namespace AICompanion
         /// <summary>Something to block with (a shield, or the weapon itself as players do).</summary>
         public static bool CanBlock(Humanoid h) => Shield(h) != null || (Right(h) != null && !IsRanged(Right(h)));
 
-        public static float Armor(Humanoid h) => Worn(h).Where(i => i.m_shared.m_itemType != ItemDrop.ItemData.ItemType.Shield).Sum(i => i.GetArmor());
+        /// <summary>The armour it wears (helmet, chest, legs, cape, belt): a weapon's or shield's own armour value is not body armour.</summary>
+        public static float Armor(Humanoid h) => Worn(h).Where(i => IsArmour(i)).Sum(i => i.GetArmor());
+
+        private static bool IsArmour(ItemDrop.ItemData i)
+        {
+            var t = i.m_shared.m_itemType;
+            return t == ItemDrop.ItemData.ItemType.Helmet || t == ItemDrop.ItemData.ItemType.Chest || t == ItemDrop.ItemData.ItemType.Legs
+                || t == ItemDrop.ItemData.ItemType.Shoulder || t == ItemDrop.ItemData.ItemType.Utility;
+        }
 
         /// <summary>Drink a healing potion if it has one and is not already under one's effect. True if it drank.</summary>
         public static bool Drink(Humanoid h)

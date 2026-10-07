@@ -1,3 +1,4 @@
+using System.Linq;
 using System.Collections.Generic;
 using HarmonyLib;
 using UnityEngine;
@@ -18,7 +19,7 @@ namespace AICompanion
         private const string Key = "dhc_stamina";
         private const float RunDrain = 10f, Regen = 8f, RegenDelay = 1f;
 
-        private class Pool { public float Value, LastUse = -99f, LastSave = -99f, Saved = -1f; public bool Winded; }
+        private class Pool { public float Value, LastUse = -99f, LastSave = -99f, Saved = -1f, LastTrace = -99f; public bool Winded; public string UsedBy = ""; }
         private static readonly Dictionary<Character, Pool> Pools = new Dictionary<Character, Pool>();
 
         public static float Max(Character c) => Food.MaxStamina(c);
@@ -41,12 +42,20 @@ namespace AICompanion
             return Mathf.Min(Max(c), Of(c).Value);
         }
 
+        public static string UsedBy(Character c) => $"{Of(c).UsedBy}, {Time.time - Of(c).LastUse:0.0} s ago";
+
         public static void Use(Character c, float amount)
         {
             if (amount <= 0f) return;
             Pool p = Of(c);
             p.Value = Mathf.Max(0f, p.Value - amount);
             p.LastUse = Time.time;
+            if (Time.time - p.LastTrace > 1f) // what spends it, for the debug dump (a short stack, once a second)
+            {
+                p.LastTrace = Time.time;
+                var trace = new System.Diagnostics.StackTrace(1, false);
+                p.UsedBy = $"{amount:0.##} by " + string.Join(" < ", trace.GetFrames().Take(5).Select(f => f.GetMethod()?.DeclaringType?.Name + "." + f.GetMethod()?.Name));
+            }
             if (p.Value <= 0.5f) p.Winded = true;
             Save(c, p, false);
         }
@@ -61,6 +70,7 @@ namespace AICompanion
         public static bool CanRun(Character c)
         {
             Pool p = Of(c);
+            if (p.Value <= 5f) p.Winded = true;                           // run out: it walks until a third is back, as a player does
             if (p.Winded && p.Value > Max(c) * 0.33f) p.Winded = false;
             return !p.Winded && p.Value > 5f && !(c is Humanoid h && Carry.Over(h)); // over its carry weight it cannot run, as a player
         }
@@ -72,7 +82,9 @@ namespace AICompanion
             Rigidbody body = c.GetComponent<Rigidbody>();
             Vector3 v = body != null ? body.linearVelocity : Vector3.zero;
             v.y = 0f;
-            if (c.IsRunning() && v.magnitude > 1f)
+            bool may = CanRun(c);
+            if (!may && c.IsRunning()) c.SetRun(false); // winded: it walks, whatever asked it to run
+            if (may && c.IsRunning() && v.magnitude > 1f)
             {
                 float drain = RunDrain;
                 c.GetSEMan().ModifyRunStaminaDrain(RunDrain, ref drain, v.normalized);

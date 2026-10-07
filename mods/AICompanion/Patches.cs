@@ -111,6 +111,27 @@ namespace AICompanion
         }
     }
 
+    [HarmonyPatch(typeof(Character), "RPC_Damage")]
+    internal static class Character_RPC_Damage_Log
+    {
+        private static void Prefix(Character __instance, out float __state) => __state = __instance.GetHealth();
+
+        private static void Postfix(Character __instance, HitData hit, float __state)
+        {
+            if (!(__instance is Humanoid h) || !Companion.Is(h) || !h.GetComponent<ZNetView>().IsOwner()) return;
+            float lost = __state - h.GetHealth();
+            if (lost <= 0.05f) return;
+            Character attacker = hit.GetAttacker();
+            string by = attacker != null ? Localization.instance.Localize(attacker.m_name)
+                      : Time.time - Aoe_OnHit.LastAt < 0.5f && Aoe_OnHit.LastWhat != null ? Aoe_OnHit.LastWhat
+                      : hit.m_hitType.ToString().ToLowerInvariant();
+            BrainState st = Brain.Get(h);
+            st.LastHurtBy = by;
+            st.LastHurtAt = Time.time;
+            Activity.Log(h, $"hurt {lost:0.#} by {by}  (hp {Mathf.Max(0f, h.GetHealth()):0}/{h.GetMaxHealth():0}, doing: {st.Status})");
+        }
+    }
+
     // Damage a companion deals, for its fight summary (counted on the game that runs the enemy, which is usually its own).
     [HarmonyPatch(typeof(Character), "RPC_Damage")]
     internal static class Character_RPC_Damage_Dealt
@@ -132,7 +153,14 @@ namespace AICompanion
     internal static class Aoe_OnHit
     {
         internal static bool HittingCompanion;
-        private static void Prefix(Collider collider) => HittingCompanion = collider != null && Companion.Is(collider.GetComponentInParent<Character>());
+        internal static string LastWhat;   // what hurt a companion last (for its activity log): "piece_sharpstakes"
+        internal static float LastAt;
+
+        private static void Prefix(Aoe __instance, Collider collider)
+        {
+            HittingCompanion = collider != null && Companion.Is(collider.GetComponentInParent<Character>());
+            if (HittingCompanion) { LastWhat = Utils.GetPrefabName(__instance.transform.root.gameObject); LastAt = Time.time; }
+        }
         private static void Postfix() => HittingCompanion = false;
     }
 
@@ -167,7 +195,9 @@ namespace AICompanion
             try
             {
                 int carried = h.GetInventory().NrOfItems();
-                Plugin.Instance?.Note($"{Companion.NameOf(h)} fell at {h.transform.position:F0} (killed by {LastHit(h)?.GetAttacker()?.m_name ?? "?"}, carrying {carried} item stacks)");
+                string by = LastHit(h)?.GetAttacker() is Character k ? Localization.instance.Localize(k.m_name) : st != null && Time.time - st.LastHurtAt < 5f ? st.LastHurtBy : "?";
+                Plugin.Instance?.Note($"{Companion.NameOf(h)} fell at {h.transform.position:F0} (killed by {by}, carrying {carried} item stacks)");
+                if (st != null) Activity.Log(h, $"FELL at {h.transform.position:F0}, killed by {by}. " + Activity.Vitals(h, st));
                 Companion.DropGear(h);
                 Player master = Companion.Master(h);
                 if (master == Player.m_localPlayer)

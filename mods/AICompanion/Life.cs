@@ -33,7 +33,7 @@ namespace AICompanion
                 string[] f = part.Split(':');
                 GameObject prefab = f.Length == 2 ? ObjectDB.instance?.GetItemPrefab(f[0]) : null;
                 ItemDrop drop = prefab != null ? prefab.GetComponent<ItemDrop>() : null;
-                if (drop != null && float.TryParse(f[1], NumberStyles.Float, CultureInfo.InvariantCulture, out float t)) s.Meals.Add(new Meal { Item = drop.m_itemData.Clone(), Time = t });
+                if (drop != null && float.TryParse(f[1], NumberStyles.Float, CultureInfo.InvariantCulture, out float t)) { ItemDrop.ItemData item = drop.m_itemData.Clone(); item.m_dropPrefab = drop.gameObject; s.Meals.Add(new Meal { Item = item, Time = t }); } // (a prefab's own item has no drop prefab)
             }
             return s;
         }
@@ -66,7 +66,7 @@ namespace AICompanion
                 c.SetMaxHealth(MaxHealth(c));
                 ZDO z = Companion.Zdo(c);
                 z.Set(MaxStaminaKey, MaxStamina(c));
-                z.Set(Key, string.Join(",", s.Meals.Select(m => Utils.GetPrefabName(m.Item.m_dropPrefab) + ":" + m.Time.ToString("0", CultureInfo.InvariantCulture))));
+                z.Set(Key, string.Join(",", s.Meals.Where(m => m.Item.m_dropPrefab != null).Select(m => Utils.GetPrefabName(m.Item.m_dropPrefab) + ":" + m.Time.ToString("0", CultureInfo.InvariantCulture))));
             }
             if (Time.time >= s.NextRegen)
             {
@@ -177,6 +177,21 @@ namespace AICompanion
             return map.TryGetValue(type, out Level l) ? l.Value : Plugin.StartingSkill.Value;
         }
 
+        /// <summary>Every skill a player has (from the game's own list).</summary>
+        public static IEnumerable<Skills.SkillType> Types()
+        {
+            Def(Skills.SkillType.Swords);
+            return _defs.Keys.Where(t => t != Skills.SkillType.None && t != Skills.SkillType.All);
+        }
+
+        /// <summary>How far toward its next level (0 to 1), on the game that runs it (else 0).</summary>
+        public static float Progress(Humanoid c, Skills.SkillType type)
+        {
+            if (!Of(c).TryGetValue(type, out Level l) || l.Value >= 100f) return 0f;
+            float need = Mathf.Pow(Mathf.Floor(l.Value + 1f), 1.5f) * 0.5f + 0.5f;
+            return Mathf.Clamp01(l.Progress / need);
+        }
+
         public static IEnumerable<KeyValuePair<Skills.SkillType, float>> All(Humanoid c) =>
             Of(c).Where(kv => kv.Value.Value >= 1f).Select(kv => new KeyValuePair<Skills.SkillType, float>(kv.Key, kv.Value.Value)).OrderByDescending(kv => kv.Value);
 
@@ -277,6 +292,16 @@ namespace AICompanion
             if (recipe == null || (recipe.m_craftingStation == null && recipe.m_repairStation == null)) return false;
             bool right = (recipe.m_repairStation != null && recipe.m_repairStation.m_name == station.m_name) || (recipe.m_craftingStation != null && recipe.m_craftingStation.m_name == station.m_name);
             return right && Mathf.Min(station.GetLevel(), 4) >= recipe.m_minStationLevel;
+        }
+
+        /// <summary>Catching up (CatchUp): everything worn that a station near home can repair, repaired. Returns how many.</summary>
+        public static int All(Humanoid me, Vector3 center, float radius)
+        {
+            List<CraftingStation> near = Upgrades.StationsNear(center, radius + 10f);
+            int n = 0;
+            foreach (ItemDrop.ItemData item in me.GetInventory().GetAllItems().Where(i => i.m_shared.m_useDurability && i.m_shared.m_canBeReparied && i.GetMaxDurability() > 0f && i.m_durability < i.GetMaxDurability() * 0.9f))
+                if (near.Any(s => CanRepairAt(item, s))) { item.m_durability = item.GetMaxDurability(); n++; }
+            return n;
         }
 
         /// <summary>True while it is busy going to a station and repairing (the rest of its peaceful behaviour waits).</summary>

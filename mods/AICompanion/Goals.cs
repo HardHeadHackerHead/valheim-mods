@@ -35,6 +35,7 @@ namespace AICompanion
 
         private static Dictionary<string, List<Source>> _sources;   // item prefab name -> what drops it
         private static Dictionary<string, ItemDrop> _smeltedFrom;   // bar prefab name -> the ore a smelter makes it from
+        private static Dictionary<string, float> _unfindable;      // the companion being planned for: what is not near its home
 
         private static readonly HashSet<string> Prey = new HashSet<string> { "Deer", "Boar", "Neck", "Hare" };
 
@@ -92,6 +93,7 @@ namespace AICompanion
         private static bool CanGather(Humanoid me, string item)
         {
             if (!_sources.TryGetValue(item, out List<Source> list)) return false;
+            if (_unfindable != null && _unfindable.TryGetValue(item, out float until) && until > Time.time) return false; // not near home
             int axe = Work.Axe(me)?.m_shared.m_toolTier ?? -1, pick = Work.Pickaxe(me)?.m_shared.m_toolTier ?? -1;
             bool armed = Companion.BestMelee(me) != null || Companion.BestRanged(me) != null;
             return list.Any(s => s.Job == Job.Forage || (s.Job == Job.Hunt && armed) || (s.Job == Job.Wood && axe >= s.Tier) || ((s.Job == Job.Stone || s.Job == Job.Ore) && pick >= s.Tier));
@@ -119,12 +121,12 @@ namespace AICompanion
         /// Its next goal, or null when there is nothing to work toward (nothing better to make or upgrade at the stations near home). Goals it
         /// can gather everything for come first, then the cheapest; with only goals it needs help with, the one needing least from you.
         /// </summary>
-        public static Goal Pick(Humanoid me, Vector3 center, float radius)
+        public static Goal Pick(Humanoid me, Vector3 center, float radius, BrainState st = null)
         {
             Learn();
             if (_sources == null || ObjectDB.instance == null) return null;
+            _unfindable = st?.Unfindable;
             List<CraftingStation> stations = Upgrades.StationsNear(center, radius + 10f);
-            if (stations.Count == 0) return null;
             List<Container> chests = Home.Chests(me);
             var goals = new List<Goal>();
 
@@ -140,10 +142,10 @@ namespace AICompanion
             }
             foreach (Recipe r in ObjectDB.instance.m_recipes)
             {
-                if (r == null || !r.m_enabled || r.m_item == null || r.m_craftingStation == null || !Upgrades.WorthMaking(me, r.m_item.m_itemData)) continue;
+                if (r == null || !r.m_enabled || r.m_item == null || !Upgrades.WorthMaking(me, r.m_item.m_itemData)) continue;
                 if (r.m_item.m_itemData.m_shared.m_itemType == ItemDrop.ItemData.ItemType.Ammo) continue; // arrows are made when it has the things (Upgrades), never a goal
-                CraftingStation at = stations.FirstOrDefault(s => s.m_name == r.m_craftingStation.m_name && s.GetLevel() >= Mathf.Max(1, r.m_minStationLevel));
-                if (at == null) continue;
+                CraftingStation at = r.m_craftingStation == null ? null : stations.FirstOrDefault(s => s.m_name == r.m_craftingStation.m_name && s.GetLevel() >= Mathf.Max(1, r.m_minStationLevel));
+                if (at == null && r.m_craftingStation != null) continue; // (no station needed: made anywhere)
                 var g = new Goal { Recipe = r, Station = at, What = Loc(r.m_item.m_itemData.m_shared.m_name) };
                 if (Build(me, chests, stations, g, r, 1)) goals.Add(g);
             }
@@ -189,7 +191,7 @@ namespace AICompanion
             }
             Recipe made = depth < 3 ? ObjectDB.instance.GetRecipe(item.m_itemData) : null;
             CraftingStation at = made?.m_craftingStation != null ? stations.FirstOrDefault(s => s.m_name == made.m_craftingStation.m_name && s.GetLevel() >= Mathf.Max(1, made.m_minStationLevel)) : null;
-            if (made != null && at != null && Upgrades.Needs(made).Any())
+            if (made != null && (at != null || made.m_craftingStation == null) && Upgrades.Needs(made).Any())
             {
                 int batches = Mathf.CeilToInt(need / (float)Mathf.Max(1, made.m_amount));
                 foreach (Piece.Requirement q in Upgrades.Needs(made)) if (q.m_resItem != null) Expand(me, chests, stations, g, q.m_resItem, q.GetAmount(1) * batches, depth + 1);
@@ -206,8 +208,8 @@ namespace AICompanion
             if (g == null) return null;
             foreach (var step in g.Steps)
             {
-                if (step.Value == null) continue;
-                List<Container> chests = Home.Chests(me).Where(c => c != null && Vector3.Distance(c.transform.position, step.Value.transform.position) < 25f).ToList(); // as Upgrades.Craft pays
+                List<Container> chests = step.Value == null ? new List<Container>() // made on the spot, from its bag
+                    : Home.Chests(me).Where(c => c != null && Vector3.Distance(c.transform.position, step.Value.transform.position) < 25f).ToList(); // as Upgrades.Craft pays
                 if (Upgrades.Needs(step.Key).All(q => q.m_resItem == null || Have(me, chests, q.m_resItem) >= q.GetAmount(1))) return step;
             }
             return null;

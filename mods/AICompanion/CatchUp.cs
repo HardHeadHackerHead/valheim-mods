@@ -12,9 +12,11 @@ namespace AICompanion
     /// away. Instead of keeping its area running (deep in the game's world code, costly, and where lost-item bugs come from), it catches up
     /// when someone comes back and its area loads: it works out how long it was away (world time) and does that much work at once, on the
     /// real world around it, then tells you what it did:
-    ///   * felling trees (a stump is left), mining rocks and ore, picking wild berries and mushrooms, at a player's pace with its tools, as far
-    ///     as what is within its radius, its tools' wear, and room in its chests allow; the game's own drop tables decide what it gets;
-    ///   * its food burns down over that time and it eats from its bag, as a player does;
+    ///   * something to eat: it cooks its raw food, takes food from its chests (a little from yours when it has none), and stays fed;
+    ///   * hunting (when hungry, or for its goal's hides), felling trees (a stump is left), mining rocks and ore, picking wild berries and
+    ///     mushrooms, at a player's pace with its tools, what its goal needs first; the game's own drop tables decide what it gets;
+    ///   * making and upgrading gear toward its goal (and bronze and the like on the way), and repairs, at its stations;
+    ///   * its food burns down over that time and it eats from its bag, and heals with what it ate, as a player does;
     ///   * with encounters on (Companion, WhileAway: Mild), it meets the creatures of its biome now and then, more at night and in harder
     ///     places, fights them off and keeps what they drop (Mild: it never falls while you are away).
     /// One game does this (the one that runs the companion), once per return.
@@ -111,19 +113,40 @@ namespace AICompanion
             yield return new WaitForSeconds(3f); // let the trees, rocks and chests around it finish loading
             Humanoid me = st.Body;
             if (me == null || me.IsDead()) yield break;
+            Talk.Hush = true; // what it did goes into one report, not a chat line for each thing
+            try { Day(st, seconds, away); }
+            catch (Exception e) { Plugin.Instance?.Warn("Companion catch-up: " + e); }
+            finally { Talk.Hush = false; }
+        }
+
+        /// <summary>
+        /// Its time at home, in the order a player's day would go: something to eat (cook raw food, take food from its chests, a little from
+        /// yours when starving), creatures that came by, hunting, gathering (what its goal needs first, food first when hungry), storing,
+        /// cooking what it hunted, making and upgrading gear toward its goal, repairs, then the time passing: its food burns down, it eats,
+        /// and it heals with what it ate.
+        /// </summary>
+        private static void Day(BrainState st, float seconds, float away)
+        {
+            Humanoid me = st.Body;
             var got = new Dictionary<string, int>();
             var notes = new List<string>();
+            var also = new List<string>();
             float budget = seconds;
             int felled = 0, mined = 0, picked = 0, fights = 0;
             string fellTo = null;
+            Vector3 center = Work.Center(me);
+            float radius = Work.RadiusOf(me);
 
-            // Encounters first take some of the time (Mild: it always comes through).
+            // 1. Something to eat for the time away.
+            int cooked = Kitchen.CookAll(me, center, radius);
+            string fromYou = Provision(me, center, radius);
+
+            // 2. Creatures that came by (Mild: it always comes through).
             if (Plugin.WhileAway.Value != AwayMode.Off)
             {
                 Heightmap.Biome biome = WorldGenerator.instance != null ? WorldGenerator.instance.GetBiome(me.transform.position) : Heightmap.Biome.Meadows;
                 float rate = FightsPerHour.TryGetValue(biome, out float r) ? r : 1f;
-                float hours = seconds / (EnvMan.instance != null ? EnvMan.instance.m_dayLengthSec / 24f : 75f); // in-game hours
-                int expected = Mathf.Min(8, Mathf.FloorToInt(hours / 24f * rate * 3f + UnityEngine.Random.value)); // a few a day, more in harder places
+                int expected = Mathf.Min(8, Mathf.FloorToInt(Hours(seconds) / 24f * rate * 3f + UnityEngine.Random.value)); // a few a day, more in harder places
                 for (int i = 0; i < expected; i++)
                 {
                     string prefab = Creatures.TryGetValue(biome, out string[] list) ? list[UnityEngine.Random.Range(0, list.Length)] : null;
@@ -138,17 +161,13 @@ namespace AICompanion
                         if (UnityEngine.Random.value > power / (power + threat * 0.4f))
                         {
                             fellTo = Localization.instance.Localize(go.GetComponent<Character>()?.m_name ?? prefab);
-                            Fall(me, Work.Center(me), Work.RadiusOf(me));
+                            Fall(me, center, radius);
                             budget = 0f; // the rest of the time it was making its way back home
                             break;
                         }
                     }
-                    CharacterDrop drops = go.GetComponent<CharacterDrop>();
-                    if (drops != null)
-                        foreach (CharacterDrop.Drop d in drops.m_drops)
-                            if (d.m_prefab != null && UnityEngine.Random.value <= d.m_chance) Add(got, d.m_prefab, UnityEngine.Random.Range(d.m_amountMin, d.m_amountMax + 1));
-                    foreach (ItemDrop.ItemData worn in Companion.Worn(me).Where(w => w.m_shared.m_useDurability))
-                        worn.m_durability = Mathf.Max(worn.GetMaxDurability() * 0.1f, worn.m_durability - worn.GetMaxDurability() * 0.03f); // wear, never broken
+                    Drops(got, go);
+                    Wear(me, 0.03f);
                     ItemDrop.ItemData weapon = me.GetCurrentWeapon();
                     if (weapon != null) Skill.Raise(me, weapon.m_shared.m_skillType, 3f);
                     string name = Localization.instance.Localize(go.GetComponent<Character>()?.m_name ?? prefab);
@@ -156,11 +175,17 @@ namespace AICompanion
                 }
             }
 
-            // Then the work, at a player's pace, on what is really there.
+            // 3. Hunting: when hungry, or when its goal needs hides and the like (and it has something to hunt with).
+            bool hungry = !me.GetInventory().GetAllItems().Any(Food.IsFood);
+            st.Goal = fellTo == null ? Goals.Pick(me, center, radius, st) : null;
+            Job goalJobs = Goals.JobsFor(st.Goal, out HashSet<string> goalPrey);
+            var hunted = new Dictionary<string, int>();
+            if (fellTo == null && (Companion.BestRanged(me) != null || Companion.BestMelee(me) != null) && (hungry || goalPrey.Count > 0))
+                Hunt(me, got, hunted, goalPrey, ref budget, seconds);
+
+            // 4. Gathering, at a player's pace, on what is really there: what its goal needs first, food first when hungry.
             Job jobs = Work.JobsOf(me);
-            if (jobs == Job.None) jobs = Work.AutoJobs(me);
-            Vector3 center = Work.Center(me);
-            float radius = Work.RadiusOf(me);
+            if (jobs == Job.None) jobs = Work.AutoJobs(me) | (goalJobs & ~(Job.Loot | Job.Hunt));
             ItemDrop.ItemData axe = Work.Axe(me), pick = Work.Pickaxe(me);
             var seen = new HashSet<GameObject>();
             var targets = new List<Component>();
@@ -172,7 +197,8 @@ namespace AICompanion
                               ?? (Component)go.GetComponent<Destructible>() ?? go.GetComponent<Pickable>();
                 if (t != null) targets.Add(t);
             }
-            targets = targets.OrderBy(t => Vector3.Distance(t.transform.position, center)).ToList();
+            targets = targets.OrderBy(t => hungry && Work.Edible(t) ? 0 : st.Goal != null && Work.Drops(t).Any(st.Goal.Wants) ? 1 : 2)
+                             .ThenBy(t => Vector3.Distance(t.transform.position, center)).ToList();
 
             foreach (Component t in targets)
             {
@@ -180,7 +206,8 @@ namespace AICompanion
                 if (Free(me) <= 1) { notes.Add("its bag and chests are full"); break; }
                 switch (t)
                 {
-                    case Pickable p when (jobs & Job.Forage) != 0 && p.m_respawnTimeMinutes > 0f && p.m_itemPrefab != null && !(Companion.Zdo(p)?.GetBool(ZDOVars.s_picked, false) ?? true):
+                    case Pickable p when (jobs & Job.Forage) != 0 && p.m_respawnTimeMinutes > 0f && p.m_itemPrefab != null && !(Companion.Zdo(p)?.GetBool(ZDOVars.s_picked, false) ?? true)
+                                         && (!hungry || Work.Edible(p) || st.Goal != null && st.Goal.Wants(p.m_itemPrefab.name)):
                         Add(got, p.m_itemPrefab, p.m_amount);
                         foreach (GameObject extra in p.m_extraDrops.GetDropList()) Add(got, extra, 1);
                         p.GetComponent<ZNetView>()?.InvokeRPC(ZNetView.Everybody, "RPC_SetPicked", true);
@@ -225,25 +252,137 @@ namespace AICompanion
                 }
             }
 
-            // Its food burned meanwhile; it ate from its bag.
-            Food.PassTime(me, st, seconds);
-
+            // 5. Into its chests (and its bag); then it cooks what it hunted and picked.
+            int total = got.Values.Sum();
             int stored = Store(me, got);
-            Companion.SaveBag(me); // its tools' and armour's wear
-            if (felled + mined + picked + fights == 0 && fellTo == null) yield break;
+            cooked += Kitchen.CookAll(me, center, radius);
+
+            // 6. Making and upgrading gear: what is ready, and its goal's in-between materials (bronze), as long as there is material.
+            var made = new List<string>();
+            for (int round = 0; round < 12 && fellTo == null; round++)
+            {
+                string done = null;
+                var up = Upgrades.Find(me, center, radius);
+                if (up != null) done = Upgrades.Do(st, up.Value.Key, up.Value.Value);
+                if (done == null) { var craft = Upgrades.FindCraft(me, center, radius); if (craft != null) done = Upgrades.Craft(st, craft.Value.Key, craft.Value.Value); }
+                if (done == null)
+                {
+                    st.Goal = Goals.Pick(me, center, radius, st);
+                    var step = Goals.StepReady(me, st.Goal);
+                    if (step != null) done = Upgrades.Craft(st, step.Value.Key, step.Value.Value, true);
+                }
+                if (done == null) break;
+                made.Add(done);
+            }
+
+            // 7. Repairs at its stations, as a player would before heading out again.
+            int repaired = Repair.All(me, center, radius);
+
+            // 8. The time passing: its food burns down and it eats from its bag; fed, it heals as a player does. Then food on it for later.
+            Food.PassTime(me, st, seconds);
+            if (Food.Meals(me).Count > 0 && fellTo == null) me.Heal(me.GetMaxHealth(), false);
+            string later = Provision(me, center, radius);
+            if (fromYou == null) fromYou = later;
+            Companion.SaveBag(me); // its tools' and armour's wear, and what it made
+            Portraits.Dirty(me);
+
+            // The report.
             var did = new List<string>();
             if (felled > 0) did.Add($"felled {felled} tree{(felled == 1 ? "" : "s")}");
             if (mined > 0) did.Add($"mined {mined} rock{(mined == 1 ? "" : "s")}");
             if (picked > 0) did.Add($"picked {picked} bush{(picked == 1 ? "" : "es")}");
+            if (hunted.Count > 0) did.Add("hunted " + string.Join(", ", hunted.Select(kv => $"{kv.Value} {kv.Key}")));
             if (fights > 0) did.Add($"fought off {fights} creature{(fights == 1 ? "" : "s")} ({string.Join(", ", notes.Where(n => !n.Contains("full")).Take(3))})");
+            if (cooked > 0) did.Add($"cooked {cooked} meal{(cooked == 1 ? "" : "s")}");
+            if (made.Count > 0) did.Add(string.Join(", ", made));
+            if (repaired > 0) did.Add($"repaired {repaired} thing{(repaired == 1 ? "" : "s")}");
+            if (did.Count == 0 && fellTo == null && fromYou == null) return;
             string items = string.Join(", ", got.OrderByDescending(kv => kv.Value).Take(8).Select(kv => $"{kv.Value} {kv.Key}"));
-            string line = $"While you were away ({Mathf.RoundToInt(away / 60f)} min) {Companion.NameOf(me)} {string.Join(", ", did)}" + (items.Length > 0 ? $": {items}" : "") +
-                          (stored < got.Values.Sum() ? " (kept the rest in their bag)" : "") + (notes.Any(n => n.Contains("full")) ? ". Their chests are full." : ".") +
+            string line = $"While you were away ({Mathf.RoundToInt(away / 60f)} min) {Companion.NameOf(me)} {(did.Count > 0 ? string.Join(", ", did) : "rested at home")}" +
+                          (items.Length > 0 ? $". Brought in: {items}" : "") + (stored < total ? " (kept the rest in their bag)" : "") +
+                          (notes.Any(n => n.Contains("full")) ? ". Their chests are full" : "") + "." +
+                          (fromYou != null ? $" Took {fromYou} from your chests to eat." : "") +
+                          (Food.Meals(me).Count == 0 && fellTo == null ? " They have nothing left to eat." : "") +
                           (fellTo != null ? $" Then they fell to a {fellTo} and woke at home; their things are in their tombstone nearby (they will go and get them)." : "");
+            Talk.Hush = false;
             st.Remember(line);
             Plugin.Instance?.Note(line);
             DebugLog.Add(new DecisionRecord { When = DateTime.Now, Companion = Companion.NameOf(me), Outcome = "— " + line + " —" });
             if (Companion.Master(me) == Player.m_localPlayer) Player.m_localPlayer.Message(MessageHud.MessageType.Center, line);
+            Talk.Tell(me, line);
+        }
+
+        private static float Hours(float seconds) => seconds / (EnvMan.instance != null ? EnvMan.instance.m_dayLengthSec / 24f : 75f); // in-game hours
+
+        /// <summary>What a creature drops, by the game's own drop list.</summary>
+        private static void Drops(Dictionary<string, int> got, GameObject creature)
+        {
+            CharacterDrop drops = creature.GetComponent<CharacterDrop>();
+            if (drops == null) return;
+            foreach (CharacterDrop.Drop d in drops.m_drops)
+                if (d.m_prefab != null && UnityEngine.Random.value <= d.m_chance) Add(got, d.m_prefab, UnityEngine.Random.Range(d.m_amountMin, d.m_amountMax + 1));
+        }
+
+        private static void Wear(Humanoid me, float share)
+        {
+            foreach (ItemDrop.ItemData worn in Companion.Worn(me).Where(w => w.m_shared.m_useDurability))
+                worn.m_durability = Mathf.Max(worn.GetMaxDurability() * 0.1f, worn.m_durability - worn.GetMaxDurability() * share); // wear, never broken
+        }
+
+        private static readonly Dictionary<Heightmap.Biome, string[]> Quarry = new Dictionary<Heightmap.Biome, string[]>
+        {
+            [Heightmap.Biome.Meadows] = new[] { "Deer", "Deer", "Boar", "Neck" },
+            [Heightmap.Biome.BlackForest] = new[] { "Deer", "Deer", "Boar" },
+            [Heightmap.Biome.Mountain] = new[] { "Wolf" },
+            [Heightmap.Biome.Plains] = new[] { "Lox", "Deer" },
+        };
+
+        /// <summary>
+        /// Hunting near home: about two kills a day (three with a bow), of its biome's game, or what its goal needs (deer for hides); each takes a
+        /// while and wears its gear a little. The game's own drop lists decide what it brings in.
+        /// </summary>
+        private static void Hunt(Humanoid me, Dictionary<string, int> got, Dictionary<string, int> hunted, HashSet<string> goalPrey, ref float budget, float seconds)
+        {
+            Heightmap.Biome biome = WorldGenerator.instance != null ? WorldGenerator.instance.GetBiome(me.transform.position) : Heightmap.Biome.Meadows;
+            string[] kinds = goalPrey.Count > 0 ? goalPrey.ToArray() : Quarry.TryGetValue(biome, out string[] k) ? k : null;
+            if (kinds == null || kinds.Length == 0) return;
+            bool bow = Companion.BestRanged(me) != null;
+            int kills = Mathf.Min(6, Mathf.FloorToInt(Hours(seconds) / 24f * (bow ? 3f : 2f) + UnityEngine.Random.value));
+            ItemDrop.ItemData weapon = Companion.BestRanged(me) ?? Companion.BestMelee(me);
+            for (int i = 0; i < kills && budget > 0f; i++)
+            {
+                GameObject go = ZNetScene.instance.GetPrefab(kinds[UnityEngine.Random.Range(0, kinds.Length)]);
+                if (go == null) continue;
+                Drops(got, go);
+                Wear(me, 0.01f);
+                if (weapon != null) Skill.Raise(me, weapon.m_shared.m_skillType, 2f);
+                budget -= 180f;
+                string name = Localization.instance.Localize(go.GetComponent<Character>()?.m_name ?? go.name).ToLowerInvariant();
+                hunted[name] = (hunted.TryGetValue(name, out int had) ? had : 0) + 1;
+            }
+        }
+
+        /// <summary>
+        /// Food on it for a while (ten): from its own chests first; with nothing at all to eat, a little from yours at home (when it may: Orders
+        /// tab). Returns what it took from yours ("3 cooked meat"), or null.
+        /// </summary>
+        private static string Provision(Humanoid me, Vector3 center, float radius)
+        {
+            Inventory mine = me.GetInventory();
+            int have = mine.GetAllItems().Where(Food.IsFood).Sum(i => i.m_stack);
+            foreach (Container chest in Home.Chests(me).Where(c => !c.IsInUse()))
+            {
+                if (have >= 10) break;
+                foreach (ItemDrop.ItemData food in chest.GetInventory().GetAllItems().Where(Food.IsFood).OrderByDescending(i => i.m_shared.m_food + i.m_shared.m_foodStamina).ToList())
+                {
+                    if (have >= 10) break;
+                    int n = Mathf.Min(10 - have, food.m_stack);
+                    if (Work.Move(chest, me, food, n)) have += n;
+                }
+            }
+            if (have > 0 || Food.Meals(me).Count > 0 || !Work.UsesPantry(me)) return null;
+            Container yours = Work.YourFood(me, center, radius);
+            return yours != null ? Work.TakeFoodFrom(me, yours, 5) : null;
         }
 
         /// <summary>The time and wear of working one tree or rock with this tool (as a player swings it); false when the tool would break.</summary>
@@ -289,7 +428,8 @@ namespace AICompanion
             ZNetScene.instance.Destroy(go);
         }
 
-        private static int Free(Humanoid me) => me.GetInventory().GetEmptySlots() + Home.Chests(me).Sum(c => c.GetInventory().GetEmptySlots());
+        private static int Free(Humanoid me) => me.GetInventory().GetEmptySlots() + Home.Chests(me).Sum(c => c.GetInventory().GetEmptySlots())
+                                                + (Work.Stows(me) ? Work.YourChests(me, Work.Center(me), Work.RadiusOf(me) + 20f).Sum(c => c.GetInventory().GetEmptySlots()) : 0);
 
         /// <summary>Into its chests first (stacking onto what is there), then its bag. Returns how many went into chests. Translated names in the report.</summary>
         private static int Store(Humanoid me, Dictionary<string, int> got)
@@ -302,7 +442,9 @@ namespace AICompanion
                 ItemDrop drop = prefab != null ? prefab.GetComponent<ItemDrop>() : null;
                 if (drop == null) continue;
                 int left = kv.Value;
-                foreach (Container chest in Home.Chests(me).Where(c => !c.IsInUse()))
+                IEnumerable<Container> chests = Home.Chests(me).Where(c => !c.IsInUse());
+                if (Work.Stows(me)) chests = chests.Concat(Work.YourChests(me, Work.Center(me), Work.RadiusOf(me) + 20f)); // then yours (only put in)
+                foreach (Container chest in chests)
                 {
                     if (left <= 0) break;
                     ZNetView v = chest.GetComponent<ZNetView>();

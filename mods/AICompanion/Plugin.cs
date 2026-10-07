@@ -24,7 +24,7 @@ namespace AICompanion
     {
         public const string Guid = "com.dhack.aicompanion";
         public const string Name = "AICompanion";
-        public const string Version = "0.6.0";
+        public const string Version = "0.6.1";
 
         internal static Plugin Instance;
         internal static ConfigEntry<string> ApiKey, Endpoint, Model;
@@ -70,7 +70,8 @@ namespace AICompanion
                 "Your Jev key from console.typesafe.ai (easiest: copy it and press Paste in the companion's Brain tab). Optional: without one a built-in brain fights. Only the companion's owner needs one; it stays on your PC.");
 
             _more = new ConfigFile(System.IO.Path.Combine(Paths.ConfigPath, Guid + ".more.cfg"), true);
-            EngageRange = More("Companion", "EngageRange", 20f, "It fights enemies that come this close (in metres) to it or to you. In the menu: Orders.", new AcceptableValueRange<float>(5f, 50f));
+            EngageRange = More("Companion", "FightRange", 12f, "It fights enemies that come this close (in metres) to it or to you. In the menu: Orders.", new AcceptableValueRange<float>(5f, 50f));
+            _more.Bind("Companion", "EngageRange", 20f, ""); _more.Remove(new ConfigDefinition("Companion", "EngageRange")); // (0.6.0's 20 m: too eager)
             ShowDecisions = More("Companion", "ShowDecisions", true, "Show what it decides in a fight above its head. In the menu: Brain.");
             RespawnSeconds = More("Companion", "RespawnSeconds", 30f, "Seconds after falling before it wakes in its bed (or beside you).", new AcceptableValueRange<float>(5f, 600f));
             BaseHealth = More("Companion", "BaseHealth", 25f, "Its health before food, as a player's (25).", new AcceptableValueRange<float>(5f, 500f));
@@ -116,6 +117,7 @@ namespace AICompanion
             Talk.Forget();
             Goals.Forget();
             Steer.Forget();
+            Activity.Forget();
             _harmony?.UnpatchSelf();
             Prefab.Unregister();
             DestroyMenuResources();

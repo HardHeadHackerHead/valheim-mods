@@ -7,7 +7,8 @@ namespace AICompanion
 {
     /// <summary>
     /// The companion's menu (J, or E on it), styled like the game's own windows (its Averia font, dark wood, gold headings), in six tabs:
-    ///   Status - what it is doing, its health, food and rest, its record, skills, effects and recent events;
+    ///   Status - what it is doing, its health, food and rest, effects and recent events;
+    ///   Stats  - all its numbers: health, stamina, healing, carry weight, armour, block, weapon damage, resistances, record, every skill;
     ///   Orders - come with me or go home (and stay, guard, come here), how it fights, its habits, sending it away;
     ///   Home   - its bed and chests, living at home (where and what it gathers), what it gathered, what happens while you are away;
     ///   Gear   - what it wears, its bag, giving it things, and what it picks up off the ground;
@@ -17,7 +18,7 @@ namespace AICompanion
     /// </summary>
     public partial class Plugin
     {
-        private enum Tab { Status, Orders, Home, Gear, Looks, Brain }
+        private enum Tab { Status, Stats, Orders, Home, Gear, Looks, Brain }
 
         internal static bool MenuOpen;
         private Humanoid _shown;          // null: the summon panel
@@ -262,6 +263,7 @@ namespace AICompanion
             switch (_tab)
             {
                 case Tab.Status: DrawStatus(c); break;
+                case Tab.Stats: DrawStats(c); break;
                 case Tab.Orders: DrawOrders(c); break;
                 case Tab.Home: DrawHome(c); break;
                 case Tab.Gear: DrawGear(c); break;
@@ -320,32 +322,6 @@ namespace AICompanion
             }
             EndCard();
 
-            BeginCard("Record");
-            GUILayout.BeginHorizontal();
-            Stat("Armour", $"{Companion.Armor(c):0}");
-            Stat("Kills", Companion.Zdo(c).GetInt(Keys.Kills, 0).ToString());
-            Stat("Fights", here ? st.Fights.ToString() : "-");
-            Stat("Potions", here ? st.Potions.ToString() : "-");
-            GUILayout.EndHorizontal();
-            EndCard();
-
-            BeginCard("Skills");
-            var skills = Skill.All(c).Take(10).ToList();
-            if (!here) Note("Shows on the game that runs it.", _dim);
-            else if (skills.Count == 0) Note("None yet. They rise as its hits land and make it hit harder, as yours do. It loses 5% when it falls.", _dim);
-            else
-                for (int i = 0; i < skills.Count; i += 2)
-                {
-                    GUILayout.BeginHorizontal();
-                    for (int j = i; j < Mathf.Min(i + 2, skills.Count); j++)
-                    {
-                        GUILayout.Label(Loc("$skill_" + skills[j].Key.ToString().ToLower()), _text, GUILayout.Width(Inner / 2f - 70f));
-                        GUILayout.Label(skills[j].Value.ToString("0"), _num, GUILayout.Width(50));
-                    }
-                    GUILayout.EndHorizontal();
-                }
-            EndCard();
-
             BeginCard("Effects");
             var effects = here ? c.GetSEMan().GetStatusEffects().Where(se => se != null && se.m_icon != null).ToList() : new List<StatusEffect>();
             if (!here) Note("Shows on the game that runs it.", _dim);
@@ -398,6 +374,91 @@ namespace AICompanion
             if (!order(_shown)) _note = "Someone has its things open. Try again in a moment.";
         }
 
+        // ==== Stats ========================================================================================
+
+        private void DrawStats(Humanoid c)
+        {
+            BrainState st = Brain.Get(c);
+            bool here = c.GetComponent<ZNetView>().IsOwner();
+            List<Food.Meal> meals = Food.Meals(c);
+
+            BeginCard("Body");
+            GUILayout.BeginHorizontal();
+            Stat("Health", $"{c.GetHealth():0}/{c.GetMaxHealth():0}");
+            Stat("Stamina", $"{Stamina.Get(c):0}/{Stamina.Max(c):0}");
+            Stat("Eitr", Eitr.Max(c) > 0f ? $"{Eitr.Get(c):0}/{Eitr.Max(c):0}" : "-");
+            Stat("Carrying", $"{Carry.Weight(c):0}/{Carry.Max(c):0}");
+            GUILayout.EndHorizontal();
+            float regen = meals.Sum(m => m.Item.m_shared.m_foodRegen) * (Rest.IsRested(c) ? 1.5f : 1f);
+            Note($"Before food: {BaseHealth.Value:0} health and {BaseStamina.Value:0} stamina, as a player's. Food adds the rest.", _dim);
+            Note(regen > 0f ? $"Heals {regen:0.#} health every 10 s from its food{(Rest.IsRested(c) ? " (rested: 50% more)" : "")}." : "Heals nothing: it has not eaten (a player only heals from food).", regen > 0f ? _text : _warn);
+            EndCard();
+
+            BeginCard("Food");
+            if (!here) Note("Shows on the game that runs it.", _dim);
+            else if (meals.Count == 0) Note("Nothing eaten.", _warn);
+            foreach (Food.Meal m in meals)
+                Note($"{Loc(m.Item.m_shared.m_name)}:  +{m.Item.m_shared.m_food:0} health, +{m.Item.m_shared.m_foodStamina:0} stamina{(m.Item.m_shared.m_foodEitr > 0f ? $", +{m.Item.m_shared.m_foodEitr:0} eitr" : "")}, heals {m.Item.m_shared.m_foodRegen:0.#}  ·  {Mathf.CeilToInt(m.Time / 60f)} min left", _text);
+            EndCard();
+
+            BeginCard("Fighting");
+            ItemDrop.ItemData melee = Companion.BestMelee(c), bow = Companion.BestRanged(c), shield = Companion.Shield(c);
+            GUILayout.BeginHorizontal();
+            Stat("Armour", $"{Companion.Armor(c):0}");
+            Stat("Block", shield != null ? $"{shield.GetBlockPower(Skill.Get(c, Skills.SkillType.Blocking) / 100f):0}" : melee != null ? $"{melee.GetBlockPower(Skill.Get(c, Skills.SkillType.Blocking) / 100f):0}" : "-");
+            Stat("Kills", Companion.Zdo(c).GetInt(Keys.Kills, 0).ToString());
+            Stat("Fights", here ? st.Fights.ToString() : "-");
+            GUILayout.EndHorizontal();
+            if (melee != null) Note($"{Loc(melee.m_shared.m_name)}: {Damage(c, melee)} damage a hit (with its {Loc("$skill_" + melee.m_shared.m_skillType.ToString().ToLower())} skill)", _text);
+            else Note("No weapon: it fights with its fists.", _warn);
+            if (bow != null) Note($"{Loc(bow.m_shared.m_name)}: {Damage(c, bow)} damage a shot", _text);
+            Note(shield != null ? $"Blocks with its {Loc(shield.m_shared.m_name)} when something swings at it, then hits back." : melee != null ? "Blocks with its weapon when something swings at it (a shield blocks far better)." : "Nothing to block with.", _dim);
+            EndCard();
+
+            BeginCard("Resistances");
+            HitData.DamageModifiers mods = Gear.Modifiers(c);
+            var lines = new List<string>();
+            foreach (HitData.DamageType t in new[] { HitData.DamageType.Blunt, HitData.DamageType.Slash, HitData.DamageType.Pierce, HitData.DamageType.Fire, HitData.DamageType.Frost, HitData.DamageType.Lightning, HitData.DamageType.Poison, HitData.DamageType.Spirit })
+            {
+                HitData.DamageModifier mod = mods.GetModifier(t);
+                if (mod != HitData.DamageModifier.Normal) lines.Add($"{t}: {mod.ToString().Replace("Very", "very ").ToLowerInvariant()}");
+            }
+            Note(lines.Count > 0 ? string.Join("   ", lines) : "None: its gear gives no resistances (and no weaknesses).", lines.Count > 0 ? _text : _dim);
+            EndCard();
+
+            BeginCard("Skills");
+            Note("As a player's: each rises as it uses it and makes it better at it. It loses 5% of every skill when it falls.", _dim);
+            var skills = Skill.Types().Select(t => new KeyValuePair<Skills.SkillType, float>(t, Skill.Get(c, t)))
+                .OrderByDescending(kv => kv.Value).ThenBy(kv => Loc("$skill_" + kv.Key.ToString().ToLower())).ToList();
+            float col = (Inner - 40f) / 2f;
+            for (int i = 0; i < skills.Count; i += 2)
+            {
+                GUILayout.BeginHorizontal();
+                for (int j = i; j < Mathf.Min(i + 2, skills.Count); j++)
+                {
+                    GUILayout.BeginVertical(GUILayout.Width(col));
+                    GUILayout.BeginHorizontal();
+                    GUILayout.Label(Loc("$skill_" + skills[j].Key.ToString().ToLower()), skills[j].Value >= 1f ? _text : _dim, GUILayout.Width(col - 50f));
+                    GUILayout.Label(skills[j].Value.ToString("0"), _num, GUILayout.Width(44));
+                    GUILayout.EndHorizontal();
+                    Rect r = GUILayoutUtility.GetRect(col - 10f, 5f, GUILayout.Width(col - 10f), GUILayout.Height(5));
+                    Rounded(r, new Color(0.06f, 0.045f, 0.035f, 1f), 2f);
+                    if (skills[j].Value > 0f) Rounded(new Rect(r.x, r.y, r.width * Mathf.Clamp01(skills[j].Value / 100f), r.height), Gold, 2f);
+                    float next = here ? Skill.Progress(c, skills[j].Key) : 0f;
+                    if (next > 0f) Rounded(new Rect(r.x, r.yMax + 1f, r.width * next, 2f), ColGood, 1f);
+                    GUILayout.Space(5);
+                    GUILayout.EndVertical();
+                }
+                GUILayout.EndHorizontal();
+            }
+            Note("Gold: its level out of 100. Green: on its way to the next level.", _dim);
+            EndCard();
+        }
+
+        /// <summary>"about 14": a hit's damage with its skill (40% of the weapon's at skill 0, all of it at 100, the player's rule).</summary>
+        private static string Damage(Humanoid c, ItemDrop.ItemData w) =>
+            $"about {w.GetDamage().GetTotalDamage() * Mathf.Lerp(0.4f, 1f, Skill.Get(c, w.m_shared.m_skillType) / 100f):0}";
+
         private void ComeHere()
         {
             Player p = Player.m_localPlayer;
@@ -439,8 +500,8 @@ namespace AICompanion
             int retreat = Companion.RetreatOf(c);
             Stepper("Falls back below", $"{retreat}% health", () => Change(z => z.Set(Keys.Retreat, Mathf.Clamp(retreat - 5, 0, 90))), () => Change(z => z.Set(Keys.Retreat, Mathf.Clamp(retreat + 5, 0, 90))));
             Note("Below half of that it runs. These are rules, whatever Jev says.", _dim);
-            Stepper("Fights enemies within", $"{EngageRange.Value:0} m", () => { EngageRange.Value = Mathf.Clamp(EngageRange.Value - 5f, 5f, 50f); SaveSettings(); },
-                    () => { EngageRange.Value = Mathf.Clamp(EngageRange.Value + 5f, 5f, 50f); SaveSettings(); });
+            Stepper("Fights enemies within", $"{EngageRange.Value:0} m", () => { EngageRange.Value = Mathf.Clamp(EngageRange.Value - 2f, 4f, 50f); SaveSettings(); },
+                    () => { EngageRange.Value = Mathf.Clamp(EngageRange.Value + 2f, 4f, 50f); SaveSettings(); });
             Note("Of it or you (all your companions). Living at home it also fights anything that comes into its home.", _dim);
             bool potions = Companion.Potions(c), protect = Companion.Protect(c);
             if (Check("Drinks healing potions when hurt", potions)) _pending = () => Change(z => z.Set(Keys.Potions, !potions));
@@ -505,6 +566,14 @@ namespace AICompanion
                 GUILayout.EndHorizontal();
                 Note($"Choosing closes this menu: then E on a bed or a chest gives it to {Companion.NameOf(c)}, E again takes it back. {MenuKey.Value} or Esc when done. Going home takes a free bed and empty chests near it by itself.", _dim);
             }
+            EndCard();
+
+            BeginCard("Your chests");
+            Note("The chests at home that are not a companion's.", _dim);
+            bool stow = Work.Stows(c), pantry = Work.UsesPantry(c);
+            if (Check("Puts what it gathers into your chests when its own are full (or it has none). It never takes anything out.", stow)) _pending = () => Change(z => z.Set(Work.StowKey, !stow));
+            if (Check("Takes a little food from your chests when it has nothing to eat (and tells you what it took)", pantry)) _pending = () => Change(z => z.Set(Work.PantryKey, !pantry));
+            if (!pantry) Note("Off: when it runs out of food it forages, hunts and asks you in chat.", _dim);
             EndCard();
 
             bool living = Companion.OrderOf(c) == AICompanion.Order.Gather;
