@@ -661,8 +661,8 @@ namespace AICompanion
                 case Tactic.DefendPlayer:
                     // Whoever is after the player first, else whoever is after the companion, else the nearest. It only runs to the player when
                     // nothing is on itself: running off with enemies hitting its back is how it died while the player circled.
-                    Character onMaster = master == null ? null : st.Enemies.Where(e => TargetOf(e) == master).OrderBy(e => Vector3.Distance(e.transform.position, master.transform.position)).FirstOrDefault();
-                    Character onMe = st.Enemies.Where(e => TargetOf(e) == me).OrderBy(e => Vector3.Distance(e.transform.position, me.transform.position)).FirstOrDefault();
+                    Character onMaster = master == null ? null : st.Enemies.Where(e => e != null && TargetOf(e) == master).OrderBy(e => Vector3.Distance(e.transform.position, master.transform.position)).FirstOrDefault();
+                    Character onMe = st.Enemies.Where(e => e != null && TargetOf(e) == me).OrderBy(e => Vector3.Distance(e.transform.position, me.transform.position)).FirstOrDefault();
                     if (onMaster != null && onMe == null && Vector3.Distance(me.transform.position, master.transform.position) > 12f)
                     { Blocking(me) = false; MoveTo(st.Ai, dt, master.transform.position, 3f, true); }
                     else Strike(st, onMaster ?? onMe ?? nearest, dt);
@@ -755,7 +755,15 @@ namespace AICompanion
                 LookAt(st.Ai, lookAt);
                 me.SetLookDir(shot.Value, 0f);
             }
-            else LookAt(st.Ai, aim);
+            else
+            {
+                LookAt(st.Ai, aim);
+                // The game swings along its body, tilted toward where it looks (up to the weapon's limit): look at the target's middle from
+                // the height the swing starts at, so a boar below it (down a slope) is swung at, not over.
+                Vector3 swingFrom = me.transform.position + Vector3.up * (weapon?.m_shared.m_attack?.m_attackHeight ?? 1f);
+                Vector3 toTarget = aim - swingFrom;
+                if (toTarget.sqrMagnitude > 0.01f) me.SetLookDir(toTarget.normalized, 0f);
+            }
             float cost = weapon?.m_shared.m_attack?.m_attackStamina ?? 0f;
             if (!me.InAttack() && cost > 0f && Stamina.Get(me) < cost + 0.1f)
             {
