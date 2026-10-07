@@ -408,6 +408,7 @@ namespace AICompanion
                     Bounds size = Size(t.Target);
                     float big = Mathf.InverseLerp(0.6f, 3f, Mathf.Max(size.size.x, size.size.z, size.size.y * 0.5f));
                     float reach = Mathf.Lerp(0.6f, Mathf.Min(1.3f, (tool.m_shared.m_attack?.m_attackRange ?? 1.8f) * 0.6f), big) * t.Closer;
+                    if (size.size.y > 0.01f && size.size.y < 1.5f) reach = Mathf.Min(reach, 0.5f); // something low: right up to it, to swing down on it
                     if (dist > reach) { moveTo(at, reach * 0.5f, dist > 8f); break; }
                     t.LastClose = Time.time;
                     stop();
@@ -549,7 +550,9 @@ namespace AICompanion
             t.Swings++;
             if (t.Swings % 3 != 1) return;
             float health = Companion.Zdo(t.Target)?.GetFloat(ZDOVars.s_health, -1f) ?? -1f;
-            if (t.HealthAt >= 0f && health >= 0f && health >= t.HealthAt - 0.01f && t.Closer > 0.35f)
+            // A big rock (copper, a boulder) keeps no one health (each part has its own): whether its last swing touched it (Attack_DoMeleeAttack_Log).
+            bool missed = health < 0f ? st.SwingMissed : t.HealthAt >= 0f && health >= t.HealthAt - 0.01f;
+            if (missed && t.Closer > 0.35f)
             {
                 t.Closer = Mathf.Max(0.6f, t.Closer * 0.75f); // (not right into it: too close, it swings past)
                 st.Remember($"its swings missed the {Hoverable(t.Target)}: it steps in closer");
@@ -616,6 +619,16 @@ namespace AICompanion
             if (c is TreeBase || c is Destructible des && (des.m_destructibleType == DestructibleType.Tree
                 || des.m_damages.m_chop != HitData.DamageModifier.Immune && des.m_damages.m_pickaxe == HitData.DamageModifier.Immune))
             {
+                // Something low (a stump): its real middle and size from its shape (a stump's pivot is off to one side: it stood 2 m off
+                // swinging over it), and the edge of it nearest to it.
+                Bounds low = Size(c);
+                if (low.size.y > 0.01f && low.size.y < 1.5f)
+                {
+                    Vector3 mid = low.center, away = from - mid;
+                    mid.y = c.transform.position.y; away.y = 0f;
+                    float radius = Mathf.Min(low.extents.x, low.extents.z) * 0.8f;
+                    return away.sqrMagnitude > 0.01f ? mid + away.normalized * radius : mid;
+                }
                 Vector3 foot = c.transform.position, nearest = foot;
                 float bestD = float.MaxValue;
                 foreach (Collider col in c.GetComponentsInChildren<Collider>())
@@ -647,8 +660,18 @@ namespace AICompanion
 
         private static float Flat(Vector3 a, Vector3 b) { a.y = 0f; b.y = 0f; return Vector3.Distance(a, b); }
 
-        /// <summary>The nearest point of the collider's real shape (a long log's, not its box's), where Unity can tell (all but concave meshes).</summary>
-        private static Vector3 Closest(Collider col, Vector3 from) => col is MeshCollider mesh && !mesh.convex ? col.ClosestPointOnBounds(from) : col.ClosestPoint(from);
+        /// <summary>
+        /// The nearest point of the collider's real shape (a long log's, not its box's). A concave mesh (a boulder, an ore vein) Unity cannot
+        /// measure that way: a line from it to the mesh's middle, where it meets the surface (its box's corner was up to a metre off a round rock).
+        /// </summary>
+        private static Vector3 Closest(Collider col, Vector3 from)
+        {
+            if (!(col is MeshCollider mesh) || mesh.convex) return col.ClosestPoint(from);
+            Vector3 start = new Vector3(from.x, Mathf.Clamp(from.y + 0.8f, col.bounds.min.y + 0.2f, col.bounds.max.y), from.z);
+            Vector3 toMiddle = col.bounds.center - start;
+            if (toMiddle.sqrMagnitude > 0.01f && col.Raycast(new Ray(start, toMiddle.normalized), out RaycastHit hit, toMiddle.magnitude + 1f)) return hit.point;
+            return col.ClosestPointOnBounds(from);
+        }
 
         // ---- choosing what to do next ------------------------------------------------------------------------
 

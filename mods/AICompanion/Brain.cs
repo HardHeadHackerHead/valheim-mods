@@ -60,7 +60,8 @@ namespace AICompanion
         public Vector3 YouWere, IdleAt, LookAroundAt;
         public TombStone GraveOrdered, GraveOn;
         public readonly List<ItemDrop> PickQueue = new List<ItemDrop>();
-        public Work.Area Area; // the patch of trees (rocks, plants) you pointed it at // things you pointed it at to pick up (Work.OrderPickUp)
+        public Work.Area Area;
+        public bool SwingMissed; // its last swing at what it works on touched something else, or nothing (Attack_DoMeleeAttack_Log) // the patch of trees (rocks, plants) you pointed it at // things you pointed it at to pick up (Work.OrderPickUp)
         public float WokeAt = -999f; // up after a fall (Tactics.Careful) // the tombstone you pointed it at; the one it is going to (Grave)
         public Work.Task Task;                                      // gathering
         public CraftingStation RepairAt;                            // repairs

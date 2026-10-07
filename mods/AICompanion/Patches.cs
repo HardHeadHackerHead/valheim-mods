@@ -362,6 +362,7 @@ namespace AICompanion
             Work.Task task = Brain.Get(me)?.Task;
             string aimedAt = task?.Target != null ? Utils.GetPrefabName(task.Target.gameObject) : null;
             bool missed = aimedAt != null && !Hits.Any(h => h.StartsWith(aimedAt + " "));
+            if (aimedAt != null) Brain.Get(me).SwingMissed = missed;
             if (missed && UnityEngine.Time.time >= _next)
             {
                 _next = UnityEngine.Time.time + 2f;
@@ -379,6 +380,21 @@ namespace AICompanion
         private static void Prefix(UnityEngine.GameObject go, float distance)
         {
             if (Attack_DoMeleeAttack_Log.Hits != null && go != null && Attack_DoMeleeAttack_Log.Hits.Count < 6) Attack_DoMeleeAttack_Log.Hits.Add($"{Utils.GetPrefabName(go)} at {distance:0.0} m");
+        }
+    }
+}
+
+namespace AICompanion
+{
+    /// <summary>A companion's pickaxe never digs the ground (a swing that misses a low rock would dig holes, in your base too). Players' do.</summary>
+    [HarmonyLib.HarmonyPatch(typeof(Attack), nameof(Attack.SpawnOnHitTerrain))]
+    internal static class Attack_SpawnOnHitTerrain_Companion
+    {
+        private static bool Prefix(Character character, ref UnityEngine.GameObject __result)
+        {
+            if (!Companion.Is(character)) return true;
+            __result = null;
+            return false;
         }
     }
 }
