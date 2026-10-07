@@ -144,6 +144,7 @@ namespace AICompanion
             if (!ok) return false;
             BrainState st = Brain.Get(c);
             st.Outing = false;
+            st.NextArmoryLook = 0f; // a look through your chests for better gear, once it is back
             st.SortWhenHome = true; // what it brought back goes into your chests when it is there (Work.SortHome)
             if (manual) { st.ManualOrderAt = Time.time; st.Remember("you sent it home"); }
             bool bed = Companion.Zdo(c).GetBool(Keys.HasBed, false);

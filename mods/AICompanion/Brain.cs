@@ -66,7 +66,7 @@ namespace AICompanion
         public float PathUntil, NextPathTry, PathProgressAt, PathBest;
         public readonly Dictionary<Door, float> OpenedDoors = new Dictionary<Door, float>(); // doors it opened, to shut behind it
         public bool SwingMissed;
-        public float NextRefillLook;
+        public float NextRefillLook, NextArmoryLook;
         public float NextDeliver, NextTidy, NextStockLook;   // what is yours to your chests; tidying its own; its stock list (Work)
         public Dictionary<string, int> StockCaps;
         public float MissionSince, MissionBest, MissionAskSince, MissionReadySince;                                       // its mission: headway, waiting on you (Missions)
@@ -76,6 +76,7 @@ namespace AICompanion
         public Work.Task Task;                                      // gathering
         public CraftingStation RepairAt;                            // repairs
         public float NextRepairLook, RepairSince;
+        public bool RepairAll;                                      // sent from its menu: everything worn at all, not only what is half gone
         public Ship Riding;                                         // riding along
         public Chair Seat;
         public Vector3 DeckSpot;
@@ -505,7 +506,9 @@ namespace AICompanion
                     SetStatus(st, st.Sitting ? "sitting here, waiting" : "staying here");
                     break;
                 case Order.Gather:
-                    if (Sleep.Tick(st, (p, dd, run) => MoveTo(st.Ai, dt, p, dd, run), () => st.Ai.StopMoving())) break; // night: in its bed
+                    bool sent = st.Task != null && st.Task.Ordered && Time.time < st.CommandUntil; // (an errand or something you pointed at: before bed)
+                    if (sent && st.Asleep) Sleep.Wake(st, "you sent it on an errand");
+                    if (!sent && Sleep.Tick(st, (p, dd, run) => MoveTo(st.Ai, dt, p, dd, run), () => st.Ai.StopMoving())) break; // night: in its bed
                     Work.Tick(st, master, dt, (p, dd, run) => MoveTo(st.Ai, dt, p, dd, run), () => st.Ai.StopMoving(), p => LookAt(st.Ai, p));
                     break;
                 case Order.Guard:

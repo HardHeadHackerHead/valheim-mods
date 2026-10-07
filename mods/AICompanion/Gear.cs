@@ -62,7 +62,7 @@ namespace AICompanion
 
         private static bool IsAxe(ItemDrop.ItemData i) => i.m_shared.m_damages.m_chop > 0f && i.m_shared.m_skillType == Skills.SkillType.Axes;
         private static bool IsPick(ItemDrop.ItemData i) => i.m_shared.m_damages.m_pickaxe > 0f;
-        private static bool IsTool(ItemDrop.ItemData i) => IsAxe(i) || IsPick(i);
+        internal static bool IsTool(ItemDrop.ItemData i) => IsAxe(i) || IsPick(i);
 
         public static bool Fits(Slot s, ItemDrop.ItemData i)
         {
@@ -91,14 +91,14 @@ namespace AICompanion
         /// <summary>A gear item at all (something one of the slots takes).</summary>
         public static bool IsGear(ItemDrop.ItemData i) => All.Any(s => Fits(s, i));
 
-        private static float Harm(ItemDrop.ItemData i)
+        internal static float Harm(ItemDrop.ItemData i)
         {
             HitData.DamageTypes d = i.GetDamage();
             return d.m_damage + d.m_blunt + d.m_slash + d.m_pierce + d.m_fire + d.m_frost + d.m_lightning + d.m_poison + d.m_spirit;
         }
 
         /// <summary>How good an item is in that slot (higher is better).</summary>
-        private static float Score(Humanoid h, Slot s, ItemDrop.ItemData i)
+        internal static float Score(Humanoid h, Slot s, ItemDrop.ItemData i)
         {
             switch (s.Kind)
             {

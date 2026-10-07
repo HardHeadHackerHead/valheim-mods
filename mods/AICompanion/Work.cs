@@ -24,7 +24,7 @@ namespace AICompanion
     /// </summary>
     internal static class Work
     {
-        internal enum Kind { None, Hit, Pick, PickUp, Store, Upgrade, Craft, Hunt, Cook, Fetch, Fuel, Mend }
+        internal enum Kind { None, Hit, Pick, PickUp, Store, Upgrade, Craft, Hunt, Cook, Fetch, Fuel, Mend, Armory }
 
         internal class Task
         {
@@ -131,7 +131,7 @@ namespace AICompanion
         /// <summary>Its player's chests at home (not a companion's) it may open (no ward against it), nearest first.</summary>
         internal static IEnumerable<Container> YourChests(Humanoid me, Vector3 center, float radius) =>
             UnityEngine.Object.FindObjectsByType<Container>(FindObjectsSortMode.None)
-                .Where(c => Home.IsChest(c) && Home.IdOn(c) == 0L && !c.IsInUse() && Vector3.Distance(c.transform.position, center) < radius
+                .Where(c => c != null && c.GetInventory() != null && Home.IsChest(c) && Home.IdOn(c) == 0L && !c.IsInUse() && Vector3.Distance(c.transform.position, center) < radius
                             && (!c.m_checkGuardStone || PrivateArea.CheckAccess(c.transform.position, 0f, false)))
                 .OrderBy(c => Vector3.Distance(c.transform.position, me.transform.position));
 
@@ -647,6 +647,16 @@ namespace AICompanion
                     st.Task = null;
                     break;
 
+                case Kind.Armory:
+                    if (dist > 2f) { moveTo(at, 1.2f, dist > 8f); break; }
+                    t.LastClose = Time.time;
+                    stop();
+                    if (Armory.TakeFrom(st, (Container)t.Target, t.Ordered) == null) Skip(st, t.Target, "nothing better in it after all", 5f);
+                    else if (t.Ordered && Armory.Find(me, Center(me), RadiusOf(me) + 20f, null, true) is Container next) { Ordered(st, New(Kind.Armory, next, Job.None), false); break; } // (sent from its menu: the round, now)
+                    else st.NextArmoryLook = 0f; // straight on to the next chest with something better (the shield, the bow...)
+                    st.Task = null;
+                    break;
+
                 case Kind.Hunt:
                     var prey = (Character)t.Target;
                     if (prey != null && prey.IsDead()) Loot.AddSpot(st, prey.transform.position); // its meat and hide, in a moment
@@ -747,6 +757,7 @@ namespace AICompanion
                 Kind.Craft => $"making a {Localization.instance.Localize(t.Recipe?.m_item?.m_itemData.m_shared.m_name ?? "")} at the {Localization.instance.Localize(((CraftingStation)t.Target).m_name)}",
                 Kind.Cook => "cooking",
                 Kind.Fetch => "getting something to eat from your chest",
+                Kind.Armory => "looking in your chest for better gear",
                 Kind.Fuel => "putting wood on the fire",
                 Kind.Mend => "repairing " + Hoverable(t.Target).ToLowerInvariant(),
                 Kind.Hunt => "hunting " + Localization.instance.Localize(((Character)t.Target)?.m_name ?? ""),
@@ -766,7 +777,7 @@ namespace AICompanion
         {
             if (t.Target == null) return false;
             if (t.Kind == Kind.Pick && Companion.Zdo(t.Target)?.GetBool(ZDOVars.s_picked, false) == true) return false;
-            if ((t.Kind == Kind.Store || t.Kind == Kind.Fetch) && ((Container)t.Target).IsInUse()) return false;
+            if ((t.Kind == Kind.Store || t.Kind == Kind.Fetch || t.Kind == Kind.Armory) && ((Container)t.Target).IsInUse()) return false;
             if (t.Kind == Kind.Mend && ((WearNTear)t.Target).GetHealthPercentage() >= 0.999f) return false;
             return true;
         }
@@ -901,8 +912,8 @@ namespace AICompanion
                 }
                 if (Food.Meals(me).Count == 0) Talk.Tell(me, "I'm out of food and there's none in my chests. I'll forage and hunt, but some cooked meat would help.", "nofood", 20f);
             }
-            // Its food slots running low: more from its chests, when they have some it would take.
-            if (!hungry && Gear.FoodLow(me) && Time.time >= st.NextRefillLook)
+            // Its food slots running low (or empty, with meals still in its belly): more from its chests, when they have some it would take.
+            if (Gear.FoodLow(me) && Time.time >= st.NextRefillLook)
             {
                 st.NextRefillLook = Time.time + 120f;
                 Container larder = Home.Chests(me).Where(c => !c.IsInUse() && !Skipped(st, c) && c.GetInventory().GetAllItems().Any(i => Gear.WantsFood(me, i)))
@@ -913,6 +924,15 @@ namespace AICompanion
                     Container yours = YourFood(me, center, radius, c => !Skipped(st, c));
                     if (yours != null) { st.Remember("went to your chest for food for its food slots"); return New(Kind.Fetch, yours, Job.None); }
                 }
+            }
+
+            // Better gear in your chests (Armory): when it gets home and every few minutes there, a look through them; a weapon, armour, shield,
+            // bow, arrows or tool better than its own it takes and wears, and it puts the old one back.
+            if (Time.time >= st.NextArmoryLook)
+            {
+                st.NextArmoryLook = Time.time + 300f;
+                Container better = Armory.Find(me, center, radius, c => !Skipped(st, c));
+                if (better != null) { st.Remember("went to your chest for better gear"); return New(Kind.Armory, better, Job.None); }
             }
 
             // Its fires: the ones under cooking stations and by its bed, topped up before they go out (wood from its bag or its chests).
@@ -1272,7 +1292,7 @@ namespace AICompanion
         /// <summary>A chest of its player's at home (not a companion's) with food in it, that it may open (no ward against it).</summary>
         internal static Container YourFood(Humanoid me, Vector3 center, float radius, Func<Container, bool> allowed = null) =>
             UnityEngine.Object.FindObjectsByType<Container>(FindObjectsSortMode.None)
-                .Where(c => Home.IsChest(c) && Home.IdOn(c) == 0L && !c.IsInUse() && Vector3.Distance(c.transform.position, center) < radius && (allowed == null || allowed(c))
+                .Where(c => c != null && c.GetInventory() != null && Home.IsChest(c) && Home.IdOn(c) == 0L && !c.IsInUse() && Vector3.Distance(c.transform.position, center) < radius && (allowed == null || allowed(c))
                             && c.GetInventory().GetAllItems().Any(Food.IsFood) && (!c.m_checkGuardStone || PrivateArea.CheckAccess(c.transform.position, 0f, false)))
                 .OrderBy(c => Vector3.Distance(c.transform.position, me.transform.position)).Take(6).FirstOrDefault(c => Brain.CanReach(me, c.transform.position));
 
@@ -1282,14 +1302,19 @@ namespace AICompanion
             if (chest == null || chest.IsInUse()) return null;
             var took = new Dictionary<string, int>();
             int left = max;
+            bool slots = max > 5; // (stocking its food slots: a few of each of its three best foods, not ten of one)
             foreach (ItemDrop.ItemData food in chest.GetInventory().GetAllItems().Where(Food.IsFood).OrderByDescending(i => i.m_shared.m_food + i.m_shared.m_foodStamina).ToList())
             {
                 if (left <= 0) break;
-                int n = Mathf.Min(left, food.m_stack);
+                if (slots && !Gear.WantsFood(me, food)) continue;
+                int carried = me.GetInventory().CountItems(food.m_shared.m_name);
+                int n = Mathf.Min(left, food.m_stack, slots ? Mathf.Max(0, 5 - carried) : left);
+                if (n <= 0) continue;
                 string name = Localization.instance.Localize(food.m_shared.m_name);
                 if (!Move(chest, me, food, n, true)) continue;
                 took[name] = (took.TryGetValue(name, out int had) ? had : 0) + n;
                 left -= n;
+                if (slots) Gear.Arrange(me); // (into its food slots, so the next food is weighed against them)
             }
             if (took.Count == 0) return null;
             string list = string.Join(", ", took.Select(kv => $"{kv.Value} {kv.Key.ToLowerInvariant()}"));
@@ -1302,7 +1327,7 @@ namespace AICompanion
         {
             Humanoid me = st.Body;
             bool starving = Food.Meals(me).Count == 0;
-            string list = TakeFoodFrom(me, chest, starving ? 5 : 10);
+            string list = TakeFoodFrom(me, chest, starving ? 5 : 15);
             if (list == null) { Skip(st, chest, "no room for the food", 5f); return; }
             st.Remember($"took {list} from your chest {(starving ? "to eat" : "for its food slots")}");
             if (starving) Talk.Tell(me, $"I had nothing to eat, so I took {list} from your chest. Thanks!");
@@ -1454,6 +1479,7 @@ namespace AICompanion
                 Plugin.Instance?.Note($"{Companion.NameOf(me)} put away {put}, took {took}, took out {tidied} at {(yours ? "your" : "its")} chest {chest.transform.position:F0}");
             }
             if (tidied > 0) { st.NextDeliver = 0f; SortHome(st); } // (straight into your chests, with QualityOfLife; else on its next round)
+            if (yours) Armory.TakeFrom(st, chest); // (and better gear of yours from it, as you pointed it there)
         }
 
         private static bool Wants(Humanoid me, ItemDrop.ItemData item, Job jobs)

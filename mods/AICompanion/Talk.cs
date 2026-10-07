@@ -19,6 +19,14 @@ namespace AICompanion
     {
         private static readonly (string id, string meaning, string[] words, string reply)[] Intents =
         {
+            // errands first (their words are more particular: "repair your gear" is not "your gear")
+            ("e:PutAway", "Put away what it carries into the chests.", new[] { "put away", "put your things away", "store your", "stash", "unload", "empty your bag" }, null),
+            ("e:Restock", "Fill its food slots from the chests.", new[] { "restock", "stock up", "get food", "grab food", "get some food" }, null),
+            ("e:BetterGear", "Look in the chests for better gear and wear it.", new[] { "gear up", "better gear", "new gear", "check gear", "check your gear", "armour up", "armor up", "upgrade your gear" }, null),
+            ("e:RepairGear", "Repair its own gear at a workbench or forge.", new[] { "repair your gear", "fix your gear", "repair your stuff", "fix your stuff", "repair gear" }, null),
+            ("e:RepairBase", "Repair the base with its hammer.", new[] { "repair the base", "fix the base", "repair base", "repair the walls", "fix the walls", "repair" }, null),
+            ("e:Fires", "Feed the fires.", new[] { "feed the fire", "fires", "fuel", "fire" }, null),
+            ("e:Cook", "Cook the raw food it carries.", new[] { "cook" }, null),
             ("follow", "Follow the player and fight beside them (go on an adventure together).", new[] { "follow", "come with", "with me", "let's go", "lets go", "adventure", "join" }, "Right behind you."),
             ("come", "Come to the player right now.", new[] { "come here", "come", "here", "to me", "over here" }, "Coming!"),
             ("stay", "Stay where it is.", new[] { "stay", "wait", "hold", "stop" }, "I'll wait here."),
@@ -71,6 +79,13 @@ namespace AICompanion
         {
             var match = Intents.FirstOrDefault(i => i.id == intent);
             if (intent == null || match.id == null) { Say(c, "Hm? I don't follow."); return; }
+            if (intent.StartsWith("e:") && Enum.TryParse(intent.Substring(2), out Errand errand))
+            {
+                string result = Errands.Run(Brain.Get(c), errand); // (it says what it does, or why not)
+                Brain.Get(c)?.Remember($"you said \"{said}\": {errand}");
+                Plugin.Instance?.Note($"{me.GetPlayerName()} told {Companion.NameOf(c)} \"{said}\" -> errand {errand}: {result}");
+                return;
+            }
             bool ok = true;
             switch (intent)
             {

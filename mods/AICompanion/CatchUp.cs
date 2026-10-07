@@ -282,6 +282,7 @@ namespace AICompanion
             int total = got.Values.Sum();
             int stored = Store(me, got);
             Work.SortHome(st); // (with QualityOfLife: what it carries into your chests by your rules)
+            Armory.CatchUp(st, center, radius); // (better gear from your chests, and its old gear back in them)
             cooked += Kitchen.CookAll(me, center, radius);
 
             Stage = "crafting";

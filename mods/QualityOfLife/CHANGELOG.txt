@@ -1,3 +1,5 @@
+Fix: Sort chests (and Stack to chests) treated a companion's bag as a chest: Sort chests took an AICompanion companion's armour, weapons, tools and food out of its gear slots and put them in your chests. Only built chests and carts take part now.
+
 Looking at a chest now shows what it receives by name ("Receives: Wood, Finewood" and up to three more on the line below, then "+N more") instead of "2 items".
 
 New: a Sort chests button next to Stack to chests (shown when a chest in range is assigned something). Everything in the chests around you goes to the chest assigned it: a chest assigned that item first, then one assigned its category; items already in a chest that wants them stay, and anything no chest is assigned stays where it is. It tells you what had no room left. Only chests take part (never your inventory, a companion's chest, a cart, a ship, or a chest someone has open), and every item is counted before and after.

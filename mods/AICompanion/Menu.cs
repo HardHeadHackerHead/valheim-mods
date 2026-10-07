@@ -504,6 +504,21 @@ namespace AICompanion
             }, _text);
             EndCard();
 
+            if (Commandable && c.GetComponent<ZNetView>().IsOwner())
+            {
+                BeginCard("Errands");
+                Note("One click: it goes and does it now, then carries on with what it was doing (near its home). Or say it in chat: \"" + Companion.NameOf(c) + ", restock\", \"gear up\", \"repair the base\"...", _dim);
+                float w = (Inner - 46f) / 3f;
+                for (int k = 0; k < Errands.All.Length; k += 3)
+                {
+                    GUILayout.BeginHorizontal();
+                    foreach (var e in Errands.All.Skip(k).Take(3))
+                        if (GUILayout.Button(e.Label, _button, GUILayout.Width(w), GUILayout.Height(30))) { Errand pick = e.What; _pending = () => _note = Errands.Run(Brain.Get(_shown), pick) ?? ""; }
+                    GUILayout.EndHorizontal();
+                }
+                EndCard();
+            }
+
             BeginCard("How it fights");
             Style style = Companion.Chosen(c);
             if (GUILayout.Button("Let it decide (recommended)", style == Style.Auto ? _buttonOn : _button, GUILayout.Width(Inner - 34f), GUILayout.Height(34)))
@@ -546,7 +561,7 @@ namespace AICompanion
 
             BeginCard("Talking to it");
             string n = Companion.NameOf(c);
-            Note($"Start a chat message with its name: \"{n}, follow me\", \"{n} go home\", \"{n}, be careful\", \"{n}, get your things\". It answers above its head.", _text);
+            Note($"Start a chat message with its name: \"{n}, follow me\", \"{n} go home\", \"{n}, be careful\", \"{n}, get your things\", and the errands: \"{n}, put away\", \"restock\", \"gear up\", \"repair your gear\", \"repair the base\", \"feed the fires\", \"cook\". It answers above its head.", _text);
             EndCard();
 
             if (Mine)
@@ -598,9 +613,10 @@ namespace AICompanion
 
             BeginCard("Your chests");
             Note("The chests at home that are not a companion's.", _dim);
-            bool stow = Work.Stows(c), pantry = Work.UsesPantry(c);
+            bool stow = Work.Stows(c), pantry = Work.UsesPantry(c), armory = Armory.Allowed(c);
             if (Check("Puts what it gathers into your chests when its own are full (or it has none). It never takes anything out.", stow)) _pending = () => Change(z => z.Set(Work.StowKey, !stow));
             if (Check("Takes food from your chests to keep its food slots filled (food only, never anything else)", pantry)) _pending = () => Change(z => z.Set(Work.PantryKey, !pantry));
+            if (Check("Takes better weapons, armour and tools from your chests and wears them (its old ones go back in the chest)", armory)) _pending = () => Change(z => z.Set(Armory.Key, !armory));
             Note(pantry ? "On: when its food slots run low it takes food from your chests at home (and says what it took). Materials for its gear it only ever takes from its own chests."
                         : "Off: it eats from its own chests, forages, hunts and cooks, and asks you in chat when it runs out. It never takes anything from your chests.", _dim);
             EndCard();

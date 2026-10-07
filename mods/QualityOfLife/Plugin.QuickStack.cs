@@ -113,6 +113,8 @@ namespace QualityOfLife
             {
                 if (c == null || ContainerRegistry.InUse(c)) continue; // (a chest you have open is handled by the game's own button)
                 if (c.GetInventory() == null || (c.transform.position - here).sqrMagnitude > max) continue;
+                // Only built containers (chests, carts): a companion carries a Container for its bag and gear, and Sort chests emptied it
+                if (c.GetComponentInParent<Piece>() == null || c.GetComponent<TombStone>() != null) continue;
                 if (!Usable(c) || CompanionsOwn(c)) continue;
                 _stackChests.Add(c);
             }

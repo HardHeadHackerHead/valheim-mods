@@ -293,6 +293,26 @@ namespace AICompanion
             return n;
         }
 
+        private static bool Scuffed(ItemDrop.ItemData i) => i.m_shared.m_useDurability && i.m_shared.m_canBeReparied && i.GetMaxDurability() > 0f && i.m_durability < i.GetMaxDurability() - 0.5f;
+
+        /// <summary>You sent it from its menu: everything it has that is worn at all, to the nearest station that can fix it. What it says.</summary>
+        public static string Order(BrainState st, out bool going)
+        {
+            Humanoid me = st.Body;
+            going = false;
+            var worn = me.GetInventory().GetAllItems().Where(Scuffed).ToList();
+            if (worn.Count == 0) return "My gear is in good shape.";
+            CraftingStation station = (Stations() ?? new List<CraftingStation>()).Where(s => s != null && Vector3.Distance(s.transform.position, me.transform.position) < 60f && worn.Any(i => CanRepairAt(i, s)))
+                                          .OrderBy(s => Vector3.Distance(s.transform.position, me.transform.position)).FirstOrDefault();
+            if (station == null) return "There's no workbench or forge near that can fix my gear.";
+            st.RepairAt = station;
+            st.RepairSince = Time.time;
+            st.RepairAll = true;
+            st.NextRepairLook = Time.time + 60f;
+            going = true;
+            return $"Taking my gear to the {Localization.instance.Localize(station.m_name).ToLowerInvariant()}.";
+        }
+
         /// <summary>True while it is busy going to a station and repairing (the rest of its peaceful behaviour waits).</summary>
         public static bool Tick(BrainState st, Action<Vector3, float, bool> moveTo, Action stop)
         {
@@ -315,7 +335,9 @@ namespace AICompanion
             if (d > 2.6f) { moveTo(station.transform.position, 1.8f, d > 8f); Brain.Status(st, $"going to the {Localization.instance.Localize(station.m_name)} to repair its gear"); return true; }
             stop();
             var fixedItems = new List<string>();
-            foreach (ItemDrop.ItemData item in me.GetInventory().GetAllItems().Where(Worn).Where(i => CanRepairAt(i, station)))
+            bool everything = st.RepairAll;
+            st.RepairAll = false;
+            foreach (ItemDrop.ItemData item in me.GetInventory().GetAllItems().Where(i => Worn(i) || everything && Scuffed(i)).Where(i => CanRepairAt(i, station)))
             {
                 item.m_durability = item.GetMaxDurability();
                 fixedItems.Add(Localization.instance.Localize(item.m_shared.m_name));
