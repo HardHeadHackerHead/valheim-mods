@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using HarmonyLib;
 using UnityEngine;
 
@@ -56,6 +57,34 @@ namespace AICompanion
     }
 
     // E on a companion opens its menu; the menu's own button opens the gear (for its owner only).
+    /// <summary>
+    /// A companion's bag (its Container) reloads itself from the save whenever the companion's save data changes at all, and the companion
+    /// writes its status, stamina, skills and food there several times a second: its bag was rebuilt from the last save over and over, new
+    /// copies of every item, so wear and repairs in between were lost and what it held in its hands pointed at old copies (it unequipped and
+    /// re-equipped twice a second, which can cut a swing short). On the game running it, its bag in memory is the truth: it reloads once when
+    /// that game takes the companion over (to take in what changed elsewhere), and not again while it keeps it. Other games load as usual.
+    /// </summary>
+    [HarmonyPatch(typeof(Container), "Load")]
+    internal static class Container_Load_Companion
+    {
+        private static readonly AccessTools.FieldRef<Container, uint> LastRevision = AccessTools.FieldRefAccess<Container, uint>("m_lastRevision");
+        private static readonly HashSet<int> Owned = new HashSet<int>(); // companions' bags this game has been running
+
+        private static bool Prefix(Container __instance, ref bool __result)
+        {
+            ZNetView view = __instance.GetComponent<ZNetView>();
+            if (view == null || !view.IsValid() || !Companion.Is(__instance)) return true;
+            int id = __instance.GetInstanceID();
+            if (!view.IsOwner()) { Owned.Remove(id); return true; }        // someone else runs it: take their changes
+            if (Owned.Add(id)) return true;                                 // just took it over: load once
+            LastRevision(__instance) = view.GetZDO().DataRevision;          // ours: memory is the truth
+            __result = false;
+            return false;
+        }
+
+        internal static void Forget() => Owned.Clear();
+    }
+
     [HarmonyPatch(typeof(Container), nameof(Container.Interact))]
     internal static class Container_Interact
     {

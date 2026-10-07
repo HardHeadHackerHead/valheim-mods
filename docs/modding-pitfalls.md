@@ -67,3 +67,12 @@ Since the battle idols arrived, a recipe's `m_resources` also lists items marked
 `Player.HaveRequirementItems`, `ConsumeResources`): at a workbench or forge the idols are left out, at an upgrader station only they count.
 Code that reads `m_resources` directly thinks every recipe needs an idol, so nothing can be made (AICompanion 0.5.0's companion never
 crafted or upgraded). Filter them out as AICompanion's `Upgrades.Needs` does.
+
+## A container reloads whenever anything in its ZDO changes
+
+`Container.Load` (called from `CheckForChanges` every update) rebuilds the inventory from the saved `s_items` whenever the ZDO's
+`DataRevision` differs from the last one it saw, and any `ZDO.Set` on that object bumps the revision, not only the items. An object that
+keeps a Container and also writes other values to its ZDO often (AICompanion's companion: status, stamina, skills several times a
+second) gets its inventory replaced by fresh copies of the last saved items over and over: changes made in place since the last save
+(wear, repairs) are lost, and anything holding a reference to an item (what a Humanoid has equipped) points at an old copy. AICompanion
+skips the reload on the game that owns the companion, after loading once when it takes ownership (`Container_Load_Companion`).

@@ -24,7 +24,7 @@ namespace AICompanion
     {
         public const string Guid = "com.dhack.aicompanion";
         public const string Name = "AICompanion";
-        public const string Version = "0.6.5";
+        public const string Version = "0.6.6";
 
         internal static Plugin Instance;
         internal static ConfigEntry<string> ApiKey, Endpoint, Model;
@@ -119,6 +119,7 @@ namespace AICompanion
             Steer.Forget();
             Activity.Forget();
             Passing.Forget();
+            Container_Load_Companion.Forget();
             _harmony?.UnpatchSelf();
             Prefab.Unregister();
             DestroyMenuResources();
