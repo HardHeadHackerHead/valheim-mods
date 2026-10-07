@@ -15,7 +15,7 @@ namespace AICompanion
     internal static class Keys
     {
         public const string Master = "dhc_master", MasterName = "dhc_mastername", Name = "dhc_name", Order = "dhc_order", Post = "dhc_post",
-            Style = "dhc_style", Retreat = "dhc_retreat", Potions = "dhc_potions", Protect = "dhc_protect", UseJev = "dhc_usejev", Status = "dhc_status";
+            Style = "dhc_style", Retreat = "dhc_retreat", Potions = "dhc_potions", Protect = "dhc_protect", UseJev = "dhc_usejev", Status = "dhc_status", Id = "dhc_id", Kills = "dhc_kills";
     }
 
     internal static class Companion
@@ -37,6 +37,20 @@ namespace AICompanion
         public static ZDO Zdo(Component c) { ZNetView v = c != null ? c.GetComponent<ZNetView>() : null; return v != null && v.IsValid() ? v.GetZDO() : null; }
 
         public static IEnumerable<Humanoid> All() => Character.GetAllCharacters().OfType<Humanoid>().Where(Is);
+
+        /// <summary>Its own lasting id (made by its owner the first time it is asked for).</summary>
+        public static long IdOf(Component c)
+        {
+            ZDO zdo = Zdo(c);
+            if (zdo == null) return 0L;
+            long id = zdo.GetLong(Keys.Id, 0L);
+            if (id == 0L && c.GetComponent<ZNetView>().IsOwner())
+            {
+                id = ((long)Random.Range(1, int.MaxValue) << 31) | (long)Random.Range(1, int.MaxValue);
+                zdo.Set(Keys.Id, id);
+            }
+            return id != 0L ? id : zdo.m_uid.ID;
+        }
 
         public static long MasterId(Component c) => Zdo(c)?.GetLong(Keys.Master, 0L) ?? 0L;
         public static bool IsMine(Component c, Player p) => p != null && MasterId(c) == p.GetPlayerID();
@@ -158,6 +172,7 @@ namespace AICompanion
             c.UnequipAllItems();
             GameObject cratePrefab = ZNetScene.instance.GetPrefab("CargoCrate");
             Container crate = cratePrefab != null ? Object.Instantiate(cratePrefab, c.transform.position + Vector3.up * 0.5f, c.transform.rotation).GetComponent<Container>() : null;
+            if (crate != null) crate.GetComponent<ZNetView>().GetZDO().Set(Net.CrateKey, NameOf(c));
             int moved = 0, dropped = 0;
             foreach (ItemDrop.ItemData item in inv.GetAllItems().ToList())
             {
@@ -177,6 +192,52 @@ namespace AICompanion
         {
             Humanoid h = gear.GetComponent<Humanoid>();
             if (h != null && HumanoidInventory != null) HumanoidInventory.SetValue(h, gear.GetInventory());
+        }
+
+        /// <summary>Its equipment slots, for the Inventory tab (an empty slot has a null item).</summary>
+        public static KeyValuePair<string, ItemDrop.ItemData>[] Slots(Humanoid h) => new[]
+        {
+            new KeyValuePair<string, ItemDrop.ItemData>("Weapon", Right(h)), new KeyValuePair<string, ItemDrop.ItemData>("Shield", Left(h)),
+            new KeyValuePair<string, ItemDrop.ItemData>("Helmet", Helmet(h)), new KeyValuePair<string, ItemDrop.ItemData>("Chest", Chest(h)),
+            new KeyValuePair<string, ItemDrop.ItemData>("Legs", Legs(h)), new KeyValuePair<string, ItemDrop.ItemData>("Cape", Shoulder(h)),
+            new KeyValuePair<string, ItemDrop.ItemData>("Ammo", Ammo(h)),
+        };
+
+        /// <summary>Things worth giving a companion: weapons, armour, shields, arrows and bolts, healing potions.</summary>
+        public static bool Useful(Humanoid h, ItemDrop.ItemData i)
+        {
+            var t = i.m_shared.m_itemType;
+            return IsMelee(i) || IsRanged(i) || t == ItemDrop.ItemData.ItemType.Shield || t == ItemDrop.ItemData.ItemType.Helmet || t == ItemDrop.ItemData.ItemType.Chest
+                || t == ItemDrop.ItemData.ItemType.Legs || t == ItemDrop.ItemData.ItemType.Shoulder || t == ItemDrop.ItemData.ItemType.Ammo
+                || (t == ItemDrop.ItemData.ItemType.Consumable && i.m_shared.m_consumeStatusEffect is SE_Stats se && (se.m_healthOverTime > 0f || se.m_healthUpFront > 0f) && i.m_shared.m_food <= 0f);
+        }
+
+        /// <summary>Move an item from the companion to the player (true if it fit). The companion must be ours and its gear closed.</summary>
+        public static bool Take(Humanoid c, Player p, ItemDrop.ItemData item, out string why)
+        {
+            why = null;
+            if (!Write(c, _ => { })) { why = "Someone has its gear open."; return false; }
+            Inventory mine = p.GetInventory(), its = c.GetInventory();
+            if (!its.ContainsItem(item)) return false;
+            if (!mine.CanAddItem(item)) { why = "Your inventory is full."; return false; }
+            if (c.IsItemEquiped(item)) c.UnequipItem(item, false);
+            item.m_equipped = false;
+            mine.MoveItemToThis(its, item);
+            return true;
+        }
+
+        /// <summary>Move an item from the player to the companion (true if it fit).</summary>
+        public static bool Give(Humanoid c, Player p, ItemDrop.ItemData item, out string why)
+        {
+            why = null;
+            if (!Write(c, _ => { })) { why = "Someone has its gear open."; return false; }
+            Inventory mine = p.GetInventory(), its = c.GetInventory();
+            if (!mine.ContainsItem(item)) return false;
+            if (!its.CanAddItem(item)) { why = $"{NameOf(c)}'s bag is full."; return false; }
+            if (p.IsItemEquiped(item)) p.UnequipItem(item, false);
+            item.m_equipped = false;
+            its.MoveItemToThis(mine, item);
+            return true;
         }
 
         public static IEnumerable<ItemDrop.ItemData> Worn(Humanoid h) =>

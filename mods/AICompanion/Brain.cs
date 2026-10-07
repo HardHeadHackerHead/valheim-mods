@@ -19,6 +19,10 @@ namespace AICompanion
         public bool FromJev;
         public string Note = "";
         public float Time;
+        public bool AskedJev;                                    // for the Debug tab: what was sent and what came back
+        public string Request = "", Response = "", Error = "";
+        public float Ms = -1f;
+        public List<string> Answers = new List<string>();
 
         public string Describe(Func<Character, string> label)
         {
@@ -46,6 +50,7 @@ namespace AICompanion
         public readonly Dictionary<Character, string> Labels = new Dictionary<Character, string>();
         public readonly List<string> History = new List<string>(); // newest first, for the menu
         public bool InCombat, Asking;
+        public int Fights, Potions, JevCalls, BuiltInCalls;     // this session, for the Overview tab
         public float NextEnemyScan, NextGear, NextAsk, LastAsk, HealthAtAsk = 1f;
         public int EnemyCountAtAsk;
         public string Status = "";
@@ -76,12 +81,16 @@ namespace AICompanion
     {
         private static readonly Dictionary<Humanoid, BrainState> States = new Dictionary<Humanoid, BrainState>();
 
-        private static readonly Func<BaseAI, float, Vector3, float, bool, bool> MoveTo = AccessTools.MethodDelegate<Func<BaseAI, float, Vector3, float, bool, bool>>(AccessTools.Method(typeof(BaseAI), "MoveTo"));
+        private static readonly Func<BaseAI, float, Vector3, float, bool, bool> MoveToRaw = AccessTools.MethodDelegate<Func<BaseAI, float, Vector3, float, bool, bool>>(AccessTools.Method(typeof(BaseAI), "MoveTo"));
         private static readonly Action<BaseAI, Vector3> LookAt = AccessTools.MethodDelegate<Action<BaseAI, Vector3>>(AccessTools.Method(typeof(BaseAI), "LookAt"));
         private static readonly Action<BaseAI, float> Regenerate = AccessTools.MethodDelegate<Action<BaseAI, float>>(AccessTools.Method(typeof(BaseAI), "UpdateRegeneration"));
         private static readonly AccessTools.FieldRef<BaseAI, float> TimeSinceHurt = AccessTools.FieldRefAccess<BaseAI, float>("m_timeSinceHurt");
         private static readonly AccessTools.FieldRef<Character, bool> Blocking = AccessTools.FieldRefAccess<Character, bool>("m_blocking");
         private static readonly AccessTools.FieldRef<Humanoid, float> DrawTime = AccessTools.FieldRefAccess<Humanoid, float>("m_attackDrawTime");
+
+        /// <summary>The game's MoveTo, but it only runs while it has the stamina for it.</summary>
+        private static bool MoveTo(BaseAI ai, float dt, Vector3 point, float dist, bool run) =>
+            MoveToRaw(ai, dt, point, dist, run && Stamina.CanRun(ai.GetComponent<Character>()));
 
         public static void Forget()
         {
@@ -107,6 +116,7 @@ namespace AICompanion
             if (view == null || !view.IsValid() || !view.IsOwner()) return false;
             Regenerate(ai, dt);
             TimeSinceHurt(ai) += dt;
+            Stamina.Tick(ai.GetComponent<Humanoid>(), dt);
 
             Humanoid me = ai.GetComponent<Humanoid>();
             BrainState st = Get(me);
@@ -117,6 +127,7 @@ namespace AICompanion
             if (gear != null && gear.IsInUse()) { ai.StopMoving(); Blocking(me) = false; SetStatus(st, "waiting while you sort its gear"); return true; }
 
             if (Time.time >= st.NextEnemyScan) { st.NextEnemyScan = Time.time + 0.25f; ScanEnemies(st, master); }
+            st.Enemies.RemoveAll(e => e == null || e.IsDead()); // killed or gone since the last look (a destroyed one throws on .transform)
 
             if (st.Enemies.Count == 0)
             {
@@ -126,7 +137,7 @@ namespace AICompanion
                 return true;
             }
 
-            if (!st.InCombat) { st.InCombat = true; st.NextAsk = 0f; }
+            if (!st.InCombat) { st.InCombat = true; st.NextAsk = 0f; st.Fights++; }
             MaybeDecide(st, master);
             Fight(st, master, dt);
             return true;
@@ -160,7 +171,7 @@ namespace AICompanion
             }
         }
 
-        private static void TeleportBehind(Humanoid me, Player master)
+        internal static void TeleportBehind(Humanoid me, Player master)
         {
             Vector3 pos = master.transform.position - master.transform.forward * 2.5f;
             if (ZoneSystem.instance != null && ZoneSystem.instance.GetSolidHeight(pos, out float h)) pos.y = Mathf.Max(pos.y, h);
@@ -224,8 +235,15 @@ namespace AICompanion
             d.Time = Time.time;
             bool changed = d.Action != st.Current.Action || d.Target != st.Current.Target || d.Ranged != st.Current.Ranged;
             st.Current = d;
-            if (d.Drink && Companion.Drink(st.Body)) st.Remember("drank a healing potion");
+            if (d.Drink && Companion.Drink(st.Body)) { st.Remember("drank a healing potion"); st.Potions++; }
             string line = d.Describe(st.Label);
+            if (d.FromJev) st.JevCalls++; else st.BuiltInCalls++;
+            DebugLog.Add(new DecisionRecord
+            {
+                When = DateTime.Now, Companion = Companion.NameOf(st.Body), Outcome = line, Note = d.Note, FromJev = d.FromJev, AskedJev = d.AskedJev,
+                Confidence = d.Confidence, Ms = d.Ms, Error = d.Error, Request = d.Request, Response = d.Response, Answers = d.Answers,
+                Enemies = string.Join(", ", st.Enemies.Where(e => e != null).Select(st.Label)),
+            });
             if (changed || d.Drink) st.Remember(line + (string.IsNullOrEmpty(d.Note) ? "" : "  (" + d.Note + ")"));
             SetStatus(st, line);
             if (changed && Plugin.ShowDecisions.Value && Chat.instance != null)
@@ -245,6 +263,8 @@ namespace AICompanion
             if (style == Style.Passive) { d.Action = health < retreat ? Tactic.Flee : Tactic.Retreat; return d; }
             if (health < retreat * 0.5f) { d.Action = Tactic.Flee; d.Note = "nearly dead"; return d; }
             if (health < retreat) { d.Action = Tactic.Retreat; d.Note = "hurt"; return d; }
+            if (Stamina.Get(me) < Stamina.Max(me) * 0.15f && nearest != null && Vector3.Distance(nearest.transform.position, me.transform.position) < 6f)
+            { d.Action = Tactic.BackOff; d.Note = "out of breath"; return d; }
             Character onMaster = master != null && Companion.Protect(me) ? st.Enemies.FirstOrDefault(e => e.GetBaseAI() is MonsterAI m && m.GetTargetCreature() == master) : null;
             d.Action = Tactic.Attack;
             d.Target = onMaster ?? nearest;
@@ -303,6 +323,12 @@ namespace AICompanion
 
             st.Ai.StopMoving();
             LookAt(st.Ai, aim);
+            float cost = weapon?.m_shared.m_attack?.m_attackStamina ?? 0f;
+            if (!me.InAttack() && cost > 0f && Stamina.Get(me) < cost + 0.1f)
+            {
+                Guarded(st, target, me.transform.position + (me.transform.position - target.transform.position).normalized * 3f, false, dt);
+                return;
+            }
             if (me.InAttack() || !st.Ai.IsLookingAt(aim, ranged ? 6f : 25f)) return;
             if (me.GetTimeSinceLastAttack() < (ranged ? 1.6f : 0.35f)) return;
             if (ranged) DrawTime(me) = 10f; // a full draw: the AI has no hold-the-button, and an undrawn bow does no damage

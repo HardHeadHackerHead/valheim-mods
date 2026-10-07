@@ -123,10 +123,10 @@ namespace PartyHud
                 y = Mathf.Max(y, ship.yMax + 10f);
 
             // Small header so the panel reads as one thing.
-            Text(new Rect(x + 2f, y, PanelWidth, 16f), $"PARTY  ·  {_members.Count}", _headerStyle, new Color(Gold.r, Gold.g, Gold.b, 0.75f));
+            Text(new Rect(x + 2f, y, PanelWidth, 16f), $"PARTY  ·  {_members.Count(m => !m.Companion)}", _headerStyle, new Color(Gold.r, Gold.g, Gold.b, 0.75f));
             y += 18f;
 
-            foreach (Member m in _members) y += DrawMember(m, x, y) + 7f;
+            foreach (Member m in _members) y += m.Companion ? DrawCompanion(m, x, y) + 5f : DrawMember(m, x, y) + 7f;
             GUI.matrix = previousMatrix; // leave the drawing scale as we found it, for whatever draws after us
         }
 
@@ -284,6 +284,77 @@ namespace PartyHud
                 }
             }
 
+            GUI.color = Color.white;
+            return height;
+        }
+
+        private static readonly Color CompanionColor = new Color(0.36f, 0.62f, 0.56f);
+
+        /// <summary>
+        /// A companion's row (AICompanion mod): smaller and indented under its owner, joined to it by a thin line. Its picture is its initial,
+        /// then its name, how far away it is and which way, its health, and what it is doing (or that it has fallen).
+        /// </summary>
+        private float DrawCompanion(Member m, float x, float y)
+        {
+            bool compact = _compact.Value;
+            float indent = compact ? 14f : 20f, w = PanelWidth - indent, height = compact ? 30f : 48f;
+            float px = x + indent;
+            bool dead = m.MaxHp <= 0f || m.Hp <= 0.5f;
+            float hpFrac = m.MaxHp > 0f ? Mathf.Clamp01(m.Hp / m.MaxHp) : 0f;
+            float stFrac = m.MaxSt > 0f ? Mathf.Clamp01(m.St / m.MaxSt) : 0f;
+            Anim a = Animate(m.Id, hpFrac, stFrac, 0f);
+            GUI.color = new Color(1f, 1f, 1f, a.Alpha);
+
+            Color line = new Color(0.55f, 0.45f, 0.25f, 0.7f);
+            float lx = x + indent * 0.45f;
+            Rounded(new Rect(lx, y - 6f, 2f, height / 2f + 7f), line, 1f);
+            Rounded(new Rect(lx, y + height / 2f - 1f, px - lx, 2f), line, 1f);
+
+            var panel = new Rect(px, y, w, height);
+            Rounded(new Rect(px + 2f, y + 3f, w, height), new Color(0f, 0f, 0f, 0.3f), PanelRadius);
+            Rounded(panel, new Color(0.05f, 0.06f, 0.055f, Mathf.Clamp(_opacity.Value, 0.2f, 1f)), PanelRadius);
+            Color edge = dead ? new Color(0.4f, 0.4f, 0.4f, 0.8f) : new Color(CompanionColor.r, CompanionColor.g, CompanionColor.b, 0.85f);
+            bool low = !dead && hpFrac < 0.25f;
+            if (low) edge = Color.Lerp(edge, new Color(1f, 0.25f, 0.2f, 1f), 0.5f + 0.5f * Mathf.Sin(Time.unscaledTime * 6f));
+            RoundedOutline(panel, edge, PanelRadius);
+
+            float pic = compact ? 18f : 28f;
+            var portrait = new Rect(px + 5f, y + (height - pic) / 2f, pic, pic);
+            Rounded(portrait, dead ? new Color(0.25f, 0.25f, 0.25f) : CompanionColor * 0.8f, 4f);
+            Text(portrait, string.IsNullOrEmpty(m.Name) ? "?" : m.Name.Substring(0, 1).ToUpperInvariant(), compact ? _nameCompactStyle : _nameStyle, Color.white);
+            RoundedOutline(portrait, new Color(0f, 0f, 0f, 0.85f), 4f);
+
+            float bx = portrait.xMax + 6f, bw = px + w - 7f - bx;
+            Text(new Rect(bx, y + 2f, bw - 58f, compact ? 13f : 15f), m.Name ?? "?", compact ? _nameCompactStyle : _nameStyle, dead ? Dim : new Color(0.8f, 0.95f, 0.9f));
+            if (_showDistance.Value && m.Distance >= 0f)
+            {
+                Text(new Rect(bx, y + 2f, bw, compact ? 13f : 15f), $"{m.Distance:0} m", _distanceStyle, Dim);
+                float? bearing = _showArrow.Value ? BearingTo(m) : null;
+                if (bearing.HasValue) Arrow(new Rect(bx + bw - 50f, y + 2f, 14f, compact ? 13f : 15f), bearing.Value, new Color(0.75f, 0.95f, 0.85f));
+            }
+            Rect hp = compact ? new Rect(bx, y + 16f, bw, 7f) : new Rect(bx, y + 18f, bw, 11f);
+            Bar(hp, a.Health, a.Trail, dead ? new Color(0.3f, 0.3f, 0.3f) : HealthColor, compact ? null : (dead ? "FALLEN" : $"{Mathf.CeilToInt(m.Hp)} / {Mathf.CeilToInt(m.MaxHp)}"), Color.white);
+            if (m.MaxSt > 0f) Bar(compact ? new Rect(bx, y + 24f, bw, 4f) : new Rect(bx, y + 31f, bw, 5f), a.Stamina, a.Stamina, dead ? new Color(0.3f, 0.3f, 0.3f) : StaminaColor, null, Color.white);
+
+            // Its buffs (a boss power, meads...) as small icons on the right of the status line.
+            float iconsWidth = 0f;
+            if (_showEffects.Value && !dead && m.Effects.Count > 0)
+            {
+                float size = compact ? 10f : 12f;
+                int n = Mathf.Min(m.Effects.Count, 6);
+                iconsWidth = n * (size + 2f);
+                for (int i = 0; i < n; i++)
+                {
+                    Effect fx = m.Effects[i];
+                    if (fx.Icon == null || fx.Icon.texture == null) continue;
+                    var icon = compact ? new Rect(px + w - 6f - (i + 1) * (size + 2f), y + 2f, size, size) : new Rect(px + w - 6f - (i + 1) * (size + 2f), y + 36f, size, size);
+                    Texture2D tex = fx.Icon.texture;
+                    Rect sr = fx.Icon.textureRect;
+                    GUI.DrawTextureWithTexCoords(icon, tex, new Rect(sr.x / tex.width, sr.y / tex.height, sr.width / tex.width, sr.height / tex.height));
+                }
+            }
+            if (!compact && !string.IsNullOrEmpty(m.Status))
+                Text(new Rect(bx, y + 35f, bw - iconsWidth, 12f), dead ? "fallen: gear in a crate (skull on the map)" : m.Status, _headerStyle, Dim);
             GUI.color = Color.white;
             return height;
         }

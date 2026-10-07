@@ -17,15 +17,18 @@ namespace PartyHud
     ///
     /// Split across files: Plugin.cs (setup + who to show), Plugin.Net.cs (messages), Plugin.Draw.cs (the panel),
     /// SteamAvatars.cs (profile pictures).
+    ///
+    /// With the AICompanion mod installed, each player's companions are shown under them (read from AppDomain data "DHack.Companions",
+    /// which that mod fills; no reference between the two, and nothing changes without it).
     /// </summary>
     [BepInPlugin(Guid, Name, Version)]
     public partial class Plugin : BaseUnityPlugin
     {
         public const string Guid = "com.dhack.partyhud";
         public const string Name = "PartyHud";
-        public const string Version = "1.6.0";
+        public const string Version = "1.7.0";
 
-        private ConfigEntry<bool> _enabled, _showSelf, _showPortraits, _showDistance, _hideInMenus, _avoidShipHud, _compact, _onLeft, _showArrow, _showEffects, _showFood;
+        private ConfigEntry<bool> _enabled, _showSelf, _showPortraits, _showDistance, _hideInMenus, _avoidShipHud, _compact, _onLeft, _showArrow, _showEffects, _showFood, _showCompanions;
         private ConfigEntry<float> _offsetX, _offsetY, _scale, _opacity;
         private ConfigEntry<int> _maxRows;
         private ConfigEntry<KeyboardShortcut> _toggleKey;
@@ -48,6 +51,8 @@ namespace PartyHud
             public List<Effect> Effects = new List<Effect>();
             public List<FoodSlot> Foods = new List<FoodSlot>();
             public bool FoodKnown; // we know what they are eating (so empty slots mean "nothing")
+            public bool Companion; // an AICompanion companion, shown under its owner
+            public string Status;  // what the companion is doing
         }
 
         private List<Member> _members = new List<Member>();
@@ -74,6 +79,7 @@ namespace PartyHud
             _showArrow = Config.Bind("General", "ShowDirectionArrow", true, "Next to each player's distance, an arrow pointing the way they are, relative to where you are looking.");
             _showFood = Config.Bind("General", "ShowFood", true, "Show three food slots under each player's picture: what they are eating and how long it has left. Only for players who also have this mod.");
             _showEffects = Config.Bind("General", "ShowStatusEffects", true, "Show each player's buffs and debuffs (food, rested, wet, poison...) as small icons under their bars. Only for players who also have this mod.");
+            _showCompanions = Config.Bind("General", "ShowCompanions", true, "With the AICompanion mod: show each player's companion under them (health, distance, what it is doing).");
             _opacity = Config.Bind("Layout", "Opacity", 0.85f, "How solid the panel background is (0.2 to 1).");
 
             _awakeFrame = Time.frameCount;
@@ -184,10 +190,41 @@ namespace PartyHud
 
             list.AddRange(others.OrderBy(o => o.Name, StringComparer.OrdinalIgnoreCase));
             _members = list.Take(Mathf.Max(1, _maxRows.Value)).ToList();
+            if (_showCompanions.Value) AddCompanions(me);
 
             // Forget people who left a while ago.
             foreach (long gone in _remote.Where(kv => Time.time - kv.Value.Seen > 60f && others.All(o => o.Id != kv.Key)).Select(kv => kv.Key).ToList())
                 _remote.Remove(gone);
+        }
+
+        /// <summary>
+        /// The AICompanion mod's companions, each placed under its owner's row: "id|name|owner|hp|maxhp|x|y|z|status[|stamina|maxstamina|effects]" per line, from a
+        /// function that mod puts in AppDomain data. Nothing happens without that mod.
+        /// </summary>
+        private void AddCompanions(Player me)
+        {
+            if (!(AppDomain.CurrentDomain.GetData("DHack.Companions") is Func<string> source)) return;
+            string text;
+            try { text = source(); } catch (Exception) { return; }
+            if (string.IsNullOrEmpty(text)) return;
+            foreach (string line in text.Split('\n'))
+            {
+                string[] f = line.Split('|');
+                if (f.Length < 9 || !long.TryParse(f[0], NumberStyles.Integer, CultureInfo.InvariantCulture, out long id)) continue;
+                int owner = _members.FindIndex(x => !x.Companion && x.Name == f[2]);
+                if (owner < 0) continue; // its owner is not in the panel
+                int at = owner + 1;
+                while (at < _members.Count && _members[at].Companion) at++;
+                var pos = new Vector3(ParseFloat(f[5]), ParseFloat(f[6]), ParseFloat(f[7]));
+                _members.Insert(at, new Member
+                {
+                    Id = id, Name = f[1], Companion = true, HasData = true, Status = f[8],
+                    Hp = ParseFloat(f[3]), MaxHp = ParseFloat(f[4]),
+                    St = f.Length > 10 ? ParseFloat(f[9]) : 0f, MaxSt = f.Length > 10 ? ParseFloat(f[10]) : 0f,
+                    Effects = f.Length > 11 ? ToEffects(ParseEffects(f[11]), 0f) : new List<Effect>(),
+                    Pos = pos, HasPos = true, Distance = Vector3.Distance(me.transform.position, pos),
+                });
+            }
         }
 
         private static float ParseFloat(string s) =>

@@ -32,7 +32,7 @@ namespace AICompanion
                 MethodInfo register = found.GetType().GetMethod("RegisterCommand", BindingFlags.Public | BindingFlags.Static);
                 if (register == null) return;
                 register.Invoke(null, new object[] { Name, "companion",
-                    "companion status | summon [name] | order <follow|stay|guard> | style <aggressive|balanced|defensive|passive> | jevtest | decide | send-home: your companion (JSON)",
+                    "companion status | summon [name] | order <follow|stay|guard> | style <aggressive|balanced|defensive|passive> | jevtest | decide | menu [overview|orders|inventory|brain|debug|close] | send-home: your companion (JSON)",
                     (Func<string[], Action<JObject>, Action<string>, IEnumerator>)CmdCompanion });
                 Logger.LogInfo("Claude Tools found: companion command added");
             }
@@ -85,6 +85,12 @@ namespace AICompanion
                     Decision got = null;
                     yield return Jev.Decide(st, Companion.Master(c), Brain.BuiltIn(st, Companion.Master(c)), d => got = d);
                     output(new JObject { ["decision"] = got?.Describe(st.Label), ["note"] = got?.Note, ["ms"] = Mathf.RoundToInt(Jev.LastMs) });
+                    yield break;
+                case "menu":
+                    if (args.Length > 1 && args[1].ToLowerInvariant() == "close") { CloseMenu(); output(new JObject { ["menu"] = "closed" }); yield break; }
+                    OpenMenuFor(p, c);
+                    if (args.Length > 1 && Enum.TryParse(args[1], true, out Tab tab)) _tab = tab;
+                    output(new JObject { ["menu"] = _tab.ToString() });
                     yield break;
                 case "send-home":
                     if (!Companion.Dismiss(c, out string why)) { error(why); yield break; }

@@ -31,7 +31,7 @@ namespace AICompanion
         {
             ["attack"] = "Fight the chosen target with the current weapon.",
             ["defend_player"] = "Stay by the player and hit whatever is attacking them.",
-            ["back_off"] = "Shield up and step back from the nearest enemy, to recover or avoid a big hit, then fight on.",
+            ["back_off"] = "Shield up and step back from the nearest enemy, to get stamina back or avoid a big hit, then fight on. Swinging, blocking and running cost stamina; with none it cannot attack and its guard breaks.",
             ["retreat_to_player"] = "Fall back to the player's side with the shield up.",
             ["flee"] = "Run away from the fight. Only when about to die or hopelessly outmatched.",
         };
@@ -57,11 +57,13 @@ namespace AICompanion
                 {
                     ["health_pct"] = Pct(me.GetHealthPercentage()),
                     ["max_health"] = Mathf.RoundToInt(me.GetMaxHealth()),
+                    ["stamina_pct"] = Pct(Stamina.Get(me) / Mathf.Max(1f, Stamina.Max(me))),
                     ["armor"] = Mathf.RoundToInt(Companion.Armor(me)),
                     ["melee_weapon"] = melee != null ? $"{Loc(melee)} ({Mathf.RoundToInt(melee.GetDamage().GetTotalDamage())} damage)" : "none (fists)",
                     ["bow"] = ranged != null ? $"{Loc(ranged)} with {me.GetInventory().CountItems(me.GetInventory().GetAmmoItem(ranged.m_shared.m_ammoType).m_shared.m_name)} arrows" : "none",
                     ["has_shield"] = Companion.Shield(me) != null,
                     ["healing_potions"] = potions,
+                    ["effects"] = new JArray(me.GetSEMan().GetStatusEffects().Where(se => se != null && se.m_icon != null).Select(se => Localization.instance.Localize(se.m_name))),
                     ["doing_now"] = st.Current.Describe(st.Label),
                 },
                 ["player"] = master == null ? (JToken)"not here" : new JObject
@@ -106,18 +108,23 @@ namespace AICompanion
             float started = Time.realtimeSinceStartup;
             yield return Post(body, j => answer = j, e => error = e);
             LastMs = (Time.realtimeSinceStartup - started) * 1000f;
+            string sent = body.ToString(Newtonsoft.Json.Formatting.Indented);
+            fallback.AskedJev = true; fallback.Request = sent; fallback.Ms = LastMs;
 
             if (answer == null)
             {
                 Failed(error);
                 fallback.Note = "Jev: " + error;
+                fallback.Error = error ?? "unknown error";
                 done(fallback);
                 yield break;
             }
             Succeeded(answer);
 
-            var d = new Decision { FromJev = true, Ranged = fallback.Ranged, Target = fallback.Target };
             JObject answers = answer["answers"] as JObject;
+            var d = new Decision { FromJev = true, Ranged = fallback.Ranged, Target = fallback.Target, AskedJev = true, Request = sent, Ms = LastMs,
+                Response = answer.ToString(Newtonsoft.Json.Formatting.Indented), Answers = DebugLog.Describe(answers) };
+            fallback.Response = d.Response; fallback.Answers = d.Answers;
             JObject act = answers?["action"] as JObject;
             string choice = (string)act?["choice"] ?? "";
             d.Confidence = (float?)act?["confidence"] ?? 0f;

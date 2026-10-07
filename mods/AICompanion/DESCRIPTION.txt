@@ -5,6 +5,10 @@ A viking companion who follows you and fights beside you, with an AI deciding ho
 - In a fight it asks Jev (TypeSafe's decision model) about once a second: attack whom, defend you, back off, fall back to you, flee, bow or melee, drink a potion. Paste your Jev API key (console.typesafe.ai) in its menu. It costs about 12 cents an hour of fighting.
 - No key, no internet, or Jev unsure: a built-in brain decides, so it never stands idle.
 - Its menu: health and what it is doing, orders (follow, stay, guard a spot), fighting style (aggressive, balanced, defensive, passive), when to fall back, potions, its last decisions and how sure Jev was.
+- It has stamina like you: swings, blocks and running cost it, and with none it cannot swing or run and its guard breaks.
+- Your boss power (Forsaken power) reaches it too when it is within 10 m of you.
 - Give it weapons, armour, arrows and healing potions (Open its inventory): it wears the best and its armour protects it.
-- If it falls, its gear goes into a crate where it fell; summon it again with J.
+- If it falls, its gear goes into a crate where it fell, marked with a skull on the map of everyone with the mod (until the crate is emptied); summon it again with J.
+- It shows on the minimap and the big map (a teal player icon with its name), for everyone with the mod.
+- With PartyHud, your companion shows in the party panel under you: health, distance, direction and what it is doing.
 - Multiplayer: it belongs to whoever summoned it, and its brain runs on their game. Everyone in the world needs the mod (the host too), or the game deletes saved companions.

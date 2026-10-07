@@ -24,12 +24,12 @@ namespace AICompanion
     {
         public const string Guid = "com.dhack.aicompanion";
         public const string Name = "AICompanion";
-        public const string Version = "0.1.0";
+        public const string Version = "0.2.0";
 
         internal static Plugin Instance;
         internal static ConfigEntry<string> ApiKey, Endpoint, Model;
-        internal static ConfigEntry<bool> UseJev, ShowDecisions;
-        internal static ConfigEntry<float> DecisionSeconds, MinConfidence, Timeout, PricePerMillion, Health, EngageRange;
+        internal static ConfigEntry<bool> UseJev, ShowDecisions, LogToFile;
+        internal static ConfigEntry<float> DecisionSeconds, MinConfidence, Timeout, PricePerMillion, Health, EngageRange, MaxStamina;
         internal static ConfigEntry<KeyboardShortcut> MenuKey;
 
         private Harmony _harmony;
@@ -40,6 +40,7 @@ namespace AICompanion
             MenuKey = Config.Bind("General", "MenuKey", new KeyboardShortcut(KeyCode.J),
                 "Opens your companion's menu (or, if you have none here, the menu to summon one). E on the companion opens it too.");
             Health = Config.Bind("Companion", "Health", 150f, new ConfigDescription("The companion's health. Its armour (what you give it to wear) protects it like a player's.", new AcceptableValueRange<float>(25f, 2000f)));
+            MaxStamina = Config.Bind("Companion", "Stamina", 100f, new ConfigDescription("The companion's stamina. Swings and blocks cost what they cost you, running drains it, and it comes back when it rests a moment.", new AcceptableValueRange<float>(25f, 500f)));
             EngageRange = Config.Bind("Companion", "EngageRange", 20f, new ConfigDescription("Enemies this close to the companion or to you (metres) start a fight.", new AcceptableValueRange<float>(5f, 50f)));
             ShowDecisions = Config.Bind("Companion", "ShowDecisions", true, "Show what the companion decided above its head (e.g. \"attack Greyling, Jev 87%\").");
 
@@ -50,11 +51,13 @@ namespace AICompanion
             DecisionSeconds = Config.Bind("Jev", "DecisionSeconds", 1.5f, new ConfigDescription("How often to ask Jev during a fight (it is also asked at once when something big happens).", new AcceptableValueRange<float>(0.5f, 10f)));
             MinConfidence = Config.Bind("Jev", "MinConfidence", 0.3f, new ConfigDescription("If Jev is less sure than this about what to do, the built-in brain decides that round.", new AcceptableValueRange<float>(0f, 1f)));
             Timeout = Config.Bind("Jev", "TimeoutSeconds", 4f, new ConfigDescription("Give up on an answer after this long (the companion keeps doing what it was doing meanwhile).", new AcceptableValueRange<float>(1f, 20f)));
+            LogToFile = Config.Bind("Jev", "LogToFile", false, "Write every Jev request and answer to BepInEx/AICompanion/jev-decisions.jsonl (one line each), for tuning the questions.");
             PricePerMillion = Config.Bind("Jev", "PricePerMillionTokens", 0.042f, "For the cost shown in the menu: Jev's price per million input tokens, in US dollars (output is free).");
 
             _harmony = new Harmony(Guid);
             _harmony.PatchAll();
             if (ZNetScene.instance != null) Prefab.Register(ZNetScene.instance); // hot reload while in a world
+            Net.Start();
 
             Logger.LogInfo($"{Name} {Version} loaded (menu: {MenuKey.Value}, Jev key {(string.IsNullOrEmpty(ApiKey.Value) ? "not set" : "set")})");
             if (Player.m_localPlayer != null && Chat.instance != null)
@@ -65,7 +68,9 @@ namespace AICompanion
         {
             CloseMenu();
             UnregisterClaudeCommands();
+            Net.Stop();
             Brain.Forget();
+            Stamina.Forget();
             _harmony?.UnpatchSelf();
             Prefab.Unregister();
             DestroyMenuResources();
@@ -76,6 +81,7 @@ namespace AICompanion
         {
             UpdateClaudeLink();
             Player player = Player.m_localPlayer;
+            Net.Update(player);
             if (player == null) { if (MenuOpen) CloseMenu(); return; }
             Companion.KeepOwnership(player);
             UpdateMenu(player);

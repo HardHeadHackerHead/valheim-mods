@@ -106,22 +106,51 @@ namespace AICompanion
         }
     }
 
-    // It falls: its gear goes into a crate where it stood.
+    // It falls: its gear goes into a crate where it stood. (And a kill of its own is counted, on the game that runs it.)
     [HarmonyPatch(typeof(Character), nameof(Character.OnDeath))]
     internal static class Character_OnDeath
     {
+        private static readonly AccessTools.FieldRef<Character, HitData> LastHit = AccessTools.FieldRefAccess<Character, HitData>("m_lastHit");
+
         private static void Prefix(Character __instance)
         {
+            Character killer = LastHit(__instance)?.GetAttacker();
+            if (killer != null && killer != __instance && Companion.Is(killer) && killer.GetComponent<ZNetView>().IsOwner())
+            {
+                ZDO z = Companion.Zdo(killer);
+                z.Set(Keys.Kills, z.GetInt(Keys.Kills, 0) + 1);
+                Brain.Get(killer as Humanoid)?.Remember("killed " + Localization.instance.Localize(__instance.m_name));
+            }
             if (!(__instance is Humanoid h) || !Companion.Is(h)) return;
             ZNetView view = h.GetComponent<ZNetView>();
             if (!view.IsOwner()) return;
             try
             {
+                Plugin.Instance?.Note($"{Companion.NameOf(h)} fell at {h.transform.position:F0} (killed by {LastHit(h)?.GetAttacker()?.m_name ?? "?"}, carrying {h.GetInventory().NrOfItems()} item stacks)");
                 Companion.DropGear(h);
+                Net.AnnounceFall(h, h.transform.position);
                 Player master = Companion.Master(h);
-                if (master == Player.m_localPlayer) Plugin.Tell($"{Companion.NameOf(h)} has fallen. Their gear is in a crate where they fell. Press {Plugin.MenuKey.Value} to summon them again.");
+                if (master == Player.m_localPlayer) Plugin.Tell($"{Companion.NameOf(h)} has fallen. Their gear is in a crate where they fell (the skull on your map). Press {Plugin.MenuKey.Value} to summon them again.");
             }
             catch (System.Exception e) { Plugin.Instance?.Warn("Could not put the fallen companion's gear in a crate: " + e); }
+        }
+    }
+
+    // The map draws every pin white each frame: give companions' pins their own colour, so they are not taken for players.
+    [HarmonyPatch(typeof(Minimap), "UpdatePins")]
+    internal static class Minimap_UpdatePins
+    {
+        private static readonly AccessTools.FieldRef<Minimap, System.Collections.Generic.List<Minimap.PinData>> Pins =
+            AccessTools.FieldRefAccess<Minimap, System.Collections.Generic.List<Minimap.PinData>>("m_pins");
+
+        private static void Postfix(Minimap __instance)
+        {
+            foreach (Minimap.PinData pin in Pins(__instance))
+            {
+                if (pin.m_iconElement == null || !Net.IsLivePin(pin)) continue;
+                pin.m_iconElement.color = Net.PinColor;
+                if (pin.m_NamePinData != null && pin.m_NamePinData.PinNameText != null) pin.m_NamePinData.PinNameText.color = Net.PinColor;
+            }
         }
     }
 
