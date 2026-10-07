@@ -1,0 +1,1 @@
+First version: summon a companion (J), give it gear, and it follows you and fights beside you. Jev (with your API key) decides its tactics in a fight; a built-in brain does without one.

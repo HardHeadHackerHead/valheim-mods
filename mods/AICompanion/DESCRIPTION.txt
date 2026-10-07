@@ -1,0 +1,10 @@
+A viking companion who follows you and fights beside you, with an AI deciding how it fights.
+
+- Press J to summon your companion (or open its menu); E on it opens the menu too.
+- The mod does the fighting itself: moving, swinging, blocking and shooting at full speed with the game's own animations.
+- In a fight it asks Jev (TypeSafe's decision model) about once a second: attack whom, defend you, back off, fall back to you, flee, bow or melee, drink a potion. Paste your Jev API key (console.typesafe.ai) in its menu. It costs about 12 cents an hour of fighting.
+- No key, no internet, or Jev unsure: a built-in brain decides, so it never stands idle.
+- Its menu: health and what it is doing, orders (follow, stay, guard a spot), fighting style (aggressive, balanced, defensive, passive), when to fall back, potions, its last decisions and how sure Jev was.
+- Give it weapons, armour, arrows and healing potions (Open its inventory): it wears the best and its armour protects it.
+- If it falls, its gear goes into a crate where it fell; summon it again with J.
+- Multiplayer: it belongs to whoever summoned it, and its brain runs on their game. Everyone in the world needs the mod (the host too), or the game deletes saved companions.
