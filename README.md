@@ -62,7 +62,7 @@ Every player installs the mods they want for themselves. A few need more than th
 | Mod | Who needs it |
 |---|---|
 | **AICompanion** | Everyone in the world, **the host too**: without it the game deletes saved companions. |
-| **Recycler, BountyBoard, SlotMachine, BirdTrap** (new build pieces) | Everyone, and **the host above all**: a game without the mod deletes the pieces when their area loads. Restart after installing or updating them. |
+| **Recycler, BountyBoard, SlotMachine, BirdTrap, LedgerChest** (new build pieces) | Everyone, and **the host above all**: a game without the mod deletes the pieces when their area loads. Restart after installing or updating them. |
 | **PortalHub, BountyBoard** | The host (it keeps the portal links and the contracts), and everyone who wants their menus. |
 | Everything else | Only the players who want it. |
 
@@ -121,7 +121,7 @@ Feed smelters, kilns, cooking racks, fires and fermenters straight from your che
 ### 🎒 QualityOfLife
 <img src="dist/QualityOfLife.cover.png" alt="QualityOfLife" width="100%">
 
-Quick gear sets on **Q**, hammer on **B**, a **Sort** button that joins stacks, **Stack to chests** with undo, chest assignment on **K** (look at a chest to see what it receives), **Sort chests** to send everything in the chests around you to the chest assigned it, item locks on **L**, and tap **P** next to a boat to push it.
+Quick gear sets on **Q**, hammer on **B**, a **Sort** button that joins stacks, **Stack to chests** with undo, chest assignment on **K** (look at a chest to see what it receives), **Sort chests** to send everything in the chests around you to the chest assigned it, item locks on **L**, your ships on the map with their own icon, and tap **P** next to a boat to push it.
 
 </td>
 </tr>
@@ -217,6 +217,21 @@ baited trap has its bird. A few traps keep you in arrow feathers.
 
 </td>
 </tr>
+<tr>
+<td valign="top">
+
+### 📒 LedgerChest
+<img src="dist/LedgerChest.cover.png" alt="LedgerChest" width="100%">
+
+A chest you build that shows everything in every chest within 30 m, in the game's own chest window: search it, pick a category button
+(Wood, Ores & metals, Food, Weapons...), and click to take what you need from wherever it is. It keeps nothing itself: drop things on it and
+each goes on to the chest assigned it (QualityOfLife's **K**), else to a chest with nothing assigned.
+
+</td>
+<td valign="top">
+
+</td>
+</tr>
 </table>
 
 ## ⌨️ Keys at a glance
@@ -230,6 +245,7 @@ baited trap has its bird. A few traps keep you in arrow feathers.
 | **Q** | QualityOfLife | Build a quick set (inventory open) / swap to it and back |
 | **B** | QualityOfLife | Jump into construction mode with your hammer, and back |
 | **K** / **L** | QualityOfLife | Assign what a chest receives / lock an item |
+| **E** at a Ledger Chest | LedgerChest | See and search everything in the chests around it; click to take, Shift-click to choose how many |
 | **E** at a Bounty Board | BountyBoard | Read the day's notices, take a contract, hand one in |
 | **E** / alternate-use + **E** at a slot machine | SlotMachine | Pull the lever / change the bet |
 | **E** at a portal | PortalHub | Open the portal menu and choose where it goes |

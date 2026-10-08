@@ -3,4 +3,8 @@
     <AssemblyName>QualityOfLife</AssemblyName>
     <RootNamespace>QualityOfLife</RootNamespace>
   </PropertyGroup>
+  <ItemGroup>
+    <!-- the longship picture for ship pins on the map -->
+    <EmbeddedResource Include="ship.png" LogicalName="ship.png" />
+  </ItemGroup>
 </Project>

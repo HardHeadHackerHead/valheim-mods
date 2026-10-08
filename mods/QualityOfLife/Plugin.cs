@@ -20,7 +20,7 @@ namespace QualityOfLife
     {
         public const string Guid = "com.dhack.qualityoflife";
         public const string Name = "QualityOfLife";
-        public const string Version = "1.7.1";
+        public const string Version = "1.8.0";
 
         private ConfigEntry<bool> _quickSetEnabled, _showBadges, _hammerEnabled, _showMessages;
         private ConfigEntry<KeyboardShortcut> _quickSetKey, _hammerKey;
@@ -41,6 +41,7 @@ namespace QualityOfLife
             BindQuickStackConfig();
             BindBoatPushConfig();
             BindSortConfig();
+            BindShipPins();
             BindCameraConfig();
 
             // The buttons under the inventory take this much room (UI pixels); other mods that put a panel there (GearSlots) keep clear of it.
@@ -73,6 +74,7 @@ namespace QualityOfLife
             ContainerRegistry.Clear();
             if (Instance == this) Instance = null;
             RestoreCamera();
+            ClearShipPins();
             _harmony?.UnpatchSelf();
             DestroyMenuResources();
         }
@@ -117,6 +119,7 @@ namespace QualityOfLife
         {
             FreeGameKeys();
             TellKeyNotes();
+            UpdateShipPins(); // (also while dead: the map stays useful)
             Player player = Player.m_localPlayer;
             if (player == null || player.IsDead()) return;
 

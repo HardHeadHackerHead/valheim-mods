@@ -1,0 +1,10 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <AssemblyName>LedgerChest</AssemblyName>
+    <RootNamespace>LedgerChest</RootNamespace>
+  </PropertyGroup>
+  <ItemGroup>
+    <!-- the build-menu picture (used if the game cannot draw one itself)  -->
+    <EmbeddedResource Include="icon.png" LogicalName="icon.png" />
+  </ItemGroup>
+</Project>

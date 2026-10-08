@@ -37,12 +37,16 @@ namespace QualityOfLife
         // ---- opening and closing ------------------------------------------------------------------
 
         private static Container OpenChest() => InventoryGui.instance != null ? CurrentContainerField?.GetValue(InventoryGui.instance) as Container : null;
+
+        /// <summary>A chest that can be assigned things: not the LedgerChest mod's Ledger Chest, which keeps nothing (it sends all on).</summary>
+        private static bool Assignable(Container c) => c != null && !c.gameObject.name.StartsWith("piece_ledgerchest", StringComparison.Ordinal);
         private static Container LookedAtChest(Player p) => p.GetHoverObject()?.GetComponentInParent<Container>();
 
         private void HandleAssignKey(Player player)
         {
             Container chest = InventoryGui.IsVisible() ? OpenChest() : LookedAtChest(player);
             if (chest == null) { Tell(player, $"Look at a chest (or open one) and press {_assignKey.Value} to choose what it receives."); return; }
+            if (!Assignable(chest)) { Tell(player, "The Ledger Chest keeps nothing: assign the chests around it."); return; }
             if (!Usable(chest)) { Tell(player, "You can't use that chest."); return; }
             if (chest != OpenChest() && ContainerRegistry.InUse(chest)) { Tell(player, "Someone else has that chest open."); return; }
             OpenRules(chest, player);
@@ -126,6 +130,7 @@ namespace QualityOfLife
         {
             if (!ShowStackUi(out Player player, out InventoryGui gui) || gui.m_container == null) return;
             Container chest = OpenChest();
+            if (!Assignable(chest)) return;
             if (chest == null) return;
             EnsureStackStyle();
 
@@ -207,6 +212,7 @@ namespace QualityOfLife
         {
             Plugin plugin = Instance;
             if (plugin == null || !plugin._stackEnabled.Value || !plugin._showChestLabels.Value) return "";
+            if (!Assignable(chest)) return "";
 
             // The game asks for hover text every frame while you look at a chest. Work it out once a second and reuse it.
             if (chest == plugin._hoverChest && Time.unscaledTime < plugin._nextHover) return plugin._hoverText;

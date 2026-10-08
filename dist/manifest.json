@@ -118,6 +118,19 @@
                                ]
                  },
                  {
+                     "guid":  "com.dhack.ledgerchest",
+                     "name":  "LedgerChest",
+                     "version":  "1.0.0",
+                     "description":  "A chest you build that shows everything in every chest around it, with a search: find anything in your storehouse and take it from wherever it is.\r\n\r\nHow it works\r\n- Build the Ledger Chest with the hammer at a workbench (10 Wood, 4 Fine Wood, 4 Leather Scraps, 2 Resin). It keeps nothing itself: it is the counter of your storehouse.\r\n- Open it (E): in place of a chest\u0027s slots, the ledger shows every kind of item in the chests within 30 m, one slot each with how many there are in all. It is the game\u0027s own chest window, with its tooltips.\r\n- A search in its title bar narrows it down (several words: all must match); list by kind, A to Z or most first.\r\n- Category buttons under it (Wood, Stone \u0026 minerals, Ores \u0026 metals, Hides \u0026 cloth, Cooking, Food, Weapons, Armor, Trophies and more), each with how many things it holds: press one to see only those. Under them: which chests hold what is under your mouse.\r\n- Click an item to pick all of it up, and put it down on a slot of your inventory: as much as fits comes out of the nearest chests that have it, into that slot first and then wherever there\u0027s room. Shift-click to choose how many (the game\u0027s own split slider). Ctrl-click: all that fits, straight into your inventory. Right-click: a stack, straight in. Put it back on the ledger (or outside the windows, or right-click) and nothing moves.\r\n- Drop things onto it (or Ctrl-click them in your inventory) to put them away: each goes straight on to a chest around it. A chest assigned that item first (QualityOfLife\u0027s K), then one assigned its category, then a chest with nothing assigned (one already holding it first). When no chest has room it comes back to you.\r\n- Hover a line to see which chests hold it and how far away they are.\r\n- Items come out exactly as they went in (upgrades, wear). Chests someone else has open are left alone, and so are carts, ships, tombstones and companions\u0027 own chests.\r\n- It has its own hand-made look: an iron-bound strongbox with the ledger open on a reading stand, a quill in its inkpot, scrolls and a candle.",
+                     "notes":  "First version: the Ledger Chest. Open it to see and search everything in the chests around it, by category (a button for each kind of thing), and take what you need. It keeps nothing itself: put things in it and they go on to the chest assigned them (QualityOfLife\u0027s chest assignments), else to a chest with nothing assigned, else back to you.",
+                     "restart":  "It adds a new build piece. Restart the game after updating so it registers cleanly.",
+                     "cover":  "LedgerChest.cover.png",
+                     "files":  [
+                                   "LedgerChest.dll",
+                                   "LedgerChest.pdb"
+                               ]
+                 },
+                 {
                      "guid":  "com.dhack.mapshare",
                      "name":  "MapShare",
                      "version":  "1.0.1",
@@ -159,9 +172,9 @@
                  {
                      "guid":  "com.dhack.qualityoflife",
                      "name":  "QualityOfLife",
-                     "version":  "1.7.1",
+                     "version":  "1.8.0",
                      "description":  "Small controls that make the game nicer to play, each with its own switch.\r\n\r\nWhat is in it\r\n- Q: build a quick set from items you hover in your inventory; outside the inventory it swaps to the set and back.\r\n- B: jump into construction mode with your hammer, and back to what you had.\r\n- Sort: a button under your inventory joins split stacks and puts everything in order (hotbar and gear slots stay put).\r\n- Stack to chests: a button under your inventory moves matching items into nearby chests, with Undo and sounds.\r\n- K opens the chest assignment menu (choose what each chest receives); L locks items so they are never stacked.\r\n- Boat push: tap or hold P next to a boat to shove it where you look (gentle, with a speed cap).\r\n- Far zoom: scroll the camera out to 20 m on foot and 40 m on a boat (the game stops at 6); the steps grow as you zoom out.\r\nKeys are configurable. Q and B work while you are running.",
-                     "notes":  "Fix: Sort chests (and Stack to chests) treated a companion\u0027s bag as a chest: Sort chests took an AICompanion companion\u0027s armour, weapons, tools and food out of its gear slots and put them in your chests. Only built chests and carts take part now.",
+                     "notes":  "New: your ships on the map. Every raft, karve, longship and drakkar in the world shows on the minimap and the big map with a longship icon of its own and its kind as the name, following it as it sails, even far away (on the game hosting the world). Map: ShowShips switches it off.",
                      "restart":  "",
                      "cover":  "QualityOfLife.cover.png",
                      "files":  [
