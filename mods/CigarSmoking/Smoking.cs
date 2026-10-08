@@ -18,13 +18,8 @@ namespace CigarSmoking
 
         public override void Setup(Character character)
         {
-            // only one cigar at a time: the old one goes out
-            SEMan seman = character.GetSEMan();
-            foreach (CigarType other in Types.All)
-            {
-                int hash = (Plugin.EffectPrefix + other.Id).GetStableHashCode();
-                if (hash != NameHash() && seman.HaveStatusEffect(hash)) seman.RemoveStatusEffect(hash, true);
-            }
+            // Pipes and other registered add-ons share the slot with cigars.
+            Plugin.Instance?.StopOtherSmoking(character, name);
 
             CigarType t = Types.ByIndex(TypeIndex);
             float s = Plugin.EffectStrength.Value / 100f;
