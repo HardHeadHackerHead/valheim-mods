@@ -7,12 +7,31 @@ namespace UnityEngine
     {
         public float x,y,z; public Vector3(float x,float y,float z){this.x=x;this.y=y;this.z=z;}
         public float sqrMagnitude => x*x+y*y+z*z;
+        public Vector3 normalized { get {float m=(float)Math.Sqrt(sqrMagnitude);return new(x/m,y/m,z/m);} }
         public static Vector3 operator -(Vector3 a,Vector3 b)=>new(a.x-b.x,a.y-b.y,a.z-b.z);
     }
     public struct Quaternion
     {
         public float x,y,z,w; public Quaternion(float x,float y,float z,float w){this.x=x;this.y=y;this.z=z;this.w=w;}
         public static float Angle(Quaternion a,Quaternion b) => (float)(2*Math.Acos(Math.Min(1,Math.Abs(a.x*b.x+a.y*b.y+a.z*b.z+a.w*b.w)))*180/Math.PI);
+    }
+    public struct Ray { public Vector3 origin,direction; public Ray(Vector3 o,Vector3 d){origin=o;direction=d;} }
+    // Unit boxes suffice for API selection tests; Unity's actual bounds intersection remains a native playtest.
+    public struct Bounds
+    {
+        public Vector3 centre;
+        public bool IntersectRay(Ray ray,out float distance)
+        {
+            double min=0,max=double.PositiveInfinity;
+            foreach(var axis in new[]{(centre.x,ray.origin.x,ray.direction.x),(centre.y,ray.origin.y,ray.direction.y),(centre.z,ray.origin.z,ray.direction.z)})
+            {
+                if(Math.Abs(axis.Item3)<1e-10){if(Math.Abs(axis.Item2-axis.Item1)>0.5){distance=0;return false;}continue;}
+                double a=(axis.Item1-0.5-axis.Item2)/axis.Item3,b=(axis.Item1+0.5-axis.Item2)/axis.Item3;
+                min=Math.Max(min,Math.Min(a,b));max=Math.Min(max,Math.Max(a,b));
+                if(min>max){distance=0;return false;}
+            }
+            distance=(float)min;return true;
+        }
     }
     public class Transform { public Vector3 position; }
     public class GameObject
@@ -35,6 +54,7 @@ public class ZNetScene
     public static ZNetScene instance; public Dictionary<string,UnityEngine.GameObject> Prefabs=new();
     public UnityEngine.GameObject GetPrefab(string name)=>Prefabs.GetValueOrDefault(name);
 }
+public static class InventoryGui { public static bool Open; public static bool IsVisible()=>Open; }
 public class ObjectDB { public static ObjectDB instance; }
 public static class PrivateArea
 {
@@ -49,9 +69,16 @@ namespace BuildOrders
         public static Plugin Instance;
         public class Order { public string Id,Prefab,By; public UnityEngine.Vector3 Pos; public UnityEngine.Quaternion Rot; }
         private readonly Dictionary<string,Order> _orders=new(); public Dictionary<string,Order> Orders=>_orders;
-        private class Setting { public bool Value=true; } private readonly Setting _enabled=new();
+        private class Setting { public bool Value=true; } private readonly Setting _enabled=new(), _showGhosts=new();
+        public bool ShowGhosts {set=>_showGhosts.Value=value;}
         public bool Enabled {get=>_enabled.Value;set=>_enabled.Value=value;}
         private bool _stabilityDirty; public bool StabilityDirty=>_stabilityDirty; private const string BridgeToolPrefab="piece_bo_bridge";
+        private object _placing; private UnityEngine.Vector3? _bridgeStart;
+        public bool PlansWindowOpen,BridgeOptionsOpen,Typing;
+        public bool Placing {set=>_placing=value?new object():null;} public bool DrawingBridge {set=>_bridgeStart=value?new UnityEngine.Vector3():null;}
+        public HashSet<string> Hidden=new();
+        private bool TypingOrMenuOpen()=>Typing;
+        private bool GhostBounds(Order o,out UnityEngine.Bounds b){b=new(){centre=o.Pos};return !Hidden.Contains(o.Id);}
         public int Saves,World=1; private int _loaded; public bool WorldReady=true;
         public List<string> Sent=new(); public HashSet<string> Records=new(),Built=new(),Terrain=new(){"old terrain snapshot"};
         private bool WorldKnown=>WorldReady&&_loaded==World;

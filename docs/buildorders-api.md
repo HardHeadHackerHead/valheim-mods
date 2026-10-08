@@ -9,6 +9,17 @@ bounded delimiter-free names, finite poses, nonzero rotations (normalized by the
 reach limit, wards, and no-build locations. Menu-only Bridge and terrain-operation prefabs are rejected. Exact nearby duplicate orders are
 skipped; a batch containing only duplicates returns false. No building resources are consumed until the ghosts are built normally.
 
+`TryCreateBuildingShell(Player player, string title, string[] prefabs, Vector3[] positions, Quaternion[] rotations, out string planKey, out string error)`
+uses the same validation and ghost-only behavior with a **1–1,024 piece** bound (`MaximumShellPieces`). Submit the whole shell in one call:
+the final invalid pose rejects the entire submission. The original `TryCreateGhostPlan` limit stays at 256. Both methods refuse active
+blueprint/bridge placement. Removal supports the larger plan while preserving built pieces. The cap does not change blueprint import limits.
+
+`IsPlanningInputAvailable(Player player)` checks world readiness, blueprint/bridge placement and native menus without processing input.
+`TryGetGhostAtRay(Player player, Vector3 origin, Vector3 direction, out string orderId, out string prefab, out Vector3 position,
+out Quaternion rotation, out float distance)` samples the nearest visible ghost bounds up to 80 m away. The origin must be within 20 m
+of the player; directions must be finite and nonzero. It returns a session order id and pose values without modifying the order or relying
+on ghost colliders. These helpers and the whole-building method are optional extensions of v1; reconnect and detect them by signature.
+
 Success returns a unique named plan key, using the existing orders, saving, sharing, material totals, and stability mechanisms. Failed
 validation leaves orders unchanged. This API does not call blueprint placement/leveling or reuse a prior plan's terrain history.
 Generated groups are excluded from the Plans window's Move and Level actions, which would otherwise level a blueprint's footprint.
