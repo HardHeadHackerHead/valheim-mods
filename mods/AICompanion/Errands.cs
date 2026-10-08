@@ -42,6 +42,29 @@ namespace AICompanion
         private static bool Go(BrainState st, Work.Kind kind, Component target, Job job = Job.None) =>
             target != null && Work.Ordered(st, Work.New(kind, target, job));
 
+        /// <summary>
+        /// You called it out from home with less than twelve food on it: it fetches some first, from its own chests (or from yours, within its
+        /// ration, when it may take from them), then comes after you. Null when it has enough, is not at home, or finds none.
+        /// </summary>
+        public static string ForTheRoad(BrainState st)
+        {
+            Humanoid me = st?.Body;
+            if (me == null || !Work.HasHome(me)) return null;
+            Vector3 center = Work.Center(me);
+            float radius = Work.RadiusOf(me);
+            if (Vector3.Distance(center, me.transform.position) > radius) return null;
+            if (me.GetInventory().GetAllItems().Where(Food.IsFood).Sum(i => i.m_stack) >= 12) return null;
+            Container mine = Home.Chests(me).Where(c => !c.IsInUse() && c.GetInventory().GetAllItems().Any(i => Gear.WantsFood(me, i)))
+                                 .OrderBy(c => Vector3.Distance(c.transform.position, me.transform.position)).FirstOrDefault(c => Reach(me, c));
+            if (mine != null && Go(st, Work.Kind.Store, mine)) { Talk.Say(me, "I'll grab some food for the road."); return "food from its chest"; }
+            if (Work.UsesPantry(me) && Work.RationLeft(me) > 0)
+            {
+                Container yours = Work.YourFood(me, center, radius + 20f);
+                if (yours != null && Go(st, Work.Kind.Fetch, yours)) { Talk.Say(me, "I'll grab some food for the road."); return "food from your chest"; }
+            }
+            return null;
+        }
+
         private static string Do(BrainState st, Errand what, Vector3 center, float radius, out bool going)
         {
             Humanoid me = st.Body;

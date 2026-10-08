@@ -125,7 +125,7 @@ namespace AICompanion
             bool ok = Companion.Write(c, z => z.Set(Keys.Order, (int)Order.Follow));
             if (!ok) return false;
             BrainState st = Brain.Get(c);
-            if (manual) { st.ManualOrderAt = Time.time; st.Outing = false; st.Remember("you called it to come with you"); }
+            if (manual) { st.ManualOrderAt = Time.time; st.Outing = false; st.Remember("you called it to come with you"); Errands.ForTheRoad(st); }
             return true;
         }
 

@@ -18,6 +18,8 @@ namespace AICompanion
         public long Id, World;
         public string Name = "Rádvar";
         public int Order, Style = 1, Retreat = 30, Kills, Jobs, Radius = 30, Model;
+        public int Ration = 12, DutyDest;
+        public bool Frugal = true;
         public bool Potions = true, Protect = true, UseJev = true, Loot = true, Friends, Pantry, Chatty = true, Stow = true, AutoHome = true, HomeSet, Armory = true;
         public Vector3 HomeSpot;
         public string MissionText = "", DutiesText = "";
@@ -86,7 +88,7 @@ namespace AICompanion
                 Hair = z.GetInt(ZDOVars.s_hairItem, 0), Beard = z.GetInt(ZDOVars.s_beardItem, 0),
                 SkinT = Looks.SkinTone(c), HairT = Looks.HairTone(c), HairL = Looks.HairShade(c), Skills = z.GetString(Skill.Key, ""),
                 HasBed = z.GetBool(Keys.HasBed, false), Bed = z.GetVec3(Keys.BedPos, Vector3.zero), LastSeen = c.transform.position,
-                HasGrave = z.GetBool(Grave.HasKey, false), DiedPos = z.GetVec3(Grave.PosKey, Vector3.zero), Loot = z.GetBool(AICompanion.Loot.Key, true), Friends = z.GetBool(Keys.Friends, false), Kept = z.GetString(Companion.KeptKey, ""), JournalText = z.GetString(Journal.EntriesKey, ""), TallyText = z.GetString(Journal.TallyKey, ""), Since = z.GetInt(Journal.SinceKey, -1), Pantry = z.GetBool(Work.PantryKey, false), HomeSet = z.GetBool(Work.HomeSetKey, false), HomeSpot = z.GetVec3(Work.HomeSpotKey, Vector3.zero), MissionText = z.GetString(Missions.Key, ""), DutiesText = z.GetString(Duties.Key, ""), Stow = z.GetBool(Work.StowKey, true), AutoHome = z.GetBool(Following.AutoHomeKey, true), Chatty = z.GetBool(Talk.ChattyKey, true), Armory = z.GetBool(AICompanion.Armory.Key, true), PickList = z.GetInt(AICompanion.Loot.ListKey, (int)AICompanion.Loot.Default),
+                HasGrave = z.GetBool(Grave.HasKey, false), DiedPos = z.GetVec3(Grave.PosKey, Vector3.zero), Loot = z.GetBool(AICompanion.Loot.Key, true), Friends = z.GetBool(Keys.Friends, false), Kept = z.GetString(Companion.KeptKey, ""), JournalText = z.GetString(Journal.EntriesKey, ""), TallyText = z.GetString(Journal.TallyKey, ""), Since = z.GetInt(Journal.SinceKey, -1), Pantry = z.GetBool(Work.PantryKey, false), HomeSet = z.GetBool(Work.HomeSetKey, false), HomeSpot = z.GetVec3(Work.HomeSpotKey, Vector3.zero), MissionText = z.GetString(Missions.Key, ""), DutiesText = z.GetString(Duties.Key, ""), Frugal = z.GetBool(Food.FrugalKey, true), Ration = z.GetInt(Work.RationKey, 12), DutyDest = z.GetInt(Duties.DestKey, 0), Stow = z.GetBool(Work.StowKey, true), AutoHome = z.GetBool(Following.AutoHomeKey, true), Chatty = z.GetBool(Talk.ChattyKey, true), Armory = z.GetBool(AICompanion.Armory.Key, true), PickList = z.GetInt(AICompanion.Loot.ListKey, (int)AICompanion.Loot.Default),
             };
         }
 
@@ -102,7 +104,7 @@ namespace AICompanion
             z.Set(Keys.HasBed, HasBed); z.Set(Keys.BedPos, Bed);
             z.Set(Skill.Key, Skills ?? "");
             z.Set(Grave.HasKey, HasGrave); z.Set(Grave.PosKey, DiedPos);
-            z.Set(AICompanion.Loot.Key, Loot); z.Set(Keys.Friends, Friends); z.Set(AICompanion.Loot.ListKey, PickList); z.Set(Work.PantryKey, Pantry); z.Set(Work.HomeSetKey, HomeSet); z.Set(Work.HomeSpotKey, HomeSpot); z.Set(Missions.Key, MissionText ?? ""); z.Set(Duties.Key, DutiesText ?? ""); z.Set(Work.StowKey, Stow); z.Set(Journal.EntriesKey, JournalText ?? ""); z.Set(Journal.TallyKey, TallyText ?? ""); z.Set(Journal.SinceKey, Since); z.Set(Following.AutoHomeKey, AutoHome); z.Set(Talk.ChattyKey, Chatty); z.Set(AICompanion.Armory.Key, Armory);
+            z.Set(AICompanion.Loot.Key, Loot); z.Set(Keys.Friends, Friends); z.Set(AICompanion.Loot.ListKey, PickList); z.Set(Work.PantryKey, Pantry); z.Set(Work.HomeSetKey, HomeSet); z.Set(Work.HomeSpotKey, HomeSpot); z.Set(Missions.Key, MissionText ?? ""); z.Set(Duties.Key, DutiesText ?? ""); z.Set(Food.FrugalKey, Frugal); z.Set(Work.RationKey, Ration); z.Set(Duties.DestKey, DutyDest); z.Set(Work.StowKey, Stow); z.Set(Journal.EntriesKey, JournalText ?? ""); z.Set(Journal.TallyKey, TallyText ?? ""); z.Set(Journal.SinceKey, Since); z.Set(Following.AutoHomeKey, AutoHome); z.Set(Talk.ChattyKey, Chatty); z.Set(AICompanion.Armory.Key, Armory);
             VisEquipment vis = c.GetComponent<VisEquipment>();
             if (vis == null) return;
             vis.SetModel(Model);
@@ -126,7 +128,7 @@ namespace AICompanion
             ["model"] = Model, ["skin"] = V(Skin), ["haircolor"] = V(HairColor), ["hair"] = Hair, ["beard"] = Beard,
             ["skint"] = SkinT, ["hairt"] = HairT, ["hairl"] = HairL, ["skills"] = Skills ?? "",
             ["hasbed"] = HasBed, ["bed"] = V(Bed), ["seen"] = V(LastSeen),
-            ["dead"] = Dead, ["diedat"] = DiedAt, ["diedpos"] = V(DiedPos), ["grave"] = HasGrave, ["loot"] = Loot, ["friends"] = Friends, ["pick"] = PickList, ["pantry"] = Pantry, ["homeset"] = HomeSet, ["homespot"] = V(HomeSpot), ["missions"] = MissionText ?? "", ["duties"] = DutiesText ?? "", ["stow"] = Stow, ["autohome"] = AutoHome, ["kept"] = Kept ?? "", ["journal"] = JournalText ?? "", ["tally"] = TallyText ?? "", ["since"] = Since, ["chatty"] = Chatty, ["armory"] = Armory,
+            ["dead"] = Dead, ["diedat"] = DiedAt, ["diedpos"] = V(DiedPos), ["grave"] = HasGrave, ["loot"] = Loot, ["friends"] = Friends, ["pick"] = PickList, ["pantry"] = Pantry, ["homeset"] = HomeSet, ["homespot"] = V(HomeSpot), ["missions"] = MissionText ?? "", ["duties"] = DutiesText ?? "", ["frugal"] = Frugal, ["ration"] = Ration, ["dutydest"] = DutyDest, ["stow"] = Stow, ["autohome"] = AutoHome, ["kept"] = Kept ?? "", ["journal"] = JournalText ?? "", ["tally"] = TallyText ?? "", ["since"] = Since, ["chatty"] = Chatty, ["armory"] = Armory,
         };
 
         private static Profile FromJson(JObject o) => new Profile
@@ -140,7 +142,7 @@ namespace AICompanion
             SkinT = (float?)o["skint"] ?? 0.3f, HairT = (float?)o["hairt"] ?? 0.5f, HairL = (float?)o["hairl"] ?? 0.8f, Skills = (string)o["skills"] ?? "",
             HasBed = (bool?)o["hasbed"] ?? false, Bed = V(o["bed"]), LastSeen = V(o["seen"]),
             Dead = (bool?)o["dead"] ?? false, DiedAt = (double?)o["diedat"] ?? 0, DiedPos = V(o["diedpos"]),
-            HasGrave = (bool?)o["grave"] ?? false, Loot = (bool?)o["loot"] ?? true, Friends = (bool?)o["friends"] ?? false, Kept = (string)o["kept"] ?? "", JournalText = (string)o["journal"] ?? "", TallyText = (string)o["tally"] ?? "", Since = (int?)o["since"] ?? -1, Pantry = (bool?)o["pantry"] ?? false, HomeSet = (bool?)o["homeset"] ?? false, HomeSpot = V(o["homespot"]), MissionText = (string)o["missions"] ?? "", DutiesText = (string)o["duties"] ?? "", Stow = (bool?)o["stow"] ?? true, AutoHome = (bool?)o["autohome"] ?? true, Chatty = (bool?)o["chatty"] ?? true, Armory = (bool?)o["armory"] ?? true, PickList = (int?)o["pick"] ?? (int)AICompanion.Loot.Default,
+            HasGrave = (bool?)o["grave"] ?? false, Loot = (bool?)o["loot"] ?? true, Friends = (bool?)o["friends"] ?? false, Kept = (string)o["kept"] ?? "", JournalText = (string)o["journal"] ?? "", TallyText = (string)o["tally"] ?? "", Since = (int?)o["since"] ?? -1, Pantry = (bool?)o["pantry"] ?? false, HomeSet = (bool?)o["homeset"] ?? false, HomeSpot = V(o["homespot"]), MissionText = (string)o["missions"] ?? "", DutiesText = (string)o["duties"] ?? "", Frugal = (bool?)o["frugal"] ?? true, Ration = (int?)o["ration"] ?? 12, DutyDest = (int?)o["dutydest"] ?? 0, Stow = (bool?)o["stow"] ?? true, AutoHome = (bool?)o["autohome"] ?? true, Chatty = (bool?)o["chatty"] ?? true, Armory = (bool?)o["armory"] ?? true, PickList = (int?)o["pick"] ?? (int)AICompanion.Loot.Default,
         };
     }
 }

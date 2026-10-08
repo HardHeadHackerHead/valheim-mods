@@ -729,7 +729,15 @@ namespace AICompanion
             Duties.Entry working = Duties.Active(c);
             BeginCard("Home duties");
             Note("What it does at home, top to bottom. It works the first duty that is on until its chest holds the amount you set, then the next one. When all are stocked it goes back to living its own life.", _text);
-            if (chests.Count == 0) Note("It has no chest of its own: give it one above, or it puts what it gathers in yours.", _warn);
+            bool toYours = Duties.ToYours(c);
+            GUILayout.BeginHorizontal();
+            if (Choice("Put it in your chests", toYours, 2) && Commandable) _pending = () => Change(cz => cz.Set(Duties.DestKey, 0));
+            if (Choice("Put it in its own chest", !toYours, 2) && Commandable) _pending = () => Change(cz => cz.Set(Duties.DestKey, 1));
+            GUILayout.EndHorizontal();
+            if (duties.Any(x => x.On) && !Duties.HasPlace(c))
+                Note(toYours ? (Work.Stows(c) ? "No chest of yours near its home that it can use: duties wait for one." : "Putting things in your chests is off (Your chests, below): duties wait until you switch it on.")
+                             : "It has no chest of its own: duties wait. Give it one in Bed and chests above.", _warn);
+            else if (toYours) Note("What is in your chests at home counts: with 300 wood there and 100 asked for, it rests.", _dim);
             for (int di = 0; di < duties.Count; di++)
             {
                 Duties.Entry e = duties[di];
@@ -745,7 +753,7 @@ namespace AICompanion
                 GUILayout.EndHorizontal();
                 if (!e.On) continue;
                 int step = Duties.Step(dd), max = Duties.Max(dd);
-                Stepper("      Keep in its chest", $"{e.Target} {Duties.Unit(dd)}",
+                Stepper("      Keep in " + (toYours ? "your chests" : "its chest"), $"{e.Target} {Duties.Unit(dd)}",
                     () => Change(cz => { var l = Duties.Read(cz); var x = l.First(a => a.Duty == dd); x.Target = Mathf.Clamp(x.Target - step, step, max); Duties.Write(cz, l); }),
                     () => Change(cz => { var l = Duties.Read(cz); var x = l.First(a => a.Duty == dd); x.Target = Mathf.Clamp(x.Target + step, step, max); Duties.Write(cz, l); }));
                 Note("      " + Duties.Status(c, e, working), e == working ? _good : _dim);
@@ -754,6 +762,17 @@ namespace AICompanion
                 if (dd == Duty.Food && Companion.BestRanged(c) == null && Companion.BestMelee(c) == null) Note("      It needs a weapon to hunt; it can still forage.", _warn);
             }
             Note("A cooking station near home lets it cook what it hunts. Hungry, it feeds itself first whatever the duty.", _dim);
+            EndCard();
+
+            BeginCard("Its food");
+            bool frugal = AICompanion.Food.Frugal(c);
+            if (Check("Eats only what it needs when it is calm at home (the cheapest food that will do)", frugal)) _pending = () => Change(cz => cz.Set(AICompanion.Food.FrugalKey, !frugal));
+            Note(frugal ? "Out with you, in a fight or hurt it eats its three best meals as a player does. Calm at home it keeps one or two meals going (none while asleep and well), and uses berries, mushrooms and the like before your good meat."
+                        : "Off: it keeps three meals going all the time, the best first. That is a lot of food.", _dim);
+            int ration = Work.RationOf(c);
+            Note($"Today: ate {AICompanion.Food.AteToday(c)} meals" + (Work.UsesPantry(c) ? $", took {Work.TakenToday(c)} of your food (up to {ration} a day)." : "."), _text);
+            if (Work.UsesPantry(c))
+                Stepper("Most it takes from yours a day", $"{ration} food", () => Change(cz => cz.Set(Work.RationKey, Mathf.Clamp(ration - 2, 2, 60))), () => Change(cz => cz.Set(Work.RationKey, Mathf.Clamp(ration + 2, 2, 60))));
             EndCard();
 
             Job jobs = Work.JobsOf(c);

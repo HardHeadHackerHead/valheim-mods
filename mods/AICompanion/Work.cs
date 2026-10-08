@@ -48,6 +48,19 @@ namespace AICompanion
 
         private static readonly string[] OreWords = { "Ore", "Scrap", "Flametal" };
         private static readonly HashSet<string> Prey = new HashSet<string> { "Deer", "Boar", "Neck", "Hare" };
+        /// <summary>
+        /// What it hunts for food: deer, boar, necks and hares; and, when it is strong enough, the mountain's wolves (90 health, nearly well)
+        /// and the plains' lox (130 health, nearly well, a bow in hand). They fight back, so a weak one leaves them alone.
+        /// </summary>
+        private static HashSet<string> GameFor(Humanoid me)
+        {
+            var game = new HashSet<string>(Prey);
+            if (me.GetHealthPercentage() < 0.8f) return game;
+            if (me.GetMaxHealth() >= 90f) game.Add("Wolf");
+            if (me.GetMaxHealth() >= 130f && Companion.BestRanged(me) != null) game.Add("Lox");
+            return game;
+        }
+
         private static readonly HashSet<string> Harmless = new HashSet<string> { "Deer", "Hare" }; // they run, never fight back
         private static HashSet<string> _cookable;
 
@@ -88,6 +101,12 @@ namespace AICompanion
         }
         public const string PantryKey = "dhc_pantry", StowKey = "dhc_stow";
         /// <summary>Starving with nothing in its own chests, it may take a little food from its player's chests at home (Home tab; off unless you allow it).</summary>
+        public const string RationKey = "dhc_ration", RationDayKey = "dhc_rationday", RationNKey = "dhc_rationn";
+        /// <summary>The most food it takes from your chests in a game day (Home tab).</summary>
+        public static int RationOf(Component c) => Companion.Zdo(c)?.GetInt(RationKey, 12) ?? 12;
+        /// <summary>The food it took from your chests today.</summary>
+        public static int TakenToday(Component c) { ZDO z = Companion.Zdo(c); return z != null && z.GetInt(RationDayKey, -1) == Journal.Day ? z.GetInt(RationNKey, 0) : 0; }
+        public static int RationLeft(Component c) => Mathf.Max(0, RationOf(c) - TakenToday(c));
         public static bool UsesPantry(Component c) => Companion.Zdo(c)?.GetBool(PantryKey, false) ?? false;
         /// <summary>Its own chests full (or none), it may put what it gathers into its player's chests at home (Home tab; on). It never takes from them.</summary>
         public static bool Stows(Component c) => Companion.Zdo(c)?.GetBool(StowKey, true) ?? true;
@@ -213,11 +232,11 @@ namespace AICompanion
                 if (st.Task == null && st.Duty != null && st.WorkNote != null)
                 {
                     // Nothing to gather for this duty (or no room): the next duty for a minute, looked at again straight away.
-                    Duties.Rest(me, st.Duty);
-                    st.Remember($"found nothing for \"{Duties.Label(st.Duty.Duty).ToLowerInvariant()}\" near home: on to the next duty");
+                    if (Duties.Rest(me, st.Duty) == 1) st.Remember($"found nothing for \"{Duties.Label(st.Duty.Duty).ToLowerInvariant()}\" near home: on to the next duty");
                     st.NextWorkLook = Time.time + 0.2f;
                 }
             }
+            else if (st.Duty != null && st.Task.Job != Job.None) Duties.Worked(me, st.Duty);
             if (st.Task == null)
             {
                 if (Idle.AtHome(st, master, center, radius, moveTo, stop, lookAt)) return; // between jobs: the fire, a chair, out of the rain, a stroll
@@ -893,7 +912,7 @@ namespace AICompanion
             bool full = BagFull(me) || inv.GetAllItems().Count(i => !Keeps(me, i)) >= 18;
             bool dutyLoad = st.OnDuties && Duties.Deliver(me, st.Duty); // a load of what its duties gather: to its chest
             bool yoursToGive = Stows(me) && inv.GetAllItems().Any(i => YoursToGive(st, i));
-            if (yoursToGive && (full || Time.time >= st.NextDeliver))
+            if (yoursToGive && (full || dutyLoad || Time.time >= st.NextDeliver))
             {
                 st.NextDeliver = Time.time + 120f;
                 if (SortHome(st) > 0) return null;
@@ -936,7 +955,7 @@ namespace AICompanion
                 if (Food.Meals(me).Count == 0) Talk.Tell(me, "I'm out of food and there's none in my chests. I'll forage and hunt, but some cooked meat would help.", "nofood", 20f);
             }
             // Its food slots running low (or empty, with meals still in its belly): more from its chests, when they have some it would take.
-            if (Gear.FoodLow(me) && Time.time >= st.NextRefillLook)
+            if (Gear.FoodShort(me) && Time.time >= st.NextRefillLook)
             {
                 st.NextRefillLook = Time.time + 120f;
                 Container larder = Home.Chests(me).Where(c => !c.IsInUse() && !Skipped(st, c) && c.GetInventory().GetAllItems().Any(i => Gear.WantsFood(me, i)))
@@ -1021,7 +1040,7 @@ namespace AICompanion
             if ((jobs & Job.Hunt) != 0 && (!st.Weak || Companion.BestRanged(me) != null) || (st.Weak && st.Hungry && Companion.BestRanged(me) != null))
             {
                 bool forGoal = goalPrey.Count > 0 && !st.Hungry;
-                HashSet<string> kinds = st.Weak ? Harmless : forGoal ? goalPrey : Prey;
+                HashSet<string> kinds = st.Weak ? Harmless : forGoal ? goalPrey : GameFor(me);
                 float reachable = Companion.BestRanged(me) != null ? float.MaxValue : 25f; // without a bow only what it can get to before it runs
                 // For its goal, and fit, further out too: a hunting trip, as far as the world around you is loaded (about 170 m).
                 bool fit = forGoal && !st.Weak && me.GetHealthPercentage() > 0.6f;
@@ -1320,11 +1339,12 @@ namespace AICompanion
                 .OrderBy(c => Vector3.Distance(c.transform.position, me.transform.position)).Take(6).FirstOrDefault(c => Brain.CanReach(me, c.transform.position));
 
         /// <summary>Up to "max" of the best food in a chest of yours into its bag. What it took ("3 cooked meat"), or null.</summary>
-        internal static string TakeFoodFrom(Humanoid me, Container chest, int max)
+        internal static string TakeFoodFrom(Humanoid me, Container chest, int max, bool rationed = false)
         {
             if (chest == null || chest.IsInUse()) return null;
             var took = new Dictionary<string, int>();
-            int left = max;
+            bool yours = Home.IdOn(chest) == 0L;
+            int left = rationed && yours ? Mathf.Min(max, RationLeft(me)) : max; // (never more than its ration of your food a day)
             bool slots = max > 5; // (stocking its food slots: a few of each of its three best foods, not ten of one)
             foreach (ItemDrop.ItemData food in chest.GetInventory().GetAllItems().Where(Food.IsFood).OrderByDescending(i => i.m_shared.m_food + i.m_shared.m_foodStamina).ToList())
             {
@@ -1340,6 +1360,11 @@ namespace AICompanion
                 if (slots) Gear.Arrange(me); // (into its food slots, so the next food is weighed against them)
             }
             if (took.Count == 0) return null;
+            if (yours)
+            {
+                ZDO z = Companion.Zdo(me);
+                if (z != null) { int day = Journal.Day; z.Set(RationNKey, (z.GetInt(RationDayKey, -1) == day ? z.GetInt(RationNKey, 0) : 0) + took.Values.Sum()); z.Set(RationDayKey, day); }
+            }
             string list = string.Join(", ", took.Select(kv => $"{kv.Value} {kv.Key.ToLowerInvariant()}"));
             Plugin.Instance?.Note($"{Companion.NameOf(me)} took {list} to eat from the chest at {chest.transform.position:F0}");
             return list;
@@ -1349,8 +1374,16 @@ namespace AICompanion
         private static void TakeFood(BrainState st, Container chest)
         {
             Humanoid me = st.Body;
-            bool starving = Food.Meals(me).Count == 0;
-            string list = TakeFoodFrom(me, chest, starving ? 5 : 15);
+            bool starving = !me.GetInventory().GetAllItems().Any(Food.IsFood); // (nothing at all on it: a few, whatever its ration)
+            int have = me.GetInventory().GetAllItems().Where(Food.IsFood).Sum(i => i.m_stack);
+            bool yours = Home.IdOn(chest) == 0L;
+            if (yours && !starving && RationLeft(me) == 0)
+            {
+                Skip(st, chest, "it has had its ration today", 30f);
+                Talk.Mention(me, $"I've had my share of your food today ({RationOf(me)}). I'll make do until tomorrow.", "ration", 120f);
+                return;
+            }
+            string list = TakeFoodFrom(me, chest, starving ? 3 : Mathf.Clamp(9 - have, 3, 9), rationed: !starving);
             if (list == null) { Skip(st, chest, "no room for the food", 5f); return; }
             st.Remember($"took {list} from your chest {(starving ? "to eat" : "for its food slots")}");
             if (starving) Talk.Tell(me, $"I had nothing to eat, so I took {list} from your chest. Thanks!");
@@ -1394,7 +1427,7 @@ namespace AICompanion
         public static int StockCap(BrainState st, ItemDrop.ItemData i)
         {
             int duty = Duties.Cap(st.Body, i); // what its home duties stockpile (wood, food, stone and ore)
-            if (Food.IsFood(i)) return Mathf.Max(40, duty);
+            if (Food.IsFood(i)) return Duties.FoodForYou(st.Body) ? 12 : Mathf.Max(40, duty); // (stocking your chests with food: its own larder is small)
             if (IsCookable(i)) return Mathf.Max(20, duty);
             if (i.m_shared.m_itemType == ItemDrop.ItemData.ItemType.Ammo) return 100;
             if (i.m_shared.m_itemType == ItemDrop.ItemData.ItemType.Consumable && Companion.Useful(st.Body, i)) return 10; // healing potions

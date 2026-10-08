@@ -208,6 +208,9 @@ namespace AICompanion
             return food.Count < 3 || food.Any(i => i.m_stack < 5);
         }
 
+        /// <summary>Less than six food on it (any kind, slots and bag): time for a trip to a chest. (FoodLow is for the errand you send it on.)</summary>
+        public static bool FoodShort(Humanoid h) => h.GetInventory().GetAllItems().Where(Food.IsFood).Sum(i => i.m_stack) < 6;
+
         /// <summary>From its chest: food it would put in its food slots (a food it has too little of, or a new one while a slot is free or weaker).</summary>
         public static bool WantsFood(Humanoid h, ItemDrop.ItemData item)
         {

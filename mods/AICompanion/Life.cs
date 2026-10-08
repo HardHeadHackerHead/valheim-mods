@@ -85,23 +85,38 @@ namespace AICompanion
 
         private static string Name(ItemDrop.ItemData i) => Localization.instance.Localize(i.m_shared.m_name);
 
+        public const string FrugalKey = "dhc_frugal", AteDayKey = "dhc_ateday", AteNKey = "dhc_aten";
+
+        /// <summary>Calm at home it eats only what it needs (Home tab; on): see TryEat.</summary>
+        public static bool Frugal(Component c) => Companion.Zdo(c)?.GetBool(FrugalKey, true) ?? true;
+
+        /// <summary>The meals it ate today (game day), for its menu.</summary>
+        public static int AteToday(Component c) { ZDO z = Companion.Zdo(c); return z != null && z.GetInt(AteDayKey, -1) == Journal.Day ? z.GetInt(AteNKey, 0) : 0; }
+
         private static void TryEat(Humanoid c, State s, BrainState st)
         {
-            float below = Plugin.EatBelow.Value / 100f; // (a meal it eats again once under this part of its time: 20%, the game allows 50%)
+            float below = Plugin.EatBelow.Value / 100f; // (a meal it eats again once under this part of its time: 10%, the game allows 50%)
+            // Out with you, in a fight, or just hurt: all three meals, the best first (a player's way). Frugal and calm at home: only the meals it
+            // needs, and the cheapest food that gives them. A player heals only from food, so hurt it eats; asleep and well it eats nothing.
+            bool calm = Frugal(c) && Companion.OrderOf(c) == Order.Gather && !st.InCombat && Time.time - st.LastHurtAt > 60f;
+            float hp = c.GetHealthPercentage();
+            int want = !calm ? 3 : hp < 0.7f ? 2 : st.Asleep ? 0 : st.Task != null ? 2 : 1;
+            if (s.Meals.Count(m => m.Time >= m.Item.m_shared.m_foodBurnTime * below) >= want) return;
             Meal depleted = s.Meals.Where(m => m.Time < m.Item.m_shared.m_foodBurnTime * below).OrderBy(m => m.Time).FirstOrDefault();
-            if (s.Meals.Count >= 3 && depleted == null) return; // full, as a player can be
             ItemDrop.ItemData best = c.GetInventory().GetAllItems().Where(IsFood)
                 .Where(i => !s.Meals.Any(m => m.Item.m_shared.m_name == i.m_shared.m_name && m.Time >= m.Item.m_shared.m_foodBurnTime * below))
-                .OrderByDescending(i => i.m_shared.m_food + i.m_shared.m_foodStamina).FirstOrDefault();
+                .OrderBy(i => (calm ? 1 : -1) * (i.m_shared.m_food + i.m_shared.m_foodStamina)).FirstOrDefault();
             if (best == null) return;
             Meal same = s.Meals.FirstOrDefault(m => m.Item.m_shared.m_name == best.m_shared.m_name);
             if (same != null) s.Meals.Remove(same);
-            else if (s.Meals.Count >= 3) s.Meals.Remove(depleted);
+            else if (s.Meals.Count >= 3 && depleted != null) s.Meals.Remove(depleted);
             s.Meals.Add(new Meal { Item = best.Clone(), Time = best.m_shared.m_foodBurnTime });
             if (best.m_shared.m_consumeStatusEffect != null) c.GetSEMan().AddStatusEffect(best.m_shared.m_consumeStatusEffect, true);
             c.m_consumeItemEffects.Create(c.transform.position, Quaternion.identity);
             c.GetInventory().RemoveOneItem(best);
             st.Remember($"ate {Name(best)}");
+            ZDO ate = Companion.Zdo(c);
+            if (ate != null) { int day = Journal.Day; ate.Set(AteNKey, (ate.GetInt(AteDayKey, -1) == day ? ate.GetInt(AteNKey, 0) : 0) + 1); ate.Set(AteDayKey, day); }
             s.NextTick = 0f;
         }
 
