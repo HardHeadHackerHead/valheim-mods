@@ -16,7 +16,7 @@ namespace AICompanion
     {
         public const string Guid = "com.dhack.aicompanion";
         public const string Name = "AICompanion";
-        public const string Version = "0.19.6";
+        public const string Version = "0.19.7";
 
         internal static Plugin Instance;
         internal static ConfigEntry<bool> ShowDecisions;

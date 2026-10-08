@@ -18,6 +18,7 @@ namespace AICompanion
     internal static class Net
     {
         private const string RpcStats = "DHack_CompanionStats", RpcFallen = "DHack_CompanionFallen", RpcCleared = "DHack_CompanionGearTaken", RpcSays = "DHack_CompanionSays";
+        private const string RpcWhereIs = "DHack_CompanionWhereIs", RpcWhereIsAnswer = "DHack_CompanionWhereIsAnswer";
         public const string CrateKey = "dhc_fallen";
         private const string MarkerSuffix = " fell here";
 
@@ -60,6 +61,8 @@ namespace AICompanion
                 rpc.Register<string>(RpcFallen, OnFallen);
                 rpc.Register<string>(RpcCleared, OnCleared);
                 rpc.Register<string>(RpcSays, OnSays);
+                rpc.Register<string>(RpcWhereIs, OnWhereIs);
+                rpc.Register<string>(RpcWhereIsAnswer, OnWhereIsAnswer);
             }
             if (me == null) return;
 
@@ -118,7 +121,29 @@ namespace AICompanion
         {
             if (ZRoutedRpc.instance == null) return;
             var table = AccessTools.Field(typeof(ZRoutedRpc), "m_functions").GetValue(ZRoutedRpc.instance) as IDictionary;
-            foreach (string name in new[] { RpcStats, RpcFallen, RpcCleared, RpcSays }) table?.Remove(name.GetStableHashCode());
+            foreach (string name in new[] { RpcStats, RpcFallen, RpcCleared, RpcSays, RpcWhereIs, RpcWhereIsAnswer }) table?.Remove(name.GetStableHashCode());
+        }
+
+        /// <summary>Ask the game hosting the world whether a companion is anywhere in it (its answer: AICompanion.Remote.Heard).</summary>
+        public static void AskWhere(long id)
+        {
+            if (ZRoutedRpc.instance == null || ZNet.instance == null || ZNet.instance.IsServer()) return;
+            try { ZRoutedRpc.instance.InvokeRoutedRPC(RpcWhereIs, id.ToString(CultureInfo.InvariantCulture)); /* (no target: to the server) */ }
+            catch (Exception e) { Plugin.Instance?.Warn($"Could not ask the host about a companion: {e.Message}"); }
+        }
+
+        private static void OnWhereIs(long sender, string payload)
+        {
+            if (ZNet.instance == null || !ZNet.instance.IsServer() || !long.TryParse(payload, NumberStyles.Integer, CultureInfo.InvariantCulture, out long id)) return;
+            AICompanion.Remote.Rescan();
+            ZDO z = AICompanion.Remote.Find(id);
+            ZRoutedRpc.instance.InvokeRoutedRPC(sender, RpcWhereIsAnswer, id.ToString(CultureInfo.InvariantCulture) + "|" + (z != null ? "1" : "0"));
+        }
+
+        private static void OnWhereIsAnswer(long sender, string payload)
+        {
+            string[] f = (payload ?? "").Split('|');
+            if (f.Length >= 2 && long.TryParse(f[0], NumberStyles.Integer, CultureInfo.InvariantCulture, out long id)) AICompanion.Remote.Heard(id, f[1] == "1");
         }
 
         /// <summary>A companion's words for its player, from the game running it: "masterId|name|text".</summary>

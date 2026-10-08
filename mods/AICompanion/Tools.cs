@@ -130,6 +130,20 @@ namespace AICompanion
                 output(new JObject { ["retired"] = args[1], ["had"] = new JArray(before), ["sorted_by_rules"] = sorted, ["into_chests"] = new JArray(put), ["to_tombstone"] = left });
                 yield break;
             }
+            if (sub == "world")
+            {
+                // Every companion anywhere in the world (this game's copy of the world: all of it on the game hosting it).
+                Remote.Rescan();
+                var list = new System.Collections.Generic.List<ZDO>();
+                int index = 0;
+                for (int guard = 0; guard < 1000 && !ZDOMan.instance.GetAllZDOsWithPrefabIterative(Prefab.PrefabName, list, ref index); guard++) { }
+                var arr = new JArray();
+                foreach (ZDO z in list)
+                    arr.Add(new JObject { ["id"] = z.GetLong(Keys.Id, 0L).ToString(), ["name"] = z.GetString(Keys.Name, "?"), ["master"] = z.GetString(Keys.MasterName, ""),
+                        ["position"] = z.GetPosition().ToString("F0"), ["health"] = z.GetFloat(ZDOVars.s_health, -1f), ["status"] = z.GetString(Keys.Status, "") });
+                output(new JObject { ["host"] = ZNet.instance != null && ZNet.instance.IsServer(), ["companions_in_world"] = arr });
+                yield break;
+            }
             if (sub == "remove")
             {
                 // A leftover companion (from before only one could be summoned): its gear goes into a tombstone, then it is gone for good.

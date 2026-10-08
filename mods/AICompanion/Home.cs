@@ -228,8 +228,14 @@ namespace AICompanion
             if (Time.time >= _nextSnapshot)
             {
                 _nextSnapshot = Time.time + 5f;
-                foreach (Humanoid c in Companion.All().Where(c => Companion.IsMine(c, p) && !c.IsDead()))
+                foreach (Humanoid c in Companion.All().Where(c => Companion.IsMine(c, p) && !c.IsDead() && c.GetHealth() > 0f))
+                {
+                    // Not over its fall: a body that fell on another player's game still stands here (only the game running it knows it
+                    // died) until it is taken away, and saving it as it looks would wipe out the fall, so it would never wake again.
+                    Profile known = Profile.Find(p, Companion.IdOf(c));
+                    if (known != null && known.Dead) continue;
                     Profile.Save(p, Profile.Of(c));
+                }
             }
 
             // Bring back the fallen once their time is up.
@@ -259,6 +265,16 @@ namespace AICompanion
 
         public static Humanoid Respawn(Player p, Profile prof)
         {
+            // Already up somewhere (woken by another way, or never really gone): no second one; its record just stops saying it fell.
+            Humanoid up = Companion.All().FirstOrDefault(h => Companion.IdOf(h) == prof.Id && !h.IsDead() && h.GetHealth() > 0f);
+            ZDO away = up == null && Remote.Sure ? Remote.Find(prof.Id) : null;
+            if (up != null || (away != null && away.GetFloat(ZDOVars.s_health, 1f) > 0f))
+            {
+                prof.Dead = false;
+                Profile.Save(p, prof);
+                Plugin.Instance?.Note($"{prof.Name} is already up: not woken again");
+                return up;
+            }
             GameObject prefab = Prefab.Get();
             if (prefab == null) return null;
             Vector3 pos = prof.HasBed ? prof.Bed : p.transform.position - p.transform.forward * 2f;

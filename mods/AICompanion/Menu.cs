@@ -180,9 +180,13 @@ namespace AICompanion
                         if (!string.IsNullOrEmpty(doing)) Note($"Last doing: {doing}.", _good);
                         foreach (string line in Remote.Journal(z, 2)) Note("· " + line, _dim);
                     }
-                    else if (Remote.Sure)
+                    else if (Remote.InWorld(prof.Id) == false)
                     {
-                        Note($"{prof.Name} is not in this world any more (nothing of them was found). If they are gone for good, you can forget them here.", _warn);
+                        // Lost: nothing of them is in the world, yet they never woke (their fall was not kept). They come back as they were.
+                        Note($"{prof.Name} is nowhere in the world: they fell and never woke up. Bring them back: they wake {(prof.HasBed ? "in their bed" : "beside you")}, with their skills, looks and settings.", _warn);
+                        if (GUILayout.Button($"Bring {prof.Name} back", _buttonOn, GUILayout.Height(30)))
+                        { Profile p2 = prof; _pending = () => { Humanoid c = Home.Respawn(Player.m_localPlayer, p2); if (c != null) OpenMenuFor(Player.m_localPlayer, c); }; }
+                        Note("Or, if they are gone for good, forget them:", _dim);
                         if (GUILayout.Button(_forgetArmed == prof.Id ? $"Click again to forget {prof.Name}" : $"Forget {prof.Name}", _button, GUILayout.Height(26)))
                         {
                             long id = prof.Id;

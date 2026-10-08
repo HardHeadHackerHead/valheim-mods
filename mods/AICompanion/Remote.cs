@@ -25,6 +25,27 @@ namespace AICompanion
         /// <summary>This game hosts the world and has looked: one not found is not in the world at all.</summary>
         public static bool Sure => _scanned && ZNet.instance != null && ZNet.instance.IsServer();
 
+        /// <summary>Look again now (the host, answering another player).</summary>
+        public static void Rescan() { _nextScan = Time.unscaledTime + 2f; Scan(); }
+
+        private static readonly Dictionary<long, KeyValuePair<bool, float>> Answers = new Dictionary<long, KeyValuePair<bool, float>>();
+        private static readonly Dictionary<long, float> Asked = new Dictionary<long, float>();
+
+        /// <summary>
+        /// Whether a companion is anywhere in the world, as the game hosting it knows (it keeps everything): true or false, or null while
+        /// that is not known yet (another player's game asks the host, and the answer comes back in a moment).
+        /// </summary>
+        public static bool? InWorld(long id)
+        {
+            if (Find(id) != null) return true;
+            if (Sure) return false;
+            if (Answers.TryGetValue(id, out var a) && Time.unscaledTime - a.Value < 20f) return a.Key;
+            if (!Asked.TryGetValue(id, out float at) || Time.unscaledTime - at > 5f) { Asked[id] = Time.unscaledTime; Net.AskWhere(id); }
+            return Answers.TryGetValue(id, out a) ? a.Key : (bool?)null;
+        }
+
+        public static void Heard(long id, bool found) => Answers[id] = new KeyValuePair<bool, float>(found, Time.unscaledTime);
+
         private static void Scan()
         {
             Found.Clear();
