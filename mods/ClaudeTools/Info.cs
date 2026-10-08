@@ -133,7 +133,7 @@ namespace ClaudeTools
                 float radius = Mathf.Clamp(F(a, 1, 15f), 2f, 60f);
                 var list = new JArray();
                 foreach (Container c in UnityEngine.Object.FindObjectsByType<Container>(FindObjectsSortMode.None)
-                             .Where(c => c != null && c.GetComponentInParent<Piece>() != null && c.GetComponent<TombStone>() == null && Vector3.Distance(c.transform.position, me) <= radius)
+                             .Where(c => c != null && c.GetInventory() != null && c.GetComponentInParent<Piece>() != null && c.GetComponent<TombStone>() == null && Vector3.Distance(c.transform.position, me) <= radius)   // (one not set up yet has no inventory)
                              .OrderBy(c => Vector3.Distance(c.transform.position, me)))
                 {
                     ZNetView v = c.GetComponent<ZNetView>();
@@ -269,7 +269,64 @@ namespace ClaudeTools
                 return null;
             });
 
-            Builtin("say", "say <text>: show a message in the middle of the player's screen", (a, output, error) =>
+            Builtin("give", "give <item prefab> [amount]: put an item in the player's inventory (for trying out a mod's new item)", (a, output, error) =>
+            {
+                if (a.Length < 2) { error("give <item prefab> [amount]"); return null; }
+                GameObject prefab = ObjectDB.instance != null ? ObjectDB.instance.GetItemPrefab(a[1]) : null;
+                if (prefab == null) { error($"no item called '{a[1]}'"); return null; }
+                int amount = Mathf.Clamp(I(a, 2, 1), 1, 100);
+                ItemDrop.ItemData added = Player.m_localPlayer.GetInventory().AddItem(prefab.name, amount, 1, 0, 0L, "", false);
+                if (added == null) { error("the inventory is full"); return null; }
+                output(new JObject { ["gave"] = prefab.name, ["amount"] = amount });
+                return null;
+            });
+
+            Builtin("grow", "grow <seconds> [radius]: make the plants (cultivated seedlings) near the player <seconds> older, so they grow without the wait", (a, output, error) =>
+            {
+                if (a.Length < 2) { error("grow <seconds> [radius]"); return null; }
+                float seconds = F(a, 1, 60f), radius = Mathf.Clamp(F(a, 2, 20f), 2f, 60f);
+                Vector3 me = Player.m_localPlayer.transform.position;
+                int key = "plantTime".GetStableHashCode();
+                var done = new JArray();
+                foreach (Plant plant in UnityEngine.Object.FindObjectsByType<Plant>(FindObjectsSortMode.None).Where(x => x != null && Vector3.Distance(x.transform.position, me) <= radius))
+                {
+                    ZNetView view = plant.GetComponent<ZNetView>();
+                    if (view == null || !view.IsValid()) continue;
+                    if (!view.IsOwner()) view.ClaimOwnership();
+                    ZDO zdo = view.GetZDO();
+                    long was = zdo.GetLong(key, 0L);
+                    if (was == 0L) continue;
+                    if (seconds == 0f)   // "grow 0": make it grow right now and say what came of it
+                    {
+                        try { GameObject made = plant.Grow(); done.Add(new JObject { ["plant"] = Utils.GetPrefabName(plant.gameObject), ["grewInto"] = made != null ? Utils.GetPrefabName(made) : "(nothing: " + plant.GetStatus() + ")" }); }
+                        catch (Exception e) { done.Add(new JObject { ["plant"] = Utils.GetPrefabName(plant.gameObject), ["error"] = e.GetType().Name + ": " + e.Message }); }
+                        continue;
+                    }
+                    zdo.Set(key, was - (long)(seconds * TimeSpan.TicksPerSecond));
+                    done.Add(new JObject { ["plant"] = Utils.GetPrefabName(plant.gameObject), ["position"] = Vec(plant.transform.position), ["age"] = Math.Round((ZNet.instance.GetTime().Ticks - (was - (long)(seconds * TimeSpan.TicksPerSecond))) / (double)TimeSpan.TicksPerSecond),
+                        ["status"] = plant.GetStatus().ToString(), ["growsInto"] = new JArray(plant.m_grownPrefabs.Select(g => g != null ? g.name : "NOTHING")), ["owner"] = view.IsOwner(), ["growTime"] = plant.m_growTime });
+                }
+                output(new JObject { ["aged"] = done, ["note"] = "plants check their growth every ten seconds or so" });
+                return null;
+            });
+
+            Builtin("use", "use <item prefab>: use an item from the player's inventory, as a double-click does (eat, drink, light)", (a, output, error) =>
+            {
+                if (a.Length < 2) { error("use <item prefab>"); return null; }
+                Player p = Player.m_localPlayer;
+                GameObject prefab = ObjectDB.instance != null ? ObjectDB.instance.GetItemPrefab(a[1]) : null;
+                if (prefab == null) { error($"no item called '{a[1]}'"); return null; }
+                string itemName = prefab.GetComponent<ItemDrop>().m_itemData.m_shared.m_name;
+                Func<IEnumerable<ItemDrop.ItemData>> mine = () => p.GetInventory().GetAllItems().Where(i => i.m_shared.m_name == itemName);
+                ItemDrop.ItemData item = mine().FirstOrDefault();
+                if (item == null) { error($"the player has no '{a[1]}'"); return null; }
+                int before = mine().Sum(i => i.m_stack);
+                p.UseItem(p.GetInventory(), item, false);
+                output(new JObject { ["used"] = a[1], ["countBefore"] = before, ["countAfter"] = mine().Sum(i => i.m_stack) });
+                return null;
+            });
+
+            Builtin("say","say <text>: show a message in the middle of the player's screen", (a, output, error) =>
             {
                 string text = Rest(a, 1);
                 Player.m_localPlayer.Message(MessageHud.MessageType.Center, text.Length > 200 ? text.Substring(0, 200) : text);

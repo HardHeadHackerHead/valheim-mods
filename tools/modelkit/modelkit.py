@@ -167,13 +167,80 @@ def mesh_quad():
     return np.array([[bl, br, tr], [bl, tr, tl]]), np.array([[n, n, n], [n, n, n]])
 
 
+# A tobacco leaf: base at the origin, tip at z = 1, 1 wide, ovate with a pointed tip, a raised midrib, ruffled edges and a drooping tip.
+# The same formulas are in mods/CigarSmoking/Meshes.cs: change both together.
+LEAF_NT, LEAF_NU = 12, 6
+
+
+def leaf_half_width(t):
+    return 0.5 * (max(0.0, math.sin(math.pi * t ** 0.8)) ** 0.75) * (1 - 0.3 * t)
+
+
+def leaf_y(t, u, lift=0.0):
+    return 0.10 * (1 - abs(u)) - 0.16 * t * t + 0.03 * math.sin(13 * t + 2.5 * u) * abs(u) ** 2 + lift
+
+
+def _grid_to_tris(grid, double=True):
+    """grid[i][j] -> points; triangles on both sides (the leaf is paper thin, so it has to be seen from either side)."""
+    tris, norms = [], []
+    for i in range(len(grid) - 1):
+        for j in range(len(grid[0]) - 1):
+            a, b, c, d = grid[i][j], grid[i][j + 1], grid[i + 1][j + 1], grid[i + 1][j]
+            for t3 in ((a, b, c), (a, c, d)):
+                n = np.cross(t3[1] - t3[0], t3[2] - t3[0])
+                ln = np.linalg.norm(n)
+                if ln < 1e-12:
+                    continue
+                n = n / ln
+                if n[1] < 0:
+                    n = -n
+                tris.append(list(t3)); norms.append([n, n, n])
+                if double:
+                    tris.append([t3[0], t3[2], t3[1]]); norms.append([-n, -n, -n])
+    return np.array(tris), np.array(norms)
+
+
+def mesh_leaf():
+    grid = []
+    for i in range(LEAF_NT + 1):
+        t = i / LEAF_NT
+        w = leaf_half_width(t)
+        grid.append([np.array([(-1 + 2 * j / LEAF_NU) * w, leaf_y(t, -1 + 2 * j / LEAF_NU), t]) for j in range(LEAF_NU + 1)])
+    return _grid_to_tris(grid)
+
+
+def mesh_rib():
+    """The midrib and six pairs of side veins as thin ribbons lying just above the leaf."""
+    tris, norms = [], []
+    def ribbon(points, width):
+        left, right = [], []
+        for k, p in enumerate(points):
+            q = points[min(k + 1, len(points) - 1)] - points[max(k - 1, 0)]
+            side = np.cross([0, 1, 0], q)
+            side = side / (np.linalg.norm(side) + 1e-9) * width / 2
+            left.append(p - side); right.append(p + side)
+        return _grid_to_tris([[l, r] for l, r in zip(left, right)])
+    def on_leaf(t, u):
+        return np.array([u * leaf_half_width(t), leaf_y(t, u, 0.012), t])
+    mid = [on_leaf(i / 10 * 0.96, 0.0) for i in range(11)]
+    t1, n1 = ribbon(mid, 0.035)
+    tris += list(t1); norms += list(n1)
+    for k in range(1, 7):
+        for sgn in (-1, 1):
+            t0 = 0.08 + k * 0.12
+            pts = [on_leaf(min(0.97, t0 + 0.14 * s / 4), sgn * 0.9 * s / 4) for s in range(5)]
+            tv, nv = ribbon(pts, 0.016)
+            tris += list(tv); norms += list(nv)
+    return np.array(tris), np.array(norms)
+
+
 QUAD_UV = np.array([[[0, 0], [1, 0], [1, 1]], [[0, 0], [1, 1], [0, 1]]], float)
 
 MESHES = {}
 
 def unit_mesh(shape):
     if shape not in MESHES:
-        MESHES[shape] = {"Cube": mesh_cube, "Cylinder": mesh_cylinder, "Sphere": mesh_sphere, "Quad": mesh_quad}[shape]()
+        MESHES[shape] = {"Cube": mesh_cube, "Cylinder": mesh_cylinder, "Sphere": mesh_sphere, "Quad": mesh_quad, "Leaf": mesh_leaf, "Rib": mesh_rib}[shape]()
     return MESHES[shape]
 
 

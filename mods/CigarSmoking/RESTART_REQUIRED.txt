@@ -1,0 +1,1 @@
+It adds a new item. Restart the game after updating so the Cigar registers cleanly (a Cigar in your bag or on the ground is lost if the game starts without the mod).

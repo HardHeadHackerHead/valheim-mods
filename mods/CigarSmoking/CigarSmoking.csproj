@@ -1,0 +1,14 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <AssemblyName>CigarSmoking</AssemblyName>
+    <RootNamespace>CigarSmoking</RootNamespace>
+  </PropertyGroup>
+  <ItemGroup>
+    <Reference Include="UnityEngine.ParticleSystemModule"><HintPath>$(ManagedDir)/UnityEngine.ParticleSystemModule.dll</HintPath><Private>false</Private></Reference>
+    <Reference Include="UnityEngine.AnimationModule"><HintPath>$(ManagedDir)/UnityEngine.AnimationModule.dll</HintPath><Private>false</Private></Reference>
+  </ItemGroup>
+  <ItemGroup>
+    <!-- the pictures of the items and pieces, drawn by tools/modelkit -->
+    <EmbeddedResource Include="icons\*.png" LogicalName="icons/%(Filename)%(Extension)" />
+  </ItemGroup>
+</Project>

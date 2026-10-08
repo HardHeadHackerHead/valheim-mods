@@ -62,7 +62,7 @@ Every player installs the mods they want for themselves. A few need more than th
 | Mod | Who needs it |
 |---|---|
 | **AICompanion** | Everyone in the world, **the host too**: without it the game deletes saved companions. |
-| **Recycler, BountyBoard, SlotMachine, BirdTrap, LedgerChest** (new build pieces) | Everyone, and **the host above all**: a game without the mod deletes the pieces when their area loads. Restart after installing or updating them. |
+| **Recycler, BountyBoard, SlotMachine, BirdTrap, LedgerChest, Quad's Cigars** (new build pieces and items) | Everyone, and **the host above all**: a game without the mod deletes the pieces when their area loads. Restart after installing or updating them. |
 | **PortalHub, BountyBoard** | The host (it keeps the portal links and the contracts), and everyone who wants their menus. |
 | Everything else | Only the players who want it. |
 
@@ -229,6 +229,14 @@ each goes on to the chest assigned it (QualityOfLife's **K**), else to a chest w
 
 </td>
 <td valign="top">
+
+### 🚬 Quad's Cigars
+<img src="dist/CigarSmoking.cover.png" alt="Quad's Cigars" width="100%">
+
+Tobacco from the wild plant to the cigar in your mouth. Three strains grow in the Meadows, the Black Forest and the Plains; farm them with the
+cultivator, dry the leaves on a rack, age them in a barrel, and roll four kinds of cigar (Connecticut, Maduro, Corojo, Habano) at a Cigar
+Rolling Table, with a Humidor for the finer ones. Each has its own status effect, and you are seen smoking it: in your hand, brought up for a
+puff, or kept in your mouth when you hold a weapon.
 
 </td>
 </tr>

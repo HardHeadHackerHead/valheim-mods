@@ -64,6 +64,9 @@ for the newest; use `_` for spaces). Positions in a place are metres: x right, y
 | `mods` | The mods running, with versions. |
 | `config <mod> [section] [key]` | A mod's settings (value, default, description). `config set <mod> <section> <key> <value>` changes one, only if the player allows it (`AllowConfigChanges`). |
 | `log [lines] [text]` | The last lines of the BepInEx log, optionally only those containing some text: for checking a mod's messages and errors. |
+| `give <item prefab> [amount]` | Put an item in the player's bag (for trying out a mod's new item). |
+| `use <item prefab>` | Use an item from the player's bag, as a double-click does (eat, drink, light). |
+| `grow <seconds> [radius]` | Age the cultivated plants near the player by that many seconds, so they grow without the wait; `grow 0` makes them grow now and says what came of it. |
 | `say <text>` | A message in the middle of the player's screen. |
 | `pin <place\|x z> <text>` | A labelled pin on the player's map. |
 | `wait <seconds>` | Pause, so things happen before the next picture. |
