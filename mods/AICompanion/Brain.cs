@@ -125,6 +125,8 @@ namespace AICompanion
         public float NextSnapshot, LastHurtAt, GraveSince, GraveBest = float.MaxValue;                     // the activity log (Activity)
         public string LastHurtBy = "";
         public bool Hungry, Weak;                                   // no food in it or on it; and badly hurt with no food (Work)
+        public Duties.Entry Duty;                                   // the home duty it works now, null when it lives its own life (Duties)
+        public bool OnDuties;                                       // its duties are switched on: they, not the job ticks, say what it does at home
         public readonly Dictionary<string, float> Unfindable = new Dictionary<string, float>(); // what its goal needs and is not near home, until when
         public Goal Goal;                                           // what it is working toward (Goals)
         public string GoalSaid;

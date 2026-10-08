@@ -337,6 +337,7 @@ namespace AICompanion
                 ["between_jobs"] = $"{Brain.Get(c).IdlePlan}, sitting {Brain.Get(c).Sitting}, chair {(Brain.Get(c).SitChair != null)}, asleep {Brain.Get(c).Asleep}",
                 ["task"] = t == null ? null : $"{t.Kind} {(t.Target != null ? Utils.GetPrefabName(t.Target.gameObject) : "-")} at {(t.Target != null ? Vector3.Distance(t.Target.transform.position, c.transform.position) : 0f):0.0} m for {Time.time - t.Started:0} s{(t.ForGoal ? " (for goal)" : "")}",
                 ["work_note"] = st.WorkNote,
+                ["duty"] = Duties.Configured(c) ? (st.Duty != null ? $"{st.Duty.Duty}: {Duties.Have(c, st.Duty.Duty)} of {st.Duty.Target}" : "all stocked: its own life") : "none set",
                 ["jobs"] = Work.JobsOf(c) == Job.None ? "auto: " + Work.AutoJobs(c) : Work.JobsOf(c).ToString(),
                 ["skipped"] = st.Skipped.Count(kv => kv.Value > Time.time),
                 ["in_combat"] = st.InCombat,

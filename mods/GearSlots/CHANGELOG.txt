@@ -1,3 +1,5 @@
+Auto-eat now waits until a food you are already under is below 20% of its time left (setting Food / EatBelowPercent, 1 to 50; the game allows eating again from 50%). A meal lasts 80% of its time instead of half, so your food goes about 1.6 times as far; its effect weakens a little towards the end.
+
 Fix: quick slots 2-4 (X, C, V) also did the game's sit, walk and auto-pickup toggle: pressing V for quick slot 4 turned auto-pickup off. The game's own key for those is now unbound (once, and you are told in chat), so only the quick slot happens; give them another key in the game's Settings, Controls if you want them. Auto-pickup is switched back on if it was left off.
 
 Fix: everything in the gear slots was dropped on the ground each time you spawned after starting the game (the game resets the inventory size on spawn since inventory rows can be bought). The gear rows now stay, and if you buy a row they move down under it.

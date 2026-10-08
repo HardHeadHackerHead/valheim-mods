@@ -724,8 +724,40 @@ namespace AICompanion
             Stepper("Goes as far as", $"{radius} m", () => Change(cz => cz.Set(Keys.Radius, Mathf.Clamp(radius - 5, 10, 80))), () => Change(cz => cz.Set(Keys.Radius, Mathf.Clamp(radius + 5, 10, 80))));
             EndCard();
 
+            // Home duties: a short list in the order it does them, each with a stockpile it keeps in its chest.
+            List<Duties.Entry> duties = Duties.Read(z);
+            Duties.Entry working = Duties.Active(c);
+            BeginCard("Home duties");
+            Note("What it does at home, top to bottom. It works the first duty that is on until its chest holds the amount you set, then the next one. When all are stocked it goes back to living its own life.", _text);
+            if (chests.Count == 0) Note("It has no chest of its own: give it one above, or it puts what it gathers in yours.", _warn);
+            for (int di = 0; di < duties.Count; di++)
+            {
+                Duties.Entry e = duties[di];
+                Duty dd = e.Duty;
+                GUILayout.BeginHorizontal();
+                GUILayout.Label((di + 1).ToString(), _num, GUILayout.Width(22));
+                if (Check(Duties.Label(dd), e.On, Inner - 160f) && Commandable)
+                    _pending = () => Change(cz => { var l = Duties.Read(cz); var x = l.First(a => a.Duty == dd); x.On = !x.On; Duties.Write(cz, l); });
+                if (GUILayout.Button("Up", _button, GUILayout.Width(44), GUILayout.Height(26)) && di > 0)
+                { _pending = () => Change(cz => { var l = Duties.Read(cz); int k = l.FindIndex(a => a.Duty == dd); if (k > 0) { var t = l[k]; l[k] = l[k - 1]; l[k - 1] = t; Duties.Write(cz, l); } }); }
+                if (GUILayout.Button("Down", _button, GUILayout.Width(52), GUILayout.Height(26)) && di < duties.Count - 1)
+                    _pending = () => Change(cz => { var l = Duties.Read(cz); int k = l.FindIndex(a => a.Duty == dd); if (k >= 0 && k < l.Count - 1) { var t = l[k]; l[k] = l[k + 1]; l[k + 1] = t; Duties.Write(cz, l); } });
+                GUILayout.EndHorizontal();
+                if (!e.On) continue;
+                int step = Duties.Step(dd), max = Duties.Max(dd);
+                Stepper("      Keep in its chest", $"{e.Target} {Duties.Unit(dd)}",
+                    () => Change(cz => { var l = Duties.Read(cz); var x = l.First(a => a.Duty == dd); x.Target = Mathf.Clamp(x.Target - step, step, max); Duties.Write(cz, l); }),
+                    () => Change(cz => { var l = Duties.Read(cz); var x = l.First(a => a.Duty == dd); x.Target = Mathf.Clamp(x.Target + step, step, max); Duties.Write(cz, l); }));
+                Note("      " + Duties.Status(c, e, working), e == working ? _good : _dim);
+                if (dd == Duty.Wood && Work.Axe(c) == null) Note("      It needs an axe (put one in its chest).", _warn);
+                if (dd == Duty.Mining && Work.Pickaxe(c) == null) Note("      It needs a pickaxe (put one in its chest).", _warn);
+                if (dd == Duty.Food && Companion.BestRanged(c) == null && Companion.BestMelee(c) == null) Note("      It needs a weapon to hunt; it can still forage.", _warn);
+            }
+            Note("A cooking station near home lets it cook what it hunts. Hungry, it feeds itself first whatever the duty.", _dim);
+            EndCard();
+
             Job jobs = Work.JobsOf(c);
-            BeginCard("Jobs (optional)");
+            BeginCard(duties.Any(x => x.On) ? "Other jobs (not used while a duty is on)" : "Jobs (optional)");
             Job auto = Work.AutoJobs(c);
             Note(jobs == Job.None
                 ? "Nothing ticked: it decides for itself, gathering what its goal needs and what its tools allow. Right now: " + (auto == Job.None && goal == null ? "nothing (no tools, and enough food)." : JobNames(auto | Goals.JobsFor(goal, out _)) + ".")

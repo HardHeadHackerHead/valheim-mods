@@ -16,11 +16,11 @@ namespace AICompanion
     {
         public const string Guid = "com.dhack.aicompanion";
         public const string Name = "AICompanion";
-        public const string Version = "0.19.7";
+        public const string Version = "0.20.0";
 
         internal static Plugin Instance;
         internal static ConfigEntry<bool> ShowDecisions;
-        internal static ConfigEntry<float> EngageRange, RespawnSeconds, BaseHealth, BaseStamina, StartingSkill;
+        internal static ConfigEntry<float> EngageRange, RespawnSeconds, BaseHealth, BaseStamina, StartingSkill, EatBelow;
         internal static ConfigEntry<KeyboardShortcut> MenuKey, CommandKey;
         internal static ConfigEntry<AwayMode> WhileAway;
         internal static ConfigEntry<int> MaxCompanions;
@@ -67,6 +67,7 @@ namespace AICompanion
             RespawnSeconds = More("Companion", "RespawnSeconds", 30f, "Seconds after falling before it wakes in its bed (or beside you).", new AcceptableValueRange<float>(5f, 600f));
             BaseHealth = More("Companion", "BaseHealth", 25f, "Its health before food, as a player's (25).", new AcceptableValueRange<float>(5f, 500f));
             BaseStamina = More("Companion", "BaseStamina", 75f, "Its stamina before food, as a player's (75).", new AcceptableValueRange<float>(10f, 500f));
+            EatBelow = More("Companion", "EatBelowPercent", 20f, "It eats a food it is already under again once its time left drops below this percent (the game allows it from 50). Lower saves food: a meal lasts 80% of its time instead of 50%, and its effect weakens a little towards the end.", new AcceptableValueRange<float>(1f, 50f));
             StartingSkill = More("Companion", "StartingSkill", 0f, "The skill level a new companion starts at (a new player: 0).", new AcceptableValueRange<float>(0f, 100f));
             foreach (string gone in new[] { "Health", "Stamina" }) { Config.Bind("Companion", gone, 0f, ""); Config.Remove(new ConfigDefinition("Companion", gone)); } // from 0.1.0
             Config.Save();   // without the settings that moved

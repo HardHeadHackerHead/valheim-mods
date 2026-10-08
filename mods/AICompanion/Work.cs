@@ -67,6 +67,9 @@ namespace AICompanion
         }
         private static readonly Func<BaseAI, Vector3, bool> HavePath = AccessTools.MethodDelegate<Func<BaseAI, Vector3, bool>>(AccessTools.Method(typeof(BaseAI), "HavePath"));
 
+        /// <summary>You ticked jobs, or a home duty is under way: it works those, not what its goal needs.</summary>
+        private static bool Directed(BrainState st) => JobsOf(st.Body) != Job.None || st.Duty != null;
+
         public static Job JobsOf(Component c) => (Job)(Companion.Zdo(c)?.GetInt(Keys.Jobs, 0) ?? 0);
 
         /// <summary>
@@ -181,7 +184,19 @@ namespace AICompanion
         {
             Humanoid me = st.Body;
             Job jobs = JobsOf(me);
-            if (jobs == Job.None) jobs = AutoJobs(me); // living at home: it decides for itself what to do with what it has
+            st.OnDuties = Duties.Configured(me);
+            if (st.OnDuties)
+            {
+                // Its home duties, in the order you set: the first not yet stocked; all stocked, its own life. Hungry, food comes first whatever the duty.
+                st.Duty = Duties.Active(me);
+                jobs = st.Duty != null ? st.Duty.Jobs : Job.None;
+                if (st.Hungry) jobs |= Job.Forage | Job.Hunt | Job.Cook;
+            }
+            else
+            {
+                st.Duty = null;
+                if (jobs == Job.None) jobs = AutoJobs(me); // living at home: it decides for itself what to do with what it has
+            }
             Vector3 center = Center(me);
             float radius = RadiusOf(me);
             if (TravelHome(st, center, radius, moveTo)) return;
@@ -195,6 +210,13 @@ namespace AICompanion
                 st.NextWorkLook = Time.time + 1.5f;
                 st.Task = Choose(st, jobs, center, radius);
                 if (st.Task == null) st.WorkTool = null;
+                if (st.Task == null && st.Duty != null && st.WorkNote != null)
+                {
+                    // Nothing to gather for this duty (or no room): the next duty for a minute, looked at again straight away.
+                    Duties.Rest(me, st.Duty);
+                    st.Remember($"found nothing for \"{Duties.Label(st.Duty.Duty).ToLowerInvariant()}\" near home: on to the next duty");
+                    st.NextWorkLook = Time.time + 0.2f;
+                }
             }
             if (st.Task == null)
             {
@@ -869,6 +891,7 @@ namespace AICompanion
             //    materials for its next upgrades and its goal) into its own chests, when its bag is full: the chest of its own that already
             //    holds most of it. Putting things in your chests switched off (Home tab): everything into its own.
             bool full = BagFull(me) || inv.GetAllItems().Count(i => !Keeps(me, i)) >= 18;
+            bool dutyLoad = st.OnDuties && Duties.Deliver(me, st.Duty); // a load of what its duties gather: to its chest
             bool yoursToGive = Stows(me) && inv.GetAllItems().Any(i => YoursToGive(st, i));
             if (yoursToGive && (full || Time.time >= st.NextDeliver))
             {
@@ -877,14 +900,14 @@ namespace AICompanion
                 Container yours = YourChests(me, center, radius + 20f).Where(c => HasRoom(c, me) && !Skipped(st, c)).Take(6).FirstOrDefault(c => Brain.CanReach(me, c.transform.position));
                 if (yours != null) return New(Kind.Store, yours, Job.None);
             }
-            if (full)
+            if (full || dutyLoad)
             {
-                var stock = inv.GetAllItems().Where(i => !Keeps(me, i) && (!Stows(me) || IsStock(st, i) && StillWanted(st, i) > 0)).Select(i => i.m_shared.m_name).ToList(); // (stock its chests still want: else no trip, or round it would go)
+                var stock =inv.GetAllItems().Where(i => !Keeps(me, i) && (!Stows(me) || IsStock(st, i) && StillWanted(st, i) > 0)).Select(i => i.m_shared.m_name).ToList(); // (stock its chests still want: else no trip, or round it would go)
                 Container chest = Home.Chests(me).Where(c => !c.IsInUse() && Vector3.Distance(c.transform.position, center) < radius + 40f && HasRoom(c, me) && !Skipped(st, c))
                                      .OrderByDescending(c => c.GetInventory().GetAllItems().Count(i => stock.Contains(i.m_shared.m_name)))
                                      .ThenBy(c => Vector3.Distance(c.transform.position, me.transform.position)).FirstOrDefault(c => Brain.CanReach(me, c.transform.position));
                 if (chest != null && stock.Count > 0) return New(Kind.Store, chest, Job.None);
-                if (inv.GetEmptySlots() == 0) { st.WorkNote = Stows(me) ? "its bag is full: give it a chest (Home tab) or room in yours" : "its bag is full: give it a chest (Home tab) or empty its bag"; return null; }
+                if (full && inv.GetEmptySlots() == 0) { st.WorkNote = Stows(me) ? "its bag is full: give it a chest (Home tab) or room in yours" : "its bag is full: give it a chest (Home tab) or empty its bag"; return null; }
             }
             // Its own chests holding what is yours (from before, or more than it keeps): a tidy now and then, what is yours to your chests.
             if (Stows(me) && Time.time >= st.NextTidy)
@@ -977,7 +1000,7 @@ namespace AICompanion
 
             // What its goal needs decides its jobs too, when you have not ticked any.
             Job goalJobs = Goals.JobsFor(st.Goal, out HashSet<string> goalPrey);
-            if (JobsOf(me) == Job.None) jobs |= goalJobs & ~Job.Loot;
+            if (!Directed(st)) jobs |= goalJobs & ~Job.Loot;
 
             // Its own meals: raw food it carries goes on a cooking station near home.
             if ((jobs & Job.Cook) != 0)
@@ -1065,7 +1088,7 @@ namespace AICompanion
             }
             // Nothing near home for its goal: a trip for it, as far as the world is loaded around you (about 170 m from home), when it is fit.
             bool searched = false;
-            if (st.Goal != null && st.Goal.Raw.Count > 0 && !goalSeen && JobsOf(me) == Job.None && !st.Weak && !st.Hungry && me.GetHealthPercentage() > 0.6f
+            if (st.Goal != null && st.Goal.Raw.Count > 0 && !goalSeen && !Directed(st) && !st.Weak && !st.Hungry && me.GetHealthPercentage() > 0.6f
                 && (Time.time >= st.NextTripLook || Time.time < st.TripUntil))
             {
                 st.NextTripLook = Time.time + 20f;
@@ -1087,7 +1110,7 @@ namespace AICompanion
                 }
                 if (Time.time < st.TripUntil) { st.TripUntil = 0f; st.Remember("came back from its trip"); } // done (or nothing more out there): home
             }
-            if (searched && st.Goal != null && st.Goal.Raw.Count > 0 && !goalSeen && JobsOf(me) == Job.None && !goalPrey.Any())
+            if (searched && st.Goal != null && st.Goal.Raw.Count > 0 && !goalSeen && !Directed(st) && !goalPrey.Any())
             {
                 // Nothing near home drops what its goal needs: those things count as "ask for them" for ten minutes, so it picks a goal it can do.
                 Talk.Tell(me, $"I can't find any {string.Join(" or ", st.Goal.Names.Values)} around here for my {st.Goal.What}, even further out. I'll look while you're away, or bring me some.", "far:" + st.Goal.What, 30f);
@@ -1370,11 +1393,12 @@ namespace AICompanion
         /// <summary>How many of it its own chests keep (0: none, it is yours).</summary>
         public static int StockCap(BrainState st, ItemDrop.ItemData i)
         {
-            if (Food.IsFood(i)) return 40;
-            if (IsCookable(i)) return 20;
+            int duty = Duties.Cap(st.Body, i); // what its home duties stockpile (wood, food, stone and ore)
+            if (Food.IsFood(i)) return Mathf.Max(40, duty);
+            if (IsCookable(i)) return Mathf.Max(20, duty);
             if (i.m_shared.m_itemType == ItemDrop.ItemData.ItemType.Ammo) return 100;
             if (i.m_shared.m_itemType == ItemDrop.ItemData.ItemType.Consumable && Companion.Useful(st.Body, i)) return 10; // healing potions
-            return StockCaps(st).TryGetValue(i.m_shared.m_name, out int n) ? n : 0;
+            return Mathf.Max(duty, StockCaps(st).TryGetValue(i.m_shared.m_name, out int n) ? n : 0);
         }
 
         public static bool IsStock(BrainState st, ItemDrop.ItemData i) => StockCap(st, i) > 0;
@@ -1455,7 +1479,7 @@ namespace AICompanion
                 }
                 if (MovePart(mine, its, item, n) > 0) put++;
             }
-            Job jobs = JobsOf(me);
+            Job jobs = JobsOf(me) | (st.Duty?.Jobs ?? Job.None);
             if (!yours)
             {
                 foreach (ItemDrop.ItemData item in its.GetAllItems().ToList())

@@ -198,13 +198,14 @@ namespace AICompanion
             st.Goal = fellTo == null ? Goals.Pick(me, center, radius, st) : null;
             Job goalJobs = Goals.JobsFor(st.Goal, out HashSet<string> goalPrey);
             var hunted = new Dictionary<string, int>();
-            if (fellTo == null && (Companion.BestRanged(me) != null || Companion.BestMelee(me) != null) && (hungry || goalPrey.Count > 0))
+            if (fellTo == null && (Companion.BestRanged(me) != null || Companion.BestMelee(me) != null) && (hungry || goalPrey.Count > 0 || Duties.Open(me, Duty.Food)))
                 Hunt(me, got, hunted, goalPrey, ref budget, seconds);
 
             Stage = "gathering";
             // 4. Gathering, at a player's pace, on what is really there: what its goal needs first, food first when hungry.
             Job jobs = Work.JobsOf(me);
-            if (jobs == Job.None) jobs = Work.AutoJobs(me) | (goalJobs & ~(Job.Loot | Job.Hunt));
+            if (Duties.Configured(me)) jobs = Duties.OpenJobs(me) | (goalJobs & ~(Job.Loot | Job.Hunt)); // its home duties still short of their stockpile, then its goal
+            else if (jobs == Job.None) jobs = Work.AutoJobs(me) | (goalJobs & ~(Job.Loot | Job.Hunt));
             ItemDrop.ItemData axe = Work.Axe(me), pick = Work.Pickaxe(me);
             var seen = new HashSet<GameObject>();
             var targets = new List<Component>();

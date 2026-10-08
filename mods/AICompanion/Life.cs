@@ -87,10 +87,11 @@ namespace AICompanion
 
         private static void TryEat(Humanoid c, State s, BrainState st)
         {
-            Meal depleted = s.Meals.Where(m => m.Time < m.Item.m_shared.m_foodBurnTime / 2f).OrderBy(m => m.Time).FirstOrDefault();
+            float below = Plugin.EatBelow.Value / 100f; // (a meal it eats again once under this part of its time: 20%, the game allows 50%)
+            Meal depleted = s.Meals.Where(m => m.Time < m.Item.m_shared.m_foodBurnTime * below).OrderBy(m => m.Time).FirstOrDefault();
             if (s.Meals.Count >= 3 && depleted == null) return; // full, as a player can be
             ItemDrop.ItemData best = c.GetInventory().GetAllItems().Where(IsFood)
-                .Where(i => !s.Meals.Any(m => m.Item.m_shared.m_name == i.m_shared.m_name && m.Time >= m.Item.m_shared.m_foodBurnTime / 2f))
+                .Where(i => !s.Meals.Any(m => m.Item.m_shared.m_name == i.m_shared.m_name && m.Time >= m.Item.m_shared.m_foodBurnTime * below))
                 .OrderByDescending(i => i.m_shared.m_food + i.m_shared.m_foodStamina).FirstOrDefault();
             if (best == null) return;
             Meal same = s.Meals.FirstOrDefault(m => m.Item.m_shared.m_name == best.m_shared.m_name);

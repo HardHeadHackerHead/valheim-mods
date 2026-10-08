@@ -22,11 +22,12 @@ namespace GearSlots
     {
         public const string Guid = "com.dhack.gearslots";
         public const string Name = "GearSlots";
-        public const string Version = "1.0.2";
+        public const string Version = "1.1.0";
 
         internal static Plugin Instance;
 
         private ConfigEntry<bool> _showPanel, _autoEat, _showMessages, _autoFill, _shieldFollows, _showQuickBar;
+        private ConfigEntry<int> _eatBelow;
         private ConfigEntry<float> _panelGap, _offsetX, _offsetY;
         private ConfigEntry<KeyboardShortcut>[] _quickKeys;
         private Harmony _harmony;
@@ -43,6 +44,8 @@ namespace GearSlots
             _showMessages = Config.Bind("General", "ShowMessages", true, "Short messages when something happens (auto-eat, a quick slot is empty).");
             _autoEat = Config.Bind("Food", "AutoEat", false,
                 "Eat from your Food slots by yourself: when a food you have in a slot is not active (and you have a free food slot), or its effect has dropped below half. Off by default.");
+            _eatBelow = Config.Bind("Food", "EatBelowPercent", 20,
+                new ConfigDescription("Auto-eat a food you are already under only once its time left drops below this percent (the game allows it from 50). Lower saves food: a meal then lasts 80% of its time instead of 50%, and its effect weakens a little towards the end.", new AcceptableValueRange<int>(1, 50)));
             _shieldFollows = Config.Bind("General", "ShieldFollowsWeapon", true,
                 "When you switch to a one-handed weapon, put on the shield from your Shield slot too. (Two-handed weapons and bows take the shield off, as in the game.)");
             _showQuickBar = Config.Bind("Quick slots", "ShowUnderHotbar", true,
@@ -230,7 +233,7 @@ namespace GearSlots
                 if (item == null) continue;
 
                 Player.Food same = active.FirstOrDefault(f => f.m_item.m_shared.m_name == item.m_shared.m_name);
-                bool wanted = same != null ? same.CanEatAgain() : active.Count < 3;
+                bool wanted = same != null ? same.CanEatAgain() && same.m_time < same.m_item.m_shared.m_foodBurnTime * _eatBelow.Value / 100f : active.Count < 3;
                 if (!wanted || !player.CanEat(item, false)) continue;
 
                 player.UseItem(inv, item, fromInventoryGui: true);
