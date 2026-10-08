@@ -5,10 +5,12 @@ using UnityEngine;
 namespace BuildOrders
 {
     /// <summary>
-    /// An estimate of how stable the planned structure would be, using the same rules the game uses for real pieces (each material's
-    /// strength, how much support is lost across a distance, ground counting as full support). The ghosts have no physics of their own,
-    /// so this works from their outlines instead; it is a guide, not a promise. A piece the estimate says nothing supports would fall
-    /// once built, which the game does on its own.
+    /// How stable the planned structure would be, worked out as the game itself does it for real pieces (WearNTear.UpdateSupport): each
+    /// piece's own solid colliders, turned with it, grown by 0.15 m into the boxes it takes support through; the ground (or any solid that
+    /// is not a piece) inside those boxes gives full support; from a touching piece, its support less the material's loss over the distance
+    /// between their centres of mass (sideways loss, or nearer the vertical loss for a support below), two supports on opposite sides
+    /// averaged; under the material's minimum it breaks and what rested on it is worked out again. Build all only builds what stands this way,
+    /// so nothing is built over a gap where a piece below is still missing (out of materials, or of a station's reach).
     /// </summary>
     public partial class Plugin
     {
@@ -24,16 +26,85 @@ namespace BuildOrders
         private class Node
         {
             public Order Order;
-            public Bounds Box;
-            public Vector3 Com;
+            public Bounds Box;                                    // all its collider boxes together (for a quick first test)
+            public Vector3 Com, Pos;
             public float Max, Min, HLoss, VLoss, Support;
-            public bool Supports, Grounded;
-            public readonly List<Node> Near = new List<Node>();
+            public bool Supports, Grounded, Broken;
+            public List<Obb> Cols, Reach;                         // its solid colliders, and those grown by 0.15 m (where it takes support)
+            public readonly List<KeyValuePair<Node, Obb>> Near = new List<KeyValuePair<Node, Obb>>();   // a touching piece, and its collider
             public readonly List<Real> Real = new List<Real>();
         }
 
+        /// <summary>An oriented box: centre, rotation, half sizes.</summary>
+        internal struct Obb
+        {
+            public Vector3 C, H;
+            public Quaternion R;
+            public Bounds Aabb()
+            {
+                Vector3 ax = R * new Vector3(H.x, 0f, 0f), ay = R * new Vector3(0f, H.y, 0f), az = R * new Vector3(0f, 0f, H.z);
+                Vector3 e = new Vector3(Mathf.Abs(ax.x) + Mathf.Abs(ay.x) + Mathf.Abs(az.x), Mathf.Abs(ax.y) + Mathf.Abs(ay.y) + Mathf.Abs(az.y), Mathf.Abs(ax.z) + Mathf.Abs(ay.z) + Mathf.Abs(az.z));
+                return new Bounds(C, e * 2f);
+            }
+            public Vector3 Closest(Vector3 p)
+            {
+                Vector3 d = Quaternion.Inverse(R) * (p - C);
+                d = new Vector3(Mathf.Clamp(d.x, -H.x, H.x), Mathf.Clamp(d.y, -H.y, H.y), Mathf.Clamp(d.z, -H.z, H.z));
+                return C + R * d;
+            }
+            public static bool Overlap(Obb a, Obb b)
+            {
+                Vector3[] A = { a.R * Vector3.right, a.R * Vector3.up, a.R * Vector3.forward };
+                Vector3[] B = { b.R * Vector3.right, b.R * Vector3.up, b.R * Vector3.forward };
+                Vector3 t = b.C - a.C;
+                bool Sep(Vector3 axis)
+                {
+                    if (axis.sqrMagnitude < 1e-8f) return false;
+                    float ra = a.H.x * Mathf.Abs(Vector3.Dot(A[0], axis)) + a.H.y * Mathf.Abs(Vector3.Dot(A[1], axis)) + a.H.z * Mathf.Abs(Vector3.Dot(A[2], axis));
+                    float rb = b.H.x * Mathf.Abs(Vector3.Dot(B[0], axis)) + b.H.y * Mathf.Abs(Vector3.Dot(B[1], axis)) + b.H.z * Mathf.Abs(Vector3.Dot(B[2], axis));
+                    return Mathf.Abs(Vector3.Dot(t, axis)) > ra + rb + 1e-4f;
+                }
+                for (int i = 0; i < 3; i++) { if (Sep(A[i]) || Sep(B[i])) return false; }
+                for (int i = 0; i < 3; i++) for (int j = 0; j < 3; j++) if (Sep(Vector3.Cross(A[i], B[j]))) return false;
+                return true;
+            }
+        }
+
+        /// <summary>A prefab's solid colliders in its own frame, as the game's support check takes them (boxes turned; other shapes by bounds).</summary>
+        private readonly Dictionary<string, List<KeyValuePair<Obb, bool>>> _colliderShapes = new Dictionary<string, List<KeyValuePair<Obb, bool>>>();
+
+        private List<KeyValuePair<Obb, bool>> ShapesOf(string prefabName)
+        {
+            if (_colliderShapes.TryGetValue(prefabName, out var cached)) return cached;
+            var list = new List<KeyValuePair<Obb, bool>>();
+            GameObject prefab = ZNetScene.instance != null ? ZNetScene.instance.GetPrefab(prefabName) : null;
+            if (prefab != null)
+            {
+                Transform root = prefab.transform;
+                foreach (Collider col in prefab.GetComponentsInChildren<Collider>(true))
+                {
+                    if (col.isTrigger || col.attachedRigidbody != null) continue;
+                    Transform t = col.transform;
+                    Matrix4x4 m = root.worldToLocalMatrix * t.localToWorldMatrix;
+                    Quaternion r = Quaternion.Inverse(root.rotation) * t.rotation;
+                    Vector3 scale = new Vector3(m.GetColumn(0).magnitude, m.GetColumn(1).magnitude, m.GetColumn(2).magnitude);
+                    if (col is BoxCollider bc)
+                        list.Add(new KeyValuePair<Obb, bool>(new Obb { C = m.MultiplyPoint3x4(bc.center), R = r, H = Vector3.Scale(scale, bc.size) * 0.5f }, true));
+                    else
+                    {
+                        Bounds lb = col is MeshCollider mc && mc.sharedMesh != null ? mc.sharedMesh.bounds
+                            : col is CapsuleCollider cc ? new Bounds(cc.center, cc.direction == 0 ? new Vector3(cc.height, cc.radius * 2f, cc.radius * 2f) : cc.direction == 1 ? new Vector3(cc.radius * 2f, cc.height, cc.radius * 2f) : new Vector3(cc.radius * 2f, cc.radius * 2f, cc.height))
+                            : col is SphereCollider sc ? new Bounds(sc.center, Vector3.one * sc.radius * 2f) : new Bounds(Vector3.zero, Vector3.zero);
+                        list.Add(new KeyValuePair<Obb, bool>(new Obb { C = m.MultiplyPoint3x4(lb.center), R = r, H = Vector3.Scale(scale, lb.size) * 0.5f }, false));
+                    }
+                }
+            }
+            _colliderShapes[prefabName] = list;
+            return list;
+        }
+
         /// <summary>A real piece already standing next to a ghost, with the support the game says it has.</summary>
-        private struct Real { public Vector3 Com, Point; public float Support; }
+        private struct Real { public Vector3 Com, Pos, Point; public float Support; }
 
         private readonly Dictionary<string, Stab> _stability = new Dictionary<string, Stab>();
         private readonly Dictionary<string, float[]> _materials = new Dictionary<string, float[]>(); // prefab -> max, min, horizontal loss, vertical loss, supports
@@ -71,103 +142,126 @@ namespace BuildOrders
             {
                 if ((o.Pos - me).sqrMagnitude > 80f * 80f) continue;
                 if (only != null && !only.Contains(o.Id)) continue;
-                if (!_ghosts.TryGetValue(o.Id, out GameObject ghost) || ghost == null || !GhostBounds(o, out Bounds box)) continue;
+                if (!_ghosts.TryGetValue(o.Id, out GameObject ghost) || ghost == null) continue;
                 float[] m = MaterialOf(o, ghost);
                 if (m == null) continue; // not a structural piece (a table, a torch...)
+                var shapes = ShapesOf(o.Prefab);
+                if (shapes.Count == 0) continue;
+                var cols = new List<Obb>(shapes.Count);
+                var reach = new List<Obb>(shapes.Count);
+                Bounds all = default;
+                foreach (var kv in shapes)
+                {
+                    Obb local = kv.Key;
+                    var w = new Obb { C = o.Pos + o.Rot * local.C, R = o.Rot * local.R, H = local.H };
+                    cols.Add(w);
+                    Obb grown = kv.Value ? new Obb { C = w.C, R = w.R, H = w.H + Vector3.one * 0.15f }
+                        : new Obb { C = w.Aabb().center, R = Quaternion.identity, H = w.Aabb().extents + Vector3.one * 0.15f }; // (the game: world bounds)
+                    reach.Add(grown);
+                    Bounds gb = grown.Aabb();
+                    if (all.size == Vector3.zero) all = gb; else all.Encapsulate(gb);
+                }
+                WearNTear wnt = ghost.GetComponent<WearNTear>();
                 nodes.Add(new Node
                 {
-                    Order = o, Box = box, Com = ghost.GetComponent<WearNTear>() != null ? (Vector3)ComOf.Invoke(ghost.GetComponent<WearNTear>(), null) : box.center,
+                    Order = o, Box = all, Pos = o.Pos, Cols = cols, Reach = reach,
+                    Com = wnt != null && ComOf != null ? (Vector3)ComOf.Invoke(wnt, null) : o.Pos,
                     Max = m[0], Min = m[1], HLoss = m[2], VLoss = m[3], Supports = m[4] > 0f,
                 });
-                if (nodes.Count >= 400) break;
             }
 
             int ground = LayerMask.GetMask("terrain", "Default", "static_solid", "Default_small");
             int pieces = LayerMask.GetMask("piece");
-
             foreach (Node n in nodes)
             {
-                Vector3 reach = n.Box.extents + Vector3.one * 0.06f;
-                n.Grounded = Physics.CheckBox(n.Box.center, reach, Quaternion.identity, ground, QueryTriggerInteraction.Ignore);
-                n.Support = n.Grounded ? n.Max : 0f;
-
-                // real pieces already touching it
-                int count = Physics.OverlapBoxNonAlloc(n.Box.center, reach, _near, Quaternion.identity, pieces, QueryTriggerInteraction.Ignore);
-                for (int i = 0; i < count; i++)
+                foreach (Obb r in n.Reach)
                 {
-                    WearNTear real = _near[i].GetComponentInParent<WearNTear>();
-                    if (real == null || !real.m_supports || SupportOf == null || ComOf == null) continue;
-                    n.Real.Add(new Real
+                    if (!n.Grounded && Physics.CheckBox(r.C, r.H, r.R, ground, QueryTriggerInteraction.Ignore)) n.Grounded = true;
+                    // real pieces already touching it
+                    int count = Physics.OverlapBoxNonAlloc(r.C, r.H, _near, r.R, pieces, QueryTriggerInteraction.Ignore);
+                    for (int i = 0; i < count; i++)
                     {
-                        Com = (Vector3)ComOf.Invoke(real, null),
-                        Point = _near[i].bounds.ClosestPoint(n.Com),
-                        Support = (float)SupportOf.Invoke(real, null),
-                    });
+                        WearNTear real = _near[i].GetComponentInParent<WearNTear>();
+                        if (real == null || !real.m_supports || SupportOf == null || ComOf == null) continue;
+                        n.Real.Add(new Real { Com = (Vector3)ComOf.Invoke(real, null), Pos = real.transform.position, Point = _near[i].ClosestPoint(n.Com), Support = (float)SupportOf.Invoke(real, null) });
+                    }
                 }
+                n.Support = n.Grounded ? n.Max : 0f;
             }
 
-            // which ghosts touch which
+            // which ghosts touch which: where a piece's grown boxes reach into another's colliders
             for (int i = 0; i < nodes.Count; i++)
-                for (int j = i + 1; j < nodes.Count; j++)
+                for (int j = 0; j < nodes.Count; j++)
                 {
-                    Bounds a = nodes[i].Box, b = nodes[j].Box;
-                    a.Expand(0.12f);
-                    if (!a.Intersects(b)) continue;
-                    if (nodes[j].Supports) nodes[i].Near.Add(nodes[j]);
-                    if (nodes[i].Supports) nodes[j].Near.Add(nodes[i]);
+                    if (i == j || !nodes[j].Supports) continue;
+                    Node a = nodes[i], b = nodes[j];
+                    if (!a.Box.Intersects(b.Box)) continue;
+                    foreach (Obb c in b.Cols)
+                    {
+                        bool touches = false;
+                        foreach (Obb r in a.Reach) if (Obb.Overlap(r, c)) { touches = true; break; }
+                        if (touches) a.Near.Add(new KeyValuePair<Node, Obb>(b, c));
+                    }
                 }
 
-            // let support flow outwards from the ground and from real pieces until nothing changes
+            // let support flow outwards from the ground and from real pieces; what falls below its minimum breaks, and the rest is worked out
+            // again without it, until nothing more breaks
             var points = new List<Vector3>();
             var values = new List<float>();
-            for (int pass = 0; pass < 30; pass++)
+            for (int cascade = 0; cascade < 60; cascade++)
             {
-                bool changed = false;
-                foreach (Node n in nodes)
+                for (int pass = 0; pass < 60; pass++)
                 {
-                    if (n.Grounded) continue;
-                    float best = 0f;
-                    points.Clear();
-                    values.Clear();
-
-                    void Consider(Vector3 com, Vector3 point, float s)
+                    bool changed = false;
+                    foreach (Node n in nodes)
                     {
-                        if (s <= 0f) return;
-                        float dist = Vector3.Distance(n.Com, com) + 0.1f;
-                        best = Mathf.Max(best, s - n.HLoss * dist * s);
-                        if (point.y < n.Com.y + 0.05f)
+                        if (n.Grounded || n.Broken) continue;
+                        float best = 0f;
+                        points.Clear();
+                        values.Clear();
+
+                        void Consider(Vector3 com, Vector3 pos, Vector3 point, float s)
                         {
-                            Vector3 dir = (point - n.Com).normalized;
-                            if (dir.y < 0f)
+                            if (s <= 0f) return;
+                            float dist = Mathf.Min(Vector3.Distance(n.Com, com), Vector3.Distance(n.Com, pos)) + 0.1f;
+                            best = Mathf.Max(best, s - n.HLoss * dist * s);
+                            if (point.y < n.Com.y + 0.05f)
                             {
-                                float t = Mathf.Acos(1f - Mathf.Abs(dir.y)) / (Mathf.PI / 2f);
-                                best = Mathf.Max(best, s - Mathf.Lerp(n.HLoss, n.VLoss, t) * dist * s);
+                                Vector3 dir = (point - n.Com).normalized;
+                                if (dir.y < 0f)
+                                {
+                                    float t = Mathf.Acos(1f - Mathf.Abs(dir.y)) / (Mathf.PI / 2f);
+                                    best = Mathf.Max(best, s - Mathf.Lerp(n.HLoss, n.VLoss, t) * dist * s);
+                                }
+                                points.Add(point);
+                                values.Add(s - n.VLoss * dist * s);
                             }
-                            points.Add(point);
-                            values.Add(s - n.VLoss * dist * s);
                         }
-                    }
 
-                    foreach (Node other in n.Near) Consider(other.Com, other.Box.ClosestPoint(n.Com), other.Support);
-                    foreach (Real r in n.Real) Consider(r.Com, r.Point, r.Support);
+                        foreach (var kv in n.Near) if (!kv.Key.Broken) Consider(kv.Key.Com, kv.Key.Pos, kv.Value.Closest(n.Com), kv.Key.Support);
+                        foreach (Real r in n.Real) Consider(r.Com, r.Pos, r.Point, r.Support);
 
-                    // two supports on opposite sides hold a piece up better than either alone
-                    for (int l = 0; l < points.Count - 1; l++)
-                    {
-                        Vector3 from = points[l] - n.Com; from.y = 0f;
-                        for (int m = l + 1; m < points.Count; m++)
+                        // two supports on opposite sides hold a piece up better than either alone
+                        for (int l = 0; l < points.Count - 1; l++)
                         {
-                            float average = (values[l] + values[m]) * 0.5f;
-                            if (average <= best) continue;
-                            Vector3 to = points[m] - n.Com; to.y = 0f;
-                            if (Vector3.Angle(from, to) >= 100f) best = average;
+                            Vector3 from = points[l] - n.Com; from.y = 0f;
+                            for (int k = l + 1; k < points.Count; k++)
+                            {
+                                float average = (values[l] + values[k]) * 0.5f;
+                                if (average <= best) continue;
+                                Vector3 to = points[k] - n.Com; to.y = 0f;
+                                if (Vector3.Angle(from, to) >= 100f) best = average;
+                            }
                         }
-                    }
 
-                    best = Mathf.Min(best, n.Max);
-                    if (best > n.Support + 0.01f) { n.Support = best; changed = true; }
+                        best = Mathf.Min(best, n.Max);
+                        if (Mathf.Abs(best - n.Support) > 0.01f) { n.Support = best; changed = true; }
+                    }
+                    if (!changed) break;
                 }
-                if (!changed) break;
+                bool broke = false;
+                foreach (Node n in nodes) if (!n.Broken && !n.Grounded && n.Support < n.Min) { n.Broken = true; n.Support = 0f; broke = true; }
+                if (!broke) break;
             }
 
             foreach (Node n in nodes) _stability[n.Order.Id] = new Stab { Support = n.Support, Max = n.Max, Min = n.Min };

@@ -1,3 +1,5 @@
+New: colliders (each piece's solid colliders as the game's support check sees them, its centre of mass and material) and support (built pieces near a place with the support the game gives them now, weakest first): for checking that a build will stand, and why a piece fell. inspect now lists each part's colliders and their sizes too (how a player measures: a capsule 0.98 m across, 1.85 m tall).
+
 chests (the chests around you: contents, QualityOfLife assignment, whose) and chestrule (set a chest's assignment, nothing in it touched).
 
 New: render (a picture of any piece, item or creature on its own, with its real materials, from any angle or close up, without placing it), inspect (what an object is made of), errors (new errors since the last check) and waitfor (wait until a rebuilt mod has reloaded).

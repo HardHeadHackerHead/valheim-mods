@@ -68,7 +68,9 @@ for the newest; use `_` for spaces). Positions in a place are metres: x right, y
 | `pin <place\|x z> <text>` | A labelled pin on the player's map. |
 | `wait <seconds>` | Pause, so things happen before the next picture. |
 | `render <prefab> [yaw=25] [pitch=12] [views=1\|4] [focus=x,y,z] [dist=m] [fov=30] [size=WxH] [bg=sky\|dark\|clear]` | A picture of any piece, item or creature **on its own**, built out of sight with its real materials and its own light (nothing is placed). `yaw=0` is its front (-z); `views=4` gives front, three-quarter, side and back; `focus` (metres from its origin) and `dist` give a close-up of one part. Use it to check and improve mods' models. |
-| `inspect <prefab> [depth=3]` | What an object is made of: its parts with positions, rotations and sizes, components, meshes and materials (with colours). |
+| `inspect <prefab> [depth=3]` | What an object is made of: its parts with positions, rotations and sizes, colliders, components, meshes and materials (with colours). |
+| `colliders <prefab> [prefab...]` | Each piece's solid colliders in its own frame as the game's support check sees them (box centre, rotation, size), its centre of mass, material and whether it holds others up. |
+| `support [radius=20] [place=look] [filter]` | Built pieces near a place with the support the game gives them now, their material's minimum and maximum, and health: weakest first. |
 | `errors` | The new errors and exceptions in the log since you last asked, with their stack traces. Run it after every rebuild. |
 | `waitfor <mod> [version] [seconds=30]` | Wait until a mod (that version) is loaded: after a rebuild, before looking at it. |
 
