@@ -199,6 +199,8 @@ namespace AICompanion
             PlayerPrefab?.m_dodgeEffects.Create(me.transform.position, Quaternion.identity, me.transform);
             Companion.Zdo(me)?.Set(ZDOVars.s_dodgeinv, true);
             st.InvulnUntil = Time.time + 0.4f;
+            st.RollCredited = false;
+            Skill.Raise(me, Skills.SkillType.Dodge, 0.1f);
             st.FightDodges++;
             Journal.Count(me, "dodges");
         }

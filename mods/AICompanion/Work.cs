@@ -1617,6 +1617,7 @@ namespace AICompanion
             if (station != null) station.m_craftItemEffects.Create(station.transform.position, Quaternion.identity);
             string what = Localization.instance.Localize(r.m_item.m_itemData.m_shared.m_name);
             st.Remember($"made a {what}");
+            Skill.Raise(me, station != null && station.m_craftingSkill != Skills.SkillType.None ? station.m_craftingSkill : Skills.SkillType.Crafting, 1f);
             st.NextGear = 0f;
             Plugin.Instance?.Note($"{Companion.NameOf(me)} made a {what} at {(station != null ? station.transform.position : me.transform.position):F0}");
             if (forGoal) Talk.Mention(me, $"I made {Mathf.Max(1, r.m_amount)} {what.ToLowerInvariant()} for my {st.Goal?.What}."); // (a step on the way: not for chat)
@@ -1680,6 +1681,7 @@ namespace AICompanion
             station.m_craftItemEffects.Create(station.transform.position, Quaternion.identity);
             string what = Localization.instance.Localize(item.m_shared.m_name);
             st.Remember($"upgraded its {what} to level {next}");
+            Skill.Raise(me, station.m_craftingSkill != Skills.SkillType.None ? station.m_craftingSkill : Skills.SkillType.Crafting, 1f);
             Plugin.Instance?.Note($"{Companion.NameOf(me)} upgraded its {what} to level {next} at {station.transform.position:F0}");
             Talk.Tell(me, $"I upgraded my {what} to level {next}.");
             Journal.Upgraded(me, $"its {what.ToLowerInvariant()} to level {next}");

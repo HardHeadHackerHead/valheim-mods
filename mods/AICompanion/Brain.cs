@@ -77,7 +77,7 @@ namespace AICompanion
         public Work.Task Task;                                      // gathering
         public CraftingStation RepairAt;                            // repairs
         public float NextRepairLook, RepairSince;
-        public bool RepairAll;                                      // sent from its menu: everything worn at all, not only what is half gone
+        public bool RepairAll, RollCredited;   // RollCredited: this roll's perfect dodge (a hit it rolled through) counted                                      // sent from its menu: everything worn at all, not only what is half gone
         public Ship Riding;                                         // riding along
         public Chair Seat;
         public Vector3 DeckSpot;
@@ -1015,7 +1015,7 @@ namespace AICompanion
             if (!ranged && Tactics.Unaware(target) && !st.Enemies.Any(e => e != null && TargetOf(e) == me))
             {
                 Vector3? behind = Tactics.Behind(me, target, reach);
-                if (behind != null && Vector3.Distance(behind.Value, me.transform.position) > 0.8f) { MoveTo(st.Ai, dt, behind.Value, 0.3f, false); if (st.Task == null) Brain.Status(st, "sneaking up on the " + Localization.instance.Localize(target.m_name).ToLowerInvariant()); return; } // (hunting: its job says so, or the two swap every frame)
+                if (behind != null && Vector3.Distance(behind.Value, me.transform.position) > 0.8f) { MoveTo(st.Ai, dt, behind.Value, 0.3f, false); Skill.Doing(me, Skills.SkillType.Sneak, dt); if (st.Task == null) Brain.Status(st, "sneaking up on the " + Localization.instance.Localize(target.m_name).ToLowerInvariant()); return; } // (hunting: its job says so, or the two swap every frame)
                 if (dist > reach) { MoveTo(st.Ai, dt, target.transform.position, reach * 0.6f, false); return; }
             }
 

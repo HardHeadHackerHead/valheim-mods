@@ -86,9 +86,10 @@ namespace AICompanion
             if (!may && c.IsRunning()) c.SetRun(false); // winded: it walks, whatever asked it to run
             if (may && c.IsRunning() && v.magnitude > 1f)
             {
-                float drain = RunDrain;
-                c.GetSEMan().ModifyRunStaminaDrain(RunDrain, ref drain, v.normalized);
+                float drain = RunDrain * Mathf.Lerp(1f, 0.5f, Skill.Get(c, Skills.SkillType.Run) / 100f); // (the run skill halves it at 100, as a player's)
+                c.GetSEMan().ModifyRunStaminaDrain(drain, ref drain, v.normalized);
                 Use(c, drain * dt);
+                if (c is Humanoid h && p.Value > 0f) Skill.Doing(h, Skills.SkillType.Run, dt);
             }
             else if (Time.time - p.LastUse > RegenDelay && p.Value < Max(c))
             {

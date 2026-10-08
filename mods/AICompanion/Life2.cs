@@ -431,6 +431,7 @@ namespace AICompanion
                     if (!me.GetInventory().CanAddItem(conv.m_to.gameObject, n)) continue;
                     inv.RemoveItem(raw, n);
                     me.GetInventory().AddItem(conv.m_to.gameObject, n);
+                    for (int k = 0; k < n; k++) Skill.Raise(me, stove.m_skill != Skills.SkillType.None ? stove.m_skill : Skills.SkillType.Cooking, 1f); // (on and off, as at the station)
                     done += n;
                 }
             return done;
@@ -474,12 +475,18 @@ namespace AICompanion
             {
                 view.InvokeRPC("RPC_RemoveDoneItem", me.transform.position, 1); // it lands at its feet; Work picks it up
                 st.CookedAt = s.transform.position;
+                Skill.Raise(me, s.m_skill != Skills.SkillType.None ? s.m_skill : Skills.SkillType.Cooking, 0.6f);
                 return true;
             }
             if (Usable(s) && (int)FreeSlot.Invoke(s, null) >= 0)
             {
                 ItemDrop.ItemData raw = me.GetInventory().GetAllItems().FirstOrDefault(i => Raw(s, i));
-                if (raw != null && s.UseItem(me, raw)) { st.Remember($"put {Localization.instance.Localize(raw.m_shared.m_name)} on to cook"); return true; }
+                if (raw != null && s.UseItem(me, raw))
+                {
+                    st.Remember($"put {Localization.instance.Localize(raw.m_shared.m_name)} on to cook");
+                    Skill.Raise(me, s.m_skill != Skills.SkillType.None ? s.m_skill : Skills.SkillType.Cooking, 0.4f);
+                    return true;
+                }
             }
             return Busy(s); // keep waiting by it while something is cooking
         }

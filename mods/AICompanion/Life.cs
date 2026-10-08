@@ -223,7 +223,22 @@ namespace AICompanion
             return Write(map);
         }
 
-        public static void Forget() { Levels.Clear(); _defs = null; }
+        private static readonly Dictionary<Humanoid, Dictionary<Skills.SkillType, float>> Timers = new Dictionary<Humanoid, Dictionary<Skills.SkillType, float>>();
+
+        /// <summary>
+        /// Doing something that trains a skill as long as it lasts (running, swimming, sneaking): every second of it raises the skill by
+        /// amount, as the player's own timers do (Player.UpdateRun, OnSwimming, UpdateCrouch).
+        /// </summary>
+        public static void Doing(Humanoid c, Skills.SkillType type, float dt, float amount = 1f)
+        {
+            if (!Timers.TryGetValue(c, out var t)) Timers[c] = t = new Dictionary<Skills.SkillType, float>();
+            t.TryGetValue(type, out float time);
+            time += dt;
+            if (time > 1f) { time = 0f; Raise(c, type, amount); }
+            t[type] = time;
+        }
+
+        public static void Forget() { Levels.Clear(); _defs = null; Timers.Clear(); }
         public static void Forget(Humanoid c) => Levels.Remove(c);
     }
 
@@ -339,6 +354,7 @@ namespace AICompanion
             st.RepairAll = false;
             foreach (ItemDrop.ItemData item in me.GetInventory().GetAllItems().Where(i => Worn(i) || everything && Scuffed(i)).Where(i => CanRepairAt(i, station)))
             {
+                Skill.Raise(me, Skills.SkillType.Crafting, 1f - item.m_durability / item.GetMaxDurability()); // (as a player's repair)
                 item.m_durability = item.GetMaxDurability();
                 fixedItems.Add(Localization.instance.Localize(item.m_shared.m_name));
             }

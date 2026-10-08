@@ -29,6 +29,7 @@ namespace AICompanion
         private bool _placed, _renaming, _showLog, _showJson, _showAdvanced;
         private Action _pending;          // button actions run in Update, not in the middle of drawing
         private string _nameField = "", _note = "", _testResult = "", _hover = "";
+        private long _forgetArmed;   // "Forget" pressed once (a second press forgets)
         private Vector2 _scroll, _logScroll, _jsonScroll;
         private readonly List<Texture2D> _textures = new List<Texture2D>();
         private GUIStyle _statNum, _title, _h2, _text, _bold, _dim, _small, _good, _warn, _bad, _mono, _button, _buttonOn, _tab0, _tab1, _check, _field, _card, _row, _rowOn, _num;
@@ -141,12 +142,16 @@ namespace AICompanion
                 Humanoid here = Companion.All().FirstOrDefault(h => Companion.IdOf(h) == prof.Id);
                 if (here != null)
                 {
+                    float d = me != null ? Vector3.Distance(me.transform.position, here.transform.position) : 0f;
                     GUILayout.BeginHorizontal();
                     GUILayout.Label(prof.Name, _h2);
                     GUILayout.FlexibleSpace();
+                    if (d > 15f && GUILayout.Button("Call to me", _button, GUILayout.Width(110), GUILayout.Height(28)))
+                    { Humanoid h2 = here; _pending = () => { if (Home.Follow(h2)) Brain.TeleportBehind(h2, Player.m_localPlayer, "was called to"); }; }
                     if (GUILayout.Button("Open", _buttonOn, GUILayout.Width(100), GUILayout.Height(28))) { Humanoid h2 = here; _pending = () => OpenMenuFor(Player.m_localPlayer, h2); }
                     GUILayout.EndHorizontal();
-                    Note("Here with you.", _good);
+                    string doing = Companion.StatusOf(here);
+                    Note((d <= 15f ? "Here with you" : Remote.Where(here.transform.position, me.transform.position)) + (string.IsNullOrEmpty(doing) ? "." : $": {doing}."), _good);
                 }
                 else if (prof.Dead)
                 {
@@ -157,10 +162,39 @@ namespace AICompanion
                 }
                 else
                 {
-                    float far = me != null ? Vector3.Distance(me.transform.position, prof.LastSeen) : 0f;
+                    // Away (its area not loaded here): what the world knows of it, and calling it to you.
+                    ZDO z = Remote.Find(prof.Id);
+                    GUILayout.BeginHorizontal();
                     GUILayout.Label(prof.Name, _h2);
-                    Note($"Out in the world, last seen {far:0} m from here. Go to them to see them again.", _text);
-                    if (GUILayout.Button($"Let {prof.Name} go for good", _button, GUILayout.Height(28))) { long id = prof.Id; _pending = () => Profile.Forget(Player.m_localPlayer, id); }
+                    GUILayout.FlexibleSpace();
+                    if (z != null && GUILayout.Button("Call to me", _buttonOn, GUILayout.Width(110), GUILayout.Height(28)))
+                    { ZDO z2 = z; _pending = () => { if (Remote.Call(z2, Player.m_localPlayer)) _note = $"{prof.Name} is on the way: they appear beside you in a moment."; }; }
+                    GUILayout.EndHorizontal();
+                    if (z != null)
+                    {
+                        Vector3 at = Remote.Position(z);
+                        string doing = Remote.Status(z);
+                        string where = (me != null ? Remote.Where(at, me.transform.position) : "") + (Remote.AtHome(z) ? ", at home" : "");
+                        string order = Remote.OrderOf(z) == AICompanion.Order.Gather ? "living at home" : Remote.OrderOf(z) == AICompanion.Order.Follow ? "with you (left behind)" : Remote.OrderOf(z) == AICompanion.Order.Guard ? "guarding a spot" : "staying put";
+                        Note($"{Capital(where)} ({order}).", _text);
+                        if (!string.IsNullOrEmpty(doing)) Note($"Last doing: {doing}.", _good);
+                        foreach (string line in Remote.Journal(z, 2)) Note("· " + line, _dim);
+                    }
+                    else if (Remote.Sure)
+                    {
+                        Note($"{prof.Name} is not in this world any more (nothing of them was found). If they are gone for good, you can forget them here.", _warn);
+                        if (GUILayout.Button(_forgetArmed == prof.Id ? $"Click again to forget {prof.Name}" : $"Forget {prof.Name}", _button, GUILayout.Height(26)))
+                        {
+                            long id = prof.Id;
+                            if (_forgetArmed == id) _pending = () => { Profile.Forget(Player.m_localPlayer, id); _forgetArmed = 0L; };
+                            else _forgetArmed = id;
+                        }
+                    }
+                    else
+                    {
+                        float far = me != null ? Vector3.Distance(me.transform.position, prof.LastSeen) : 0f;
+                        Note($"Out in the world, last seen {Remote.Where(prof.LastSeen, me != null ? me.transform.position : prof.LastSeen)} (far from you, so this game does not see them; the host's does).", _text);
+                    }
                 }
                 EndCard();
             }
@@ -180,9 +214,14 @@ namespace AICompanion
             _nameField = GUILayout.TextField(_nameField ?? "", 24, _field, GUILayout.Height(30));
             GUILayout.EndHorizontal();
             GUILayout.Space(6);
-            if (GUILayout.Button("Summon", _buttonOn, GUILayout.Height(36)))
+            if (mine.Count > 0) Note("This makes a new companion, starting from nothing. To see one you already have, go to where they are.", _warn);
+            if (GUILayout.Button(mine.Count == 0 ? "Summon" : "Summon a new companion", _buttonOn, GUILayout.Height(36)))
                 _pending = () =>
                 {
+                    // Not a second one by the same name: someone looking for theirs pressed this, and got a new one called the same.
+                    string wanted = string.IsNullOrEmpty(_nameField?.Trim()) ? "Rádvar" : _nameField.Trim();
+                    Profile same = Profile.Here(Player.m_localPlayer).FirstOrDefault(pr => string.Equals(pr.Name, wanted, StringComparison.OrdinalIgnoreCase));
+                    if (same != null) { _note = $"You already have a companion called {same.Name}. Give the new one another name, or go to {same.Name}."; return; }
                     Player p = Player.m_localPlayer;
                     Humanoid c = p != null ? Companion.Summon(p, _nameField.Trim()) : null;
                     if (c == null) return;

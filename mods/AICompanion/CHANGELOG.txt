@@ -1,3 +1,9 @@
+Skills that never rose now train as a player's do: Run (every second of running; and a higher Run skill makes running cost less stamina), Jump (each jump), Dodge (each roll a little, a hit it rolled through a full point), Swim (every second swimming), Sneak (creeping up on a creature that has not noticed it), Cooking (putting food on and taking it off a cooking station, and its cooking while you are away), and Crafting (what it makes and upgrades, and repairs). The game only trained these for players.
+
+The companions menu (J) shows a companion who is not near you: where it is (how far, which way, at home or not), what it was last doing, its order and the last lines of its journal, with Call to me (it appears beside you and comes along). No more "Let it go for good" there: a companion can only be forgotten when it is truly no longer in the world, with a second click to confirm.
+
+Summoning no longer makes a second companion with the name of one you have: looking for yours (away out in the world), the menu offered "Summon another companion" with the name Rádvar already filled in, and made a new Rádvar from nothing. It now says it makes a new one, and asks for another name if that one is taken.
+
 Fix: riding along in a boat it no longer rocks or damages it. Held in place on deck it still pushed against the boat as a solid body: the boat rolled, nearly capsized, steered badly and took impact damage. A passenger now collides with nothing until it steps off.
 
 Fix: a bed up on chests (not on the floor) was never reached: it stood on the chests over the bed, or below it, "going to bed" all night. It now gets in when it can reach the bed as a player would: beside it within reach, from above or below, and after trying for a while from a few metres away. Getting up it steps down onto the floor beside the bed (not left standing on a bed up on chests with no way down), and one already stuck on a bed hops down.

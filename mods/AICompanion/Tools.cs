@@ -75,6 +75,61 @@ namespace AICompanion
                 output(new JObject { ["companions"] = all, ["profiles"] = new JArray(Profile.Here(p).Select(x => $"{x.Id} {x.Name}{(x.Dead ? " (fallen)" : "")}")) });
                 yield break;
             }
+            if (sub == "inspect")
+            {
+                // One companion by its id (companion list): who it is, everything it has, its skills.
+                Humanoid who = args.Length > 1 ? Companion.All().FirstOrDefault(h => Companion.IdOf(h).ToString() == args[1]) : null;
+                if (who == null) { error("inspect <id> (see: companion list)"); yield break; }
+                JObject d = Describe(who);
+                d["id"] = args[1];
+                d["bag"] = new JArray(who.GetInventory().GetAllItems().OrderBy(i => i.m_gridPos.y).ThenBy(i => i.m_gridPos.x)
+                    .Select(i => $"{Localization.instance.Localize(i.m_shared.m_name)} x{i.m_stack} q{i.m_quality} at {i.m_gridPos.x},{i.m_gridPos.y}"));
+                d["skills"] = Companion.Zdo(who).GetString(Skill.Key, "");
+                d["journal_entries"] = (Companion.Zdo(who).GetString(Journal.EntriesKey, "") ?? "").Split('\n').Length;
+                output(d);
+                yield break;
+            }
+            if (sub == "retire")
+            {
+                // A companion sent away for good, its things kept: everything it has (bag and gear slots) goes into your chests near it (by
+                // your chest rules with QualityOfLife, then any chest with room); what fits nowhere goes into a tombstone where it stands.
+                Humanoid extra = args.Length > 1 ? Companion.All().FirstOrDefault(h => Companion.IdOf(h).ToString() == args[1]) : null;
+                if (extra == null) { error("retire <id> (see: companion list)"); yield break; }
+                if (!Companion.IsMine(extra, p)) { error("that companion is not yours"); yield break; }
+                ZNetView view = extra.GetComponent<ZNetView>();
+                if (!view.IsOwner()) view.ClaimOwnership();
+                Inventory inv = extra.GetInventory();
+                var before = inv.GetAllItems().Select(i => $"{Localization.instance.Localize(i.m_shared.m_name)} x{i.m_stack}").ToList();
+                foreach (ItemDrop.ItemData item in inv.GetAllItems().ToList())
+                {
+                    if (extra.IsItemEquiped(item)) extra.UnequipItem(item, false);
+                    item.m_equipped = false;
+                }
+                int sorted = 0;
+                if (AppDomain.CurrentDomain.GetData("DHack.QoL.StackInventory") is Func<Inventory, Vector3, float, Func<ItemDrop.ItemData, bool>, int> stack)
+                    sorted = stack(inv, extra.transform.position, 40f, null);
+                var put = new System.Collections.Generic.List<string>();
+                foreach (ItemDrop.ItemData item in inv.GetAllItems().ToList())
+                {
+                    foreach (Container chest in Work.YourChests(extra, extra.transform.position, 40f))
+                    {
+                        if (!chest.GetInventory().CanAddItem(item)) continue;
+                        ZNetView cv = chest.GetComponent<ZNetView>();
+                        if (cv != null && !cv.IsOwner()) cv.ClaimOwnership();
+                        string what = $"{Localization.instance.Localize(item.m_shared.m_name)} x{item.m_stack}";
+                        chest.GetInventory().MoveItemToThis(inv, item);
+                        put.Add($"{what} -> chest at {chest.transform.position:F0}");
+                        break;
+                    }
+                }
+                int left = inv.NrOfItems();
+                if (left > 0) Companion.DropGear(extra);
+                Profile.Forget(p, Companion.IdOf(extra));
+                Logger.LogInfo($"Retired the companion {Companion.NameOf(extra)} ({args[1]}) at {extra.transform.position:F0}: {sorted} sorted into your chests, {put.Count} more stacks into chests with room, {left} stacks to a tombstone");
+                ZNetScene.instance.Destroy(extra.gameObject);
+                output(new JObject { ["retired"] = args[1], ["had"] = new JArray(before), ["sorted_by_rules"] = sorted, ["into_chests"] = new JArray(put), ["to_tombstone"] = left });
+                yield break;
+            }
             if (sub == "remove")
             {
                 // A leftover companion (from before only one could be summoned): its gear goes into a tombstone, then it is gone for good.
