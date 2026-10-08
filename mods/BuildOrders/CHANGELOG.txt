@@ -1,3 +1,5 @@
+Fetch from chests (Y) takes exactly what the selected piece needs instead of a whole stack: holding less than one piece's worth, it tops you up to one; holding enough, each press brings another piece's worth. The panel shows only while you are short.
+
 Fix: the select key (G) also opened the game's radial menu. The game's key for it is now unbound (once, and you are told in chat); bind it again in Settings, Controls if you want it.
 
 New: a planning API for add-ons (from Bob): other mods can submit shared ghost plans, such as the curves drawn by Bob's BuildShapes, and remove their unbuilt ghosts, without touching terrain or anything built; Move and Level are switched off for those plans. See docs/buildorders-api.md. Also: blueprints can now have up to 5000 pieces (was 1500) and levelling covers bigger sites; for AI-designed builds, the design guide explains the one-time setup that lets previews show pieces as they really look (pip install UnityPy, then python tools/extract_meshes.py), and the export finds your game wherever it is installed.

@@ -264,13 +264,13 @@ namespace BuildOrders
         }
 
         /// <summary>
-        /// With the hammer out: "[Y] Fetch materials for 10 x Wood wall from the chests", with a tile for each material that is short in your
-        /// inventory but in the chests (what you have, and how many one press takes).
+        /// With the hammer out: "[Y] Fetch what one Wood wall needs from the chests" (or "another Wood wall's worth"), with a tile for each
+        /// material a press takes (what you have, and how many it takes).
         /// </summary>
         private void DrawFetchHint(float sw, float sh)
         {
             List<FetchLine> lines = FetchLines.Where(l => l.Short).ToList();
-            if (lines.Count == 0) return;
+            if (lines.Count == 0 || !FetchTopUp) return; // (holding enough already: no panel in the way; the key still brings another piece's worth)
             const float tile = 56f, gap = 8f;
             float w = Mathf.Max(360f, lines.Count * (tile + gap) - gap + 40f);
             float h = 38f + tile + 26f;
@@ -284,7 +284,7 @@ namespace BuildOrders
             var key = new Rect(r.x + 14f, r.y + 7f, cap + 4f, cap);
             Round(key, new Color(0.95f, 0.78f, 0.35f, 1f), 6f);
             Label(key, _fetchKey.Value.ToString(), _bold, new Color(0.12f, 0.09f, 0.04f), TextAnchor.MiddleCenter);
-            Label(new Rect(key.xMax + 8f, r.y + 6f, r.width - 60f, cap), $"Fetch a stack of each material for {FetchPieceName} from the chests", _bold, Color.white, TextAnchor.MiddleLeft);
+            Label(new Rect(key.xMax + 8f, r.y + 6f, r.width - 60f, cap), FetchTopUp ? $"Fetch what one {FetchPieceName} needs from the chests" : $"Fetch another {FetchPieceName}'s worth from the chests", _bold, Color.white, TextAnchor.MiddleLeft);
 
             float x = r.x + (r.width - (lines.Count * (tile + gap) - gap)) / 2f;
             for (int i = 0; i < lines.Count; i++)

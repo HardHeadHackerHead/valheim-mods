@@ -2,8 +2,8 @@
 
 # ⚒️ Valheim Mods
 
-**Quality-of-life mods and new things to build for Valheim, made to play nicely together.**
-Craft and build from chests. Plan builds as ghosts with your friends. Wear gear from its own slots. Take on group bounties, recycle old gear, link portals from a list, and try your luck at a slot machine.
+**Quality-of-life mods, a companion who plays like a player, and new things to build for Valheim, made to play nicely together.**
+Craft and build from chests. Bring a viking companion on your adventures. Plan builds as ghosts with your friends. Wear gear from its own slots. Take on group bounties, trap birds for feathers, recycle old gear, link portals from a list, and try your luck at a slot machine.
 
 ![Valheim](https://img.shields.io/badge/Valheim-BepInEx-3b6e8f?style=flat-square)
 ![C#](https://img.shields.io/badge/made%20with-C%23-68217a?style=flat-square)
@@ -14,18 +14,79 @@ Craft and build from chests. Plan builds as ghosts with your friends. Wear gear 
 
 ---
 
-## 🚀 Get them in one minute
+## 🚀 Install
 
-Everything here installs and updates through the in-game **[mod manager](https://github.com/HardHeadHackerHead/valheim-mod-manager)**.
-It already knows about this repo, so press **F7** in game, open **Browse** and click **Install**. No downloading DLLs, and most updates need no restart (mods that add new build pieces ask for one).
+Everything here installs and updates through the in-game **[mod manager](https://github.com/HardHeadHackerHead/valheim-mod-manager)** (**F7**).
+Pick whichever way suits you; all three end the same way.
 
-New to modding? The manager repo has a one-step installer that sets up BepInEx for you.
+### Option 1: the one-step installer (Windows, Steam), easiest
 
-On **native Linux**, including **Flatpak Steam**, follow the manager's
-[Linux installation guide](https://github.com/HardHeadHackerHead/valheim-mod-manager/blob/main/installer/INSTALL-LINUX.md).
+It installs BepInEx (the mod loader), ScriptEngine (lets mods reload without restarting), the mod manager and every mod in this repo.
+Close Valheim, open **PowerShell** and paste:
+
+```powershell
+[Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
+Invoke-WebRequest "https://raw.githubusercontent.com/HardHeadHackerHead/valheim-mod-manager/main/installer/install.ps1" -OutFile "$env:TEMP\install-valheim-mods.ps1"
+powershell -ExecutionPolicy Bypass -File "$env:TEMP\install-valheim-mods.ps1"
+```
+
+If it cannot find the game, add `-ValheimDir "D:\SteamLibrary\steamapps\common\Valheim"` to the last line (in Steam: right-click Valheim,
+*Manage*, *Browse local files* shows the folder). It is a short script, so you can open it and read it first. With an AI assistant such as
+[Claude Code](https://claude.com/claude-code), just ask it to follow
+[`installer/INSTALL.md`](https://github.com/HardHeadHackerHead/valheim-mod-manager/blob/main/installer/INSTALL.md) for you.
+
+Then start Valheim from Steam, load a world and press **F7**: the manager lists every mod, installed and up to date.
+
+### Option 2: by hand (you already use BepInEx, or you want to pick and choose)
+
+1. **BepInEx:** install [BepInExPack_Valheim](https://thunderstore.io/c/valheim/p/denikson/BepInExPack_Valheim/): copy the contents of its
+   `BepInExPack_Valheim` folder into your Valheim folder (next to `valheim.exe`). Start the game once and close it.
+2. **ScriptEngine:** from [BepInEx.Debug releases](https://github.com/BepInEx/BepInEx.Debug/releases) download `ScriptEngine_*.zip` and copy its
+   `BepInEx` folder over yours, so you have `BepInEx\plugins\ScriptEngine.dll`. Create the folder `BepInEx\scripts`. Then open
+   `BepInEx\config\com.bepis.bepinex.scriptengine.cfg` (start the game once if it is not there yet) and set `LoadOnStart = true` under
+   `[General]`; it is off by default, and without it the mods only load after you press **F6**.
+3. **The mods:** from [`dist/`](dist/) here download each mod you want, **both** its `.dll` and its `.pdb`, into `BepInEx\scripts`. Take
+   `ModUpdater.dll` and `.pdb` from the [manager's `dist/`](https://github.com/HardHeadHackerHead/valheim-mod-manager/tree/main/dist) too, so
+   you get updates with **F7** from then on.
+4. Start Valheim. In a world, a chat line such as `[Mod]: CraftFromChests v1.3.4 loaded` shows each mod is running.
+
+### Option 3: Linux (native game, standard or Flatpak Steam)
+
+Follow the manager's [Linux installation guide](https://github.com/HardHeadHackerHead/valheim-mod-manager/blob/main/installer/INSTALL-LINUX.md).
 The installer lives in the manager repo; this repo contains the gameplay mods.
 
+### Playing together
+
+Every player installs the mods they want for themselves. A few need more than that:
+
+| Mod | Who needs it |
+|---|---|
+| **AICompanion** | Everyone in the world, **the host too**: without it the game deletes saved companions. |
+| **Recycler, BountyBoard, SlotMachine, BirdTrap** (new build pieces) | Everyone, and **the host above all**: a game without the mod deletes the pieces when their area loads. Restart after installing or updating them. |
+| **PortalHub, BountyBoard** | The host (it keeps the portal links and the contracts), and everyone who wants their menus. |
+| Everything else | Only the players who want it. |
+
+On a dedicated server, put the host's mods in the server's `BepInEx\scripts` (with BepInEx and ScriptEngine installed there too).
+
+### Updating and removing
+
+- **Update:** press **F7** in game, then **Update all**. Most mods reload on the spot; mods that add build pieces ask you to restart.
+- **Remove one mod:** delete its `.dll` and `.pdb` from `BepInEx\scripts` (or click **Disable** in F7).
+- **Remove everything:** delete `BepInEx`, `winhttp.dll`, `doorstop_config.ini`, `.doorstop_version` and `doorstop_libs` from the Valheim
+  folder (Steam's *Verify integrity of game files* does not remove them). Pieces from mods you remove (a Recycler, a trap) disappear from your world.
+
 ## 🧰 The mods
+
+### 🧔 AICompanion: a companion who plays like a player
+<img src="dist/AICompanion.cover.png" alt="AICompanion" width="100%">
+
+Press **J** to summon a viking companion. It comes on your adventures and fights like a player: timed parries, rolls out of sweeps, gets round
+behind what you are hitting, kites with a bow, drinks the right mead, and follows you through portals, crypts, doors and onto boats. Point with
+**H** and it attacks, chops a whole patch of trees, mines, picks things up, sorts its bag into your chests or pulls a cart. Back home it lives its
+own life: picks its next upgrade, gathers exactly what it needs, crafts and upgrades at your workbench and forge, hunts, cooks, keeps the fires
+burning, repairs your base, sleeps in its bed, takes better gear from your chests, and catches up on all of it while you are away. Its own gear
+slots, a journal, small talk, missions, and one-click errands in its menu ("restock food", "gear up", "repair the base"). Everyone in the
+world needs it installed.
 
 <table>
 <tr>
@@ -60,7 +121,7 @@ Feed smelters, kilns, cooking racks, fires and fermenters straight from your che
 ### 🎒 QualityOfLife
 <img src="dist/QualityOfLife.cover.png" alt="QualityOfLife" width="100%">
 
-Quick gear sets on **Q**, hammer on **B**, a **Sort** button that joins stacks, **Stack to chests** with undo, chest assignment on **K**, item locks on **L**, and tap **P** next to a boat to push it.
+Quick gear sets on **Q**, hammer on **B**, a **Sort** button that joins stacks, **Stack to chests** with undo, chest assignment on **K** (look at a chest to see what it receives), **Sort chests** to send everything in the chests around you to the chest assigned it, item locks on **L**, and tap **P** next to a boat to push it.
 
 </td>
 </tr>
@@ -142,10 +203,17 @@ Odin's Fortune: build a slot machine, put coins in, pull the lever and watch thr
 ### 🤖 ClaudeTools
 <img src="dist/ClaudeTools.cover.png" alt="ClaudeTools" width="100%">
 
-Lets an AI assistant like [Claude Code](https://claude.com/claude-code) see your game and help, through a **request mailbox** of files on your computer: pictures from any angle, ground surveys, your status, inventory, what is nearby and what you look at, the mods running and their settings, the log, a message on screen or a pin on your map. Other mods add their own commands (BuildOrders: place, check and photograph blueprints). No network port; it never moves your character. Off until you switch requests on.
+Lets an AI assistant like [Claude Code](https://claude.com/claude-code) see your game and help, through a **request mailbox** of files on your computer: pictures from any angle, ground surveys, your status, inventory, what is nearby and what you look at, the chests around you and what each is assigned, the mods running and their settings, the log, a message on screen or a pin on your map. Other mods add their own commands (BuildOrders: place, check and photograph blueprints). No network port; it never moves your character. Off until you switch requests on.
 
 </td>
 <td valign="top">
+
+### 🪤 BirdTrap
+<img src="dist/BirdTrap.cover.png" alt="BirdTrap" width="100%">
+
+A buildable bird trap with its own hand-made look. Bait it with berries or seeds and leave it under the open sky: a gull hops in, the prop
+falls and the door drops. Pluck it for feathers and let it go. Birds come while you are away and at first light, so after a night's sleep every
+baited trap has its bird. A few traps keep you in arrow feathers.
 
 </td>
 </tr>
@@ -156,6 +224,9 @@ Lets an AI assistant like [Claude Code](https://claude.com/claude-code) see your
 | Key | Mod | What it does |
 |---|---|---|
 | **F7** | Mod manager | Open the mod manager |
+| **J** / hold **J** | AICompanion | Summon your companion or open its menu / your companions come with you, or go home |
+| **H** | AICompanion | Point: attack it, chop or mine it (a whole patch), pick it up, put its things in that chest, pull that cart, wait here |
+| **E** / Shift + **E** at a bird trap | BirdTrap | Add bait (or pluck the bird) / fill it with bait |
 | **Q** | QualityOfLife | Build a quick set (inventory open) / swap to it and back |
 | **B** | QualityOfLife | Jump into construction mode with your hammer, and back |
 | **K** / **L** | QualityOfLife | Assign what a chest receives / lock an item |
@@ -224,7 +295,8 @@ after it finishes, or restart if the installer reports a mod that requires it
 - Add-ons can submit ordinary shared ghosts through the versioned [BuildOrders planning API](docs/buildorders-api.md), without changing terrain or duplicating the planner.
 - A mod that cannot be reloaded in game gets a `RESTART_REQUIRED.txt` explaining why.
 - Set `VALHEIM_DIR` for a custom game library; you do not need to edit shared build settings.
-- Mods with hand-made 3D looks (Bounty Board, Slot Machine) are described as simple shapes in `tools/modelkit`, which draws previews and writes the C# for them; see its README.
+- Mods with hand-made 3D looks (Bounty Board, Slot Machine, Bird Trap) are described as simple shapes in `tools/modelkit`, which draws previews and writes the C# for them; see its README.
+- Before writing or changing a mod, read [`docs/modding-pitfalls.md`](docs/modding-pitfalls.md): bugs that cost players their items and buildings, and how to avoid them.
 - Release: `.\publish.ps1`, then `git add -A; git commit; git push`.
 
 ## 🧱 Make your own mod repo

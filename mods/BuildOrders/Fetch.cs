@@ -7,8 +7,8 @@ using UnityEngine;
 namespace BuildOrders
 {
     /// <summary>
-    /// With the hammer out and a piece selected: a hotkey that takes one stack of each material that piece needs out of the chests around you and
-    /// puts it in your inventory. The chest access is BuildFromChests' (same range, same rules about protected and busy chests), reached through two
+    /// With the hammer out and a piece selected: a hotkey that takes exactly what that piece needs out of the chests around you and puts it in
+    /// your inventory. Holding less than one piece's worth, it tops you up to one; holding enough, each press brings another piece's worth. The chest access is BuildFromChests' (same range, same rules about protected and busy chests), reached through two
     /// small functions it leaves in the app domain's shared data, so nothing is fetched if that mod is not installed.
     /// </summary>
     public partial class Plugin
@@ -23,14 +23,17 @@ namespace BuildOrders
             public string Item, Name;
             public Sprite Icon;
             public GameObject Prefab;
-            public int Stack, InInventory, InChests;
+            public int Need, InInventory, InChests;
 
-            /// <summary>What one press takes: a full stack of it, or what the chests have if that is less.</summary>
-            public int Take => Mathf.Min(Stack, InChests);
+            /// <summary>What one press takes (worked out with the other materials: see FetchTopUp), no more than the chests have.</summary>
+            public int Take;
 
-            /// <summary>The chests have some and you hold less than a full stack.</summary>
-            public bool Short => InChests > 0 && InInventory < Stack;
+            /// <summary>One press takes some of it.</summary>
+            public bool Short => Take > 0;
         }
+
+        /// <summary>You hold less than one piece's worth of something: a press tops you up to one. Otherwise a press brings another piece's worth.</summary>
+        internal bool FetchTopUp;
 
         internal readonly List<FetchLine> FetchLines = new List<FetchLine>();
         internal bool FetchAvailable;
@@ -43,7 +46,7 @@ namespace BuildOrders
         private void BindFetch()
         {
             _fetchKey = Config.Bind("Keys", "FetchKey", KeyCode.Y,
-                "With the hammer out and a piece selected: press this to take one stack of each material it needs out of the chests around you and put it in your inventory (needs BuildFromChests).");
+                "With the hammer out and a piece selected: press this to take exactly what it needs out of the chests around you (topping you up to one piece's worth, or another piece's worth when you have enough) and put it in your inventory (needs BuildFromChests).");
         }
 
         private void UpdateFetch(Player player)
@@ -69,11 +72,14 @@ namespace BuildOrders
                     FetchLines.Add(new FetchLine
                     {
                         Item = item, Name = Localization.instance.Localize(item), Icon = req.m_resItem.m_itemData.GetIcon(), Prefab = req.m_resItem.gameObject,
-                        Stack = Mathf.Max(1, req.m_resItem.m_itemData.m_shared.m_maxStackSize),
+                        Need = req.GetAmount(1),
                         InInventory = inventory.GetAllItems().Where(i => i.m_shared.m_name == item).Sum(i => i.m_stack), // yours only (not the chests' count)
                         InChests = count(item),
                     });
                 }
+                FetchTopUp = FetchLines.Any(l => l.InInventory < l.Need);
+                foreach (FetchLine l in FetchLines)
+                    l.Take = Mathf.Min(l.InChests, FetchTopUp ? Mathf.Max(0, l.Need - l.InInventory) : l.Need);
             }
             FetchAvailable = FetchLines.Any(l => l.Short);
 
