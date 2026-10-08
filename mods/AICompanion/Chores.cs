@@ -213,7 +213,7 @@ namespace AICompanion
         }
     }
 
-    /// <summary>Look at it and press a hotbar key: food or a potion it takes one of (and eats or drinks it when it needs to), gear the whole stack.</summary>
+    /// <summary>Look at it and press a hotbar key: food or a potion it takes one of (and eats or drinks it when it needs to). Anything else is refused.</summary>
     [HarmonyPatch(typeof(Container), nameof(Container.UseItem))]
     internal static class Container_UseItem_Give
     {
@@ -237,10 +237,9 @@ namespace AICompanion
                     Idle.Queue(Brain.Get(c), "thumbsup", 0.3f, p);
                     return false;
                 }
-                if (!Companion.Give(c, p, item, out string why)) { if (why != null) p.Message(MessageHud.MessageType.Center, why); return false; }
-                Brain.Get(c).NextGear = 0f; // wear it now if it is better
-                Talk.Say(c, "Thanks!");
-                Idle.Queue(Brain.Get(c), "thumbsup", 0.3f, p);
+                // Not food or a potion: nothing happens (a hotbar key must never hand over gear by accident; its gear and bag are given from the menu or your inventory beside it).
+                p.Message(MessageHud.MessageType.Center, $"Only food and potions can be given this way. To give {Companion.NameOf(c)} gear, open your inventory next to it (Tab).");
+                __result = false;
             }
             catch (Exception e) { Plugin.Instance?.Warn("Giving to the companion: " + e.Message); }
             return false;
