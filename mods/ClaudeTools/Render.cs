@@ -66,7 +66,7 @@ namespace ClaudeTools
             Builtin("render", "render <prefab> [yaw=25] [pitch=12] [views=1|4] [focus=x,y,z] [dist=m] [fov=30] [size=1280x720] [bg=sky|dark|clear]: a picture of any piece, item or creature on its own, with its real materials (yaw 0 = from its front, -z); focus and dist for a close-up of one part",
                 (a, output, error) => a.Length < 2 ? Fail(error, "render <prefab name>") : RenderCommand(a, output, error));
 
-            Builtin("inspect", "inspect <prefab> [depth=3]: what an object is made of: its components, parts (position, size), meshes and materials", (a, output, error) =>
+            Builtin("inspect", "inspect <prefab> [depth=3]: what an object is made of: its components, parts (position, size), colliders, meshes and materials", (a, output, error) =>
             {
                 if (a.Length < 2) { error("inspect <prefab name>"); return null; }
                 GameObject prefab = FindPrefab(a[1]);
@@ -84,6 +84,15 @@ namespace ClaudeTools
                     if (comps.Length > 0) info["components"] = new JArray(comps);
                     MeshFilter mf = t.GetComponent<MeshFilter>();
                     if (mf != null && mf.sharedMesh != null) info["mesh"] = mf.sharedMesh.name + " " + Vec(mf.sharedMesh.bounds.size);
+                    var cols = new JArray();   // its colliders' shapes (sizes, for measuring: how wide a player is, what fits through a gap)
+                    foreach (Collider col in t.GetComponents<Collider>())
+                    {
+                        if (col is CapsuleCollider cc) cols.Add($"capsule radius {cc.radius:0.###} height {cc.height:0.###} centre {Vec(cc.center)} axis {cc.direction}{(cc.isTrigger ? " (trigger)" : "")}");
+                        else if (col is BoxCollider bc) cols.Add($"box {Vec(bc.size)} centre {Vec(bc.center)}{(bc.isTrigger ? " (trigger)" : "")}");
+                        else if (col is SphereCollider sc) cols.Add($"sphere radius {sc.radius:0.###} centre {Vec(sc.center)}{(sc.isTrigger ? " (trigger)" : "")}");
+                        else if (col is MeshCollider mc) cols.Add($"mesh {(mc.sharedMesh != null ? mc.sharedMesh.name + " " + Vec(mc.sharedMesh.bounds.size) : "?")}{(mc.isTrigger ? " (trigger)" : "")}");
+                    }
+                    if (cols.Count > 0) info["colliders"] = cols;
                     Renderer r = t.GetComponent<Renderer>();
                     if (r != null) info["materials"] = new JArray(r.sharedMaterials.Where(m => m != null).Select(m => m.name + " (" + (m.shader != null ? m.shader.name : "?") + ")" + (m.HasProperty("_Color") ? " " + ColorString(m.color) : "")));
                     parts.Add(info);
