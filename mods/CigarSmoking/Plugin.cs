@@ -21,7 +21,7 @@ namespace CigarSmoking
     {
         public const string Guid = "com.dhack.cigarsmoking";
         public const string Name = "Quad's Cigars";
-        public const string Version = "0.2.0";
+        public const string Version = "0.2.1";
         public const string EffectPrefix = "SE_dh_smoking_";
 
         internal static ConfigEntry<float> Minutes, EffectStrength, GrowMinutes, DryMinutes, CureMinutes;

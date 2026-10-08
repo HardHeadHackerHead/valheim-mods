@@ -44,6 +44,7 @@ namespace CigarSmoking
         {
             GameObject go = UnityEngine.Object.Instantiate(source, _holder.transform);
             go.name = prefab;
+            go.layer = LayerMask.NameToLayer("item");   // what the game looks for to pick it up
             foreach (LODGroup lod in go.GetComponents<LODGroup>()) UnityEngine.Object.DestroyImmediate(lod);
             foreach (Collider c in go.GetComponents<Collider>()) UnityEngine.Object.DestroyImmediate(c);
             foreach (MeshRenderer r in go.GetComponents<MeshRenderer>()) UnityEngine.Object.DestroyImmediate(r);

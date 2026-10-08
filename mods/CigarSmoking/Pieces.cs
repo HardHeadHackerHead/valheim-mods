@@ -98,7 +98,7 @@ namespace CigarSmoking
                 rack.GetComponent<Piece>().m_craftingStation = workbench;
                 Curer c = rack.AddComponent<Curer>();
                 c.Title = "Tobacco Drying Rack"; c.Doing = "Drying"; c.Done = "dried"; c.Capacity = 8; c.Seconds = Plugin.DryMinutes.Value * 60f;
-                foreach (Strain s in Strains.All) c.Conversions.Add(new KeyValuePair<string, string>(s.Fresh, s.Dried));
+                c.Drying = true;
                 HammerPieces.Add(rack);
             }
             GameObject barrel = Clone(scene, "piece_chest_wood", "dh_curing_barrel");
@@ -111,7 +111,7 @@ namespace CigarSmoking
                 barrel.GetComponent<Piece>().m_craftingStation = workbench;
                 Curer c = barrel.AddComponent<Curer>();
                 c.Title = "Tobacco Curing Barrel"; c.Doing = "Curing"; c.Done = "aged"; c.Capacity = 8; c.Seconds = Plugin.CureMinutes.Value * 60f;
-                foreach (Strain s in Strains.All) c.Conversions.Add(new KeyValuePair<string, string>(s.Dried, s.Aged));
+                c.Drying = false;
                 HammerPieces.Add(barrel);
             }
 

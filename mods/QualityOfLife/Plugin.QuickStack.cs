@@ -29,7 +29,9 @@ namespace QualityOfLife
         private void BindQuickStackConfig()
         {
             _stackEnabled = Config.Bind("QuickStack", "Enabled", true, "Turn the quick-stack buttons and item locking on or off.");
-            _stackRadius = Config.Bind("QuickStack", "Radius", 20f, "How far (in metres) from you a chest can be and still be used.");
+            _stackRadius = Config.Bind("QuickStack", "Radius", 20f, new ConfigDescription("How far (in metres) from you a chest can be and still be used by Stack to chests " +
+                "and Sort chests. Raise it to put things away into your storehouse from across a big base: 60 reaches a long way. Chests only count while " +
+                "their area is loaded around you (about 100 m and more). Takes effect at once.", new AcceptableValueRange<float>(2f, 150f)));
             _lockKey = Config.Bind("QuickStack", "LockKey", KeyCode.L,
                 "Inventory open: hover an item and press this to lock it (it will never be moved by the buttons) or unlock it.");
             _stackKey = Config.Bind("QuickStack", "StackKey", KeyCode.None,

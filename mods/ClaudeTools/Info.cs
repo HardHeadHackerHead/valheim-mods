@@ -277,6 +277,7 @@ namespace ClaudeTools
                 int amount = Mathf.Clamp(I(a, 2, 1), 1, 100);
                 ItemDrop.ItemData added = Player.m_localPlayer.GetInventory().AddItem(prefab.name, amount, 1, 0, 0L, "", false);
                 if (added == null) { error("the inventory is full"); return null; }
+                added.m_worldLevel = (byte)Game.m_worldLevel;   // as an item picked up in this world has, or recipes would not count it
                 output(new JObject { ["gave"] = prefab.name, ["amount"] = amount });
                 return null;
             });
@@ -307,6 +308,43 @@ namespace ClaudeTools
                         ["status"] = plant.GetStatus().ToString(), ["growsInto"] = new JArray(plant.m_grownPrefabs.Select(g => g != null ? g.name : "NOTHING")), ["owner"] = view.IsOwner(), ["growTime"] = plant.m_growTime });
                 }
                 output(new JObject { ["aged"] = done, ["note"] = "plants check their growth every ten seconds or so" });
+                return null;
+            });
+
+            Builtin("fixlevels", "fixlevels <prefix>: give every item in the bag whose prefab name starts with <prefix> this world's level (for items added by an older give, which recipes would not count)", (a, output, error) =>
+            {
+                if (a.Length < 2) { error("fixlevels <prefix>"); return null; }
+                int n = 0;
+                foreach (ItemDrop.ItemData item in Player.m_localPlayer.GetInventory().GetAllItems())
+                    if (item.m_dropPrefab != null && item.m_dropPrefab.name.StartsWith(a[1]) && item.m_worldLevel != (byte)Game.m_worldLevel) { item.m_worldLevel = (byte)Game.m_worldLevel; n++; }
+                output(new JObject { ["fixed"] = n, ["worldLevel"] = Game.m_worldLevel });
+                return null;
+            });
+
+            Builtin("drop", "drop <item prefab> [amount]: drop an item from the player's bag on the ground in front of them, as dragging it out of the bag does", (a, output, error) =>
+            {
+                if (a.Length < 2) { error("drop <item prefab> [amount]"); return null; }
+                Player p = Player.m_localPlayer;
+                GameObject prefab = ObjectDB.instance != null ? ObjectDB.instance.GetItemPrefab(a[1]) : null;
+                if (prefab == null) { error($"no item called '{a[1]}'"); return null; }
+                string itemName = prefab.GetComponent<ItemDrop>().m_itemData.m_shared.m_name;
+                ItemDrop.ItemData item = p.GetInventory().GetAllItems().FirstOrDefault(i => i.m_shared.m_name == itemName);
+                if (item == null) { error($"the player has no '{a[1]}'"); return null; }
+                bool dropped = p.DropItem(p.GetInventory(), item, Mathf.Clamp(I(a, 2, 1), 1, item.m_stack));
+                output(new JObject { ["dropped"] = a[1], ["ok"] = dropped });
+                return null;
+            });
+
+            Builtin("pickup", "pickup <item prefab>: pick up the nearest dropped item of that kind within 4 m, as walking up to it and pressing use does", (a, output, error) =>
+            {
+                if (a.Length < 2) { error("pickup <item prefab>"); return null; }
+                Player p = Player.m_localPlayer;
+                ItemDrop nearest = UnityEngine.Object.FindObjectsByType<ItemDrop>(FindObjectsSortMode.None)
+                    .Where(d => d != null && d.gameObject.name.StartsWith(a[1]) && Vector3.Distance(d.transform.position, p.transform.position) < 4f)
+                    .OrderBy(d => Vector3.Distance(d.transform.position, p.transform.position)).FirstOrDefault();
+                if (nearest == null) { error($"no dropped '{a[1]}' within 4 m"); return null; }
+                bool ok = p.Pickup(nearest.gameObject, false, false);
+                output(new JObject { ["pickedUp"] = a[1], ["ok"] = ok });
                 return null;
             });
 

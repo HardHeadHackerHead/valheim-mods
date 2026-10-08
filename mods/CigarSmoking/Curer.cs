@@ -18,7 +18,24 @@ namespace CigarSmoking
         public string Title, Doing, Done;                 // "Drying Rack", "Drying", "dried"
         public float Seconds;
         public int Capacity;
-        public readonly List<KeyValuePair<string, string>> Conversions = new List<KeyValuePair<string, string>>();   // input item -> output item
+        public bool Drying;                               // the rack (fresh -> dried) or the barrel (dried -> aged)
+
+        // input item -> output item. Worked out here and not stored as a field: the game builds a placed piece from the prefab, and a list
+        // filled in by code is not copied (Unity only copies what it can save), so a placed rack or barrel would start with an empty one.
+        private List<KeyValuePair<string, string>> _conversions;
+        private List<KeyValuePair<string, string>> Conversions
+        {
+            get
+            {
+                if (_conversions == null)
+                {
+                    _conversions = new List<KeyValuePair<string, string>>();
+                    foreach (Strain s in Strains.All)
+                        _conversions.Add(Drying ? new KeyValuePair<string, string>(s.Fresh, s.Dried) : new KeyValuePair<string, string>(s.Dried, s.Aged));
+                }
+                return _conversions;
+            }
+        }
 
         private ZNetView _nview;
         private Transform _fresh, _dry, _lid, _contents;
@@ -101,15 +118,15 @@ namespace CigarSmoking
             Inventory inv = player.GetInventory();
             if (input == null)
                 foreach (KeyValuePair<string, string> c in Conversions)
-                    if (inv.CountItems(Things.SharedName(c.Key)) > 0) { input = c.Key; break; }
+                    if (inv.CountItems(Things.SharedName(c.Key), -1, false) > 0) { input = c.Key; break; }
             if (input == null)
             {
                 player.Message(MessageHud.MessageType.Center, "You have no leaves for the " + Title.ToLower());
                 return true;
             }
             string shared = Things.SharedName(input);
-            int n = Mathf.Min(inv.CountItems(shared), Capacity);
-            inv.RemoveItem(shared, n);
+            int n = Mathf.Min(inv.CountItems(shared, -1, false), Capacity);   // leaves of any world level
+            inv.RemoveItem(shared, n, -1, false);
             _nview.ClaimOwnership();
             ZDO zdo = _nview.GetZDO();
             zdo.Set(KeyIn, input);

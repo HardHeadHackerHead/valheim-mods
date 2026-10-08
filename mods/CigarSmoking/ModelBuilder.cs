@@ -48,6 +48,19 @@ namespace CigarSmoking
                 var mesh = new Mesh { name = "dh_" + (group.Length > 0 ? group + "_" : "") + material, indexFormat = UnityEngine.Rendering.IndexFormat.UInt32 };
                 mesh.CombineMeshes(buckets[key].ToArray(), true, true);
                 mesh.RecalculateBounds();
+                if (!Finite(mesh.bounds))
+                {
+                    // Invalid points (seen once, at game start): the shapes it was made of are made again, and it is combined once more.
+                    Debug.LogWarning($"[Quad's Cigars] the mesh {mesh.name} of {name} came out with invalid points: making its shapes again");
+                    Meshes.Rebuild();
+                    var again = new List<CombineInstance>();
+                    foreach (object[] p in parts)
+                        if ((string)p[1] != "Group" && (string)p[2] + "|" + (string)p[12] == key) again.Add(new CombineInstance { mesh = Meshes.Of((string)p[1]), transform = WithScale(p) });
+                    mesh.Clear();
+                    mesh.CombineMeshes(again.ToArray(), true, true);
+                    mesh.RecalculateBounds();
+                    if (!Finite(mesh.bounds)) Debug.LogWarning($"[Quad's Cigars] the mesh {mesh.name} of {name} is still invalid after making its shapes again");
+                }
                 var go = new GameObject(material) { layer = layer };
                 go.transform.SetParent(group.Length > 0 && groups.TryGetValue(group, out Transform gt) ? gt : root.transform, false);
                 go.AddComponent<MeshFilter>().sharedMesh = mesh;
@@ -55,6 +68,10 @@ namespace CigarSmoking
             }
             return root;
         }
+
+        private static bool Finite(Bounds b) =>
+            !(float.IsNaN(b.center.x) || float.IsNaN(b.center.y) || float.IsNaN(b.center.z) || float.IsInfinity(b.extents.x) || float.IsInfinity(b.extents.y) ||
+              float.IsInfinity(b.extents.z) || float.IsNaN(b.extents.x) || float.IsNaN(b.extents.y) || float.IsNaN(b.extents.z));
 
         /// <summary>The box a model fits in (from its parts' corners, so it needs nothing built), in the model's own space.</summary>
         internal static Bounds BoundsOf(object[][] parts)

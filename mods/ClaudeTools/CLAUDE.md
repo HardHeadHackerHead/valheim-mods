@@ -74,6 +74,7 @@ for the newest; use `_` for spaces). Positions in a place are metres: x right, y
 | `inspect <prefab> [depth=3]` | What an object is made of: its parts with positions, rotations and sizes, colliders, components, meshes and materials (with colours). |
 | `colliders <prefab> [prefab...]` | Each piece's solid colliders in its own frame as the game's support check sees them (box centre, rotation, size), its centre of mass, material and whether it holds others up. |
 | `support [radius=20] [place=look] [filter]` | Built pieces near a place with the support the game gives them now, their material's minimum and maximum, and health: weakest first. |
+| `comfort [prefab...]` | With prefabs: the comfort level they would give together (under a roof, within 10 m), each piece's comfort and group, which count. Without: the player's comfort now and the pieces giving it. |
 | `errors` | The new errors and exceptions in the log since you last asked, with their stack traces. Run it after every rebuild. |
 | `waitfor <mod> [version] [seconds=30]` | Wait until a mod (that version) is loaded: after a rebuild, before looking at it. |
 

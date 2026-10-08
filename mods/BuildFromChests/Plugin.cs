@@ -14,7 +14,7 @@ namespace BuildFromChests
     {
         public const string Guid = "com.dhack.buildfromchests";
         public const string Name = "BuildFromChests";
-        public const string Version = "1.2.1";
+        public const string Version = "1.3.0";
 
         internal static ConfigEntry<bool> Enabled;
         internal static ConfigEntry<bool> ShowHaveCounts;
@@ -30,7 +30,9 @@ namespace BuildFromChests
                 "In the build menu, show how many of each material you HAVE (inventory + chests) next to how many you need.");
             Enabled = Config.Bind("General", "Enabled", true, "Turn the mod on or off.");
             Radius = Config.Bind("General", "Radius", 20f,
-                "How far (in meters) from YOU a chest can be and still be used while building.");
+                new ConfigDescription("How far (in meters) from YOU a chest can be and still be used while building (also for BuildOrders: building its ghosts, " +
+                    "hold E to build all, and its fetch key). Raise it to build far from your storehouse: 60 reaches across a big base. Chests only count " +
+                    "while their area is loaded around you (about 100 m and more). Takes effect at once.", new AcceptableValueRange<float>(2f, 150f)));
 
             _harmony = new Harmony(Guid);
             _harmony.PatchAll();

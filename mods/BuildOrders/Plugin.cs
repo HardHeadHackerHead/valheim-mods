@@ -1,3 +1,4 @@
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
@@ -21,7 +22,7 @@ namespace BuildOrders
     {
         public const string Guid = "com.dhack.buildorders";
         public const string Name = "BuildOrders";
-        public const string Version = "1.9.6";
+        public const string Version = "1.9.7";
 
         internal static Plugin Instance;
 
@@ -459,16 +460,19 @@ namespace BuildOrders
             return false;
         }
 
-        /// <summary>Build every ghost within reach, lowest first, as far as your materials go. Pieces nothing supports yet are skipped.</summary>
+        /// <summary>
+        /// Build every ghost within reach that your materials cover and whose station is near you, as far as they go. Only what will stand
+        /// with what is already there is built, and in the order the support runs: a piece goes up after the pieces that hold it up, and if
+        /// one of those could not be built, what rests on it waits.
+        /// </summary>
         private IEnumerator BuildMany(Player player)
         {
             _building = true;
-            int built = 0, noMaterials = 0, unsupported = 0;
+            int built = 0, noMaterials = 0, unsupported = 0, waited = 0;
+            var noStation = new Dictionary<string, int>();
             try
             {
-                // what you can afford, lowest first; then only the part of that which stands up by itself (on the ground, on what is
-                // already built, or on other pieces built now), so building a plan bit by bit never wastes materials on a piece that falls
-                List<Order> chosen = AffordableNearby(player, out noMaterials, out int all);
+                List<Order> chosen = AffordableNearby(player, out noMaterials, out int all, noStation);
                 var keep = new HashSet<string>(chosen.Select(o => o.Id));
                 for (int round = 0; round < 6 && keep.Count > 0; round++)
                 {
@@ -479,16 +483,40 @@ namespace BuildOrders
                     unsupported += falls.Count;
                 }
 
-                foreach (Order o in chosen)
+                // the order: by how many pieces stand between it and the ground (or what is already built), then lowest first; pieces that
+                // hold nothing up (tables, torches) after the structure
+                var depth = new Dictionary<string, int>();
+                int Depth(string id, int guard)
                 {
-                    if (!keep.Contains(o.Id) || !_orders.ContainsKey(o.Id)) continue;
+                    if (depth.TryGetValue(id, out int d)) return d;
+                    if (guard > 400 || !_stability.TryGetValue(id, out Stab st)) return 0;
+                    depth[id] = 0;                                                    // (a loop counts as resting on the ground)
+                    int deepest = 0;
+                    foreach (string f in st.From) if (keep.Contains(f)) deepest = Math.Max(deepest, Depth(f, guard + 1) + 1);
+                    depth[id] = deepest;
+                    return deepest;
+                }
+                List<Order> ordered = chosen.Where(o => keep.Contains(o.Id))
+                    .OrderBy(o => _stability.ContainsKey(o.Id) ? 0 : 1)
+                    .ThenBy(o => Depth(o.Id, 0))
+                    .ThenBy(o => Mathf.Round(o.Pos.y * 2f)).ToList();
+
+                var failed = new HashSet<string>();
+                foreach (Order o in ordered)
+                {
+                    if (!_orders.ContainsKey(o.Id)) continue;
+                    if (_stability.TryGetValue(o.Id, out Stab st) && st.From.Any(failed.Contains)) { failed.Add(o.Id); waited++; continue; }
                     if (TryBuild(player, o, quiet: true)) { built++; if (built % 2 == 0) yield return null; } // two per frame, so the effects are not all at once
+                    else failed.Add(o.Id);
                 }
             }
             finally { _building = false; }
 
-            string extra = (noMaterials > 0 ? $", {noMaterials} need materials" : "") + (unsupported > 0 ? $", {unsupported} skipped: nothing supports them yet" : "");
+            string stations = string.Join(", ", noStation.Select(kv => $"{kv.Value} need a {kv.Key} near you").ToArray());
+            string extra = (noMaterials > 0 ? $", {noMaterials} need materials" : "") + (stations.Length > 0 ? ", " + stations : "")
+                + (unsupported > 0 ? $", {unsupported} skipped: nothing supports them yet" : "") + (waited > 0 ? $", {waited} wait for what holds them up" : "");
             player.Message(MessageHud.MessageType.Center, built > 0 ? $"Built {built} piece(s){extra}" : $"Nothing built{extra}");
+            if (stations.Length > 0) Logger.LogInfo("Build all: " + stations);
             _stabilityDirty = true;
         }
 
@@ -498,7 +526,7 @@ namespace BuildOrders
         /// The ghosts within the build-all radius that your materials (inventory and nearby chests) cover, picked lowest first and counting the
         /// materials down as they would be used. <paramref name="short_"/> is how many more there are that you cannot afford yet.
         /// </summary>
-        private List<Order> AffordableNearby(Player player, out int short_, out int all)
+        private List<Order> AffordableNearby(Player player, out int short_, out int all, Dictionary<string, int> noStation = null)
         {
             float radius = _buildAllRadius.Value;
             List<Order> batch = _orders.Values
@@ -519,6 +547,16 @@ namespace BuildOrders
                 {
                     Piece piece = PieceOf(o);
                     if (piece == null || !player.IsRecipeKnown(piece.m_name)) continue;
+                    if (piece.m_craftingStation != null && CraftingStation.HaveBuildStationInRange(piece.m_craftingStation.m_name, player.transform.position) == null)
+                    {
+                        // (the game will not build it without its station near you: counting it as built would let what rests on it go up on nothing)
+                        if (noStation != null)
+                        {
+                            string station = Localization.instance.Localize(piece.m_craftingStation.m_name);
+                            noStation[station] = (noStation.TryGetValue(station, out int c) ? c : 0) + 1;
+                        }
+                        continue;
+                    }
                     free = ZoneSystem.instance.GetGlobalKey(piece.FreeBuildKey());
                     bool ok = true;
                     foreach (Piece.Requirement req in piece.m_resources)

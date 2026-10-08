@@ -30,6 +30,13 @@ namespace CigarSmoking
             return m;
         }
 
+        /// <summary>Make the two shapes made here again (the next Of builds them anew): for a mesh that came out with invalid points.</summary>
+        internal static void Rebuild()
+        {
+            Cache.Remove("Leaf");
+            Cache.Remove("Rib");
+        }
+
         internal static void Clear()
         {
             foreach (KeyValuePair<string, Mesh> kv in Cache)

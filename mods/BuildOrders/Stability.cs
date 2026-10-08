@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System.Linq;
 using HarmonyLib;
 using UnityEngine;
 
@@ -17,6 +18,8 @@ namespace BuildOrders
         internal class Stab
         {
             public float Support, Max, Min;
+            /// <summary>The ghosts its support comes from (none: the ground, or a piece already built). Build those first.</summary>
+            public List<string> From = new List<string>();
             public bool Collapses => Support < Min;
             /// <summary>0 = about to fall, 1 = comfortable; -1 = fully solid.</summary>
             public float Value => Support >= Max ? -1f : Mathf.Clamp01((Support - Min) / Mathf.Max(0.01f, Max * 0.5f - Min));
@@ -30,6 +33,7 @@ namespace BuildOrders
             public Vector3 Com, Pos;
             public float Max, Min, HLoss, VLoss, Support;
             public bool Supports, Grounded, Broken;
+            public List<Node> From = new List<Node>();            // where its support comes from (empty: the ground or real pieces)
             public List<Obb> Cols, Reach;                         // its solid colliders, and those grown by 0.15 m (where it takes support)
             public readonly List<KeyValuePair<Node, Obb>> Near = new List<KeyValuePair<Node, Obb>>();   // a touching piece, and its collider
             public readonly List<Real> Real = new List<Real>();
@@ -208,6 +212,7 @@ namespace BuildOrders
             // again without it, until nothing more breaks
             var points = new List<Vector3>();
             var values = new List<float>();
+            var pointFrom = new List<Node>();
             for (int cascade = 0; cascade < 60; cascade++)
             {
                 for (int pass = 0; pass < 60; pass++)
@@ -219,27 +224,38 @@ namespace BuildOrders
                         float best = 0f;
                         points.Clear();
                         values.Clear();
+                        pointFrom.Clear();
+                        var bestFrom = new List<Node>();
 
-                        void Consider(Vector3 com, Vector3 pos, Vector3 point, float s)
+                        void Take(float v, Node from)
+                        {
+                            if (v <= best) return;
+                            best = v;
+                            bestFrom.Clear();
+                            if (from != null) bestFrom.Add(from);
+                        }
+
+                        void Consider(Vector3 com, Vector3 pos, Vector3 point, float s, Node from)
                         {
                             if (s <= 0f) return;
                             float dist = Mathf.Min(Vector3.Distance(n.Com, com), Vector3.Distance(n.Com, pos)) + 0.1f;
-                            best = Mathf.Max(best, s - n.HLoss * dist * s);
+                            Take(s - n.HLoss * dist * s, from);
                             if (point.y < n.Com.y + 0.05f)
                             {
                                 Vector3 dir = (point - n.Com).normalized;
                                 if (dir.y < 0f)
                                 {
                                     float t = Mathf.Acos(1f - Mathf.Abs(dir.y)) / (Mathf.PI / 2f);
-                                    best = Mathf.Max(best, s - Mathf.Lerp(n.HLoss, n.VLoss, t) * dist * s);
+                                    Take(s - Mathf.Lerp(n.HLoss, n.VLoss, t) * dist * s, from);
                                 }
                                 points.Add(point);
                                 values.Add(s - n.VLoss * dist * s);
+                                pointFrom.Add(from);
                             }
                         }
 
-                        foreach (var kv in n.Near) if (!kv.Key.Broken) Consider(kv.Key.Com, kv.Key.Pos, kv.Value.Closest(n.Com), kv.Key.Support);
-                        foreach (Real r in n.Real) Consider(r.Com, r.Pos, r.Point, r.Support);
+                        foreach (var kv in n.Near) if (!kv.Key.Broken) Consider(kv.Key.Com, kv.Key.Pos, kv.Value.Closest(n.Com), kv.Key.Support, kv.Key);
+                        foreach (Real r in n.Real) Consider(r.Com, r.Pos, r.Point, r.Support, null);
 
                         // two supports on opposite sides hold a piece up better than either alone
                         for (int l = 0; l < points.Count - 1; l++)
@@ -250,12 +266,18 @@ namespace BuildOrders
                                 float average = (values[l] + values[k]) * 0.5f;
                                 if (average <= best) continue;
                                 Vector3 to = points[k] - n.Com; to.y = 0f;
-                                if (Vector3.Angle(from, to) >= 100f) best = average;
+                                if (Vector3.Angle(from, to) >= 100f)
+                                {
+                                    best = average;
+                                    bestFrom.Clear();
+                                    if (pointFrom[l] != null) bestFrom.Add(pointFrom[l]);
+                                    if (pointFrom[k] != null && pointFrom[k] != pointFrom[l]) bestFrom.Add(pointFrom[k]);
+                                }
                             }
                         }
 
                         best = Mathf.Min(best, n.Max);
-                        if (Mathf.Abs(best - n.Support) > 0.01f) { n.Support = best; changed = true; }
+                        if (Mathf.Abs(best - n.Support) > 0.01f) { n.Support = best; n.From = bestFrom; changed = true; }
                     }
                     if (!changed) break;
                 }
@@ -264,7 +286,8 @@ namespace BuildOrders
                 if (!broke) break;
             }
 
-            foreach (Node n in nodes) _stability[n.Order.Id] = new Stab { Support = n.Support, Max = n.Max, Min = n.Min };
+            foreach (Node n in nodes)
+                _stability[n.Order.Id] = new Stab { Support = n.Support, Max = n.Max, Min = n.Min, From = n.Grounded ? new List<string>() : n.From.Select(f => f.Order.Id).ToList() };
             _stabilityDirty = false;
         }
 

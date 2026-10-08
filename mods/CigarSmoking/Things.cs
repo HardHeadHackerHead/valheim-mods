@@ -52,13 +52,23 @@ namespace CigarSmoking
 
         internal static string DisplayName(string prefab) => Localization.instance.Localize(SharedName(prefab));
 
-        /// <summary>Puts items in the player's bag; what does not fit lands at their feet.</summary>
+        /// <summary>
+        /// Puts items in the player's bag; whatever does not fit lands at their feet as a stack. (The game's own add-by-name call drops a single
+        /// copy when the bag is full, and loses the rest.)
+        /// </summary>
         internal static void Give(Player player, string prefab, int amount)
         {
-            ItemDrop.ItemData added = player.GetInventory().AddItem(prefab, amount, 1, 0, 0L, "", false);
-            if (added != null) return;
-            ItemDrop drop = Find(prefab)?.GetComponent<ItemDrop>();
-            if (drop != null) ItemDrop.DropItem(drop.m_itemData.Clone(), amount, player.transform.position + Vector3.up, Quaternion.identity);
+            GameObject go = Find(prefab);
+            ItemDrop drop = go != null ? go.GetComponent<ItemDrop>() : null;
+            if (drop == null) return;
+            ItemDrop.ItemData data = drop.m_itemData.Clone();
+            data.m_dropPrefab = go;
+            data.m_stack = Mathf.Max(1, amount);
+            data.m_worldLevel = (byte)Game.m_worldLevel;
+            if (player.GetInventory().AddItem(data)) return;
+            // it did not all fit: m_stack is now what is left over
+            ItemDrop.DropItem(data, Mathf.Max(1, data.m_stack), player.transform.position + player.transform.forward * 0.8f + Vector3.up, Quaternion.identity);
+            player.Message(MessageHud.MessageType.Center, "Your bag is full: the rest is on the ground");
         }
 
         /// <summary>The game's crafting sound and sparks, played when something is put in or taken out.</summary>

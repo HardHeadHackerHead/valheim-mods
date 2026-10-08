@@ -179,6 +179,45 @@ namespace ClaudeTools
                 return null;
             });
 
+            Builtin("comfort", "comfort [prefab...]: with prefabs, the comfort level they would give together (under a roof, all within 10 m), each piece's comfort and comfort group, and which count; without, the player's comfort now and the pieces giving it", (a, output, error) =>
+            {
+                var pieces = new List<Piece>();
+                bool real = a.Length < 2;
+                if (real)
+                {
+                    Player p = Player.m_localPlayer;
+                    Piece.GetAllComfortPiecesInRadius(p.transform.position, 10f, pieces);
+                }
+                else
+                    foreach (string name in a.Skip(1))
+                    {
+                        Piece pc = FindPrefab(name)?.GetComponent<Piece>();
+                        if (pc == null) { error($"no piece called '{name}'"); return null; }
+                        pieces.Add(pc);
+                    }
+                // the game's rule (SE_Rested.CalculateComfortLevel): 1, +1 under a roof, + the best of each group; pieces of no group count
+                // once per name
+                var sorted = pieces.OrderBy(pc => (int)pc.m_comfortGroup).ThenByDescending(pc => pc.m_comfort).ThenByDescending(pc => pc.m_name, StringComparer.Ordinal).ToList();
+                int level = 2;
+                var rows = new JArray();
+                for (int i = 0; i < sorted.Count; i++)
+                {
+                    Piece pc = sorted[i], prev = i > 0 ? sorted[i - 1] : null;
+                    bool counts = prev == null || !((pc.m_comfortGroup != 0 && pc.m_comfortGroup == prev.m_comfortGroup) || pc.m_name == prev.m_name);
+                    if (counts) level += pc.m_comfort;
+                    rows.Add($"{Utils.GetPrefabName(pc.gameObject)} ({Localization.instance.Localize(pc.m_name)}): {pc.m_comfort}, group {pc.m_comfortGroup}{(counts ? "" : "  (not counted: its group or kind is already counted)")}");
+                }
+                var result = new JObject { ["level"] = level, ["pieces"] = rows };
+                if (real)
+                {
+                    Player p = Player.m_localPlayer;
+                    result["inShelter"] = p.InShelter();
+                    result["gameSays"] = SE_Rested.CalculateComfortLevel(p);
+                }
+                output(result);
+                return null;
+            });
+
             Builtin("errors", "errors: the new errors and exceptions in the log since the last time you asked (with where they came from)", (a, output, error) =>
             {
                 string path = Path.Combine(Paths.BepInExRootPath, "LogOutput.log");
