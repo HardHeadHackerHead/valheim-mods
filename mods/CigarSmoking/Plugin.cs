@@ -21,16 +21,26 @@ namespace CigarSmoking
     {
         public const string Guid = "com.dhack.cigarsmoking";
         public const string Name = "Quad's Cigars";
-        public const string Version = "0.2.1";
+        public const string Version = "0.2.2";
         public const string EffectPrefix = "SE_dh_smoking_";
 
         internal static ConfigEntry<float> Minutes, EffectStrength, GrowMinutes, DryMinutes, CureMinutes;
         internal static ConfigEntry<bool> DrawSmoke, DrawGlow;
 
+        public const int SmokingApiVersion = 1;
+        private readonly SmokingSlots _smokingSlots = new SmokingSlots();
+        /// <summary>Register an add-on's status-effect name for the one-active-smoke rule. Repeat after this plugin reloads.</summary>
+        public bool RegisterSmokingEffect(string effectName) => _smokingSlots.Register(effectName);
+        public void UnregisterSmokingEffect(string effectName) => _smokingSlots.Unregister(effectName);
+        /// <summary>Stop other registered smoking effects on this character; unrelated effects remain.</summary>
+        public bool StopOtherSmoking(Character character, string keepEffectName) => _smokingSlots.StopOthers(character, keepEffectName);
+        internal static Plugin Instance;
+
         private Harmony _harmony;
 
         private void Awake()
         {
+            Instance = this;
             Minutes = Config.Bind("Smoking", "Minutes", 5f, new ConfigDescription("How long one cigar lasts (minutes).", new AcceptableValueRange<float>(0.5f, 60f)));
             EffectStrength = Config.Bind("Smoking", "EffectStrength", 100f, new ConfigDescription("How strong the cigars' bonuses are (percent of the default). 0 for none.", new AcceptableValueRange<float>(0f, 300f)));
             DrawSmoke = Config.Bind("Look", "DrawSmoke", true, "Draw the smoke curling up from smoking players.");
@@ -51,6 +61,7 @@ namespace CigarSmoking
             _harmony?.UnpatchSelf();
             foreach (Player p in Player.GetAllPlayers()) Smoke.Clear(p, null);
             Things.Unregister();
+            if (Instance == this) Instance = null;
         }
     }
 
