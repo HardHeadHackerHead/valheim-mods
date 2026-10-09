@@ -3,7 +3,7 @@
 # ⚒️ Valheim Mods
 
 **Quality-of-life mods, a companion who plays like a player, and new things to build for Valheim, made to play nicely together.**
-Craft and build from chests. Bring a viking companion on your adventures. Plan builds as ghosts with your friends. Wear gear from its own slots. Take on group bounties, trap birds for feathers, recycle old gear, link portals from a list, try your luck at a slot machine, get your arrows back, raise a tankard of ale, and ride a zipline down a mountain.
+Craft and build from chests. Bring a viking companion on your adventures. Plan builds as ghosts with your friends. Wear gear from its own slots. Take on group bounties, trap birds for feathers, recycle old gear, link portals from a list, try your luck at a slot machine, get your arrows back, raise a tankard of ale, ride a zipline down a mountain, and fight for a roaring crowd in the Arena.
 
 ![Valheim](https://img.shields.io/badge/Valheim-BepInEx-3b6e8f?style=flat-square)
 ![C#](https://img.shields.io/badge/made%20with-C%23-68217a?style=flat-square)
@@ -62,7 +62,7 @@ Every player installs the mods they want for themselves. A few need more than th
 | Mod | Who needs it |
 |---|---|
 | **AICompanion** | Everyone in the world, **the host too**: without it the game deletes saved companions. |
-| **Recycler, BountyBoard, SlotMachine, BirdTrap, LedgerChest, Quad's Cigars, SkalTavern, Ziplines** (new build pieces and items) | Everyone, and **the host above all**: a game without the mod deletes the pieces when their area loads. Restart after installing or updating them. |
+| **Recycler, BountyBoard, SlotMachine, BirdTrap, LedgerChest, Quad's Cigars, SkalTavern, Ziplines, Arena** (new build pieces and items; the Arena's host also picks where it stands) | Everyone, and **the host above all**: a game without the mod deletes the pieces when their area loads. Restart after installing or updating them. |
 | **PortalHub, BountyBoard** | The host (it keeps the portal links and the contracts), and everyone who wants their menus. |
 | Everything else | Only the players who want it. |
 
@@ -300,6 +300,17 @@ need it, and nothing is saved in the world.
 
 </td>
 <td valign="top">
+
+### 🏟️ Arena
+<img src="dist/Arena.cover.png" alt="Arena" width="100%">
+
+A stone colosseum, after the arena of the first Fable, builds itself on open ground in your world. Arena Waystones (hammer, Misc) take you
+to its forecourt, where the champions of each contest stand in stone and the **Arena Master** takes your fee. Walk **the Long Road** from the
+Meadows to the Ashlands, three rounds in each land with its champion in the third: the Arena Master holds your things, and the arena arms
+you and feeds you three meals of your choosing, with better steel in each land. Or bring your own gear to a **Champion Bout** or the
+**Endless Horde**, try **Today's Trial**, or duel a friend for a wager. A crowd fills the stands, cheers, boos and throws you food. Death is
+real. Everyone in the world needs it, and restart after installing.
+
 </td>
 </tr>
 </table>
@@ -317,6 +328,8 @@ need it, and nothing is saved in the world.
 | **B** | QualityOfLife | Jump into construction mode with your hammer, and back |
 | **K** / **L** | QualityOfLife | Assign what a chest receives / lock an item |
 | **E** at a Ledger Chest | LedgerChest | See and search everything in the chests around it; click to take, Shift-click to choose how many |
+| **E** at the Arena Master | Arena | Pick a contest (the Long Road, a Champion Bout, the Endless Horde, today's trial), duel a player, see the champions |
+| **Backspace** twice | Arena | In a contest: take your purse and leave between rounds (in a round you give up for half of it) |
 | **E** at a Bounty Board | BountyBoard | Read the day's notices, take a contract, hand one in |
 | **E** / alternate-use + **E** at a slot machine | SlotMachine | Pull the lever / change the bet |
 | **E** at a portal | PortalHub | Open the portal menu and choose where it goes |
@@ -394,3 +407,6 @@ Copy the `template/` folder from the [mod manager repo](https://github.com/HardH
 ## 📄 License
 
 [MIT](LICENSE). Mods run inside your game with full access to your PC, so only install code you trust.
+
+The Arena's crowd sounds are from OpenGameArt: "Free Crowd Cheering Sounds" by Gregor Quendel
+([CC-BY 4.0](https://creativecommons.org/licenses/by/4.0/)) and "Crowd Shouting" by StarNinjas (CC0), converted to OGG.

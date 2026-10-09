@@ -1,0 +1,1 @@
+It adds a new build piece (the Arena Waystone). Restart the game after updating so it registers cleanly.

@@ -1,0 +1,19 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <AssemblyName>Arena</AssemblyName>
+    <RootNamespace>Arena</RootNamespace>
+  </PropertyGroup>
+  <ItemGroup>
+    <!-- the arena's layout, designed offline (design/arena.py) -->
+    <EmbeddedResource Include="Layout.json" LogicalName="Layout.json" />
+    <!-- the crowd's recordings (see Sound.cs for where they are from) -->
+    <EmbeddedResource Include="Sounds\*.ogg" LogicalName="Sounds.%(Filename).ogg" />
+  </ItemGroup>
+  <ItemGroup>
+    <Reference Include="netstandard"><HintPath>$(ManagedDir)/netstandard.dll</HintPath><Private>false</Private></Reference>
+    <Reference Include="UnityEngine.ParticleSystemModule"><HintPath>$(ManagedDir)/UnityEngine.ParticleSystemModule.dll</HintPath><Private>false</Private></Reference>
+    <Reference Include="UnityEngine.AnimationModule"><HintPath>$(ManagedDir)/UnityEngine.AnimationModule.dll</HintPath><Private>false</Private></Reference>
+    <Reference Include="UnityEngine.UnityWebRequestAudioModule"><HintPath>$(ManagedDir)/UnityEngine.UnityWebRequestAudioModule.dll</HintPath><Private>false</Private></Reference>
+    <Reference Include="UnityEngine.AudioModule"><HintPath>$(ManagedDir)/UnityEngine.AudioModule.dll</HintPath><Private>false</Private></Reference>
+  </ItemGroup>
+</Project>
