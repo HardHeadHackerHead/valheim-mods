@@ -24,13 +24,26 @@ namespace Arena
             new[] { "Charred_Melee", "Asksvin", "Charred_Archer", "Charred_Mage" },
         };
 
-        private static readonly string[] Champions = { "Boar", "Troll", "Draugr_Elite", "Fenring", "GoblinBrute", "SeekerBrute", "Charred_Melee" };
-        private static readonly string[] ChampionFallbacks = { "Greydwarf_Elite", "Greydwarf_Elite", "Draugr", "Wolf", "Goblin", "Seeker", "Charred_Archer" };
+        // Each land's champions, one picked at random for each champion round (not the same one twice running, where there is a choice).
+        // Only those that walk: a flyer would be over the wall and gone.
+        private static readonly string[][] Champions =
+        {
+            new[] { "Boar", "Greydwarf", "Neck" },
+            new[] { "Troll", "Bjorn", "Greydwarf_Elite", "Skeleton_Poison" },
+            new[] { "Draugr_Elite", "Abomination", "Wraith", "BlobElite", "Unbjorn" },
+            new[] { "Fenring", "StoneGolem", "Fenring_Cultist", "Ulv" },
+            new[] { "GoblinBrute", "Lox", "GoblinShaman" },
+            new[] { "SeekerBrute", "Seeker" },
+            new[] { "Charred_Melee", "Morgen", "Asksvin", "Charred_Mage" },
+        };
+        private static string _lastChampion;
 
         private static readonly Dictionary<string, string> Trophies = new Dictionary<string, string>
         {
-            ["Troll"] = "TrophyFrostTroll", ["Draugr_Elite"] = "TrophyDraugrElite", ["GoblinBrute"] = "TrophyGoblinBrute", ["SeekerBrute"] = "TrophySeekerBrute",
+            ["Troll"] = "TrophyForestTroll", ["Draugr_Elite"] = "TrophyDraugrElite", ["GoblinBrute"] = "TrophyGoblinBrute", ["SeekerBrute"] = "TrophySeekerBrute",
             ["Charred_Melee"] = "TrophyCharredMelee", ["Greydwarf_Elite"] = "TrophyGreydwarfBrute", ["Goblin"] = "TrophyGoblin",
+            ["Bjorn"] = "TrophyBjorn", ["Unbjorn"] = "TrophyBjornUndead", ["Skeleton_Poison"] = "TrophySkeletonPoison", ["BlobElite"] = "TrophyBlob",
+            ["StoneGolem"] = "TrophySGolem", ["Fenring_Cultist"] = "TrophyCultist", ["Charred_Mage"] = "TrophyCharredMage",
         };
 
         private static readonly string[] FirstNames = { "Grimtooth", "Ironjaw", "Bloodaxe", "Skullsplitter", "Stormhide", "Nightmaw", "Ragnok", "Hrafn", "Thundergut", "Old Scar", "Wyrmbane", "Fenwick", "Grundr", "Ulfgar", "Morgrim", "Hakon" };
@@ -38,18 +51,6 @@ namespace Arena
 
         // Materials a tier pays beside coins.
         private static readonly string[] Materials = { "Flint", "Bronze", "Iron", "Silver", "BlackMetal", "Eitr", "FlametalNew" };
-
-        // What the crowd throws you when it loves you, by tier (the first that exists of each tier's list).
-        private static readonly string[][] Gifts =
-        {
-            new[] { "CookedMeat", "NeckTailGrilled", "Raspberry" },
-            new[] { "CookedMeat", "QueensJam", "MeadHealthMinor" },
-            new[] { "Sausages", "TurnipStew", "MeadHealthMinor" },
-            new[] { "Sausages", "OnionSoup", "MeadHealthMedium" },
-            new[] { "CookedLoxMeat", "FishWraps", "MeadHealthMedium" },
-            new[] { "MisthareSupreme", "MeatPlatter", "MeadHealthMajor" },
-            new[] { "MashedMeat", "PiquantPie", "MeadHealthMajor" },
-        };
 
         /// <summary>How far on you are: the number of bosses beaten, never more than the last tier.</summary>
         internal static int Stage()
@@ -79,14 +80,28 @@ namespace Arena
             return names.Count == 0 ? "nobody" : string.Join(", ", names);
         }
 
-        /// <summary>The champion's prefab for a tier (or a stand-in when the game has not got it).</summary>
+        /// <summary>A land's champions (those the game has).</summary>
+        internal static List<string> ChampionPool(int tier) => Champions[Mathf.Clamp(tier, 0, Champions.Length - 1)].Where(Has).ToList();
+
+        /// <summary>A champion for a land, picked at random from its champions (or its hardest fighter when the game has none of them).</summary>
         internal static string Champion(int tier)
         {
-            tier = Mathf.Clamp(tier, 0, Champions.Length - 1);
-            if (Has(Champions[tier])) return Champions[tier];
-            if (Has(ChampionFallbacks[tier])) return ChampionFallbacks[tier];
-            List<string> pool = Pool(tier);
-            return pool.Count > 0 ? pool[pool.Count - 1] : null;
+            List<string> pool = ChampionPool(tier);
+            if (pool.Count > 1) pool.Remove(_lastChampion);
+            if (pool.Count > 0) return _lastChampion = pool[Random.Range(0, pool.Count)];
+            List<string> fodder = Pool(tier);
+            return fodder.Count > 0 ? fodder[fodder.Count - 1] : null;
+        }
+
+        /// <summary>The names a player would know a land's champions by.</summary>
+        internal static string ChampionText(int tier)
+        {
+            var names = ChampionPool(tier).Select(p =>
+            {
+                Character c = ZNetScene.instance.GetPrefab(p)?.GetComponent<Character>();
+                return c != null && Localization.instance != null ? Localization.instance.Localize(c.m_name) : p;
+            }).Distinct().ToList();
+            return names.Count == 0 ? "none" : names.Count == 1 ? "a great " + names[0] : "a great " + string.Join(", ", names.Take(names.Count - 1)) + " or " + names.Last();
         }
 
         internal static string ChampionName() => FirstNames[Random.Range(0, FirstNames.Length)] + " " + Epithets[Random.Range(0, Epithets.Length)];
@@ -110,12 +125,6 @@ namespace Arena
             foreach (string name in new[] { "Trophy" + prefab, "Trophy" + prefab.Replace("_", "") })
                 if (Has(name)) return name;
             return null;
-        }
-
-        internal static string Gift(int tier)
-        {
-            string[] list = Gifts[Mathf.Clamp(tier, 0, Gifts.Length - 1)].Where(Has).ToArray();
-            return list.Length > 0 ? list[Random.Range(0, list.Length)] : null;
         }
     }
 }

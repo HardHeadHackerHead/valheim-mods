@@ -58,43 +58,55 @@ namespace Arena
     }
 
     /// <summary>
-    /// Dying in the ring: your tombstone is carried just outside it (on the side where you fell), so the next fight there does not stand on your
-    /// things and you can walk in and pick them up. Your death marker on the map and the game's "where you died" point move with it.
+    /// Dying in a contest. On the arena's steel nothing of yours was in the ring: what the arena lent and the crowd threw goes back, so no
+    /// tombstone is made at all. With your own gear the tombstone is carried out to the forecourt, where you rise again. Either way there is no
+    /// death marker on the map (you rise beside your things), and the game's "where you died" point is the forecourt.
     /// </summary>
     [HarmonyPatch(typeof(Player), nameof(Player.OnDeath))]
     internal static class Player_OnDeath_Tomb
     {
         internal static Vector3? MovedTo;
         internal static Vector3 DiedAt;
+        private static bool _inContest;
 
         private static readonly AccessTools.FieldRef<Character, HitData> LastHit = AccessTools.FieldRefAccess<Character, HitData>("m_lastHit");
 
         private static void Prefix(Player __instance)
         {
             MovedTo = null;
+            _inContest = false;
             if (__instance == Player.m_localPlayer && Site.Known && Travel.Distance(__instance.transform.position) < 120f)
             {
                 HitData hit = LastHit(__instance);
                 Character by = hit?.GetAttacker();
                 Plugin.Log.LogWarning($"Died at the arena (in a contest: {Contest.Active}): {(hit != null ? hit.m_hitType + " " + hit.GetTotalDamage().ToString("0.0") + " from " + (by != null ? by.name : "nothing") + " at " + hit.m_point : "no hit known")}, at {Site.Local(__instance.transform.position)} in the arena's frame");
             }
-            // the arena's lent things go back to the armourer, not into your tombstone (your own come back when you rise)
-            if (__instance == Player.m_localPlayer && Kit.Stowed(__instance)) Kit.TakeBack(__instance);
+            // the arena's lent things go back to the armourer, and what the crowd threw goes with the purse: nothing is left for a tombstone
+            // (your own things are with the Arena Master, and come back when you rise)
+            if (__instance == Player.m_localPlayer && Kit.Stowed(__instance))
+            {
+                Kit.TakeBack(__instance);
+                __instance.UnequipAllItems();
+                __instance.GetInventory().RemoveAll();
+            }
             if (__instance != Player.m_localPlayer || !Contest.Active) return;
+            _inContest = true;
+            if (Plugin.RespawnAtArena.Value) Game_FindSpawnPoint_Arena.Pending = true;
             DiedAt = __instance.transform.position;
             Contest.NoteDeath();
         }
 
         private static void Postfix(Player __instance)
         {
-            if (__instance != Player.m_localPlayer || MovedTo == null) return;
-            Vector3 spot = MovedTo.Value;
+            if (__instance != Player.m_localPlayer || !_inContest) return;
+            _inContest = false;
+            Vector3 spot = MovedTo ?? Site.World(Layout.Arrival.Pos);
             MovedTo = null;
             Game.instance?.GetPlayerProfile()?.SetDeathPoint(spot);
             if (Minimap.instance == null) return;
             var pins = AccessTools.Field(typeof(Minimap), "m_pins").GetValue(Minimap.instance) as List<Minimap.PinData>;
-            Minimap.PinData pin = pins?.Where(p => p.m_type == Minimap.PinType.Death && (p.m_pos - DiedAt).sqrMagnitude < 9f).LastOrDefault();
-            if (pin != null) pin.m_pos = spot;
+            foreach (Minimap.PinData pin in pins?.Where(p => p.m_type == Minimap.PinType.Death && (p.m_pos - DiedAt).sqrMagnitude < 9f).ToList() ?? new List<Minimap.PinData>())
+                Minimap.instance.RemovePin(pin);
         }
     }
 
@@ -116,7 +128,8 @@ namespace Arena
             Rigidbody body = tomb.GetComponent<Rigidbody>();
             if (body != null) { body.position = spot; body.velocity = Vector3.zero; }
             ZNetView view = tomb.GetComponent<ZNetView>();
-            if (view != null && view.IsValid()) view.GetZDO().SetPosition(spot);
+            // (the game keeps a tombstone near where it was made, and puts it back there: that point moves too)
+            if (view != null && view.IsValid()) { view.GetZDO().SetPosition(spot); view.GetZDO().Set(ZDOVars.s_spawnPoint, spot); }
             Player_OnDeath_Tomb.MovedTo = spot;
             Plugin.Log.LogInfo($"Died in the ring: the tombstone was carried out to {spot}");
         }
@@ -169,6 +182,57 @@ namespace Arena
             if (!(ZInput.GetKeyDown(KeyCode.Escape) || ZInput.GetButtonDown("JoyMenu"))) return true;
             Window.Close();
             return false;
+        }
+    }
+}
+
+namespace Arena
+{
+    /// <summary>
+    /// Falling in a contest, you rise again at the arena: in its forecourt by the waystone, where the Arena Master gives your things back
+    /// (and your tombstone waits, if you fought with your own gear). Otherwise the game's own spawn point (your bed) is used as always.
+    /// </summary>
+    [HarmonyPatch(typeof(Game), "FindSpawnPoint")]
+    internal static class Game_FindSpawnPoint_Arena
+    {
+        internal static bool Pending;
+
+        private static readonly AccessTools.FieldRef<Game, bool> AfterDeath = AccessTools.FieldRefAccess<Game, bool>("m_respawnAfterDeath");
+        private static readonly AccessTools.FieldRef<Game, float> Wait = AccessTools.FieldRefAccess<Game, float>("m_respawnWait");
+
+        private static bool Prefix(Game __instance, ref Vector3 point, ref bool usedLogoutPoint, float dt, ref bool __result)
+        {
+            if (!Pending || !AfterDeath(__instance) || !Site.Known || !Layout.Loaded) return true;
+            usedLogoutPoint = false;
+            Vector3 at = Site.World(Layout.Arrival.Pos + new Vector3(0f, 0f, 3f));
+            ZNet.instance.SetReferencePosition(at);
+            Wait(__instance) += dt;
+            point = Vector3.zero;
+            __result = false;
+            if (Wait(__instance) <= __instance.m_respawnLoadDuration || !ZNetScene.instance.IsAreaReady(at)) return false;
+            float ground = ZoneSystem.instance.GetGroundHeight(at, out float h) ? h : at.y;
+            point = new Vector3(at.x, Mathf.Max(ground, Site.Origin.y - 0.5f) + 1.2f, at.z);   // (a little over the forecourt's floor, made when you get near)
+            Pending = false;
+            __result = true;
+            Plugin.Log.LogInfo($"Rising again at the arena, at {point}");
+            return false;
+        }
+    }
+}
+
+namespace Arena
+{
+    /// <summary>
+    /// The arena's fighters drop no loot. Turning a creature's drops off is not enough: one that leaves a body (a greydwarf, a troll) gives
+    /// its loot list to the body, which drops it when it fades. (On the arena's steel they drop coins instead: Armoury.Spill.)
+    /// </summary>
+    [HarmonyPatch(typeof(Ragdoll), nameof(Ragdoll.Setup))]
+    internal static class Ragdoll_Setup_NoLoot
+    {
+        private static void Prefix(ref CharacterDrop characterDrop)
+        {
+            ZNetView view = characterDrop != null ? characterDrop.GetComponent<ZNetView>() : null;
+            if (view != null && view.IsValid() && view.GetZDO().GetBool("dh_arena", false)) characterDrop = null;
         }
     }
 }

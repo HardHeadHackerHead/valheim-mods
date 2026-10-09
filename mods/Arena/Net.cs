@@ -89,7 +89,7 @@ namespace Arena
 
         // ---- events: a call, a sound, a grate, the cover ---------------------------------------------------------------------
 
-        internal enum Kind { Shout = 1, Sound = 2, Gate = 3, Props = 4 }
+        internal enum Kind { Shout = 1, Sound = 2, Gate = 3, Props = 4, Fireworks = 5, Celebrate = 6 }
 
         /// <summary>Does it here and tells the players near the arena.</summary>
         internal static void Event(Kind kind, string a, string b = "", float f = 0f)
@@ -116,6 +116,8 @@ namespace Arena
                 case Kind.Sound: Crowd.Play(a); break;
                 case Kind.Gate: if (int.TryParse(a, out int g)) { if (f > 0f) Scenery.OpenGate(g, f); else Scenery.CloseGate(g); } break;
                 case Kind.Props: if (string.IsNullOrEmpty(a)) Scenery.ClearProps(); else Scenery.ShowProps(a); break;
+                case Kind.Fireworks: if (int.TryParse(a, out int n)) Show.Fireworks(n, f); break;
+                case Kind.Celebrate: Crowd.Celebrate(); break;
             }
         }
 
@@ -123,5 +125,7 @@ namespace Arena
         internal static void Sound(string name) => Event(Kind.Sound, name);
         internal static void Gate(int index, float seconds) => Event(Kind.Gate, index.ToString(), "", seconds);
         internal static void Props(string set) => Event(Kind.Props, set ?? "");
+        internal static void Fireworks(int count, float over) => Event(Kind.Fireworks, count.ToString(), "", over);
+        internal static void Celebrate() => Event(Kind.Celebrate, "");
     }
 }

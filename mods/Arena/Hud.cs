@@ -14,7 +14,7 @@ namespace Arena
     {
         private static GameObject _bar;
         private static GuiBar _fast, _slow;
-        private static TMP_Text _name, _info;
+        private static TMP_Text _name, _info, _clock;
         private static float _lastBig;
 
         /// <summary>A small line (a rule, a warning), top left as the game shows them.</summary>
@@ -81,6 +81,16 @@ namespace Arena
                 _info.enableWordWrapping = false;
                 _info.overflowMode = TextOverflowModes.Overflow;
                 _info.alignment = TextAlignmentOptions.Top;
+                // and under that the clock between the fights, big
+                GameObject big = Object.Instantiate(line, line.transform.parent);
+                big.name = "ArenaClock";
+                _clock = big.GetComponent<TMP_Text>();
+                var br = (RectTransform)big.transform;
+                br.anchoredPosition = r.anchoredPosition + new Vector2(0f, -34f);
+                br.sizeDelta = new Vector2(1100f, 70f);
+                _clock.fontSize = 22f;
+                _clock.enableWordWrapping = true;
+                _clock.text = "";
             }
             return true;
         }
@@ -102,6 +112,8 @@ namespace Arena
                 if (_name != null) _name.text = "The Crowd: " + Crowd.Mood;
                 string state = Contest.Phase == Contest.PhaseKind.Ready ? "Walk through the gate into the ring"
                              : Contest.Phase == Contest.PhaseKind.Countdown ? "Get ready"
+                             : Contest.Phase == Contest.PhaseKind.Arming ? "Arm yourself"
+                             : Contest.Phase == Contest.PhaseKind.Victory ? "<color=#ffd27a>VICTORY!</color>"
                              : Contest.Phase == Contest.PhaseKind.Break ? $"Catch your breath  ·  {key} twice: take your purse and leave"
                              : Contest.FoesLeft + (Contest.FoesLeft == 1 ? " foe left" : " foes left");
                 string round = Contest.Endless ? "Wave " + Mathf.Max(1, Contest.Round)
@@ -109,6 +121,17 @@ namespace Arena
                              : Contest.Rounds > 1 ? $"Round {Mathf.Max(1, Contest.Round)} of {Contest.Rounds}" : "Champion Bout";
                 string clock = Rules.Timed && Contest.Fighting ? $"  ·  <color={(Contest.RoundLeft < 10f ? "#ff7a5a" : "#ffffff")}>{Mathf.CeilToInt(Mathf.Max(0f, Contest.RoundLeft))}s</color>" : "";
                 if (_info != null) _info.text = $"{round}  ·  {state}{clock}  ·  <color=#ffd27a>Purse: {Contest.PurseText()}</color>";
+                if (_clock != null)
+                {
+                    string what = Contest.TimerLabel(out float left);
+                    if (left < 0f) _clock.text = "";
+                    else
+                    {
+                        int s = Mathf.CeilToInt(Mathf.Max(0f, left));
+                        string colour = left <= 10f ? "#ff7a5a" : "#ffd27a";
+                        _clock.text = $"<size=200%><b><color={colour}>{s / 60}:{s % 60:00}</color></b></size>\n{what}";
+                    }
+                }
             }
             else
             {
@@ -117,6 +140,7 @@ namespace Arena
                 _fast?.SetValue(f); _slow?.SetValue(f);
                 _fast?.SetColor(new Color(0.8f, 0.2f, 0.15f));
                 if (_name != null) _name.text = Duel.OpponentName;
+                if (_clock != null) _clock.text = "";
                 float mine = me != null && me.GetMaxHealth() > 0f ? me.GetHealth() / me.GetMaxHealth() : 0f;
                 if (_info != null) _info.text = $"Duel  ·  you {Mathf.RoundToInt(mine * 100f)}%  ·  the first to a fifth loses" + (Duel.Wager > 0 ? $"  ·  <color=#ffd27a>{Duel.Wager * 2 - Duel.Wager * 2 / 10} coins to the winner</color>" : "");
             }

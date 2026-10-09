@@ -50,7 +50,7 @@ namespace Arena
             {
                 var tiers = new JArray();
                 for (int t = 0; t < Roster.TierNames.Length; t++)
-                    tiers.Add(new JObject { ["tier"] = Roster.TierNames[t], ["fighters"] = new JArray(Roster.Pool(t)), ["champion"] = Roster.Champion(t), ["trophy"] = Roster.Trophy(Roster.Champion(t) ?? ""), ["material"] = Roster.Material(t) });
+                    tiers.Add(new JObject { ["tier"] = Roster.TierNames[t], ["fighters"] = new JArray(Roster.Pool(t)), ["champions"] = new JArray(Roster.ChampionPool(t).Select(c => c + " (" + (Roster.Trophy(c) ?? "no trophy") + ")")), ["material"] = Roster.Material(t) });
                 output(new JObject { ["stage"] = Roster.Stage(), ["tiers"] = tiers });
                 yield break;
             }
@@ -97,6 +97,32 @@ namespace Arena
                 output(new JObject { ["armed"] = new JArray(armed), ["before"] = before.Count, ["after"] = after.Count, ["differ"] = new JArray(diff), ["stowedLeft"] = Kit.Stowed(player) });
                 yield break;
             }
+            if (sub == "chest")
+            {
+                bool prize = args.Length > 1 && args[1] == "prize";
+                if (args.Length > 1 && args[1] == "take") { Show.TakeChest(); output(new JObject { ["chest"] = "taken" }); yield break; }
+                Container c = prize ? Show.PopChest(Show.Prize, new[] { ("Coins", 50, 1, (string)null) }) : Show.PopChest(Show.Armoury, Kit.Outfit(1, 0, false, true));
+                output(new JObject { ["chest"] = c != null ? c.name : "none", ["items"] = c != null ? c.GetInventory().NrOfItems() : 0, ["at"] = c != null ? c.transform.position.ToString() : "" });
+                yield break;
+            }
+            if (sub == "gift") { Favours.Throw(args.Length > 1 && int.TryParse(args[1], out int gl) ? gl : 2); output(new JObject { ["gift"] = "thrown" }); yield break; }
+            if (sub == "armourer") { Show.Armourer(args.Length < 2 || args[1] != "off", args.Length > 1 && args[1] == "here" ? player.transform.position + player.transform.forward * 2f : (Vector3?)null); output(new JObject { ["armourer"] = args.Length < 2 || args[1] != "off" }); yield break; }
+            if (sub == "store")
+            {
+                Armourer a = UnityEngine.Object.FindObjectOfType<Armourer>();
+                bool shown = a != null && a.Interact(player, false, false);
+                output(new JObject { ["store"] = shown, ["visible"] = StoreGui.IsVisible() });
+                yield break;
+            }
+            if (sub == "upgrades")
+            {
+                var list = new JArray();
+                foreach (Armoury.Slot s in Armoury.Slots(0, false))
+                    list.Add($"{s}: {Armoury.Name(player, s, 0)} -> " + (Armoury.Next(player, s, 0, out int nt, out string np, out int nq) ? $"{np} q{nq} for {Armoury.Price(s, nt)}" : "none"));
+                output(new JObject { ["upgrades"] = list, ["random"] = Armoury.Random(player, 0, false, "x")?.Prefab });
+                yield break;
+            }
+            if (sub == "fireworks") { Show.Fireworks(12, 6f); output(new JObject { ["fireworks"] = 12 }); yield break; }
             if (sub == "kittest") { output(new JObject { ["kit"] = Kit.SelfTest(player), ["stowed"] = Kit.Stowed(player) }); yield break; }
             if (sub == "railtest")
             {
@@ -285,9 +311,9 @@ namespace Arena
                 int stake = 0;
                 for (int i = 0; i < args.Length - 1; i++) if (args[i].ToLowerInvariant() == "stake") int.TryParse(args[i + 1], out stake);
                 Contest.KindOf kind = what.StartsWith("champ") ? Contest.KindOf.Champion : what.StartsWith("endless") ? Contest.KindOf.Endless : what.StartsWith("trial") ? Contest.KindOf.Trial : Contest.KindOf.Road;
-                int style = 0;
+                int style = -1;
                 for (int i = 0; i < args.Length - 1; i++) if (args[i].ToLowerInvariant() == "style") int.TryParse(args[i + 1], out style);
-                string why = Contest.Start(kind, tier, style, null, Flag("fists"), Flag("nofood"), Flag("hard"), Flag("timed"), stake, Flag("daily"));
+                string why = Contest.Start(kind, tier, style, Flag("fists"), Flag("nofood"), Flag("hard"), Flag("timed"), stake, Flag("daily"));
                 if (why != null) { error(why); yield break; }
             }
             else if (sub == "stop") Contest.Abort("Stopped by a command.");

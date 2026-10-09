@@ -307,7 +307,7 @@ need it, and nothing is saved in the world.
 A stone colosseum, after the arena of the first Fable, builds itself on open ground in your world. Arena Waystones (hammer, Misc) take you
 to its forecourt, where the champions of each contest stand in stone and the **Arena Master** takes your fee. Walk **the Long Road** from the
 Meadows to the Ashlands, three rounds in each land with its champion in the third: the Arena Master holds your things, and the arena arms
-you and feeds you three meals of your choosing, with better steel in each land. Or bring your own gear to a **Champion Bout** or the
+you from a chest that rises in the ring; the fighters drop coins, and you upgrade your gear as you go from reward chests, the Armourer and the crowd, who also throw the fresh food, so play to them. Or bring your own gear to a **Champion Bout** or the
 **Endless Horde**, try **Today's Trial**, or duel a friend for a wager. A crowd fills the stands, cheers, boos and throws you food. Death is
 real. Everyone in the world needs it, and restart after installing.
 

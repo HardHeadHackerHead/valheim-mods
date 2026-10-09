@@ -21,13 +21,13 @@ namespace Arena
     {
         public const string Guid = "com.dhack.arena";
         public const string Name = "Arena";
-        public const string Version = "0.1.0";
+        public const string Version = "0.2.0";
 
         internal static Plugin Instance;
         internal static ManualLogSource Log;
 
-        internal static ConfigEntry<float> Rewards, CrowdVolume, CrowdSize, EntryFee;
-        internal static ConfigEntry<bool> RealDeath, Spectators, Announcer, Gifts, MapPin, AllTiers;
+        internal static ConfigEntry<float> Rewards, CrowdVolume, CrowdSize, EntryFee, MealFreshness, RingHunger;
+        internal static ConfigEntry<bool> RealDeath, Spectators, Announcer, Gifts, MapPin, AllTiers, RespawnAtArena;
         internal static ConfigEntry<KeyboardShortcut> YieldKey;
 
         private Harmony _harmony;
@@ -39,9 +39,12 @@ namespace Arena
             Rewards = Config.Bind("Arena", "RewardPercent", 100f, new ConfigDescription("How big the prizes are (percent).", new AcceptableValueRange<float>(10f, 500f)));
             RealDeath = Config.Bind("Arena", "DeathIsReal", true, "You can die in a contest. Your tombstone is carried just outside the ring for you to collect, and the purse and stake are lost. Off: beaten, you are carried out at a third of your health with half your purse. (Duels never kill.)");
             EntryFee = Config.Bind("Arena", "EntryFeePercent", 100f, new ConfigDescription("How much it costs to enter a contest (percent of the usual: 150 coins for the Long Road; today's trial 60, a Champion Bout 50 and the Endless Horde 40 in the Meadows, more in each land after). The first fight of a character is free.", new AcceptableValueRange<float>(0f, 500f)));
+            RespawnAtArena = Config.Bind("Arena", "RespawnAtArena", true, "Fall in a contest and you rise again in the arena's forecourt (not at your bed).");
             MapPin = Config.Bind("Arena", "MapPin", true, "The Arena is marked on your map.");
             AllTiers = Config.Bind("Arena", "AllTiers", false, "Every tier of fighters can be chosen at once (normally each opens as you beat the boss before it).");
-            Gifts = Config.Bind("Crowd", "Gifts", true, "When the crowd loves you (favour 75 and up) it throws you food now and then (coins in a no-food contest).");
+            Gifts = Config.Bind("Crowd", "Gifts", true, "When the crowd likes you it throws you things now and then: food and meads, then arrows, bombs and strong meads, and (on the arena's steel) the next land's weapon, more often and better the more they love you.");
+            MealFreshness = Config.Bind("Crowd", "LeftoverMeals", 50f, new ConfigDescription("On the arena's steel: how much of its time one of the kitchen's meals (yesterday's leftovers) has left once eaten, percent. 100 is a fresh meal.", new AcceptableValueRange<float>(5f, 100f)));
+            RingHunger = Config.Bind("Crowd", "RingHunger", 2.5f, new ConfigDescription("On the arena's steel: how many times faster food burns (fighting is hungry work), so a fresh meal lasts about a land and the crowd's gifts matter. 1 is as outside.", new AcceptableValueRange<float>(1f, 6f)));
             Spectators = Config.Bind("Crowd", "Spectators", true, "A crowd fills the stands during a fight.");
             CrowdSize = Config.Bind("Crowd", "FullHouse", 30f, new ConfigDescription("How full the stands are during a fight (percent of the seats). Fewer is lighter on the frame rate.", new AcceptableValueRange<float>(0f, 100f)));
             Announcer = Config.Bind("Crowd", "Announcer", true, "The announcer's calls across the top of the screen.");

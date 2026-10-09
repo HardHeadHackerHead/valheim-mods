@@ -20,7 +20,7 @@ namespace Arena
 
         private static readonly List<Spec> Specs = new List<Spec>();
         private static GameObject _root;
-        private static float _lastAction, _lastBoo, _nextGift, _waveAt, _waveAngle, _loudSince, _nextBuild;
+        private static float _lastAction, _lastBoo, _waveAt, _waveAngle, _loudSince, _nextBuild;
         private static bool _open;
         private static int _building;
 
@@ -36,7 +36,7 @@ namespace Arena
         {
             Close(false);
             _open = true;
-            Favour = 25f; Excitement = 0.25f; _lastAction = Time.time; _nextGift = Time.time + 30f; _waveAt = 0f; _loudSince = 0f;
+            Favour = 25f; Excitement = 0.25f; _lastAction = Time.time; _waveAt = 0f; _loudSince = 0f;
             if (Plugin.Spectators.Value && Site.Known && Scenery.Root != null)
             {
                 _root = new GameObject("ArenaCrowd");
@@ -97,8 +97,8 @@ namespace Arena
                 if (Favour < 10f && Time.time - _lastBoo > 18f) { _lastBoo = Time.time; Boo(); Hud.Call("BOOO!", "The crowd is bored. Fight!", false); }
             }
 
-            // when they love you they throw food (coins in a no-food contest)
-            if (Contest.Fighting && Favour >= 75f && Time.time > _nextGift && Plugin.Gifts.Value) { _nextGift = Time.time + Random.Range(28f, 45f); ThrowGift(); }
+            // what they throw you, and what they chant for (Favours.cs)
+            Favours.Tick();
 
             // a wave round the stands when they have been roaring for a while
             if (Excitement > 0.72f) { if (_loudSince == 0f) _loudSince = Time.time; } else _loudSince = 0f;
@@ -141,20 +141,25 @@ namespace Arena
             }
         }
 
-        private static void ThrowGift()
+        /// <summary>Someone in the stands throws you a thing (an arc from their seat to your feet). False when it could not be thrown.</summary>
+        internal static bool Throw(string item, int amount, System.Action<ItemDrop> setup = null)
         {
             Player player = Player.m_localPlayer;
-            if (player == null || Specs.Count == 0) return;
-            string item = Rules.NoFood ? "Coins" : Roster.Gift(Contest.Tier);
+            if (player == null || Layout.Seats.Count == 0) return false;
             GameObject prefab = item != null ? ZNetScene.instance.GetPrefab(item) : null;
-            if (prefab == null) return;
-            Spec from = Specs[Random.Range(0, Specs.Count)];
-            if (from.Go != null) Figures.Emote(from.Go, "wave");
-            Vector3 start = from.At + Vector3.up * 2f;
+            if (prefab == null || prefab.GetComponent<ItemDrop>() == null) return false;
+            // from someone in the stands (or a seat, with the spectators switched off)
+            Spec from = Specs.Count > 0 ? Specs[Random.Range(0, Specs.Count)] : null;
+            if (from?.Go != null) Figures.Emote(from.Go, "wave");
+            Vector3 start = (from != null ? from.At : Site.World(Layout.Seats[Random.Range(0, Layout.Seats.Count)].Pos)) + Vector3.up * 2f;
             Vector3 land = player.transform.position + new Vector3(Random.Range(-2f, 2f), 0f, Random.Range(-2f, 2f));
             GameObject go = Object.Instantiate(prefab, start, Quaternion.identity);
             ItemDrop drop = go.GetComponent<ItemDrop>();
-            if (drop != null && item == "Coins") drop.SetStack(Random.Range(8, 20));
+            if (drop != null)
+            {
+                setup?.Invoke(drop);
+                drop.SetStack(Mathf.Max(1, amount));   // (and saves it, with whatever setup changed)
+            }
             Rigidbody body = go.GetComponent<Rigidbody>();
             if (body != null)
             {
@@ -164,8 +169,16 @@ namespace Arena
                 v.y = (land.y - start.y) / time + 0.5f * -Physics.gravity.y * time;
                 body.linearVelocity = v;
             }
-            Hud.Call("A GIFT FROM THE CROWD!", "They love you", false);
             Cheer();
+            return true;
+        }
+
+        /// <summary>The crowd answers an emote of yours with the same (or laughs at you).</summary>
+        internal static void Mirror(string emote)
+        {
+            if (emote == "laugh") { Sound.Boo(); React(0.5f, "laugh", "point"); return; }
+            Sound.Cheer();
+            React(0.55f, emote, emote, "cheer");
         }
 
         // ---- what the crowd feels -----------------------------------------------------------------------------------------
@@ -193,6 +206,15 @@ namespace Arena
                 case "gong": Sound.Gong(); break;
                 case "horn": Sound.Chant(); React(0.7f, "cheer", "roar", "toast"); break;
             }
+        }
+
+        /// <summary>A win: everyone on their feet, cheering, and a wave going round the stands.</summary>
+        internal static void Celebrate()
+        {
+            Favour = 100f; Excitement = 1f; _lastAction = Time.time;
+            foreach (Spec s in Specs) if (s.Go != null && s.Sitting) { s.Sitting = false; Figures.Hold(s.Go, "sit", false); }
+            React(1f, "cheer", "roar", "toast", "flex", "challenge");
+            _waveAt = Time.time; _waveAngle = Random.value * Mathf.PI * 2f; _loudSince = Time.time;
         }
 
         internal static void Cheer() { Sound.Cheer(); React(0.35f, "cheer", "roar", "flex", "toast"); }

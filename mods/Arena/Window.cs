@@ -16,12 +16,12 @@ namespace Arena
     {
         internal enum Context { Master, Waystone, Arrival }
 
+
         internal static bool IsOpen => _window != null;
         private static RectTransform _window;
         private static Context _context;
         private static Stand _stone;
-        private static int _tab, _tier, _stake, _wager, _kind, _style;
-        private static readonly List<string> _meals = new List<string>();
+        private static int _tab, _tier, _stake, _wager, _kind;
         internal static int ContestKind { set { _kind = value; } }   // (for testing)
         private static bool _fists, _noFood, _hard, _timed, _tierSet, _dirty;
         private static string _message = "";
@@ -67,7 +67,7 @@ namespace Arena
         private static string Signature()
         {
             Player p = Player.m_localPlayer;
-            return $"{Net.RemoteFight}{Duel.HasIncoming}{Duel.Active}{Scenery.Built}{(p != null ? p.GetInventory().CountItems("$item_coins") : 0)}{Ladder.Hall().Count}";
+            return $"{Net.RemoteFight}{Duel.HasIncoming}{Duel.Active}{Scenery.Built}{(p != null ? p.GetInventory().CountItems("$item_coins") + "/" + p.GetInventory().NrOfItems() : "")}{Ladder.Hall().Count}";
         }
 
         // ---- the window --------------------------------------------------------------------------------------------------------
@@ -139,15 +139,16 @@ namespace Arena
             Contest.KindOf kind = _kind == 0 ? Contest.KindOf.Road : _kind == 1 ? Contest.KindOf.Champion : _kind == 2 ? Contest.KindOf.Endless : Contest.KindOf.Trial;
             bool daily = kind == Contest.KindOf.Trial;
             bool lent = kind == Contest.KindOf.Road || daily;
-            int tier, style = _style;
+            int tier, style = 0;
             bool fists = _fists, noFood = _noFood, hard = _hard, timed = _timed;
             if (kind == Contest.KindOf.Road)
             {
                 tier = 0;
-                y = Line(w, "From the Meadows to the Ashlands: three rounds in each land, its champion in the third, and on to the next. The arena arms and feeds you for each land. Go as far as you can, and take your purse between rounds.", y, Ui.Dim, 14f);
-                y = Heading(w, "Your weapon  <size=70%><color=#bdb7a9>(with a shield, the bow with a knife; a better one in each land)</color></size>", y);
-                string[] styles = { "Sword", "Axe", "Mace", "Spear", "Bow" };
-                y = Choices(w, y, Enumerable.Range(0, Kit.Styles.Length).ToList(), k => styles[k], k => k == _style, k => _style = k);
+                style = -1;   // (the armourer's pick: a random Meadows weapon)
+                y = Line(w, "From the Meadows to the Ashlands: three rounds in each land, its champion in the third, and on to the next, as far as you can get.", y, Ui.Text, 15f);
+                y = Line(w, "You start in the plainest Meadows gear from a chest, with whatever weapon the armourer hands you, and keep it, building it up as you go: " +
+                            "the fighters drop coins; between lands a reward chest holds a free upgrade, and the Armourer sells upgrades (or another kind of weapon), fresh food and meads. " +
+                            "The crowd throws the rest when you please them, and the kitchen's meals are leftovers, so you will need them.", y, Ui.Dim, 14f);
             }
             else if (daily)
             {
@@ -162,20 +163,6 @@ namespace Arena
                 y = Choices(w, y, Enumerable.Range(0, stage + 1).ToList(), t => Roster.TierNames[t], t => t == _tier, t => _tier = t);
                 tier = Mathf.Clamp(_tier, 0, stage);
                 y = Line(w, $"{Roster.PoolText(tier)}. The champion: {ChampionName(tier)}.", y, Ui.Dim, 14f);
-            }
-
-            List<string> plate = null;
-            if (lent && !noFood)
-            {
-                // three meals from the first land's kitchen (each land after serves its own like them)
-                List<(string Prefab, Kit.Role Role)> menu = Kit.Menu(tier);
-                _meals.RemoveAll(m => !menu.Any(x => x.Prefab == m));
-                foreach (string d in Kit.Plate(tier, Kit.DefaultRoles)) if (_meals.Count < 3 && !_meals.Contains(d)) _meals.Add(d);
-                y = Heading(w, "Your three meals" + (kind == Contest.KindOf.Road ? "  <size=70%><color=#bdb7a9>(each land's kitchen serves its own like them)</color></size>" : ""), y);
-                for (int row = 0; row * 3 < menu.Count; row++)
-                    y = Choices(w, y, menu.Skip(row * 3).Take(3).ToList(), m => Contest.ItemName(m.Prefab) + "  <size=75%><color=#c9b78f>" + (m.Role == Kit.Role.Health ? "health" : m.Role == Kit.Role.Stamina ? "stamina" : "both") + "</color></size>",
-                                m => _meals.Contains(m.Prefab), m => { if (!_meals.Remove(m.Prefab)) { if (_meals.Count >= 3) _meals.RemoveAt(0); _meals.Add(m.Prefab); } }, null, 30f);
-                plate = _meals.ToList();
             }
 
             if (!daily)
@@ -202,7 +189,7 @@ namespace Arena
             string prize = kind == Contest.KindOf.Endless
                 ? $"Each wave adds to your purse (about {Mathf.RoundToInt((20 + 30 * tier) * 0.8f * mult)} coins for the first, more after)."
                 : kind == Contest.KindOf.Road
-                ? $"Each round adds to your purse, more in each land (about {Mathf.RoundToInt(20 * 3.3f * mult)} coins for the Meadows, {Mathf.RoundToInt(50 * 3.3f * mult)} for the Black Forest...), with the lands' metals and the champions' trophies from the lands your world has reached."
+                ? "The fighters drop coins, more in each land and with the crowd's favour: spend them on upgrades, or walk out with them. Champions drop their trophy and the land's metal (in the lands your world has reached)."
                 : $"A win pays about <color=#ffd27a>{Mathf.RoundToInt((20 + 30 * tier) * (daily ? 3.3f : 3f) * mult * 1.25f * (daily && !Ladder.DailyDone ? 1.5f : 1f))} coins</color>" + (mat != null && tier <= stage ? " and " + Contest.ItemName(mat) : "") + ", more with the crowd's favour, and the champion's trophy.";
             string entry = fee == 0 ? (Ladder.Get("fights") == 0 ? "<color=#a8e88a>Your first fight is on the house.</color> " : "") : $"Entry <color=#ffd27a>{fee} coins</color> (you have {coins}). ";
             y = Line(w, entry + prize, y - 2f, Ui.Text, 15f);
@@ -214,21 +201,15 @@ namespace Arena
             float bottom = -_window.sizeDelta.y + 30f + 48f;
             bool can = !Net.RemoteFight && Scenery.Built && coins >= fee;
             Contest.KindOf k2 = kind; int t2 = tier, s2 = style; bool f2 = fists, n2 = noFood, h2 = hard, ti2 = timed;
-            List<string> p2 = plate;
             Ui.Button(w, fee > 0 ? $"Enter the arena  ({fee} coins)" : "Enter the arena", new Vector2(W / 2f - 170f, bottom), new Vector2(340f, 46f), () =>
             {
-                string why = Contest.Start(k2, t2, s2, p2, f2, n2, h2, ti2, staking ? _stake : 0, daily);
+                string why = Contest.Start(k2, t2, s2, f2, n2, h2, ti2, staking ? _stake : 0, daily);
                 if (why == null) Close(); else { _message = why; Changed(); }
             }, can);
             Ui.Label(w, "The grate in the tunnel beyond the main gate rises: walk through it into the ring and the fight begins.", new Vector2(Pad, bottom - 52f), new Vector2(W - 2 * Pad, 20f), 13f, Ui.Dim, null, TextAlignmentOptions.Center);
         }
 
-        private static string ChampionName(int tier)
-        {
-            string p = Roster.Champion(tier);
-            Character c = p != null ? ZNetScene.instance.GetPrefab(p)?.GetComponent<Character>() : null;
-            return c != null && Localization.instance != null ? "a great " + Localization.instance.Localize(c.m_name) : "none";
-        }
+        private static string ChampionName(int tier) => Roster.ChampionText(tier);
 
         // ---- duels ------------------------------------------------------------------------------------------------------------------
 
