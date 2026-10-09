@@ -10,6 +10,7 @@ namespace BuildOrders
         // Only game/BCL types cross this boundary, so callers can reconnect after ScriptEngine reloads.
         public const int PlanningApiVersion = 1;
         public const int MaximumApiPieces = 256;
+        public const int MaximumShellPieces = 2048;
         private const string AddonPlanPrefix = "Blueprint: Addon ";
         private static bool IsAddonGhostPlan(string key) => key != null && key.StartsWith(AddonPlanPrefix, StringComparison.Ordinal);
 
@@ -18,14 +19,25 @@ namespace BuildOrders
         /// The returned world-specific key identifies this submission, including when its title is reused.</summary>
         public bool TryCreateGhostPlan(Player player, string title, string[] prefabs, Vector3[] positions,
             Quaternion[] rotations, out string planKey, out string error)
+            => TryCreateAddonPlan(player, title, prefabs, positions, rotations, MaximumApiPieces, out planKey, out error);
+
+        /// <summary>Create one bounded whole-building plan, validating every pose before inserting any ghosts.
+        /// Like API v1: no terrain changes, no resource consumption, no real pieces; removal preserves built pieces.</summary>
+        public bool TryCreateBuildingShell(Player player, string title, string[] prefabs, Vector3[] positions,
+            Quaternion[] rotations, out string planKey, out string error)
+            => TryCreateAddonPlan(player, title, prefabs, positions, rotations, MaximumShellPieces, out planKey, out error);
+
+        private bool TryCreateAddonPlan(Player player, string title, string[] prefabs, Vector3[] positions,
+            Quaternion[] rotations, int maximum, out string planKey, out string error)
         {
             planKey = null;
             if (!ApiReady(player, out error)) return false;
+            if (ApiToolBusy) { error = "Finish or cancel the current blueprint/bridge placement first."; return false; }
             if (string.IsNullOrWhiteSpace(title) || title.Length > 80 || title.IndexOfAny(new[] { '|', '\r', '\n' }) >= 0)
             { error = "Invalid plan title."; return false; }
-            if (prefabs == null || positions == null || rotations == null || prefabs.Length < 1 || prefabs.Length > MaximumApiPieces ||
+            if (prefabs == null || positions == null || rotations == null || prefabs.Length < 1 || prefabs.Length > maximum ||
                 positions.Length != prefabs.Length || rotations.Length != prefabs.Length)
-            { error = "Expected 1–256 matching prefab, position, and rotation entries."; return false; }
+            { error = $"Expected 1–{maximum} matching prefab, position, and rotation entries."; return false; }
 
             var turns = new Quaternion[rotations.Length];
             HashSet<string> buildable = Buildable();
@@ -77,8 +89,8 @@ namespace BuildOrders
             if (!ApiReady(player, out error)) return false;
             if (string.IsNullOrEmpty(planKey) || planKey.Length > 160 || !IsAddonGhostPlan(planKey))
             { error = "Not an add-on ghost plan."; return false; }
-            List<Order> orders = _orders.Values.Where(o => o.By == planKey).Take(MaximumApiPieces + 1).ToList();
-            if (orders.Count > MaximumApiPieces) { error = "Too many ghosts in this plan."; return false; }
+            List<Order> orders = _orders.Values.Where(o => o.By == planKey).Take(MaximumShellPieces + 1).ToList();
+            if (orders.Count > MaximumShellPieces) { error = "Too many ghosts in this plan."; return false; }
             foreach (Order order in orders)
                 if ((order.Pos - player.transform.position).sqrMagnitude > 80f * 80f || !PrivateArea.CheckAccess(order.Pos, 0f, false, false))
                 { error = "The plan is out of reach or protected."; return false; }
@@ -98,5 +110,35 @@ namespace BuildOrders
             error = null; return true;
         }
         private static bool ApiFinite(float value) => !float.IsNaN(value) && !float.IsInfinity(value);
+        private bool ApiToolBusy => _placing != null || PlansWindowOpen || _bridgeStart.HasValue || BridgeOptionsOpen;
+
+        /// <summary>Whether an add-on can capture planning input without conflicting with a blueprint, bridge, or menu.
+        /// Query on the main thread; this does not advance placement or process any keys.</summary>
+        public bool IsPlanningInputAvailable(Player player) => ApiReady(player, out _) && !ApiToolBusy &&
+            !TypingOrMenuOpen() && !InventoryGui.IsVisible();
+
+        /// <summary>Find the nearest rendered ghost intersected by a world ray, independent of ghost colliders and cached aim.
+        /// Only game/BCL pose values and its session order id are returned. No key handling, building, or deletion occurs.</summary>
+        public bool TryGetGhostAtRay(Player player, Vector3 origin, Vector3 direction, out string orderId, out string prefab,
+            out Vector3 position, out Quaternion rotation, out float distance)
+        {
+            orderId = prefab = null; position = default; rotation = default; distance = 0;
+            if (!IsPlanningInputAvailable(player) || !_showGhosts.Value || !ApiFinite(origin.x) || !ApiFinite(origin.y) || !ApiFinite(origin.z) ||
+                !ApiFinite(direction.x) || !ApiFinite(direction.y) || !ApiFinite(direction.z) ||
+                (origin-player.transform.position).sqrMagnitude > 20f*20f || direction.sqrMagnitude < 0.0001f || direction.sqrMagnitude > 10000f)
+                return false;
+            var ray = new Ray(origin, direction.normalized);
+            float best = 80f;
+            Order chosen = null;
+            foreach (Order order in _orders.Values)
+            {
+                if ((order.Pos-player.transform.position).sqrMagnitude > 80f*80f || !GhostBounds(order, out Bounds bounds)) continue;
+                if (bounds.IntersectRay(ray, out float hit) && hit >= 0 && hit <= best)
+                { best = hit; chosen = order; }
+            }
+            if (chosen == null) return false;
+            orderId = chosen.Id; prefab = chosen.Prefab; position = chosen.Pos; rotation = chosen.Rot; distance = best;
+            return true;
+        }
     }
 }

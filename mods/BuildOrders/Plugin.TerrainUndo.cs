@@ -238,6 +238,9 @@ namespace BuildOrders
                         _recordPlans[path] = key;
                     }
                     if (key.Length == 0 || live.Contains(key)) continue;
+                    // Add-on shells may have a cellar whose ground recovery belongs to the add-on.
+                    // Keep the piece list so a completed shell can still be taken down after F6.
+                    if (dir == PlanRecordDir && IsAddonGhostPlan(key) && BuiltPieces(key).Count > 0) continue;
                     _recordPlans.Remove(path);
                     if (dir == PlanRecordDir) { try { File.Delete(path); } catch (Exception) { } continue; }
                     RestoreTerrainFile(path, key, false, out bool restored);
