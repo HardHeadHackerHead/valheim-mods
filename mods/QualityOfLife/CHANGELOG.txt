@@ -1,3 +1,5 @@
+New: Planting/NeedRoomToGrow: you cannot plant a seed, sapling or crop where it has no room to grow up (another plant, a rock, a tree or a building too close). The game only finds this out after planting, and then the plant never grows; now the ghost turns red and says there is not enough space. On by default.
+
 New: Stations/BuildRange: crafting stations (workbench, stonecutter, forge...) reach farther for building, up to 150 m, so a big build at the edge of the base needs no second workbench or stonecutter. 0 (the default) leaves the game's ranges. Only building changes: a station's base area and crafting at it stay as they were.
 
 Stack to chests and Sort chests can reach farther: their Radius (QuickStack) is now a 2 to 150 m slider in the configuration manager, taking effect at once.

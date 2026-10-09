@@ -57,6 +57,10 @@ stations) have no exported shape and are drawn as their box.
   ground (saved in `_terrain/`) unless pieces of it are built. So **design for flat ground with the base at y 0**; there is no need for posts
   down a slope. Requests: `level <name|last>` levels a placed plan again; `check <name|last>` reports post columns that do not reach the ground
   and how high doors and gates sit above it.
+- **Keeping the land as it is:** `"level": false` in the blueprint file skips the levelling entirely: the ghosts go straight onto the ground
+  (for builds that use the terrain: bridges over a creek, a keep on a crag, posts cut to the slope). Heights are then measured from the
+  ground at the anchor (or from the ground under each piece marked `g`), so such a plan is placed by its world coordinates (`anchor: "world"`,
+  `at`, the import request with `x z yaw`), where it was designed to fit.
 - A design fitted to one surveyed hillside (its own posts cut to the slope, as `wood_fort.py --site` does) only fits there, so save it under its
   own name (`wooden_fort_site.json`); being levelled, it no longer needs those posts.
 - Each piece: `p` prefab, `x y z` metres from the anchor (y above the ground at the anchor), `rx ry rz` degrees (Unity order z, x, y),

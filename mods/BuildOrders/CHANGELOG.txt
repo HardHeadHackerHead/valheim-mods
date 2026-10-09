@@ -1,3 +1,5 @@
+New: a blueprint can be made for the land as it is: "level": false in its file places its ghosts straight onto the ground, never levelling it (for builds that follow a hillside or bridge a creek, with posts down to the ground). Placed by its world coordinates, it fits exactly.
+
 Add-ons can plan a whole building at once: TryCreateBuildingShell takes up to 2,048 pieces, checks every pose, unlock, reach and protected area before adding any ghost (so a bad piece never leaves a partial plan), and undo takes down only what is still a ghost. Also a ghost-ray query and a planning-input check for shape tools (from Bob, for Hallwright and BuildShapes), and the helper hooks a companion uses to build your plans.
 
 A helper that builds your plans can now ask why pieces cannot be built (DHack.BuildOrders.Blockers): pieces you have not unlocked, pieces whose station is not by them, and pieces on protected ground.

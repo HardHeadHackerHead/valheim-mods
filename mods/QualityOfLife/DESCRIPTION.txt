@@ -8,4 +8,5 @@ What is in it
 - K opens the chest assignment menu (choose what each chest receives); L locks items so they are never stacked.
 - Boat push: tap or hold P next to a boat to shove it where you look (gentle, with a speed cap).
 - Far zoom: scroll the camera out to 20 m on foot and 40 m on a boat (the game stops at 6); the steps grow as you zoom out.
+- Planting: you cannot plant a seed, sapling or crop where it has no room to grow up (the ghost turns red and says so), instead of finding out after it never grows.
 Keys are configurable. Q and B work while you are running.

@@ -303,6 +303,15 @@ namespace BuildOrders
         internal int LevelThenPlace(Player player, string title, string file, List<Entry> entries, Vector3 anchor, float yaw, float offset)
         {
             if (ZoneSystem.instance == null) return 0;
+            if (KeepsGround(file))
+            {
+                // "level": false: the land stays as it is. The ghosts go straight onto it (heights from the ground at the anchor, or from the
+                // ground under each piece marked to follow it), and the plan is never levelled later: no Move or Level ground for it.
+                int placed = PlaceEntries(player, title, file, entries, anchor, yaw, offset, fixedBaseY: ZoneSystem.instance.GetGroundHeight(anchor) + offset);
+                MarkNoLevel(BlueprintPrefix + LastPlacedTitle());
+                _bridgeTitlesAt = -99f;
+                return placed;
+            }
             title = FreeTitle(title);
             ClearStaleRecords(BlueprintPrefix + title);
             float baseY = ZoneSystem.instance.GetGroundHeight(anchor) + offset;
@@ -310,6 +319,14 @@ namespace BuildOrders
             StartPlanLevel((JObject)_pendingLevels.Last);
             player.Message(MessageHud.MessageType.TopLeft, $"Levelling the ground for \"{title}\": its ghosts appear when it is done");
             return entries.Count;
+        }
+
+        /// <summary>Does this blueprint file ask for the land to be left as it is ("level": false)?</summary>
+        internal bool KeepsGround(string file)
+        {
+            if (string.IsNullOrEmpty(file) || !File.Exists(file)) return false;
+            JToken level = Read(file)?["level"];
+            return level != null && level.Type == JTokenType.Boolean && !(bool)level;
         }
 
         /// <summary>Pick a placed plan up again: its pieces relative to where it was placed, ready to be put down somewhere else.</summary>

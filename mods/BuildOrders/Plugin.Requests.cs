@@ -41,7 +41,7 @@ namespace BuildOrders
                 if (register == null) { Logger.LogWarning("Claude Tools is installed but too old for BuildOrders' commands"); return; }
                 void Add(string name, string usage, Func<string[], Action<JObject>, Action<string>, IEnumerator> run) => register.Invoke(null, new object[] { Name, name, usage, run });
 
-                Add("import", "import <file.json> [look|here|x z yaw]: place a blueprint from BepInEx/blueprints (the ground is levelled first, the ghosts follow)", CmdImport);
+                Add("import", "import <file.json> [look|here|x z yaw]: place a blueprint from BepInEx/blueprints (the ground is levelled first, the ghosts follow; not when the file says \"level\": false)", CmdImport);
                 Add("remove", "remove <blueprint name|last>: take its ghosts away (pieces already built stay)", CmdRemove);
                 Add("takedown", "takedown <blueprint name>: remove it and take down what was built of it (materials back to the player)", CmdTakeDown);
                 Add("build", "build <count> <blueprint name>: build that many of its ghosts as E does (uses the player's materials; the workbench first)", CmdBuild);
@@ -176,7 +176,9 @@ namespace BuildOrders
             if (a.Length >= 5) { at = new Vector3(Num(a, 2, 0), 0f, Num(a, 3, 0)); yaw = Num(a, 4, 0); }
             else if (a.Length > 2 && a[2] == "here") at = player.transform.position;
             else if (!LookPoint(player, out at)) at = player.transform.position + player.transform.forward * 6f;
-            output(new JObject { ["import"] = a[1], ["placed"] = Import(player, path, doc, at, yaw), ["note"] = "the ghosts appear when the ground is levelled (about a second)" });
+            bool keeps = KeepsGround(path);
+            output(new JObject { ["import"] = a[1], ["placed"] = Import(player, path, doc, at, yaw),
+                                 ["note"] = keeps ? "\"level\": false: placed straight onto the ground as it is" : "the ghosts appear when the ground is levelled (about a second)" });
             return null;
         }
 

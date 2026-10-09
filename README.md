@@ -122,7 +122,7 @@ Feed smelters, kilns, cooking racks, fires and fermenters straight from your che
 ### 🎒 QualityOfLife
 <img src="dist/QualityOfLife.cover.png" alt="QualityOfLife" width="100%">
 
-Quick gear sets on **Q**, hammer on **B**, a **Sort** button that joins stacks, **Stack to chests** with undo, chest assignment on **K** (look at a chest to see what it receives), **Sort chests** to send everything in the chests around you to the chest assigned it, item locks on **L**, your ships on the map with their own icon, and tap **P** next to a boat to push it.
+Quick gear sets on **Q**, hammer on **B**, a **Sort** button that joins stacks, **Stack to chests** with undo, chest assignment on **K** (look at a chest to see what it receives), **Sort chests** to send everything in the chests around you to the chest assigned it, item locks on **L**, your ships on the map with their own icon, and tap **P** next to a boat to push it. It will not let you plant a seed, sapling or crop where it has no room to grow up.
 
 </td>
 </tr>

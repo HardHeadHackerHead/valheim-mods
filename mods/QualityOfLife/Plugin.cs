@@ -20,7 +20,7 @@ namespace QualityOfLife
     {
         public const string Guid = "com.dhack.qualityoflife";
         public const string Name = "QualityOfLife";
-        public const string Version = "1.9.0";
+        public const string Version = "1.10.0";
 
         private ConfigEntry<bool> _quickSetEnabled, _showBadges, _hammerEnabled, _showMessages;
         private ConfigEntry<KeyboardShortcut> _quickSetKey, _hammerKey;
@@ -44,6 +44,7 @@ namespace QualityOfLife
             BindShipPins();
             BindStationsConfig();
             BindCameraConfig();
+            BindPlantingConfig();
 
             // The buttons under the inventory take this much room (UI pixels); other mods that put a panel there (GearSlots) keep clear of it.
             AppDomain.CurrentDomain.SetData("DHack.QoL.UnderInventoryHeight", 36f);
