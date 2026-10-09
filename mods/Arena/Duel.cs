@@ -8,9 +8,11 @@ using UnityEngine;
 namespace Arena
 {
     /// <summary>
-    /// A duel between two players, with a wager. One challenges another standing in the ring; the other accepts in the menu; both pay the wager,
-    /// a countdown runs, and both are put in PvP. Whoever drops to a fifth of their health loses (nobody can die in a duel: the health patch holds
-    /// them there) and tells the other, who takes both wagers less a tenth to the arena. Leaving the ring, or the game, forfeits.
+    /// A duel between two players, with a wager. One challenges another at the arena; the other accepts in the menu; both pay the wager and the
+    /// gate opens. Each, walking into the ring, is taken to their own end of it (the challenger and the challenged facing each other across
+    /// the floor) and held there until both are in; a countdown runs, and at FIGHT! both are put in PvP (kept on for the fight: it cannot be
+    /// switched off to dodge blows), set back as it was after. Whoever drops to a fifth of their health loses (nobody can die in a duel: the
+    /// health patch holds them there) and tells the other, who takes both wagers less a tenth to the arena. Leaving the ring, or the game, forfeits.
     /// Each game does its own part (its own wager, its own health, its own winnings) and tells the other by routed RPC, so it needs the mod on both.
     /// </summary>
     internal static class Duel
@@ -24,7 +26,8 @@ namespace Arena
         private static int _wager, _count;
         private static Vector3 _at;
         private static float _timer, _outside, _missing, _closeAt;
-        private static bool _prevPvp, _ending;
+        private static bool _prevPvp, _ending, _placed, _pvpSet;
+        private const float Apart = 8f;   // (each stands this far from the middle, on their own side)
 
         private static long _inFrom, _outTo;
         private static string _inName = "";
@@ -157,13 +160,13 @@ namespace Arena
             if (me == null) return;
             if (wager > 0) me.GetInventory().RemoveItem("$item_coins", wager);
             _opponent = opponent; _opponentName = name; _wager = wager; _at = at;
-            _phase = PhaseKind.Walking; _timer = 90f; _count = 4; _outside = 0f; _missing = 0f; _ending = false; _closeAt = 0f;
+            _phase = PhaseKind.Walking; _timer = 90f; _count = 6; _outside = 0f; _missing = 0f; _ending = false; _closeAt = 0f; _placed = false;
             me.Heal(me.GetMaxHealth(), true);
             Crowd.Open();
             Crowd.Gong();
             Scenery.OpenGate(Scenery.MainGrate, 90f);
-            Scenery.OpenDoor(90f);
-            Hud.Shout("DUEL!", "You against " + name + (wager > 0 ? "   -   " + wager + " coins each" : "") + ". Walk into the ring.", 5f);
+            Net.Door(90f);   // (for the watchers too)
+            Hud.Shout("DUEL!", "You against " + name + (wager > 0 ? "   -   " + wager + " coins each" : "") + ". Walk into the ring: you will be taken to your side.", 5f);
         }
 
         internal static void Tick(float dt)
@@ -176,14 +179,23 @@ namespace Arena
 
             if (_phase == PhaseKind.Walking)
             {
-                // both walk in through the grate; the fight starts when both are on the floor
+                // each walks in through the grate and is taken to their side; the countdown starts when both are in
                 _timer -= dt;
                 Player them = Opponent;
-                if (Site.OnFloor(me.transform.position, -1f) && them != null && Site.OnFloor(them.transform.position, -1f))
+                if (!_placed && Site.OnFloor(me.transform.position, -1f))
+                {
+                    _placed = true;
+                    Place(me);
+                    Hud.Say("Wait for " + _opponentName + " to come in");
+                }
+                if (_placed) Hold(me);
+                if (_placed && them != null && Site.OnFloor(them.transform.position, -1f))
                 {
                     Scenery.CloseGate(Scenery.MainGrate);
-                    _phase = PhaseKind.Countdown; _timer = 4.5f;
-                    Hud.Shout("DUEL!", "You against " + _opponentName, 3f);
+                    Net.Door(0f);
+                    _phase = PhaseKind.Countdown; _timer = 5.5f; _count = 6;
+                    Hud.Shout("DUEL!", "You against " + _opponentName + (_wager > 0 ? "   -   " + _wager * 2 + " coins in the pot" : ""), 3.5f);
+                    Crowd.Gong();
                 }
                 else if (_timer <= 0f)
                 {
@@ -196,12 +208,15 @@ namespace Arena
 
             if (_phase == PhaseKind.Countdown)
             {
+                // held at your mark while it counts down (no blows yet: PvP is not on until FIGHT!)
+                Hold(me);
                 _timer -= dt;
                 int n = Mathf.CeilToInt(_timer);
-                if (n < _count && n >= 1 && n <= 3) { _count = n; Hud.Count(n.ToString()); }
+                if (n < _count && n >= 1 && n <= 5) { _count = n; Hud.Count(n.ToString()); }
                 if (_timer <= 0f)
                 {
                     _prevPvp = me.IsPVPEnabled();
+                    _pvpSet = true;
                     me.SetPVP(true);
                     _phase = PhaseKind.Fighting;
                     Hud.Count("FIGHT!");
@@ -209,6 +224,9 @@ namespace Arena
                 }
                 return;
             }
+
+            // PvP stays on for the fight (switched off in the inventory, it is put straight back)
+            if (!me.IsPVPEnabled()) { me.SetPVP(true); Hud.Say("PvP stays on until the duel is over"); }
 
             if (!Player.GetAllPlayers().Any(p => p != null && p.GetOwner() == _opponent)) _missing += dt; else _missing = 0f;
             if (_missing > 8f) { Finish(true, "Your opponent left."); return; }
@@ -218,6 +236,36 @@ namespace Arena
                 if (_outside > 6f) { End(_opponent, true, "forfeit"); Finish(false, "You left the ring."); }
             }
             else _outside = Mathf.Max(0f, _outside - dt);
+        }
+
+        /// <summary>My mark: the challenger at the west end of the floor, the challenged at the east (by session id: both games agree).</summary>
+        private static Vector3 Mark(out Quaternion facing)
+        {
+            float side = MyId < _opponent ? -1f : 1f;
+            float x = side * Apart;
+            facing = Site.Turn * Quaternion.LookRotation(new Vector3(-side, 0f, 0f));
+            return Site.World(new Vector3(x, Layout.FloorHeight(x, 0f) + 0.15f, 0f));
+        }
+
+        /// <summary>Taken to your side of the ring, facing your opponent's.</summary>
+        private static void Place(Player me)
+        {
+            Vector3 to = Mark(out Quaternion facing);
+            to.y = Site.Ground(to, to.y) + 0.15f;
+            me.transform.SetPositionAndRotation(to, facing);
+            Rigidbody body = me.GetComponent<Rigidbody>();
+            if (body != null) { body.position = to; body.linearVelocity = Vector3.zero; }
+            me.SetLookDir(facing * Vector3.forward);
+            Fx.SpawnPuff(to);
+            Crowd.Cheer();
+        }
+
+        /// <summary>Kept on your mark until FIGHT! (wander more than a step off it and you are put back).</summary>
+        private static void Hold(Player me)
+        {
+            Vector3 mark = Mark(out _);
+            Vector3 off = me.transform.position - mark; off.y = 0f;
+            if (off.magnitude > 1.5f) Place(me);
         }
 
         /// <summary>The local player's health fell to a fifth in a duel (the health patch calls this): they have lost.</summary>
@@ -257,11 +305,12 @@ namespace Arena
             bool fought = _phase == PhaseKind.Fighting;
             _phase = PhaseKind.None;
             Scenery.OpenGate(Scenery.MainGrate, 30f);
-            Scenery.OpenDoor(45f);
+            Net.Door(45f);
             Guard.Grace(60f);
             if (me != null)
             {
-                if (fought) me.SetPVP(_prevPvp);
+                if (_pvpSet) me.SetPVP(_prevPvp);
+                _pvpSet = false;
                 me.Heal(me.GetMaxHealth(), true);
                 if (win == true)
                 {
@@ -288,7 +337,8 @@ namespace Arena
             if (!Active) return;
             Player me = Player.m_localPlayer;
             if (tell) End(_opponent, true, "forfeit");
-            if (me != null) { if (_phase == PhaseKind.Fighting) me.SetPVP(_prevPvp); }
+            if (me != null && _pvpSet) me.SetPVP(_prevPvp);
+            _pvpSet = false;
             _phase = PhaseKind.None;
         }
     }

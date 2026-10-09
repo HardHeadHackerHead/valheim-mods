@@ -89,7 +89,7 @@ namespace Arena
 
         // ---- events: a call, a sound, a grate, the cover ---------------------------------------------------------------------
 
-        internal enum Kind { Shout = 1, Sound = 2, Gate = 3, Props = 4, Fireworks = 5, Celebrate = 6, Door = 7 }
+        internal enum Kind { Shout = 1, Sound = 2, Gate = 3, Props = 4, Fireworks = 5, Celebrate = 6, Door = 7, Effect = 8 }
 
         /// <summary>Does it here and tells the players near the arena.</summary>
         internal static void Event(Kind kind, string a, string b = "", float f = 0f)
@@ -119,6 +119,17 @@ namespace Arena
                 case Kind.Fireworks: if (int.TryParse(a, out int n)) Show.Fireworks(n, f); break;
                 case Kind.Celebrate: Crowd.Celebrate(); break;
                 case Kind.Door: Scenery.OpenDoor(f); break;
+                case Kind.Effect:
+                    {
+                        // a show effect (fire, sparks: none of the game's harmful ones), by prefab name, at a point
+                        string[] v = b.Split(';');
+                        GameObject fx = ZNetScene.instance != null ? ZNetScene.instance.GetPrefab(a) : null;
+                        if (fx != null && v.Length == 3 && float.TryParse(v[0], System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture, out float x)
+                            && float.TryParse(v[1], System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture, out float y)
+                            && float.TryParse(v[2], System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture, out float z))
+                            UnityEngine.Object.Instantiate(fx, new Vector3(x, y, z), Quaternion.identity);
+                        break;
+                    }
             }
         }
 
@@ -129,5 +140,6 @@ namespace Arena
         internal static void Fireworks(int count, float over) => Event(Kind.Fireworks, count.ToString(), "", over);
         internal static void Celebrate() => Event(Kind.Celebrate, "");
         internal static void Door(float seconds) => Event(Kind.Door, "", "", seconds);
+        internal static void Effect(string prefab, Vector3 at) => Event(Kind.Effect, prefab, string.Format(System.Globalization.CultureInfo.InvariantCulture, "{0};{1};{2}", at.x, at.y, at.z));
     }
 }

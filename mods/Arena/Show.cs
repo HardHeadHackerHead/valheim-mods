@@ -33,7 +33,14 @@ namespace Arena
             string name = kind == Armoury ? "piece_chest_blackmetal" : kind == Reward ? "piece_chest" : "piece_chest_treasure";
             GameObject prefab = ZNetScene.instance != null ? (ZNetScene.instance.GetPrefab(name) ?? ZNetScene.instance.GetPrefab("piece_chest")) : null;
             if (prefab == null) return null;
+            // on whatever stands in the middle (the platform between lands), beside the player if they are standing right there
             Vector3 at = Floor(Site.Centre);
+            Player me = Player.m_localPlayer;
+            if (me != null)
+            {
+                Vector3 off = me.transform.position - at; off.y = 0f;
+                if (off.magnitude < 1.3f) at = Floor(Site.Centre - (off.sqrMagnitude > 0.01f ? off.normalized : Site.Turn * Vector3.forward) * 1.6f);
+            }
             Quaternion turn = Quaternion.LookRotation(Site.Turn * Vector3.back);   // (its lid toward the main gate, where you come in)
             GameObject go = Object.Instantiate(prefab, at, turn);
             ZNetView view = go.GetComponent<ZNetView>();
@@ -172,6 +179,7 @@ namespace Arena
         private static Vector3 Floor(Vector3 p)
         {
             int mask = LayerMask.GetMask("Default", "static_solid", "Default_small", "piece", "terrain");
+            Physics.SyncTransforms();   // (cover put up this very frame counts)
             if (Physics.Raycast(p + Vector3.up * 8f, Vector3.down, out RaycastHit hit, 16f, mask)) return hit.point + Vector3.up * 0.02f;
             return new Vector3(p.x, Site.Ground(p, p.y), p.z);
         }

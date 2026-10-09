@@ -190,7 +190,7 @@ namespace Arena
                 ? $"Each wave adds to your purse (about {Mathf.RoundToInt((20 + 30 * tier) * 0.8f * mult)} coins for the first, more after)."
                 : kind == Contest.KindOf.Road
                 ? "The fighters drop coins, more in each land and with the crowd's favour: spend them on upgrades, or walk out with them. Champions drop their trophy and the land's metal (in the lands your world has reached)."
-                : $"A win pays about <color=#ffd27a>{Mathf.RoundToInt((20 + 30 * tier) * (daily ? 3.3f : 3f) * mult * 1.25f * (daily && !Ladder.DailyDone ? 1.5f : 1f))} coins</color>" + (mat != null && tier <= stage ? " and " + Contest.ItemName(mat) : "") + ", more with the crowd's favour, and the champion's trophy.";
+                : $"A win pays about <color=#ffd27a>{Mathf.RoundToInt((20 + 30 * tier) * (daily ? 3.3f : 3f) * mult * 1.25f * (daily && !Ladder.DailyDone ? 1.5f : 1f))} coins</color>" + (mat != null && tier <= Roster.Beaten() ? " and " + Contest.ItemName(mat) : "") + ", more with the crowd's favour, and the champion's trophy.";
             string entry = fee == 0 ? (Ladder.Get("fights") == 0 ? "<color=#a8e88a>Your first fight is on the house.</color> " : "") : $"Entry <color=#ffd27a>{fee} coins</color> (you have {coins}). ";
             y = Line(w, entry + prize, y - 2f, Ui.Text, 15f);
             y = Line(w, (lent ? "<color=#ffd27a>The Arena Master holds everything you carry while you fight</color>, and gives it back when you come out (or when you rise again). " : "")
@@ -217,7 +217,7 @@ namespace Arena
         {
             Player me = Player.m_localPlayer;
             y = Heading(w, "Duel another player", y);
-            y = Line(w, "You both walk into the ring and fight with what you carry. The first to drop to a fifth of their health loses; nobody dies in a duel. The winner takes both wagers, less a tenth to the arena. Leaving the ring forfeits.", y, Ui.Dim);
+            y = Line(w, "You both walk into the ring, are taken to your ends of it, and after a countdown fight with what you carry (PvP is switched on for you, and back off after). The first to drop to a fifth of their health loses; nobody dies in a duel. The winner takes both wagers, less a tenth to the arena. Leaving the ring forfeits.", y, Ui.Dim);
 
             if (Duel.HasIncoming)
             {

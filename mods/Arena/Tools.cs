@@ -327,7 +327,17 @@ namespace Arena
                 Vector3 to = Site.Point(m, 0.5f) + (where == "master" ? Site.Turn * new Vector3(0f, 0f, -2f) : where == "court" ? Site.Turn * new Vector3(0f, 0f, 2.5f) : Vector3.zero);
                 Quaternion face = Site.Turn;
                 if (where == "hall") { to = Site.World(Layout.Hall[0].Pos + new Vector3(5.5f, -Layout.Hall[0].Pos.y + 0.3f, -1.5f)); face = Site.Turn * Quaternion.Euler(0f, 285f, 0f); }
-                player.TeleportTo(to, face, false);
+                bool far = false;
+                if (where == "tomb")
+                {
+                    // your newest tombstone if it is loaded near you, else where you last died
+                    long me = Game.instance.GetPlayerProfile().GetPlayerID();
+                    TombStone tomb = UnityEngine.Object.FindObjectsOfType<TombStone>().Where(t => t != null && t.GetComponent<ZNetView>()?.GetZDO()?.GetLong(ZDOVars.s_owner, 0L) == me).OrderBy(t => (t.transform.position - player.transform.position).sqrMagnitude).FirstOrDefault();
+                    to = tomb != null ? tomb.transform.position + Vector3.up * 0.5f + tomb.transform.forward * 1.2f : Game.instance.GetPlayerProfile().GetDeathPoint() + Vector3.up;
+                    far = (to - player.transform.position).magnitude > 150f;
+                    output(new JObject { ["tomb"] = tomb != null ? tomb.transform.position.ToString() : "not loaded: the death point" });
+                }
+                player.TeleportTo(to, face, far);
                 output(new JObject { ["to"] = where, ["at"] = to.ToString() });
                 yield break;
             }

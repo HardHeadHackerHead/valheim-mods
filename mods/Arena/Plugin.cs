@@ -21,7 +21,7 @@ namespace Arena
     {
         public const string Guid = "com.dhack.arena";
         public const string Name = "Arena";
-        public const string Version = "0.2.2";
+        public const string Version = "0.2.3";
 
         internal static Plugin Instance;
         internal static ManualLogSource Log;
@@ -41,7 +41,7 @@ namespace Arena
             EntryFee = Config.Bind("Arena", "EntryFeePercent", 100f, new ConfigDescription("How much it costs to enter a contest (percent of the usual: 150 coins for the Long Road; today's trial 60, a Champion Bout 50 and the Endless Horde 40 in the Meadows, more in each land after). The first fight of a character is free.", new AcceptableValueRange<float>(0f, 500f)));
             RespawnAtArena = Config.Bind("Arena", "RespawnAtArena", true, "Fall in a contest and you rise again in the arena's forecourt (not at your bed).");
             MapPin = Config.Bind("Arena", "MapPin", true, "The Arena is marked on your map.");
-            AllTiers = Config.Bind("Arena", "AllTiers", false, "Every tier of fighters can be chosen at once (normally each opens as you beat the boss before it).");
+            AllTiers = Config.Bind("Arena", "AllTiers", false, "Every land's fighters can be chosen in a Champion Bout or the Endless Horde at once (normally each opens as you beat the boss before it). For trying them out: the arena still pays metals and trophies only from lands your world has reached, and today's trial stays among them.");
             Gifts = Config.Bind("Crowd", "Gifts", true, "When the crowd likes you it throws you things now and then: food and meads, then arrows, bombs and strong meads, and (on the arena's steel) the next land's weapon, more often and better the more they love you.");
             MealFreshness = Config.Bind("Crowd", "LeftoverMeals", 50f, new ConfigDescription("On the arena's steel: how much of its time one of the kitchen's meals (yesterday's leftovers) has left once eaten, percent. 100 is a fresh meal.", new AcceptableValueRange<float>(5f, 100f)));
             RingHunger = Config.Bind("Crowd", "RingHunger", 2.5f, new ConfigDescription("On the arena's steel: how many times faster food burns (fighting is hungry work), so a fresh meal lasts about a land and the crowd's gifts matter. 1 is as outside.", new AcceptableValueRange<float>(1f, 6f)));

@@ -62,6 +62,16 @@ namespace Arena
         internal static bool Fighting => Phase == PhaseKind.Spawning || Phase == PhaseKind.Fighting;
         internal static bool Waiting => Phase == PhaseKind.Ready;
 
+        /// <summary>The floor between lands and at a win: the platform in the middle, where the chests stand.</summary>
+        internal const string Stage = "Platform";
+
+        /// <summary>Cover for a fight: one of the sets (not the platform: that is for between lands), or now and then the bare floor.</summary>
+        private static string FightCover()
+        {
+            string[] sets = Layout.Props.Keys.Where(k => k != Stage).ToArray();
+            return sets.Length > 0 && UnityEngine.Random.value < 0.85f ? sets[UnityEngine.Random.Range(0, sets.Length)] : null;
+        }
+
         /// <summary>The clock on the screen between the fights, and what it is for (seconds below zero: none shown).</summary>
         internal static string TimerLabel(out float seconds)
         {
@@ -112,11 +122,13 @@ namespace Arena
         {
             var rng = new System.Random(Ladder.Today * 31 + 7);
             style = rng.Next(Kit.Styles.Length);
-            int stage = Roster.Stage();
+            int stage = Roster.Beaten();   // (the lands this world has reached: not opened by AllTiers)
             tier = Mathf.Max(0, stage - rng.Next(Mathf.Min(2, stage + 1)));
-            bool[] rules = new bool[4];
-            for (int n = 0; n < 2; n++) rules[rng.Next(4)] = true;
-            fists = rules[0]; noFood = rules[1]; hard = rules[2]; timed = rules[3];
+            // one or two of bare fists, hard and the clock (never no food: on the arena's gear that leaves you 25 health, and nobody lives)
+            bool[] rules = new bool[3];
+            int count = 1 + rng.Next(2);
+            for (int n = 0; n < count; n++) rules[rng.Next(3)] = true;
+            fists = rules[0]; noFood = false; hard = rules[1]; timed = rules[2];
         }
 
         // ---- starting ------------------------------------------------------------------------------------------------------
@@ -152,8 +164,7 @@ namespace Arena
             Foes.Clear(); Queue.Clear();
 
             // the floor is dressed for the fight, the crowd comes in, and the grate rises: walk in
-            string[] sets = Layout.Props.Keys.ToArray();
-            Net.Props(sets.Length > 0 && UnityEngine.Random.value < 0.85f ? sets[UnityEngine.Random.Range(0, sets.Length)] : null);
+            Net.Props(FightCover());
             Show.ClearFloor();   // (the last fight's leavings)
             Crowd.Open();
             Favours.Reset();
@@ -301,6 +312,7 @@ namespace Arena
             int fodder, level;
             float lean;
             int step = (n - 1) % 3;
+            if (Kind == KindOf.Road && step == 0 && n > 1) { Show.TakeChest(); Net.Props(FightCover()); }   // (a new land: its own cover, the stage taken down)
             if (Lands)
             {
                 // three rounds a land, its champion in the third; on the Long Road each three takes you to the next land
@@ -366,28 +378,30 @@ namespace Arena
             Phase = PhaseKind.Break;
             _timer = 12f;
             player.AddStamina(player.GetMaxStamina());
-            if (Lent && step == 2 && Kind == KindOf.Road)
-            {
-                // between lands on the Long Road: a chest with one upgrade (and a leftover meal), and the Armourer by the gate
-                var reward = new List<(string Prefab, int Amount, int Quality, string Loan)>();
-                var up = Armoury.Random(player, Style, Rules.Fists, Tier.ToString());
-                if (up != null) reward.Add(up.Value);
-                // (food and meads are the Armourer's to sell: only now and then is one in the chest too)
-                if (!Rules.NoFood && UnityEngine.Random.value < 0.3f)
-                {
-                    if (UnityEngine.Random.value < 0.5f) foreach (string meal in Kit.Plate(Tier + 1, new[] { Kit.Role.Health }).Take(1)) reward.Add((meal, 1, 1, Tier.ToString()));
-                    else reward.Add((Kit.Meads[Mathf.Clamp(Tier + 1, 0, Kit.Meads.Length - 1)], 1, 1, Tier.ToString()));
-                }
-                if (reward.Count > 0) Show.PopChest(Show.Reward, reward);
-                Show.Armourer(true);
-            }
             if (Kind == KindOf.Road && step == 2)
             {
                 // a land beaten: on to the next, with new cover on the floor; you keep your gear, and upgrade it as you can
                 int next = Mathf.Min(Tier + 1, Roster.TierNames.Length - 1);
                 player.Heal(player.GetMaxHealth(), true);
-                string[] sets = Layout.Props.Keys.ToArray();
-                Net.Props(sets.Length > 0 && UnityEngine.Random.value < 0.85f ? sets[UnityEngine.Random.Range(0, sets.Length)] : null);
+                // between lands the floor is always the same: the platform in the middle, the reward chest on it (the next land's own cover
+                // goes up when its first round begins)
+                Net.Props(Stage);
+                if (Lent)
+                {
+                    // between lands on the Long Road: a chest with one upgrade (and a leftover meal), and the Armourer by the gate
+                    var reward = new List<(string Prefab, int Amount, int Quality, string Loan)>();
+                    var up = Armoury.Random(player, Style, Rules.Fists, Tier.ToString());
+                    if (up != null) reward.Add(up.Value);
+                    else reward.Add(("Coins", Mathf.RoundToInt(60f * (Tier + 1) * Plugin.Rewards.Value / 100f), 1, null));   // (nothing left to raise: coins instead)
+                    // (food and meads are the Armourer's to sell: only now and then is one in the chest too)
+                    if (!Rules.NoFood && UnityEngine.Random.value < 0.3f)
+                    {
+                        if (UnityEngine.Random.value < 0.5f) foreach (string meal in Kit.Plate(Tier + 1, new[] { Kit.Role.Health }).Take(1)) reward.Add((meal, 1, 1, Tier.ToString()));
+                        else reward.Add((Kit.Meads[Mathf.Clamp(Tier + 1, 0, Kit.Meads.Length - 1)], 1, 1, Tier.ToString()));
+                    }
+                    if (reward.Count > 0) Show.PopChest(Show.Reward, reward);
+                    Show.Armourer(true);
+                }
                 Net.Sound("roar");
                 Net.Shout("THE " + Roster.TierNames[Tier].ToUpperInvariant() + " IS BEATEN!", $"On to the {Roster.TierNames[next]}! Open your reward, see the Armourer by the gate"
                           + $"   -   {Plugin.YieldKey.Value} twice to take your coins and leave", 7f);
@@ -409,7 +423,7 @@ namespace Arena
             float mult = Rules.Multiplier * (1f + Crowd.Favour / 200f) * Plugin.Rewards.Value / 100f;
             _purseCoins += (20 + 30 * Tier) * units * mult;
             // materials only from lands your world has reached (the arena's steel takes you further than that, but pays it in coins)
-            string mat = Tier <= Roster.Stage() ? Roster.Material(Tier) : null;
+            string mat = Tier <= Roster.Beaten() ? Roster.Material(Tier) : null;
             if (mat != null) Mats[mat] = (Mats.TryGetValue(mat, out float had) ? had : 0f) + (2 + Tier) * 0.5f * units * mult;
         }
 
@@ -475,7 +489,14 @@ namespace Arena
             }
             Foes.Add(foe);
             _spawnedAt = Time.time;
-            if (item.Champion) { Net.Shout(item.Name.ToUpperInvariant(), Roster.Origin(Tier) + "... a champion of the pit!", 4f); Net.Sound("roar"); }
+            if (item.Champion)
+            {
+                // the champion's entrance: a fanfare, a burst of fire at its gate, and the crowd on its feet
+                Net.Shout(item.Name.ToUpperInvariant(), Roster.Origin(Tier) + "... a champion of the pit!", 4f);
+                Net.Sound("horn"); Net.Sound("roar");
+                Net.Effect("fx_fireball_staff_explosion", at + Vector3.up * 1.2f);
+                Net.Effect("fx_fireskeleton_nova", at);
+            }
         }
 
         private static void CheckFoes(Player player)
@@ -513,7 +534,7 @@ namespace Arena
             {
                 // on the arena's steel the fighters drop coins (a champion a pile, with its trophy and the land's metal)
                 Armoury.Spill(f.LastPos, Tier, f.Level, f.Champion);
-                if (f.Champion && Tier <= Roster.Stage())
+                if (f.Champion && Tier <= Roster.Beaten())
                 {
                     string t = Roster.Trophy(f.Prefab), m = Roster.Material(Tier);
                     if (t != null) Armoury.Drop(t, 1, f.LastPos);
@@ -522,7 +543,7 @@ namespace Arena
             }
             if (f.Champion)
             {
-                string trophy = !Lent && Tier <= Roster.Stage() ? Roster.Trophy(f.Prefab) : null;
+                string trophy = !Lent && Tier <= Roster.Beaten() ? Roster.Trophy(f.Prefab) : null;
                 if (trophy != null) Trophies.Add(trophy);
                 Net.Shout("THE CHAMPION FALLS!", Lines.ChampionDown(), 3f);
                 Net.Sound("roar");
@@ -614,6 +635,7 @@ namespace Arena
             Pay(player, Outcome.Win, false);   // (into the prize chest, which rises in a moment)
             _toChest = false;
             Net.Sound("roar"); Net.Sound("horn"); Net.Sound("applause");
+            Net.Props(Stage);   // (the platform rises for the prize chest)
             Net.Fireworks(18, 12f);
             Net.Celebrate();
         }

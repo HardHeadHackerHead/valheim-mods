@@ -142,7 +142,7 @@ for t in range(TIERS):
     for i in range(n):
         a = (i + 0.5 * (t % 2)) * 360.0 / n
         # the master's box stands on the third tier: the two below run on under it (no hollow beneath), the third gives way to its floor
-        if t == 2 and abs(r * math.sin(rad(a))) < 3.0:
+        if t == 2 and ang(a, MASTER) < 30 and abs(r * math.sin(rad(a))) < 3.0:
             continue
         put("stone_floor_2x2", r, a, top - 1.0)
         if ang(a, MAIN) > 8 and ang(a, MASTER) > 10:
@@ -378,6 +378,71 @@ for side in (-1, 1):
     bp.place("piece_groundtorch", side * 3.0, court_top - DEPTH + 4.0, y=0.0, yaw=0)
     bp.place("piece_groundtorch", side * 12.0, court_top - 1.5, y=0.0, yaw=0)
     bp.place("piece_groundtorch", side * 12.0, court_top - DEPTH + 1.5, y=0.0, yaw=0)
+
+
+# ================================================================================================================ the second dressing
+# (things that are not building pieces, a weapon or a shield, are put down as they are: the mod builds any prefab of the game)
+def deco(name, x, y, z, yaw=0.0, rx=0.0, rz=0.0, out=None):
+    item = {"p": name, "x": round(x, 3), "y": round(y, 3), "z": round(z, 3), "ry": round(yaw % 360, 3)}
+    if rx:
+        item["rx"] = round(rx, 3)
+    if rz:
+        item["rz"] = round(rz, 3)
+    (out or bp).items.append(item)
+    return item
+
+
+# ---- the fighting floor: a paved border round its edge, where it meets the podium wall
+n_edge = ring_count(PODIUM_R - 1.0, 2.0)
+for i in range(n_edge):
+    put("Piece_grausten_floor_2x2", PODIUM_R - 1.0, i * 360.0 / n_edge, -0.4)
+
+# ---- trophies of old fights by every pen: a shield on the wall each side of its gate
+shields = ["ShieldWood", "ShieldBanded", "ShieldBronzeBuckler", "ShieldIronTower", "ShieldBlackmetal", "ShieldSerpentscale", "ShieldBoneTower", "ShieldSilver"]
+k_sh = 0
+for g in GATES:
+    tx, tz = math.cos(rad(g)), -math.sin(rad(g))
+    for side in (-1, 1):
+        x, z = polar(PODIUM_R - 0.15, g)
+        x += tx * 2.45 * side
+        z += tz * 2.45 * side
+        deco(shields[k_sh % len(shields)], x, 2.6, z, yaw=g + 180, rx=90)    # (an item lies flat as it drops: stood up on the wall, its face out)
+        k_sh += 1
+
+# ---- the pens: straw on the floor, bones and skulls in the corners (what was fed to the last one in here)
+for g in GATES:
+    tx, tz = math.cos(rad(g)), -math.sin(rad(g))
+    x, z = polar(PODIUM_R + 3.2, g)
+    bp.place("rug_straw", x, z, y=0.0, yaw=g)
+    x, z = polar(PODIUM_R + 4.6, g)
+    bp.place("bone_stack", x + tx * 0.7, z + tz * 0.7, y=0.0, yaw=g + 30)
+    bp.place("skull_pile", x - tx * 0.6, z - tz * 0.6, y=0.0, yaw=g - 40)
+
+# ---- the stands at night: torches on the attic's inner face at every other pilaster, and torches at the foot and head of each stair
+for i in range(n_bay):
+    if i % 2 == 1 and abs(i - main_bay) > 1:
+        put("piece_walltorch", FACADE_R - 0.25, i * bay_step - bay_step / 2, TOP + 1.7, yaw_add=180)
+for side in (-1, 1):
+    x, z = polar((INNER_R + FACADE_R) / 2 + 0.9, MAIN + side * (STAIR_START - 2.5))
+    bp.place("piece_groundtorch", x, z, y=0.0, yaw=0)
+    x, z = polar(last_r + 2.6, MAIN + side * (_seam + 2.0))
+    bp.place("piece_groundtorch", x, z, y=TOP, yaw=0)
+
+# ---- the forecourt: a bear rug before the Arena Master's desk, benches for those waiting their turn, barrels, a rack of shields
+bp.place("rug_Bjorn", 0.0, desk_z + 2.6, y=0.0, yaw=0)
+for side in (-1, 1):
+    bp.place("piece_bench01", side * 4.6, desk_z - 3.0, y=0.0, yaw=90)
+    bp.place("piece_chest_barrel", side * 3.6, desk_z + 0.4, y=0.0, yaw=side * 20)
+    bp.place("piece_chest_barrel", side * 4.4, desk_z + 0.9, y=0.0, yaw=side * 50)
+    bp.place("fire_pit_iron", side * 4.8, desk_z + 5.5, y=0.0, yaw=0)
+deco("SwordIron", -0.9, 0.86, desk_z, yaw=90, rx=90)          # on the desk: a sword laid down, a helmet beside it
+deco("HelmetBronze", 1.1, 0.86, desk_z, yaw=200)
+for k, x in enumerate((-1.4, 1.4)):                            # and a shield each side of the Master's banners
+    deco(shields[(k + 3) % len(shields)], x * 1.86, 2.2, desk_z + 0.95, yaw=180, rx=90)
+# rugs before the champions' plinths
+for k3, z in enumerate((court_top - 5.0, court_top - 12.0)):
+    for x in (-8.0, 8.0):
+        bp.place("rug_wolf", x * 0.72, z, y=0.0, yaw=90)
 
 # ---------------------------------------------------------------------------------------------------------------- cover for the floor: a set is put up for each contest
 def prop_set(name, build):

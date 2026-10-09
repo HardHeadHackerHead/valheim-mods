@@ -151,7 +151,7 @@ namespace Arena
             {
                 if (mb == null) continue;
                 bool game = mb is Piece || mb is WearNTear || mb is ZSyncTransform || mb is ZSyncAnimation || mb is Door || mb is Container
-                            || mb is Interactable || mb is Hoverable || mb is StaticPhysics;
+                            || mb is Interactable || mb is Hoverable || mb is StaticPhysics || mb is Floating;   // (a weapon or shield on display: no floating in water)
                 if (game && !(mb is Stand) && !(mb is Chair)) Object.Destroy(mb);   // (a seat stays a seat: the Arena Master's throne, benches)
             }
             foreach (ZNetView v in go.GetComponentsInChildren<ZNetView>(true)) Object.Destroy(v);
@@ -203,6 +203,46 @@ namespace Arena
                 var lifted = new Layout.Part { Prefab = part.Prefab, Rot = part.Rot, Pos = part.Pos + Vector3.up * Layout.FloorHeight(part.Pos.x, part.Pos.z) };
                 Make(lifted, _props.transform, missing);
             }
+            Unstick();
+        }
+
+        /// <summary>
+        /// Cover going up where the player stands would trap them in it: they are lifted onto it if it is low enough to stand on (the
+        /// platform), or else moved to the nearest clear floor.
+        /// </summary>
+        internal static void Unstick()
+        {
+            Player p = Player.m_localPlayer;
+            if (p == null || _props == null || p.IsDead()) return;
+            Physics.SyncTransforms();
+            int mask = LayerMask.GetMask("Default", "static_solid", "Default_small", "piece", "terrain");
+            bool Blocked(Vector3 feet) => Physics.OverlapCapsule(feet + Vector3.up * 0.5f, feet + Vector3.up * 1.5f, 0.4f, mask, QueryTriggerInteraction.Ignore)
+                                                 .Any(c => c != null && c.transform.IsChildOf(_props.transform));
+            Vector3 at = p.transform.position;
+            if (!Blocked(at)) return;
+            Vector3 to = at;
+            // on top, if what came up under them is low (a platform, a step)
+            if (Physics.Raycast(at + Vector3.up * 4f, Vector3.down, out RaycastHit top, 4f, mask) && top.collider.transform.IsChildOf(_props.transform) && top.point.y - at.y < 2.5f && !Blocked(top.point + Vector3.up * 0.05f))
+                to = top.point + Vector3.up * 0.1f;
+            else
+            {
+                // else the nearest clear floor, in widening rings
+                bool found = false;
+                for (float r = 1f; r <= 8f && !found; r += 0.75f)
+                    for (int k = 0; k < 16 && !found; k++)
+                    {
+                        float a = k * Mathf.PI / 8f;
+                        Vector3 c = at + new Vector3(Mathf.Sin(a) * r, 0f, Mathf.Cos(a) * r);
+                        if (!Physics.Raycast(c + Vector3.up * 4f, Vector3.down, out RaycastHit floor, 8f, mask)) continue;
+                        Vector3 feet = floor.point + Vector3.up * 0.05f;
+                        if (!Blocked(feet)) { to = feet; found = true; }
+                    }
+                if (!found) return;
+            }
+            p.transform.position = to;
+            Rigidbody body = p.GetComponent<Rigidbody>();
+            if (body != null) { body.position = to; body.linearVelocity = Vector3.zero; }
+            Plugin.Log.LogInfo($"The cover went up where you stood: moved to {to}");
         }
 
         internal static void ClearProps()

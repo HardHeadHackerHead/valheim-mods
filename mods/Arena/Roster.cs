@@ -63,6 +63,19 @@ namespace Arena
             return Mathf.Min(n, Fodder.Length - 1);
         }
 
+        /// <summary>
+        /// The lands this world has truly reached (its bosses beaten), whatever AllTiers says: what the arena pays in metals and trophies, and
+        /// where today's trial is fought, never go past it, so the arena is never a way to another land's materials before their time.
+        /// </summary>
+        internal static int Beaten()
+        {
+            ZoneSystem zone = ZoneSystem.instance;
+            if (zone == null) return 0;
+            int n = 0;
+            foreach (string key in BossKeys) if (zone.GetGlobalKey(key)) n++;
+            return Mathf.Min(n, Fodder.Length - 1);
+        }
+
         internal static bool Has(string prefab) => !string.IsNullOrEmpty(prefab) && ZNetScene.instance != null && ZNetScene.instance.GetPrefab(prefab) != null;
 
         internal static List<string> Pool(int tier) => Fodder[Mathf.Clamp(tier, 0, Fodder.Length - 1)].Where(Has).Distinct().ToList();
