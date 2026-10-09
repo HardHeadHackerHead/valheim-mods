@@ -15,6 +15,7 @@ namespace Arena
     internal static class Layout
     {
         internal sealed class Part { public string Prefab; public Vector3 Pos; public Quaternion Rot; }
+        // (Piece: the piece a mark stands for; Gate: a pen's grate, or the main gate's second door)
         internal sealed class Mark { public Vector3 Pos; public float Yaw; public int Piece = -1, Gate = -1; public bool Main; }
 
         internal static readonly List<Part> Parts = new List<Part>();

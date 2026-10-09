@@ -162,6 +162,7 @@ namespace Arena
             Crowd.Open();
             Crowd.Gong();
             Scenery.OpenGate(Scenery.MainGrate, 90f);
+            Scenery.OpenDoor(90f);
             Hud.Shout("DUEL!", "You against " + name + (wager > 0 ? "   -   " + wager + " coins each" : "") + ". Walk into the ring.", 5f);
         }
 
@@ -256,6 +257,8 @@ namespace Arena
             bool fought = _phase == PhaseKind.Fighting;
             _phase = PhaseKind.None;
             Scenery.OpenGate(Scenery.MainGrate, 30f);
+            Scenery.OpenDoor(45f);
+            Guard.Grace(60f);
             if (me != null)
             {
                 if (fought) me.SetPVP(_prevPvp);

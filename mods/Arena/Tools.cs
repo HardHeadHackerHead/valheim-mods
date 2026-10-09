@@ -19,7 +19,7 @@ namespace Arena
         {
             if (Time.unscaledTime < _next) return;
             _next = Time.unscaledTime + 5f;
-            BaseUnityPlugin found = Resources.FindObjectsOfTypeAll<BaseUnityPlugin>().Where(p => p != null && p.gameObject.scene.IsValid()).FirstOrDefault(p => MetadataHelper.GetMetadata(p)?.GUID == "com.dhack.claudetools");
+            BaseUnityPlugin found = Chainloader.PluginInfos.TryGetValue("com.dhack.claudetools", out PluginInfo info) ? info.Instance : null;
             if (found == _claudeTools) return;
             _claudeTools = found;
             if (found == null) return;
@@ -122,6 +122,7 @@ namespace Arena
                 output(new JObject { ["upgrades"] = list, ["random"] = Armoury.Random(player, 0, false, "x")?.Prefab });
                 yield break;
             }
+            if (sub == "door") { Scenery.OpenDoor(args.Length > 1 && float.TryParse(args[1], out float ds) ? ds : 20f); output(new JObject { ["door"] = "set" }); yield break; }
             if (sub == "fireworks") { Show.Fireworks(12, 6f); output(new JObject { ["fireworks"] = 12 }); yield break; }
             if (sub == "kittest") { output(new JObject { ["kit"] = Kit.SelfTest(player), ["stowed"] = Kit.Stowed(player) }); yield break; }
             if (sub == "railtest")

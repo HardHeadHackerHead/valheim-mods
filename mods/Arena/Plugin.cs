@@ -21,7 +21,7 @@ namespace Arena
     {
         public const string Guid = "com.dhack.arena";
         public const string Name = "Arena";
-        public const string Version = "0.2.0";
+        public const string Version = "0.2.1";
 
         internal static Plugin Instance;
         internal static ManualLogSource Log;
@@ -70,6 +70,7 @@ namespace Arena
             Kit.Tick();
             float dt = Time.deltaTime;
             Contest.Tick(dt);
+            Guard.Tick();
             Duel.Tick(dt);
             Crowd.Tick(dt);
             Scenery.Tick(dt);

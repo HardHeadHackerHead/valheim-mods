@@ -61,6 +61,7 @@ INNER_R = 24.9          # the gallery's inner wall (behind the last tier)
 FACADE_R = 27.2         # the outer arcade
 STOREY = 4.08           # two courses of grausten (2.04)
 TOP = 2 * STOREY        # the promenade behind the last tier, over the gallery
+ATTIC = TOP + STOREY    # the top of the attic: a third, closed storey over the arcades, as the Colosseum has
 
 GATES = [45.0, 135.0, 225.0, 315.0]     # where the creatures come in
 MAIN = 180.0                            # the fighters' grate, at the end of the tunnel from the main gate
@@ -150,12 +151,23 @@ markers["seats"] = seats
 # the promenade behind the last tier and over the gallery, with a gap over each stair
 last_r = PODIUM_R + 1.35 + TIER_DEPTH * TIERS
 STAIR_SPAN = 35.5       # degrees of gallery each stair climbs through (8 stairs, 2 m each, end to end)
+STAIR_ROWS = int(TOP)
+STAIR_STEP = STAIR_SPAN / STAIR_ROWS
+STAIR_HALF = math.degrees(1.0 / ((INNER_R + FACADE_R) / 2))     # half a stair's width, in degrees round the gallery
+# The stairs start one arch round from the gate (the gate's towers stand before the first), and end on a seam between two of the
+# promenade's floors over them, so the gap left for headroom (over the top three steps only) ends exactly where the stairs do: no hole.
+_n_out = ring_count(last_r + 2.2, 2.0)
+_tstep = 360.0 / _n_out
+_seam = (math.ceil((19.5 + (STAIR_ROWS - 1) * STAIR_STEP + STAIR_HALF) / _tstep - 0.5) + 0.5) * _tstep
+STAIR_START = _seam - (STAIR_ROWS - 1) * STAIR_STEP - STAIR_HALF
+_gap_lo = STAIR_START + (STAIR_ROWS - 3) * STAIR_STEP - STAIR_HALF
 for r in (last_r + 0.2, last_r + 2.2):
     n = ring_count(r, 2.0)
     for i in range(n):
         a = i * 360.0 / n
         off = (a - MAIN + 360) % 360
-        if r > last_r + 1 and (8 < off < 8 + STAIR_SPAN + 2 or 360 - 8 - STAIR_SPAN - 2 < off < 352):
+        side_off = min(off, 360 - off)
+        if r > last_r + 1 and _gap_lo - _tstep / 2 < side_off < _seam:
             continue
         put("stone_floor_2x2", r, a, TOP - 1.0)
 _sx, _sz = polar(last_r + 0.5, MAIN + STAIR_SPAN + 14)
@@ -170,58 +182,82 @@ for i in range(n_in):
     for s in range(4):
         put("Piece_grausten_wall_4x2", INNER_R, a, s * 2.04, yaw_add=180)
 
-# ---------------------------------------------------------------------------------------------------------------- the facade: two storeys of arches
+# ---------------------------------------------------------------------------------------------------------------- the facade
+# Two storeys of arches, each post fronted by a column (base, tapered shaft, capital), braziers hanging in the ground arches and banners in
+# the upper ones; over them the attic, a closed storey with windows, pilasters and masts flying banners all round the top.
 BAY = 5.04          # a 1 m post and a 4 m arch
 n_bay = ring_count(FACADE_R, BAY)
 bay_step = 360.0 / n_bay
 main_bay = round(MAIN / bay_step)
+colours = ["piece_banner01", "piece_banner02", "piece_banner05", "piece_banner07", "piece_banner09", "piece_banner04", "piece_banner11", "piece_banner03"]
 for i in range(n_bay):
     a = i * bay_step
     post_a = a - bay_step / 2
     is_main = i == main_bay
-    for s in range(2):
-        y = s * STOREY
-        # the post between bays
+    for st in range(2):
+        y = st * STOREY
+        # the post between bays, and its column standing before it
         put("Piece_grausten_wall_1x2", FACADE_R, post_a, y)
         put("Piece_grausten_wall_1x2", FACADE_R, post_a, y + 2.04)
+        put("Piece_grausten_pillarbase_medium", FACADE_R + 0.6, post_a, y)
+        put("Piece_grausten_pillarbase_tapered", FACADE_R + 0.6, post_a, y + 1.0)
+        put("Piece_grausten_pillarbeam_medium", FACADE_R + 0.6, post_a, y + 3.0)
         if is_main:
             continue
-        # the arch: two arch walls meeting in the middle, open below (the ground storey) or a window wall below (the upper storey)
+        # the arch: two arch walls meeting in the middle, open below
         da = math.degrees(1.0 / FACADE_R)
         put("Piece_grausten_wall_arch", FACADE_R, a - da, y + 2.04)
         put("Piece_grausten_wall_arch", FACADE_R, a + da, y + 2.04, yaw_add=180)
-        if s == 1:
-            pass
-    # banners hang from the upper arches, every third bay
-    if i % 3 == 0 and not is_main and abs(i - main_bay) > 1:
-        put(banners[(i // 3) % len(banners)], FACADE_R + 0.32, a, TOP - 0.2, yaw_add=90, ref="top")
-# the crown: a walk of floors over the arches, merlons, and braziers
+        if st == 0 and i % 2 == 0 and abs(i - main_bay) > 1:
+            put("piece_brazierceiling01", FACADE_R - 0.1, a, y + 3.3, ref="top")       # a fire hanging in the arch
+        if st == 1 and abs(i - main_bay) > 1:
+            put(colours[i % len(colours)], FACADE_R + 0.32, a, TOP - 0.2, yaw_add=90, ref="top")
+    # the attic: a pilaster over each post, a window or a panel between
+    put("Piece_grausten_wall_1x2", FACADE_R, post_a, TOP)
+    put("Piece_grausten_wall_1x2", FACADE_R, post_a, TOP + 2.04)
+    put("Piece_grausten_window_4x2" if i % 2 and not is_main else "Piece_grausten_wall_4x2", FACADE_R, a, TOP)
+    put("Piece_grausten_wall_4x2", FACADE_R, a, TOP + 2.04)
+    if not is_main:
+        if i % 2 == 0:   # and, inside, banners hanging over the stands for the crowd to see across the ring
+            put(colours[(i // 2) % len(colours)], FACADE_R - 0.35, a, ATTIC - 0.3, yaw_add=-90, ref="top")
+    # masts round the top, every third post, each flying a banner
+    if i % 3 == 0:
+        put("stave_pole_4m", FACADE_R, post_a, ATTIC)
+        put(colours[(i // 3 + 3) % len(colours)], FACADE_R + 0.45, post_a, ATTIC + 4.0, yaw_add=90, ref="top")
+# the crown of the attic: merlons all round
 n_cr = ring_count(FACADE_R, 2.06)
 for i in range(n_cr):
     a = i * 360.0 / n_cr
-    if i % 2 == 0:
-        put("Piece_grausten_wall_1x2", FACADE_R, a, TOP, height=None)
-    else:
-        put("Piece_grausten_wall_1x2", FACADE_R, a, TOP - 1.0)
+    put("Piece_grausten_wall_1x2", FACADE_R, a, ATTIC if i % 2 == 0 else ATTIC - 1.0)
+# braziers along the promenade, against the attic
 for i in range(0, n_bay, 4):
-    a = i * bay_step
-    if ang(a, MAIN) < 12:
-        continue
-    put("piece_brazierfloor01", FACADE_R - 0.9, a + bay_step / 2, TOP)
+    a = i * bay_step + bay_step / 2
+    if ang(a, MAIN) < 12 or STAIR_START - 4 < ang(a, MAIN) < _seam + 4:
+        continue    # (none by the gate, nor at the top of a stair, in the way)
+    put("piece_brazierfloor01", FACADE_R - 0.9, a, TOP)
 
 # ---------------------------------------------------------------------------------------------------------------- the main gate and its hall
 gx, gz = polar(FACADE_R, MAIN)
-bp.place("stave_gate", gx, gz, y=0.0, yaw=0)
-markers["maingate"] = {"x": round(gx, 3), "y": 0.0, "z": round(gz, 3), "yaw": 0.0, "piece": len(bp.items) - 1}
+# the main gate: a pair of stave doors, one each side, meeting in the middle (the mod opens them for a fighter and shuts them after)
+# (a stave door hangs from its +x end: the east door as it comes, the west one turned round, so both hinge at the outside)
+bp.place("stave_gate", gx + 1.03, gz, y=0.0, yaw=0)
+_east = len(bp.items) - 1
+bp.place("stave_gate", gx - 1.03, gz, y=0.0, yaw=180)
+markers["maingate"] = {"x": round(gx, 3), "y": 0.0, "z": round(gz, 3), "yaw": 0.0, "piece": _east, "gate": len(bp.items) - 1}
 for side in (-1, 1):
     for s in range(6):
         bp.place("blackmarble_column_1", gx + side * 1.9, gz - 0.7, y=float(s), yaw=0)
     bp.place("blackmarble_tip", gx + side * 1.9, gz - 0.7, y=6.0, yaw=0)
     bp.place("wood_dragon1", gx + side * 2.2, gz - 0.8, y=6.6, yaw=180 + side * 25)
-    bp.place("piece_brazierfloor01", gx + side * 3.4, gz - 1.6, y=0.0, yaw=0)
+    # a tower each side of the gate, as high as the attic, a fire on top and a banner down its face
+    tx = gx + side * 4.4
+    for s in range(6):
+        bp.place("blackmarble_2x2x2", tx, gz - 1.3, y=2.0 * s, yaw=0)
+    bp.place("piece_brazierfloor01", tx, gz - 1.3, y=12.0, yaw=0)
+    bp.place("piece_banner10", tx, gz - 2.38, y=11.0, yaw=90, ref="top")
+    bp.place("piece_brazierfloor01", gx + side * 6.6, gz - 1.8, y=0.0, yaw=0)
 for x in (-1.0, 1.0):
     bp.place("Piece_grausten_wall_2x2", gx + x, gz, y=6.4, yaw=0)
-bp.place("piece_banner10", gx, gz - 0.4, y=TOP + 0.4, yaw=90, ref="top")
 
 # the tunnel from the gate hall to the fighters' grate, under the stands
 r0, r1 = PODIUM_R + 1.3, INNER_R
@@ -242,11 +278,12 @@ markers["tunnel"] = {"x": 0.0, "y": 0.0, "z": round(-(r0 + 1.0), 3), "yaw": 0.0}
 for side in (-1, 1):
     rows = int(TOP)
     for k4 in range(rows):
-        a = MAIN + side * (9.0 + k4 * (STAIR_SPAN / rows))
+        a = MAIN + side * (STAIR_START + k4 * STAIR_STEP)
         tang = (a + side * 90) % 360            # climbing away from the gate, round the gallery
         x, z = polar((INNER_R + FACADE_R) / 2, a)
         bp.place("stone_stair", x, z, y=float(k4), yaw=bp.yaw_for("stone_stair", math.sin(rad(tang)), math.cos(rad(tang))))
-markers["upstairs"] = {"x": round(polar((INNER_R + FACADE_R) / 2, MAIN + 9)[0], 3), "y": 0.0, "z": round(polar((INNER_R + FACADE_R) / 2, MAIN + 9)[1], 3), "yaw": 90.0}
+markers["upstairs"] = {"x": round(polar((INNER_R + FACADE_R) / 2, MAIN + STAIR_START)[0], 3), "y": 0.0, "z": round(polar((INNER_R + FACADE_R) / 2, MAIN + STAIR_START)[1], 3), "yaw": 90.0}
+print("stairs from %.1f to %.1f degrees off the gate; the walk open over them from %.1f" % (STAIR_START, _seam, _gap_lo))
 
 # ---------------------------------------------------------------------------------------------------------------- the Arena Master's box (north)
 box_y = PODIUM_TOP + TIER_RISE * 2
@@ -260,6 +297,18 @@ for dx in (-3.0, 3.0):
     bp.place("blackmarble_tip", dx, PODIUM_R + 1.0, y=box_y + 3.0, yaw=0)
     bp.place("piece_banner06", dx * 0.6, PODIUM_R + 1.0, y=box_y + 0.0, yaw=0, ref="bottom") if False else None
 bp.place("piece_blackmarble_throne", 0.0, PODIUM_R + 4.2, y=box_y, yaw=180)
+for dx in (-3.0, 3.0):
+    for s in range(3):
+        bp.place("blackmarble_column_1", dx, PODIUM_R + 5.6, y=box_y + s, yaw=0)
+for dx in (-2.0, 0.0, 2.0):
+    for dz in (1.6, 3.6, 5.6):
+        bp.place("blackmarble_floor", dx, PODIUM_R + dz, y=box_y + 3.0, yaw=0)    # the canopy
+    bp.place("blackmarble_base_1", dx, PODIUM_R + 6.4, y=box_y, yaw=0)             # the backdrop
+    bp.place("blackmarble_base_1", dx, PODIUM_R + 6.4, y=box_y + 2.0, yaw=0)
+for dx in (-1.6, 1.6):
+    bp.place("piece_banner06", dx, PODIUM_R + 5.85, y=box_y + 2.9, yaw=90, ref="top")
+for dx in (-2.6, 2.6):
+    bp.place("darkwood_raven", dx, PODIUM_R + 1.4, y=box_y + 4.0, yaw=90 if dx > 0 else 270)   # ravens on the canopy's corners, looking out to either side
 for dx in (-1.8, 1.8):
     bp.place("piece_brazierfloor01", dx, PODIUM_R + 1.6, y=box_y, yaw=0)
 bp.place("jute_carpet", 0.0, PODIUM_R + 3.0, y=box_y, yaw=0)
@@ -298,6 +347,30 @@ bp.place("darkwood_beam4x4", 0.0, desk_z + 0.6, y=3.6, yaw=0)
 bp.place("darkwood_beam", 0.0, desk_z + 0.6, y=3.6, yaw=0) if False else None
 mark("desk", 0.0, 0.0, desk_z, 180.0)
 mark("masterspot", 0.0, 0.0, desk_z + 1.0, 180.0)
+# a low stone wall along both sides of the forecourt, masts with banners, lanterns along the way in
+for side in (-1, 1):
+    z = court_top - 1.6
+    while z > court_top - DEPTH + 1.0:
+        bp.place("stone_wall_2x1", side * 14.0, z, y=0.0, yaw=90, height=1.0)
+        z -= 2.2
+    for k in range(3):
+        mz = court_top - 3.0 - k * 9.0
+        bp.place("darkwood_pole4", side * 12.6, mz, y=0.0, yaw=0)
+        bp.place("darkwood_pole4", side * 12.6, mz, y=4.0, yaw=0)
+        bp.place(["piece_banner01", "piece_banner02", "piece_banner05"][k], side * 12.6 + side * 0.3, mz, y=8.0, yaw=0, ref="top")
+    for k in range(3):
+        bp.place("piece_dvergr_lantern_pole", side * 4.2, court_top - 12.0 - k * 4.0, y=0.0, yaw=90 - side * 90)
+# the gateway you come in by, behind the waystone
+gate_z = court_top - DEPTH + 1.2
+for side in (-1, 1):
+    bp.place("Piece_grausten_pillarbase_medium", side * 4.0, gate_z, y=0.0, yaw=0)
+    bp.place("Piece_grausten_pillarbase_tapered", side * 4.0, gate_z, y=1.0, yaw=0)
+    bp.place("Piece_grausten_pillarbase_tapered", side * 4.0, gate_z, y=3.0, yaw=0)
+    bp.place("Piece_grausten_pillarbeam_medium", side * 4.0, gate_z, y=5.0, yaw=0)
+    bp.place("piece_brazierfloor01", side * 4.0, gate_z, y=6.0, yaw=0)
+bp.place("darkwood_beam4x4", -2.0, gate_z, y=5.5, yaw=0)
+bp.place("darkwood_beam4x4", 2.0, gate_z, y=5.5, yaw=0)
+bp.place("piece_banner10", 0.0, gate_z - 0.3, y=5.5, yaw=90, ref="top")
 # where you arrive (the waystone), at the far end of the forecourt
 mark("arrival", 0.0, 0.0, court_top - DEPTH + 4.0, 0.0)
 for side in (-1, 1):

@@ -24,7 +24,9 @@ namespace Arena
         private static GameObject _root, _props, _hall;
         private static readonly List<Grate> Grates = new List<Grate>();
         private static readonly List<Material> Owned = new List<Material>();
-        private static Animator _mainGate;
+        private static Animator _doorLeft, _doorRight;
+        private static float _doorUntil;
+        private static bool _doorOpen;
         private static bool _building;
         private static string _propSet;
         private static string _hallShown;
@@ -55,6 +57,17 @@ namespace Arena
                 if (g.Main) { bool shut = g.Open < 0.5f; foreach (Collider c in g.Solid) if (c != null && c.enabled != shut) c.enabled = shut; }
             }
             if (Time.time > _nextHall) { _nextHall = Time.time + 5f; UpdateHall(); }
+
+            // the main gate's doors: open only while a fighter is to walk in or out
+            bool open = Time.time < _doorUntil;
+            if (open != _doorOpen)
+            {
+                _doorOpen = open;
+                _doorLeft?.SetInteger("state", open ? 1 : 0);
+                _doorRight?.SetInteger("state", open ? -1 : 0);   // (turned the other way round: it opens the other way, so both swing in)
+                Door sound = ZNetScene.instance?.GetPrefab("stave_gate")?.GetComponent<Door>();
+                (open ? sound?.m_openEffects : sound?.m_closeEffects)?.Create(Site.World(Layout.MainGate.Pos), Quaternion.identity);
+            }
         }
 
         // ---- putting it up ------------------------------------------------------------------------------------------------
@@ -86,9 +99,11 @@ namespace Arena
                                         Solid = go != null ? go.GetComponentsInChildren<Collider>(true) : new Collider[0] };
                 Grates.Add(grate);
             }
-            GameObject main = Layout.MainGate.Piece >= 0 && Layout.MainGate.Piece < made.Count ? made[Layout.MainGate.Piece] : null;
-            _mainGate = main != null ? main.GetComponentInChildren<Animator>(true) : null;
-            if (_mainGate != null) { _mainGate.enabled = true; _mainGate.SetInteger("state", 1); }
+            // the main gate's two doors (shut until someone takes up a challenge)
+            Animator DoorAt(int i) { GameObject d = i >= 0 && i < made.Count ? made[i] : null; Animator an = d != null ? d.GetComponentInChildren<Animator>(true) : null; if (an != null) an.enabled = true; return an; }
+            _doorLeft = DoorAt(Layout.MainGate.Piece);
+            _doorRight = DoorAt(Layout.MainGate.Gate);
+            _doorOpen = !(Time.time < _doorUntil);   // (so the next tick sets them as they should be)
 
             BuildForecourt(root.transform);
             _hallShown = null;
@@ -145,7 +160,7 @@ namespace Arena
         internal static void Drop()
         {
             if (_root != null) Object.Destroy(_root);
-            _root = null; _props = null; _hall = null; _mainGate = null;
+            _root = null; _props = null; _hall = null; _doorLeft = _doorRight = null;
             Grates.Clear();
             foreach (Material m in Owned) if (m != null) Object.Destroy(m);
             Owned.Clear();
@@ -167,6 +182,9 @@ namespace Arena
         }
 
         internal static int MainGrate => Layout.Gates.FindIndex(g => g.Main);
+
+        /// <summary>Opens the main gate's doors for a while (0 shuts them).</summary>
+        internal static void OpenDoor(float seconds) => _doorUntil = seconds > 0f ? Time.time + seconds : 0f;
         internal static bool GateOpen(int index) => index >= 0 && index < Grates.Count && Grates[index].Open > 0.7f;
 
         // ---- cover on the floor --------------------------------------------------------------------------------------------------

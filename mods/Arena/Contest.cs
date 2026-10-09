@@ -158,6 +158,7 @@ namespace Arena
             Crowd.Open();
             Favours.Reset();
             Net.Gate(Scenery.MainGrate, ReadySeconds);
+            Net.Door(ReadySeconds);   // (the main gate opens for you)
             Net.Shout("TO THE RING!", "Walk through the gate and into the ring, " + player.GetPlayerName() + ". The crowd is waiting.", 6f);
             Phase = PhaseKind.Ready;
             _timer = ReadySeconds; _count = 4;
@@ -201,6 +202,7 @@ namespace Arena
                 if (Site.OnFloor(player.transform.position, -1f))
                 {
                     Net.Gate(Scenery.MainGrate, 0f);   // shut behind you
+                    Net.Door(0f);
                     if (Lent)
                     {
                         // your things to the Arena Master; the arena's steel and meals to you
@@ -637,6 +639,7 @@ namespace Arena
             {
                 _victoryStep = 3;
                 Net.Gate(Scenery.MainGrate, 120f);
+                Net.Door(120f);
                 Net.Shout("TAKE A BOW!", "Open your prize, then walk out through the main gate when you are ready", 3f);
                 Net.Fireworks(12, 9f);
             }
@@ -663,6 +666,8 @@ namespace Arena
             Rules.Restore(player);
             Rules.Clear();
             Net.Gate(Scenery.MainGrate, 30f);
+            Net.Door(45f);
+            Guard.Grace(60f);
             _closeAt = Time.time + 6f;
         }
 
@@ -684,6 +689,8 @@ namespace Arena
             if (player != null && !player.IsDead() && outcome == Outcome.Carried) player.SetHealth(player.GetMaxHealth() * 0.35f);
             _knockedOut = false;
             Net.Gate(Scenery.MainGrate, wasReady ? 0f : 30f);
+            Net.Door(wasReady ? 0f : 45f);   // (open again for you to walk out)
+            Guard.Grace(60f);
             bool won = outcome == Outcome.Win || outcome == Outcome.CashOut;
             if (won) { Net.Sound("roar"); Net.Sound("horn"); Net.Sound("applause"); } else { Net.Sound("boo"); }
             _closeAt = Time.time + (won ? 8f : 5f);
@@ -775,6 +782,33 @@ namespace Arena
                 if (inv.CanAddItem(go, n)) inv.AddItem(go, n);
                 else Object.Instantiate(go, player.transform.position + Vector3.up, Quaternion.identity).GetComponent<ItemDrop>().SetStack(n);
             }
+        }
+    }
+
+    /// <summary>
+    /// The ring is for those who have taken up a challenge. Anyone else found on the fighting floor (climbed in, or slipped through the
+    /// grate behind a fighter) is shown out by the Arena Master's guards: back to the forecourt by the waystone. A fighter just finished
+    /// has a while to walk out.
+    /// </summary>
+    internal static class Guard
+    {
+        private static float _graceUntil, _next;
+
+        internal static void Grace(float seconds) => _graceUntil = Mathf.Max(_graceUntil, Time.time + seconds);
+
+        internal static void Tick()
+        {
+            if (Time.time < _next) return;
+            _next = Time.time + 0.5f;
+            Player p = Player.m_localPlayer;
+            if (p == null || p.IsDead() || p.IsTeleporting() || !Site.Known || !Scenery.Built) return;
+            if (Contest.Active || Duel.Active || Time.time < _graceUntil) return;
+            if (!Site.OnFloor(p.transform.position, -0.5f)) return;
+            Vector3 to = Site.World(Layout.Arrival.Pos + new Vector3(0f, 0.3f, 3f));
+            to.y = Mathf.Max(to.y, Site.Ground(to, Site.Origin.y) + 0.3f);
+            p.TeleportTo(to, Site.Turn * Quaternion.Euler(0f, 180f, 0f), false);
+            p.Message(MessageHud.MessageType.Center, "The Arena Master's guards show you out: the ring is for those who have taken up a challenge");
+            Plugin.Log.LogInfo("Someone on the fighting floor without a challenge was shown out to the forecourt");
         }
     }
 
