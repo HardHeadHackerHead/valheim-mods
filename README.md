@@ -3,7 +3,7 @@
 # ⚒️ Valheim Mods
 
 **Quality-of-life mods, a companion who plays like a player, and new things to build for Valheim, made to play nicely together.**
-Craft and build from chests. Bring a viking companion on your adventures. Plan builds as ghosts with your friends. Wear gear from its own slots. Take on group bounties, trap birds for feathers, recycle old gear, link portals from a list, and try your luck at a slot machine.
+Craft and build from chests. Bring a viking companion on your adventures. Plan builds as ghosts with your friends. Wear gear from its own slots. Take on group bounties, trap birds for feathers, recycle old gear, link portals from a list, try your luck at a slot machine, get your arrows back, raise a tankard of ale, and ride a zipline down a mountain.
 
 ![Valheim](https://img.shields.io/badge/Valheim-BepInEx-3b6e8f?style=flat-square)
 ![C#](https://img.shields.io/badge/made%20with-C%23-68217a?style=flat-square)
@@ -168,7 +168,7 @@ Share the map you uncover with everyone in the world, live, as you run through t
 ### 🛡️ GearSlots
 <img src="dist/GearSlots.cover.png" alt="GearSlots" width="100%">
 
-A Gear panel next to your inventory: Head, Chest, Legs, Cape, Belt, Trinket, Ammo and Shield slots (drop gear in and you wear it), three Food slots, and five Quick slots with hotkeys that also show in a row under your hotbar. Your shield follows your one-handed weapon, and worn gear moves into its slot by itself.
+A Gear panel next to your inventory: Head, Chest, Legs, Cape, Belt, Trinket, Ammo and Shield slots (drop gear in and you wear it), three Food slots, and five Quick slots with hotkeys that also show in a row under your hotbar. Your shield follows your one-handed weapon, and worn gear moves into its slot by itself. Auto-eat keeps you fed: the food slots are eaten when a meal is below 20% of its time left, so your food goes about 1.6 times as far.
 
 </td>
 <td valign="top">
