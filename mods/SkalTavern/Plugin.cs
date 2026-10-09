@@ -21,7 +21,7 @@ namespace SkalTavern
     {
         public const string Guid = "com.dhack.skaltavern";
         public const string Name = "SkalTavern";
-        public const string Version = "0.2.0";
+        public const string Version = "0.2.1";
 
         internal static Plugin Instance;
         internal static ManualLogSource Log;

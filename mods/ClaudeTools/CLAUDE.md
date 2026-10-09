@@ -106,8 +106,19 @@ built pieces (giving the materials back). Ask first.
 
 ## For mod makers: adding commands
 
-A mod adds commands without referencing Claude Tools (so it works without it), by finding the Claude Tools plugin
-(`MetadataHelper.GetMetadata(plugin).GUID == "com.dhack.claudetools"`) and calling its public static methods by reflection:
+A mod adds commands without referencing Claude Tools (so it works without it), by finding the Claude Tools plugin in BepInEx's
+plugin list and calling its public static methods by reflection:
+
+```csharp
+BaseUnityPlugin found = Chainloader.PluginInfos.TryGetValue("com.dhack.claudetools", out PluginInfo info) ? info.Instance : null;
+```
+
+That is a dictionary lookup, and hot reload keeps it current (ScriptEngine adds its plugins to `Chainloader.PluginInfos` and updates
+`Instance` on every reload). Don't search with `Resources.FindObjectsOfTypeAll<BaseUnityPlugin>()`: it walks every loaded object,
+textures and meshes included, about 10 ms a call. Mods that check every few seconds all start at the same moment, so their checks land
+in the same frame and the game stutters.
+
+The methods:
 
 ```csharp
 RegisterCommand(string owner, string name, string usage, Func<string[], Action<JObject>, Action<string>, IEnumerator> run)

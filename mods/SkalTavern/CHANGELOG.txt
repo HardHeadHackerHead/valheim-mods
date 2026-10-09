@@ -1,3 +1,5 @@
+Fix: no more stutter every 5 seconds. Looking for Claude Tools searched everything the game had loaded; it now asks BepInEx's list of mods.
+
 Being drunk is now unmissable. The picture darkens at the edges, colours fringe, what is far goes blurry, double vision trails behind you, the colours drift and the view sways and pulses; your body leans and weaves, stars circle your head, you hiccup, and very drunk you give a drunken cheer; sounds go muffled and wobbly; you slide when you walk, your aim floats, your walk wanders and sloshed your controls reverse for a moment; and your chat slurs. You throw up (the game's own vomit effect) when you drink too much too fast, now and then when sloshed and as you fall, and that sobers you a little. One setting, Drinking: EffectStrength (0 to 300%), scales it all, and each effect has its own switch.
 
 Fix: drinks already in your bag, a chest or on the ground could no longer be dropped or drunk after the mod reloaded (a hot reload, or the manager updating it mid-game); they are now attached to the new copy. New: a skal command for Claude Tools (status, level, drink, drop, puke).

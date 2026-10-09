@@ -5,6 +5,7 @@ using System.IO;
 using System.Linq;
 using System.Reflection;
 using BepInEx;
+using BepInEx.Bootstrap;
 using BepInEx.Configuration;
 using Newtonsoft.Json.Linq;
 using UnityEngine;
@@ -207,7 +208,7 @@ namespace ClaudeTools
             {
                 output(new JObject
                 {
-                    ["mods"] = new JArray(Resources.FindObjectsOfTypeAll<BaseUnityPlugin>().Where(p => p != null && p.gameObject.scene.IsValid()).Select(m =>
+                    ["mods"] = new JArray(LoadedMods().Select(m =>
                     {
                         BepInPlugin meta = MetadataHelper.GetMetadata(m);
                         return new JObject { ["guid"] = meta?.GUID, ["name"] = meta?.Name, ["version"] = meta?.Version?.ToString() };
@@ -394,8 +395,11 @@ namespace ClaudeTools
             yield return new WaitForSeconds(seconds);
         }
 
+        /// <summary>The mods running, from BepInEx's own list (hot-reloaded ones too). Much cheaper than Resources.FindObjectsOfTypeAll.</summary>
+        private static IEnumerable<BaseUnityPlugin> LoadedMods() => Chainloader.PluginInfos.Values.Select(i => i.Instance).Where(p => p != null);
+
         private static BaseUnityPlugin FindMod(string name) =>
-            Resources.FindObjectsOfTypeAll<BaseUnityPlugin>().Where(p => p != null && p.gameObject.scene.IsValid()).FirstOrDefault(m =>
+            LoadedMods().FirstOrDefault(m =>
             {
                 BepInPlugin meta = MetadataHelper.GetMetadata(m);
                 return meta != null && (meta.GUID.Equals(name, StringComparison.OrdinalIgnoreCase) || meta.Name.Equals(name, StringComparison.OrdinalIgnoreCase));

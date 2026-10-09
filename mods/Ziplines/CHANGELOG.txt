@@ -1,1 +1,3 @@
+Fix: no more stutter every 5 seconds. Looking for Claude Tools searched everything the game had loaded; it now asks BepInEx's list of mods.
+
 New: Zipline Posts. Build two, link them with E, and ride the downhill rope between them hanging from your axe.

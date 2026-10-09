@@ -19,7 +19,7 @@ namespace LedgerChest
     {
         public const string Guid = "com.dhack.ledgerchest";
         public const string Name = "LedgerChest";
-        public const string Version = "1.0.0";
+        public const string Version = "1.0.1";
         public const string PiecePrefab = "piece_ledgerchest";
 
         internal static Plugin Instance;
@@ -64,8 +64,7 @@ namespace LedgerChest
         {
             if (Time.unscaledTime < _nextClaudeCheck) return;
             _nextClaudeCheck = Time.unscaledTime + 5f;
-            BaseUnityPlugin found = System.Linq.Enumerable.FirstOrDefault(Resources.FindObjectsOfTypeAll<BaseUnityPlugin>(),
-                pl => pl != null && pl.gameObject.scene.IsValid() && MetadataHelper.GetMetadata(pl)?.GUID == "com.dhack.claudetools");
+            BaseUnityPlugin found = BepInEx.Bootstrap.Chainloader.PluginInfos.TryGetValue("com.dhack.claudetools", out PluginInfo info) ? info.Instance : null;
             if (found == _claudeTools) return;
             _claudeTools = found;
             if (found == null) return;

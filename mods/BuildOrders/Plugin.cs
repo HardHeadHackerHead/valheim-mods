@@ -22,7 +22,7 @@ namespace BuildOrders
     {
         public const string Guid = "com.dhack.buildorders";
         public const string Name = "BuildOrders";
-        public const string Version = "1.11.1";
+        public const string Version = "1.11.2";
 
         internal static Plugin Instance;
 

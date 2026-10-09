@@ -19,7 +19,7 @@ namespace Ziplines
     {
         public const string Guid = "com.dhack.ziplines";
         public const string Name = "Ziplines";
-        public const string Version = "0.1.0";
+        public const string Version = "0.1.1";
 
         internal static Plugin Instance;
         internal static ManualLogSource Log;

@@ -63,6 +63,7 @@ namespace PortalHub
         internal List<PortalInfo> Portals = new List<PortalInfo>();
         internal float PortalsAt = -999f;
         private float _nextAsk;
+        private float _nextNearCheck;
         private ZRoutedRpc _registeredOn;
 
         internal static string Key(ZDOID id) => id.UserID.ToString(CultureInfo.InvariantCulture) + ":" + id.ID.ToString(CultureInfo.InvariantCulture);
@@ -101,11 +102,19 @@ namespace PortalHub
             }
 
             // While a portal is close by (or the menu is open), keep the list fresh.
-            if (Time.time >= _nextAsk && Player.m_localPlayer != null && (WindowOpen || NearAPortal()))
+            if (Time.time >= _nextAsk && Player.m_localPlayer != null && (WindowOpen || NearAPortalThrottled()))
             {
                 _nextAsk = Time.time + (WindowOpen ? 5f : 20f);
                 RequestList();
             }
+        }
+
+        // Looking for portals walks the scene, so at most once a second (it would run every frame while none is near).
+        private bool NearAPortalThrottled()
+        {
+            if (Time.time < _nextNearCheck) return false;
+            _nextNearCheck = Time.time + 1f;
+            return NearAPortal();
         }
 
         private static bool NearAPortal()
