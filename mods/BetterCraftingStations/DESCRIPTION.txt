@@ -1,0 +1,8 @@
+Filter chips above the crafting list: pick a type, a tier or what you can make now.
+
+What is in it
+- At the workbench, forge, cauldron and the other stations, two rows of chips sit above the recipe list. The first row is the type of thing (weapons, armor, tools, ammo, food, potions), with All and Can craft; the second is how far into the game it is (wood and flint, bronze, iron, silver, black metal, Mistlands, Ashlands).
+- Each chip shows how many recipes it has, given what the other row has chosen. Click a chip to pick it, click it again to clear it. All clears everything.
+- Only what that station makes shows, and each station remembers its own choice while the game runs.
+- The list below is the game's own, narrowed: crafting, upgrading and the Upgrade tab are unchanged.
+The only setting is Enabled.

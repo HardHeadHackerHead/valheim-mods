@@ -85,8 +85,9 @@ behind what you are hitting, kites with a bow, drinks the right mead, and follow
 **H** and it attacks, chops a whole patch of trees, mines, picks things up, sorts its bag into your chests or pulls a cart. Back home it lives its
 own life: picks its next upgrade, gathers exactly what it needs, crafts and upgrades at your workbench and forge, hunts, cooks, keeps the fires
 burning, repairs your base, sleeps in its bed, takes better gear from your chests, and catches up on all of it while you are away. Its own gear
-slots, a journal, small talk, missions, and one-click errands in its menu ("restock food", "gear up", "repair the base"). Everyone in the
-world needs it installed.
+slots, a journal, small talk, missions, and one-click errands in its menu ("restock food", "gear up", "repair the base"). Give it home duties
+in the order you want (keep your chests stocked with good meals, wood and ore; build your BuildOrders plans, fetching or making what a plan
+lacks), and while you are away every duty makes progress. Everyone in the world needs it installed.
 
 <table>
 <tr>
@@ -237,6 +238,28 @@ Tobacco from the wild plant to the cigar in your mouth. Three strains grow in th
 cultivator, dry the leaves on a rack, age them in a barrel, and roll four kinds of cigar (Connecticut, Maduro, Corojo, Habano) at a Cigar
 Rolling Table, with a Humidor for the finer ones. Each has its own status effect, and you are seen smoking it: in your hand, brought up for a
 puff, or kept in your mouth when you hold a weapon.
+
+</td>
+</tr>
+<tr>
+<td valign="top">
+
+### 🔧 BetterCraftingStations
+<img src="dist/BetterCraftingStations.cover.png" alt="BetterCraftingStations" width="100%">
+
+Filter chips above the crafting list at every station: pick a type (weapons, armor, tools, ammo, food, potions), how far into the game it is
+(wood and flint, bronze, iron, silver...), or just what you can make now, each with how many recipes it has. The list below is the game's own,
+narrowed; crafting and upgrading are unchanged.
+
+</td>
+<td valign="top">
+
+### 🏹 Quiver
+<img src="dist/Quiver.cover.png" alt="Quiver" width="100%">
+
+Pick your arrows back up. Those that hit the ground, a tree or a wall are all kept as arrows you pick up; of those that hit a creature, three
+in four drop with its loot when it dies. A quiver hangs on your back while you have arrows equipped, with the arrows you carry sticking out of it.
+Only you need the mod.
 
 </td>
 </tr>

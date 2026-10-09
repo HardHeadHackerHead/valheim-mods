@@ -1,0 +1,1 @@
+New: arrows you shoot come back. Those that hit the ground, a tree or a wall are all kept as arrows you pick up; of those that hit a creature, three in four drop with its loot when it dies (only you need the mod). A quiver hangs on your back while you have arrows equipped, with the arrows you carry sticking out of it.

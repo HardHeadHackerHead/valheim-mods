@@ -22,7 +22,7 @@ namespace BuildOrders
     {
         public const string Guid = "com.dhack.buildorders";
         public const string Name = "BuildOrders";
-        public const string Version = "1.9.9";
+        public const string Version = "1.10.2";
 
         internal static Plugin Instance;
 
@@ -45,6 +45,7 @@ namespace BuildOrders
         private void Awake()
         {
             Instance = this;
+            PublishHelperHooks();
             _enabled = Config.Bind("General", "Enabled", true, "Turn the mod on or off.");
             BindBlueprintConfig();
             _showGhosts = Config.Bind("General", "ShowGhosts", true, "Show the glowing ghosts of planned pieces.");
@@ -104,6 +105,7 @@ namespace BuildOrders
             DestroyWindowResources();
             _harmony?.UnpatchSelf();
             UnregisterRpc();
+            RemoveHelperHooks();
             UnregisterClaudeCommands();
             UnregisterBridgeTool();
             DestroyAllGhosts();
@@ -473,33 +475,8 @@ namespace BuildOrders
             try
             {
                 List<Order> chosen = AffordableNearby(player, out noMaterials, out int all, noStation);
-                var keep = new HashSet<string>(chosen.Select(o => o.Id));
-                for (int round = 0; round < 6 && keep.Count > 0; round++)
-                {
-                    ComputeStability(player, keep);
-                    var falls = keep.Where(id => _stability.TryGetValue(id, out Stab s) && s.Collapses).ToList();
-                    if (falls.Count == 0) break;
-                    foreach (string id in falls) keep.Remove(id);
-                    unsupported += falls.Count;
-                }
-
-                // the order: by how many pieces stand between it and the ground (or what is already built), then lowest first; pieces that
-                // hold nothing up (tables, torches) after the structure
-                var depth = new Dictionary<string, int>();
-                int Depth(string id, int guard)
-                {
-                    if (depth.TryGetValue(id, out int d)) return d;
-                    if (guard > 400 || !_stability.TryGetValue(id, out Stab st)) return 0;
-                    depth[id] = 0;                                                    // (a loop counts as resting on the ground)
-                    int deepest = 0;
-                    foreach (string f in st.From) if (keep.Contains(f)) deepest = Math.Max(deepest, Depth(f, guard + 1) + 1);
-                    depth[id] = deepest;
-                    return deepest;
-                }
-                List<Order> ordered = chosen.Where(o => keep.Contains(o.Id))
-                    .OrderBy(o => _stability.ContainsKey(o.Id) ? 0 : 1)
-                    .ThenBy(o => Depth(o.Id, 0))
-                    .ThenBy(o => Mathf.Round(o.Pos.y * 2f)).ToList();
+                List<Order> ordered = StandingOrder(player, chosen, out int fell);
+                unsupported += fell;
 
                 var failed = new HashSet<string>();
                 foreach (Order o in ordered)
@@ -518,6 +495,40 @@ namespace BuildOrders
             player.Message(MessageHud.MessageType.Center, built > 0 ? $"Built {built} piece(s){extra}" : $"Nothing built{extra}");
             if (stations.Length > 0) Logger.LogInfo("Build all: " + stations);
             _stabilityDirty = true;
+        }
+
+        /// <summary>
+        /// Of these orders, the ones that will stand with what is built already, in the order to build them: by how many pieces stand between it
+        /// and the ground (or what is already built), then lowest first; pieces that hold nothing up (tables, torches) after the structure.
+        /// <paramref name="fell"/> is how many were left out because nothing supports them yet.
+        /// </summary>
+        private List<Order> StandingOrder(Player player, List<Order> chosen, out int fell)
+        {
+            fell = 0;
+            var keep = new HashSet<string>(chosen.Select(o => o.Id));
+            for (int round = 0; round < 6 && keep.Count > 0; round++)
+            {
+                ComputeStability(player, keep);
+                var falls = keep.Where(id => _stability.TryGetValue(id, out Stab s) && s.Collapses).ToList();
+                if (falls.Count == 0) break;
+                foreach (string id in falls) keep.Remove(id);
+                fell += falls.Count;
+            }
+            var depth = new Dictionary<string, int>();
+            int Depth(string id, int guard)
+            {
+                if (depth.TryGetValue(id, out int d)) return d;
+                if (guard > 400 || !_stability.TryGetValue(id, out Stab st)) return 0;
+                depth[id] = 0;                                                    // (a loop counts as resting on the ground)
+                int deepest = 0;
+                foreach (string f in st.From) if (keep.Contains(f)) deepest = Math.Max(deepest, Depth(f, guard + 1) + 1);
+                depth[id] = deepest;
+                return deepest;
+            }
+            return chosen.Where(o => keep.Contains(o.Id))
+                .OrderBy(o => _stability.ContainsKey(o.Id) ? 0 : 1)
+                .ThenBy(o => Depth(o.Id, 0))
+                .ThenBy(o => Mathf.Round(o.Pos.y * 2f)).ToList();
         }
 
         private void BuildByHand(Player player, Order order) => TryBuild(player, order, quiet: false);

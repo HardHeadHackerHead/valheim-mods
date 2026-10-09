@@ -44,11 +44,17 @@ namespace AICompanion
             if (w == null || hammer == null || !Repairable(w)) return false;
             if (!w.Repair()) return false;
             Piece p = w.GetComponent<Piece>();
-            if (hammer.m_shared.m_attack != null && !string.IsNullOrEmpty(hammer.m_shared.m_attack.m_attackAnimation)) Anim(me)?.SetTrigger(hammer.m_shared.m_attack.m_attackAnimation);
+            Swing(me, hammer);
             p?.m_placeEffect.Create(w.transform.position, w.transform.rotation);
             int n = Journal.Count(me, "mended");
             if (n % 10 == 1) st.Remember("repaired your base");
             return true;
+        }
+
+        /// <summary>The hammer's swing (its animation).</summary>
+        public static void Swing(Humanoid me, ItemDrop.ItemData hammer)
+        {
+            if (hammer?.m_shared.m_attack != null && !string.IsNullOrEmpty(hammer.m_shared.m_attack.m_attackAnimation)) Anim(me)?.SetTrigger(hammer.m_shared.m_attack.m_attackAnimation);
         }
 
         /// <summary>Catching up: every damaged piece in its home repaired at once. How many.</summary>

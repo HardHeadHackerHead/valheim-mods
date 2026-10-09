@@ -24,7 +24,7 @@ namespace AICompanion
     /// </summary>
     internal static class Work
     {
-        internal enum Kind { None, Hit, Pick, PickUp, Store, Upgrade, Craft, Hunt, Cook, Fetch, Fuel, Mend, Armory }
+        internal enum Kind { None, Hit, Pick, PickUp, Store, Upgrade, Craft, Hunt, Cook, Fetch, Fuel, Mend, Armory, Build, Supply }
 
         internal class Task
         {
@@ -44,6 +44,8 @@ namespace AICompanion
             public bool UsedChop;
             public float HealthAt = -1f;     // the target's health when it last checked its swings
             public float Started, LastClose;
+            public string BuildId, BuildPrefab; // the planned piece it is going to build (Building)
+            public float Arrived;               // when it got within reach of it
         }
 
         private static readonly string[] OreWords = { "Ore", "Scrap", "Flametal" };
@@ -79,6 +81,9 @@ namespace AICompanion
             return _cookable != null && _cookable.Contains(i.m_shared.m_name);
         }
         private static readonly Func<BaseAI, Vector3, bool> HavePath = AccessTools.MethodDelegate<Func<BaseAI, Vector3, bool>>(AccessTools.Method(typeof(BaseAI), "HavePath"));
+
+        /// <summary>What it gathers toward: what your plan is short of while building it is its duty, else its gear goal.</summary>
+        internal static Goal Aim(BrainState st) => st.PlanGoal != null && st.Duty != null && st.Duty.Duty == Duty.Build ? st.PlanGoal : st.Goal;
 
         /// <summary>You ticked jobs, or a home duty is under way: it works those, not what its goal needs.</summary>
         private static bool Directed(BrainState st) => JobsOf(st.Body) != Job.None || st.Duty != null;
@@ -202,20 +207,18 @@ namespace AICompanion
         public static void Tick(BrainState st, Player master, float dt, Action<Vector3, float, bool> moveTo, Action stop, Action<Vector3> lookAt)
         {
             Humanoid me = st.Body;
+            if (Companion.Zdo(me) == null) return; // (its network object is gone for a moment: nothing to read its home from)
             Job jobs = JobsOf(me);
             st.OnDuties = Duties.Configured(me);
+            // Its home duties, in the order you set: the first one with work to do (a stockpile short, plans to build); none, its own life.
+            // Hungry, food comes first whatever the duty.
+            st.Duty = Duties.Active(me);
             if (st.OnDuties)
             {
-                // Its home duties, in the order you set: the first not yet stocked; all stocked, its own life. Hungry, food comes first whatever the duty.
-                st.Duty = Duties.Active(me);
                 jobs = st.Duty != null ? st.Duty.Jobs : Job.None;
                 if (st.Hungry) jobs |= Job.Forage | Job.Hunt | Job.Cook;
             }
-            else
-            {
-                st.Duty = null;
-                if (jobs == Job.None) jobs = AutoJobs(me); // living at home: it decides for itself what to do with what it has
-            }
+            else if (jobs == Job.None) jobs = AutoJobs(me); // living at home: it decides for itself what to do with what it has
             Vector3 center = Center(me);
             float radius = RadiusOf(me);
             if (TravelHome(st, center, radius, moveTo)) return;
@@ -236,7 +239,7 @@ namespace AICompanion
                     st.NextWorkLook = Time.time + 0.2f;
                 }
             }
-            else if (st.Duty != null && st.Task.Job != Job.None) Duties.Worked(me, st.Duty);
+            else if (st.Task != null && st.Duty != null && (st.Task.Job != Job.None || st.Task.Kind == Kind.Build || st.Task.Kind == Kind.Supply)) Duties.Worked(me, st.Duty);
             if (st.Task == null)
             {
                 if (Idle.AtHome(st, master, center, radius, moveTo, stop, lookAt)) return; // between jobs: the fire, a chair, out of the rain, a stroll
@@ -551,6 +554,7 @@ namespace AICompanion
             if (Time.time - t.Started > (t.Trip ? 240f : t.Ordered ? 180f : 60f) || (dist > 3f && Time.time - t.LastClose > (t.Trip || t.Ordered ? 120f : 20f))) // (pointed at from far off: the walk there)
             {
                 // A piece it could not get to: the rest of that wall too (a stake wall outside your walls: one stake after another, for ever).
+                if (t.Kind == Kind.Build) Building.Failed(st, t);
                 if (t.Kind == Kind.Mend)
                     foreach (Collider col in Physics.OverlapSphere(t.Target.transform.position, 6f, LayerMask.GetMask("piece", "piece_nonsolid")))
                         if (col.GetComponentInParent<WearNTear>() is WearNTear near && near != t.Target) st.Skipped[near.gameObject.GetInstanceID()] = Time.time + 600f;
@@ -698,6 +702,30 @@ namespace AICompanion
                     st.Task = null;
                     break;
 
+                case Kind.Supply:
+                    if (dist > 2f) { moveTo(at, 1.2f, dist > 8f); break; }
+                    t.LastClose = Time.time;
+                    stop();
+                    Building.Take(st, (Container)t.Target);
+                    st.Task = null;
+                    break;
+
+                case Kind.Build:
+                    ItemDrop.ItemData hammer = Mending.Hammer(me);
+                    if (hammer == null) { st.Task = null; break; }
+                    // A hammer reaches a few metres, in any direction (up on a wall, down in a foundation): it comes within six metres of the piece.
+                    if (Vector3.Distance(me.transform.position + Vector3.up, t.Pos) > 6f) { moveTo(at, 3f, dist > 8f); break; }
+                    t.LastClose = Time.time;
+                    stop();
+                    lookAt(t.Pos);
+                    st.WorkTool = hammer;
+                    if (t.Arrived == 0f) t.Arrived = Time.time;
+                    if (Time.time - t.Arrived < 1.2f) break;
+                    Mending.Swing(me, hammer);
+                    Building.Place(st, t);
+                    st.Task = null;
+                    break;
+
                 case Kind.Hunt:
                     var prey = (Character)t.Target;
                     if (prey != null && prey.IsDead()) Loot.AddSpot(st, prey.transform.position); // its meat and hide, in a moment
@@ -801,6 +829,8 @@ namespace AICompanion
                 Kind.Armory => "looking in your chest for better gear",
                 Kind.Fuel => "putting wood on the fire",
                 Kind.Mend => "repairing " + Hoverable(t.Target).ToLowerInvariant(),
+                Kind.Build => "building your plan",
+                Kind.Supply => "getting materials for your plan",
                 Kind.Hunt => "hunting " + Localization.instance.Localize(((Character)t.Target)?.m_name ?? ""),
                 Kind.Upgrade => $"upgrading its {Localization.instance.Localize(t.Item?.m_shared.m_name ?? "")} at the {Localization.instance.Localize(((CraftingStation)t.Target).m_name)}",
                 _ => "gathering",
@@ -818,7 +848,7 @@ namespace AICompanion
         {
             if (t.Target == null) return false;
             if (t.Kind == Kind.Pick && Companion.Zdo(t.Target)?.GetBool(ZDOVars.s_picked, false) == true) return false;
-            if ((t.Kind == Kind.Store || t.Kind == Kind.Fetch || t.Kind == Kind.Armory) && ((Container)t.Target).IsInUse()) return false;
+            if ((t.Kind == Kind.Store || t.Kind == Kind.Fetch || t.Kind == Kind.Armory || t.Kind == Kind.Supply) && ((Container)t.Target).IsInUse()) return false;
             if (t.Kind == Kind.Mend && ((WearNTear)t.Target).GetHealthPercentage() >= 0.999f) return false;
             return true;
         }
@@ -998,6 +1028,19 @@ namespace AICompanion
                 }
             }
 
+            // Your plans (BuildOrders): the duty "Build our plans", where it stands in its list: a piece it can pay for, or the trip for the materials.
+            if (st.Duty != null && st.Duty.Duty == Duty.Build)
+            {
+                Task build = Building.Next(st);
+                if (build != null) return build;
+                var pstep = Goals.StepReady(me, st.PlanGoal);     // (nails and the like, made at a station near home for the plan)
+                if (pstep != null)
+                {
+                    if (pstep.Value.Value == null) Upgrades.Craft(st, pstep.Value.Key, null, true);
+                    else { Task t4 = New(Kind.Craft, pstep.Value.Value, Job.None); t4.Recipe = pstep.Value.Key; t4.ForGoal = true; return t4; }
+                }
+            }
+
             // 2. Better gear: an upgrade at its workbench (or forge...) when it has the materials, in its bag or its chests; else what it is
             //    working toward (Goals), and the in-between materials for it it can make now.
             if (Time.time >= st.NextUpgradeLook)
@@ -1018,8 +1061,10 @@ namespace AICompanion
             }
 
             // What its goal needs decides its jobs too, when you have not ticked any.
-            Job goalJobs = Goals.JobsFor(st.Goal, out HashSet<string> goalPrey);
-            if (!Directed(st)) jobs |= goalJobs & ~Job.Loot;
+            Goal goal = Aim(st);                                // the plan's shortfall while it builds, else its gear goal
+            bool planning = goal != null && goal == st.PlanGoal;
+            Job goalJobs = Goals.JobsFor(goal, out HashSet<string> goalPrey);
+            if ((!Directed(st) || planning)) jobs |= goalJobs & ~Job.Loot;
 
             // Its own meals: raw food it carries goes on a cooking station near home.
             if ((jobs & Job.Cook) != 0)
@@ -1064,7 +1109,7 @@ namespace AICompanion
                         if (Time.time >= st.TripUntil)
                         {
                             string what = Localization.instance.Localize(prey.m_name).ToLowerInvariant();
-                            Talk.Mention(me, $"No {what} near home, so I'm going hunting for one, {Flat(prey.transform.position, center):0} m {Compass(prey.transform.position - center)} of home, for my {st.Goal?.What}.", "hunt:" + what, 10f);
+                            Talk.Mention(me, $"No {what} near home, so I'm going hunting for one, {Flat(prey.transform.position, center):0} m {Compass(prey.transform.position - center)} of home, for my {goal?.What}.", "hunt:" + what, 10f);
                             st.Remember($"went hunting {what} further out");
                         }
                         st.TripUntil = Time.time + 180f;
@@ -1092,7 +1137,7 @@ namespace AICompanion
                 if (!seen.Add(go)) continue;
                 Task t = Consider(st, go, jobs, axe, pick);
                 if (t == null || Skipped(st, t.Target) || ClaimedByOther(st, t.Target)) continue;
-                t.ForGoal = st.Goal != null && Drops(t.Target).Any(st.Goal.Wants);
+                t.ForGoal = goal != null && Drops(t.Target).Any(goal.Wants);
                 if (t.ForGoal) goalSeen = true;
                 float score = Vector3.Distance(t.Target.transform.position, me.transform.position) + Priority(t) - (t.ForGoal ? 60f : 0f) - (t.Edible && st.Hungry ? 200f : 0f); // food when hungry, then its goal
                 if (score < bestScore) { bestScore = score; best = t; }
@@ -1102,12 +1147,12 @@ namespace AICompanion
                 var missing = new List<string>();
                 if ((jobs & Job.Wood) != 0 && axe == null) missing.Add("an axe");
                 if ((jobs & (Job.Stone | Job.Ore)) != 0 && pick == null) missing.Add("a pickaxe");
-                st.WorkNote = st.Goal != null && st.Goal.Raw.Count > 0 && !goalSeen ? $"looking for {string.Join(" or ", st.Goal.Names.Values)} for its {st.Goal.What} (none near home)"
+                st.WorkNote = goal != null && goal.Raw.Count > 0 && !goalSeen ? $"looking for {string.Join(" or ", goal.Names.Values)} for its {goal.What} (none near home)"
                             : missing.Count > 0 ? $"needs {string.Join(" and ", missing)} for its jobs" : $"nothing left to gather within {radius:0} m";
             }
             // Nothing near home for its goal: a trip for it, as far as the world is loaded around you (about 170 m from home), when it is fit.
             bool searched = false;
-            if (st.Goal != null && st.Goal.Raw.Count > 0 && !goalSeen && !Directed(st) && !st.Weak && !st.Hungry && me.GetHealthPercentage() > 0.6f
+            if (goal != null && goal.Raw.Count > 0 && !goalSeen && (!Directed(st) || planning) && !st.Weak && !st.Hungry && me.GetHealthPercentage() > 0.6f
                 && (Time.time >= st.NextTripLook || Time.time < st.TripUntil))
             {
                 st.NextTripLook = Time.time + 20f;
@@ -1120,8 +1165,8 @@ namespace AICompanion
                     if (starting)
                     {
                         Vector3 way = trip.Target.transform.position - center;
-                        string names = string.Join(" and ", st.Goal.Names.Values);
-                        Talk.Mention(me, $"Nothing near home has {names}, so I'm going to get some, {Flat(trip.Target.transform.position, center):0} m {Compass(way)} of home.", "trip:" + st.Goal.What, 10f);
+                        string names = string.Join(" and ", goal.Names.Values);
+                        Talk.Mention(me, $"Nothing near home has {names}, so I'm going to get some, {Flat(trip.Target.transform.position, center):0} m {Compass(way)} of home.", "trip:" + goal.What, 10f);
                         st.Remember($"set off on a trip for {names}");
                         Journal.Trip(me, $"Went on a trip {Flat(trip.Target.transform.position, center):0} m {Compass(way)} of home for {names}.");
                     }
@@ -1129,11 +1174,11 @@ namespace AICompanion
                 }
                 if (Time.time < st.TripUntil) { st.TripUntil = 0f; st.Remember("came back from its trip"); } // done (or nothing more out there): home
             }
-            if (searched && st.Goal != null && st.Goal.Raw.Count > 0 && !goalSeen && !Directed(st) && !goalPrey.Any())
+            if (searched && goal != null && goal.Raw.Count > 0 && !goalSeen && (!Directed(st) || planning) && !goalPrey.Any())
             {
                 // Nothing near home drops what its goal needs: those things count as "ask for them" for ten minutes, so it picks a goal it can do.
-                Talk.Tell(me, $"I can't find any {string.Join(" or ", st.Goal.Names.Values)} around here for my {st.Goal.What}, even further out. I'll look while you're away, or bring me some.", "far:" + st.Goal.What, 30f);
-                foreach (string item in st.Goal.Raw.Keys) st.Unfindable[item] = Time.time + 600f;
+                Talk.Tell(me, $"I can't find any {string.Join(" or ", goal.Names.Values)} around here for my {goal.What}, even further out. I'll look while you're away, or bring me some.", "far:" + goal.What, 30f);
+                foreach (string item in goal.Raw.Keys) st.Unfindable[item] = Time.time + 600f;
                 st.NextUpgradeLook = 0f;
             }
             if (best == null && inv.GetEmptySlots() == 0) Talk.Tell(me, "My bag is full and none of my chests has room. Give me another chest (Home tab).", "full", 15f);
@@ -1235,7 +1280,7 @@ namespace AICompanion
             {
                 Pickable p = go.GetComponent<Pickable>();
                 // Only what grows back by itself (wild berries, mushrooms, thistle...): planted crops do not, and are never touched.
-                bool wanted = p != null && p.m_itemPrefab != null && st.Goal != null && st.Goal.Wants(p.m_itemPrefab.name);
+                bool wanted = p != null && p.m_itemPrefab != null && Aim(st) != null && Aim(st).Wants(p.m_itemPrefab.name);
                 if (p != null && p.m_itemPrefab != null && !(Companion.Zdo(p)?.GetBool(ZDOVars.s_picked, false) ?? true) && (p.m_respawnTimeMinutes > 0f || wanted || ordered) // (pointed at: a stone, a flint on the shore)
                     && !Goals.IsCrop(Utils.GetPrefabName(p.gameObject)) && !(Heightmap.FindHeightmap(p.transform.position)?.IsCultivated(p.transform.position) ?? false))
                 {
@@ -1265,7 +1310,8 @@ namespace AICompanion
                 GameObject go = col.attachedRigidbody != null ? col.attachedRigidbody.gameObject : col.transform.root.gameObject;
                 if (!seen.Add(go)) continue;
                 Task t = Consider(st, go, jobs, axe, pick);
-                if (t == null || Skipped(st, t.Target) || !Drops(t.Target).Any(st.Goal.Wants)) continue;
+                Goal aim = Aim(st);
+                if (t == null || Skipped(st, t.Target) || aim == null || !Drops(t.Target).Any(aim.Wants)) continue;
                 float d = Vector3.Distance(t.Target.transform.position, me.transform.position);
                 if (d >= bestDist) continue;
                 bestDist = d;
@@ -1477,7 +1523,7 @@ namespace AICompanion
         }
 
         /// <summary>What it keeps on itself: anything it wears or could use (weapons, armour, shields, tools, ammo, healing potions).</summary>
-        public static bool Keeps(Humanoid h, ItemDrop.ItemData i) => Gear.InSlot(i) || h.IsItemEquiped(i) || Companion.Useful(h, i) || IsTool(i) || IsCookable(i) || Mending.IsHammer(i);
+        public static bool Keeps(Humanoid h, ItemDrop.ItemData i) => Gear.InSlot(i) || h.IsItemEquiped(i) || Companion.Useful(h, i) || IsTool(i) || IsCookable(i) || Mending.IsHammer(i) || Building.Needed(h, i);
 
         private static bool HasRoom(Container chest, Humanoid h) =>
             chest.GetInventory().HaveEmptySlot() || h.GetInventory().GetAllItems().Any(i => !Keeps(h, i) && chest.GetInventory().CanAddItem(i, 1));
@@ -1677,7 +1723,7 @@ namespace AICompanion
             Skill.Raise(me, station != null && station.m_craftingSkill != Skills.SkillType.None ? station.m_craftingSkill : Skills.SkillType.Crafting, 1f);
             st.NextGear = 0f;
             Plugin.Instance?.Note($"{Companion.NameOf(me)} made a {what} at {(station != null ? station.transform.position : me.transform.position):F0}");
-            if (forGoal) Talk.Mention(me, $"I made {Mathf.Max(1, r.m_amount)} {what.ToLowerInvariant()} for my {st.Goal?.What}."); // (a step on the way: not for chat)
+            if (forGoal) Talk.Mention(me, $"I made {Mathf.Max(1, r.m_amount)} {what.ToLowerInvariant()} for my {Work.Aim(st)?.What}."); // (a step on the way: not for chat)
             else Talk.Tell(me, st.Goal != null && st.Goal.Recipe == r ? $"I made my {what.ToLowerInvariant()}!" : $"I made a {what.ToLowerInvariant()}.");
             if (!forGoal) Journal.Made(me, $"a {what.ToLowerInvariant()}");
             return forGoal ? $"made {Mathf.Max(1, r.m_amount)} {what.ToLowerInvariant()}" : $"made a {what.ToLowerInvariant()}";
