@@ -287,6 +287,21 @@ view widening and the wind rising; longer lines are faster. Jump lets go. Everyo
 
 </td>
 </tr>
+<tr>
+<td valign="top">
+
+### 🌈 Rainbows
+<img src="dist/Rainbows.cover.png" alt="Rainbows" width="100%">
+
+When a good spell of rain ends and the sun is low, a rainbow arcs across the sky opposite the sun, with a soft chime. Now and then it is a double
+rainbow, with a fainter second bow outside it. It follows the sun, fades into the horizon and goes after a few minutes. Look up at it for
+**Rainbow's Blessing**: stamina and health come back faster and running and jumping cost less; a double rainbow gives a stronger one. Only you
+need it, and nothing is saved in the world.
+
+</td>
+<td valign="top">
+</td>
+</tr>
 </table>
 
 ## ⌨️ Keys at a glance

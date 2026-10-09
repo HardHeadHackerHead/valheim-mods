@@ -1,0 +1,10 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <AssemblyName>Rainbows</AssemblyName>
+    <RootNamespace>Rainbows</RootNamespace>
+  </PropertyGroup>
+  <ItemGroup>
+    <Reference Include="netstandard"><HintPath>$(ManagedDir)/netstandard.dll</HintPath><Private>false</Private></Reference>
+    <Reference Include="UnityEngine.AudioModule"><HintPath>$(ManagedDir)/UnityEngine.AudioModule.dll</HintPath><Private>false</Private></Reference>
+  </ItemGroup>
+</Project>

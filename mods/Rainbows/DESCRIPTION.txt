@@ -1,0 +1,7 @@
+Rainbows: a rainbow after the rain, and a blessing for looking up at it.
+
+What is in it
+- When a good spell of rain ends and the sun is low (morning or evening), a rainbow arcs across the sky opposite the sun. Three times in ten it is a double rainbow, with a fainter second one outside it, its colours the other way round. It fades in with a soft chime, follows the sun as it moves, fades into the horizon, and fades out after a few minutes or when the sun climbs too high. If the rain stops with the sun too high, it waits a while for the sun to come down.
+- Look up at it and you get Rainbow's Blessing for five minutes: stamina comes back 30% faster, health 20% faster, and running and jumping cost 20% less stamina. A double rainbow gives the Double Rainbow's Blessing, half as strong again.
+Settings: how often it comes, how long it must have rained, how long it stays, brightness, how often it is a double rainbow, the chime and its volume, and the blessing and how long it lasts.
+Only you need it: the sky is drawn for you from the weather the game already has, and nothing is saved in the world.

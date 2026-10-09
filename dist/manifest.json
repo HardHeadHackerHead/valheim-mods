@@ -272,6 +272,19 @@
                                    "Ziplines.dll",
                                    "Ziplines.pdb"
                                ]
+                 },
+                 {
+                     "guid":  "com.dhack.rainbows",
+                     "name":  "Rainbows",
+                     "version":  "0.1.0",
+                     "description":  "Rainbows: a rainbow after the rain, and a blessing for looking up at it.\n\nWhat is in it\n- When a good spell of rain ends and the sun is low (morning or evening), a rainbow arcs across the sky opposite the sun. Three times in ten it is a double rainbow, with a fainter second one outside it, its colours the other way round. It fades in with a soft chime, follows the sun as it moves, fades into the horizon, and fades out after a few minutes or when the sun climbs too high. If the rain stops with the sun too high, it waits a while for the sun to come down.\n- Look up at it and you get Rainbow\u0027s Blessing for five minutes: stamina comes back 30% faster, health 20% faster, and running and jumping cost 20% less stamina. A double rainbow gives the Double Rainbow\u0027s Blessing, half as strong again.\nSettings: how often it comes, how long it must have rained, how long it stays, brightness, how often it is a double rainbow, the chime and its volume, and the blessing and how long it lasts.\nOnly you need it: the sky is drawn for you from the weather the game already has, and nothing is saved in the world.",
+                     "notes":  "New: Rainbows. When the rain stops and the sun is low, a rainbow arcs across the sky (sometimes a double rainbow), and looking up at it gives Rainbow\u0027s Blessing: more stamina and health back, cheaper running and jumping, and half as strong again for a double rainbow.",
+                     "restart":  "",
+                     "cover":  "Rainbows.cover.png",
+                     "files":  [
+                                   "Rainbows.dll",
+                                   "Rainbows.pdb"
+                               ]
                  }
              ]
 }
