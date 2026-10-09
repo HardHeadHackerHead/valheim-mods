@@ -62,7 +62,7 @@ Every player installs the mods they want for themselves. A few need more than th
 | Mod | Who needs it |
 |---|---|
 | **AICompanion** | Everyone in the world, **the host too**: without it the game deletes saved companions. |
-| **Recycler, BountyBoard, SlotMachine, BirdTrap, LedgerChest, Quad's Cigars, SkalTavern** (new build pieces and items) | Everyone, and **the host above all**: a game without the mod deletes the pieces when their area loads. Restart after installing or updating them. |
+| **Recycler, BountyBoard, SlotMachine, BirdTrap, LedgerChest, Quad's Cigars, SkalTavern, Ziplines** (new build pieces and items) | Everyone, and **the host above all**: a game without the mod deletes the pieces when their area loads. Restart after installing or updating them. |
 | **PortalHub, BountyBoard** | The host (it keeps the portal links and the contracts), and everyone who wants their menus. |
 | Everything else | Only the players who want it. |
 
@@ -277,6 +277,14 @@ companions, get a **Skål!** buff.
 
 </td>
 <td valign="top">
+
+### 🪢 Ziplines
+<img src="dist/Ziplines.cover.png" alt="Ziplines" width="100%">
+
+Build two Zipline Posts (hammer, Misc) and link them with **E**: a rope runs between them, up to kilometres long. It only runs downhill. Press **E**
+on the higher post, hook your axe over the rope and hang from its handle, both hands on it and your feet dangling, and slide down with the
+view widening and the wind rising; longer lines are faster. Jump lets go. Everyone in the world needs it, and restart after installing.
+
 </td>
 </tr>
 </table>

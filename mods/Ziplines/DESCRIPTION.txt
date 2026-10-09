@@ -1,0 +1,10 @@
+Ziplines: build two posts, run a rope between them and ride it, hanging from your axe.
+
+What is in it
+- The Zipline Post is in the hammer menu (Misc). Build one, build another (a line can be kilometres long), press E on the first and then on the other, and a rope runs between them.
+- A line only runs downhill: press E on the higher post to ride. You hook your axe over the rope and hang from its handle with both hands, feet dangling. Without an axe (or with the setting off) you hang from a wooden triangle instead.
+- You are lifted to the rope and slide along it, faster downhill and faster on longer lines, the view widening and the wind rising, and are eased down at the far end. Press jump to let go. Shift+E on a post takes its line down.
+- A line has to be rideable: it must fall enough, your feet must clear the ground all the way and nothing may stand in the way; if not, it says why.
+- The lines are saved with the world (each post keeps its partner's place, so the far end need not be loaded), and others see you glide.
+Settings: longest line, slope, speed (and a percentage to slow the whole ride), how far you hang below the rope, the widening view, the wind and its volume, and whether you need an axe.
+Everyone in the world needs it installed (the post is a building piece: a game without the mod deletes it when its area loads). Restart after installing.
