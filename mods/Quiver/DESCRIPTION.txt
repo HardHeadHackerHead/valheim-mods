@@ -1,0 +1,7 @@
+Pick your shot arrows back up, and carry them in a quiver on your back.
+
+What is in it
+- Arrows (and crossbow bolts) you shoot that hit the ground, a tree, a wall or a creature come back as arrows you pick up again. Arrows that hit the ground, a tree or a wall are all kept; of those that hit a creature, three in four are kept and drop with its loot when it dies. Fire arrows are always used up. All of it is in the settings.
+- A quiver hangs on your back while you have arrows or bolts equipped, with the arrows you carry sticking out of it (more of them the more you carry), made from the real model of the arrow you have equipped.
+- Where the quiver hangs (back, side, height, tilt) is in the settings, and changes at once.
+It works on the game that shoots, so it does not need the other players to have it.

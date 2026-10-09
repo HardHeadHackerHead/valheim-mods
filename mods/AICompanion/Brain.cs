@@ -133,6 +133,8 @@ namespace AICompanion
         public float BuildKeepUntil;
         public int Built;                                           // pieces it has built since it was loaded here
         public string BuildNote;                                    // why it is not building (for its menu)
+        public float PlanGoalAt;
+        public Goal PlanGoal;                                       // what your plan is short of, to gather or make for it while building is its duty (Building)
         public Duties.Entry Duty;                                   // the home duty it works now, null when it lives its own life (Duties)
         public bool OnDuties;                                       // its duties are switched on: they, not the job ticks, say what it does at home
         public readonly Dictionary<string, float> Unfindable = new Dictionary<string, float>(); // what its goal needs and is not near home, until when

@@ -279,8 +279,30 @@ namespace AICompanion
 
             // Its home duties, in the order you set, each with its share of the time (a stockpile that reaches its target, your plans built),
             // then its own life with what is left; without duties, as before. Each one shows progress for the time it was away.
+            Job jobs0 = jobs;   // (what it works without duties)
             int builtHere = 0;
             string shortOf = null;
+            Goal planGoal = null;   // what your plan was still short of: gathered, made and fetched below, then built with what comes of it
+
+            // Your plans: what it can pay for put up first; short of materials, a pass over what is around it for what the plan needs (a share
+            // of its time), the rest kept for putting up what it brings in (below, once it is stored).
+            int BuildSlice(float floor)
+            {
+                float from = budget;
+                int n = Building.CatchUp(st, ref budget, floor, out string sh);
+                shortOf = shortOf ?? sh;
+                Goal plan = Building.ShortFor(st);
+                if (plan == null) return n;
+                planGoal = plan;
+                if (plan.Raw.Count == 0) return n;
+                float keep = floor + (from - floor) * 0.4f;
+                jobs = Goals.JobsFor(plan, out HashSet<string> prey) & ~(Job.Loot | Job.Hunt);
+                targets = targets.OrderBy(t => Work.Drops(t).Any(plan.Wants) ? 0 : 1).ThenBy(t => Vector3.Distance(t.transform.position, center)).ToList();
+                Gather(() => plan.Raw.All(kv => got.TryGetValue(kv.Key, out int have) && have >= kv.Value) || budget <= keep);
+                if (prey.Count > 0 && budget > keep && (Companion.BestRanged(me) != null || Companion.BestMelee(me) != null)) Hunt(me, got, hunted, prey, ref budget, seconds);
+                return n;
+            }
+
             if (Duties.Configured(me))
             {
                 var open = Duties.OnEntries(me).Where(e => e.Duty == Duty.Build ? Building.Pending(me) > 0 : Duties.Have(me, e.Duty) < e.Target).ToList();
@@ -288,7 +310,7 @@ namespace AICompanion
                 foreach (Duties.Entry e in open)
                 {
                     float floor = Mathf.Max(0f, budget - slice);
-                    if (e.Duty == Duty.Build) { builtHere += Building.CatchUp(st, ref budget, floor, out string sh); shortOf = shortOf ?? sh; continue; }
+                    if (e.Duty == Duty.Build) { builtHere += BuildSlice(floor); continue; }
                     int baseHave = Duties.Have(me, e.Duty);
                     jobs = e.Jobs;
                     Gather(() => baseHave + Duties.Accrued(e.Duty, got) >= e.Target || budget <= floor);
@@ -298,16 +320,17 @@ namespace AICompanion
             }
             else
             {
-                if (Duties.Open(me, Duty.Build)) builtHere += Building.CatchUp(st, ref budget, budget / 2f, out shortOf); // (half its time at most: the rest for its own work)
+                if (Duties.Open(me, Duty.Build)) builtHere += BuildSlice(budget / 2f); // (half its time at most: the rest for its own work)
+                jobs = jobs0;
                 Gather(null);
             }
-            if (builtHere > 0) did0.Add($"built {builtHere} piece{(builtHere == 1 ? "" : "s")} of your plan");
-            else if (shortOf != null) did0.Add($"could not build your plan: it needs {shortOf}");
 
             Stage = "trip";
             // 4b. What its goal still needs and nothing near home has: a trip further out, through the saved world (it is not loaded): flint on
             //     a shore 300 m off, and the like.
             string trip = fellTo == null ? AwayTrip(me, center, radius, got, ref budget) : null;
+            if (trip == null && fellTo == null && planGoal != null && planGoal.Raw.Count > 0)
+                trip = AwayTrip(me, center, radius, got, ref budget, Remaining(planGoal, got)); // (what the plan still lacks after what it gathered near home)
             if (trip != null) Journal.Trip(me, $"While you were away it {trip}.");
 
             Stage = "storing";
@@ -317,6 +340,21 @@ namespace AICompanion
             Work.SortHome(st); // (with QualityOfLife: what it carries into your chests by your rules)
             Armory.CatchUp(st, center, radius); // (better gear from your chests, and its old gear back in them)
             cooked += Kitchen.CookAll(me, center, radius);
+
+            Stage = "plan";
+            // What it brought in for your plan is in the chests now: the in-between things made (nails and the like), then everything it can
+            // put up with the time it kept.
+            if (planGoal != null && fellTo == null)
+            {
+                for (int k = 0; k < 20; k++)
+                {
+                    var step = Goals.StepReady(me, planGoal);
+                    if (step == null || Upgrades.Craft(st, step.Value.Key, step.Value.Value, true) == null) break;
+                }
+                int more = Building.CatchUp(st, ref budget, 0f, out string sh2);
+                builtHere += more;
+                if (more > 0) shortOf = null; else shortOf = shortOf ?? sh2;
+            }
 
             Stage = "crafting";
             // 6. Making and upgrading gear: what is ready, and its goal's in-between materials (bronze), as long as there is material.
@@ -354,6 +392,9 @@ namespace AICompanion
             Stage = "report";
             // The report.
             var did = new List<string>(did0);
+            if (builtHere > 0) did.Add($"built {builtHere} piece{(builtHere == 1 ? "" : "s")} of your plan");
+            else if (planGoal != null && planGoal.Ask.Count > 0) did.Add($"could not finish your plan: it needs {string.Join(" and ", planGoal.Ask)} that it cannot get itself");
+            else if (shortOf != null) did.Add($"could not build your plan: it needs {shortOf}");
             if (felled > 0) did.Add($"felled {felled} tree{(felled == 1 ? "" : "s")}");
             if (mined > 0) did.Add($"mined {mined} rock{(mined == 1 ? "" : "s")}");
             if (picked > 0) did.Add($"picked {picked} bush{(picked == 1 ? "" : "es")}");
@@ -385,10 +426,24 @@ namespace AICompanion
         /// home in the world as saved, nearest first. Each one picked is marked picked in the world (when its area loads, the game hides or
         /// removes it, as if picked there). The walk there and back takes its time. What it did ("went 260 m south for 4 flint"), or null.
         /// </summary>
-        private static string AwayTrip(Humanoid me, Vector3 center, float radius, Dictionary<string, int> got, ref float budget)
+        /// <summary>The goal less what it has already gathered (prefab name to number), for a trip for what is still missing.</summary>
+        private static Goal Remaining(Goal g, Dictionary<string, int> got)
+        {
+            var rest = new Goal { What = g.What };
+            foreach (var kv in g.Raw)
+            {
+                int left = kv.Value - (got.TryGetValue(kv.Key, out int have) ? have : 0);
+                if (left <= 0) continue;
+                rest.Raw[kv.Key] = left;
+                rest.Names[kv.Key] = g.Names.TryGetValue(kv.Key, out string name) ? name : kv.Key;
+            }
+            return rest;
+        }
+
+        private static string AwayTrip(Humanoid me, Vector3 center, float radius, Dictionary<string, int> got, ref float budget, Goal over = null)
         {
             if (budget < 300f || ZDOMan.instance == null) return null;
-            Goal g = Goals.Pick(me, center, radius); // (what it still needs, near home or not)
+            Goal g = over ?? Goals.Pick(me, center, radius); // (what it still needs, near home or not)
             if (g == null || g.Raw.Count == 0) return null;
             var brought = new Dictionary<string, int>();
             float farthest = 0f;

@@ -255,6 +255,10 @@ namespace AICompanion
                 if (!Building.Available) return "Needs the BuildOrders mod";
                 int left = Building.Pending(me);
                 if (left == 0) return "No plans near home";
+                Goal plan = Brain.Get(me).PlanGoal;
+                if (e == active && plan != null)
+                    return plan.Raw.Count > 0 ? $"Getting {plan.RawText()} for your plan ({left} piece{(left == 1 ? "" : "s")} left)"
+                         : plan.Ask.Count > 0 ? $"Your plan needs {string.Join(" and ", plan.Ask)} from you ({left} left)" : $"Making materials for your plan ({left} left)";
                 if (e == active) return $"Building: {left} piece{(left == 1 ? "" : "s")} left in your plans";
                 string why = Brain.Get(me).BuildNote;
                 return Resting(me, e.Duty) ? $"{left} left, waiting: {(string.IsNullOrEmpty(why) ? "nothing it can build yet" : why)}" : $"Waiting its turn: {left} piece{(left == 1 ? "" : "s")} left";

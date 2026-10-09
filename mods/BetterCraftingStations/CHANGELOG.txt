@@ -1,0 +1,1 @@
+New: filter chips above the crafting list at every station: a type (weapons, armor, tools, ammo, food, potions), how far into the game (wood and flint, bronze, iron, silver...) or just what you can make now, each with its count.

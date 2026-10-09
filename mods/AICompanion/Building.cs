@@ -22,6 +22,8 @@ namespace AICompanion
         private static Func<Vector3, float, int, string[]> NextFn => AppDomain.CurrentDomain.GetData("DHack.BuildOrders.Next") as Func<Vector3, float, int, string[]>;
         private static Func<string, bool> PlaceFn => AppDomain.CurrentDomain.GetData("DHack.BuildOrders.Place") as Func<string, bool>;
 
+        private static Func<Vector3, float, string[]> BlockersFn => AppDomain.CurrentDomain.GetData("DHack.BuildOrders.Blockers") as Func<Vector3, float, string[]>;
+
         public static bool Available => CountFn != null && NextFn != null && PlaceFn != null;
 
         /// <summary>Material the next pieces of your plans need, on it: it keeps it (Work.Keeps) instead of putting it away with its other finds.</summary>
@@ -91,8 +93,16 @@ namespace AICompanion
             string.Join(", ", items.Select(kv => $"{kv.Value} {Localization.instance.Localize(kv.Key).ToLowerInvariant()}"));
 
         /// <summary>The chests it may take materials from: its own, then yours near home (the duty is your ask to build, so yours are open to it).</summary>
-        private static List<Container> Sources(Humanoid me) =>
-            Home.Chests(me).Where(c => !c.IsInUse()).Concat(Work.YourChests(me, Work.Center(me), Work.RadiusOf(me) + 20f)).Distinct().ToList();
+        private static readonly Dictionary<long, KeyValuePair<float, List<Container>>> SourceCache = new Dictionary<long, KeyValuePair<float, List<Container>>>();
+
+        private static List<Container> Sources(Humanoid me)
+        {
+            long id = Companion.IdOf(me);
+            if (SourceCache.TryGetValue(id, out var hit) && Time.time - hit.Key < 4f) return hit.Value.Where(c => c != null).ToList();
+            List<Container> found = Home.Chests(me).Where(c => !c.IsInUse()).Concat(Work.YourChests(me, Work.Center(me), Work.RadiusOf(me) + 20f)).Distinct().ToList();
+            SourceCache[id] = new KeyValuePair<float, List<Container>>(Time.time, found);
+            return found;
+        }
 
         private static Dictionary<string, int> Count(IEnumerable<Inventory> inventories)
         {
@@ -114,6 +124,8 @@ namespace AICompanion
         public static Work.Task Next(BrainState st)
         {
             Humanoid me = st.Body;
+            Goal prevGoal = st.PlanGoal;   // (worked out every twenty seconds, not every look)
+            st.PlanGoal = null;
             if (!Available) { st.BuildNote = st.WorkNote = "BuildOrders is not installed"; return null; }
             Vector3 center = Work.Center(me);
             if (Time.time >= st.NextBuildLook)
@@ -124,7 +136,7 @@ namespace AICompanion
             List<Cand> cands = st.BuildList.Where(c => !(st.BuildSkip.TryGetValue(c.Id, out float until) && until > Time.time)).ToList();
             if (cands.Count == 0)
             {
-                st.BuildNote = st.WorkNote = Pending(me) > 0 ? "none of its plans can be built yet (what holds them up, an unlocked piece, a station)" : "no plans near home";
+                st.BuildNote = st.WorkNote = Pending(me) > 0 ? Explain(st) : "no plans near home";
                 return null;
             }
             st.BuildKeep.Clear();
@@ -176,11 +188,21 @@ namespace AICompanion
             }
             if (picked == 0 || want.Count == 0)
             {
-                Dictionary<string, int> first = Needs(cands[0].Prefab) ?? new Dictionary<string, int>();
-                Dictionary<string, int> missing = Missing(have, first);
-                st.BuildNote = st.WorkNote = missing.Count > 0 ? $"its plans need {Say(missing)} more" : "nothing to build with";
-                if (missing.Count > 0)
-                    Talk.Mention(me, $"I can't build the next piece of your plan: it needs {Say(missing)} more. Put some in a chest near home (or I'll gather it if wood or stone duties are on).", "needmat", 300f);
+                // Short of materials for what is next: what the next pieces need all told, less what it has, as a goal: it gathers it, smelts it,
+                // makes it at a station near home, or asks you for what it cannot get (Work gathers toward st.PlanGoal while this duty is its work).
+                Dictionary<string, int> total = new Dictionary<string, int>();
+                foreach (Cand c in cands) { var cost = Needs(c.Prefab); if (cost != null) foreach (var kv in cost) total[kv.Key] = (total.TryGetValue(kv.Key, out int had) ? had : 0) + kv.Value; }
+                Dictionary<string, int> missing = Missing(have, total);
+                if (prevGoal != null && Time.time - st.PlanGoalAt < 20f) st.PlanGoal = prevGoal;
+                else { st.PlanGoal = Short(st, missing, sources); st.PlanGoalAt = Time.time; }
+                if (st.PlanGoal != null && st.PlanGoal.Raw.Count > 0)
+                {
+                    st.BuildNote = st.WorkNote = $"getting {st.PlanGoal.RawText()} for your plan";
+                    Talk.Mention(me, $"Your plan needs {Say(missing)} more than I have. I'll go and get {st.PlanGoal.RawText()}.", "planget", 600f);
+                }
+                else st.BuildNote = st.WorkNote = missing.Count > 0 ? $"your plan needs {Say(missing)} more" : "nothing to build with";
+                if (st.PlanGoal != null && st.PlanGoal.Ask.Count > 0)
+                    Talk.Tell(me, $"For your plan I need {string.Join(" and ", st.PlanGoal.Ask)}, and I can't get that myself. Put some in a chest near home, or give it to me.", "planask", 600f);
                 return null;
             }
             Container chest = sources.Where(c => c.GetInventory().GetAllItems().Any(i => want.ContainsKey(i.m_shared.m_name)) && !Skipped(st, c))
@@ -188,6 +210,55 @@ namespace AICompanion
             if (chest == null) { st.BuildNote = st.WorkNote = "the materials for its plans are in chests it cannot get to"; return null; }
             st.BuildWant = want;
             return Work.New(Work.Kind.Supply, chest, Job.None);
+        }
+
+        /// <summary>What a plan is short of, as a goal (null when it is nothing it needs to do something about).</summary>
+        private static Goal Short(BrainState st, Dictionary<string, int> missing, List<Container> sources)
+        {
+            if (missing.Count == 0) return null;
+            Humanoid me = st.Body;
+            var items = missing.Select(kv => new KeyValuePair<ItemDrop, int>(ItemByName(kv.Key)?.GetComponent<ItemDrop>(), kv.Value));
+            return Goals.ForNeeds(me, Work.Center(me), Work.RadiusOf(me), st, items, sources, "plan");
+        }
+
+        /// <summary>
+        /// Away (CatchUp): what the next pieces of your plan still need that it does not have, as a goal to gather, make or ask for. Null when it
+        /// has it all (or there is no plan).
+        /// </summary>
+        public static Goal ShortFor(BrainState st)
+        {
+            Humanoid me = st.Body;
+            if (!Available || Pending(me) == 0) return null;
+            List<Cand> cands = Parse(NextFn(Work.Center(me), Reach(me), 24));
+            if (cands.Count == 0) return null;
+            List<Container> sources = Sources(me);
+            Dictionary<string, int> have = Count(sources.Select(c => c.GetInventory()).Concat(new[] { me.GetInventory() }));
+            var total = new Dictionary<string, int>();
+            foreach (Cand c in cands) { var cost = Needs(c.Prefab); if (cost != null) foreach (var kv in cost) total[kv.Key] = (total.TryGetValue(kv.Key, out int had) ? had : 0) + kv.Value; }
+            return Short(st, Missing(have, total), sources);
+        }
+
+        /// <summary>Why nothing of the plan can be built, said to its player now and then, and for its menu.</summary>
+        private static string Explain(BrainState st)
+        {
+            Humanoid me = st.Body;
+            var parts = new List<string>();
+            try
+            {
+                foreach (string line in BlockersFn?.Invoke(Work.Center(me), Reach(me)) ?? new string[0])
+                {
+                    string[] f = line.Split('|');
+                    if (f.Length < 3) continue;
+                    if (f[0] == "unlocked") parts.Add($"{f[1]} need pieces you have not unlocked yet ({f[2]})");
+                    else if (f[0] == "station") parts.Add($"{f[1]} need a {f[2]} built near them");
+                    else if (f[0] == "protected") parts.Add($"{f[1]} are on protected ground");
+                }
+            }
+            catch (Exception) { }
+            string why = parts.Count > 0 ? string.Join("; ", parts)
+                       : "none of it will stand yet (what holds it up cannot be built: the ground under it may need levelling first)";
+            Talk.Tell(me, $"I can't build your plan yet: {why}.", "planblock", 600f);
+            return "your plan is stuck: " + why;
         }
 
         private static bool Skipped(BrainState st, Component c) => st.Skipped.TryGetValue(c.gameObject.GetInstanceID(), out float until) && Time.time < until;
@@ -292,24 +363,27 @@ namespace AICompanion
             if (Mending.Hammer(me) == null) { Mending.MakeHammer(st); if (Mending.Hammer(me) == null) { shortOf = "a hammer"; return 0; } }
             Vector3 center = Work.Center(me);
             int built = 0;
-            for (int guard = 0; guard < 400 && budget >= 30f + floor; guard++)
+            // A batch at a time, in the order BuildOrders gives (each piece after what holds it up, as Build all does): asking again after every
+            // piece would work out the whole plan's stability each time. A piece it cannot pay for ends the batch (what rests on it waits).
+            for (int round = 0; round < 40 && budget >= 30f + floor; round++)
             {
-                List<Cand> next = Parse(NextFn(center, Reach(me), 12)).Where(c => !(st.BuildSkip.TryGetValue(c.Id, out float until) && until > Time.time)).ToList();
+                List<Cand> next = Parse(NextFn(center, Reach(me), 24)).Where(c => !(st.BuildSkip.TryGetValue(c.Id, out float until) && until > Time.time)).ToList();
                 if (next.Count == 0) break;
-                bool any = false;
+                int before = built;
                 foreach (Cand c in next)
                 {
+                    if (budget < 30f + floor) break;
                     Dictionary<string, int> needs = Needs(c.Prefab);
                     if (needs == null) continue;
-                    if (!Pay(me, needs)) { shortOf = Say(Missing(Count(Sources(me).Select(x => x.GetInventory()).Concat(new[] { me.GetInventory() })), needs)); continue; }
+                    if (!Pay(me, needs)) { shortOf = Say(Missing(Count(Sources(me).Select(x => x.GetInventory()).Concat(new[] { me.GetInventory() })), needs)); break; }
                     bool ok = false;
                     try { ok = PlaceFn(c.Id); } catch (Exception) { }
-                    if (!ok) { Refund(me, needs); st.BuildSkip[c.Id] = Time.time + 600f; continue; }
-                    budget -= 30f; built++; any = true;
+                    if (!ok) { Refund(me, needs); st.BuildSkip[c.Id] = Time.time + 600f; break; }
+                    budget -= 30f; built++;
                     Journal.Count(me, "built");
-                    break; // (the next pieces to build change with this one up: ask again)
                 }
-                if (!any) break;
+                if (built == before) break;   // nothing went up this round: no more to do
+                if (shortOf != null) break;
             }
             if (built > 0) { shortOf = null; Counted.Remove(Companion.IdOf(me)); }
             Companion.SaveBag(me);

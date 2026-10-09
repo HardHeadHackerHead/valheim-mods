@@ -186,6 +186,21 @@ namespace AICompanion
             return ranked.FirstOrDefault();
         }
 
+        /// <summary>
+        /// A goal for materials something else needs (your plan's pieces): for each item and how many are still short, where it comes from
+        /// (gathered, smelted, made at a station near home) or that it must ask you. Null when nothing is short.
+        /// </summary>
+        public static Goal ForNeeds(Humanoid me, Vector3 center, float radius, BrainState st, IEnumerable<KeyValuePair<ItemDrop, int>> short_, List<Container> chests, string what)
+        {
+            Learn();
+            if (_sources == null || ObjectDB.instance == null) return null;
+            _unfindable = st?.Unfindable;
+            List<CraftingStation> stations = Upgrades.StationsNear(center, radius + 10f);
+            var g = new Goal { What = what };
+            foreach (var kv in short_) if (kv.Key != null && kv.Value > 0) Expand(me, chests, stations, g, kv.Key, kv.Value, 0);
+            return g.Cost > 0 ? g : null;
+        }
+
         /// <summary>Fills in what the goal is missing; false when nothing is (then Upgrades makes it at once) .</summary>
         private static bool Build(Humanoid me, List<Container> chests, List<CraftingStation> stations, Goal g, Recipe r, int quality)
         {
