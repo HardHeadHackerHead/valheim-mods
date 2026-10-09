@@ -1,0 +1,7 @@
+Ale and mead that get you tipsy, and a toast.
+
+What is in it
+- Four drinks from the cauldron: Tankard of Ale (barley and honey), Honey Mead (honey and raspberries), Blueberry Wine (blueberries and honey) and Skaldic Mead (honey and cloudberries). They are the real tankard in your hand and on the ground, each with its own colour.
+- Each drink makes you drunker, and it wears off with time. A little warms you and gives some stamina and frost resistance. More and the view sways and your feet wander; very drunk and you stagger now and then; too much and you fall down. A big night ends in a hangover.
+- Press B (changeable) to raise a cup. Everyone near you who has the mod and toasts within a few seconds, and your AICompanion companions standing by, drink together and get a Skal! buff: faster stamina and health for five minutes, more with more to drink with.
+Every number and key is in the settings: how long to sober up, how strong the sway and wander are, whether you stumble, fall or get a hangover. Only the player who drinks needs the mod for the drinks; a toast needs it on both sides.

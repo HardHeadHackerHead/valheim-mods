@@ -1,0 +1,98 @@
+using System.Collections;
+using BepInEx;
+using BepInEx.Configuration;
+using BepInEx.Logging;
+using HarmonyLib;
+using UnityEngine;
+
+namespace SkalTavern
+{
+    /// <summary>
+    /// Ale and mead that get you tipsy, and a toast. Four drinks come from the cauldron (ale, honey mead, blueberry wine, skaldic mead); each
+    /// one raises how drunk you are, and that wears off with time. A little drink is warming and gives you a bit of stamina; more and the
+    /// world sways and your feet wander; too much and you stagger, and later have a hangover. Press the toast key beside friends (or your
+    /// companions) and everyone who raises a cup together gets a short Skal! buff.
+    ///
+    /// Split across files: Plugin.cs (settings, setup), Drinks.cs (the items, recipes and effects), Tipsy.cs (how drunk you are and what it
+    /// does), Toast.cs (the toast and its buff).
+    /// </summary>
+    [BepInPlugin(Guid, Name, Version)]
+    public class Plugin : BaseUnityPlugin
+    {
+        public const string Guid = "com.dhack.skaltavern";
+        public const string Name = "SkalTavern";
+        public const string Version = "0.1.0";
+
+        internal static Plugin Instance;
+        internal static ManualLogSource Log;
+
+        internal static ConfigEntry<float> SoberMinutes, Sway, Drift, ToastSeconds;
+        internal static ConfigEntry<bool> StumbleOn, PassOutOn, HangoverOn;
+        internal static ConfigEntry<KeyboardShortcut> ToastKey;
+
+        private Harmony _harmony;
+        internal int AwakeFrame;
+
+        private void Awake()
+        {
+            Instance = this;
+            Log = Logger;
+            AwakeFrame = Time.frameCount;
+            SoberMinutes = Config.Bind("Drinking", "MinutesToSober", 8f, new ConfigDescription("How many minutes it takes to sober up from very drunk (100). Longer and you stay tipsy for longer.", new AcceptableValueRange<float>(1f, 60f)));
+            Sway = Config.Bind("Drinking", "ScreenSway", 100f, new ConfigDescription("How much the view sways when you are drunk (percent). 0 for none.", new AcceptableValueRange<float>(0f, 200f)));
+            Drift = Config.Bind("Drinking", "FeetDrift", 100f, new ConfigDescription("How much your walking wanders when you are drunk (percent). 0 for none.", new AcceptableValueRange<float>(0f, 200f)));
+            StumbleOn = Config.Bind("Drinking", "Stumble", true, "Very drunk, you stagger now and then.");
+            PassOutOn = Config.Bind("Drinking", "PassOut", true, "Too much drink knocks you down (and sobers you a little).");
+            HangoverOn = Config.Bind("Drinking", "Hangover", true, "After a big night you wake with a hangover: slower stamina and health for a few minutes.");
+            ToastKey = Config.Bind("Toast", "Key", new KeyboardShortcut(KeyCode.B), "Raise a cup: a toast with whoever is near. Friends who toast at the same time (and your companions) give each other a Skal! buff.");
+            ToastSeconds = Config.Bind("Toast", "Window", 6f, new ConfigDescription("How many seconds apart two toasts can be and still count as together.", new AcceptableValueRange<float>(2f, 20f)));
+
+            _harmony = new Harmony(Guid);
+            _harmony.PatchAll(typeof(Plugin).Assembly);
+            Drinks.Register(); // a hot reload while in a world
+            Logger.LogInfo($"{Name} {Version} loaded");
+        }
+
+        private void Update()
+        {
+            Toast.UpdateNetwork();
+            Player player = Player.m_localPlayer;
+            if (player == null) return;
+            Tipsy.Tick(player, Time.deltaTime);
+            if (ToastKey.Value.MainKey != KeyCode.None && Input.GetKeyDown(ToastKey.Value.MainKey) && !TypingOrMenuOpen()) Toast.Raise(player);
+        }
+
+        private static bool TypingOrMenuOpen() =>
+            (Chat.instance != null && Chat.instance.HasFocus()) || Console.IsVisible() || TextInput.IsVisible() || Minimap.InTextInput() || Menu.IsVisible()
+            || Minimap.IsOpen() || StoreGui.IsVisible() || InventoryGui.IsVisible();
+
+        private void OnDestroy()
+        {
+            _harmony?.UnpatchSelf();
+            Toast.Unregister();
+            Tipsy.Clear();
+            Drinks.Unregister();
+            if (Instance == this) Instance = null;
+        }
+    }
+
+    // Whichever of ZNetScene and ObjectDB wakes first, the drinks are registered before a saved one is loaded (docs/modding-pitfalls.md).
+    [HarmonyPatch(typeof(ZNetScene), "Awake")]
+    internal static class ZNetScene_Awake
+    {
+        private static void Postfix() => Drinks.Register();
+    }
+
+    [HarmonyPatch(typeof(ObjectDB), "Awake")]
+    internal static class ObjectDB_Awake
+    {
+        private static void Postfix() => Drinks.Register();
+    }
+
+    // The game swaps in another ObjectDB's item lists when a world loads, which drops what was added to the old ones.
+    [HarmonyPatch(typeof(ObjectDB), nameof(ObjectDB.CopyOtherDB))]
+    internal static class ObjectDB_CopyOtherDB
+    {
+        private static void Postfix() => Drinks.Register();
+    }
+}

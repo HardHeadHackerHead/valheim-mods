@@ -62,7 +62,7 @@ Every player installs the mods they want for themselves. A few need more than th
 | Mod | Who needs it |
 |---|---|
 | **AICompanion** | Everyone in the world, **the host too**: without it the game deletes saved companions. |
-| **Recycler, BountyBoard, SlotMachine, BirdTrap, LedgerChest, Quad's Cigars** (new build pieces and items) | Everyone, and **the host above all**: a game without the mod deletes the pieces when their area loads. Restart after installing or updating them. |
+| **Recycler, BountyBoard, SlotMachine, BirdTrap, LedgerChest, Quad's Cigars, SkalTavern** (new build pieces and items) | Everyone, and **the host above all**: a game without the mod deletes the pieces when their area loads. Restart after installing or updating them. |
 | **PortalHub, BountyBoard** | The host (it keeps the portal links and the contracts), and everyone who wants their menus. |
 | Everything else | Only the players who want it. |
 
@@ -263,6 +263,19 @@ Only you need the mod.
 
 </td>
 </tr>
+<tr>
+<td valign="top">
+
+### 🍺 SkalTavern
+
+Ale and mead that actually get you tipsy. Four drinks from the cauldron (ale, honey mead, blueberry wine, skaldic mead), each the real tankard
+in your hand. A little warms you and gives some stamina; more and the view sways and your feet wander; very drunk and you stagger; too much and
+you fall, and a big night ends in a hangover. Press **B** to raise a cup: friends who toast with you, and your companions, get a **Skål!** buff.
+
+</td>
+<td valign="top">
+</td>
+</tr>
 </table>
 
 ## ⌨️ Keys at a glance
@@ -271,6 +284,7 @@ Only you need the mod.
 |---|---|---|
 | **F7** | Mod manager | Open the mod manager |
 | **J** / hold **J** | AICompanion | Summon your companion or open its menu / your companions come with you, or go home |
+| **B** | SkalTavern | Raise a cup: toast with friends and companions beside you for a Skål! buff |
 | **H** | AICompanion | Point: attack it, chop or mine it (a whole patch), pick it up, put its things in that chest, pull that cart, wait here |
 | **E** / Shift + **E** at a bird trap | BirdTrap | Add bait (or pluck the bird) / fill it with bait |
 | **Q** | QualityOfLife | Build a quick set (inventory open) / swap to it and back |
