@@ -10,7 +10,7 @@ reach limit, wards, and no-build locations. Menu-only Bridge and terrain-operati
 skipped; a batch containing only duplicates returns false. No building resources are consumed until the ghosts are built normally.
 
 `TryCreateBuildingShell(Player player, string title, string[] prefabs, Vector3[] positions, Quaternion[] rotations, out string planKey, out string error)`
-uses the same validation and ghost-only behavior with a **1–1,024 piece** bound (`MaximumShellPieces`). Submit the whole shell in one call:
+uses the same validation and ghost-only behavior with a **1–2,048 piece** bound (`MaximumShellPieces`). Submit the whole shell in one call:
 the final invalid pose rejects the entire submission. The original `TryCreateGhostPlan` limit stays at 256. Both methods refuse active
 blueprint/bridge placement. Removal supports the larger plan while preserving built pieces. The cap does not change blueprint import limits.
 

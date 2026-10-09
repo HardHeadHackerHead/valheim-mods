@@ -10,7 +10,7 @@ namespace BuildOrders
         // Only game/BCL types cross this boundary, so callers can reconnect after ScriptEngine reloads.
         public const int PlanningApiVersion = 1;
         public const int MaximumApiPieces = 256;
-        public const int MaximumShellPieces = 1024;
+        public const int MaximumShellPieces = 2048;
         private const string AddonPlanPrefix = "Blueprint: Addon ";
         private static bool IsAddonGhostPlan(string key) => key != null && key.StartsWith(AddonPlanPrefix, StringComparison.Ordinal);
 
