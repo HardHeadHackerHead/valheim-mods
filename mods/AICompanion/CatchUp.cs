@@ -146,6 +146,7 @@ namespace AICompanion
             var got = new Dictionary<string, int>();
             var notes = new List<string>();
             var also = new List<string>();
+            var did0 = new List<string>();   // what its duties did (for the report)
             float budget = seconds;
             int felled = 0, mined = 0, picked = 0, fights = 0;
             string fellTo = null;
@@ -220,9 +221,12 @@ namespace AICompanion
             targets = targets.OrderBy(t => hungry && Work.Edible(t) ? 0 : st.Goal != null && Work.Drops(t).Any(st.Goal.Wants) ? 1 : 2)
                              .ThenBy(t => Vector3.Distance(t.transform.position, center)).ToList();
 
+            // One pass over what is around it, with the jobs set in "jobs", until its time is up or "done" says it has enough.
+            void Gather(Func<bool> done)
+            {
             foreach (Component t in targets)
             {
-                if (budget <= 0f) break;
+                if (budget <= 0f || done != null && done()) break;
                 if (Free(me) <= 1) { notes.Add("its bag and chests are full"); break; }
                 switch (t)
                 {
@@ -271,6 +275,34 @@ namespace AICompanion
                         break;
                 }
             }
+            }
+
+            // Its home duties, in the order you set, each with its share of the time (a stockpile that reaches its target, your plans built),
+            // then its own life with what is left; without duties, as before. Each one shows progress for the time it was away.
+            int builtHere = 0;
+            string shortOf = null;
+            if (Duties.Configured(me))
+            {
+                var open = Duties.OnEntries(me).Where(e => e.Duty == Duty.Build ? Building.Pending(me) > 0 : Duties.Have(me, e.Duty) < e.Target).ToList();
+                float slice = open.Count > 0 ? budget / open.Count : 0f;
+                foreach (Duties.Entry e in open)
+                {
+                    float floor = Mathf.Max(0f, budget - slice);
+                    if (e.Duty == Duty.Build) { builtHere += Building.CatchUp(st, ref budget, floor, out string sh); shortOf = shortOf ?? sh; continue; }
+                    int baseHave = Duties.Have(me, e.Duty);
+                    jobs = e.Jobs;
+                    Gather(() => baseHave + Duties.Accrued(e.Duty, got) >= e.Target || budget <= floor);
+                }
+                jobs = goalJobs & ~(Job.Loot | Job.Hunt);
+                Gather(null);
+            }
+            else
+            {
+                if (Duties.Open(me, Duty.Build)) builtHere += Building.CatchUp(st, ref budget, budget / 2f, out shortOf); // (half its time at most: the rest for its own work)
+                Gather(null);
+            }
+            if (builtHere > 0) did0.Add($"built {builtHere} piece{(builtHere == 1 ? "" : "s")} of your plan");
+            else if (shortOf != null) did0.Add($"could not build your plan: it needs {shortOf}");
 
             Stage = "trip";
             // 4b. What its goal still needs and nothing near home has: a trip further out, through the saved world (it is not loaded): flint on
@@ -321,7 +353,7 @@ namespace AICompanion
 
             Stage = "report";
             // The report.
-            var did = new List<string>();
+            var did = new List<string>(did0);
             if (felled > 0) did.Add($"felled {felled} tree{(felled == 1 ? "" : "s")}");
             if (mined > 0) did.Add($"mined {mined} rock{(mined == 1 ? "" : "s")}");
             if (picked > 0) did.Add($"picked {picked} bush{(picked == 1 ? "" : "es")}");
@@ -537,8 +569,27 @@ namespace AICompanion
                 ItemDrop drop = prefab != null ? prefab.GetComponent<ItemDrop>() : null;
                 if (drop == null) continue;
                 int left = kv.Value;
-                IEnumerable<Container> chests = Home.Chests(me).Where(c => !c.IsInUse());
-                if (Work.Stows(me)) chests = chests.Concat(Work.YourChests(me, Work.Center(me), Work.RadiusOf(me) + 20f)); // then yours (only put in)
+                List<Container> own = Home.Chests(me).Where(c => !c.IsInUse()).ToList();
+                List<Container> yours = Work.Stows(me) ? Work.YourChests(me, Work.Center(me), Work.RadiusOf(me) + 20f).ToList() : new List<Container>();
+                // Its duties work for you: what it brings goes into your chests first (its own keep a little food for itself); without duties,
+                // into its own first, then yours (only put in).
+                bool forYou = Duties.Configured(me) && Duties.ToYours(me) && yours.Count > 0;
+                IEnumerable<Container> chests = forYou ? yours.Concat(own) : own.Concat(yours);
+                if (forYou && Food.IsFood(drop.m_itemData))
+                {
+                    int larder = own.Sum(c => c.GetInventory().GetAllItems().Where(Food.IsFood).Sum(i => i.m_stack));
+                    int toLarder = Mathf.Clamp(12 - larder, 0, left);
+                    foreach (Container chest in own)
+                    {
+                        if (toLarder <= 0) break;
+                        ZNetView lv = chest.GetComponent<ZNetView>();
+                        if (lv != null && !lv.IsOwner()) lv.ClaimOwnership();
+                        int had = chest.GetInventory().CountItems(drop.m_itemData.m_shared.m_name);
+                        chest.GetInventory().AddItem(prefab, toLarder);
+                        int put = chest.GetInventory().CountItems(drop.m_itemData.m_shared.m_name) - had;
+                        toLarder -= put; left -= put; stored += put;
+                    }
+                }
                 foreach (Container chest in chests)
                 {
                     if (left <= 0) break;

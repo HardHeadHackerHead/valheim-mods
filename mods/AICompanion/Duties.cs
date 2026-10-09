@@ -6,7 +6,7 @@ using UnityEngine;
 
 namespace AICompanion
 {
-    public enum Duty { Food, Wood, Mining }
+    public enum Duty { Food, Build, Wood, Mining }
 
     /// <summary>
     /// Its home duties: a short list in the order you set (Home tab), each with a stockpile it keeps up in its own chests: collect wood,
@@ -41,11 +41,11 @@ namespace AICompanion
             public bool On;
             public int Target;
 
-            public Job Jobs => Duty == Duty.Wood ? Job.Wood : Duty == Duty.Food ? Job.Forage | Job.Hunt | Job.Cook : Job.Stone | Job.Ore;
+            public Job Jobs => Duty == Duty.Wood ? Job.Wood : Duty == Duty.Food ? Job.Forage | Job.Hunt | Job.Cook : Duty == Duty.Build ? Job.None : Job.Stone | Job.Ore;
         }
 
-        public static string Label(Duty d) => d == Duty.Wood ? "Collect wood" : d == Duty.Food ? "Hunt and forage food" : "Mine stone and ore";
-        public static string Unit(Duty d) => d == Duty.Wood ? "wood" : d == Duty.Food ? "good meals" : "stone and ore";
+        public static string Label(Duty d) => d == Duty.Wood ? "Collect wood" : d == Duty.Food ? "Hunt and forage food" : d == Duty.Build ? "Build our plans" : "Mine stone and ore";
+        public static string Unit(Duty d) => d == Duty.Wood ? "wood" : d == Duty.Food ? "good meals" : d == Duty.Build ? "pieces" : "stone and ore";
         public static int Step(Duty d) => d == Duty.Food ? 10 : 20;
         public static int Max(Duty d) => d == Duty.Food ? 300 : 600;
         private static int Default(Duty d) => d == Duty.Food ? 60 : 100;
@@ -63,7 +63,7 @@ namespace AICompanion
                 int.TryParse(f[2], NumberStyles.Integer, CultureInfo.InvariantCulture, out int target);
                 list.Add(new Entry { Duty = d, On = f[1] == "1", Target = Mathf.Clamp(target > 0 ? target : Default(d), Step(d), Max(d)) });
             }
-            foreach (Duty d in Enum.GetValues(typeof(Duty))) if (list.All(e => e.Duty != d)) list.Add(new Entry { Duty = d, Target = Default(d) });
+            foreach (Duty d in Enum.GetValues(typeof(Duty))) if (list.All(e => e.Duty != d)) list.Add(new Entry { Duty = d, Target = Default(d), On = d == Duty.Build }); // (building your plans is on until you switch it off)
             return list;
         }
 
@@ -86,10 +86,10 @@ namespace AICompanion
         }
 
         /// <summary>Any duty switched on and a chest to keep the stockpile in: then these, not the plain job ticks, say what it does at home.</summary>
-        public static bool Configured(Humanoid c) => Cached(c).Any(e => e.On) && HasPlace(c);
+        public static bool Configured(Humanoid c) => Cached(c).Any(e => e.On && e.Duty != Duty.Build) && HasPlace(c);
 
-        /// <summary>Any duty switched on (for its menu).</summary>
-        public static bool AnyOn(Component c) => Cached(c).Any(e => e.On);
+        /// <summary>Any gathering duty switched on (for its menu).</summary>
+        public static bool AnyOn(Component c) => Cached(c).Any(e => e.On && e.Duty != Duty.Build);
 
         // ---- what counts toward a stockpile -------------------------------------------------------------------------
 
@@ -104,6 +104,7 @@ namespace AICompanion
             {
                 case Duty.Wood: return material && WoodNames.Contains(name);
                 case Duty.Food: return Food.IsFood(i) || Work.IsCookable(i);
+                case Duty.Build: return false;
                 default: return material && (name == "$item_stone" || name.EndsWith("ore", StringComparison.Ordinal) || name.EndsWith("scrap", StringComparison.Ordinal));
             }
         }
@@ -154,9 +155,12 @@ namespace AICompanion
         /// <summary>The first duty switched on whose stockpile is below its target and that is not resting. Null: its own life.</summary>
         public static Entry Active(Humanoid me)
         {
-            if (!HasPlace(me)) return null;
             foreach (Entry e in Cached(me))
-                if (e.On && Have(me, e.Duty) < e.Target && !Resting(me, e.Duty)) return e;
+            {
+                if (!e.On || Resting(me, e.Duty)) continue;
+                if (e.Duty == Duty.Build) { if (Building.Pending(me) > 0) return e; continue; } // (your plans near home that are left)
+                if (HasPlace(me) && Have(me, e.Duty) < e.Target) return e;
+            }
             return null;
         }
 
@@ -182,13 +186,28 @@ namespace AICompanion
         }
 
         /// <summary>Whether some duty not yet stocked is on, even if resting (for catching up while you were away).</summary>
-        public static bool Open(Humanoid me, Duty d) => Cached(me).Any(e => e.Duty == d && e.On && Have(me, d) < e.Target);
+        public static bool Open(Humanoid me, Duty d) => Cached(me).Any(e => e.Duty == d && e.On && (d == Duty.Build ? Building.Pending(me) > 0 : Have(me, d) < e.Target));
+
+        /// <summary>The duties switched on, in the order you set (for catching up).</summary>
+        public static List<Entry> OnEntries(Humanoid me) => Cached(me).Where(e => e.On).ToList();
+
+        /// <summary>How much of the duty's stock these gathered items (prefab name to number) come to (food in good meals).</summary>
+        public static int Accrued(Duty d, Dictionary<string, int> got)
+        {
+            float total = 0f;
+            foreach (var kv in got)
+            {
+                ItemDrop drop = ObjectDB.instance?.GetItemPrefab(kv.Key)?.GetComponent<ItemDrop>();
+                if (drop != null && Counts(d, drop.m_itemData)) total += kv.Value * (d == Duty.Food ? MealWeight(drop.m_itemData) : 1f);
+            }
+            return Mathf.FloorToInt(total);
+        }
 
         /// <summary>The jobs of every duty still short of its stockpile.</summary>
         public static Job OpenJobs(Humanoid me)
         {
             Job j = Job.None;
-            foreach (Entry e in Cached(me)) if (e.On && Have(me, e.Duty) < e.Target) j |= e.Jobs;
+            foreach (Entry e in Cached(me)) if (e.On && e.Duty != Duty.Build && Have(me, e.Duty) < e.Target) j |= e.Jobs;
             return j;
         }
 
@@ -218,7 +237,7 @@ namespace AICompanion
             Inventory inv = me.GetInventory();
             foreach (Entry e in Cached(me))
             {
-                if (!e.On) continue;
+                if (!e.On || e.Duty == Duty.Build) continue;
                 int carried = inv.GetAllItems().Where(i => Counts(e.Duty, i) && !Work.Keeps(me, i)).Sum(i => i.m_stack) - (e.Duty == Duty.Food ? 10 : 0);
                 if (carried <= 0) continue;
                 if (carried >= (e.Duty == Duty.Food ? 8 : 20) || e != active || Have(me, e.Duty) >= e.Target) { LastDelivery[id] = Time.time; return true; }
@@ -230,8 +249,17 @@ namespace AICompanion
 
         public static string Status(Humanoid me, Entry e, Entry active)
         {
-            int have = Have(me, e.Duty);
             if (!e.On) return "Off";
+            if (e.Duty == Duty.Build)
+            {
+                if (!Building.Available) return "Needs the BuildOrders mod";
+                int left = Building.Pending(me);
+                if (left == 0) return "No plans near home";
+                if (e == active) return $"Building: {left} piece{(left == 1 ? "" : "s")} left in your plans";
+                string why = Brain.Get(me).BuildNote;
+                return Resting(me, e.Duty) ? $"{left} left, waiting: {(string.IsNullOrEmpty(why) ? "nothing it can build yet" : why)}" : $"Waiting its turn: {left} piece{(left == 1 ? "" : "s")} left";
+            }
+            int have = Have(me, e.Duty);
             if (have >= e.Target) return $"Stocked: {have} of {e.Target}";
             if (e == active) return $"Working on it now: {have} of {e.Target}";
             if (Resting(me, e.Duty)) return $"Nothing to find near home just now: {have} of {e.Target}";

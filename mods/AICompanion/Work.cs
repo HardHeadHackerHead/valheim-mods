@@ -24,7 +24,7 @@ namespace AICompanion
     /// </summary>
     internal static class Work
     {
-        internal enum Kind { None, Hit, Pick, PickUp, Store, Upgrade, Craft, Hunt, Cook, Fetch, Fuel, Mend, Armory }
+        internal enum Kind { None, Hit, Pick, PickUp, Store, Upgrade, Craft, Hunt, Cook, Fetch, Fuel, Mend, Armory, Build, Supply }
 
         internal class Task
         {
@@ -44,6 +44,8 @@ namespace AICompanion
             public bool UsedChop;
             public float HealthAt = -1f;     // the target's health when it last checked its swings
             public float Started, LastClose;
+            public string BuildId, BuildPrefab; // the planned piece it is going to build (Building)
+            public float Arrived;               // when it got within reach of it
         }
 
         private static readonly string[] OreWords = { "Ore", "Scrap", "Flametal" };
@@ -204,18 +206,15 @@ namespace AICompanion
             Humanoid me = st.Body;
             Job jobs = JobsOf(me);
             st.OnDuties = Duties.Configured(me);
+            // Its home duties, in the order you set: the first one with work to do (a stockpile short, plans to build); none, its own life.
+            // Hungry, food comes first whatever the duty.
+            st.Duty = Duties.Active(me);
             if (st.OnDuties)
             {
-                // Its home duties, in the order you set: the first not yet stocked; all stocked, its own life. Hungry, food comes first whatever the duty.
-                st.Duty = Duties.Active(me);
                 jobs = st.Duty != null ? st.Duty.Jobs : Job.None;
                 if (st.Hungry) jobs |= Job.Forage | Job.Hunt | Job.Cook;
             }
-            else
-            {
-                st.Duty = null;
-                if (jobs == Job.None) jobs = AutoJobs(me); // living at home: it decides for itself what to do with what it has
-            }
+            else if (jobs == Job.None) jobs = AutoJobs(me); // living at home: it decides for itself what to do with what it has
             Vector3 center = Center(me);
             float radius = RadiusOf(me);
             if (TravelHome(st, center, radius, moveTo)) return;
@@ -236,7 +235,7 @@ namespace AICompanion
                     st.NextWorkLook = Time.time + 0.2f;
                 }
             }
-            else if (st.Duty != null && st.Task.Job != Job.None) Duties.Worked(me, st.Duty);
+            else if (st.Duty != null && (st.Task.Job != Job.None || st.Task.Kind == Kind.Build || st.Task.Kind == Kind.Supply)) Duties.Worked(me, st.Duty);
             if (st.Task == null)
             {
                 if (Idle.AtHome(st, master, center, radius, moveTo, stop, lookAt)) return; // between jobs: the fire, a chair, out of the rain, a stroll
@@ -551,6 +550,7 @@ namespace AICompanion
             if (Time.time - t.Started > (t.Trip ? 240f : t.Ordered ? 180f : 60f) || (dist > 3f && Time.time - t.LastClose > (t.Trip || t.Ordered ? 120f : 20f))) // (pointed at from far off: the walk there)
             {
                 // A piece it could not get to: the rest of that wall too (a stake wall outside your walls: one stake after another, for ever).
+                if (t.Kind == Kind.Build) Building.Failed(st, t);
                 if (t.Kind == Kind.Mend)
                     foreach (Collider col in Physics.OverlapSphere(t.Target.transform.position, 6f, LayerMask.GetMask("piece", "piece_nonsolid")))
                         if (col.GetComponentInParent<WearNTear>() is WearNTear near && near != t.Target) st.Skipped[near.gameObject.GetInstanceID()] = Time.time + 600f;
@@ -698,6 +698,30 @@ namespace AICompanion
                     st.Task = null;
                     break;
 
+                case Kind.Supply:
+                    if (dist > 2f) { moveTo(at, 1.2f, dist > 8f); break; }
+                    t.LastClose = Time.time;
+                    stop();
+                    Building.Take(st, (Container)t.Target);
+                    st.Task = null;
+                    break;
+
+                case Kind.Build:
+                    ItemDrop.ItemData hammer = Mending.Hammer(me);
+                    if (hammer == null) { st.Task = null; break; }
+                    // A hammer reaches a few metres, in any direction (up on a wall, down in a foundation): it comes within six metres of the piece.
+                    if (Vector3.Distance(me.transform.position + Vector3.up, t.Pos) > 6f) { moveTo(at, 3f, dist > 8f); break; }
+                    t.LastClose = Time.time;
+                    stop();
+                    lookAt(t.Pos);
+                    st.WorkTool = hammer;
+                    if (t.Arrived == 0f) t.Arrived = Time.time;
+                    if (Time.time - t.Arrived < 1.2f) break;
+                    Mending.Swing(me, hammer);
+                    Building.Place(st, t);
+                    st.Task = null;
+                    break;
+
                 case Kind.Hunt:
                     var prey = (Character)t.Target;
                     if (prey != null && prey.IsDead()) Loot.AddSpot(st, prey.transform.position); // its meat and hide, in a moment
@@ -801,6 +825,8 @@ namespace AICompanion
                 Kind.Armory => "looking in your chest for better gear",
                 Kind.Fuel => "putting wood on the fire",
                 Kind.Mend => "repairing " + Hoverable(t.Target).ToLowerInvariant(),
+                Kind.Build => "building your plan",
+                Kind.Supply => "getting materials for your plan",
                 Kind.Hunt => "hunting " + Localization.instance.Localize(((Character)t.Target)?.m_name ?? ""),
                 Kind.Upgrade => $"upgrading its {Localization.instance.Localize(t.Item?.m_shared.m_name ?? "")} at the {Localization.instance.Localize(((CraftingStation)t.Target).m_name)}",
                 _ => "gathering",
@@ -818,7 +844,7 @@ namespace AICompanion
         {
             if (t.Target == null) return false;
             if (t.Kind == Kind.Pick && Companion.Zdo(t.Target)?.GetBool(ZDOVars.s_picked, false) == true) return false;
-            if ((t.Kind == Kind.Store || t.Kind == Kind.Fetch || t.Kind == Kind.Armory) && ((Container)t.Target).IsInUse()) return false;
+            if ((t.Kind == Kind.Store || t.Kind == Kind.Fetch || t.Kind == Kind.Armory || t.Kind == Kind.Supply) && ((Container)t.Target).IsInUse()) return false;
             if (t.Kind == Kind.Mend && ((WearNTear)t.Target).GetHealthPercentage() >= 0.999f) return false;
             return true;
         }
@@ -996,6 +1022,13 @@ namespace AICompanion
                     if (Mending.Hammer(me) != null) return New(Kind.Mend, damaged, Job.None);
                     Talk.Tell(me, "Parts of the base are damaged. Give me a hammer and I'll fix them.", "nohammer", 30f);
                 }
+            }
+
+            // Your plans (BuildOrders): the duty "Build our plans", where it stands in its list: a piece it can pay for, or the trip for the materials.
+            if (st.Duty != null && st.Duty.Duty == Duty.Build)
+            {
+                Task build = Building.Next(st);
+                if (build != null) return build;
             }
 
             // 2. Better gear: an upgrade at its workbench (or forge...) when it has the materials, in its bag or its chests; else what it is
@@ -1477,7 +1510,7 @@ namespace AICompanion
         }
 
         /// <summary>What it keeps on itself: anything it wears or could use (weapons, armour, shields, tools, ammo, healing potions).</summary>
-        public static bool Keeps(Humanoid h, ItemDrop.ItemData i) => Gear.InSlot(i) || h.IsItemEquiped(i) || Companion.Useful(h, i) || IsTool(i) || IsCookable(i) || Mending.IsHammer(i);
+        public static bool Keeps(Humanoid h, ItemDrop.ItemData i) => Gear.InSlot(i) || h.IsItemEquiped(i) || Companion.Useful(h, i) || IsTool(i) || IsCookable(i) || Mending.IsHammer(i) || Building.Needed(h, i);
 
         private static bool HasRoom(Container chest, Humanoid h) =>
             chest.GetInventory().HaveEmptySlot() || h.GetInventory().GetAllItems().Any(i => !Keeps(h, i) && chest.GetInventory().CanAddItem(i, 1));

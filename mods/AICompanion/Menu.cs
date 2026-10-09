@@ -728,13 +728,13 @@ namespace AICompanion
             List<Duties.Entry> duties = Duties.Read(z);
             Duties.Entry working = Duties.Active(c);
             BeginCard("Home duties");
-            Note("What it does at home, top to bottom. It works the first duty that is on until its chest holds the amount you set, then the next one. When all are stocked it goes back to living its own life.", _text);
+            Note("What it does at home, top to bottom. It works the first duty that is on until its stockpile holds the amount you set (or your plans are built), then the next one. When all are done it goes back to living its own life.", _text);
             bool toYours = Duties.ToYours(c);
             GUILayout.BeginHorizontal();
             if (Choice("Put it in your chests", toYours, 2) && Commandable) _pending = () => Change(cz => cz.Set(Duties.DestKey, 0));
             if (Choice("Put it in its own chest", !toYours, 2) && Commandable) _pending = () => Change(cz => cz.Set(Duties.DestKey, 1));
             GUILayout.EndHorizontal();
-            if (duties.Any(x => x.On) && !Duties.HasPlace(c))
+            if (duties.Any(x => x.On && x.Duty != Duty.Build) && !Duties.HasPlace(c))
                 Note(toYours ? (Work.Stows(c) ? "No chest of yours near its home that it can use: duties wait for one." : "Putting things in your chests is off (Your chests, below): duties wait until you switch it on.")
                              : "It has no chest of its own: duties wait. Give it one in Bed and chests above.", _warn);
             else if (toYours) Note("What is in your chests at home counts: with 300 wood there and 100 asked for, it rests.", _dim);
@@ -752,6 +752,12 @@ namespace AICompanion
                     _pending = () => Change(cz => { var l = Duties.Read(cz); int k = l.FindIndex(a => a.Duty == dd); if (k >= 0 && k < l.Count - 1) { var t = l[k]; l[k] = l[k + 1]; l[k + 1] = t; Duties.Write(cz, l); } });
                 GUILayout.EndHorizontal();
                 if (!e.On) continue;
+                if (dd == Duty.Build)
+                {
+                    Note("      " + Duties.Status(c, e, working), e == working ? _good : _dim);
+                    if (Duties.Status(c, e, working).StartsWith("Needs")) Note("      Install BuildOrders, then plan pieces at your base (hammer out, Left Alt): it builds them, paying from its bag and your chests.", _warn);
+                    continue;
+                }
                 int step = Duties.Step(dd), max = Duties.Max(dd);
                 Stepper("      Keep in " + (toYours ? "your chests" : "its chest"), $"{e.Target} {Duties.Unit(dd)}",
                     () => Change(cz => { var l = Duties.Read(cz); var x = l.First(a => a.Duty == dd); x.Target = Mathf.Clamp(x.Target - step, step, max); Duties.Write(cz, l); }),
@@ -776,7 +782,7 @@ namespace AICompanion
             EndCard();
 
             Job jobs = Work.JobsOf(c);
-            BeginCard(duties.Any(x => x.On) ? "Other jobs (not used while a duty is on)" : "Jobs (optional)");
+            BeginCard(duties.Any(x => x.On && x.Duty != Duty.Build) ? "Other jobs (not used while a duty is on)" : "Jobs (optional)");
             Job auto = Work.AutoJobs(c);
             Note(jobs == Job.None
                 ? "Nothing ticked: it decides for itself, gathering what its goal needs and what its tools allow. Right now: " + (auto == Job.None && goal == null ? "nothing (no tools, and enough food)." : JobNames(auto | Goals.JobsFor(goal, out _)) + ".")
