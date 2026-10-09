@@ -141,8 +141,9 @@ for t in range(TIERS):
     n = ring_count(r, 2.0)
     for i in range(n):
         a = (i + 0.5 * (t % 2)) * 360.0 / n
-        if ang(a, MASTER) < 7 and t < 3:
-            continue          # the master's box stands here
+        # the master's box stands on the third tier: the two below run on under it (no hollow beneath), the third gives way to its floor
+        if t == 2 and abs(r * math.sin(rad(a))) < 3.0:
+            continue
         put("stone_floor_2x2", r, a, top - 1.0)
         if ang(a, MAIN) > 8 and ang(a, MASTER) > 10:
             seats.append({"r": round(r - 0.3, 2), "a": round(a, 2), "y": round(top, 2)})

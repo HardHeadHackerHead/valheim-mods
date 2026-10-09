@@ -158,7 +158,7 @@ namespace Arena
             }
             else
             {
-                y = Line(w, kind == Contest.KindOf.Champion ? "One named champion, a head taller, at three stars. You fight with what you carry." : "Wave after wave, harder each time, until you fall or take your purse. You fight with what you carry.", y, Ui.Dim);
+                y = Line(w, kind == Contest.KindOf.Champion ? "One named champion, a head taller, with as many stars as it can bear. You fight with what you carry." : "Wave after wave, harder each time, until you fall or take your purse. You fight with what you carry.", y, Ui.Dim);
                 y = Heading(w, "Who you fight  <size=70%><color=#bdb7a9>(each land opens as your world beats the boss before it)</color></size>", y);
                 y = Choices(w, y, Enumerable.Range(0, stage + 1).ToList(), t => Roster.TierNames[t], t => t == _tier, t => _tier = t);
                 tier = Mathf.Clamp(_tier, 0, stage);

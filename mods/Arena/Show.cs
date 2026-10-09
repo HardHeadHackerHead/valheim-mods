@@ -16,7 +16,7 @@ namespace Arena
     internal static class Show
     {
         internal const int Armoury = 1, Prize = 2, Reward = 3;
-        private const string ChestKey = "dh_arena_chest";
+        private const string ChestKey = "dh_arena_chest", ChestTimeKey = "dh_arena_chest_t";
 
         private static GameObject _chest;
         private static int _chestKind;
@@ -39,6 +39,7 @@ namespace Arena
             ZNetView view = go.GetComponent<ZNetView>();
             if (view == null || !view.IsValid()) { Object.Destroy(go); return null; }
             view.GetZDO().Set(ChestKey, kind);   // (before the items: a container reloads when its saved data changes)
+            view.GetZDO().Set(ChestTimeKey, ZNet.instance.GetTime().Ticks);
             Piece piece = go.GetComponent<Piece>();
             if (piece != null) piece.m_canBeRemoved = false;
             WearNTear wear = go.GetComponent<WearNTear>();
@@ -120,14 +121,17 @@ namespace Arena
         /// </summary>
         internal static void Tidy()
         {
-            if (!Site.Known || Contest.Active || Player.m_localPlayer == null || Travel.Distance(Player.m_localPlayer.transform.position) > 300f) return;
+            // (never while anyone fights: another player's chest is that player's, standing in the ring for them right now)
+            if (!Site.Known || Net.Busy || Player.m_localPlayer == null || Travel.Distance(Player.m_localPlayer.transform.position) > 300f) return;
+            long now = ZNet.instance.GetTime().Ticks;
             foreach (Container c in Object.FindObjectsOfType<Container>())
             {
                 if (c == null || c.gameObject == _chest) continue;
                 ZNetView view = c.GetComponent<ZNetView>();
                 if (view == null || !view.IsValid()) continue;
                 int kind = view.GetZDO().GetInt(ChestKey, 0);
-                if (kind == 0 || kind == Prize && c.GetInventory().NrOfItems() > 0) continue;   // (the armourer's and the reward chests: lent things)
+                if (kind == 0 || kind == Prize && c.GetInventory().NrOfItems() > 0) continue;
+                if (now - view.GetZDO().GetLong(ChestTimeKey, 0L) < System.TimeSpan.TicksPerMinute * 15) continue;   // (only old ones: left by a fight long over)   // (the armourer's and the reward chests: lent things)
                 view.ClaimOwnership();
                 view.Destroy();
             }
@@ -197,6 +201,7 @@ namespace Arena
             Vector3 local = new Vector3(3.2f, 0f, -(Layout.Floor - 2.2f));
             Vector3 at = here ?? Floor(Site.World(local));   // (somewhere else only for testing)
             _armourer = new GameObject("ArenaArmourer");
+            if (Scenery.Root != null) _armourer.transform.SetParent(Scenery.Root, true);   // (goes with the arena when it is taken down)
             GameObject smith = Figures.Make(_armourer.transform, at, Quaternion.LookRotation(Site.Turn * new Vector3(-local.x, 0f, -local.z)), new Figures.Look
             {
                 Model = 0, Skin = new Color(0.82f, 0.62f, 0.5f), Hair = new Color(0.3f, 0.18f, 0.1f),
@@ -208,6 +213,14 @@ namespace Arena
             smith.AddComponent<Armourer>();
             Fx.SpawnPuff(at);
             Effect("vfx_spawn", at);
+        }
+
+        /// <summary>The mod loading or unloading: no Armourer is left standing (one from before a reload would stay forever).</summary>
+        internal static void ClearLeftovers()
+        {
+            Armourer(false);
+            // (by name: one left by an earlier copy of the mod is of that copy's types, not this one's)
+            foreach (GameObject go in Object.FindObjectsOfType<GameObject>()) if (go != null && go.name == "ArenaArmourer" && go != _armourer) Object.Destroy(go);
         }
 
         // ---- fireworks ----------------------------------------------------------------------------------------------------------

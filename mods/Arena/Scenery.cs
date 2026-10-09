@@ -152,7 +152,7 @@ namespace Arena
                 if (mb == null) continue;
                 bool game = mb is Piece || mb is WearNTear || mb is ZSyncTransform || mb is ZSyncAnimation || mb is Door || mb is Container
                             || mb is Interactable || mb is Hoverable || mb is StaticPhysics;
-                if (game && !(mb is Stand)) Object.Destroy(mb);
+                if (game && !(mb is Stand) && !(mb is Chair)) Object.Destroy(mb);   // (a seat stays a seat: the Arena Master's throne, benches)
             }
             foreach (ZNetView v in go.GetComponentsInChildren<ZNetView>(true)) Object.Destroy(v);
         }

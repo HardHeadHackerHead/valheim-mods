@@ -21,7 +21,7 @@ namespace Arena
     {
         public const string Guid = "com.dhack.arena";
         public const string Name = "Arena";
-        public const string Version = "0.2.1";
+        public const string Version = "0.2.2";
 
         internal static Plugin Instance;
         internal static ManualLogSource Log;
@@ -56,6 +56,7 @@ namespace Arena
             Duel.Init();
             Net.Init();
             Layout.Load();
+            Show.ClearLeftovers();   // (a hot reload: what the last copy of the mod left in the world)
             Things.Register();   // a hot reload while in a world
             Logger.LogInfo($"{Name} {Version} loaded");
         }
@@ -85,6 +86,7 @@ namespace Arena
             Duel.Abort(true);
             Duel.Unregister();
             Crowd.Clear();
+            Show.ClearLeftovers();
             Scenery.Drop();
             Site.Unpin();
             Net.Unregister();

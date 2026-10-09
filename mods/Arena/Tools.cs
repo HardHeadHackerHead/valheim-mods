@@ -123,6 +123,35 @@ namespace Arena
                 yield break;
             }
             if (sub == "door") { Scenery.OpenDoor(args.Length > 1 && float.TryParse(args[1], out float ds) ? ds : 20f); output(new JObject { ["door"] = "set" }); yield break; }
+            if (sub == "champs")
+            {
+                var list = new JArray();
+                for (int t = 0; t < Roster.TierNames.Length; t++)
+                    foreach (string c in Roster.ChampionPool(t))
+                    {
+                        Character ch = ZNetScene.instance.GetPrefab(c)?.GetComponent<Character>();
+                        float dmg = Roster.HardestHit(c);
+                        list.Add($"{Roster.TierNames[t]} {c}: health {ch?.m_health}, hardest hit {dmg:0}, level {Roster.ChampionLevel(t, c, Contest.KindOf.Road, 0)} (bout {Roster.ChampionLevel(t, c, Contest.KindOf.Champion, 0)})");
+                    }
+                output(new JObject { ["champions"] = list });
+                yield break;
+            }
+            if (sub == "holes")
+            {
+                // straight down every half metre over the stands and the walk: where would you fall to the ground?
+                int mask = LayerMask.GetMask("Default", "static_solid", "Default_small", "piece", "terrain");
+                var holes = new JArray();
+                for (float r = Layout.Podium + 0.3f; r < Layout.Facade - 0.3f; r += 0.5f)
+                    for (float a = 0f; a < 360f; a += 0.75f)
+                    {
+                        Vector3 local = new Vector3(Mathf.Sin(a * Mathf.Deg2Rad) * r, 20f, Mathf.Cos(a * Mathf.Deg2Rad) * r);
+                        if (!Physics.Raycast(Site.World(local), Vector3.down, out RaycastHit hit, 40f, mask)) continue;
+                        float y = Site.Local(hit.point).y;
+                        if (y < 2.5f && holes.Count < 200 && !(r > 16.2f && r < 16.8f)) holes.Add($"r {r:0.0} a {a:0} -> {y:0.0}");   // (the crack behind the podium wall: too narrow to fall into)
+                    }
+                output(new JObject { ["holes"] = holes });
+                yield break;
+            }
             if (sub == "fireworks") { Show.Fireworks(12, 6f); output(new JObject { ["fireworks"] = 12 }); yield break; }
             if (sub == "kittest") { output(new JObject { ["kit"] = Kit.SelfTest(player), ["stowed"] = Kit.Stowed(player) }); yield break; }
             if (sub == "railtest")

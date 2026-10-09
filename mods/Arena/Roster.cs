@@ -33,7 +33,7 @@ namespace Arena
             new[] { "Draugr_Elite", "Abomination", "Wraith", "BlobElite", "Unbjorn" },
             new[] { "Fenring", "StoneGolem", "Fenring_Cultist", "Ulv" },
             new[] { "GoblinBrute", "Lox", "GoblinShaman" },
-            new[] { "SeekerBrute", "Seeker" },
+            new[] { "SeekerBrute" },   // (a seeker: too little health for the hit it has, to be a champion)
             new[] { "Charred_Melee", "Morgen", "Asksvin", "Charred_Mage" },
         };
         private static string _lastChampion;
@@ -91,6 +91,46 @@ namespace Arena
             if (pool.Count > 0) return _lastChampion = pool[Random.Range(0, pool.Count)];
             List<string> fodder = Pool(tier);
             return fodder.Count > 0 ? fodder[fodder.Count - 1] : null;
+        }
+
+        // How tough a land's champion may be, after its stars: its health (the game's stars multiply it: two at a star, three at two) and its
+        // hardest hit (half again at a star, double at two), against what that land's gear can take.
+        private static readonly float[] ChampionHealth = { 120f, 600f, 900f, 1300f, 1900f, 2700f, 3600f };
+        private static readonly float[] ChampionHit = { 30f, 140f, 200f, 260f, 340f, 450f, 550f };
+        private static readonly Dictionary<string, float> Hits = new Dictionary<string, float>();
+
+        /// <summary>The hardest single attack a creature has (its attack items, set or random).</summary>
+        internal static float HardestHit(string prefab)
+        {
+            if (Hits.TryGetValue(prefab, out float known)) return known;
+            Humanoid h = ZNetScene.instance?.GetPrefab(prefab)?.GetComponent<Humanoid>();
+            float best = 0f;
+            void Look(GameObject w) { ItemDrop.ItemData d = w != null ? w.GetComponent<ItemDrop>()?.m_itemData : null; if (d != null) best = Mathf.Max(best, d.m_shared.m_damages.GetTotalDamage()); }
+            if (h != null)
+            {
+                foreach (GameObject w in h.m_defaultItems ?? new GameObject[0]) Look(w);
+                foreach (GameObject w in h.m_randomWeapon ?? new GameObject[0]) Look(w);
+                foreach (Humanoid.ItemSet set in h.m_randomSets ?? new Humanoid.ItemSet[0]) foreach (GameObject w in set.m_items ?? new GameObject[0]) Look(w);
+            }
+            Hits[prefab] = best;
+            return best;
+        }
+
+        /// <summary>
+        /// A champion's level (1; 2 and 3 for one and two stars): as many stars as its land's gear can take, by its health and by its hardest
+        /// hit, whichever allows fewer. A boar or a greydwarf gets both stars; a bear, a troll or an abomination none (they are a land's
+        /// champion as they are). Tougher in a Champion Bout (you bring your best) and as the Endless Horde goes on; a star more with Hard.
+        /// </summary>
+        internal static int ChampionLevel(int tier, string prefab, Contest.KindOf kind, int wave, bool hard = false)
+        {
+            int t = Mathf.Clamp(tier, 0, ChampionHealth.Length - 1);
+            float health = Mathf.Max(1f, ZNetScene.instance?.GetPrefab(prefab)?.GetComponent<Character>()?.m_health ?? 100f);
+            float hit = HardestHit(prefab);
+            float more = kind == Contest.KindOf.Champion ? 1.6f : kind == Contest.KindOf.Endless ? 1f + wave / 15f : 1f;
+            int byHealth = Mathf.RoundToInt(ChampionHealth[t] * more / health);
+            int byHit = hit <= 0f ? 3 : Mathf.FloorToInt(1f + 2f * (ChampionHit[t] * more / hit - 1f));
+            int level = Mathf.Clamp(Mathf.Min(byHealth, byHit), 1, 3);
+            return Mathf.Min(3, level + (hard ? 1 : 0));
         }
 
         /// <summary>The names a player would know a land's champions by.</summary>

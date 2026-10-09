@@ -306,7 +306,7 @@ namespace Arena
                 // three rounds a land, its champion in the third; on the Long Road each three takes you to the next land
                 if (Kind == KindOf.Road) Tier = Mathf.Min((n - 1) / 3, Roster.TierNames.Length - 1);
                 champion = step == 2;
-                fodder = 3 + step + (Rules.Hard ? 2 : 0) - (champion ? 2 : 0);
+                fodder = 3 + step + (Rules.Hard ? 2 : 0) - (champion ? 3 : 0);   // (two with the champion)
                 lean = step / 2f;
                 level = 1 + (Rules.Hard ? 1 : 0);
             }
@@ -334,7 +334,8 @@ namespace Arena
             if (champion)
             {
                 string prefab = Roster.Champion(Tier);
-                if (prefab != null) Queue.Enqueue(new Item { Prefab = prefab, Name = Roster.ChampionName(), Level = 3, Champion = true });
+                // (its stars by what its land's gear can take: Roster.ChampionLevel)
+                if (prefab != null) Queue.Enqueue(new Item { Prefab = prefab, Name = Roster.ChampionName(), Level = Roster.ChampionLevel(Tier, prefab, Kind, n, Rules.Hard), Champion = true });
             }
             if (Queue.Count == 0) { End(Outcome.Aborted); return; }
             _roundLeft = Rules.RoundSeconds + (champion ? 30f : 0f);
