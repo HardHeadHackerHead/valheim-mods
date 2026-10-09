@@ -1,225 +1,225 @@
 {
-  "mods": [
-    {
-      "guid": "com.dhack.aicompanion",
-      "name": "AICompanion",
-      "version": "0.20.2",
-      "description": "A viking companion who plays like a player: comes on your adventures, lives its own life at home, and gets better as it goes.\r\n\r\n- Press J to summon your companion or open its menu (E on it too). Hold J: your companions come with you, or go home.\r\n- Point and press H: at an enemy (they attack it), a tree, rock or plant (it works it, and the thing glows with a note above it while it does), your chest (it puts its things in), a cart (it pulls it), the ground (it waits there), the sky (it comes back).\r\n- \"Let it decide\": it reads what you are doing. It fights beside you, mines or chops beside you, and keeps close while you explore; where a place is too dangerous for its gear it tells you and only defends.\r\n- It fights like a player: timed parries (it learns each creature's swing), rolls out of sweeps and shots, joins in on what you are hitting and gets round behind it, pulls enemies off you when you are hurt, sneaks up for backstabs, uses weapon specials, hits and steps back against heavy hitters, drinks the right mead, remembers what has killed it, kites with its bow (leading moving targets, allowing for arrow drop), and fights bosses with care (flanking, keeping its distance, drinking early).\r\n- Follows you through portals, into crypts and caves, onto boats and through doors; it steers round stakes and fires, jumps streams and gets itself unstuck.\r\n- Home and away by itself: when you head out it comes along; back home it lives there again. It takes a free bed and empty chests by itself.\r\n- At home it works toward better gear: picks its next upgrade, gathers exactly what it needs (trips further out when nothing near has it), makes bronze and the like, crafts and upgrades at your workbench and forge.\r\n- It hunts, cooks on your cooking stations, keeps its fires burning, repairs its gear and your base, sleeps in its bed at night, and sorts what it brings home into the right chests (with QualityOfLife).\r\n- While you are away it catches up on all of it, and tells you what it did when you return.\r\n- Needs like a player: food for health and stamina, skills that rise, stamina, carry weight, weather, rest.\r\n- Its gear has slots of its own (weapons, shield, bow and arrows, axe, pickaxe, hammer, armour, and three food slots it keeps filled): change them from its menu from anywhere. When it falls it keeps its gear; only its bag goes into a tombstone, which it goes back for.\r\n- Its bag shows beside your inventory: drag items between you. Hotbar keys give it food, potions or gear.\r\n- Between jobs it acts like a person: sits by the fire or in a chair, gets out of the rain, takes a stroll, sits with you when you rest, waves when you come back, cheers after a big fight and answers your emotes.\r\n- A journal of its life, small talk that fits the moment, and chat messages about what it is up to.\r\n- Its menu: status, stats and every skill, orders, home, gear, looks and journal. Talk to it in chat: \"RÃƒÂ¡dvar, follow me\", \"RÃƒÂ¡dvar go home\".\r\n- With PartyHud it shows in the party panel (face, health, food); it shows on the map, and where it fell is marked for everyone.\r\n- Multiplayer: it belongs to whoever summoned it. Everyone in the world needs the mod (the host too), or the game deletes saved companions.",
-      "notes": "Fix: looking at a companion and pressing a hotbar key with a weapon, armour or tool on it handed the whole thing over. Only food and potions go that way now (one at a time); anything else is refused with a message. Giving gear from your inventory next to it, or from its menu, is unchanged.",
-      "restart": "",
-      "cover": "AICompanion.cover.png",
-      "files": [
-        "AICompanion.dll",
-        "AICompanion.pdb"
-      ]
-    },
-    {
-      "guid": "com.dhack.birdtrap",
-      "name": "BirdTrap",
-      "version": "1.0.0",
-      "description": "A buildable bird trap: bait it with berries or seeds, leave it under the open sky, and come back to a gull to pluck for feathers.\r\n\r\nHow it works\r\n- Build it with the hammer at a workbench (8 Wood, 2 Leather Scraps). It is a slatted box with a drop-door propped up by a stick tied to the bait pedal.\r\n- Use it to put bait in: raspberries, blueberries, cloudberries, barley, or beech, birch, carrot, turnip or onion seeds. Hold the alternate-place key (Shift) and use it to fill it at once. It holds five.\r\n- Baited and with open sky above it, a bird comes in 8 to 14 minutes (game time, so it keeps going while you are away). It eats one bait, the prop falls and the door drops.\r\n- Birds roost at night, and come at first light: sleep through the night and every trap you baited the day before has its bird in the morning. Under a roof none come, and the trap tells you why.\r\n- Use it again to pluck the gull (2 or 3 feathers) and let it go. The door goes back up, and with bait left the next bird is on its way.\r\n- Look at it to see how much bait is left and about how long until a bird. Build a few for a steady supply of feathers for arrows.\r\n- It has its own hand-made look: wicker slats, a drop-door on a forked prop stick, berries on a leaf, and a grey-and-white gull that hops about and pecks once it's caught.",
-      "notes": "First version: the Bird Trap. Bait it with berries or seeds under the open sky, and pluck the gull it catches for feathers.",
-      "restart": "It adds a new build piece. Restart the game after updating so it registers cleanly.",
-      "cover": "BirdTrap.cover.png",
-      "files": [
-        "BirdTrap.dll",
-        "BirdTrap.pdb"
-      ]
-    },
-    {
-      "guid": "com.dhack.bountyboard",
-      "name": "BountyBoard",
-      "version": "1.1.3",
-      "description": "A buildable notice board with contracts for the whole group, paid in coins and the materials of the stage you have reached.\n\nHow it works\n- Build it with the hammer at a workbench (Wood, Leather Scraps and Flint) and press E on it. Every board shows the same notices.\n- Five notices are posted each in-game day: hunt a number of one creature, clear out a region's creatures, slay starred ones, or bring in loot.\n- The whole server shares the contracts. The group can run three at a time, and a new one can only be taken when one is finished. Everyone's kills count towards them, and loot is handed in by whoever has it.\n- When a contract is finished, every player collects their own reward at a board.\n- The further you get, the harder it gets: each boss you beat opens the next region's creatures, and Hard and Brutal contracts (more to kill, better pay) show up more often.\n- Rewards are materials you will actually use, matched to progress: resin and flint early, then copper, tin and bronze after Eikthyr, iron after the Elder, silver after Bonemass, black metal after Moder, and on up to Ashlands metals. Coins come too.\n- Finished contracts raise the group's rank (Newcomers up to Legends), which adds a bonus to every reward.\n- A switch in the board's menu shows the running contracts and their progress on your screen, so you can hunt with them in mind.\n- It has its own hand-made look: a gabled roof, a horned skull, a hanging rune sign, pinned notices, a lantern and a bell.\nThe contracts are kept by the host's game, so BountyBoard has to be installed on the host too.",
-      "notes": "Fix: after a fresh game start the board was not registered until the mods were reloaded, so the game deleted any it found standing in the world. It is now registered as the world loads. Ones already lost can't be brought back; build them again. Fix: kills by any player now count in multiplayer (before, a kill only counted when the killer's own game was handling that creature). Fix: hosting a different world without restarting the game no longer carries the last world's contracts over and overwrites the new one's. Contracts are now kept by the world's id, so two worlds with the same name no longer share them (your existing contracts carry over).",
-      "restart": "It adds a new build piece. Restart the game after updating so it registers cleanly.",
-      "cover": "BountyBoard.cover.png",
-      "files": [
-        "BountyBoard.dll",
-        "BountyBoard.pdb"
-      ]
-    },
-    {
-      "guid": "com.dhack.buildfromchests",
-      "name": "BuildFromChests",
-      "version": "1.3.0",
-      "description": "Building with the hammer uses materials from chests near you, not just your inventory.\n\nHow it works\n- Pieces you place take materials from your inventory first, then from chests within range (default 20 m).\n- The build menu shows how many of each material you have in total, so you can see what is possible before you place anything.\n- Works together with CraftFromChests; each can be turned off on its own.\n\nSettings: range and whether the counts show.",
-      "notes": "Radius can now be set anywhere from 2 to 150 m (a slider in the configuration manager), and takes effect at once: raise it to build far from your storehouse, for instance a big BuildOrders blueprint at the edge of your base (BuildOrders' ghosts, hold-E build-all and fetch key use the same range).",
-      "restart": "",
-      "cover": "BuildFromChests.cover.png",
-      "files": [
-        "BuildFromChests.dll",
-        "BuildFromChests.pdb"
-      ]
-    },
-    {
-      "guid": "com.dhack.buildorders",
-      "name": "BuildOrders",
-      "version": "1.9.8",
-      "description": "Plan pieces as shared ghost build orders for everyone in your party, and build them by just walking up and pressing E.\r\n\r\nHow it works\r\n- With the hammer out, press Left Alt to turn plan mode on (press it again, or put the hammer away, to turn it off). In plan mode, placing a piece plans it instead of building it. It shows as a see-through ghost that other players see too. (A setting lets you hold the key instead.)\r\n- Walk up to a ghost and tap E to build it: no hammer needed, on land or in the water. It builds even if nothing supports it yet (so you can build the structure around it afterwards). It costs the normal materials, from your inventory and then nearby chests (with BuildFromChests), and needs the piece to be unlocked and the spot not to be protected.\r\n- Hold E at a ghost to build every ghost within 24 m (changeable in the F11 window) that you can afford, lowest first. Short of materials? It builds the part you can pay for, and only pieces that will stand on what is built (so nothing falls and nothing is wasted); come back with more and hold E again to carry on.\r\n- Aiming at a ghost shows what that piece costs, what the whole plan still needs against what you have, and how many pieces holding E would build right now.\r\n- Stability: while planning, ghosts are coloured by how well they would be supported (blue solid, green to red weaker, red would fall), worked out from the same rules the game uses. F10 shows or hides the colours any time, and the prompt says how well the ghost you are looking at would hold. It is an estimate; the game does the real check once a piece is built.\r\n- In plan mode, ghosts act like real pieces: you can aim at them and your next piece snaps onto their snap points, so you can lay out a whole structure with the normal snapping and build it later, piece by piece.\r\n- When you build for real, your placement snaps onto a ghost of the same piece, and the ghost disappears once the real piece is built.\r\n- G selects the piece you are looking at to build more like it, and Delete removes a ghost. F9 shows or hides all ghosts.\r\n- A panel totals the materials your orders still need.\r\n\r\nSettings: ghost opacity, view distance, snap distance, how close you must be to build with E, and the keys.\r\n\r\nSwimming: your hammer stays out in the water (setting BuildWhileSwimming), so you can plan and build from it. Equip the hammer before you jump in, because the game does not let you equip things while swimming.\r\n\r\nFetching materials: with the hammer out and a piece selected, a hint appears when your inventory is short of materials that the chests nearby have. Press Y (FetchKey) to take one stack of each of those materials out of the chests and into your inventory. It uses BuildFromChests for the chest access, so that mod has to be installed.\r\n\r\nBridge builder\r\n- Pick Bridge in the hammer's build menu (Misc tab). Click where the bridge starts and walk or swim across (a ghost of it stretches after you, with its length and cost), then click where it ends.\r\n- A Bridge panel opens beside the ghost: width (2, 4 or 6 m), material (wood; core wood, stronger and reaching deeper water; darkwood; stone, with a pillar under every slab and a stonecutter needed), sides (handrails, half walls or none), open or covered (a pitched roof on tall posts), supports down to the riverbed (auto, every 2 m, every 4 m), straight or gently arched, ends (a deck sloping from bank to bank, or a level deck with steps down at the lower end, stopping at the waterline), and torches every 8 m. The ghost changes as you choose and the panel shows what it takes against what you have. Confirm places it; Change end lets you aim the end again; Cancel or Esc drops it. Your choices are kept for next time.\r\n- The deck slopes evenly from end to end (kept above the water, so a pier works too). Build it with E or hold E like any plan; Remove and take-down work as usual. The ground is not levelled, and a bridge is not moved (its posts are cut to the riverbed where it stands). It warns when it is very steep, the water is too deep for the posts, or there is no workbench within reach of an end.\r\n\r\nPlans window (F11)\r\n- Blueprints: your library from BepInEx/blueprints, with each one's size, piece count and materials. Place one and a green preview of the whole structure follows where you look: mouse wheel turns it (Shift for fine steps), R turns it 90Ãƒâ€šÃ‚Â°, PgUp/PgDn raise or lower it, Home resets the height, click places it, right-click or Esc cancels. Nothing is built for free.\r\n- Level ground, always: when you place a plan, the ground under all of it is set to its floor height, with a gentle 3 m slope back to the natural ground around it, and painted as dirt (a brown pad shows where in the preview). The ghosts appear once it is done, about a second later. The game moves ground at most 8 m, and warded ground is left alone. It pauses if you walk more than 60 m away. Removing or moving the plan puts the ground back exactly as it was (unless some of it is already built; finishing a build never resets anything). Placed plans also have a Level ground button to level again.\r\n- Placed plans: every plan with its pieces left, how far away and which way, and the materials you have against what it needs. Build nearby builds every ghost within the build-all radius; Move picks the plan up into the preview again so you can put it somewhere better or turn it; Remove takes it away (click twice); if part of it is built, choose Remove ghosts only, or Also take down what is built: those pieces come down as with the hammer and their materials go straight into your inventory (the same materials the game gives back). You can also remove every ghost within a radius you choose, up to 150 m.\r\n- Pictures: every blueprint gets a picture in the Plans window, made in the game from the blueprint itself (or put your own image next to the file, same name, .png or .jpg).\r\n- Sharing: Share on a blueprint sends it (and its picture) to everyone playing with you; it shows up in their Plans window under \"Shared with you\" (Place, Save to library, Dismiss). Not playing together? Code copies it as a short text code to paste in a chat, and Paste code adds a code to your library. A shared blueprint is only a list of pieces: it never places itself, and you place it where you look.\r\n- Settings: build-all radius (up to 64 m), reach for E, ghost view distance, opacity, how many ghosts show at once, and switches for the main features. Changes save straight away.\r\n- Ask an AI assistant to design a build for you: BuildOrders writes a design guide (CLAUDE.md), every piece's size, snap points, cost and rules, and helper scripts (placing, a stability check, previews) into BepInEx/blueprints. Start Claude Code in that folder, ask for a fort or a house, then place it from the F11 window.\r\n- With the Claude Tools mod installed, an AI assistant can also see your game and place, check, photograph, build and take down blueprints for you through its request mailbox (BepInEx/claude). BuildOrders adds those commands to it by itself; without Claude Tools nothing changes.",
-      "notes": "1.9.8: Add a bounded atomic whole-building planning API for Hallwright (1–1,024 pieces). Validate all poses, unlocks, reach and protected areas before adding any ghosts; keep the existing 256-piece API unchanged. Add-on undo supports the larger plan and preserves built pieces. Keep completed add-on piece records while matching built pieces remain, so takedown still works after the ghosts are finished or F6 reloads. Include reload-safe planning-input and ghost-ray helpers for BuildShapes. No terrain edits or material consumption.",
-      "restart": "",
-      "cover": "BuildOrders.cover.png",
-      "files": [
-        "BuildOrders.dll",
-        "BuildOrders.pdb"
-      ]
-    },
-    {
-      "guid": "com.dhack.cigarsmoking",
-      "name": "Quad's Cigars",
-      "version": "0.2.1",
-      "description": "Grow tobacco, cure it, roll your own cigars and smoke them: a real part of the game, from the wild plant to the cigar in your mouth.\n\nHow it works\n- Find wild tobacco growing in the Meadows, the Black Forest and the Plains. Each biome has its own strain, a little different in leaf and flower. Picking a plant gives leaves and seeds.\n- Sow seeds with the cultivator in cultivated soil. A plant grows tall in about 25 minutes and gives leaves and more seeds. Every strain can be farmed in the Meadows, the Black Forest and the Plains.\n- Build a Tobacco Drying Rack: hang fresh leaves on it and take them back dried. Then pack the dried leaves into a Tobacco Curing Barrel to age them.\n- Build a Cigar Rolling Table (near a workbench) and roll cigars in the game's own crafting menu. Build a Humidor beside the table to roll the finer cigars.\n- Light a cigar from your inventory or hotbar. You smoke for 5 minutes with a cigar in your hand or mouth, an ember and drifting smoke; with a weapon in your right hand it stays in your mouth. Other players with the mod see it too.\n\nThe cigars (one at a time; lighting another starts it fresh):\n- Connecticut (Dried Meadow Leaf, Resin): Relaxed, stamina regenerates 15% faster.\n- Maduro (Aged Forest Leaf, Honey, Resin; needs a Humidor): Smooth, health regenerates 40% faster.\n- Corojo (Aged Forest Leaf, Thistle, Resin; needs a Humidor): Shadow, you make less noise and are harder to spot.\n- Habano (Aged Plains Leaf, Cloudberries, Resin; needs a Humidor): Fired Up, attacks and sprinting cost less stamina.\n\nSettings: how long a cigar lasts, how strong the bonuses are, how long plants grow and leaves dry and cure, and whether the smoke and glow are drawn.\nWild tobacco only appears in parts of the world you have not visited yet. It adds new items, pieces and plants. Restart the game after installing or updating it.",
-      "notes": "Fixes: a Drying Rack or Curing Barrel you built had nothing to turn leaves into (its list was only on the build-menu copy), so it took no leaves: it now works from the strains themselves. Tobacco items dropped on the ground could not be picked up (now on the item layer). When your bag is full, the rest of what a rack, barrel or plant gives you lands at your feet as a stack (it used to drop one and lose the rest), with a message. Leaves taken from a rack or barrel count from any world level. And a model that ever comes out with invalid points (seen once at game start) is made again, with a note in the log naming it.",
-      "restart": "It adds a new item. Restart the game after updating so the Cigar registers cleanly (a Cigar in your bag or on the ground is lost if the game starts without the mod).",
-      "cover": "CigarSmoking.cover.png",
-      "files": [
-        "CigarSmoking.dll",
-        "CigarSmoking.pdb"
-      ]
-    },
-    {
-      "guid": "com.dhack.claudetools",
-      "name": "ClaudeTools",
-      "version": "1.1.6",
-      "description": "Lets an AI assistant like Claude Code see your game and help you, through files on your computer: no network port, and it never moves your character or presses keys.\n\nHow it works\n- The assistant writes a request (a text file of commands) into BepInEx/claude/requests. While you are in a world, the game carries it out and writes the answer next to it. Pictures go to BepInEx/claude/shots.\n- It can take pictures (your view, a separate camera anywhere, all round a place, straight down), survey the ground, and find out your status, inventory, what is nearby, what you are looking at, which mods are running, their settings and the log. It can show you a message and put a pin on your map.\n- Other mods add their own commands. With BuildOrders, the assistant can design blueprints, place them, photograph and check them.\n- F12 saves a screenshot for the assistant; Ctrl+F12 surveys the ground where you look.\n- The assistant's guide is written to BepInEx/claude/CLAUDE.md: start Claude Code in that folder (or in BepInEx/blueprints to design builds).\n\nRequests are off until you switch AllowRequests on (BepInEx/config/com.dhack.claudetools.cfg). Changing mods' settings by request needs AllowConfigChanges as well. Only switch requests on while you work with an assistant.",
-      "notes": "New: comfort: the comfort level a set of pieces would give together (with each piece's comfort and comfort group, as the game counts them), or the player's comfort now and the pieces giving it.",
-      "restart": "",
-      "cover": "ClaudeTools.cover.png",
-      "files": [
-        "ClaudeTools.dll",
-        "ClaudeTools.pdb"
-      ]
-    },
-    {
-      "guid": "com.dhack.craftfromchests",
-      "name": "CraftFromChests",
-      "version": "1.3.4",
-      "description": "Crafting stations, and hand-crafting from your inventory, use materials from nearby chests.\n\nHow it works\n- Anything you can reach within the range counts toward a recipe. The game takes the materials from your inventory first, then from the chests.\n- The crafting menu shows how many of each material you have in total.\n- A Chest lines button beside the crafting tabs draws lines from the station to every chest in use; a Range button cycles the distance (5 to 30 m).\n\nSettings: range (default 20 m), whether counts and lines show, and the position and size of the buttons.",
-      "notes": "Fix: in multiplayer, crafting with materials from a chest another player had open could lose or duplicate items. Chests in use are now left alone.",
-      "restart": "",
-      "cover": "CraftFromChests.cover.png",
-      "files": [
-        "CraftFromChests.dll",
-        "CraftFromChests.pdb"
-      ]
-    },
-    {
-      "guid": "com.dhack.feedfromchests",
-      "name": "FeedFromChests",
-      "version": "1.5.0",
-      "description": "Smelters, kilns, cooking racks, fires and fermenters can use items from nearby chests, and smelters and kilns can run themselves.\n\nHow it works\n- Press E at a smelter, kiln or furnace to open its menu, whatever you are carrying. Add 1 and Fill put items in by hand; the Auto-feed panel at the top sets the station up to feed itself.\n- The menu also shows what is loaded inside: the ore waiting in the queue, the fuel, and anything ready to collect. The same line appears when you look at the smelter.\n- Auto-feed: turn it on, tick which items it may use (for a kiln, just plain wood to start with, and tick fine wood, core wood and so on if you want them used), and it keeps itself stocked from the chests nearby. Coal comes first, then the lowest-tier item you ticked.\n- Limits that fit the station: a kiln makes coal until the chests hold 100 (or what you set); a smelter always leaves some coal; a windmill always leaves 20 barley for planting; ovens, spits and fermenters stop once you have enough of each food or mead. The menu says why each item is or is not being fed.\n- Output to chests: what the station makes goes into the chests assigned to that item (the chest assign menu from QualityOfLife, K), nearest first. With none assigned it drops on the ground as usual.\n- Cooking stations (spit, iron spit, oven): food that is done comes off by itself, so it never burns: into a chest assigned to it or to Food, else it slides off the side of the spit towards you. E takes everything that is done into your inventory, or opens the menu (what is cooking, Add 1 / Fill, auto-feed with the raw food you tick). Alternate-place key + E puts food on by hand.\n- Torches, sconces and braziers keep themselves lit: when one has room for more resin or coal, it takes one from a chest near it. One setting for all of them (on); campfires and hearths can do the same with wood (off unless you turn it on). They always leave 10 of the fuel in the chests.\n- Fermenters load themselves with the mead bases you tick (from chests, only when they have their roof), tap themselves when ready, and put the mead into a chest assigned to it or to Potions, or one that already holds it. E on an empty one opens its menu.\n- Beehives empty themselves into a chest (assigned to honey or to Food, or one that already has honey), so they never stop full; their tooltip says when the next honey comes, or why none is coming (biome, too much cover).\n- Other stations: press E when you carry nothing it takes and a chest has some, and one is added for you (a menu opens if there is a choice). Turn on AlwaysOpenMenu in the config to always get the menu.\n- Nothing is created from nothing: every item comes out of a chest or your inventory, and a station that is full is left alone.\n\nSettings: range (default 15 m), auto-feed on or off, how often it tops up, how near you must be for it to run, and the Fill limit.\n- Shield generators keep their fuel, ballistas reload themselves, and sap extractors empty into a chest, all from nearby chests.",
-      "notes": "New: the things that look after a base keep themselves going from nearby chests, all at once: shield generators take their fuel so the shield never runs dry (Defenses, FuelShieldGenerators), ballistas are reloaded with the ammo they hold (ReloadBallistas), and sap extractors empty themselves into a chest assigned to sap or Materials (K), or one that already holds sap (CollectSap). Fuel and ammo leave KeepFuel of each in the chests.",
-      "restart": "",
-      "cover": "FeedFromChests.cover.png",
-      "files": [
-        "FeedFromChests.dll",
-        "FeedFromChests.pdb"
-      ]
-    },
-    {
-      "guid": "com.dhack.gearslots",
-      "name": "GearSlots",
-      "version": "1.1.0",
-      "description": "Extra inventory slots for what you wear, eat and use, in a Gear panel next to your inventory.\n\nWhat is in it\n- Head, Chest, Legs, Cape, Belt, Trinket, Ammo and Shield slots: drop a matching piece in and you put it on. Armor and arrows no longer take room in your bag, and gear you are already wearing moves into its slot by itself.\n- The shield follows your weapon: switch to a one-handed weapon and the shield from the Shield slot comes out with it (two-handed weapons and bows put it away).\n- Three Food slots: keep your best meals in their own place (right-click to eat). Optional auto-eat is in the settings.\n- Five Quick slots (Z, X, C, V by default; the fifth is unbound) for a weapon, tool, potion or anything else: press the key to equip or use it. With the inventory closed they show in a row under your hotbar, with their keys.\n- Slots only accept the right kind of item, and Sort and Stack to Chests (QualityOfLife) leave them alone.\n- Nothing is stored in a new place: the slots are extra rows of your real inventory, so saving, weight, crafting and dragging work as normal. Before removing the mod, move your gear-slot items into your bag: without it the game drops anything in those rows at your feet the next time you spawn.\nEvery key and option is in the settings (the manager's Mod settings tab).",
-      "notes": "Auto-eat now waits until a food you are already under is below 20% of its time left (setting Food / EatBelowPercent, 1 to 50; the game allows eating again from 50%). A meal lasts 80% of its time instead of half, so your food goes about 1.6 times as far; its effect weakens a little towards the end.",
-      "restart": "",
-      "cover": "GearSlots.cover.png",
-      "files": [
-        "GearSlots.dll",
-        "GearSlots.pdb"
-      ]
-    },
-    {
-      "guid": "com.dhack.ledgerchest",
-      "name": "LedgerChest",
-      "version": "1.0.0",
-      "description": "A chest you build that shows everything in every chest around it, with a search: find anything in your storehouse and take it from wherever it is.\r\n\r\nHow it works\r\n- Build the Ledger Chest with the hammer at a workbench (10 Wood, 4 Fine Wood, 4 Leather Scraps, 2 Resin). It keeps nothing itself: it is the counter of your storehouse.\r\n- Open it (E): in place of a chest's slots, the ledger shows every kind of item in the chests within 30 m, one slot each with how many there are in all. It is the game's own chest window, with its tooltips.\r\n- A search in its title bar narrows it down (several words: all must match); list by kind, A to Z or most first.\r\n- Category buttons under it (Wood, Stone & minerals, Ores & metals, Hides & cloth, Cooking, Food, Weapons, Armor, Trophies and more), each with how many things it holds: press one to see only those. Under them: which chests hold what is under your mouse.\r\n- Click an item to pick all of it up, and put it down on a slot of your inventory: as much as fits comes out of the nearest chests that have it, into that slot first and then wherever there's room. Shift-click to choose how many (the game's own split slider). Ctrl-click: all that fits, straight into your inventory. Right-click: a stack, straight in. Put it back on the ledger (or outside the windows, or right-click) and nothing moves.\r\n- Drop things onto it (or Ctrl-click them in your inventory) to put them away: each goes straight on to a chest around it. A chest assigned that item first (QualityOfLife's K), then one assigned its category, then a chest with nothing assigned (one already holding it first). When no chest has room it comes back to you.\r\n- Hover a line to see which chests hold it and how far away they are.\r\n- Items come out exactly as they went in (upgrades, wear). Chests someone else has open are left alone, and so are carts, ships, tombstones and companions' own chests.\r\n- It has its own hand-made look: an iron-bound strongbox with the ledger open on a reading stand, a quill in its inkpot, scrolls and a candle.",
-      "notes": "First version: the Ledger Chest. Open it to see and search everything in the chests around it, by category (a button for each kind of thing), and take what you need. It keeps nothing itself: put things in it and they go on to the chest assigned them (QualityOfLife's chest assignments), else to a chest with nothing assigned, else back to you.",
-      "restart": "It adds a new build piece. Restart the game after updating so it registers cleanly.",
-      "cover": "LedgerChest.cover.png",
-      "files": [
-        "LedgerChest.dll",
-        "LedgerChest.pdb"
-      ]
-    },
-    {
-      "guid": "com.dhack.mapshare",
-      "name": "MapShare",
-      "version": "1.0.1",
-      "description": "Share the map you uncover with everyone in the world, live, as you run through the fog of war.\n\nHow it works\n- The cartography table only shares a map by hand: you write your map to the table, then others read it one visit at a time. This mod does it automatically instead.\n- Every few seconds, the new parts of the map you uncovered are sent to the other players and appear on their maps.\n- When someone joins, one of the players already there sends them the whole map, and the newcomer sends theirs back, so everyone ends up with the same explored area.\n- Only the explored area is shared, not pins. Players without the mod do not take part.\n\nSettings: turn sending or receiving on or off, and how often updates go out.",
-      "notes": "Fix: a player joining could miss the map explored so far when someone online did not have MapShare or had sharing off. Everyone who shares now sends it.",
-      "restart": "",
-      "cover": "MapShare.cover.png",
-      "files": [
-        "MapShare.dll",
-        "MapShare.pdb"
-      ]
-    },
-    {
-      "guid": "com.dhack.partyhud",
-      "name": "PartyHud",
-      "version": "1.7.3",
-      "description": "A party panel on the right of the screen showing every player in your world.\n\nWhat it shows\n- Each player's Steam picture, name, health, stamina and distance, live, at any range.\n- Each picture has a ring that is green, amber or red by how healthy that player is, and an arrow next to their distance points the way they are, relative to where you are looking. F8 hides or shows the panel (handy for screenshots). It hides itself while menus are open.\n\nSettings: how many players, size, opacity, position, left or right edge, a Compact mode, and whether to show yourself, portraits, distance and the arrow. While you steer a ship the panel moves out of the way of the ship display.\n- With the AICompanion mod: each player's companion shows under them (health, distance, what it is doing).",
-      "notes": "A fallen companion's row says its things are in a tombstone (they keep the gear they wore since AICompanion 0.8), not \"gear in a crate\".",
-      "restart": "",
-      "cover": "PartyHud.cover.png",
-      "files": [
-        "PartyHud.dll",
-        "PartyHud.pdb"
-      ]
-    },
-    {
-      "guid": "com.dhack.portalhub",
-      "name": "PortalHub",
-      "version": "1.1.1",
-      "description": "Portals you can actually use: press E on a portal and pick where it goes from a list.\r\n\r\nWhat is in it\r\n- The list shows every portal in the world, nearest first, with its biome and distance. Search it, sort it by name, or star the ones you use most to keep them at the top.\r\n- One click links this portal to the one you pick, and (by default) links that one back, so there is no more matching names on both ends.\r\n- Every portal shows on the map with its name, and the big map draws a line from each portal to where it goes (an arrow when it only goes one way). A Map button next to each portal in the menu opens the map at that spot.\r\n- Look at a portal and it tells you where it goes.\r\n- Rename a portal right in the menu. Portals you never choose a destination for work the old way, by matching names, so nothing you built breaks.\r\n- Teleport rules are unchanged: you still cannot carry ores or other blocked items through a portal.\r\n- Needs to be installed on the host's game (and on yours to use the menu). Players without it can still walk through linked portals.",
-      "notes": "Fix: after restarting the game, linked portals sent you to a random place (the game renumbers everything when a world loads, and links were saved by number). Each portal now keeps its own id, so links and starred portals survive restarts. Links made with the old version are cleared once: link your portals again in the menu. Also: the last world's portals no longer show on a new world's map, and a newly built portal no longer lists itself as a destination.",
-      "restart": "",
-      "cover": "PortalHub.cover.png",
-      "files": [
-        "PortalHub.dll",
-        "PortalHub.pdb"
-      ]
-    },
-    {
-      "guid": "com.dhack.qualityoflife",
-      "name": "QualityOfLife",
-      "version": "1.9.0",
-      "description": "Small controls that make the game nicer to play, each with its own switch.\r\n\r\nWhat is in it\r\n- Q: build a quick set from items you hover in your inventory; outside the inventory it swaps to the set and back.\r\n- B: jump into construction mode with your hammer, and back to what you had.\r\n- Sort: a button under your inventory joins split stacks and puts everything in order (hotbar and gear slots stay put).\r\n- Stack to chests: a button under your inventory moves matching items into nearby chests, with Undo and sounds.\r\n- K opens the chest assignment menu (choose what each chest receives); L locks items so they are never stacked.\r\n- Boat push: tap or hold P next to a boat to shove it where you look (gentle, with a speed cap).\r\n- Far zoom: scroll the camera out to 20 m on foot and 40 m on a boat (the game stops at 6); the steps grow as you zoom out.\r\nKeys are configurable. Q and B work while you are running.",
-      "notes": "New: Stations/BuildRange: crafting stations (workbench, stonecutter, forge...) reach farther for building, up to 150 m, so a big build at the edge of the base needs no second workbench or stonecutter. 0 (the default) leaves the game's ranges. Only building changes: a station's base area and crafting at it stay as they were.",
-      "restart": "",
-      "cover": "QualityOfLife.cover.png",
-      "files": [
-        "QualityOfLife.dll",
-        "QualityOfLife.pdb"
-      ]
-    },
-    {
-      "guid": "com.dhack.recycler",
-      "name": "Recycler",
-      "version": "1.0.6",
-      "description": "Build a Recycler with the hammer and turn old gear back into a share of the materials it was made from.\n\nHow it works\n- Look at the Recycler and press E: pick a weapon, armor piece or tool from your inventory, see what it would return, and recycle it.\n- You get about half of the materials back (50% by default; leftovers are a chance of one more). Recycler Presses built within 8 m raise this to 60% and then 70%.\n- The gear must be one you could craft, and the crafting station it was made at (and its level) must be nearby. Equipped or upgraded gear asks for a second click. Items locked with L are skipped.\n- The Recycler needs only bronze-tier materials (fine wood, bronze and stone), so you can build it as soon as you have bronze. Each Press costs iron, bronze and stone, so the better refunds come with iron. Restart the game after installing or updating it.\n\nSettings: refund percentages, chance rounding, which gear types are allowed.",
-      "notes": "Fix: after a fresh game start the Recycler and Press were not registered until the mods were reloaded, so the game deleted any it found standing in the world. It is now registered as the world loads. Ones already lost can't be brought back; build them again.",
-      "restart": "It adds new build pieces. Restart the game after updating so they register cleanly.",
-      "cover": "Recycler.cover.png",
-      "files": [
-        "Recycler.dll",
-        "Recycler.pdb"
-      ]
-    },
-    {
-      "guid": "com.dhack.slotmachine",
-      "name": "SlotMachine",
-      "version": "1.0.4",
-      "description": "Odin's Fortune: a buildable slot machine. Put coins in, pull the lever, and the winnings come out of the tray.\r\n\r\nHow it works\r\n- Build it with the hammer at a workbench: Fine Wood, Bronze and Stone.\r\n- Press E to pull the lever. Your bet goes in, three reels spin and stop one after another, and a win is spat out of the tray as coins.\r\n- Press the alternate-use key with E to change the bet (5, 10, 25, 50 or 100 coins).\r\n- Three alike pay the most, from three Coins to three Valknuts (300 times your bet). Pairs of Coins, Ravens and Valknuts pay a little.\r\n- Everyone nearby sees the same spin. The lamps chase each other while the reels turn and flash after a win.\r\n- Over a long time it gives back about 93% of what goes in: a fun way to lose a few coins, not a way to make them.\r\nIt has its own hand-made look: carved dark wood and gold, a raven on top, a rune-marked marquee, a lever, buttons and a brass payout tray.\r\nSettings let you change the bet and scale the prizes.",
-      "notes": "Fix: after a fresh game start the slot machine was not registered until the mods were reloaded, so the game deleted any it found standing in the world. It is now registered as the world loads. Ones already lost can't be brought back; build them again. Fix: logging out, or walking away so the machine unloads, before the reels stop no longer loses your bet's winnings: they go into your inventory.",
-      "restart": "It adds a new build piece. Restart the game after updating so it registers cleanly.",
-      "cover": "SlotMachine.cover.png",
-      "files": [
-        "SlotMachine.dll",
-        "SlotMachine.pdb"
-      ]
-    }
-  ]
+    "mods":  [
+                 {
+                     "guid":  "com.dhack.aicompanion",
+                     "name":  "AICompanion",
+                     "version":  "0.20.2",
+                     "description":  "A viking companion who plays like a player: comes on your adventures, lives its own life at home, and gets better as it goes.\r\n\r\n- Press J to summon your companion or open its menu (E on it too). Hold J: your companions come with you, or go home.\r\n- Point and press H: at an enemy (they attack it), a tree, rock or plant (it works it, and the thing glows with a note above it while it does), your chest (it puts its things in), a cart (it pulls it), the ground (it waits there), the sky (it comes back).\r\n- \"Let it decide\": it reads what you are doing. It fights beside you, mines or chops beside you, and keeps close while you explore; where a place is too dangerous for its gear it tells you and only defends.\r\n- It fights like a player: timed parries (it learns each creature\u0027s swing), rolls out of sweeps and shots, joins in on what you are hitting and gets round behind it, pulls enemies off you when you are hurt, sneaks up for backstabs, uses weapon specials, hits and steps back against heavy hitters, drinks the right mead, remembers what has killed it, kites with its bow (leading moving targets, allowing for arrow drop), and fights bosses with care (flanking, keeping its distance, drinking early).\r\n- Follows you through portals, into crypts and caves, onto boats and through doors; it steers round stakes and fires, jumps streams and gets itself unstuck.\r\n- Home and away by itself: when you head out it comes along; back home it lives there again. It takes a free bed and empty chests by itself.\r\n- At home it works toward better gear: picks its next upgrade, gathers exactly what it needs (trips further out when nothing near has it), makes bronze and the like, crafts and upgrades at your workbench and forge.\r\n- It hunts, cooks on your cooking stations, keeps its fires burning, repairs its gear and your base, sleeps in its bed at night, and sorts what it brings home into the right chests (with QualityOfLife).\r\n- While you are away it catches up on all of it, and tells you what it did when you return.\r\n- Needs like a player: food for health and stamina, skills that rise, stamina, carry weight, weather, rest.\r\n- Its gear has slots of its own (weapons, shield, bow and arrows, axe, pickaxe, hammer, armour, and three food slots it keeps filled): change them from its menu from anywhere. When it falls it keeps its gear; only its bag goes into a tombstone, which it goes back for.\r\n- Its bag shows beside your inventory: drag items between you. Hotbar keys give it food, potions or gear.\r\n- Between jobs it acts like a person: sits by the fire or in a chair, gets out of the rain, takes a stroll, sits with you when you rest, waves when you come back, cheers after a big fight and answers your emotes.\r\n- A journal of its life, small talk that fits the moment, and chat messages about what it is up to.\r\n- Its menu: status, stats and every skill, orders, home, gear, looks and journal. Talk to it in chat: \"RÃƒÂ¡dvar, follow me\", \"RÃƒÂ¡dvar go home\".\r\n- With PartyHud it shows in the party panel (face, health, food); it shows on the map, and where it fell is marked for everyone.\r\n- Multiplayer: it belongs to whoever summoned it. Everyone in the world needs the mod (the host too), or the game deletes saved companions.",
+                     "notes":  "Fix: looking at a companion and pressing a hotbar key with a weapon, armour or tool on it handed the whole thing over. Only food and potions go that way now (one at a time); anything else is refused with a message. Giving gear from your inventory next to it, or from its menu, is unchanged.",
+                     "restart":  "",
+                     "cover":  "AICompanion.cover.png",
+                     "files":  [
+                                   "AICompanion.dll",
+                                   "AICompanion.pdb"
+                               ]
+                 },
+                 {
+                     "guid":  "com.dhack.birdtrap",
+                     "name":  "BirdTrap",
+                     "version":  "1.0.0",
+                     "description":  "A buildable bird trap: bait it with berries or seeds, leave it under the open sky, and come back to a gull to pluck for feathers.\r\n\r\nHow it works\r\n- Build it with the hammer at a workbench (8 Wood, 2 Leather Scraps). It is a slatted box with a drop-door propped up by a stick tied to the bait pedal.\r\n- Use it to put bait in: raspberries, blueberries, cloudberries, barley, or beech, birch, carrot, turnip or onion seeds. Hold the alternate-place key (Shift) and use it to fill it at once. It holds five.\r\n- Baited and with open sky above it, a bird comes in 8 to 14 minutes (game time, so it keeps going while you are away). It eats one bait, the prop falls and the door drops.\r\n- Birds roost at night, and come at first light: sleep through the night and every trap you baited the day before has its bird in the morning. Under a roof none come, and the trap tells you why.\r\n- Use it again to pluck the gull (2 or 3 feathers) and let it go. The door goes back up, and with bait left the next bird is on its way.\r\n- Look at it to see how much bait is left and about how long until a bird. Build a few for a steady supply of feathers for arrows.\r\n- It has its own hand-made look: wicker slats, a drop-door on a forked prop stick, berries on a leaf, and a grey-and-white gull that hops about and pecks once it\u0027s caught.",
+                     "notes":  "First version: the Bird Trap. Bait it with berries or seeds under the open sky, and pluck the gull it catches for feathers.",
+                     "restart":  "It adds a new build piece. Restart the game after updating so it registers cleanly.",
+                     "cover":  "BirdTrap.cover.png",
+                     "files":  [
+                                   "BirdTrap.dll",
+                                   "BirdTrap.pdb"
+                               ]
+                 },
+                 {
+                     "guid":  "com.dhack.bountyboard",
+                     "name":  "BountyBoard",
+                     "version":  "1.1.3",
+                     "description":  "A buildable notice board with contracts for the whole group, paid in coins and the materials of the stage you have reached.\n\nHow it works\n- Build it with the hammer at a workbench (Wood, Leather Scraps and Flint) and press E on it. Every board shows the same notices.\n- Five notices are posted each in-game day: hunt a number of one creature, clear out a region\u0027s creatures, slay starred ones, or bring in loot.\n- The whole server shares the contracts. The group can run three at a time, and a new one can only be taken when one is finished. Everyone\u0027s kills count towards them, and loot is handed in by whoever has it.\n- When a contract is finished, every player collects their own reward at a board.\n- The further you get, the harder it gets: each boss you beat opens the next region\u0027s creatures, and Hard and Brutal contracts (more to kill, better pay) show up more often.\n- Rewards are materials you will actually use, matched to progress: resin and flint early, then copper, tin and bronze after Eikthyr, iron after the Elder, silver after Bonemass, black metal after Moder, and on up to Ashlands metals. Coins come too.\n- Finished contracts raise the group\u0027s rank (Newcomers up to Legends), which adds a bonus to every reward.\n- A switch in the board\u0027s menu shows the running contracts and their progress on your screen, so you can hunt with them in mind.\n- It has its own hand-made look: a gabled roof, a horned skull, a hanging rune sign, pinned notices, a lantern and a bell.\nThe contracts are kept by the host\u0027s game, so BountyBoard has to be installed on the host too.",
+                     "notes":  "Fix: after a fresh game start the board was not registered until the mods were reloaded, so the game deleted any it found standing in the world. It is now registered as the world loads. Ones already lost can\u0027t be brought back; build them again. Fix: kills by any player now count in multiplayer (before, a kill only counted when the killer\u0027s own game was handling that creature). Fix: hosting a different world without restarting the game no longer carries the last world\u0027s contracts over and overwrites the new one\u0027s. Contracts are now kept by the world\u0027s id, so two worlds with the same name no longer share them (your existing contracts carry over).",
+                     "restart":  "It adds a new build piece. Restart the game after updating so it registers cleanly.",
+                     "cover":  "BountyBoard.cover.png",
+                     "files":  [
+                                   "BountyBoard.dll",
+                                   "BountyBoard.pdb"
+                               ]
+                 },
+                 {
+                     "guid":  "com.dhack.buildfromchests",
+                     "name":  "BuildFromChests",
+                     "version":  "1.3.0",
+                     "description":  "Building with the hammer uses materials from chests near you, not just your inventory.\n\nHow it works\n- Pieces you place take materials from your inventory first, then from chests within range (default 20 m).\n- The build menu shows how many of each material you have in total, so you can see what is possible before you place anything.\n- Works together with CraftFromChests; each can be turned off on its own.\n\nSettings: range and whether the counts show.",
+                     "notes":  "Radius can now be set anywhere from 2 to 150 m (a slider in the configuration manager), and takes effect at once: raise it to build far from your storehouse, for instance a big BuildOrders blueprint at the edge of your base (BuildOrders\u0027 ghosts, hold-E build-all and fetch key use the same range).",
+                     "restart":  "",
+                     "cover":  "BuildFromChests.cover.png",
+                     "files":  [
+                                   "BuildFromChests.dll",
+                                   "BuildFromChests.pdb"
+                               ]
+                 },
+                 {
+                     "guid":  "com.dhack.buildorders",
+                     "name":  "BuildOrders",
+                     "version":  "1.9.8",
+                     "description":  "Plan pieces as shared ghost build orders for everyone in your party, and build them by just walking up and pressing E.\r\n\r\nHow it works\r\n- With the hammer out, press Left Alt to turn plan mode on (press it again, or put the hammer away, to turn it off). In plan mode, placing a piece plans it instead of building it. It shows as a see-through ghost that other players see too. (A setting lets you hold the key instead.)\r\n- Walk up to a ghost and tap E to build it: no hammer needed, on land or in the water. It builds even if nothing supports it yet (so you can build the structure around it afterwards). It costs the normal materials, from your inventory and then nearby chests (with BuildFromChests), and needs the piece to be unlocked and the spot not to be protected.\r\n- Hold E at a ghost to build every ghost within 24 m (changeable in the F11 window) that you can afford, lowest first. Short of materials? It builds the part you can pay for, and only pieces that will stand on what is built (so nothing falls and nothing is wasted); come back with more and hold E again to carry on.\r\n- Aiming at a ghost shows what that piece costs, what the whole plan still needs against what you have, and how many pieces holding E would build right now.\r\n- Stability: while planning, ghosts are coloured by how well they would be supported (blue solid, green to red weaker, red would fall), worked out from the same rules the game uses. F10 shows or hides the colours any time, and the prompt says how well the ghost you are looking at would hold. It is an estimate; the game does the real check once a piece is built.\r\n- In plan mode, ghosts act like real pieces: you can aim at them and your next piece snaps onto their snap points, so you can lay out a whole structure with the normal snapping and build it later, piece by piece.\r\n- When you build for real, your placement snaps onto a ghost of the same piece, and the ghost disappears once the real piece is built.\r\n- G selects the piece you are looking at to build more like it, and Delete removes a ghost. F9 shows or hides all ghosts.\r\n- A panel totals the materials your orders still need.\r\n\r\nSettings: ghost opacity, view distance, snap distance, how close you must be to build with E, and the keys.\r\n\r\nSwimming: your hammer stays out in the water (setting BuildWhileSwimming), so you can plan and build from it. Equip the hammer before you jump in, because the game does not let you equip things while swimming.\r\n\r\nFetching materials: with the hammer out and a piece selected, a hint appears when your inventory is short of materials that the chests nearby have. Press Y (FetchKey) to take one stack of each of those materials out of the chests and into your inventory. It uses BuildFromChests for the chest access, so that mod has to be installed.\r\n\r\nBridge builder\r\n- Pick Bridge in the hammer\u0027s build menu (Misc tab). Click where the bridge starts and walk or swim across (a ghost of it stretches after you, with its length and cost), then click where it ends.\r\n- A Bridge panel opens beside the ghost: width (2, 4 or 6 m), material (wood; core wood, stronger and reaching deeper water; darkwood; stone, with a pillar under every slab and a stonecutter needed), sides (handrails, half walls or none), open or covered (a pitched roof on tall posts), supports down to the riverbed (auto, every 2 m, every 4 m), straight or gently arched, ends (a deck sloping from bank to bank, or a level deck with steps down at the lower end, stopping at the waterline), and torches every 8 m. The ghost changes as you choose and the panel shows what it takes against what you have. Confirm places it; Change end lets you aim the end again; Cancel or Esc drops it. Your choices are kept for next time.\r\n- The deck slopes evenly from end to end (kept above the water, so a pier works too). Build it with E or hold E like any plan; Remove and take-down work as usual. The ground is not levelled, and a bridge is not moved (its posts are cut to the riverbed where it stands). It warns when it is very steep, the water is too deep for the posts, or there is no workbench within reach of an end.\r\n\r\nPlans window (F11)\r\n- Blueprints: your library from BepInEx/blueprints, with each one\u0027s size, piece count and materials. Place one and a green preview of the whole structure follows where you look: mouse wheel turns it (Shift for fine steps), R turns it 90Ãƒâ€šÃ‚Â°, PgUp/PgDn raise or lower it, Home resets the height, click places it, right-click or Esc cancels. Nothing is built for free.\r\n- Level ground, always: when you place a plan, the ground under all of it is set to its floor height, with a gentle 3 m slope back to the natural ground around it, and painted as dirt (a brown pad shows where in the preview). The ghosts appear once it is done, about a second later. The game moves ground at most 8 m, and warded ground is left alone. It pauses if you walk more than 60 m away. Removing or moving the plan puts the ground back exactly as it was (unless some of it is already built; finishing a build never resets anything). Placed plans also have a Level ground button to level again.\r\n- Placed plans: every plan with its pieces left, how far away and which way, and the materials you have against what it needs. Build nearby builds every ghost within the build-all radius; Move picks the plan up into the preview again so you can put it somewhere better or turn it; Remove takes it away (click twice); if part of it is built, choose Remove ghosts only, or Also take down what is built: those pieces come down as with the hammer and their materials go straight into your inventory (the same materials the game gives back). You can also remove every ghost within a radius you choose, up to 150 m.\r\n- Pictures: every blueprint gets a picture in the Plans window, made in the game from the blueprint itself (or put your own image next to the file, same name, .png or .jpg).\r\n- Sharing: Share on a blueprint sends it (and its picture) to everyone playing with you; it shows up in their Plans window under \"Shared with you\" (Place, Save to library, Dismiss). Not playing together? Code copies it as a short text code to paste in a chat, and Paste code adds a code to your library. A shared blueprint is only a list of pieces: it never places itself, and you place it where you look.\r\n- Settings: build-all radius (up to 64 m), reach for E, ghost view distance, opacity, how many ghosts show at once, and switches for the main features. Changes save straight away.\r\n- Ask an AI assistant to design a build for you: BuildOrders writes a design guide (CLAUDE.md), every piece\u0027s size, snap points, cost and rules, and helper scripts (placing, a stability check, previews) into BepInEx/blueprints. Start Claude Code in that folder, ask for a fort or a house, then place it from the F11 window.\r\n- With the Claude Tools mod installed, an AI assistant can also see your game and place, check, photograph, build and take down blueprints for you through its request mailbox (BepInEx/claude). BuildOrders adds those commands to it by itself; without Claude Tools nothing changes.",
+                     "notes":  "1.9.8: Add a bounded atomic whole-building planning API for Hallwright (1–1,024 pieces). Validate all poses, unlocks, reach and protected areas before adding any ghosts; keep the existing 256-piece API unchanged. Add-on undo supports the larger plan and preserves built pieces. Keep completed add-on piece records while matching built pieces remain, so takedown still works after the ghosts are finished or F6 reloads. Include reload-safe planning-input and ghost-ray helpers for BuildShapes. No terrain edits or material consumption.",
+                     "restart":  "",
+                     "cover":  "BuildOrders.cover.png",
+                     "files":  [
+                                   "BuildOrders.dll",
+                                   "BuildOrders.pdb"
+                               ]
+                 },
+                 {
+                     "guid":  "com.dhack.cigarsmoking",
+                     "name":  "Quad\u0027s Cigars",
+                     "version":  "0.2.1",
+                     "description":  "Grow tobacco, cure it, roll your own cigars and smoke them: a real part of the game, from the wild plant to the cigar in your mouth.\n\nHow it works\n- Find wild tobacco growing in the Meadows, the Black Forest and the Plains. Each biome has its own strain, a little different in leaf and flower. Picking a plant gives leaves and seeds.\n- Sow seeds with the cultivator in cultivated soil. A plant grows tall in about 25 minutes and gives leaves and more seeds. Every strain can be farmed in the Meadows, the Black Forest and the Plains.\n- Build a Tobacco Drying Rack: hang fresh leaves on it and take them back dried. Then pack the dried leaves into a Tobacco Curing Barrel to age them.\n- Build a Cigar Rolling Table (near a workbench) and roll cigars in the game\u0027s own crafting menu. Build a Humidor beside the table to roll the finer cigars.\n- Light a cigar from your inventory or hotbar. You smoke for 5 minutes with a cigar in your hand or mouth, an ember and drifting smoke; with a weapon in your right hand it stays in your mouth. Other players with the mod see it too.\n\nThe cigars (one at a time; lighting another starts it fresh):\n- Connecticut (Dried Meadow Leaf, Resin): Relaxed, stamina regenerates 15% faster.\n- Maduro (Aged Forest Leaf, Honey, Resin; needs a Humidor): Smooth, health regenerates 40% faster.\n- Corojo (Aged Forest Leaf, Thistle, Resin; needs a Humidor): Shadow, you make less noise and are harder to spot.\n- Habano (Aged Plains Leaf, Cloudberries, Resin; needs a Humidor): Fired Up, attacks and sprinting cost less stamina.\n\nSettings: how long a cigar lasts, how strong the bonuses are, how long plants grow and leaves dry and cure, and whether the smoke and glow are drawn.\nWild tobacco only appears in parts of the world you have not visited yet. It adds new items, pieces and plants. Restart the game after installing or updating it.",
+                     "notes":  "Fixes: a Drying Rack or Curing Barrel you built had nothing to turn leaves into (its list was only on the build-menu copy), so it took no leaves: it now works from the strains themselves. Tobacco items dropped on the ground could not be picked up (now on the item layer). When your bag is full, the rest of what a rack, barrel or plant gives you lands at your feet as a stack (it used to drop one and lose the rest), with a message. Leaves taken from a rack or barrel count from any world level. And a model that ever comes out with invalid points (seen once at game start) is made again, with a note in the log naming it.",
+                     "restart":  "It adds a new item. Restart the game after updating so the Cigar registers cleanly (a Cigar in your bag or on the ground is lost if the game starts without the mod).",
+                     "cover":  "CigarSmoking.cover.png",
+                     "files":  [
+                                   "CigarSmoking.dll",
+                                   "CigarSmoking.pdb"
+                               ]
+                 },
+                 {
+                     "guid":  "com.dhack.claudetools",
+                     "name":  "ClaudeTools",
+                     "version":  "1.1.6",
+                     "description":  "Lets an AI assistant like Claude Code see your game and help you, through files on your computer: no network port, and it never moves your character or presses keys.\n\nHow it works\n- The assistant writes a request (a text file of commands) into BepInEx/claude/requests. While you are in a world, the game carries it out and writes the answer next to it. Pictures go to BepInEx/claude/shots.\n- It can take pictures (your view, a separate camera anywhere, all round a place, straight down), survey the ground, and find out your status, inventory, what is nearby, what you are looking at, which mods are running, their settings and the log. It can show you a message and put a pin on your map.\n- Other mods add their own commands. With BuildOrders, the assistant can design blueprints, place them, photograph and check them.\n- F12 saves a screenshot for the assistant; Ctrl+F12 surveys the ground where you look.\n- The assistant\u0027s guide is written to BepInEx/claude/CLAUDE.md: start Claude Code in that folder (or in BepInEx/blueprints to design builds).\n\nRequests are off until you switch AllowRequests on (BepInEx/config/com.dhack.claudetools.cfg). Changing mods\u0027 settings by request needs AllowConfigChanges as well. Only switch requests on while you work with an assistant.",
+                     "notes":  "New: comfort: the comfort level a set of pieces would give together (with each piece\u0027s comfort and comfort group, as the game counts them), or the player\u0027s comfort now and the pieces giving it.",
+                     "restart":  "",
+                     "cover":  "ClaudeTools.cover.png",
+                     "files":  [
+                                   "ClaudeTools.dll",
+                                   "ClaudeTools.pdb"
+                               ]
+                 },
+                 {
+                     "guid":  "com.dhack.craftfromchests",
+                     "name":  "CraftFromChests",
+                     "version":  "1.3.4",
+                     "description":  "Crafting stations, and hand-crafting from your inventory, use materials from nearby chests.\n\nHow it works\n- Anything you can reach within the range counts toward a recipe. The game takes the materials from your inventory first, then from the chests.\n- The crafting menu shows how many of each material you have in total.\n- A Chest lines button beside the crafting tabs draws lines from the station to every chest in use; a Range button cycles the distance (5 to 30 m).\n\nSettings: range (default 20 m), whether counts and lines show, and the position and size of the buttons.",
+                     "notes":  "Fix: in multiplayer, crafting with materials from a chest another player had open could lose or duplicate items. Chests in use are now left alone.",
+                     "restart":  "",
+                     "cover":  "CraftFromChests.cover.png",
+                     "files":  [
+                                   "CraftFromChests.dll",
+                                   "CraftFromChests.pdb"
+                               ]
+                 },
+                 {
+                     "guid":  "com.dhack.feedfromchests",
+                     "name":  "FeedFromChests",
+                     "version":  "1.5.0",
+                     "description":  "Smelters, kilns, cooking racks, fires and fermenters can use items from nearby chests, and smelters and kilns can run themselves.\n\nHow it works\n- Press E at a smelter, kiln or furnace to open its menu, whatever you are carrying. Add 1 and Fill put items in by hand; the Auto-feed panel at the top sets the station up to feed itself.\n- The menu also shows what is loaded inside: the ore waiting in the queue, the fuel, and anything ready to collect. The same line appears when you look at the smelter.\n- Auto-feed: turn it on, tick which items it may use (for a kiln, just plain wood to start with, and tick fine wood, core wood and so on if you want them used), and it keeps itself stocked from the chests nearby. Coal comes first, then the lowest-tier item you ticked.\n- Limits that fit the station: a kiln makes coal until the chests hold 100 (or what you set); a smelter always leaves some coal; a windmill always leaves 20 barley for planting; ovens, spits and fermenters stop once you have enough of each food or mead. The menu says why each item is or is not being fed.\n- Output to chests: what the station makes goes into the chests assigned to that item (the chest assign menu from QualityOfLife, K), nearest first. With none assigned it drops on the ground as usual.\n- Cooking stations (spit, iron spit, oven): food that is done comes off by itself, so it never burns: into a chest assigned to it or to Food, else it slides off the side of the spit towards you. E takes everything that is done into your inventory, or opens the menu (what is cooking, Add 1 / Fill, auto-feed with the raw food you tick). Alternate-place key + E puts food on by hand.\n- Torches, sconces and braziers keep themselves lit: when one has room for more resin or coal, it takes one from a chest near it. One setting for all of them (on); campfires and hearths can do the same with wood (off unless you turn it on). They always leave 10 of the fuel in the chests.\n- Fermenters load themselves with the mead bases you tick (from chests, only when they have their roof), tap themselves when ready, and put the mead into a chest assigned to it or to Potions, or one that already holds it. E on an empty one opens its menu.\n- Beehives empty themselves into a chest (assigned to honey or to Food, or one that already has honey), so they never stop full; their tooltip says when the next honey comes, or why none is coming (biome, too much cover).\n- Other stations: press E when you carry nothing it takes and a chest has some, and one is added for you (a menu opens if there is a choice). Turn on AlwaysOpenMenu in the config to always get the menu.\n- Nothing is created from nothing: every item comes out of a chest or your inventory, and a station that is full is left alone.\n\nSettings: range (default 15 m), auto-feed on or off, how often it tops up, how near you must be for it to run, and the Fill limit.\n- Shield generators keep their fuel, ballistas reload themselves, and sap extractors empty into a chest, all from nearby chests.",
+                     "notes":  "New: the things that look after a base keep themselves going from nearby chests, all at once: shield generators take their fuel so the shield never runs dry (Defenses, FuelShieldGenerators), ballistas are reloaded with the ammo they hold (ReloadBallistas), and sap extractors empty themselves into a chest assigned to sap or Materials (K), or one that already holds sap (CollectSap). Fuel and ammo leave KeepFuel of each in the chests.",
+                     "restart":  "",
+                     "cover":  "FeedFromChests.cover.png",
+                     "files":  [
+                                   "FeedFromChests.dll",
+                                   "FeedFromChests.pdb"
+                               ]
+                 },
+                 {
+                     "guid":  "com.dhack.gearslots",
+                     "name":  "GearSlots",
+                     "version":  "1.1.0",
+                     "description":  "Extra inventory slots for what you wear, eat and use, in a Gear panel next to your inventory.\n\nWhat is in it\n- Head, Chest, Legs, Cape, Belt, Trinket, Ammo and Shield slots: drop a matching piece in and you put it on. Armor and arrows no longer take room in your bag, and gear you are already wearing moves into its slot by itself.\n- The shield follows your weapon: switch to a one-handed weapon and the shield from the Shield slot comes out with it (two-handed weapons and bows put it away).\n- Three Food slots: keep your best meals in their own place (right-click to eat). Optional auto-eat is in the settings.\n- Five Quick slots (Z, X, C, V by default; the fifth is unbound) for a weapon, tool, potion or anything else: press the key to equip or use it. With the inventory closed they show in a row under your hotbar, with their keys.\n- Slots only accept the right kind of item, and Sort and Stack to Chests (QualityOfLife) leave them alone.\n- Nothing is stored in a new place: the slots are extra rows of your real inventory, so saving, weight, crafting and dragging work as normal. Before removing the mod, move your gear-slot items into your bag: without it the game drops anything in those rows at your feet the next time you spawn.\nEvery key and option is in the settings (the manager\u0027s Mod settings tab).",
+                     "notes":  "Auto-eat now waits until a food you are already under is below 20% of its time left (setting Food / EatBelowPercent, 1 to 50; the game allows eating again from 50%). A meal lasts 80% of its time instead of half, so your food goes about 1.6 times as far; its effect weakens a little towards the end.",
+                     "restart":  "",
+                     "cover":  "GearSlots.cover.png",
+                     "files":  [
+                                   "GearSlots.dll",
+                                   "GearSlots.pdb"
+                               ]
+                 },
+                 {
+                     "guid":  "com.dhack.ledgerchest",
+                     "name":  "LedgerChest",
+                     "version":  "1.0.0",
+                     "description":  "A chest you build that shows everything in every chest around it, with a search: find anything in your storehouse and take it from wherever it is.\r\n\r\nHow it works\r\n- Build the Ledger Chest with the hammer at a workbench (10 Wood, 4 Fine Wood, 4 Leather Scraps, 2 Resin). It keeps nothing itself: it is the counter of your storehouse.\r\n- Open it (E): in place of a chest\u0027s slots, the ledger shows every kind of item in the chests within 30 m, one slot each with how many there are in all. It is the game\u0027s own chest window, with its tooltips.\r\n- A search in its title bar narrows it down (several words: all must match); list by kind, A to Z or most first.\r\n- Category buttons under it (Wood, Stone \u0026 minerals, Ores \u0026 metals, Hides \u0026 cloth, Cooking, Food, Weapons, Armor, Trophies and more), each with how many things it holds: press one to see only those. Under them: which chests hold what is under your mouse.\r\n- Click an item to pick all of it up, and put it down on a slot of your inventory: as much as fits comes out of the nearest chests that have it, into that slot first and then wherever there\u0027s room. Shift-click to choose how many (the game\u0027s own split slider). Ctrl-click: all that fits, straight into your inventory. Right-click: a stack, straight in. Put it back on the ledger (or outside the windows, or right-click) and nothing moves.\r\n- Drop things onto it (or Ctrl-click them in your inventory) to put them away: each goes straight on to a chest around it. A chest assigned that item first (QualityOfLife\u0027s K), then one assigned its category, then a chest with nothing assigned (one already holding it first). When no chest has room it comes back to you.\r\n- Hover a line to see which chests hold it and how far away they are.\r\n- Items come out exactly as they went in (upgrades, wear). Chests someone else has open are left alone, and so are carts, ships, tombstones and companions\u0027 own chests.\r\n- It has its own hand-made look: an iron-bound strongbox with the ledger open on a reading stand, a quill in its inkpot, scrolls and a candle.",
+                     "notes":  "First version: the Ledger Chest. Open it to see and search everything in the chests around it, by category (a button for each kind of thing), and take what you need. It keeps nothing itself: put things in it and they go on to the chest assigned them (QualityOfLife\u0027s chest assignments), else to a chest with nothing assigned, else back to you.",
+                     "restart":  "It adds a new build piece. Restart the game after updating so it registers cleanly.",
+                     "cover":  "LedgerChest.cover.png",
+                     "files":  [
+                                   "LedgerChest.dll",
+                                   "LedgerChest.pdb"
+                               ]
+                 },
+                 {
+                     "guid":  "com.dhack.mapshare",
+                     "name":  "MapShare",
+                     "version":  "1.0.1",
+                     "description":  "Share the map you uncover with everyone in the world, live, as you run through the fog of war.\n\nHow it works\n- The cartography table only shares a map by hand: you write your map to the table, then others read it one visit at a time. This mod does it automatically instead.\n- Every few seconds, the new parts of the map you uncovered are sent to the other players and appear on their maps.\n- When someone joins, one of the players already there sends them the whole map, and the newcomer sends theirs back, so everyone ends up with the same explored area.\n- Only the explored area is shared, not pins. Players without the mod do not take part.\n\nSettings: turn sending or receiving on or off, and how often updates go out.",
+                     "notes":  "Fix: a player joining could miss the map explored so far when someone online did not have MapShare or had sharing off. Everyone who shares now sends it.",
+                     "restart":  "",
+                     "cover":  "MapShare.cover.png",
+                     "files":  [
+                                   "MapShare.dll",
+                                   "MapShare.pdb"
+                               ]
+                 },
+                 {
+                     "guid":  "com.dhack.partyhud",
+                     "name":  "PartyHud",
+                     "version":  "1.7.3",
+                     "description":  "A party panel on the right of the screen showing every player in your world.\n\nWhat it shows\n- Each player\u0027s Steam picture, name, health, stamina and distance, live, at any range.\n- Each picture has a ring that is green, amber or red by how healthy that player is, and an arrow next to their distance points the way they are, relative to where you are looking. F8 hides or shows the panel (handy for screenshots). It hides itself while menus are open.\n\nSettings: how many players, size, opacity, position, left or right edge, a Compact mode, and whether to show yourself, portraits, distance and the arrow. While you steer a ship the panel moves out of the way of the ship display.\n- With the AICompanion mod: each player\u0027s companion shows under them (health, distance, what it is doing).",
+                     "notes":  "A fallen companion\u0027s row says its things are in a tombstone (they keep the gear they wore since AICompanion 0.8), not \"gear in a crate\".",
+                     "restart":  "",
+                     "cover":  "PartyHud.cover.png",
+                     "files":  [
+                                   "PartyHud.dll",
+                                   "PartyHud.pdb"
+                               ]
+                 },
+                 {
+                     "guid":  "com.dhack.portalhub",
+                     "name":  "PortalHub",
+                     "version":  "1.1.1",
+                     "description":  "Portals you can actually use: press E on a portal and pick where it goes from a list.\r\n\r\nWhat is in it\r\n- The list shows every portal in the world, nearest first, with its biome and distance. Search it, sort it by name, or star the ones you use most to keep them at the top.\r\n- One click links this portal to the one you pick, and (by default) links that one back, so there is no more matching names on both ends.\r\n- Every portal shows on the map with its name, and the big map draws a line from each portal to where it goes (an arrow when it only goes one way). A Map button next to each portal in the menu opens the map at that spot.\r\n- Look at a portal and it tells you where it goes.\r\n- Rename a portal right in the menu. Portals you never choose a destination for work the old way, by matching names, so nothing you built breaks.\r\n- Teleport rules are unchanged: you still cannot carry ores or other blocked items through a portal.\r\n- Needs to be installed on the host\u0027s game (and on yours to use the menu). Players without it can still walk through linked portals.",
+                     "notes":  "Fix: after restarting the game, linked portals sent you to a random place (the game renumbers everything when a world loads, and links were saved by number). Each portal now keeps its own id, so links and starred portals survive restarts. Links made with the old version are cleared once: link your portals again in the menu. Also: the last world\u0027s portals no longer show on a new world\u0027s map, and a newly built portal no longer lists itself as a destination.",
+                     "restart":  "",
+                     "cover":  "PortalHub.cover.png",
+                     "files":  [
+                                   "PortalHub.dll",
+                                   "PortalHub.pdb"
+                               ]
+                 },
+                 {
+                     "guid":  "com.dhack.qualityoflife",
+                     "name":  "QualityOfLife",
+                     "version":  "1.9.0",
+                     "description":  "Small controls that make the game nicer to play, each with its own switch.\r\n\r\nWhat is in it\r\n- Q: build a quick set from items you hover in your inventory; outside the inventory it swaps to the set and back.\r\n- B: jump into construction mode with your hammer, and back to what you had.\r\n- Sort: a button under your inventory joins split stacks and puts everything in order (hotbar and gear slots stay put).\r\n- Stack to chests: a button under your inventory moves matching items into nearby chests, with Undo and sounds.\r\n- K opens the chest assignment menu (choose what each chest receives); L locks items so they are never stacked.\r\n- Boat push: tap or hold P next to a boat to shove it where you look (gentle, with a speed cap).\r\n- Far zoom: scroll the camera out to 20 m on foot and 40 m on a boat (the game stops at 6); the steps grow as you zoom out.\r\nKeys are configurable. Q and B work while you are running.",
+                     "notes":  "New: Stations/BuildRange: crafting stations (workbench, stonecutter, forge...) reach farther for building, up to 150 m, so a big build at the edge of the base needs no second workbench or stonecutter. 0 (the default) leaves the game\u0027s ranges. Only building changes: a station\u0027s base area and crafting at it stay as they were.",
+                     "restart":  "",
+                     "cover":  "QualityOfLife.cover.png",
+                     "files":  [
+                                   "QualityOfLife.dll",
+                                   "QualityOfLife.pdb"
+                               ]
+                 },
+                 {
+                     "guid":  "com.dhack.recycler",
+                     "name":  "Recycler",
+                     "version":  "1.0.6",
+                     "description":  "Build a Recycler with the hammer and turn old gear back into a share of the materials it was made from.\n\nHow it works\n- Look at the Recycler and press E: pick a weapon, armor piece or tool from your inventory, see what it would return, and recycle it.\n- You get about half of the materials back (50% by default; leftovers are a chance of one more). Recycler Presses built within 8 m raise this to 60% and then 70%.\n- The gear must be one you could craft, and the crafting station it was made at (and its level) must be nearby. Equipped or upgraded gear asks for a second click. Items locked with L are skipped.\n- The Recycler needs only bronze-tier materials (fine wood, bronze and stone), so you can build it as soon as you have bronze. Each Press costs iron, bronze and stone, so the better refunds come with iron. Restart the game after installing or updating it.\n\nSettings: refund percentages, chance rounding, which gear types are allowed.",
+                     "notes":  "Fix: after a fresh game start the Recycler and Press were not registered until the mods were reloaded, so the game deleted any it found standing in the world. It is now registered as the world loads. Ones already lost can\u0027t be brought back; build them again.",
+                     "restart":  "It adds new build pieces. Restart the game after updating so they register cleanly.",
+                     "cover":  "Recycler.cover.png",
+                     "files":  [
+                                   "Recycler.dll",
+                                   "Recycler.pdb"
+                               ]
+                 },
+                 {
+                     "guid":  "com.dhack.slotmachine",
+                     "name":  "SlotMachine",
+                     "version":  "1.0.4",
+                     "description":  "Odin\u0027s Fortune: a buildable slot machine. Put coins in, pull the lever, and the winnings come out of the tray.\r\n\r\nHow it works\r\n- Build it with the hammer at a workbench: Fine Wood, Bronze and Stone.\r\n- Press E to pull the lever. Your bet goes in, three reels spin and stop one after another, and a win is spat out of the tray as coins.\r\n- Press the alternate-use key with E to change the bet (5, 10, 25, 50 or 100 coins).\r\n- Three alike pay the most, from three Coins to three Valknuts (300 times your bet). Pairs of Coins, Ravens and Valknuts pay a little.\r\n- Everyone nearby sees the same spin. The lamps chase each other while the reels turn and flash after a win.\r\n- Over a long time it gives back about 93% of what goes in: a fun way to lose a few coins, not a way to make them.\r\nIt has its own hand-made look: carved dark wood and gold, a raven on top, a rune-marked marquee, a lever, buttons and a brass payout tray.\r\nSettings let you change the bet and scale the prizes.",
+                     "notes":  "Fix: after a fresh game start the slot machine was not registered until the mods were reloaded, so the game deleted any it found standing in the world. It is now registered as the world loads. Ones already lost can\u0027t be brought back; build them again. Fix: logging out, or walking away so the machine unloads, before the reels stop no longer loses your bet\u0027s winnings: they go into your inventory.",
+                     "restart":  "It adds a new build piece. Restart the game after updating so it registers cleanly.",
+                     "cover":  "SlotMachine.cover.png",
+                     "files":  [
+                                   "SlotMachine.dll",
+                                   "SlotMachine.pdb"
+                               ]
+                 }
+             ]
 }
