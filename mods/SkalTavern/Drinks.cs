@@ -101,6 +101,37 @@ namespace SkalTavern
                     if (!db.m_recipes.Contains(recipe)) { db.m_recipes.RemoveAll(r => r == null || r.name == recipe.name); db.m_recipes.Add(recipe); }
                 if (changed) AccessTools.Method(typeof(ObjectDB), "UpdateRegisters").Invoke(db, null);
             }
+            if (!_rebound) Rebind();
+        }
+
+        private static bool _rebound;
+
+        /// <summary>
+        /// After this mod reloaded (a hot reload, or the manager updating it mid-game): the drinks already in bags, chests and on the ground still
+        /// point at the copies of the items and effects from before, which are gone, so they could not be dropped or drunk. Each is pointed at
+        /// the new ones. (From a saved game they are made from the new ones to begin with.)
+        /// </summary>
+        private static void Rebind()
+        {
+            if (ObjectDB.instance == null || ZNetScene.instance == null) return;
+            _rebound = true;
+            int fixedItems = 0;
+            foreach (Player player in Player.GetAllPlayers()) fixedItems += Rebind(player.GetInventory());
+            foreach (Container container in Object.FindObjectsOfType<Container>()) if (container != null) fixedItems += Rebind(container.GetInventory());
+            foreach (ItemDrop drop in Object.FindObjectsOfType<ItemDrop>()) if (drop != null && Fix(drop.m_itemData)) fixedItems++;
+            if (fixedItems > 0) Plugin.Log.LogInfo($"{fixedItems} drink(s) already in the world were attached to the reloaded mod");
+        }
+
+        private static int Rebind(Inventory inventory) => inventory == null ? 0 : inventory.GetAllItems().Count(Fix);
+
+        private static bool Fix(ItemDrop.ItemData item)
+        {
+            if (item?.m_shared == null) return false;
+            Def d = All.FirstOrDefault(x => x.Display == item.m_shared.m_name);
+            if (d == null || !Made.TryGetValue(d.Prefab, out GameObject go) || go == null || item.m_dropPrefab == go) return false;
+            item.m_shared = go.GetComponent<ItemDrop>().m_itemData.m_shared;
+            item.m_dropPrefab = go;
+            return true;
         }
 
         internal static void Unregister()
@@ -127,7 +158,7 @@ namespace SkalTavern
             foreach (Recipe r in Recipes) Object.Destroy(r);
             foreach (StatusEffect e in Effects) Object.Destroy(e);
             Made.Clear(); ItemPrefabs.Clear(); Effects.Clear(); Recipes.Clear();
-            _items = _recipes = false;
+            _items = _recipes = _rebound = false;
             if (_holder != null) Object.Destroy(_holder);
             _holder = null;
         }

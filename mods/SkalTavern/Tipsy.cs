@@ -1,4 +1,3 @@
-using HarmonyLib;
 using UnityEngine;
 
 namespace SkalTavern
@@ -12,7 +11,8 @@ namespace SkalTavern
     internal static class Tipsy
     {
         public static float Level;
-        private static float _peak, _nextStumble;
+        private static float _peak, _nextStumble, _nextPuke;
+        private static readonly int PukeHash = "Puke".GetStableHashCode();   // (the game's own: the vomit, and the sounds)
 
         public static string Stage(float level) => level < 12f ? "Warm" : level < 35f ? "Merry" : level < 60f ? "Tipsy" : level < 85f ? "Drunk" : "Sloshed";
 
@@ -21,6 +21,8 @@ namespace SkalTavern
             Player player = Player.m_localPlayer;
             if (player == null) return;
             float before = Level;
+            // too much, too fast: the drink comes back up (and it counts for less)
+            if (amount > 0f && before >= 85f && Random.value < 0.4f) { Puke(player); before = Level; amount *= 0.5f; }
             Level = Mathf.Min(130f, Level + amount);
             _peak = Mathf.Max(_peak, Level);
             SEMan sem = player.GetSEMan();
@@ -57,9 +59,15 @@ namespace SkalTavern
 
             if (Level >= 100f && Plugin.PassOutOn.Value)
             {
-                Level = 70f;
+                Puke(player);   // (and down you go)
+                Level = Mathf.Min(Level, 62f);
                 player.Stagger(-player.transform.forward);
                 player.Message(MessageHud.MessageType.Center, "The floor comes up to meet you.");
+            }
+            else if (Level >= 88f && Time.time >= _nextPuke)
+            {
+                _nextPuke = Time.time + Random.Range(22f, 42f);
+                if (Random.value < 0.5f) Puke(player);
             }
             else if (Level >= 75f && Plugin.StumbleOn.Value && Time.time >= _nextStumble)
             {
@@ -72,12 +80,23 @@ namespace SkalTavern
             }
         }
 
+        /// <summary>You throw up: the game's own vomit effect and sounds, and you are a little less drunk for it.</summary>
+        public static void Puke(Player player)
+        {
+            if (!Plugin.PukeOn.Value || player == null) return;
+            SEMan sem = player.GetSEMan();
+            if (!sem.HaveStatusEffect(PukeHash)) sem.AddStatusEffect(PukeHash, true);
+            Level = Mathf.Max(0f, Level - 14f);
+            player.Message(MessageHud.MessageType.TopLeft, "You throw up.");
+        }
+
         public static void Clear()
         {
             Level = 0f; _peak = 0f;
             Player player = Player.m_localPlayer;
             if (player == null) return;
             foreach (int hash in new[] { Drinks.TipsyHash, Drinks.HangoverHash, Drinks.SkalHash }) player.GetSEMan().RemoveStatusEffect(hash, true);
+            Fx.Reset();
         }
 
         /// <summary>How far into the sway, 0 to 1: nothing until about a fifth of the way drunk.</summary>
@@ -143,34 +162,5 @@ namespace SkalTavern
         }
 
         public override string GetTooltipString() => "A sore head. Stamina and health come back slower for a few minutes.";
-    }
-
-    // ---- what being drunk does to the view and to your feet --------------------------------------------------------
-
-    // After the game has put the camera where it goes: a slow sway.
-    [HarmonyPatch(typeof(GameCamera), "LateUpdate")]
-    internal static class GameCamera_Sway
-    {
-        private static void Postfix(GameCamera __instance)
-        {
-            float k = Tipsy.Wobble * Plugin.Sway.Value / 100f;
-            if (k <= 0f || Player.m_localPlayer == null) return;
-            float t = Time.time;
-            __instance.transform.Rotate(new Vector3(Mathf.Sin(t * 0.53f) * 1.4f * k, Mathf.Sin(t * 0.37f + 1.3f) * 2.4f * k, Mathf.Sin(t * 0.71f) * 3.6f * k), Space.Self);
-        }
-    }
-
-    // The way you walk wanders to one side and then the other.
-    [HarmonyPatch(typeof(Player), "SetControls")]
-    internal static class Player_SetControls_Drift
-    {
-        private static void Prefix(Player __instance, ref Vector3 movedir)
-        {
-            if (__instance != Player.m_localPlayer || movedir.sqrMagnitude < 0.01f) return;
-            float k = Mathf.InverseLerp(30f, 100f, Tipsy.Level) * Plugin.Drift.Value / 100f;
-            if (k <= 0f) return;
-            float angle = (Mathf.Sin(Time.time * 0.8f) + 0.5f * Mathf.Sin(Time.time * 1.9f + 0.7f)) * 14f * k;
-            movedir = Quaternion.Euler(0f, angle, 0f) * movedir;
-        }
     }
 }

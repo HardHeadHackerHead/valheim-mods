@@ -267,10 +267,13 @@ Only you need the mod.
 <td valign="top">
 
 ### 🍺 SkalTavern
+<img src="dist/SkalTavern.cover.png" alt="SkalTavern" width="100%">
 
-Ale and mead that actually get you tipsy. Four drinks from the cauldron (ale, honey mead, blueberry wine, skaldic mead), each the real tankard
-in your hand. A little warms you and gives some stamina; more and the view sways and your feet wander; very drunk and you stagger; too much and
-you fall, and a big night ends in a hangover. Press **B** to raise a cup: friends who toast with you, and your companions, get a **Skål!** buff.
+Ale and mead that actually get you drunk. Four drinks from the cauldron (ale, honey mead, blueberry wine, skaldic mead), each the real tankard
+in your hand. A little warms you and gives some stamina. More and the screen darkens, blurs and doubles, colours drift, your body leans and weaves,
+stars circle your head, you hiccup, you slide when you walk, your aim floats and your chat slurs. Drink too much too fast and you throw up (the
+game's own effect), too much and you fall, and a big night ends in a hangover. Press **B** to raise a cup: friends who toast with you, and your
+companions, get a **Skål!** buff.
 
 </td>
 <td valign="top">

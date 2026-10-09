@@ -21,13 +21,13 @@ namespace SkalTavern
     {
         public const string Guid = "com.dhack.skaltavern";
         public const string Name = "SkalTavern";
-        public const string Version = "0.1.0";
+        public const string Version = "0.2.0";
 
         internal static Plugin Instance;
         internal static ManualLogSource Log;
 
-        internal static ConfigEntry<float> SoberMinutes, Sway, Drift, ToastSeconds;
-        internal static ConfigEntry<bool> StumbleOn, PassOutOn, HangoverOn;
+        internal static ConfigEntry<float> SoberMinutes, Sway, Drift, ToastSeconds, Strength;
+        internal static ConfigEntry<bool> StumbleOn, PassOutOn, HangoverOn, ScreenFx, Muffle, StarsOn, LeanOn, HiccupsOn, SlurOn, ConfusionOn, PukeOn;
         internal static ConfigEntry<KeyboardShortcut> ToastKey;
 
         private Harmony _harmony;
@@ -39,6 +39,15 @@ namespace SkalTavern
             Log = Logger;
             AwakeFrame = Time.frameCount;
             SoberMinutes = Config.Bind("Drinking", "MinutesToSober", 8f, new ConfigDescription("How many minutes it takes to sober up from very drunk (100). Longer and you stay tipsy for longer.", new AcceptableValueRange<float>(1f, 60f)));
+            Strength = Config.Bind("Drinking", "EffectStrength", 100f, new ConfigDescription("How strong everything about being drunk is (percent): the picture, the sway, your steering, the sound. 0 for none, 200 for a night you will not remember.", new AcceptableValueRange<float>(0f, 300f)));
+            ScreenFx = Config.Bind("Effects", "Picture", true, "The picture changes as you get drunk: dark edges, colour fringing, blur, double vision, colours that drift.");
+            Muffle = Config.Bind("Effects", "Sound", true, "Sounds go muffled and wobbly as you get drunk.");
+            StarsOn = Config.Bind("Effects", "Stars", true, "Stars circle your head when you are drunk.");
+            LeanOn = Config.Bind("Effects", "Weave", true, "Your body leans and weaves when you are drunk.");
+            HiccupsOn = Config.Bind("Effects", "Hiccups", true, "Hiccups now and then, and a drunken cheer when you stand still.");
+            SlurOn = Config.Bind("Effects", "SlurredChat", true, "What you say in chat comes out slurred when you are drunk.");
+            ConfusionOn = Config.Bind("Effects", "ReversedControls", true, "Sloshed, your controls reverse for a moment now and then.");
+            PukeOn = Config.Bind("Effects", "Puke", true, "Too much drink and you throw up.");
             Sway = Config.Bind("Drinking", "ScreenSway", 100f, new ConfigDescription("How much the view sways when you are drunk (percent). 0 for none.", new AcceptableValueRange<float>(0f, 200f)));
             Drift = Config.Bind("Drinking", "FeetDrift", 100f, new ConfigDescription("How much your walking wanders when you are drunk (percent). 0 for none.", new AcceptableValueRange<float>(0f, 200f)));
             StumbleOn = Config.Bind("Drinking", "Stumble", true, "Very drunk, you stagger now and then.");
@@ -56,9 +65,12 @@ namespace SkalTavern
         private void Update()
         {
             Toast.UpdateNetwork();
+            Tools.Update();
             Player player = Player.m_localPlayer;
             if (player == null) return;
             Tipsy.Tick(player, Time.deltaTime);
+            Body.Tick(player, Time.deltaTime);
+            Sound.Tick(Tipsy.Level);
             if (ToastKey.Value.MainKey != KeyCode.None && Input.GetKeyDown(ToastKey.Value.MainKey) && !TypingOrMenuOpen()) Toast.Raise(player);
         }
 
@@ -70,7 +82,9 @@ namespace SkalTavern
         {
             _harmony?.UnpatchSelf();
             Toast.Unregister();
+            Tools.Unregister();
             Tipsy.Clear();
+            Fx.Reset();
             Drinks.Unregister();
             if (Instance == this) Instance = null;
         }
