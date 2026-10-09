@@ -89,6 +89,8 @@ slots, a journal, small talk, missions, and one-click errands in its menu ("rest
 in the order you want (keep your chests stocked with good meals, wood and ore; build your BuildOrders plans, fetching or making what a plan
 lacks), and while you are away every duty makes progress. Everyone in the world needs it installed.
 
+**[More: how it works, settings and screenshots →](mods/AICompanion/README.md)**
+
 <table>
 <tr>
 <td width="50%" valign="top">
@@ -98,6 +100,8 @@ lacks), and while you are away every duty makes progress. Everyone in the world 
 
 Crafting stations (and hand-crafting) use materials from nearby chests. See lines to every chest in use and change the range from 5 to 30 m.
 
+**[More: how it works, settings and screenshots →](mods/CraftFromChests/README.md)**
+
 </td>
 <td width="50%" valign="top">
 
@@ -105,6 +109,8 @@ Crafting stations (and hand-crafting) use materials from nearby chests. See line
 <img src="dist/BuildFromChests.cover.png" alt="BuildFromChests" width="100%">
 
 Building with the hammer uses materials from chests near you. The build menu shows how much of everything you own in total.
+
+**[More: how it works, settings and screenshots →](mods/BuildFromChests/README.md)**
 
 </td>
 </tr>
@@ -116,6 +122,8 @@ Building with the hammer uses materials from chests near you. The build menu sho
 
 Feed smelters, kilns, cooking racks, fires and fermenters straight from your chests, and let smelters and kilns run themselves: choose what they use, keep a minimum in stock, and send what they make into your assigned chests.
 
+**[More: how it works, settings and screenshots →](mods/FeedFromChests/README.md)**
+
 </td>
 <td valign="top">
 
@@ -123,6 +131,8 @@ Feed smelters, kilns, cooking racks, fires and fermenters straight from your che
 <img src="dist/QualityOfLife.cover.png" alt="QualityOfLife" width="100%">
 
 Quick gear sets on **Q**, hammer on **B**, a **Sort** button that joins stacks, **Stack to chests** with undo, chest assignment on **K** (look at a chest to see what it receives), **Sort chests** to send everything in the chests around you to the chest assigned it, item locks on **L**, your ships on the map with their own icon, and tap **P** next to a boat to push it. It will not let you plant a seed, sapling or crop where it has no room to grow up.
+
+**[More: how it works, settings and screenshots →](mods/QualityOfLife/README.md)**
 
 </td>
 </tr>
@@ -134,6 +144,8 @@ Quick gear sets on **Q**, hammer on **B**, a **Sort** button that joins stacks, 
 
 Plan pieces as shared ghost build orders. Your party sees them, you can build one by just walking up and pressing **E**, and a panel totals the materials you still need. Pick a blueprint in the Plans window (**F11**), turn its preview into place, and a whole structure appears as ghosts (share blueprints with your friends from the same window): ask an AI assistant to design a fort for you.
 
+**[More: how it works, settings and screenshots →](mods/BuildOrders/README.md)**
+
 </td>
 <td valign="top">
 
@@ -141,6 +153,8 @@ Plan pieces as shared ghost build orders. Your party sees them, you can build on
 <img src="dist/PartyHud.cover.png" alt="PartyHud" width="100%">
 
 A party panel with every player's Steam picture, health, stamina and distance, live and at any range.
+
+**[More: how it works, settings and screenshots →](mods/PartyHud/README.md)**
 
 </td>
 </tr>
@@ -152,6 +166,8 @@ A party panel with every player's Steam picture, health, stamina and distance, l
 
 A buildable Recycler, with its own look in the build menu, that turns old weapons, armor and tools back into a share of their materials. Build Presses nearby to raise the share.
 
+**[More: how it works, settings and screenshots →](mods/Recycler/README.md)**
+
 </td>
 <td valign="top">
 
@@ -159,6 +175,8 @@ A buildable Recycler, with its own look in the build menu, that turns old weapon
 <img src="dist/MapShare.cover.png" alt="MapShare" width="100%">
 
 Share the map you uncover with everyone in the world, live, as you run through the fog. New players get the whole map when they join.
+
+**[More: how it works, settings and screenshots →](mods/MapShare/README.md)**
 
 </td>
 </tr>
@@ -170,6 +188,8 @@ Share the map you uncover with everyone in the world, live, as you run through t
 
 A Gear panel next to your inventory: Head, Chest, Legs, Cape, Belt, Trinket, Ammo and Shield slots (drop gear in and you wear it), three Food slots, and five Quick slots with hotkeys that also show in a row under your hotbar. Your shield follows your one-handed weapon, and worn gear moves into its slot by itself. Auto-eat keeps you fed: the food slots are eaten when a meal is below 20% of its time left, so your food goes about 1.6 times as far.
 
+**[More: how it works, settings and screenshots →](mods/GearSlots/README.md)**
+
 </td>
 <td valign="top">
 
@@ -177,6 +197,8 @@ A Gear panel next to your inventory: Head, Chest, Legs, Cape, Belt, Trinket, Amm
 <img src="dist/PortalHub.cover.png" alt="PortalHub" width="100%">
 
 Press **E** on a portal and pick where it goes from a list of every portal in the world: nearest first, searchable, with favourites. Every portal shows on the map with lines between linked ones. One click links it both ways, and no more matching names on two portals. (Install it on the host too.)
+
+**[More: how it works, settings and screenshots →](mods/PortalHub/README.md)**
 
 </td>
 </tr>
@@ -188,6 +210,8 @@ Press **E** on a portal and pick where it goes from a list of every portal in th
 
 A buildable notice board with contracts the whole server works on together: hunt, clear out regions, slay starred creatures or bring in loot, and get paid in coins and materials that match how far you have got (bronze, iron, silver...). Harder contracts as you beat bosses, and a tracker you can keep on screen.
 
+**[More: how it works, settings and screenshots →](mods/BountyBoard/README.md)**
+
 </td>
 <td valign="top">
 
@@ -195,6 +219,8 @@ A buildable notice board with contracts the whole server works on together: hunt
 <img src="dist/SlotMachine.cover.png" alt="SlotMachine" width="100%">
 
 Odin's Fortune: build a slot machine, put coins in, pull the lever and watch three reels spin. Wins are spat out of the tray, and you can change the bet. It pays back about 93% over time, so it is for fun.
+
+**[More: how it works, settings and screenshots →](mods/SlotMachine/README.md)**
 
 </td>
 </tr>
@@ -206,6 +232,8 @@ Odin's Fortune: build a slot machine, put coins in, pull the lever and watch thr
 
 Lets an AI assistant like [Claude Code](https://claude.com/claude-code) see your game and help, through a **request mailbox** of files on your computer: pictures from any angle, ground surveys, your status, inventory, what is nearby and what you look at, the chests around you and what each is assigned, the mods running and their settings, the log, a message on screen or a pin on your map. Other mods add their own commands (BuildOrders: place, check and photograph blueprints). No network port; it never moves your character. Off until you switch requests on.
 
+**[More: how it works, settings and screenshots →](mods/ClaudeTools/README.md)**
+
 </td>
 <td valign="top">
 
@@ -215,6 +243,8 @@ Lets an AI assistant like [Claude Code](https://claude.com/claude-code) see your
 A buildable bird trap with its own hand-made look. Bait it with berries or seeds and leave it under the open sky: a gull hops in, the prop
 falls and the door drops. Pluck it for feathers and let it go. Birds come while you are away and at first light, so after a night's sleep every
 baited trap has its bird. A few traps keep you in arrow feathers.
+
+**[More: how it works, settings and screenshots →](mods/BirdTrap/README.md)**
 
 </td>
 </tr>
@@ -228,6 +258,8 @@ A chest you build that shows everything in every chest within 30 m, in the game'
 (Wood, Ores & metals, Food, Weapons...), and click to take what you need from wherever it is. It keeps nothing itself: drop things on it and
 each goes on to the chest assigned it (QualityOfLife's **K**), else to a chest with nothing assigned.
 
+**[More: how it works, settings and screenshots →](mods/LedgerChest/README.md)**
+
 </td>
 <td valign="top">
 
@@ -238,6 +270,8 @@ Tobacco from the wild plant to the cigar in your mouth. Three strains grow in th
 cultivator, dry the leaves on a rack, age them in a barrel, and roll four kinds of cigar (Connecticut, Maduro, Corojo, Habano) at a Cigar
 Rolling Table, with a Humidor for the finer ones. Each has its own status effect, and you are seen smoking it: in your hand, brought up for a
 puff, or kept in your mouth when you hold a weapon.
+
+**[More: how it works, settings and screenshots →](mods/CigarSmoking/README.md)**
 
 </td>
 </tr>
@@ -251,6 +285,8 @@ Filter chips above the crafting list at every station: pick a type (weapons, arm
 (wood and flint, bronze, iron, silver...), or just what you can make now, each with how many recipes it has. The list below is the game's own,
 narrowed; crafting and upgrading are unchanged.
 
+**[More: how it works, settings and screenshots →](mods/BetterCraftingStations/README.md)**
+
 </td>
 <td valign="top">
 
@@ -260,6 +296,8 @@ narrowed; crafting and upgrading are unchanged.
 Pick your arrows back up. Those that hit the ground, a tree or a wall are all kept as arrows you pick up; of those that hit a creature, three
 in four drop with its loot when it dies. A quiver hangs on your back while you have arrows equipped, with the arrows you carry sticking out of it.
 Only you need the mod.
+
+**[More: how it works, settings and screenshots →](mods/Quiver/README.md)**
 
 </td>
 </tr>
@@ -275,6 +313,8 @@ stars circle your head, you hiccup, you slide when you walk, your aim floats and
 game's own effect), too much and you fall, and a big night ends in a hangover. Press **B** to raise a cup: friends who toast with you, and your
 companions, get a **Skål!** buff.
 
+**[More: how it works, settings and screenshots →](mods/SkalTavern/README.md)**
+
 </td>
 <td valign="top">
 
@@ -284,6 +324,8 @@ companions, get a **Skål!** buff.
 Build two Zipline Posts (hammer, Misc) and link them with **E**: a rope runs between them, up to kilometres long. It only runs downhill. Press **E**
 on the higher post, hook your axe over the rope and hang from its handle, both hands on it and your feet dangling, and slide down with the
 view widening and the wind rising; longer lines are faster. Jump lets go. Everyone in the world needs it, and restart after installing.
+
+**[More: how it works, settings and screenshots →](mods/Ziplines/README.md)**
 
 </td>
 </tr>
@@ -298,6 +340,8 @@ rainbow, with a fainter second bow outside it. It follows the sun, fades into th
 **Rainbow's Blessing**: stamina and health come back faster and running and jumping cost less; a double rainbow gives a stronger one. Only you
 need it, and nothing is saved in the world.
 
+**[More: how it works, settings and screenshots →](mods/Rainbows/README.md)**
+
 </td>
 <td valign="top">
 
@@ -310,6 +354,8 @@ Meadows to the Ashlands, three rounds in each land with its champion in the thir
 you from a chest that rises in the ring; the fighters drop coins, and you upgrade your gear as you go from reward chests, the Armourer and the crowd, who also throw the fresh food, so play to them. Or bring your own gear to a **Champion Bout** or the
 **Endless Horde**, try **Today's Trial**, or duel a friend for a wager. A crowd fills the stands, cheers, boos and throws you food. Death is
 real. Everyone in the world needs it, and restart after installing.
+
+**[More: how it works, settings and screenshots →](mods/Arena/README.md)**
 
 </td>
 </tr>
@@ -391,6 +437,7 @@ after it finishes, or restart if the installer reports a mod that requires it
 (such as Recycler, Bounty Board and Slot Machine, which add build pieces).
 
 - Each mod is a folder under `mods/` with its own `.csproj`, `Plugin.cs`, `DESCRIPTION.txt` (first paragraph is the summary, the rest is shown under **Details**), `CHANGELOG.txt` (first paragraph is "what is new") and an optional `cover.png`.
+- Each mod has its own page, `mods/<Mod>/README.md`, linked from its card above. `publish.ps1` makes it again from the mod's description, changelog, settings and card here (`tools/modpages/make_pages.py`); only the part between its HAND-WRITTEN markers (the screenshots, in `mods/<Mod>/images/`) is written by hand.
 - Bump the `Version` constant in `Plugin.cs` for every change people should get.
 - Add-ons can submit ordinary shared ghosts through the versioned [BuildOrders planning API](docs/buildorders-api.md), without changing terrain or duplicating the planner.
 - A mod that cannot be reloaded in game gets a `RESTART_REQUIRED.txt` explaining why.

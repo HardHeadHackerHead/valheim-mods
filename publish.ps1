@@ -65,6 +65,10 @@ foreach ($proj in Get-ChildItem (Join-Path $root "mods") -Directory) {
 $json = ConvertTo-Json -InputObject ([ordered]@{ mods = @($manifest) }) -Depth 5
 [IO.File]::WriteAllText((Join-Path $dist "manifest.json"), $json, (New-Object Text.UTF8Encoding($false)))
 
+# Each mod's own page (mods/<Mod>/README.md): made again from its DESCRIPTION.txt, CHANGELOG.txt and settings (tools/modpages)
+$py = Get-Command python -ErrorAction SilentlyContinue
+if ($py) { & $py.Source (Join-Path $root "tools/modpages/make_pages.py") }
+else { Write-Warning "Python not found: the mods' own pages were not made again (run tools/modpages/make_pages.py)" }
 Write-Host "`nReady in $dist :"
 Get-ChildItem $dist | Select-Object Name, Length, LastWriteTime
 Write-Host "`nNext: git add dist; git commit -m 'Update mods'; git push"
