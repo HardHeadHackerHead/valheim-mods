@@ -5,7 +5,7 @@
 
 <img src="cover.png" alt="Quad's Ledger Chest" width="100%">
 
-**A chest you build that shows everything in every chest around it, with a search: find anything in your storehouse and take it from wherever it is.**
+**A chest you build that shows everything in every chest around it, with a search: search all your chests and storage, and take anything from wherever it is.**
 
 ![version: 1.0.4](https://img.shields.io/badge/version-1.0.4-3b6e8f?style=flat-square)  ![multiplayer: everyone + host](https://img.shields.io/badge/multiplayer-everyone%20%2B%20host-7a5c2e?style=flat-square)  ![made with: Claude Code](https://img.shields.io/badge/made%20with-Claude%20Code-c26a3d?style=flat-square)
 

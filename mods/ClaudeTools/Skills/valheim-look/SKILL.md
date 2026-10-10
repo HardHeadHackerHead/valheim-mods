@@ -22,8 +22,11 @@ volume slider. The game already has everything you need. **Take it from the game
   for every item).
 - Item slots: reuse the game's `InventoryElement` cells, so equip markers, tooltips and drag behave as in the game.
 
-**2. Build from cloned game parts** (a window of your own that still looks native). Take templates by path under
-`InventoryGui.instance`, and log a warning if one is missing (a game update can move them):
+**2. Build from cloned game parts** (a window of your own that still looks native). **Start from `templates/GameUi.cs`** (in
+`BepInEx/claude/templates`): it does everything below (panel, boxes, buttons, tabs, braid, fonts, item cells, compact item chips,
+progress bars, icons, a scrolling list with the game's scrollbar, a place on the HUD, the canvas, the input patches), and its comment
+shows a whole window. The Recycler's and the Bounty Board's windows are built with it. The parts, by path under
+`InventoryGui.instance` (log a warning if one is missing: a game update can move them):
 
 | Part | Path under InventoryGui |
 |---|---|
@@ -41,14 +44,44 @@ volume slider. The game already has everything you need. **Take it from the game
 - **Images:** copy all of `sprite`, `type` (sliced), `material`, `color`, `pixelsPerUnitMultiplier`, `fillCenter`, or the panel looks wrong.
 - **Fonts:** take `font` and `fontSharedMaterial` from a live game TMP text; never hard-code font names, never use Unity's default font.
   Norse for titles, Averia for body text and **numbers** (Norse draws 0 as a rune).
-- **Cloned buttons:** destroy `gamepad_hint*` children and every `UIGamePad` component (it binds a gamepad button to the original, so the
-  clone would fire on it); replace `onClick` with a new event; reuse the child named `Text`. A cloned tab: also destroy its
-  `ButtonTextColor` (it stays wired to the original tab and errors every frame) and add a fresh `Button`.
+- **Cloned buttons and tabs:** destroy `gamepad_hint*` children and every `UIGamePad` component (it binds a gamepad button to the
+  original, so the clone would fire on it); replace `onClick` with a new event; reuse the child named `Text`. Destroy `ButtonTextColor`
+  too: it sets the label's colour every frame, so a colour you give it (gold for a chosen tab, orange for "are you sure?") never shows;
+  then colour the label yourself (dim when the button is disabled).
+- **Tabs:** the game shows the chosen tab by making it **not clickable** (`interactable = false`), which draws it pressed in; its label in
+  gold. A tab with news (rewards waiting) can have a green label.
+- **An on/off setting** in a window: the inventory screen has no tick box to clone. Use a button that says its state ("Contracts on
+  screen: On"), its label gold when on.
+- **Symbols:** the game's fonts lack many (★, ✓, arrows): they show as empty boxes. Use words ("Hard", "Brutal") or the game's icons.
 - **Colours** that match the game's: text (0.94, 0.9, 0.82), dim (0.75, 0.72, 0.66), warm title (1, 0.86, 0.55), gold (1, 0.78, 0.3),
   warning (1, 0.55, 0.35), good (0.6, 0.9, 0.55); rich-text accent `#ffd27a`, notes `<size=70%><color=#bdb7a9>`. Title in Norse about
   34 pt with the braid line under it; a selected tab in gold.
-- **Rebuild rather than patch** a window when what it shows changes (check at most once a second); close it on distance, death or
-  `Menu.IsVisible()`.
+- **Rebuild rather than patch** a window when what it shows changes: keep a signature string of everything it shows and build again
+  only when it differs (checking a few times a second is cheap); keep the scroll position across a rebuild. Close it on distance, death
+  or `Menu.IsVisible()`, and on **E** again as a chest closes (ignore E for 0.2 s after opening, and have your piece's `Interact` ignore
+  the same press for 0.25 s after closing, or it opens again at once).
+- **Never change the inventory from a click handler**: set a flag and act on it in `Update` (the window is mid-draw).
+- **Text that may wrap** (an item's name, a long line): size it before placing what comes under it,
+  `label.GetPreferredValues(text, width, 0).y`, or the next line runs into it.
+- **Item slots**: the inventory's own cell, `InventoryGui.instance.m_playerGrid.m_elementPrefab` (spaced `m_elementSpace` apart). On a
+  copy: `Initialize(0, 0)`; fill `m_icon`, `m_durability` (a `GuiBar`: `SetValue`), `m_quality`, `m_amount` (any text: a cost, "2-3"),
+  `m_equiped`; switch off `m_queued`, `m_noteleport`, `m_food` and the `binding` text; `m_selected` is the selection frame;
+  `m_tooltip.Set(item.m_shared.m_name, item.GetTooltip())` gives the game's tooltip. Clicks: its `UIInputHandler.m_onLeftClick`. Destroy
+  its `UIDragHandler` (its drag handlers are wired only by the inventory's grid) and `UIGamePad`.
+- **Compact items** (a cost or reward inside a line): a whole cell is 64 wide, and a cell scaled down makes its amount unreadable. Use
+  the item's icon (about 28) with the amount beside it in normal text, and give the icon a `UITooltip` whose `m_tooltipPrefab` is the
+  cell's (`m_elementPrefab`'s `InventoryElement.m_tooltip.m_tooltipPrefab`): the game's tooltip on hover. Keep cards short: put rewards
+  on a line that has room (beside "Hard · Mountain") rather than on a row of their own.
+- **Scrolling lists**: a viewport with `RectMask2D` and a clear `Image` (so the wheel works between items), a content child sized to
+  what's in it, and a `ScrollRect` (vertical, Clamped). **Copy the scroll speed** from the crafting screen's recipe list (the `ScrollRect`
+  whose `content` is `InventoryGui.m_recipeListRoot`): the game's wheel moves a ScrollRect only a little per notch, so a guessed
+  `scrollSensitivity` (40) takes a hundred notches. **Clone its scrollbar** (`InventoryGui.m_recipeListScroll`) beside the list and set
+  `verticalScrollbarVisibility = AutoHide`. Size the content **exactly** (no gap after the last item, notes measured): a few pixels too
+  tall and a scrollbar appears for nothing. The `GetMouseScrollWheel` patch below keeps the wheel from zooming the camera too.
+- **Progress:** a sunken groove (`root/Player/sunken`) with a fill `Image` its width the fraction (gold; green when done) and the count
+  in the middle, with a dark copy one pixel down-right under it so it reads on the fill and on the groove.
+- **A window that waits for the host** (the host keeps the data): say "Reading..." at first and, after a few seconds without an answer,
+  why (the host needs the mod too), instead of an empty window.
 - **A public static `Close()`** on your window class (and `IsOpen`), so other mods and tools can close it as Escape does: Claude Tools'
   `shoot close` calls it by reflection before a screenshot.
 
@@ -80,6 +113,7 @@ and Tab type instead of closing it. Each prefix that returns false does so **onl
 | `MessageType.Center` | One important line (a countdown at `<size=150%>`, "bag full"). |
 | `MessageHud.instance.ShowBiomeFoundMsg(text, false)` | Big moments, in the large Norse title. It queues: at most one every few seconds, send the rest to Center. |
 | `player.Message(type, text)` | A message to a player; on another player's character it reaches them over the network. |
+| A panel on the HUD | Something to keep an eye on while playing (the group's contracts): build it under `Hud.instance.m_rootObject` (it hides with the HUD and scales with it), from the same parts as a window (a sunken box, labels, bars). Hide it while the inventory, the menu, the map, a store or your own window is open; build it again only when what it shows changes; remove the old copy's by name after a hot reload. |
 | A cloned boss bar | Progress: `Instantiate(EnemyHud.instance.m_baseHudBoss, EnemyHud.instance.m_hudRoot.transform)`, hide the parts you don't need, drive its `GuiBar`s (`SetValue`, `SetColor`). Under the HUD root it hides with the HUD. |
 
 Hover prompts in the game's own format, localized: `"[<color=yellow><b>$KEY_Use</b></color>] Open"` through
@@ -115,7 +149,9 @@ Hover prompts in the game's own format, localized: `"[<color=yellow><b>$KEY_Use<
 
 ## Hot reload and world changes
 
-The game rebuilds `InventoryGui` and the HUD on every world change, and a hot reload leaves the old copy's objects behind. So: test
+The game rebuilds `InventoryGui` and the HUD on every world change, and a hot reload leaves the old copy's objects behind. Pieces
+already standing in the world keep the **old copy's components** after a reload: their `Interact` opens the old copy's window, which
+nothing draws any more. `templates/PieceReload.cs` fixes that (see **valheim-mod-start**, "Pieces that reload while you play"). So: test
 `go != null` with Unity's own null check before reusing UI; find and destroy leftovers **by name** (the old copy's types differ from the new
 one's); tear down everything your mod made in `OnDestroy`; move RectTransforms only when what they depend on changed (touching them
 re-runs layout); if UI code fails every frame, log once and hide the panel instead of filling the log.
@@ -123,8 +159,8 @@ re-runs layout); if UI code fails every frame, log once and hide the panel inste
 ## Checklist
 
 1. Can a game window do it (StoreGui, a cloned container, the inventory grid)? Use it.
-2. Otherwise clone game parts by path, copy all Image fields, fonts from live game texts, game colours, your own canvas with the
-   inventory's scaler settings.
+2. Otherwise start from `templates/GameUi.cs`: game parts cloned by path, all Image fields, fonts from live game texts, game colours,
+   your own canvas with the inventory's scaler settings, the inventory's own cells for items.
 3. Strip `UIGamePad` and gamepad hints from cloned buttons.
 4. The five input patches; hide the inventory on open; close on Escape, distance, death.
 5. TopLeft for small news, Center for important, biome title (rate-limited) for big moments.

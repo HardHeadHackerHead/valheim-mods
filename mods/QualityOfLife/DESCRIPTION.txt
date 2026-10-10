@@ -1,4 +1,4 @@
-Small controls that make the game nicer to play, each with its own switch.
+Small QoL controls, each with its own switch: sort and stack to chests, chests that take what you assign, item locks, quick build sets, a boat push and more.
 
 What is in it
 - Q: build a quick set from items you hover in your inventory; outside the inventory it swaps to the set and back.

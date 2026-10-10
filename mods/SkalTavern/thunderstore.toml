@@ -7,7 +7,7 @@ schemaVersion = "0.0.1"
 namespace = "Quads_Lab"
 name = "Quads_Skal_Tavern"
 versionNumber = "0.3.3"
-description = "Ale and mead that get you tipsy, and a toast."
+description = "Ale and mead that get you drunk (tipsy, stumbling, a hangover), and a Skål! toast with your friends for a buff."
 websiteUrl = "https://github.com/HardHeadHackerHead/valheim-mods/tree/main/mods/SkalTavern"
 containsNsfwContent = false
 
@@ -32,4 +32,4 @@ repository = "https://thunderstore.io"
 communities = [ "valheim" ]
 
 [publish.categories]
-valheim = [ "mods", "crafting", "misc", "ai-generated" ]
+valheim = [ "mods", "crafting", "misc", "client-side", "server-side", "deep-north-update", "ai-generated" ]

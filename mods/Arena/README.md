@@ -5,7 +5,7 @@
 
 <img src="cover.png" alt="Quad's Arena" width="100%">
 
-**The Arena: a great stone colosseum that stands in your world, where you fight for the crowd, for gold and for glory, like the arena in the first Fable.**
+**The Arena: a stone colosseum in your world where you fight waves of monsters and champions for the crowd, for gold and for glory, or duel your friends (PvP), like the arena in the first Fable.**
 
 ![version: 0.3.3](https://img.shields.io/badge/version-0.3.3-3b6e8f?style=flat-square)  ![multiplayer: everyone + host](https://img.shields.io/badge/multiplayer-everyone%20%2B%20host-7a5c2e?style=flat-square)  ![made with: Claude Code](https://img.shields.io/badge/made%20with-Claude%20Code-c26a3d?style=flat-square)
 

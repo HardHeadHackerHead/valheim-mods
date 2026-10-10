@@ -4,6 +4,9 @@ using BepInEx.Configuration;
 using HarmonyLib;
 using UnityEngine;
 
+// Its pieces reload while you play: they stay registered across a reload and the ones standing get the new copy (Shared/PieceReload.cs).
+[assembly: System.Reflection.AssemblyMetadata("ClaudeTools.Reload", "world")]
+
 namespace Recycler
 {
     /// <summary>
@@ -19,7 +22,7 @@ namespace Recycler
         public const string Guid = "com.quad.recycler";
         public const string OldGuid = "com.dhack.recycler"; // (its id until 2026-10: settings move over by themselves, see Shared/Migration.cs)
         public const string Name = "Recycler";
-        public const string Version = "1.1.2";
+        public const string Version = "1.2.0";
         public const string RecyclerPrefab = "piece_recycler";
         public const string PressPrefab = "piece_recycler_press";
 
@@ -59,6 +62,7 @@ namespace Recycler
         private void OnDestroy()
         {
             Window.Close();
+            GameUi.Destroy();
             _harmony?.UnpatchSelf();
             Synced?.Dispose();
             Unregister();
@@ -69,7 +73,6 @@ namespace Recycler
             Synced?.Update(); // notices joining and leaving a server, for the settings it decides
             Window.Tick();
         }
-        private void OnGUI() => Window.Draw();
 
         internal static void Register(ZNetScene scene)
         {
@@ -93,14 +96,15 @@ namespace Recycler
                     Req("Iron", 15), Req("Bronze", 10), Req("Stone", 10)));
             }
 
-            var named = Named(scene);
+            // registered in place of an older copy's (a hot reload while playing), and the pieces standing get this copy's code
             PieceTable table = hammer.GetComponent<ItemDrop>().m_itemData.m_shared.m_buildPieces;
+            int swapped = 0;
             foreach (GameObject prefab in Prefabs)
             {
-                if (!scene.m_prefabs.Contains(prefab)) scene.m_prefabs.Add(prefab);
-                named[prefab.name.GetStableHashCode()] = prefab; // lets it be placed and loaded from saves
-                if (!table.m_pieces.Contains(prefab)) table.m_pieces.Add(prefab);
+                DHack.Shared.PieceReload.ReplacePrefab(scene, prefab, table);
+                swapped += DHack.Shared.PieceReload.Reattach(scene, prefab);
             }
+            if (swapped > 0) Debug.Log($"Recycler: {swapped} piece(s) in the world now run this copy");
         }
 
         private static GameObject Make(string prefabName, GameObject source, Material mat, string title, string description, bool recycler,
@@ -130,26 +134,16 @@ namespace Recycler
             return go;
         }
 
-        private static Dictionary<int, GameObject> Named(ZNetScene scene) =>
-            (Dictionary<int, GameObject>)AccessTools.Field(typeof(ZNetScene), "m_namedPrefabs").GetValue(scene);
 
         internal static void Unregister()
         {
             if (Prefabs.Count == 0) return;
+            // out of the build menu, but still registered, so no area loading before the next copy is up loses its pieces
+            // (Shared/PieceReload.cs); the next copy replaces them
             GameObject hammer = ObjectDB.instance != null ? ObjectDB.instance.GetItemPrefab("Hammer") : null;
             foreach (GameObject prefab in Prefabs)
-            {
-                if (ZNetScene.instance != null)
-                {
-                    ZNetScene.instance.m_prefabs.Remove(prefab);
-                    var named = Named(ZNetScene.instance);
-                    int hash = prefab.name.GetStableHashCode();
-                    if (named.TryGetValue(hash, out GameObject current) && current == prefab) named.Remove(hash);
-                }
-                if (hammer != null) hammer.GetComponent<ItemDrop>().m_itemData.m_shared.m_buildPieces.m_pieces.Remove(prefab);
-            }
+                DHack.Shared.PieceReload.UnloadPiece(prefab, hammer != null ? hammer.GetComponent<ItemDrop>().m_itemData.m_shared.m_buildPieces : null);
             Prefabs.Clear();
-            Object.Destroy(_holder);
             _holder = null;
         }
 
@@ -174,29 +168,4 @@ namespace Recycler
         private static void Postfix() { if (ZNetScene.instance != null) Plugin.Register(ZNetScene.instance); }
     }
 
-    // While the menu is open: keep the game from reacting to clicks and typing, and show the mouse.
-    [HarmonyPatch(typeof(PlayerController), "TakeInput")]
-    internal static class PlayerController_TakeInput
-    {
-        private static void Postfix(ref bool __result) { if (Window.IsOpen) __result = false; }
-    }
-
-    [HarmonyPatch(typeof(Player), "TakeInput")]
-    internal static class Player_TakeInput
-    {
-        private static void Postfix(ref bool __result) { if (Window.IsOpen) __result = false; }
-    }
-
-    [HarmonyPatch(typeof(GameCamera), nameof(GameCamera.UpdateMouseCapture))]
-    internal static class GameCamera_UpdateMouseCapture
-    {
-        // Skip the game's own cursor handling while our window is open (locking would snap the pointer to the middle of the screen on Linux).
-        private static bool Prefix()
-        {
-            if (!Window.IsOpen) return true;
-            ZCursor.LockState = CursorLockMode.None;
-            ZCursor.Show();
-            return false;
-        }
-    }
 }

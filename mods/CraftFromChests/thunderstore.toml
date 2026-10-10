@@ -7,7 +7,7 @@ schemaVersion = "0.0.1"
 namespace = "Quads_Lab"
 name = "Quads_Craft_From_Chests"
 versionNumber = "1.4.2"
-description = "Crafting stations, and hand-crafting from your inventory, use materials from nearby chests."
+description = "Craft from chests: crafting stations, and hand-crafting from your inventory, use materials from nearby chests and containers."
 websiteUrl = "https://github.com/HardHeadHackerHead/valheim-mods/tree/main/mods/CraftFromChests"
 containsNsfwContent = false
 
@@ -32,4 +32,4 @@ repository = "https://thunderstore.io"
 communities = [ "valheim" ]
 
 [publish.categories]
-valheim = [ "mods", "crafting", "utility", "ai-generated" ]
+valheim = [ "mods", "crafting", "utility", "tweaks", "client-side", "deep-north-update", "ai-generated" ]

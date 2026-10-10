@@ -1,4 +1,4 @@
-A party panel on the right of the screen showing every player in your world.
+A party HUD: health bars, stamina and distance for every player in your group, live and at any range, on the right of the screen.
 
 What it shows
 - Each player's Steam picture, name, health, stamina and distance, live, at any range.

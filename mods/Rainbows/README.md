@@ -5,7 +5,7 @@
 
 <img src="cover.png" alt="Quad's Rainbows" width="100%">
 
-**Rainbows: a rainbow after the rain, and a blessing for looking up at it.**
+**A rainbow in the sky after the rain, and a blessing for looking up at it: the weather gives something back.**
 
 ![version: 0.2.3](https://img.shields.io/badge/version-0.2.3-3b6e8f?style=flat-square)  ![multiplayer: only who wants it](https://img.shields.io/badge/multiplayer-only%20who%20wants%20it-7a5c2e?style=flat-square)  ![made with: Claude Code](https://img.shields.io/badge/made%20with-Claude%20Code-c26a3d?style=flat-square)
 

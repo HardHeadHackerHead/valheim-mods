@@ -90,6 +90,12 @@ Read `thunderstore.toml` the first time: the description comes from `DESCRIPTION
 when nobody else needs it), `server-side`... `modkit package` lists them if one is wrong). Edits to the toml are kept: modkit only
 updates the version and dependencies. Fix every **problem** and run it again until there are none.
 
+**Being found.** Thunderstore's search reads only the package's name and description (not the README or the categories), and matches
+the words as typed: a description that says "chests" isn't found by "containers". Put the words players search for in the description
+(what other mods for the same job call it: "quick slots", "auto fuel", "salvage", "follower NPC"). Categories are the filters: add
+`client-side` and/or `server-side` (server admins filter by them), and the current game update's category (`deep-north-update` in 2026,
+a site section of its own) once the mod is tested on that version; add the next one when a game update comes and the mod still works.
+
 **A repository with several mods**: each mod is its own package (one `thunderstore.toml` per mod folder, the same team). A small script
 that, for each mod, builds it, runs `modkit package`, `tcli build` and `modkit package check`, and publishes only the mods named on its
 command line keeps releases consistent. Other channels (a GitHub feed, a mod manager of your own) can ship the same builds alongside.

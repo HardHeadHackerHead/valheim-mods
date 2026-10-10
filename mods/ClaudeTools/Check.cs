@@ -257,7 +257,11 @@ namespace ClaudeTools
             void Need(int l, string reason) { level = Math.Max(level, l); why.Add(reason); }
             if (usesJotunn) Need(2, "it uses Jotunn, which registers its things once per game");
             if (managers != null) Need(2, $"it includes {managers}, which patches with its own Harmony id: unloading can't undo it");
-            if (addsPrefabs) Need(1, "it registers prefabs (pieces, items or creatures): for a moment they're missing, and placed ones and items in bags " +
+            // a mod whose pieces are made reloadable (they stay registered, and placed ones get the new copy's components: the template's
+            // PieceReload) says so with AssemblyMetadata("ClaudeTools.Reload", "world"); that covers pieces only, never items in bags
+            bool piecesReload = declaredReload == "world" && !addsToObjectDB && heightWhere == null && !(patches.Count > 0 && !unpatches) && !usesJotunn && managers == null;
+            if (addsPrefabs && piecesReload) why.Add("it registers pieces, and its author says they reload in a world (kept registered, placed ones given the new copy)");
+            else if (addsPrefabs) Need(1, "it registers prefabs (pieces, items or creatures): for a moment they're missing, and placed ones and items in bags " +
                                      "point at the old copy");
             if (addsToObjectDB) Need(1, "it adds items, recipes or status effects to ObjectDB");
             if (heightWhere != null) Need(1, "it changes an inventory's size: unloading can drop items from the extra rows");

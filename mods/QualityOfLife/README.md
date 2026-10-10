@@ -5,7 +5,7 @@
 
 <img src="cover.png" alt="Quad's Quality of Life" width="100%">
 
-**Small controls that make the game nicer to play, each with its own switch.**
+**Small QoL controls, each with its own switch: sort and stack to chests, chests that take what you assign, item locks, quick build sets, a boat push and more.**
 
 ![version: 1.11.2](https://img.shields.io/badge/version-1.11.2-3b6e8f?style=flat-square)  ![multiplayer: only who wants it](https://img.shields.io/badge/multiplayer-only%20who%20wants%20it-7a5c2e?style=flat-square)  ![made with: Claude Code](https://img.shields.io/badge/made%20with-Claude%20Code-c26a3d?style=flat-square)
 

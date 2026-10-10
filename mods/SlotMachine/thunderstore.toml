@@ -7,7 +7,7 @@ schemaVersion = "0.0.1"
 namespace = "Quads_Lab"
 name = "Quads_Slot_Machine"
 versionNumber = "1.1.2"
-description = "Odin's Fortune: a buildable slot machine. Put coins in, pull the lever, and the winnings come out of the tray."
+description = "Odin's Fortune: a buildable slot machine for your viking casino. Put coins in, pull the lever, and the winnings come out of the tray."
 websiteUrl = "https://github.com/HardHeadHackerHead/valheim-mods/tree/main/mods/SlotMachine"
 containsNsfwContent = false
 
@@ -32,4 +32,4 @@ repository = "https://thunderstore.io"
 communities = [ "valheim" ]
 
 [publish.categories]
-valheim = [ "mods", "building", "misc", "ai-generated" ]
+valheim = [ "mods", "building", "misc", "client-side", "server-side", "deep-north-update", "ai-generated" ]

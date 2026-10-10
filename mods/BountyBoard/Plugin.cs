@@ -4,6 +4,9 @@ using BepInEx.Configuration;
 using HarmonyLib;
 using UnityEngine;
 
+// Its pieces reload while you play: they stay registered across a reload and the boards standing get the new copy (Shared/PieceReload.cs).
+[assembly: System.Reflection.AssemblyMetadata("ClaudeTools.Reload", "world")]
+
 namespace BountyBoard
 {
     /// <summary>
@@ -21,7 +24,7 @@ namespace BountyBoard
         public const string Guid = "com.quad.bountyboard";
         public const string OldGuid = "com.dhack.bountyboard"; // (its id until 2026-10: settings move over by themselves, see Shared/Migration.cs)
         public const string Name = "BountyBoard";
-        public const string Version = "1.2.2";
+        public const string Version = "1.3.0";
         public const string PiecePrefab = "piece_bountyboard";
 
         internal static Plugin Instance;
@@ -64,12 +67,12 @@ namespace BountyBoard
             if (Instance == this) Instance = null;
             _harmony?.UnpatchSelf();
             Unregister();
-            Styles.Destroy();
+            Tracker.Destroy();
+            GameUi.Destroy();
             Synced?.Dispose();
         }
 
-        private void Update() { Synced?.Update(); UpdateNetwork(); Window.Tick(); }
-        private void OnGUI() { Window.Draw(); Tracker.Draw(); }
+        private void Update() { Synced?.Update(); UpdateNetwork(); Window.Tick(); Tracker.Tick(); }
 
         internal static void Register(ZNetScene scene)
         {
@@ -89,11 +92,10 @@ namespace BountyBoard
                 _prefab = Make(source, bench != null ? bench.GetComponent<CraftingStation>() : null);
             }
 
-            var named = (Dictionary<int, GameObject>)AccessTools.Field(typeof(ZNetScene), "m_namedPrefabs").GetValue(scene);
-            PieceTable table = hammer.GetComponent<ItemDrop>().m_itemData.m_shared.m_buildPieces;
-            if (!scene.m_prefabs.Contains(_prefab)) scene.m_prefabs.Add(_prefab);
-            named[_prefab.name.GetStableHashCode()] = _prefab; // lets it be placed and loaded from saves
-            if (!table.m_pieces.Contains(_prefab)) table.m_pieces.Add(_prefab);
+            // registered in place of an older copy's (a hot reload while playing), and the boards already standing get this copy's code
+            DHack.Shared.PieceReload.ReplacePrefab(scene, _prefab, hammer.GetComponent<ItemDrop>().m_itemData.m_shared.m_buildPieces);
+            int swapped = DHack.Shared.PieceReload.Reattach(scene, _prefab);
+            if (swapped > 0) Debug.Log($"{Name}: {swapped} board(s) in the world now run this copy");
         }
 
         private static GameObject Make(GameObject source, CraftingStation workbench)
@@ -128,20 +130,16 @@ namespace BountyBoard
             return go;
         }
 
+        /// <summary>
+        /// When this copy unloads: out of the build menu, but still registered, so no area loading before the next copy is up loses its
+        /// boards (Shared/PieceReload.cs). The prefab (and its holder) stay until the next copy replaces it, or the game ends.
+        /// </summary>
         internal static void Unregister()
         {
             if (_prefab == null) return;
-            if (ZNetScene.instance != null)
-            {
-                ZNetScene.instance.m_prefabs.Remove(_prefab);
-                var named = (Dictionary<int, GameObject>)AccessTools.Field(typeof(ZNetScene), "m_namedPrefabs").GetValue(ZNetScene.instance);
-                int hash = _prefab.name.GetStableHashCode();
-                if (named.TryGetValue(hash, out GameObject current) && current == _prefab) named.Remove(hash); // only our own entry
-            }
             GameObject hammer = ObjectDB.instance != null ? ObjectDB.instance.GetItemPrefab("Hammer") : null;
-            if (hammer != null) hammer.GetComponent<ItemDrop>().m_itemData.m_shared.m_buildPieces.m_pieces.Remove(_prefab);
+            DHack.Shared.PieceReload.UnloadPiece(_prefab, hammer != null ? hammer.GetComponent<ItemDrop>().m_itemData.m_shared.m_buildPieces : null);
             _prefab = null;
-            Object.Destroy(_holder);
             _holder = null;
             Look.Clear();
         }
@@ -172,48 +170,5 @@ namespace BountyBoard
     internal static class ObjectDB_Awake
     {
         private static void Postfix() { if (ZNetScene.instance != null) Plugin.Register(ZNetScene.instance); }
-    }
-
-    // While the menu is open: keep the game from reacting to clicks and typing, show the mouse, and let Escape close only the menu.
-    [HarmonyPatch(typeof(PlayerController), "TakeInput")]
-    internal static class PlayerController_TakeInput
-    {
-        private static void Postfix(ref bool __result) { if (Window.IsOpen) __result = false; }
-    }
-
-    [HarmonyPatch(typeof(Player), "TakeInput")]
-    internal static class Player_TakeInput
-    {
-        private static void Postfix(ref bool __result) { if (Window.IsOpen) __result = false; }
-    }
-
-    [HarmonyPatch(typeof(GameCamera), nameof(GameCamera.UpdateMouseCapture))]
-    internal static class GameCamera_UpdateMouseCapture
-    {
-        private static bool Prefix()
-        {
-            if (!Window.IsOpen) return true;
-            ZCursor.LockState = CursorLockMode.None;
-            ZCursor.Show();
-            return false;
-        }
-    }
-
-    [HarmonyPatch(typeof(ZInput), nameof(ZInput.GetMouseScrollWheel))]
-    internal static class ZInput_GetMouseScrollWheel
-    {
-        private static void Postfix(ref float __result) { if (Window.IsOpen) __result = 0f; }
-    }
-
-    [HarmonyPatch(typeof(Menu), "Update")]
-    internal static class Menu_Update_EscapeCloses
-    {
-        private static bool Prefix()
-        {
-            if (!Window.IsOpen) return true;
-            if (!(ZInput.GetKeyDown(KeyCode.Escape) || ZInput.GetButtonDown("JoyMenu"))) return true;
-            Window.Close();
-            return false;
-        }
     }
 }

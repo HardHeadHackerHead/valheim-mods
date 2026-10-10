@@ -7,7 +7,7 @@ schemaVersion = "0.0.1"
 namespace = "Quads_Lab"
 name = "Quads_Build_Orders"
 versionNumber = "1.12.2"
-description = "Shared ghost build orders and blueprints: plan pieces (or import a blueprint) for everyone in your party, then build them by walking up and pressing E."
+description = "Shared ghost build orders and blueprints, a build planner for your party: plan pieces (or import a blueprint) for everyone, then build them by walking up and pressing E."
 websiteUrl = "https://github.com/HardHeadHackerHead/valheim-mods/tree/main/mods/BuildOrders"
 containsNsfwContent = false
 
@@ -32,4 +32,4 @@ repository = "https://thunderstore.io"
 communities = [ "valheim" ]
 
 [publish.categories]
-valheim = [ "mods", "building", "utility", "ai-generated" ]
+valheim = [ "mods", "building", "tools", "utility", "client-side", "deep-north-update", "ai-generated" ]

@@ -7,7 +7,7 @@ schemaVersion = "0.0.1"
 namespace = "Quads_Lab"
 name = "Quads_Rainbows"
 versionNumber = "0.2.3"
-description = "Rainbows: a rainbow after the rain, and a blessing for looking up at it."
+description = "A rainbow in the sky after the rain, and a blessing for looking up at it: the weather gives something back."
 websiteUrl = "https://github.com/HardHeadHackerHead/valheim-mods/tree/main/mods/Rainbows"
 containsNsfwContent = false
 
@@ -32,4 +32,4 @@ repository = "https://thunderstore.io"
 communities = [ "valheim" ]
 
 [publish.categories]
-valheim = [ "mods", "misc", "ai-generated" ]
+valheim = [ "mods", "misc", "client-side", "deep-north-update", "ai-generated" ]

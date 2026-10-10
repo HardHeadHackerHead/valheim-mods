@@ -1,4 +1,4 @@
-Crafting stations, and hand-crafting from your inventory, use materials from nearby chests.
+Craft from chests: crafting stations, and hand-crafting from your inventory, use materials from nearby chests and containers.
 
 How it works
 - Anything you can reach within the range counts toward a recipe. The game takes the materials from your inventory first, then from the chests.

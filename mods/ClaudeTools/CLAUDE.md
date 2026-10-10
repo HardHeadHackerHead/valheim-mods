@@ -19,7 +19,7 @@ profile's `BepInEx` folder with r2modman or Thunderstore Mod Manager (Settings â
 | `modkit/` | **modkit**: the mod-maker commands on the command line, without the game (see "For mod makers" below). |
 | `.claude/skills/` | Skills for making mods: starting one, the game's code, other mods, looking native, pitfalls, releasing (and on Thunderstore), fixing errors. |
 | `modelkit/` | Design, preview and check 3D models offline, and draw the game's real pieces (Python; see its README). |
-| `templates/` | Code to copy into a mod: server-decided settings, and taking from chests safely in multiplayer (see its README). |
+| `templates/` | Code to copy into a mod: server-decided settings, taking from chests safely in multiplayer, and windows in the game's own look (see its README). |
 
 ## Before you start
 
@@ -111,7 +111,7 @@ Each mod has a **reload level**, from its code (`modcheck` and `devmods` show it
 | Level | What the mod does | When it reloads |
 |---|---|---|
 | `world` | patches methods, UI, commands, settings | anywhere |
-| `menu` | registers pieces, items, creatures, recipes or status effects, or changes inventory sizes | at the main menu only: in a world, for a moment its prefabs are missing (the host deletes objects in areas that load) and items in bags point at the old copy |
+| `menu` | registers pieces, items, creatures, recipes or status effects, or changes inventory sizes | at the main menu only: in a world, for a moment its prefabs are missing (the host deletes objects in areas that load) and items in bags point at the old copy. A piece mod using `templates/PieceReload.cs` declares `world` and reloads anywhere |
 | `restart` | uses Jotunn or blaxxun-boop's managers | only by restarting the game |
 
 `reload <mod> force` ignores the level: only in a test world, and only after asking the player. `AutoReload` (section `Dev` of the

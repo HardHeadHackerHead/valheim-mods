@@ -7,7 +7,7 @@ schemaVersion = "0.0.1"
 namespace = "Quads_Lab"
 name = "Quads_Quiver"
 versionNumber = "0.2.2"
-description = "Pick your shot arrows back up, and carry them in a quiver on your back."
+description = "Pick your shot arrows back up (arrow recovery), and carry them in a quiver on your back: archery that doesn't eat your arrows."
 websiteUrl = "https://github.com/HardHeadHackerHead/valheim-mods/tree/main/mods/Quiver"
 containsNsfwContent = false
 
@@ -32,4 +32,4 @@ repository = "https://thunderstore.io"
 communities = [ "valheim" ]
 
 [publish.categories]
-valheim = [ "mods", "gear", "ai-generated" ]
+valheim = [ "mods", "gear", "tweaks", "client-side", "deep-north-update", "ai-generated" ]

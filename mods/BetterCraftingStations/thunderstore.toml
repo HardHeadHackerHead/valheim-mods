@@ -7,7 +7,7 @@ schemaVersion = "0.0.1"
 namespace = "Quads_Lab"
 name = "Quads_Crafting_Filters"
 versionNumber = "0.1.3"
-description = "Filter chips above the crafting list: pick a type, a tier or what you can make now."
+description = "Recipe filter chips above the crafting list: pick a type, a tier or what you can make now, at every crafting station."
 websiteUrl = "https://github.com/HardHeadHackerHead/valheim-mods/tree/main/mods/BetterCraftingStations"
 containsNsfwContent = false
 
@@ -32,4 +32,4 @@ repository = "https://thunderstore.io"
 communities = [ "valheim" ]
 
 [publish.categories]
-valheim = [ "mods", "crafting", "client-side", "ai-generated" ]
+valheim = [ "mods", "crafting", "tweaks", "client-side", "deep-north-update", "ai-generated" ]

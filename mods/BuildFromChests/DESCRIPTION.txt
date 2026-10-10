@@ -1,4 +1,4 @@
-Building with the hammer uses materials from chests near you, not just your inventory.
+Build from chests: building with the hammer uses materials from nearby chests and containers, not just your inventory.
 
 How it works
 - Pieces you place take materials from your inventory first, then from chests within range (default 20 m).

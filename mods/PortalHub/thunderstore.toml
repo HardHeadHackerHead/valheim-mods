@@ -7,7 +7,7 @@ schemaVersion = "0.0.1"
 namespace = "Quads_Lab"
 name = "Quads_Portal_Hub"
 versionNumber = "1.2.2"
-description = "Portals you can actually use: press E on a portal and pick where it goes from a list."
+description = "A portal network: press E on a portal and pick where it goes from a list. No more matching portal names to teleport where you want."
 websiteUrl = "https://github.com/HardHeadHackerHead/valheim-mods/tree/main/mods/PortalHub"
 containsNsfwContent = false
 
@@ -32,4 +32,4 @@ repository = "https://thunderstore.io"
 communities = [ "valheim" ]
 
 [publish.categories]
-valheim = [ "mods", "transportation", "utility", "ai-generated" ]
+valheim = [ "mods", "transportation", "utility", "tweaks", "client-side", "server-side", "deep-north-update", "ai-generated" ]

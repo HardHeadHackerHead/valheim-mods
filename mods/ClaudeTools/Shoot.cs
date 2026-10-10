@@ -128,14 +128,16 @@ namespace ClaudeTools
             }
         }
 
+        /// <summary>The newest copy of a type: after a hot reload the old copy's assembly is still loaded, but nothing uses it any more.</summary>
         private static Type FindType(string name)
         {
-            foreach (Assembly asm in AppDomain.CurrentDomain.GetAssemblies())
+            Type found = null;
+            foreach (Assembly asm in AppDomain.CurrentDomain.GetAssemblies())   // (in the order they were loaded)
             {
                 Type t = asm.GetType(name, false);
-                if (t != null) return t;
+                if (t != null) found = t;
             }
-            return null;
+            return found;
         }
 
         private const BindingFlags AnyStatic = BindingFlags.Static | BindingFlags.Public | BindingFlags.NonPublic;

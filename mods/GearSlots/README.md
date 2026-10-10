@@ -5,7 +5,7 @@
 
 <img src="cover.png" alt="Quad's Gear Slots" width="100%">
 
-**Extra inventory slots for what you wear, eat and use, in a Gear panel next to your inventory.**
+**Equipment slots and quick slots: extra inventory slots for what you wear, eat and use (armor, cape, ammo, shield, food, quickslots), in a Gear panel next to your inventory.**
 
 ![version: 1.2.2](https://img.shields.io/badge/version-1.2.2-3b6e8f?style=flat-square)  ![multiplayer: only who wants it](https://img.shields.io/badge/multiplayer-only%20who%20wants%20it-7a5c2e?style=flat-square)  ![made with: Claude Code](https://img.shields.io/badge/made%20with-Claude%20Code-c26a3d?style=flat-square)
 

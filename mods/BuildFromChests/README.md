@@ -5,7 +5,7 @@
 
 <img src="cover.png" alt="Quad's Build From Chests" width="100%">
 
-**Building with the hammer uses materials from chests near you, not just your inventory.**
+**Build from chests: building with the hammer uses materials from nearby chests and containers, not just your inventory.**
 
 ![version: 1.4.2](https://img.shields.io/badge/version-1.4.2-3b6e8f?style=flat-square)  ![multiplayer: only who wants it](https://img.shields.io/badge/multiplayer-only%20who%20wants%20it-7a5c2e?style=flat-square)  ![made with: Claude Code](https://img.shields.io/badge/made%20with-Claude%20Code-c26a3d?style=flat-square)
 

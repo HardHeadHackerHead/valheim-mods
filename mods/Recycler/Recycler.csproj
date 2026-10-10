@@ -4,6 +4,6 @@
     <RootNamespace>Recycler</RootNamespace>
   </PropertyGroup>
   <ItemGroup>
-    <Compile Include="../Shared/ServerSettings.cs" Link="Shared/ServerSettings.cs" />
+    <Compile Include="../Shared/ServerSettings.cs" Link="Shared/ServerSettings.cs" /> <Compile Include="../Shared/PieceReload.cs" Link="Shared/PieceReload.cs" />
   </ItemGroup>
 </Project>

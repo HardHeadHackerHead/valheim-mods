@@ -7,7 +7,7 @@ schemaVersion = "0.0.1"
 namespace = "Quads_Lab"
 name = "Quads_Map_Share"
 versionNumber = "1.1.2"
-description = "Share the map you uncover with everyone in the world, live, as you run through the fog of war."
+description = "Shared map: share the map you uncover with everyone in the world, live, as you explore through the fog of war."
 websiteUrl = "https://github.com/HardHeadHackerHead/valheim-mods/tree/main/mods/MapShare"
 containsNsfwContent = false
 
@@ -32,4 +32,4 @@ repository = "https://thunderstore.io"
 communities = [ "valheim" ]
 
 [publish.categories]
-valheim = [ "mods", "utility", "ai-generated" ]
+valheim = [ "mods", "utility", "tweaks", "client-side", "deep-north-update", "ai-generated" ]

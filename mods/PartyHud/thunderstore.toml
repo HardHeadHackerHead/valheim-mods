@@ -7,7 +7,7 @@ schemaVersion = "0.0.1"
 namespace = "Quads_Lab"
 name = "Quads_Party_HUD"
 versionNumber = "1.8.2"
-description = "A party panel on the right of the screen showing every player in your world."
+description = "A party HUD: health bars, stamina and distance for every player in your group, live and at any range, on the right of the screen."
 websiteUrl = "https://github.com/HardHeadHackerHead/valheim-mods/tree/main/mods/PartyHud"
 containsNsfwContent = false
 
@@ -32,4 +32,4 @@ repository = "https://thunderstore.io"
 communities = [ "valheim" ]
 
 [publish.categories]
-valheim = [ "mods", "utility", "ai-generated" ]
+valheim = [ "mods", "utility", "tweaks", "client-side", "deep-north-update", "ai-generated" ]

@@ -1,86 +1,106 @@
 using System.Collections.Generic;
 using System.Linq;
+using TMPro;
 using UnityEngine;
 
 namespace Recycler
 {
-    /// <summary>The Recycler's menu: your recyclable gear on the left, what the selected item returns on the right.</summary>
+    /// <summary>
+    /// The Recycler's window, in the game's own look (GameUi.cs): your recyclable gear on the left in the inventory's own cells, what the
+    /// chosen piece returns on the right, and the Recycle button. It is built again whenever what it shows changes.
+    /// </summary>
     internal static class Window
     {
-        private class Row { public ItemDrop.ItemData Item; public string Name, Sub; }
+        private const float W = 860f, H = 580f, Pad = 30f, ListW = 470f;
 
-        internal static bool IsOpen;
+        internal static bool IsOpen => _window != null;
+        internal static float ClosedAt = -1f;   // (the E that closes it mustn't open it again)
 
+        private static RectTransform _window, _content;
         private static RecyclerStation _station;
-        private static readonly List<Row> Rows = new List<Row>();
+        private static readonly List<ItemDrop.ItemData> Rows = new List<ItemDrop.ItemData>();
         private static ItemDrop.ItemData _selected;
         private static Calc.Quote _quote;
-        private static Vector2 _scroll;
-        private static float _nextRefresh;
+        private static float _nextRefresh, _openedAt;
         private static bool _pending;
         private static ItemDrop.ItemData _confirmFor;
         private static float _confirmUntil;
-
-        private static Texture2D _white;
-        private static GUIStyle _title, _text, _small, _button, _bad;
-        private static Font _bodyFont, _titleFont;
-
-        private static readonly Color Panel = new Color(0.08f, 0.10f, 0.11f, 0.97f);
-        private static readonly Color RowOn = new Color(0.16f, 0.45f, 0.5f, 0.55f);
-        private static readonly Color RowOff = new Color(1f, 1f, 1f, 0.05f);
-        private static readonly Color Teal = new Color(0.3f, 0.8f, 0.85f);
+        private static string _shown = "";
 
         internal static void Open(RecyclerStation station)
         {
+            if (!GameUi.Ready()) return;
+            GameUi.IsOpen = () => IsOpen;
+            GameUi_EscapeCloses.Close = Close;
             _station = station;
             _selected = null; _quote = null; _confirmFor = null;
-            _scroll = Vector2.zero;
-            IsOpen = true;
+            _openedAt = Time.unscaledTime;
+            if (InventoryGui.IsVisible()) InventoryGui.instance.Hide();
             Refresh(Player.m_localPlayer);
+            Build(true);
         }
 
         internal static void Close()
         {
-            IsOpen = false;
-            _station = null; _selected = null; _quote = null; _pending = false;
+            if (_window != null) Object.Destroy(_window.gameObject);
+            _window = null; _content = null;
+            _station = null; _selected = null; _quote = null; _pending = false; _shown = "";
             Rows.Clear();
             Calc.ClearCache();
-            if (_white != null) { Object.Destroy(_white); _white = null; }
+            UITooltip.HideTooltip();
+            ClosedAt = Time.unscaledTime;
         }
 
         internal static void Tick()
         {
-            if (!IsOpen) return;
+            if (_window == null) { if (_station != null) Close(); return; }   // (the game rebuilt its interface: a world change)
             Player player = Player.m_localPlayer;
-            if (player == null || player.IsDead() || _station == null || Menu.IsVisible() || Input.GetKeyDown(KeyCode.Escape) ||
+            bool useAgain = Time.unscaledTime > _openedAt + 0.2f && ZInput.GetButtonDown("Use");   // E closes it again, as it does a chest
+            if (player == null || player.IsDead() || _station == null || Menu.IsVisible() || Input.GetKeyDown(KeyCode.Escape) || useAgain ||
                 (_station.transform.position - player.transform.position).sqrMagnitude > 6f * 6f)
             {
                 Close();
                 return;
             }
             if (_pending) { _pending = false; Recycle(player); }
-            if (Time.time >= _nextRefresh) Refresh(player);
+            if (Time.unscaledTime >= _nextRefresh) Refresh(player);
+            if (Signature() != _shown) Build(false);
         }
 
         // ---- data -------------------------------------------------------------------------------------
 
         private static void Refresh(Player player)
         {
-            _nextRefresh = Time.time + 0.4f;
+            _nextRefresh = Time.unscaledTime + 0.4f;
             Rows.Clear();
             if (player == null) return;
-            bool stillThere = false;
             foreach (ItemDrop.ItemData item in player.GetInventory().GetAllItems())
-            {
-                if (!Calc.Listed(item)) continue;
-                if (item == _selected) stillThere = true;
-                string sub = item.m_quality > 1 ? $"Quality {item.m_quality}" : "";
-                if (item.m_equipped) sub += (sub.Length > 0 ? "  ·  " : "") + "equipped";
-                Rows.Add(new Row { Item = item, Name = Localization.instance.Localize(item.m_shared.m_name), Sub = sub });
-            }
-            Rows.Sort((a, b) => string.Compare(a.Name, b.Name, System.StringComparison.OrdinalIgnoreCase));
-            if (!stillThere) _selected = null;
+                if (Calc.Listed(item)) Rows.Add(item);
+            Rows.Sort((a, b) => string.Compare(Localization.instance.Localize(a.m_shared.m_name), Localization.instance.Localize(b.m_shared.m_name),
+                System.StringComparison.OrdinalIgnoreCase));
+            if (!Rows.Contains(_selected)) _selected = null;
             _quote = _selected != null && _station != null ? Calc.Evaluate(_selected, _station) : null;
+        }
+
+        /// <summary>Everything the window shows, so it is built again only when something changed.</summary>
+        private static string Signature()
+        {
+            var sb = new System.Text.StringBuilder();
+            sb.Append(_station != null ? Calc.Percent(_station) : 0).Append('|').Append(Confirming).Append('|').Append(_selected?.GetHashCode() ?? 0);
+            foreach (ItemDrop.ItemData item in Rows)
+                sb.Append('|').Append(item.GetHashCode()).Append(',').Append(item.m_stack).Append(',').Append(item.m_quality).Append(',')
+                  .Append(item.m_equipped).Append(',').Append((int)(item.GetDurabilityPercentage() * 50f));
+            if (_quote != null) sb.Append('|').Append(_quote.Blocked).Append(string.Join(",", _quote.Entries.Select(e => e.Min + "-" + e.Max)));
+            return sb.ToString();
+        }
+
+        private static bool Valuable => _selected != null && Plugin.ConfirmValuable.Value && Calc.Valuable(_selected);
+        private static bool Confirming => Valuable && _confirmFor == _selected && Time.unscaledTime < _confirmUntil;
+
+        private static void Select(ItemDrop.ItemData item)
+        {
+            _selected = item; _confirmFor = null;
+            _quote = _station != null ? Calc.Evaluate(item, _station) : null;
         }
 
         private static void Recycle(Player player)
@@ -131,167 +151,103 @@ namespace Recycler
             }
         }
 
-        // ---- drawing ----------------------------------------------------------------------------------
+        // ---- the window --------------------------------------------------------------------------------------------------------
 
-        private static void Init()
+        private static void Build(bool fresh)
         {
-            if (_white != null && _title != null) return;
-            _white = new Texture2D(1, 1) { hideFlags = HideFlags.HideAndDontSave };
-            _white.SetPixel(0, 0, Color.white); _white.Apply();
-            _title = new GUIStyle(GUI.skin.label) { fontSize = 22, fontStyle = FontStyle.Bold, normal = { textColor = Color.white } };
-            _text = new GUIStyle(GUI.skin.label) { fontSize = 15, normal = { textColor = new Color(0.9f, 0.93f, 0.94f) }, wordWrap = true };
-            _small = new GUIStyle(_text) { fontSize = 12, normal = { textColor = new Color(0.6f, 0.68f, 0.7f) } };
-            _bad = new GUIStyle(_text) { normal = { textColor = new Color(1f, 0.6f, 0.45f) } };
-            _button = new GUIStyle(GUI.skin.button) { fontSize = 16, fontStyle = FontStyle.Bold };
-            if (_bodyFont == null) _bodyFont = GameFont("AveriaSerifLibre-Bold", "AveriaSerifLibre", "Averia");
-            if (_titleFont == null) _titleFont = GameFont("Norsebold", "Norse") ?? _bodyFont;
-            if (_bodyFont != null) foreach (GUIStyle s in new[] { _text, _small, _bad, _button }) s.font = _bodyFont;
-            if (_titleFont != null) _title.font = _titleFont;
+            if (!GameUi.Ready() || _station == null) { Close(); return; }
+            float scrolled = !fresh && _content != null ? _content.anchoredPosition.y : 0f;
+            if (_window != null) Object.Destroy(_window.gameObject);
+            UITooltip.HideTooltip();
+            _shown = Signature();
+
+            _window = GameUi.Window("RecyclerWindow", new Vector2(W, H));
+            Transform w = _window;
+
+            // title, the braid under it, and the share this Recycler returns
+            GameUi.Label(w, "Recycler", new Vector2(Pad, -20f), new Vector2(300f, 44f), 34f, GameUi.Warm, GameUi.Norse);
+            int presses = RecyclerPress.CountNear(_station.transform.position);
+            GameUi.Label(w, $"Returns <color=#ffd27a>{Calc.Percent(_station)}%</color> of the materials\n<size=80%><color=#bdb7a9>Presses nearby: {presses} of 2</color></size>",
+                new Vector2(-Pad, -22f), new Vector2(360f, 50f), 19f, GameUi.Text, GameUi.Sans, TextAlignmentOptions.TopRight, new Vector2(1f, 1f));
+            GameUi.Braid(w, new Vector2(0f, -76f), W - Pad * 2f);
+
+            DrawList(w);
+            DrawDetails(w);
+
+            if (_content != null) _content.anchoredPosition = new Vector2(0f, Mathf.Clamp(scrolled, 0f, Mathf.Max(0f, _content.sizeDelta.y)));
         }
 
-        /// <summary>The game's own fonts (Averia for text and numbers, Norse for titles), looked up once; null if a game update renamed them.</summary>
-        private static Font GameFont(params string[] names)
+        private static void DrawList(Transform w)
         {
-            Font[] all = Resources.FindObjectsOfTypeAll<Font>();
-            foreach (string name in names)
-                foreach (Font f in all)
-                    if (f != null && f.name.StartsWith(name, System.StringComparison.OrdinalIgnoreCase)) return f;
-            return null;
-        }
-
-        private static void Fill(Rect r, Color c)
-        {
-            Color old = GUI.color;
-            GUI.color = c;
-            GUI.DrawTexture(r, _white);
-            GUI.color = old;
-        }
-
-        private static void Icon(Rect r, Sprite sprite)
-        {
-            if (sprite == null || sprite.texture == null) return;
-            Rect s = sprite.textureRect, t = new Rect(s.x / sprite.texture.width, s.y / sprite.texture.height, s.width / sprite.texture.width, s.height / sprite.texture.height);
-            GUI.DrawTextureWithTexCoords(r, sprite.texture, t);
-        }
-
-        internal static void Draw()
-        {
-            if (!IsOpen || _station == null || Event.current == null) return;
-            Init();
-            // Drawn at 1080p size and scaled to the screen, as the game's own windows are.
-            float scale = Mathf.Max(0.8f, Screen.height / 1080f);
-            Matrix4x4 before = GUI.matrix;
-            GUI.matrix = Matrix4x4.Scale(new Vector3(scale, scale, 1f));
-            try { DrawWindow(Screen.width / scale, Screen.height / scale); }
-            finally { GUI.matrix = before; }
-        }
-
-        private static void DrawWindow(float screenW, float screenH)
-        {
-            float w = Mathf.Min(800f, screenW - 40f), h = Mathf.Min(520f, screenH - 40f);
-            var win = new Rect((screenW - w) / 2f, (screenH - h) / 2f, w, h);
-            Fill(win, Panel);
-
-            GUI.Label(new Rect(win.x + 16, win.y + 10, 300, 32), "Recycler", _title);
-            string share = $"Returns {Calc.Percent(_station)}% of the materials   ·   presses {RecyclerPress.CountNear(_station.transform.position)}/2";
-            GUI.Label(new Rect(win.x + 140, win.y + 16, win.width - 260, 24), share, _small);
-            if (GUI.Button(new Rect(win.xMax - 92, win.y + 10, 80, 28), "Close", _button)) { Close(); return; }
-
-            var list = new Rect(win.x + 12, win.y + 52, win.width * 0.46f, win.height - 64);
-            var right = new Rect(list.xMax + 14, list.y, win.xMax - list.xMax - 26, list.height);
-            Fill(list, new Color(1, 1, 1, 0.04f));
-            DrawList(list);
-            DrawDetails(right);
-        }
-
-        private static void DrawList(Rect area)
-        {
+            GameUi.Label(w, "Your gear", new Vector2(Pad, -94f), new Vector2(ListW, 28f), 20f, GameUi.Dim, GameUi.Serif);
+            RectTransform box = GameUi.Box(w, new Vector2(Pad - 6f, -124f), new Vector2(ListW, H - 124f - Pad));
+            _content = GameUi.Scroll(box, 8f);
             if (Rows.Count == 0)
             {
-                GUI.Label(new Rect(area.x + 10, area.y + 10, area.width - 20, 120), "Nothing in your inventory can be recycled.\nOnly weapons, armor and tools with a recipe are accepted. Items locked with L are skipped.", _small);
+                GameUi.Label(_content, "Nothing in your inventory can be recycled.\n\n<size=85%><color=#bdb7a9>Weapons, armor and tools you could craft can be. " +
+                                   "Items locked with L are kept out.</color></size>", new Vector2(12f, -12f), new Vector2(ListW - 40f, 160f), 19f, GameUi.Text);
                 return;
             }
-            const float rowH = 46f;
-            _scroll = GUI.BeginScrollView(area, _scroll, new Rect(0, 0, area.width - 18, Rows.Count * rowH));
+            float space = GameUi.CellSpace;
+            int columns = Mathf.Max(1, Mathf.FloorToInt((ListW - 16f) / space));
+            float left = (ListW - 16f - columns * space) / 2f + (space - 64f) / 2f;
             for (int i = 0; i < Rows.Count; i++)
             {
-                Row row = Rows[i];
-                var r = new Rect(4, i * rowH + 2, area.width - 26, rowH - 4);
-                if (r.yMax < _scroll.y || r.y > _scroll.y + area.height) continue;
-                Fill(r, row.Item == _selected ? RowOn : RowOff);
-                Icon(new Rect(r.x + 4, r.y + 3, 36, 36), row.Item.GetIcon());
-                GUI.Label(new Rect(r.x + 48, r.y + 2, r.width - 52, 22), row.Name, _text);
-                if (row.Sub.Length > 0) GUI.Label(new Rect(r.x + 48, r.y + 22, r.width - 52, 18), row.Sub, _small);
-                if (GUI.Button(r, GUIContent.none, GUIStyle.none)) { _selected = row.Item; _confirmFor = null; _quote = Calc.Evaluate(row.Item, _station); }
+                ItemDrop.ItemData item = Rows[i];
+                GameUi.Cell(_content, new Vector2(left + i % columns * space, -6f - i / columns * space), item, null, item == _selected, () => Select(item));
             }
-            GUI.EndScrollView();
+            _content.sizeDelta = new Vector2(_content.sizeDelta.x, (Rows.Count + columns - 1) / columns * space + 12f);
         }
 
-        private static void DrawDetails(Rect area)
+        private static void DrawDetails(Transform w)
         {
+            float x = Pad + ListW + 16f, width = W - x - Pad, y = -94f;
             if (_selected == null || _quote == null)
             {
-                GUI.Label(area, "Pick an item on the left to see what it would return.\n\nA Recycler Press within 8 m raises the share.", _small);
+                GameUi.Label(w, "Pick a piece of gear on the left to see what it gives back.\n\n<size=85%><color=#bdb7a9>A Recycler Press within 8 m raises the share; " +
+                            "up to two count.</color></size>", new Vector2(x, y), new Vector2(width, 200f), 19f, GameUi.Text);
                 return;
             }
 
-            float y = area.y;
-            GUI.Label(new Rect(area.x, y, area.width, 28), Localization.instance.Localize(_selected.m_shared.m_name), _title);
-            y += 36;
-            GUI.Label(new Rect(area.x, y, area.width, 22), $"You get back about {_quote.Percent}% of its materials", _small);
-            y += 30;
-
-            foreach (Calc.Entry e in _quote.Entries)
+            // each line takes the height its text needs (a long name or a narrow window wraps), so the next starts below it
+            void Line(string text, float size, Color color, TMP_FontAsset font, float gap)
             {
-                Icon(new Rect(area.x, y, 32, 32), e.Res.m_itemData.GetIcon());
-                string amount = e.Min == e.Max ? e.Min.ToString() : $"{e.Min}–{e.Max}";
-                GUI.Label(new Rect(area.x + 40, y + 5, area.width - 40, 24), $"{amount}  {Localization.instance.Localize(e.Res.m_itemData.m_shared.m_name)}", _text);
-                y += 36;
+                TMP_Text t = GameUi.Label(w, text, new Vector2(x, y), new Vector2(width, 30f), size, color, font);
+                float h = t.GetPreferredValues(text, width, 0f).y;
+                ((RectTransform)t.transform).sizeDelta = new Vector2(width, h);
+                y -= h + gap;
             }
+            Line(Localization.instance.Localize(_selected.m_shared.m_name), 28f, GameUi.Warm, GameUi.Norse, 4f);
+            var notes = new List<string>();
+            if (_selected.m_shared.m_maxQuality > 1) notes.Add($"Quality {_selected.m_quality}");
+            if (_selected.m_equipped) notes.Add("equipped");
+            if (notes.Count > 0) Line(string.Join("  ·  ", notes), 17f, GameUi.Dim, GameUi.Sans, 8f);
+            Line($"You get back about <color=#ffd27a>{_quote.Percent}%</color> of its materials:", 19f, GameUi.Text, GameUi.Sans, 10f);
 
-            float bottom = area.yMax;
-            if (_quote.Blocked != null) GUI.Label(new Rect(area.x, bottom - 100, area.width, 44), _quote.Blocked, _bad);
-            bool valuable = Plugin.ConfirmValuable.Value && Calc.Valuable(_selected);
-            bool confirming = valuable && _confirmFor == _selected && Time.time < _confirmUntil;
-            if (valuable && _quote.Blocked == null)
-                GUI.Label(new Rect(area.x, bottom - 100, area.width, 44), _selected.m_equipped ? "This item is equipped. Recycling destroys it."
-                    : _selected.m_quality >= 2 ? "This item has been upgraded. Recycling destroys it."
-                    : "This item carries other mods' data (enchantments, a bag's contents). Recycling destroys it.", _bad);
-
-            GUI.enabled = _quote.Blocked == null;
-            string label = confirming ? "Yes, recycle it" : valuable ? "Recycle…" : "Recycle";
-            if (GUI.Button(new Rect(area.x, bottom - 48, area.width, 40), label, _button))
+            float space = GameUi.CellSpace;
+            foreach (Calc.Entry e in _quote.Entries.Take(5))
             {
-                if (valuable && !confirming) { _confirmFor = _selected; _confirmUntil = Time.time + 5f; }
+                string amount = e.Min == e.Max ? e.Min.ToString() : $"{e.Min}-{e.Max}";
+                GameUi.Cell(w, new Vector2(x, y), e.Res.m_itemData, amount, false, null);
+                GameUi.Label(w, Localization.instance.Localize(e.Res.m_itemData.m_shared.m_name), new Vector2(x + space, y - 18f), new Vector2(width - space, 30f), 20f, GameUi.Text);
+                y -= space;
+            }
+            if (_quote.Entries.Count > 5) GameUi.Label(w, $"and {_quote.Entries.Count - 5} more", new Vector2(x, y), new Vector2(width, 24f), 17f, GameUi.Dim);
+
+            // what stands in the way, or what recycling it would cost, above the button
+            string warning = _quote.Blocked ?? (!Valuable ? null
+                : _selected.m_equipped ? "This item is equipped. Recycling destroys it."
+                : _selected.m_quality >= 2 ? "This item has been upgraded. Recycling destroys it."
+                : "This item carries other mods' data (enchantments, a bag's contents). Recycling destroys it.");
+            if (warning != null) GameUi.Label(w, warning, new Vector2(x, -(H - Pad - 112f)), new Vector2(width, 56f), 18f, GameUi.Warn, GameUi.Sans, TextAlignmentOptions.BottomLeft);
+
+            string label = Confirming ? "Yes, recycle it" : Valuable ? "Recycle…" : "Recycle";
+            var button = GameUi.Button(w, label, new Vector2(x, -(H - Pad - 48f)), new Vector2(width, 48f), () =>
+            {
+                if (Valuable && !Confirming) { _confirmFor = _selected; _confirmUntil = Time.unscaledTime + 5f; }
                 else _pending = true;
-            }
-            GUI.enabled = true;
-        }
-    }
-}
-
-namespace Recycler
-{
-    // While one of our windows is open, the mouse wheel should scroll the window, not zoom the camera (or cycle the hotbar).
-    [HarmonyLib.HarmonyPatch(typeof(ZInput), nameof(ZInput.GetMouseScrollWheel))]
-    internal static class ZInput_GetMouseScrollWheel
-    {
-        private static void Postfix(ref float __result) { if (Window.IsOpen) __result = 0f; }
-    }
-}
-
-namespace Recycler
-{
-    // Escape closes our window, and only that: the game's own menu does not open (so the game is not paused by it).
-    [HarmonyLib.HarmonyPatch(typeof(Menu), "Update")]
-    internal static class Menu_Update_EscapeCloses
-    {
-        private static bool Prefix()
-        {
-            if (!(Window.IsOpen)) return true;
-            if (!(ZInput.GetKeyDown(UnityEngine.KeyCode.Escape) || ZInput.GetButtonDown("JoyMenu"))) return true;
-            Window.Close();
-            return false; // skip the game's menu handling for this frame
+            }, _quote.Blocked == null, 22f);
+            if (Confirming) GameUi.Label(button).color = GameUi.Warn;
         }
     }
 }

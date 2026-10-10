@@ -1,4 +1,4 @@
-The Arena: a great stone colosseum that stands in your world, where you fight for the crowd, for gold and for glory, like the arena in the first Fable.
+The Arena: a stone colosseum in your world where you fight waves of monsters and champions for the crowd, for gold and for glory, or duel your friends (PvP), like the arena in the first Fable.
 
 What is in it
 - The Arena builds itself: the first time the world runs with the mod, it finds flat ground near the middle of the world, clear of everyone's buildings, levels it, clears the trees and puts up a colosseum made of the game's own stone. It is marked on the map, and it is the same for everyone. It cannot be broken, and nothing of it is saved but the levelled ground.

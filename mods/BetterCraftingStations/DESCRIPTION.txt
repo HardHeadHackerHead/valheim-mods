@@ -1,4 +1,4 @@
-Filter chips above the crafting list: pick a type, a tier or what you can make now.
+Recipe filter chips above the crafting list: pick a type, a tier or what you can make now, at every crafting station.
 
 What is in it
 - At the workbench, forge, cauldron and the other stations, two rows of chips sit above the recipe list. The first row is the type of thing (weapons, armor, tools, ammo, food, potions), with All and Can craft; the second is how far into the game it is (wood and flint, bronze, iron, silver, black metal, Mistlands, Ashlands).

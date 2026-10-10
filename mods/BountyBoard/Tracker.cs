@@ -1,91 +1,77 @@
-using System.Linq;
 using UnityEngine;
 
 namespace BountyBoard
 {
-    /// <summary>The group's running contracts on your screen: what they are and how far along, so you can hunt with them in mind.</summary>
+    /// <summary>
+    /// The group's running contracts on your screen, part of the game's HUD (GameUi.cs): what they are and how far along, so you can hunt
+    /// with them in mind. It hides with the HUD and while a menu or the map is open, and is built again only when something changed.
+    /// </summary>
     internal static class Tracker
     {
-        internal static void Draw()
+        private const string Name = "BountyTracker";
+        private const float W = 300f, Pad = 12f;
+
+        private static RectTransform _panel;
+        private static string _shown = "";
+        private static float _nextCheck;
+
+        internal static void Tick()
         {
-            if (!Plugin.ShowTracker.Value || Event.current.type != EventType.Repaint) return;
+            if (Time.unscaledTime < _nextCheck) return;
+            _nextCheck = Time.unscaledTime + 0.3f;
+
             Plugin plugin = Plugin.Instance;
             State state = plugin?.Current;
             Player player = Player.m_localPlayer;
-            if (state == null || player == null || Window.IsOpen) return;
-            if (InventoryGui.IsVisible() || Menu.IsVisible() || Minimap.IsOpen() || StoreGui.IsVisible()) return;
+            bool show = Plugin.ShowTracker.Value && state != null && player != null && !Window.IsOpen && GameUi.HudRoot != null && GameUi.Ready() &&
+                        !InventoryGui.IsVisible() && !Menu.IsVisible() && !Minimap.IsOpen() && !StoreGui.IsVisible() &&
+                        (state.Active.Count > 0 || plugin.ToClaim() > 0);
+            if (!show) { Destroy(); return; }
+
+            string signature = Plugin.TrackerX.Value + "," + Plugin.TrackerY.Value + "," + Plugin.TrackerScale.Value + "|" + plugin.ToClaim();
+            foreach (Bounty b in state.Active)
+                signature += "|" + b.Id + "," + b.Progress + "," + (b.Kind == Kind.Gather ? player.GetInventory().CountItems(Rules.ItemName(b.Target)) : 0);
+            if (_panel != null && signature == _shown) return;
+            Build(state, plugin, player);
+            _shown = signature;
+        }
+
+        internal static void Destroy()
+        {
+            if (_panel != null) Object.Destroy(_panel.gameObject);
+            _panel = null; _shown = "";
+        }
+
+        private static void Build(State state, Plugin plugin, Player player)
+        {
+            Destroy();
+            Transform hud = GameUi.HudRoot;
+            // a hot reload leaves the old copy's panel behind (its types differ from ours): find it by name
+            foreach (Transform old in hud) if (old.name == Name) Object.Destroy(old.gameObject);
+
             int toClaim = plugin.ToClaim();
-            if (state.Active.Count == 0 && toClaim == 0) return;
-            Styles.Ensure();
+            float rowH = 50f, h = Pad * 2f + 30f + state.Active.Count * rowH + (toClaim > 0 ? 26f : 0f);
+            _panel = GameUi.Box(hud, new Vector2(Plugin.TrackerX.Value, -Plugin.TrackerY.Value), new Vector2(W, h));
+            _panel.name = Name;
+            _panel.localScale = Vector3.one * Plugin.TrackerScale.Value;
 
-            float scale = Plugin.TrackerScale.Value * Mathf.Max(0.8f, Screen.height / 1080f);
-            Matrix4x4 saved = GUI.matrix;
-            GUI.matrix = Matrix4x4.Scale(new Vector3(scale, scale, 1f));
-
-            const float w = 290f, rowHeight = 46f, pad = 10f;
-            float h = pad * 2f + 24f + state.Active.Count * rowHeight + (toClaim > 0 ? 22f : 0f);
-            var panel = new Rect(Plugin.TrackerX.Value / scale, Plugin.TrackerY.Value / scale, w, h);
-            Styles.Rounded(new Rect(panel.x + 2f, panel.y + 3f, w, h), new Color(0f, 0f, 0f, 0.3f), 7f);
-            Styles.Rounded(panel, new Color(0.07f, 0.06f, 0.05f, 0.82f), 7f);
-            Styles.Outline(panel, new Color(0.62f, 0.47f, 0.22f, 0.9f), 7f);
-
-            float y = panel.y + pad;
-            GUI.Label(new Rect(panel.x + pad, y, w - pad * 2f, 20f), "Group contracts", Small(true));
-            y += 24f;
-
+            GameUi.Label(_panel, "Group contracts", new Vector2(Pad, -Pad + 2f), new Vector2(W - Pad * 2f, 28f), 20f, GameUi.Warm, GameUi.Norse);
+            float y = Pad + 30f;
             foreach (Bounty b in state.Active)
             {
                 bool gather = b.Kind == Kind.Gather;
                 int have = gather ? player.GetInventory().CountItems(Rules.ItemName(b.Target)) : 0;
                 int shown = Mathf.Min(b.Count, b.Progress);
-                GUI.Label(new Rect(panel.x + pad, y, w - pad * 2f, 20f), Rules.Describe(b) + (gather && have > 0 ? $"  (you have {have})" : ""), Small(false));
-
-                var bar = new Rect(panel.x + pad, y + 21f, w - pad * 2f, 18f);
-                Styles.Rounded(bar, new Color(0.05f, 0.04f, 0.03f, 1f), 5f);
-                float frac = Mathf.Clamp01(shown / (float)Mathf.Max(1, b.Count));
-                if (frac > 0f) Styles.Rounded(new Rect(bar.x, bar.y, bar.width * frac, bar.height), new Color(0.78f, 0.58f, 0.22f), 5f);
-                Centered(bar, shown + "/" + b.Count);
-                y += rowHeight;
+                TMPro.TMP_Text line = GameUi.Label(_panel, Rules.Describe(b) + (gather && have > 0 ? $"  <color=#bdb7a9>(you have {have})</color>" : ""),
+                    new Vector2(Pad, -y), new Vector2(W - Pad * 2f, 24f), 16f, GameUi.Text);
+                line.enableWordWrapping = false;
+                line.overflowMode = TMPro.TextOverflowModes.Ellipsis;
+                GameUi.Bar(_panel, new Vector2(Pad, -y - 24f), new Vector2(W - Pad * 2f, 18f), shown / (float)Mathf.Max(1, b.Count),
+                    shown >= b.Count ? GameUi.Good : GameUi.Gold, shown + "/" + b.Count, 14f);
+                y += rowH;
             }
-
             if (toClaim > 0)
-            {
-                var good = new GUIStyle(Small(false)) { fontStyle = FontStyle.Bold };
-                good.normal.textColor = new Color(0.6f, 0.9f, 0.6f);
-                GUI.Label(new Rect(panel.x + pad, y, w - pad * 2f, 20f), toClaim + " reward" + (toClaim == 1 ? "" : "s") + " to collect at a board", good);
-            }
-            GUI.matrix = saved;
-        }
-
-        private static GUIStyle _small, _header, _center;
-
-        /// <summary>The "3/6" in the middle of a bar: big enough to read, with a dark edge so it shows on the gold fill as well as the dark part.</summary>
-        private static void Centered(Rect bar, string text)
-        {
-            if (_center == null)
-            {
-                _center = new GUIStyle(GUI.skin.label) { fontSize = 13, alignment = TextAnchor.MiddleCenter, fontStyle = FontStyle.Bold, clipping = TextClipping.Overflow, font = Styles.GameFont(false) };
-                _center.normal.textColor = Color.white;
-            }
-            Color old = GUI.color;
-            GUI.color = new Color(0f, 0f, 0f, 0.9f);
-            foreach (Vector2 d in new[] { new Vector2(1, 1), new Vector2(-1, 1), new Vector2(1, -1), new Vector2(-1, -1) })
-                GUI.Label(new Rect(bar.x + d.x, bar.y + d.y, bar.width, bar.height), text, _center);
-            GUI.color = old;
-            GUI.Label(bar, text, _center);
-        }
-
-        private static GUIStyle Small(bool header, bool centered = false, int size = 12)
-        {
-            if (centered) { var c = new GUIStyle(GUI.skin.label) { fontSize = size, alignment = TextAnchor.MiddleCenter, fontStyle = FontStyle.Bold, font = Styles.GameFont(false) }; c.normal.textColor = Color.white; return c; }
-            if (_small == null)
-            {
-                _small = new GUIStyle(GUI.skin.label) { fontSize = 14, clipping = TextClipping.Clip, font = Styles.GameFont(false) };
-                _small.normal.textColor = new Color(0.95f, 0.91f, 0.84f);
-                _header = new GUIStyle(_small) { fontSize = 15, fontStyle = FontStyle.Bold };
-                _header.normal.textColor = new Color(0.95f, 0.78f, 0.35f);
-            }
-            return header ? _header : _small;
+                GameUi.Label(_panel, toClaim + " reward" + (toClaim == 1 ? "" : "s") + " to collect at a board", new Vector2(Pad, -y), new Vector2(W - Pad * 2f, 24f), 16f, GameUi.Good);
         }
     }
 }

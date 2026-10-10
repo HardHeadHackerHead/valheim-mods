@@ -100,6 +100,17 @@ quit to the main menu, `reload YourMod`, then load the world. `reload YourMod fo
 copy's code and static fields stay in memory (.NET never unloads it), so a mod that keeps state in statics must reset it in `OnDestroy`.
 If ScriptEngine is installed too, its F6 reloads **every** mod in `scripts` at once with no such check: use `reload` instead.
 
+**Pieces that reload while you play.** A mod whose only `menu` reason is its build pieces can be made reloadable in a world with
+`templates/PieceReload.cs` (about 60 lines; the Bounty Board uses it). It fixes the two things that go wrong:
+1. The gap: the old copy no longer unregisters its piece (`UnloadPiece` only takes it out of the hammer menu), and the new copy's
+   registration replaces it by name (`ReplacePrefab`). The game never stops knowing the piece, so no area loading meanwhile loses any.
+2. The pieces standing: after registering, `Reattach` swaps the old copy's components on placed pieces for the new copy's, so E on them
+   runs the new code at once. Their fields start at defaults: a component reads what it needs in `Awake`, not from fields set on the prefab.
+
+Then declare it, `[assembly: AssemblyMetadata("ClaudeTools.Reload", "world")]`, and `modcheck` gives it `world`. It covers pieces only:
+an item in a bag or chest keeps the old copy's data until a restart, so a mod that adds items stays `menu`. Worth it when you change a
+piece mod often (no trip to the main menu, nothing deleted); players never notice either way, since they start the game with the mod.
+
 **Test in a world you can lose.** Make a test world (and character) for your mod, and back up `BepInEx/scripts` before copying in a build
 someone else made. Never try a build that saves things (pieces, chest contents, player data) on your main world first.
 
@@ -168,7 +179,7 @@ registering:
   https://github.com/blaxxun-boop, merged into your DLL with ILRepack as their READMEs show): `new Item(bundle, "MyAxe")`,
   `new BuildPiece(bundle, "MyWall")` with costs and crafting stations. Nothing for players to install. They patch with their own Harmony
   ids, which your `UnpatchSelf` doesn't undo: the mod's reload level is `restart`.
-- **Jotunn** (a mod players must also install; 21 of the top mods require it): `PrefabManager.OnVanillaPrefabsAvailable`,
+- **Jotunn** (a mod players must also install; 25 of the top 100 require it): `PrefabManager.OnVanillaPrefabsAvailable`,
   `PieceManager.Instance.AddPiece`, `ItemManager.Instance.AddItem`.
 A piece with no cost is free to build: refuse to register it.
 
@@ -178,6 +189,21 @@ RPC's sender, never from an id in the payload; take ownership only after the acc
 check (`ZNetView.ClaimOwnership` / `ZDO.SetOwner`). **Never claim ownership and then hand out items yourself**: two players doing it at once
 both get them (duplication). The owner gives, as the game's own Fermenter does (`RPC_Tap`); wrap every handler in try/catch and log; compress big payloads. `ZNet.instance.IsServer()`,
 `IsDedicated()`; before `ZNet` exists, `SystemInfo.graphicsDeviceType == GraphicsDeviceType.Null` means a dedicated server.
+
+**Sharing code** (between your mods, or taken from elsewhere). In the 100 most-downloaded Valheim mods (October 2026), 45 have shared
+libraries **compiled into their own DLL** (blaxxun-boop's ServerSync in 40, LocalizationManager, ItemManager, PieceManager...), 25 depend
+on a **library mod** players must install too (Jotunn), and 56 need nothing but BepInEx. So:
+1. **Compile it in, by default.** Copy the code into your mod (a template from `BepInEx/claude/templates`, or a library's source or DLL
+   merged with ILRepack), make its classes `internal` and put them in your namespace. Players install one mod; two mods carrying the same
+   code each have their own private copy and never clash.
+2. **Several mods in one repo:** one `mods/Shared/` folder, linked into the mods that use it
+   (`<Compile Include="../Shared/X.cs" Link="Shared/X.cs" />` in the csproj; files every mod needs, from `Directory.Build.props`). One
+   copy to fix, but a fix reaches players only when each mod using it is rebuilt and released. The mod template has this set up
+   (`Shared/All` goes into every mod).
+3. **A separate library mod** only for something big many mods build on (as Jotunn is): players must install it, and every mod that
+   uses it depends on its version (a library update can break them all at once).
+4. **Shared code explains itself:** at the top of each file, why it exists, which mods use it and how it gets in. Keep it small, and
+   tested in a real mod before a second one uses it.
 
 **Names that are yours.** Everything a mod registers shares one space with every other mod, and two of the same name break one or both:
 prefab names (`yourmod_lantern`, not `Lantern`), RPC names, ZDO and `m_customData` keys, console and Claude Tools command names, the

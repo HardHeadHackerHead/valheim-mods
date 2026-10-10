@@ -6,8 +6,8 @@ schemaVersion = "0.0.1"
 [package]
 namespace = "Quads_Lab"
 name = "Quads_Recycler"
-versionNumber = "1.1.2"
-description = "Build a Recycler with the hammer and turn old gear back into a share of the materials it was made from."
+versionNumber = "1.2.0"
+description = "Build a Recycler and turn old weapons, armor and tools back into a share of their materials: recycle, salvage and reclaim the gear you've outgrown."
 websiteUrl = "https://github.com/HardHeadHackerHead/valheim-mods/tree/main/mods/Recycler"
 containsNsfwContent = false
 
@@ -32,4 +32,4 @@ repository = "https://thunderstore.io"
 communities = [ "valheim" ]
 
 [publish.categories]
-valheim = [ "mods", "building", "crafting", "ai-generated" ]
+valheim = [ "mods", "crafting", "building", "utility", "client-side", "server-side", "deep-north-update", "ai-generated" ]

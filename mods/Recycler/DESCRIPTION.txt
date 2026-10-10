@@ -1,4 +1,4 @@
-Build a Recycler with the hammer and turn old gear back into a share of the materials it was made from.
+Build a Recycler and turn old weapons, armor and tools back into a share of their materials: recycle, salvage and reclaim the gear you've outgrown.
 
 How it works
 - Look at the Recycler and press E: pick a weapon, armor piece or tool from your inventory, see what it would return, and recycle it.

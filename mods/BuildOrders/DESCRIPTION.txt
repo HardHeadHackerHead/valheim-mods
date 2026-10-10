@@ -1,4 +1,4 @@
-Plan pieces as shared ghost build orders for everyone in your party, and build them by just walking up and pressing E.
+Shared ghost build orders and blueprints, a build planner for your party: plan pieces (or import a blueprint) for everyone, then build them by walking up and pressing E.
 
 How it works
 - With the hammer out, press Left Alt to turn plan mode on (press it again, or put the hammer away, to turn it off). In plan mode, placing a piece plans it instead of building it. It shows as a see-through ghost that other players see too. (A setting lets you hold the key instead.)

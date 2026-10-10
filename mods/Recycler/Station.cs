@@ -30,7 +30,7 @@ namespace Recycler
 
         public bool Interact(Humanoid user, bool hold, bool alt)
         {
-            if (hold || user != Player.m_localPlayer) return false;
+            if (hold || user != Player.m_localPlayer || Time.unscaledTime < Window.ClosedAt + 0.25f) return false;
             Window.Open(this);
             return true;
         }

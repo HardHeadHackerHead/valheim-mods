@@ -1,4 +1,4 @@
-A viking companion who plays like a player: comes on your adventures, lives its own life at home, and gets better as it goes.
+A viking companion, a follower NPC who plays like a player: comes on your adventures, fights beside you, lives its own life at home, and gets better as it goes.
 
 - Press J to summon your companion or open its menu (E on it too). Hold J: your companions come with you, or go home.
 - Point and press H: at an enemy (they attack it), a tree, rock or plant (it works it, and the thing glows with a note above it while it does), your chest (it puts its things in), a cart (it pulls it), the ground (it waits there), the sky (it comes back).

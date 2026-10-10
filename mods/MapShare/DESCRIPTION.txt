@@ -1,4 +1,4 @@
-Share the map you uncover with everyone in the world, live, as you run through the fog of war.
+Shared map: share the map you uncover with everyone in the world, live, as you explore through the fog of war.
 
 How it works
 - The cartography table only shares a map by hand: you write your map to the table, then others read it one visit at a time. This mod does it automatically instead.

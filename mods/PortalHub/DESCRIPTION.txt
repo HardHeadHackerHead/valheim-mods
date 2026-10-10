@@ -1,4 +1,4 @@
-Portals you can actually use: press E on a portal and pick where it goes from a list.
+A portal network: press E on a portal and pick where it goes from a list. No more matching portal names to teleport where you want.
 
 What is in it
 - The list shows every portal in the world, nearest first, with its biome and distance. Search it, sort it by name, or star the ones you use most to keep them at the top.

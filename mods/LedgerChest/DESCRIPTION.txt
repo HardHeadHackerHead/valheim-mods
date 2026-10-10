@@ -1,4 +1,4 @@
-A chest you build that shows everything in every chest around it, with a search: find anything in your storehouse and take it from wherever it is.
+A chest you build that shows everything in every chest around it, with a search: search all your chests and storage, and take anything from wherever it is.
 
 How it works
 - Build the Ledger Chest with the hammer at a workbench (10 Wood, 4 Fine Wood, 4 Leather Scraps, 2 Resin). It keeps nothing itself: it is the counter of your storehouse.

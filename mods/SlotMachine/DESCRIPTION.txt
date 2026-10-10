@@ -1,4 +1,4 @@
-Odin's Fortune: a buildable slot machine. Put coins in, pull the lever, and the winnings come out of the tray.
+Odin's Fortune: a buildable slot machine for your viking casino. Put coins in, pull the lever, and the winnings come out of the tray.
 
 How it works
 - Build it with the hammer at a workbench: Fine Wood, Bronze and Stone.

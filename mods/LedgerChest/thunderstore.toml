@@ -7,7 +7,7 @@ schemaVersion = "0.0.1"
 namespace = "Quads_Lab"
 name = "Quads_Ledger_Chest"
 versionNumber = "1.0.4"
-description = "A chest you build that shows everything in every chest around it, with a search: find anything in your storehouse and take it from wherever it is."
+description = "A chest you build that shows everything in every chest around it, with a search: search all your chests and storage, and take anything from wherever it is."
 websiteUrl = "https://github.com/HardHeadHackerHead/valheim-mods/tree/main/mods/LedgerChest"
 containsNsfwContent = false
 
@@ -32,4 +32,4 @@ repository = "https://thunderstore.io"
 communities = [ "valheim" ]
 
 [publish.categories]
-valheim = [ "mods", "building", "utility", "ai-generated" ]
+valheim = [ "mods", "building", "utility", "client-side", "server-side", "deep-north-update", "ai-generated" ]

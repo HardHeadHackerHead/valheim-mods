@@ -1,4 +1,4 @@
-Extra inventory slots for what you wear, eat and use, in a Gear panel next to your inventory.
+Equipment slots and quick slots: extra inventory slots for what you wear, eat and use (armor, cape, ammo, shield, food, quickslots), in a Gear panel next to your inventory.
 
 What is in it
 - Head, Chest, Legs, Cape, Belt, Trinket, Ammo and Shield slots: drop a matching piece in and you put it on. Armor and arrows no longer take room in your bag, and gear you are already wearing moves into its slot by itself.

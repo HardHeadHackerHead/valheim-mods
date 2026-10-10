@@ -5,7 +5,7 @@
 
 <img src="cover.png" alt="Quad's Portal Hub" width="100%">
 
-**Portals you can actually use: press E on a portal and pick where it goes from a list.**
+**A portal network: press E on a portal and pick where it goes from a list. No more matching portal names to teleport where you want.**
 
 ![version: 1.2.2](https://img.shields.io/badge/version-1.2.2-3b6e8f?style=flat-square)  ![multiplayer: everyone + host](https://img.shields.io/badge/multiplayer-everyone%20%2B%20host-7a5c2e?style=flat-square)  ![made with: Claude Code](https://img.shields.io/badge/made%20with-Claude%20Code-c26a3d?style=flat-square)
 

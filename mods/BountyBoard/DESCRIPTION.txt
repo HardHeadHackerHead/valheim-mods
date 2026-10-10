@@ -1,4 +1,4 @@
-A buildable notice board with contracts for the whole group, paid in coins and the materials of the stage you have reached.
+A buildable notice board with bounties for the whole group: quests and hunting contracts, paid in coins and the materials of the stage you have reached.
 
 How it works
 - Build it with the hammer at a workbench (Wood, Leather Scraps and Flint) and press E on it. Every board shows the same notices.

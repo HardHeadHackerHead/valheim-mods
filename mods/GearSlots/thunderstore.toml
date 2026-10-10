@@ -7,7 +7,7 @@ schemaVersion = "0.0.1"
 namespace = "Quads_Lab"
 name = "Quads_Gear_Slots"
 versionNumber = "1.2.2"
-description = "Extra inventory slots for what you wear, eat and use, in a Gear panel next to your inventory."
+description = "Equipment slots and quick slots: extra inventory slots for what you wear, eat and use (armor, cape, ammo, shield, food, quickslots), in a Gear panel next to your inventory."
 websiteUrl = "https://github.com/HardHeadHackerHead/valheim-mods/tree/main/mods/GearSlots"
 containsNsfwContent = false
 
@@ -32,4 +32,4 @@ repository = "https://thunderstore.io"
 communities = [ "valheim" ]
 
 [publish.categories]
-valheim = [ "mods", "gear", "utility", "ai-generated" ]
+valheim = [ "mods", "gear", "utility", "tweaks", "client-side", "deep-north-update", "ai-generated" ]

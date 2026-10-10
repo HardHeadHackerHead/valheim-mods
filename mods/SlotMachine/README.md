@@ -5,7 +5,7 @@
 
 <img src="cover.png" alt="Quad's Slot Machine" width="100%">
 
-**Odin's Fortune: a buildable slot machine. Put coins in, pull the lever, and the winnings come out of the tray.**
+**Odin's Fortune: a buildable slot machine for your viking casino. Put coins in, pull the lever, and the winnings come out of the tray.**
 
 ![version: 1.1.2](https://img.shields.io/badge/version-1.1.2-3b6e8f?style=flat-square)  ![multiplayer: everyone + host](https://img.shields.io/badge/multiplayer-everyone%20%2B%20host-7a5c2e?style=flat-square)  ![made with: Claude Code](https://img.shields.io/badge/made%20with-Claude%20Code-c26a3d?style=flat-square)
 

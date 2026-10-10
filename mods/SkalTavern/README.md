@@ -5,7 +5,7 @@
 
 <img src="cover.png" alt="Quad's Skal Tavern" width="100%">
 
-**Ale and mead that get you tipsy, and a toast.**
+**Ale and mead that get you drunk (tipsy, stumbling, a hangover), and a Skål! toast with your friends for a buff.**
 
 ![version: 0.3.3](https://img.shields.io/badge/version-0.3.3-3b6e8f?style=flat-square)  ![multiplayer: everyone + host](https://img.shields.io/badge/multiplayer-everyone%20%2B%20host-7a5c2e?style=flat-square)  ![made with: Claude Code](https://img.shields.io/badge/made%20with-Claude%20Code-c26a3d?style=flat-square)
 

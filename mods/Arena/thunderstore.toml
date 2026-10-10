@@ -7,7 +7,7 @@ schemaVersion = "0.0.1"
 namespace = "Quads_Lab"
 name = "Quads_Arena"
 versionNumber = "0.3.3"
-description = "The Arena: a great stone colosseum that stands in your world, where you fight for the crowd, for gold and for glory, like the arena in the first Fable."
+description = "The Arena: a stone colosseum in your world where you fight waves of monsters and champions for the crowd, for gold and for glory, or duel your friends (PvP), like the arena in the first Fable."
 websiteUrl = "https://github.com/HardHeadHackerHead/valheim-mods/tree/main/mods/Arena"
 containsNsfwContent = false
 
@@ -32,4 +32,4 @@ repository = "https://thunderstore.io"
 communities = [ "valheim" ]
 
 [publish.categories]
-valheim = [ "mods", "enemies", "ai-generated" ]
+valheim = [ "mods", "enemies", "pvp", "npcs", "client-side", "server-side", "deep-north-update", "ai-generated" ]
