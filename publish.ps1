@@ -21,7 +21,7 @@ foreach ($proj in Get-ChildItem (Join-Path $root "mods") -Directory) {
 
     # Read guid/name/version from the mod's [BepInPlugin] constants, description from DESCRIPTION.txt (optional).
     $src = (Get-ChildItem $proj.FullName -Filter *.cs -Recurse | Where-Object { $_.FullName -notmatch '[\\/](obj|bin)[\\/]' } |
-            ForEach-Object { Get-Content $_.FullName -Raw }) -join "`n"
+            ForEach-Object { Get-Content $_.FullName -Raw -Encoding UTF8 }) -join "`n"
     $guid = [regex]::Match($src, 'const string Guid\s*=\s*"([^"]+)"').Groups[1].Value
     $name = [regex]::Match($src, 'const string Name\s*=\s*"([^"]+)"').Groups[1].Value
     $ver  = [regex]::Match($src, 'const string Version\s*=\s*"([^"]+)"').Groups[1].Value
@@ -29,14 +29,14 @@ foreach ($proj in Get-ChildItem (Join-Path $root "mods") -Directory) {
     $oldGuid = [regex]::Match($src, 'const string OldGuid\s*=\s*"([^"]+)"').Groups[1].Value
     if (-not $guid -or -not $ver) { Write-Error "Couldn't find Guid/Version constants in $($proj.Name)"; exit 1 }
     $descFile = Join-Path $proj.FullName "DESCRIPTION.txt"
-    $desc = if (Test-Path $descFile) { (Get-Content $descFile -Raw).Trim() } else { "" }
+    $desc = if (Test-Path $descFile) { (Get-Content $descFile -Raw -Encoding UTF8).Trim() } else { "" }
 
     # "What's new" shown in the manager when an update is waiting: the top section of CHANGELOG.txt (up to the first blank line).
     $notes = ""
     $logFile = Join-Path $proj.FullName "CHANGELOG.txt"
     if (Test-Path $logFile) {
         $lines = @()
-        foreach ($line in (Get-Content $logFile)) {
+        foreach ($line in (Get-Content $logFile -Encoding UTF8)) {
             if ($line.Trim() -eq "") { if ($lines.Count -gt 0) { break } else { continue } }
             $lines += $line.Trim()
         }
@@ -45,7 +45,7 @@ foreach ($proj in Get-ChildItem (Join-Path $root "mods") -Directory) {
 
     # Optional RESTART_REQUIRED.txt: the mod can't be hot-reloaded safely, so the manager asks for a game restart. The file's text is the reason.
     $restartFile = Join-Path $proj.FullName "RESTART_REQUIRED.txt"
-    $restart = if (Test-Path $restartFile) { (Get-Content $restartFile -Raw).Trim() } else { "" }
+    $restart = if (Test-Path $restartFile) { (Get-Content $restartFile -Raw -Encoding UTF8).Trim() } else { "" }
     # The release that moved every mod to its com.quad.* GUID: a manager that doesn't know "was" would hot-load the new copy next to the
     # old one (two GUIDs, so both run), so this one release asks for a restart. Set $GuidSwitchRelease to $false after it.
     if ($GuidSwitchRelease -and $oldGuid -and -not $restart) { $restart = "This update gives the mod a new id ($guid; it was $oldGuid). Restart the game to finish: your settings move over by themselves." }
