@@ -179,19 +179,19 @@ namespace BuildOrders
             for (; i < _bridgeGhosts.Count; i++) if (_bridgeGhosts[i].Value != null && _bridgeGhosts[i].Value.activeSelf) _bridgeGhosts[i].Value.SetActive(false);
         }
 
-        private void DrawBridgeBanner(float sw)
+        /// <summary>The bar shown while a bridge is being drawn (on the HUD: see Panel.cs).</summary>
+        private Line[] BridgeBannerLines()
         {
-            if (!_bridgeStart.HasValue || BridgeOptionsOpen) return;
             BridgeDesign d = _bridgeDesign;
-            var r = new Rect(sw / 2f - 450f, 70f, 900f, d != null && d.Warnings.Count > 0 ? 78f : 56f);
-            Round(r, new Color(0.04f, 0.08f, 0.1f, 0.88f), 8f);
-            Outline(r, new Color(PreviewColor.r, PreviewColor.g, PreviewColor.b, 0.9f), 8f);
-            string head = d == null ? "BRIDGE: aim where it should end" :
-                $"BRIDGE   {d.Length:0} m   ·   {d.Entries.Count} pieces   ·   " + string.Join(", ", MaterialsOf(d.Entries.Select(e => e.Prefab)).Select(kv => $"{kv.Value} {Localization.instance.Localize(kv.Key)}").ToArray());
-            Label(new Rect(r.x, r.y + 4f, r.width, 22f), head, _bold, PreviewColor, TextAnchor.MiddleCenter);
-            Label(new Rect(r.x, r.y + 28f, r.width, 20f), "Walk or swim across and aim where it ends   ·   Click: plan it   ·   Esc (or another piece): cancel", _text, Color.white, TextAnchor.MiddleCenter);
-            if (d != null && d.Warnings.Count > 0)
-                Label(new Rect(r.x, r.y + 50f, r.width, 20f), string.Join("   ·   ", d.Warnings.ToArray()), _bold, new Color(1f, 0.65f, 0.4f), TextAnchor.MiddleCenter);
+            string head = d == null ? "Bridge: aim where it should end" :
+                $"Bridge   {d.Length:0} m   ·   {d.Entries.Count} pieces   ·   " + string.Join(", ", MaterialsOf(d.Entries.Select(e => e.Prefab)).Select(kv => $"{kv.Value} {Localization.instance.Localize(kv.Key)}").ToArray());
+            var lines = new List<Line>
+            {
+                new Line(head, 19f, GameUi.Good),
+                new Line("Walk or swim across and aim where it ends   ·   Click: plan it   ·   Esc (or another piece): cancel", 16f, GameUi.Text),
+            };
+            if (d != null && d.Warnings.Count > 0) lines.Add(new Line(string.Join("   ·   ", d.Warnings.ToArray()), 16f, GameUi.Warn));
+            return lines.ToArray();
         }
 
         // ---- bridges are not levelled, and are not moved (their posts are cut to the riverbed where they stand) ----

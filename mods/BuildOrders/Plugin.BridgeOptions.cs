@@ -1,21 +1,27 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Text;
+using TMPro;
 using UnityEngine;
 
 namespace BuildOrders
 {
     /// <summary>
-    /// The Bridge options panel: opens when the end of a bridge is set. The ghost stays where it is and changes as you change the settings
-    /// (width, material, rails, roof, supports, shape, torches); Confirm places the plan, Change end lets you aim the end again, Cancel drops it.
-    /// The choices are kept for the next bridge.
+    /// The Bridge options panel, in the game's own look (GameUi.cs): opens when the end of a bridge is set, at the side of the screen so the
+    /// bridge stays in view. The ghost stays where it is and changes as you change the settings (width, material, rails, roof, supports, shape,
+    /// torches); Confirm places the plan, Change end lets you aim the end again, Cancel drops it. The choices are kept for the next bridge.
     /// </summary>
     public partial class Plugin
     {
         internal static bool BridgeOptionsOpen;
         private BridgeOptions _bridgeOpts;
-        private Rect _bridgeRect;
-        private bool _bridgeRectPlaced;
+
+        private const float BridgeW = 520f, BridgePad = 24f;
+        private RectTransform _bridgeWin;
+        private string _bridgeShown = "";
+        private float _bridgeCheckAt;
+        private Action _bridgePending;   // a click's action, run in Update
 
         private void OpenBridgeOptions()
         {
@@ -35,103 +41,146 @@ namespace BuildOrders
             player.Message(MessageHud.MessageType.TopLeft, $"Bridge planned: {d.Length:0} m. Build it with E (hold E for everything near you)");
         }
 
-        private void DrawBridgeOptions()
+        private void DestroyBridgeWindow()
         {
-            if (!BridgeOptionsOpen || _bridgeOpts == null) return;
-            if (Cursor.lockState != CursorLockMode.None) Cursor.lockState = CursorLockMode.None;
-            if (!Cursor.visible) Cursor.visible = true;
-            EnsureWindowStyles();
-            Matrix4x4 saved = GUI.matrix;
-            float s = Mathf.Max(0.8f, Screen.height / 1080f);
-            GUI.matrix = Matrix4x4.Scale(new Vector3(s, s, 1f));
-            float sw = Screen.width / s, sh = Screen.height / s;
-            float w = 470f, h = Mathf.Min(760f, sh - 60f);
-            if (!_bridgeRectPlaced) { _bridgeRect = new Rect(sw - w - 30f, (sh - h) / 2f, w, h); _bridgeRectPlaced = true; }   // at the side: the bridge stays in view
-            _bridgeRect.width = w; _bridgeRect.height = h;
-            _bridgeRect = GUI.Window(8872, _bridgeRect, BridgeOptionsContents, GUIContent.none, GUIStyle.none);
-            _bridgeRect.x = Mathf.Clamp(_bridgeRect.x, 0f, Mathf.Max(0f, sw - w));
-            _bridgeRect.y = Mathf.Clamp(_bridgeRect.y, 0f, Mathf.Max(0f, sh - h));
-            GUI.matrix = saved;
+            if (_bridgeWin != null) Destroy(_bridgeWin.gameObject);
+            _bridgeWin = null;
+            _bridgeShown = "";
+            _bridgePending = null;
+            UITooltip.HideTooltip();
         }
 
-        private void BridgeOptionsContents(int id)
+        /// <summary>Every frame (from Update): show or hide the panel as BridgeOptionsOpen says, run a click's action, rebuild it when what it shows changed.</summary>
+        private void TickBridgeOptions()
         {
-            float w = _bridgeRect.width, h = _bridgeRect.height;
-            Round(new Rect(0, 0, w, h), new Color(0.05f, 0.07f, 0.08f, 0.97f), 10f);
-            Round(new Rect(0, 0, w, h), new Color(0.05f, 0.07f, 0.08f, 0.9f), 10f);
-            Outline(new Rect(0, 0, w, h), new Color(PreviewColor.r, PreviewColor.g, PreviewColor.b, 0.85f), 10f);
+            if (!BridgeOptionsOpen || _bridgeOpts == null) { if (_bridgeWin != null || _bridgePending != null) DestroyBridgeWindow(); return; }
             Player player = Player.m_localPlayer;
-            if (player == null) return;
-            BridgeOptions o = _bridgeOpts;
-            BridgeDesign d = _bridgeDesign;
-
-            GUILayout.BeginArea(new Rect(16f, 12f, w - 32f, h - 24f));
-            GUILayout.Label("Bridge", _wTitle);
-            GUILayout.Label(d != null ? $"{d.Length:0} m long   ·   {d.Entries.Count} pieces" : "", _wText);
-            GUILayout.Space(6);
-
-            bool Choice<T>(string label, ref T value, T[] values, string[] names)
+            if (player == null) { DestroyBridgeWindow(); return; }
+            bool fresh = _bridgeWin == null;
+            if (fresh && !GameUi.Ready())
             {
-                GUILayout.Label(label, _wBold);
-                GUILayout.BeginHorizontal();
-                bool changed = false;
-                for (int i = 0; i < values.Length; i++)
-                {
-                    bool on = EqualityComparer<T>.Default.Equals(value, values[i]);
-                    if (GUILayout.Button(names[i], on ? _wButtonOn : _wButton, GUILayout.Height(28)) && !on) { value = values[i]; changed = true; }
-                }
-                GUILayout.EndHorizontal();
-                GUILayout.Space(4);
-                return changed;
+                CancelBridge();
+                player.Message(MessageHud.MessageType.TopLeft, "The bridge options could not open: the game's interface was not found where expected (see the log)");
+                return;
             }
-
-            bool dirty = false;
-            int width = o.Width; BridgeMaterial mat = o.Material; BridgeSides sides = o.Sides; BridgeSupports sup = o.Supports; BridgeShape shape = o.Shape; BridgeEnds ends = o.Ends;
-            bool roof = o.Roof, torches = o.Torches;
-            dirty |= Choice("Width", ref width, new[] { 2, 4, 6 }, new[] { "2 m", "4 m", "6 m" });
-            dirty |= Choice("Material", ref mat, new[] { BridgeMaterial.Wood, BridgeMaterial.CoreWood, BridgeMaterial.Darkwood, BridgeMaterial.Stone }, new[] { "Wood", "Core wood", "Darkwood", "Stone" });
-            dirty |= Choice("Sides", ref sides, new[] { BridgeSides.Rails, BridgeSides.HalfWalls, BridgeSides.None }, new[] { "Handrails", "Half walls", "None" });
-            dirty |= Choice("Roof", ref roof, new[] { false, true }, new[] { "Open", "Covered" });
-            if (mat != BridgeMaterial.Stone)
-                dirty |= Choice("Supports", ref sup, new[] { BridgeSupports.Auto, BridgeSupports.Every2m, BridgeSupports.Every4m }, new[] { "Auto", "Every 2 m", "Every 4 m" });
-            dirty |= Choice("Shape", ref shape, new[] { BridgeShape.Straight, BridgeShape.Arched }, new[] { "Straight", "Arched" });
-            dirty |= Choice("Ends", ref ends, new[] { BridgeEnds.Sloped, BridgeEnds.Steps }, new[] { "Sloped deck", "Level + steps" });
-            dirty |= Choice("Torches", ref torches, new[] { false, true }, new[] { "None", "Every 8 m" });
-            if (dirty)
+            if (_bridgePending != null)
             {
-                o.Width = width; o.Material = mat; o.Sides = sides; o.Roof = roof; o.Supports = sup; o.Shape = shape; o.Ends = ends; o.Torches = torches;
-                _bridgeDirty = true;
+                Action act = _bridgePending;
+                _bridgePending = null;
+                act();
+                if (!BridgeOptionsOpen || _bridgeOpts == null) { DestroyBridgeWindow(); return; }
+                _bridgeCheckAt = 0f;
             }
+            if (!fresh && Time.unscaledTime < _bridgeCheckAt) return;
+            _bridgeCheckAt = Time.unscaledTime + 0.2f;
 
             // what it costs, against what you carry (and the chests nearby)
+            BridgeDesign d = _bridgeDesign;
+            var needs = new List<KeyValuePair<string, int>>();
+            var have = new List<int>();
             if (d != null)
             {
-                var needs = MaterialsOf(d.Entries.Select(e => e.Prefab));
+                needs = MaterialsOf(d.Entries.Select(e => e.Prefab));
                 ForceBuildContext(true);
-                string cost;
                 try
                 {
                     Inventory inv = player.GetInventory();
-                    cost = string.Join("   ", needs.Select(kv =>
-                    {
-                        int have = inv.CountItems(kv.Key);
-                        return $"<color={(have >= kv.Value ? "#8fe08f" : "#ffb38a")}>{Localization.instance.Localize(kv.Key)} {have}/{kv.Value}</color>";
-                    }).ToArray());
+                    foreach (var kv in needs) have.Add(inv.CountItems(kv.Key));
                 }
                 finally { ForceBuildContext(false); }
-                GUILayout.Label("Needs (you have / it takes):", _wBold);
-                GUILayout.Label(cost, new GUIStyle(_wText) { wordWrap = true });
-                foreach (string warn in d.Warnings) GUILayout.Label("<color=#ffb070>" + warn + "</color>", new GUIStyle(_wDim) { wordWrap = true });
             }
 
-            GUILayout.FlexibleSpace();
-            GUILayout.BeginHorizontal();
-            if (GUILayout.Button("Confirm", _wButtonGood, GUILayout.Height(34))) ConfirmBridge(player);
-            if (GUILayout.Button("Change end", _wButton, GUILayout.Height(34))) { BridgeOptionsOpen = false; _bridgeEndFixed = false; }
-            if (GUILayout.Button("Cancel", _wButtonBad, GUILayout.Height(34))) { CancelBridge(); player.Message(MessageHud.MessageType.TopLeft, "Bridge cancelled"); }
-            GUILayout.EndHorizontal();
-            GUILayout.EndArea();
-            GUI.DragWindow(new Rect(0, 0, w, 40));
+            BridgeOptions o = _bridgeOpts;
+            var sb = new StringBuilder();
+            sb.Append(o.Width).Append(o.Material).Append(o.Sides).Append(o.Roof).Append(o.Supports).Append(o.Shape).Append(o.Ends).Append(o.Torches);
+            if (d != null)
+            {
+                sb.Append('|').Append(Mathf.RoundToInt(d.Length)).Append('|').Append(d.Entries.Count).Append('|').Append(string.Join(";", d.Warnings.ToArray()));
+                for (int i = 0; i < needs.Count; i++) sb.Append('|').Append(needs[i].Key).Append(have[i]).Append('/').Append(needs[i].Value);
+            }
+            string signature = sb.ToString();
+            if (fresh || signature != _bridgeShown) BuildBridgeWindow(player, d, needs, have, signature);
+        }
+
+        private void BuildBridgeWindow(Player player, BridgeDesign d, List<KeyValuePair<string, int>> needs, List<int> have, string signature)
+        {
+            if (_bridgeWin != null) Destroy(_bridgeWin.gameObject);
+            UITooltip.HideTooltip();
+            _bridgeShown = signature;
+            BridgeOptions o = _bridgeOpts;
+
+            _bridgeWin = GameUi.Window("BuildOrdersBridge", new Vector2(BridgeW, 600f));
+            // at the right-hand side of the screen: the bridge stays in view
+            _bridgeWin.anchorMin = _bridgeWin.anchorMax = new Vector2(1f, 0.5f);
+            _bridgeWin.pivot = new Vector2(1f, 0.5f);
+            _bridgeWin.anchoredPosition = new Vector2(-30f, 0f);
+            Transform w = _bridgeWin;
+
+            GameUi.Label(w, "Bridge", new Vector2(BridgePad, -14f), new Vector2(200f, 44f), 34f, GameUi.Warm, GameUi.Norse);
+            TMP_Text summary = GameUi.Line(w, d != null ? $"{d.Length:0} m long   ·   {d.Entries.Count} pieces" : "", new Vector2(-BridgePad, -26f), 260f, 17f, GameUi.Text,
+                                           null, TextAlignmentOptions.TopRight, new Vector2(1f, 1f));
+            GameUi.Braid(w, new Vector2(0f, -64f), BridgeW - BridgePad * 2f);
+
+            float y = 80f;
+            void Choice<T>(string label, T value, T[] values, string[] names, Action<T> set)
+            {
+                GameUi.Line(w, label, new Vector2(BridgePad, -y - 7f), 96f, 17f, GameUi.Text);
+                float x0 = BridgePad + 100f, bw = (BridgeW - BridgePad - x0 - (values.Length - 1) * 6f) / values.Length;
+                for (int i = 0; i < values.Length; i++)
+                {
+                    T choice = values[i];
+                    bool on = EqualityComparer<T>.Default.Equals(value, choice);
+                    GameUi.Tab(w, names[i], new Vector2(x0 + i * (bw + 6f), -y), new Vector2(bw, 34f), on, () => _bridgePending = () => { set(choice); _bridgeDirty = true; }, 15f);
+                }
+                y += 40f;
+            }
+            Choice("Width", o.Width, new[] { 2, 4, 6 }, new[] { "2 m", "4 m", "6 m" }, v => o.Width = v);
+            Choice("Material", o.Material, new[] { BridgeMaterial.Wood, BridgeMaterial.CoreWood, BridgeMaterial.Darkwood, BridgeMaterial.Stone }, new[] { "Wood", "Core wood", "Darkwood", "Stone" }, v => o.Material = v);
+            Choice("Sides", o.Sides, new[] { BridgeSides.Rails, BridgeSides.HalfWalls, BridgeSides.None }, new[] { "Handrails", "Half walls", "None" }, v => o.Sides = v);
+            Choice("Roof", o.Roof, new[] { false, true }, new[] { "Open", "Covered" }, v => o.Roof = v);
+            if (o.Material != BridgeMaterial.Stone)
+                Choice("Supports", o.Supports, new[] { BridgeSupports.Auto, BridgeSupports.Every2m, BridgeSupports.Every4m }, new[] { "Auto", "Every 2 m", "Every 4 m" }, v => o.Supports = v);
+            Choice("Shape", o.Shape, new[] { BridgeShape.Straight, BridgeShape.Arched }, new[] { "Straight", "Arched" }, v => o.Shape = v);
+            Choice("Ends", o.Ends, new[] { BridgeEnds.Sloped, BridgeEnds.Steps }, new[] { "Sloped deck", "Level + steps" }, v => o.Ends = v);
+            Choice("Torches", o.Torches, new[] { false, true }, new[] { "None", "Every 8 m" }, v => o.Torches = v);
+
+            // what it costs, against what you have (and the chests nearby): icons with the game's tooltips
+            if (d != null)
+            {
+                y += 6f;
+                GameUi.Line(w, "Needs (you have / it takes):", new Vector2(BridgePad, -y), BridgeW - BridgePad * 2f, 16f, GameUi.Dim);
+                y += 26f;
+                float x = BridgePad;
+                for (int i = 0; i < needs.Count; i++)
+                {
+                    string amount = $"{have[i]}/{needs[i].Value}";
+                    float guess = 26f + 3f + GameUi.Width(summary, amount) * 15f / 17f + 14f;   // (the summary line measures text: it is 17 pt, the amounts 15)
+                    if (x > BridgePad && x + guess > BridgeW - BridgePad) { x = BridgePad; y += 32f; }
+                    x += Cost(w, new Vector2(x, -y), needs[i].Key, amount, have[i] >= needs[i].Value ? GameUi.Good : GameUi.Warn, 26f, 15f);
+                }
+                y += 34f;
+                foreach (string warn in d.Warnings)
+                {
+                    TMP_Text t = GameUi.Label(w, warn, new Vector2(BridgePad, -y), new Vector2(BridgeW - BridgePad * 2f, 24f), 15f, GameUi.Warn);
+                    y += t.GetPreferredValues(warn, BridgeW - BridgePad * 2f, 0f).y + 4f;
+                }
+            }
+
+            // confirm, aim the end again, or drop it
+            y += 10f;
+            float bw3 = (BridgeW - BridgePad * 2f - 16f) / 3f;
+            var confirm = GameUi.Button(w, "Confirm", new Vector2(BridgePad, -y), new Vector2(bw3, 42f), () => _bridgePending = () => ConfirmBridge(player), d != null);
+            if (d != null) GameUi.Label(confirm).color = GameUi.Gold;
+            GameUi.Button(w, "Change end", new Vector2(BridgePad + bw3 + 8f, -y), new Vector2(bw3, 42f), () => _bridgePending = () => { BridgeOptionsOpen = false; _bridgeEndFixed = false; });
+            var cancel = GameUi.Button(w, "Cancel", new Vector2(BridgePad + (bw3 + 8f) * 2f, -y), new Vector2(bw3, 42f), () => _bridgePending = () =>
+            {
+                CancelBridge();
+                player.Message(MessageHud.MessageType.TopLeft, "Bridge cancelled");
+            });
+            GameUi.Label(cancel).color = GameUi.Warn;
+            y += 42f + BridgePad;
+
+            _bridgeWin.sizeDelta = new Vector2(BridgeW, y);
         }
     }
 }

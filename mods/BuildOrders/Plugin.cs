@@ -15,7 +15,8 @@ namespace BuildOrders
     /// the order disappears once the real piece stands there.
     ///
     /// Split across files: Plugin.cs (setup + the per-frame work), Orders.cs (the orders, saving, syncing),
-    /// Ghosts.cs (the see-through copies), Patches.cs (hooks into building), Panel.cs (the on-screen panel).
+    /// Ghosts.cs (the see-through copies), Patches.cs (hooks into building), Panel.cs (the on-screen help on the HUD),
+    /// Plugin.PlansWindow.cs and Plugin.BridgeOptions.cs (the windows), GameUi.cs (both built from the game's own interface).
     /// </summary>
     [BepInPlugin(Guid, Name, Version)]
     public partial class Plugin : BaseUnityPlugin
@@ -90,6 +91,8 @@ namespace BuildOrders
             Log = Logger;
             BindBridgeConfig();
             PlansPatches.Apply(_harmony);
+            GameUi.IsOpen = () => PlansWindowOpen || BridgeOptionsOpen;   // the game keeps its hands off the mouse and keys while one is open
+            GameUi_EscapeCloses.Close = CloseFromEscape;
             if (ZNetScene.instance != null) RegisterBridgeTool(ZNetScene.instance);   // hot reload while in a world
 
             Logger.LogInfo($"{Name} {Version} loaded ({PlanHint})");
@@ -107,7 +110,7 @@ namespace BuildOrders
             CancelPlacement();
             FlushSave();
             PlansWindowOpen = false;
-            DestroyWindowResources();
+            DestroyUi();
             _harmony?.UnpatchSelf();
             UnregisterRpc();
             RemoveHelperHooks();
@@ -169,13 +172,13 @@ namespace BuildOrders
             UpdateSave();
             FreeGameKeys();
             TellKeyNotes();
-            if (!_enabled.Value) { DestroyAllGhosts(); return; }
+            if (!_enabled.Value) { DestroyAllGhosts(); TickUi(); return; }
 
             UpdateNetwork();
             EnsureWorldLoaded();
 
             Player player = Player.m_localPlayer;
-            if (player == null || ZNetScene.instance == null) { DropPlacing(); return; }
+            if (player == null || ZNetScene.instance == null) { DropPlacing(); TickUi(); return; }
 
             UpdatePlanMode(player);
             UpdateFetch(player);
@@ -209,9 +212,47 @@ namespace BuildOrders
             }
 
             UpdateAim(player);
+            TickUi();
         }
 
         private float _nextRecords;
+
+        // ---- the windows and the HUD (GameUi.cs: built from the game's own interface) ----
+
+        private bool _uiFailed;
+        private float _uiPausedUntil;
+
+        /// <summary>Every frame: the Plans window, the bridge options and the pieces on the HUD follow what is going on.</summary>
+        private void TickUi()
+        {
+            try
+            {
+                if (!_enabled.Value) { PlansWindowOpen = false; if (BridgeOptionsOpen) CancelBridge(); }
+                TickPlansWindow();
+                TickBridgeOptions();
+                if (Time.unscaledTime >= _uiPausedUntil) TickHud();
+            }
+            catch (Exception e)
+            {
+                // logged once; the windows close (they hold the mouse and keys) and the HUD pieces rest for a few seconds, so a fault
+                // never fills the log every frame or leaves the game without controls
+                if (!_uiFailed) { _uiFailed = true; Logger.LogError("The on-screen windows failed and were closed: " + e); }
+                PlansWindowOpen = false;
+                if (BridgeOptionsOpen) CancelBridge();
+                try { DestroyPlansWindow(); DestroyBridgeWindow(); HideAllHud(); } catch (Exception) { }
+                _uiPausedUntil = Time.unscaledTime + 5f;
+            }
+        }
+
+        /// <summary>Takes everything on screen down (a hot reload must not leave a window, the canvas or a HUD piece behind).</summary>
+        private void DestroyUi()
+        {
+            try { DestroyPlansWindow(); DestroyBridgeWindow(); HideAllHud(); } catch (Exception) { }
+            GameUi.Destroy();
+            GameUi_EscapeCloses.Close = () => { };
+            foreach (Texture2D t in _pictures.Values) if (t != null) Destroy(t);
+            _pictures.Clear();
+        }
 
         /// <summary>
         /// No player (died, logged out, disconnected) or another world: placing, the Plans window and drawing a bridge end, or the next world
@@ -388,7 +429,7 @@ namespace BuildOrders
                     int need = req.GetAmount(1);
                     if (need <= 0) continue;
                     string item = req.m_resItem.m_itemData.m_shared.m_name;
-                    HintLines.Add(new HintLine { Name = Localization.instance.Localize(item), Have = inventory.CountItems(item), Need = need, Icon = req.m_resItem.m_itemData.GetIcon() });
+                    HintLines.Add(new HintLine { Name = Localization.instance.Localize(item), Have = inventory.CountItems(item), Need = need, Icon = req.m_resItem.m_itemData.GetIcon(), Item = req.m_resItem.m_itemData });
                 }
 
                 // the whole plan this ghost belongs to: everything it still needs, against what you have
@@ -406,7 +447,7 @@ namespace BuildOrders
                         if (req.m_resItem == null || req.GetAmount(1) <= 0) continue;
                         string item = req.m_resItem.m_itemData.m_shared.m_name;
                         if (!totals.TryGetValue(item, out HintLine line))
-                            totals[item] = line = new HintLine { Name = Localization.instance.Localize(item), Have = inventory.CountItems(item), Icon = req.m_resItem.m_itemData.GetIcon() };
+                            totals[item] = line = new HintLine { Name = Localization.instance.Localize(item), Have = inventory.CountItems(item), Icon = req.m_resItem.m_itemData.GetIcon(), Item = req.m_resItem.m_itemData };
                         line.Need += req.GetAmount(1);
                     }
                 }
@@ -420,7 +461,7 @@ namespace BuildOrders
         internal string PlanTitle = "";
         internal int PlanLeft, HoldCount, HoldAll;
 
-        internal class HintLine { public string Name; public int Have, Need; public Sprite Icon; }
+        internal class HintLine { public string Name; public int Have, Need; public Sprite Icon; public ItemDrop.ItemData Item; }
         internal Sprite HintPieceIcon;
         internal readonly List<HintLine> HintLines = new List<HintLine>();
         internal bool HintKnown;

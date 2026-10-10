@@ -296,10 +296,7 @@ namespace BuildOrders
                     StartPlacement((string)doc["name"] ?? Path.GetFileNameWithoutExtension(path), path, EntriesFrom(doc["pieces"] as JArray ?? new JArray()), player.transform.eulerAngles.y, 0f, null);
                     break;
                 default:
-                    _plansTab = what == "plans" ? 1 : what == "settings" ? 2 : 0;
-                    _plansScroll = Vector2.zero;
-                    _libraryAt = -99f;
-                    PlansWindowOpen = true;
+                    ShowPlansTab(what == "plans" ? 1 : what == "settings" ? 2 : 0);
                     break;
             }
             output(new JObject { ["ui"] = what });

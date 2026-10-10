@@ -370,19 +370,17 @@ namespace BuildOrders
             }).ToList();
         }
 
-        /// <summary>The help bar shown while placing.</summary>
-        private void DrawPlacementBanner(float sw)
+        /// <summary>The help bar shown while placing (on the HUD: see Panel.cs).</summary>
+        private Line[] PlacementBannerLines()
         {
             Placement pl = _placing;
-            if (pl == null) return;
-            var r = new Rect(sw / 2f - 450f, 70f, 900f, 78f);
-            Round(r, new Color(0.04f, 0.1f, 0.06f, 0.88f), 8f);
-            Outline(r, new Color(PreviewColor.r, PreviewColor.g, PreviewColor.b, 0.9f), 8f);
             string loading = pl.Spawned < pl.Entries.Count ? $"   (showing {pl.Spawned}/{pl.Entries.Count})" : "";
-            Label(new Rect(r.x, r.y + 4f, r.width, 22f), $"PLACING \"{pl.Title}\"   turned {pl.Yaw:0}°   height {pl.OffsetY:+0.0;-0.0;0} m{loading}", _bold, PreviewColor, TextAnchor.MiddleCenter);
-            Label(new Rect(r.x, r.y + 28f, r.width, 20f), "Look where it goes   ·   Wheel: turn (Shift: fine)   ·   R: 90°   ·   PgUp/PgDn: height   ·   Click: place   ·   Right-click / Esc: cancel",
-                _text, Color.white, TextAnchor.MiddleCenter);
-            Label(new Rect(r.x, r.yMax - 24f, r.width, 20f), LevelBannerText(pl), _bold, PadColor, TextAnchor.MiddleCenter);
+            return new[]
+            {
+                new Line($"Placing \"{pl.Title}\"   turned {pl.Yaw:0}°   height {pl.OffsetY:+0.0;-0.0;0} m{loading}", 19f, GameUi.Good),
+                new Line("Look where it goes   ·   Wheel: turn (Shift: fine)   ·   R: 90°   ·   PgUp/PgDn: height   ·   Click: place   ·   Right-click / Esc: cancel", 16f, GameUi.Text),
+                new Line(LevelBannerText(pl), 16f, GameUi.Gold),
+            };
         }
     }
 }
