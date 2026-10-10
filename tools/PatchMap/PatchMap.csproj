@@ -1,0 +1,27 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <!--
+    Builds the patch map ClaudeTools ships with: the most-downloaded Valheim mods on Thunderstore and what each one patches.
+    Run it from tools/PatchMap:  dotnet run -c Release  (or add a number for how many mods, 100 by default)
+    It shares ClaudeTools' scanner (Scan.cs) and zip reader (Zip.cs), so the shipped map is made exactly as the game makes it.
+  -->
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net48</TargetFramework>
+    <LangVersion>latest</LangVersion>
+    <Nullable>disable</Nullable>
+    <ValheimDir Condition="'$(ValheimDir)' == ''">$(VALHEIM_DIR)</ValheimDir>
+    <ValheimDir Condition="'$(ValheimDir)' == '' and '$(OS)' == 'Windows_NT'">D:/SteamLibrary/steamapps/common/Valheim</ValheimDir>
+  </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="Microsoft.NETFramework.ReferenceAssemblies" Version="1.0.3" PrivateAssets="all" />
+    <Reference Include="System.Net.Http" />
+    <Reference Include="System.IO.Compression" />
+    <Reference Include="Mono.Cecil"><HintPath>$(ValheimDir)/BepInEx/core/Mono.Cecil.dll</HintPath></Reference>
+    <Reference Include="Newtonsoft.Json"><HintPath>$(ValheimDir)/valheim_Data/Managed/Newtonsoft.Json.dll</HintPath></Reference>
+    <Compile Include="../../mods/ClaudeTools/Scan.cs" Link="Shared/Scan.cs" />
+    <Compile Include="../../mods/ClaudeTools/Zip.cs" Link="Shared/Zip.cs" />
+    <Compile Include="../../mods/ClaudeTools/Compat.cs" Link="Shared/Compat.cs" />
+    <Compile Include="../../mods/ClaudeTools/Check.cs" Link="Shared/Check.cs" />
+    <Compile Include="../Shared/Thunderstore.cs" Link="Shared/Thunderstore.cs" />
+  </ItemGroup>
+</Project>

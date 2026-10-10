@@ -1,3 +1,5 @@
+The machine costs what it should again: 15 Fine Wood, 8 Bronze and 10 Stone (at a workbench), no longer the single Fine Wood it cost while it was being tested. In multiplayer the server decides the payout (PayoutPercent), so nobody can set their own machine to pay out more than goes in.
+
 Fix: after a fresh game start the slot machine was not registered until the mods were reloaded, so the game deleted any it found standing in the world. It is now registered as the world loads. Ones already lost can't be brought back; build them again. Fix: logging out, or walking away so the machine unloads, before the reels stop no longer loses your bet's winnings: they go into your inventory.
 
 For testing, the machine costs a single Fine Wood (at a workbench). The real cost comes back after testing.

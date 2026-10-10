@@ -63,6 +63,7 @@ namespace Quiver
             {
                 ItemDrop.ItemData one = kv.Key.Clone();
                 one.m_stack = kv.Value;
+                one.m_equipped = false; // (a copy of the arrows you had equipped)
                 ItemDrop.DropItem(one, kv.Value, at + Random.insideUnitSphere * 0.3f, Quaternion.Euler(0f, Random.Range(0f, 360f), 0f));
                 if (Plugin.Debug.Value) Plugin.Log.LogInfo($"  {e.Name} died: {kv.Value} {kv.Key.m_dropPrefab.name} dropped with its loot");
             }

@@ -60,6 +60,50 @@ namespace GearSlots
         public static void RememberNormalRows(int rows) => AppDomain.CurrentDomain.SetData(RowsKey, rows);
         public static void ForgetNormalRows() => AppDomain.CurrentDomain.SetData(RowsKey, null);
 
+        // Where the gear rows start for this character, saved with it: other mods' rows (ValheimPlus) can sit between the game's
+        // rows and ours, so the game's own row count is not enough to find them again.
+        private const string BaseKey = "DHack.GearSlots.Base";
+
+        public static void SaveBase(Player player, int gearBase) => player.m_customData[BaseKey] = gearBase.ToString();
+
+        /// <summary>The first gear row of this character, from its save.</summary>
+        public static int WorkOutBase(Player player)
+        {
+            if (player.m_customData.TryGetValue(BaseKey, out string saved) && int.TryParse(saved, out int gearBase) && gearBase >= 0) return gearBase;
+            // Saved before this was kept: the gear rows were right under the game's rows (the "invrows" key; trader-bought rows count).
+            if (player.TryGetUniqueKeyValue(Player.InventoryRowsKey, out string value) && int.TryParse(value, out int rows)) return Mathf.Clamp(rows, 0, 9);
+            // Never been in a world since rows could be bought, so no gear yet: its rows start under whatever the game and other mods made.
+            return player.GetInventory().GetHeight();
+        }
+
+        /// <summary>
+        /// When another slot mod is installed: move whatever this mod had in its rows into free cells of the game's own rows, so the
+        /// other mod never finds it in its slots. Done once (the saved position is removed); anything that doesn't fit stays where it
+        /// is and is tried again next time. Returns how many moved and how many didn't fit.
+        /// </summary>
+        public static (int moved, int left) EmptyGearRows(Player player)
+        {
+            if (!player.m_customData.TryGetValue(BaseKey, out string saved) || !int.TryParse(saved, out int gearBase)) return (0, 0);
+            // Only the game's rows: with another slot mod, rows below them may be its slots.
+            int bagRows = player.TryGetUniqueKeyValue(Player.InventoryRowsKey, out string value) && int.TryParse(value, out int rows) ? Mathf.Clamp(rows, 0, 9) : 4;
+            bagRows = Mathf.Min(bagRows, gearBase);
+            Inventory inv = player.GetInventory();
+            int moved = 0, left = 0;
+            foreach (ItemDrop.ItemData item in inv.GetAllItems())
+            {
+                if (item.m_gridPos.y < gearBase || item.m_gridPos.y >= gearBase + ExtraRows) continue;
+                Vector2i free = new Vector2i(-1, -1);
+                for (int y = 0; y < bagRows && free.x < 0; y++)
+                    for (int x = 0; x < inv.GetWidth(); x++)
+                        if (inv.GetItemAt(x, y) == null) { free = new Vector2i(x, y); break; }
+                if (free.x < 0) { left++; continue; }
+                item.m_gridPos = free;
+                moved++;
+            }
+            if (left == 0) player.m_customData.Remove(BaseKey);
+            return (moved, left);
+        }
+
         public static Vector2i CellOf(Slot s) => new Vector2i(s.Col, NormalRows + s.Row);
 
         /// <summary>The slot that sits at this inventory cell, or null for an ordinary cell.</summary>
@@ -106,8 +150,9 @@ namespace GearSlots
             return inv.GetItemAt(cell.x, cell.y);
         }
 
+        /// <summary>True for your own inventory while the gear slots are on (another slot mod turns them off: see Compat).</summary>
         public static bool IsPlayerInventory(Inventory inv) =>
-            inv != null && Player.m_localPlayer != null && inv == Player.m_localPlayer.GetInventory();
+            inv != null && Player.m_localPlayer != null && inv == Player.m_localPlayer.GetInventory() && !Compat.StandingDown;
 
         /// <summary>Items in the ordinary part of the inventory (the extra rows do not count toward "full").</summary>
         public static int NormalItemCount(Inventory inv)

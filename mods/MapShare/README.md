@@ -5,7 +5,7 @@
 
 <img src="cover.png" alt="MapShare" width="100%">
 
-**Version 1.0.1**  ·  [all the mods](../../README.md)  ·  installs and updates through the in-game [mod manager](https://github.com/HardHeadHackerHead/valheim-mod-manager) (**F7**)
+**Version 1.1.0**  ·  [all the mods](../../README.md)  ·  installs and updates through the in-game [mod manager](https://github.com/HardHeadHackerHead/valheim-mod-manager) (**F7**)
 
 Share the map you uncover with everyone in the world, live, as you run through the fog. New players get the whole map when they join.
 
@@ -15,6 +15,11 @@ Share the map you uncover with everyone in the world, live, as you run through t
 **One map for everyone: what each player has explored, and their pins**
 
 <img src="images/1.jpg" alt="One map for everyone: what each player has explored, and their pins" width="100%">
+
+## Playing on a server
+
+General/AllowSharing is the server's when the server has this mod: turned off there, nobody's map is shared while they play on it. A
+server without the mod sends nothing, and each player's own settings apply.
 <!-- END HAND-WRITTEN -->
 
 ## 🔍 How it works
@@ -41,6 +46,7 @@ In `BepInEx/config/com.dhack.mapshare.cfg` (made the first time the game runs wi
 | `ShareMyMap` | `true` | Send the parts of the map you uncover to the other players in the world. |
 | `ReceiveSharedMap` | `true` | Show the parts of the map other players uncover on your own map. |
 | `SendInterval` | `2` | Seconds between sending newly uncovered map cells. |
+| `AllowSharing` | `true` | Players with this mod share the map they uncover with each other. A server that wants everyone to explore for themselves turns this off. In multiplayer the server's value applies. |
 
 ## 👥 Playing together
 
@@ -48,5 +54,6 @@ See [who needs which mod](../../README.md#playing-together) on the front page.
 
 ## 📜 Changes
 
+- New: General/AllowSharing, decided by the server in multiplayer: a server where everyone should explore for themselves can turn map sharing off for all. Fix: a map that arrived only partly (its sender left) was kept in memory for the rest of the session, and a shared map is now only unpacked up to the size of this world's map, so nobody can send something that unpacks to a huge size.
 - Fix: a player joining could miss the map explored so far when someone online did not have MapShare or had sharing off. Everyone who shares now sends it.
 - First version: live sharing of the explored map between players, plus a full sync when someone joins.

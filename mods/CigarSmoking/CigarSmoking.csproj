@@ -11,4 +11,7 @@
     <!-- the pictures of the items and pieces, drawn by tools/modelkit -->
     <EmbeddedResource Include="icons\*.png" LogicalName="icons/%(Filename)%(Extension)" />
   </ItemGroup>
+  <ItemGroup>
+    <Compile Include="../Shared/ServerSettings.cs" Link="Shared/ServerSettings.cs" />
+  </ItemGroup>
 </Project>

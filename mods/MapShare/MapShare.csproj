@@ -3,4 +3,7 @@
     <AssemblyName>MapShare</AssemblyName>
     <RootNamespace>MapShare</RootNamespace>
   </PropertyGroup>
+  <ItemGroup>
+    <Compile Include="../Shared/ServerSettings.cs" Link="Shared/ServerSettings.cs" />
+  </ItemGroup>
 </Project>

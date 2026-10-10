@@ -57,7 +57,7 @@ namespace BuildFromChests
             if (Suspend || !Plugin.Enabled.Value) return false;
             Player p = Player.m_localPlayer;
             if (p == null || inv != p.GetInventory()) return false;
-            return BuildingNow();
+            return BuildingNow() && OtherChestMods.Which == null; // another chest-building mod doing it too would count every chest twice
         }
 
         // ---- which chests are in range (refreshed a few times a second) -------------------------------
@@ -89,12 +89,24 @@ namespace BuildFromChests
             foreach (Container c in AllContainers)
             {
                 if ((c.transform.position - origin).sqrMagnitude > maxSqr) continue; // cheapest test first
-                if (c.GetInventory() == null || InUse(c)) continue;
+                if (c.GetInventory() == null || !IsStorage(c) || InUse(c)) continue;
                 if (c.m_checkGuardStone && !PrivateArea.CheckAccess(c.transform.position, 0f, false)) continue;
                 if (!(bool)CheckAccess.Invoke(c, new object[] { playerId })) continue;
                 Nearby.Add(c);
             }
             return Nearby;
+        }
+
+        /// <summary>
+        /// A chest someone built. Graves, carts, ships, a companion's bag, its own chest (its stock) and a backpack carried by a player
+        /// (Adventure Backpacks) have a Container too, but they aren't storage to build from.
+        /// </summary>
+        private static bool IsStorage(Container c)
+        {
+            if (c.GetComponentInParent<Piece>() == null || c.GetComponent<TombStone>() != null) return false;
+            if (c.GetComponentInParent<Character>() != null || c.GetComponentInParent<Vagon>() != null || c.GetComponentInParent<Ship>() != null) return false;
+            ZNetView nview = NView.GetValue(c) as ZNetView;
+            return nview != null && nview.IsValid() && nview.GetZDO().GetLong("dhc_home", 0L) == 0L; // (a companion's own chest)
         }
 
         /// <summary>
@@ -139,6 +151,58 @@ namespace BuildFromChests
             foreach (Container c in GetNearby()) total += c.GetInventory().CountItems(name, quality, matchWorldLevel);
             byKind[kind] = total;
             return total;
+        }
+
+        /// <summary>
+        /// How many of an item the player carries, counted item by item. Inventory.CountItems isn't enough: while building, this mod and
+        /// others (a backpack mod) add their own sources to it.
+        /// </summary>
+        internal static int OwnCount(Inventory inv, string name, int quality, bool matchWorldLevel)
+        {
+            int total = 0;
+            foreach (ItemDrop.ItemData item in inv.GetAllItems())
+                if (item.m_shared.m_name == name && (quality < 0 || item.m_quality == quality) && (!matchWorldLevel || item.m_worldLevel >= Game.m_worldLevel))
+                    total += item.m_stack;
+            return total;
+        }
+
+        /// <summary>
+        /// The game places the piece before it charges for it, so a shortfall found while paying is too late to refuse. So check first:
+        /// what the chests must supply (what's needed minus what you carry and what other mods' sources, such as a backpack, will pay)
+        /// must really be in them, counted after taking each chest that has some over and reloading it (until then our copy can be a
+        /// second old, and another player may have emptied it). Taking them over also keeps other players' games from changing them
+        /// until we've paid. Returns the first material that's short, or null when everything is there.
+        /// </summary>
+        internal static string FindShortfall(Inventory inv, Piece.Requirement[] resources)
+        {
+            foreach (Piece.Requirement req in resources)
+            {
+                if (req.m_resItem == null || req.m_upgraderResource) continue; // (battle idols are only charged at an upgrader station)
+                int amount = req.GetAmount(0);
+                if (amount <= 0) continue;
+                string name = req.m_resItem.m_itemData.m_shared.m_name;
+
+                int others;
+                Suspend = true; // what you have without our chests (the game's count, plus other mods' sources)
+                try { others = inv.CountItems(name, -1, true); }
+                finally { Suspend = false; }
+                int fromChests = amount - others;
+                if (fromChests <= 0) continue;
+
+                int found = 0;
+                foreach (Container c in GetNearby())
+                {
+                    if (found >= fromChests) break;
+                    if (c == null || InUse(c)) continue;
+                    Inventory chest = c.GetInventory();
+                    if (chest.CountItems(name, -1, true) <= 0) continue;
+                    TakeOwnership(c);
+                    found += chest.CountItems(name, -1, true); // counted again: the reload may have changed it
+                }
+                InvalidateCounts();
+                if (found < fromChests) return name;
+            }
+            return null;
         }
 
         /// <summary>Remove up to <paramref name="amount"/> of an item from nearby chests; returns how many were left unfound.</summary>

@@ -1,0 +1,1 @@
+It adds the companion (a new creature the world saves). Restart the game after updating so it registers cleanly: a companion whose area loads while it is not registered is deleted by the host, with everything it carries.

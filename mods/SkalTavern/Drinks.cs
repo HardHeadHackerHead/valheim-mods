@@ -18,23 +18,23 @@ namespace SkalTavern
             public string Prefab, Display, Flavour;
             public float Amount;          // how much drunker one makes you (0 to 100 is sober to very drunk)
             public Color Liquid;
-            public int Value, Makes;
+            public int Makes;
             public (string Item, int Count)[] Cost;
         }
 
         /// <summary>The drinks, weakest first. What they cost grows with how far into the game you are.</summary>
         internal static readonly Def[] All =
         {
-            new Def { Prefab = "dh_drink_ale", Display = "Tankard of Ale", Amount = 14f, Liquid = new Color(0.89f, 0.74f, 0.30f), Value = 14, Makes = 2,
+            new Def { Prefab = "dh_drink_ale", Display = "Tankard of Ale", Amount = 14f, Liquid = new Color(0.89f, 0.74f, 0.30f), Makes = 2,
                       Flavour = "Cold, golden and honest. A tankard warms you and puts a spring in your step.",
                       Cost = new[] { ("Barley", 3), ("Honey", 1) } },
-            new Def { Prefab = "dh_drink_honeymead", Display = "Honey Mead", Amount = 22f, Liquid = new Color(0.95f, 0.58f, 0.10f), Value = 22, Makes = 2,
+            new Def { Prefab = "dh_drink_honeymead", Display = "Honey Mead", Amount = 22f, Liquid = new Color(0.95f, 0.58f, 0.10f), Makes = 2,
                       Flavour = "Sweet, strong and dangerous. The skalds swear it carries songs.",
                       Cost = new[] { ("Honey", 4), ("Raspberry", 2) } },
-            new Def { Prefab = "dh_drink_wine", Display = "Blueberry Wine", Amount = 20f, Liquid = new Color(0.40f, 0.10f, 0.34f), Value = 26, Makes = 2,
+            new Def { Prefab = "dh_drink_wine", Display = "Blueberry Wine", Amount = 20f, Liquid = new Color(0.40f, 0.10f, 0.34f), Makes = 2,
                       Flavour = "Dark and sharp, pressed from the berries of the Black Forest. Sneaks up on you.",
                       Cost = new[] { ("Blueberries", 4), ("Honey", 1) } },
-            new Def { Prefab = "dh_drink_skaldmead", Display = "Skaldic Mead", Amount = 34f, Liquid = new Color(0.97f, 0.80f, 0.20f), Value = 48, Makes = 2,
+            new Def { Prefab = "dh_drink_skaldmead", Display = "Skaldic Mead", Amount = 34f, Liquid = new Color(0.97f, 0.80f, 0.20f), Makes = 2,
                       Flavour = "Cloudberry mead brewed for feast nights on the plains. Two of these and the longhouse starts to spin.",
                       Cost = new[] { ("Honey", 5), ("Cloudberry", 3) } },
         };
@@ -217,7 +217,7 @@ namespace SkalTavern
             s.m_icons = new[] { icon };
             s.m_maxStackSize = 10;
             s.m_weight = 0.5f;
-            s.m_value = d.Value;
+            s.m_value = 0;   // (worth nothing at the trader: they are cheap to brew, and a price made the beehive a coin machine)
             s.m_maxQuality = 1;
             s.m_variants = 0;
             s.m_food = 0f;

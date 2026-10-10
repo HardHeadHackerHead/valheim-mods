@@ -63,7 +63,7 @@ On a dedicated server, put the host's mods in the server's `BepInEx\scripts` (wi
 
 <img src="cover.png" alt="Option 1" width="100%">
 
-**Version 0.21.2**  ·  [all the mods](../../README.md)  ·  installs and updates through the in-game [mod manager](https://github.com/HardHeadHackerHead/valheim-mod-manager) (**F7**)
+**Version 0.22.0**  ·  [all the mods](../../README.md)  ·  installs and updates through the in-game [mod manager](https://github.com/HardHeadHackerHead/valheim-mod-manager) (**F7**)
 
 Press **J** to summon a viking companion. It comes on your adventures and fights like a player: timed parries, rolls out of sweeps, gets round
 behind what you are hitting, kites with a bow, drinks the right mead, and follows you through portals, crypts, doors and onto boats. Point with
@@ -108,7 +108,7 @@ A viking companion who plays like a player: comes on your adventures, lives its 
 - It hunts, cooks on your cooking stations, keeps its fires burning, repairs its gear and your base, sleeps in its bed at night, and sorts what it brings home into the right chests (with QualityOfLife).
 - While you are away it catches up on all of it, and tells you what it did when you return.
 - Needs like a player: food for health and stamina, skills that rise, stamina, carry weight, weather, rest.
-- Its gear has slots of its own (weapons, shield, bow and arrows, axe, pickaxe, hammer, armour, and three food slots it keeps filled): change them from its menu from anywhere. When it falls it keeps its gear; only its bag goes into a tombstone, which it goes back for.
+- Its gear has slots of its own (weapons, shield, bow and arrows, axe, pickaxe, hammer, armour, and three food slots it keeps filled): change them from its menu from anywhere. When it falls everything goes into its tombstone, as a player's; it wakes wearing its gear again when its tombstone is near, else it goes back for it.
 - Its bag shows beside your inventory: drag items between you. Hotbar keys give it food, potions or gear.
 - Between jobs it acts like a person: sits by the fire or in a chair, gets out of the rain, takes a stroll, sits with you when you rest, waves when you come back, cheers after a big fight and answers your emotes.
 - A journal of its life, small talk that fits the moment, and chat messages about what it is up to.
@@ -131,8 +131,8 @@ In `BepInEx/config/com.dhack.aicompanion.cfg` (made the first time the game runs
 
 | Setting | Default | What it does |
 |---|---|---|
-| `MaxCompanions` | `3` | How many companions each player can have. |
-| `WhileAway` | `Mild` | What a companion living at home does while nobody is near. It always catches up on its work when you come back. Mild: it also fights off a few creatures and keeps their drops, and never falls. Real: those fights can go badly and it can fall. Off: work only. |
+| `MaxCompanions` | `3` | How many companions each player can have. In multiplayer the server's value applies. |
+| `WhileAway` | `Mild` | What a companion living at home does while nobody is near. It always catches up on its work when you come back. Mild: it also fights off a few creatures and keeps their drops, and never falls. Real: those fights can go badly and it can fall. Off: work only. In multiplayer the server's value applies. |
 
 **General**
 
@@ -147,18 +147,19 @@ In `BepInEx/config/com.dhack.aicompanion.cfg` (made the first time the game runs
 |---|---|---|
 | `FightRange` | `12` | It fights enemies that come this close (in metres) to it or to you. In the menu: Orders. |
 | `ShowDecisions` | `true` | Show what it decides in a fight above its head. In the menu: Brain. |
-| `RespawnSeconds` | `30` | Seconds after falling before it wakes in its bed (or beside you). |
-| `BaseHealth` | `25` | Its health before food, as a player's (25). |
-| `BaseStamina` | `75` | Its stamina before food, as a player's (75). |
-| `EatBelowPercent` | `10` | It eats a food it is already under again once its time left drops below this percent (the game allows it from 50). Lower saves food: a meal lasts 80% of its time instead of 50%, and its effect weakens a little towards the end. |
-| `StartingSkill` | `0` | The skill level a new companion starts at (a new player: 0). |
+| `RespawnSeconds` | `30` | Seconds after falling before it wakes in its bed (or beside you). In multiplayer the server's value applies. |
+| `BaseHealth` | `25` | Its health before food, as a player's (25). In multiplayer the server's value applies. |
+| `BaseStamina` | `75` | Its stamina before food, as a player's (75). In multiplayer the server's value applies. |
+| `EatBelowPercent` | `10` | It eats a food it is already under again once its time left drops below this percent (the game allows it from 50). Lower saves food: a meal lasts 80% of its time instead of 50%, and its effect weakens a little towards the end. In multiplayer the server's value applies. |
+| `StartingSkill` | `0` | The skill level a new companion starts at (a new player: 0). In multiplayer the server's value applies. |
 
 ## 👥 Playing together
 
-See [who needs which mod](../../README.md#playing-together) on the front page.
+Everyone in the world needs it, **the host above all**. It adds the companion (a new creature the world saves). Restart the game after updating so it registers cleanly: a companion whose area loads while it is not registered is deleted by the host, with everything it carries.
 
 ## 📜 Changes
 
+- When it falls, everything it has now goes into its tombstone, its gear too, and it puts its gear back on when it wakes if its tombstone is near (else it says where it is and goes back for it; at home it fetches it by itself). Before, the gear it wore was kept apart on your character, and was lost for good when it fell on another player's game while you were offline, or before your game saved. A companion brought back from the companions menu now finds its tombstone too (the menu says where). Multiplayer fixes: it no longer takes from or puts into a chest someone else has open, and loads what is really in a chest (or its tombstone, or its own bag) before it touches it, so items are no longer doubled or lost at shared bases; food or a potion a friend gives it with a hotbar key is no longer lost; a lost fight while you are away (WhileAway: Real) no longer makes a second copy of it; it no longer takes over other players' companions from afar. The gameplay settings (MaxCompanions, WhileAway, RespawnSeconds, BaseHealth, BaseStamina, EatBelowPercent, StartingSkill) are the server's in multiplayer. Typing its name in the menu no longer opens the map or the inventory. It sends far less over the network (its food and stamina were saved every second). Restart the game after updating: the companion is a creature the world saves, and a hot reload could let the host delete one with everything it carries; a reload now leaves it registered.
 - Fix: no more stutter every 5 seconds. Looking for Claude Tools searched everything the game had loaded; it now asks BepInEx's list of mods.
 - Building your plans, when it lacks what the plan needs: it works out what the next pieces of your plan still need less what is in its bag and the chests, as a goal like its gear goals: it gathers it (wood, stone, ore, resin, flint and the like, near home first and then on a trip as far as the world is loaded), smelts or makes it at a station near home (nails and the like), and asks you in chat only for what it cannot get itself ("For your plan I need 30 iron nails, and I can't get that myself"). What it gathers it keeps on it for the building instead of putting it away. When pieces cannot be built at all it says why: pieces you have not unlocked, a station (a stonecutter, say) not built near them, ground you may not build on, or nothing that will stand yet. Its menu shows what it is getting for the plan. While you are away it does the same when you come back: builds what it can pay for, gathers what is missing with its share of the time (a far trip if it must), makes what needs making, and builds what that brings, and the report says what it built and what it still lacks. Also fixed: a companion with an active duty and nothing to do for a moment threw an error (in the log every few minutes) that cut short its idle behaviour (the fire, a chair, a stroll).
 - Building your plans: with BuildOrders installed, a new home duty, Build our plans (Home tab, on by default, second in the list after food), makes building your planned ghosts one of its main jobs at home. It picks the next piece that will stand with what is built (BuildOrders works that out, as for Build all), takes what it costs from its bag or your chests near home (and its own; it carries what several pieces need in one trip), walks to it with a hammer (it makes one when it can) and puts it up. It pays for it itself: nothing is taken from you. With nothing it can build it says what is missing ("needs 40 more wood"), and the next duty is worked, so with Collect wood on it fetches what the plan needs. While you are away, when you come back every duty has made progress for the time that passed: each switched-on duty gets its share of the time, in its order (food hunted and brought to your chests, wood cut, ore mined, pieces of your plan put up), then its own work with what is left; the report says what it built. Its stockpiles go into your chests first while it does its duties, with a little food kept in its own.

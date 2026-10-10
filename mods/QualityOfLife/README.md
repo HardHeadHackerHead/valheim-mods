@@ -5,7 +5,7 @@
 
 <img src="cover.png" alt="QualityOfLife" width="100%">
 
-**Version 1.10.0**  ·  [all the mods](../../README.md)  ·  installs and updates through the in-game [mod manager](https://github.com/HardHeadHackerHead/valheim-mod-manager) (**F7**)
+**Version 1.11.0**  ·  [all the mods](../../README.md)  ·  installs and updates through the in-game [mod manager](https://github.com/HardHeadHackerHead/valheim-mod-manager) (**F7**)
 
 Quick gear sets on **Q**, hammer on **B**, a **Sort** button that joins stacks, **Stack to chests** with undo, chest assignment on **K** (look at a chest to see what it receives), **Sort chests** to send everything in the chests around you to the chest assigned it, item locks on **L**, your ships on the map with their own icon, and tap **P** next to a boat to push it. It will not let you plant a seed, sapling or crop where it has no room to grow up.
 
@@ -15,6 +15,14 @@ Quick gear sets on **Q**, hammer on **B**, a **Sort** button that joins stacks, 
 **Choosing what a chest receives (K)**
 
 <img src="images/1.jpg" alt="Choosing what a chest receives (K)" width="100%">
+
+## Known clashes
+
+- **ExtraSlots, Equipment and Quick Slots, AzuExtendedPlayerInventory, Extended Player Inventory, ComfyQuickSlots, BetterArchery** (with
+  its quiver on): they keep slots in rows of your inventory below the ordinary ones, which Sort can't tell from your bag, so the Sort button
+  is off while one is installed. Stack to chests never moves what you wear or hold; anything else you keep in their slots, lock (L).
+- **Removing this mod** doesn't give the game back a key it freed (Q, auto-run, by default): bind it again in the game's Settings, Controls.
+  Changing the mod's key does give it back.
 <!-- END HAND-WRITTEN -->
 
 ## 🔍 How it works
@@ -124,7 +132,7 @@ In `BepInEx/config/com.dhack.qualityoflife.cfg` (made the first time the game ru
 
 | Setting | Default | What it does |
 |---|---|---|
-| `BuildRange` | `0` | How far (in metres) from a crafting station (workbench, stonecutter, forge, ...) you can build with it, when that is more than the station's own range (20 m, more with upgrades). 0 leaves the game's ranges. 60 reaches across a big base. Takes effect at once. |
+| `BuildRange` | `0` | How far (in metres) from a crafting station (workbench, stonecutter, forge, ...) you can build with it, when that is more than the station's own range (20 m, more with upgrades). 0 leaves the game's ranges. 60 reaches across a big base. Takes effect at once. In multiplayer the server's value applies. |
 
 ## 👥 Playing together
 
@@ -132,6 +140,7 @@ See [who needs which mod](../../README.md#playing-together) on the front page.
 
 ## 📜 Changes
 
+- Fix: Undo after Stack to chests could double an item or swap it for another: it took back the first item of that name in the chest (often an older one) and gave you a copy of the one you had put in, so an enchanted sword, a filled backpack or a worn tool could come back twice or come back as a different one. Undo now takes back the very item you put in; only plain stackable things (wood, stone, arrows) come back by name, and exactly as many as leave the chest. Stack to chests, Sort chests and Undo now also leave alone a chest another player is using or has just changed ("The chests in range are in use"), so your moves and theirs never undo each other. Sort is off (the button is hidden) next to a mod that keeps its own slots in your inventory's rows (ExtraSlots, Equipment and Quick Slots, AzuExtendedPlayerInventory, Extended Player Inventory, ComfyQuickSlots, BetterArchery with its quiver on): it pulled their items out of their slots. Stations/BuildRange is now decided by the server in multiplayer. If you change a key the mod freed from the game (Q: auto-run), the game gets its key back. The buttons under the inventory and the assign window now use the game's own lettering.
 - New: Planting/NeedRoomToGrow: you cannot plant a seed, sapling or crop where it has no room to grow up (another plant, a rock, a tree or a building too close). The game only finds this out after planting, and then the plant never grows; now the ghost turns red and says there is not enough space. On by default.
 - New: Stations/BuildRange: crafting stations (workbench, stonecutter, forge...) reach farther for building, up to 150 m, so a big build at the edge of the base needs no second workbench or stonecutter. 0 (the default) leaves the game's ranges. Only building changes: a station's base area and crafting at it stay as they were.
 - Stack to chests and Sort chests can reach farther: their Radius (QuickStack) is now a 2 to 150 m slider in the configuration manager, taking effect at once.

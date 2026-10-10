@@ -1,3 +1,5 @@
+On a server, how often rainbows come (chance, how long it must rain, how long to wait for the sun, double rainbows) and how long the blessing lasts are the server's settings. It must rain at least 10 seconds, and the blessing lasts at most 30 minutes. The chime now follows the game's sound effects volume.
+
 Fix: no more stutter every 5 seconds. Looking for Claude Tools searched everything the game had loaded; it now asks BepInEx's list of mods.
 
 New: Rainbows. When the rain stops and the sun is low, a rainbow arcs across the sky (sometimes a double rainbow), and looking up at it gives Rainbow's Blessing: more stamina and health back, cheaper running and jumping, and half as strong again for a double rainbow.

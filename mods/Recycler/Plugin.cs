@@ -18,13 +18,14 @@ namespace Recycler
     {
         public const string Guid = "com.dhack.recycler";
         public const string Name = "Recycler";
-        public const string Version = "1.0.6";
+        public const string Version = "1.1.0";
         public const string RecyclerPrefab = "piece_recycler";
         public const string PressPrefab = "piece_recycler_press";
 
         internal static ConfigEntry<int> BasePercent, Press1Bonus, Press2Bonus;
         
         internal static ConfigEntry<bool> ChanceRounding, RequireStation, ConfirmValuable, AllowWeapons, AllowArmor, AllowTools, ShowMessages;
+        internal static DHack.Shared.ServerSettings Synced; // settings the server decides in multiplayer
 
         private static GameObject _holder;
         private static readonly List<GameObject> Prefabs = new List<GameObject>();
@@ -32,16 +33,19 @@ namespace Recycler
 
         private void Awake()
         {
+            // What it gives back and what it takes are the server's to decide in multiplayer; the rest (asking twice, messages) is each player's.
+            Synced = new DHack.Shared.ServerSettings(Guid, Config, Logger);
+            const string server = " In multiplayer the server's value applies.";
             var pct = new AcceptableValueRange<int>(0, 100);
-            BasePercent = Config.Bind("Refund", "BasePercent", 50, new ConfigDescription("Share of the materials you get back with no Press nearby (0-100).", pct));
-            Press1Bonus = Config.Bind("Refund", "OnePressBonus", 10, new ConfigDescription("Extra percentage points with one Press within 8 m.", pct));
-            Press2Bonus = Config.Bind("Refund", "TwoPressBonus", 20, new ConfigDescription("Extra percentage points with two Presses within 8 m.", pct));
-            ChanceRounding = Config.Bind("Refund", "ChanceRounding", true, "Instead of always rounding down, a leftover fraction becomes a matching chance of one more (so 50% averages out to 50%).");
-            RequireStation = Config.Bind("Rules", "RequireCraftingStation", true, "Gear can only be recycled with the crafting station (and level) it was made at nearby.");
-            ConfirmValuable = Config.Bind("Rules", "ConfirmValuable", true, "Ask for a second click before recycling equipped or upgraded gear.");
-            AllowWeapons = Config.Bind("Rules", "AllowWeapons", true, "Weapons, bows and ammo launchers.");
-            AllowArmor = Config.Bind("Rules", "AllowArmor", true, "Armor, capes and shields.");
-            AllowTools = Config.Bind("Rules", "AllowTools", true, "Tools and torches.");
+            BasePercent = Synced.Add(Config.Bind("Refund", "BasePercent", 50, new ConfigDescription("Share of the materials you get back with no Press nearby (0-100)." + server, pct)));
+            Press1Bonus = Synced.Add(Config.Bind("Refund", "OnePressBonus", 10, new ConfigDescription("Extra percentage points with one Press within 8 m." + server, pct)));
+            Press2Bonus = Synced.Add(Config.Bind("Refund", "TwoPressBonus", 20, new ConfigDescription("Extra percentage points with two Presses within 8 m." + server, pct)));
+            ChanceRounding = Synced.Add(Config.Bind("Refund", "ChanceRounding", true, "Instead of always rounding down, a leftover fraction becomes a matching chance of one more (so 50% averages out to 50%)." + server));
+            RequireStation = Synced.Add(Config.Bind("Rules", "RequireCraftingStation", true, "Gear can only be recycled with the crafting station (and level) it was made at nearby." + server));
+            ConfirmValuable = Config.Bind("Rules", "ConfirmValuable", true, "Ask for a second click before recycling equipped or upgraded gear, or gear carrying other mods' data (enchantments, a bag's contents).");
+            AllowWeapons = Synced.Add(Config.Bind("Rules", "AllowWeapons", true, "Weapons, bows and ammo launchers." + server));
+            AllowArmor = Synced.Add(Config.Bind("Rules", "AllowArmor", true, "Armor, capes and shields." + server));
+            AllowTools = Synced.Add(Config.Bind("Rules", "AllowTools", true, "Tools and torches." + server));
             ShowMessages = Config.Bind("General", "ShowMessages", true, "Show a short message in the top-left when something is recycled.");
 
             _harmony = new Harmony(Guid);
@@ -54,10 +58,15 @@ namespace Recycler
         {
             Window.Close();
             _harmony?.UnpatchSelf();
+            Synced?.Dispose();
             Unregister();
         }
 
-        private void Update() => Window.Tick();
+        private void Update()
+        {
+            Synced?.Update(); // notices joining and leaving a server, for the settings it decides
+            Window.Tick();
+        }
         private void OnGUI() => Window.Draw();
 
         internal static void Register(ZNetScene scene)
@@ -100,15 +109,21 @@ namespace Recycler
             Container container = go.GetComponent<Container>();
             if (container != null) Object.DestroyImmediate(container); // these are not storage
 
-            Model.Build(go, mat, recycler, hitCenter, hitSize);
+            // The look can fail (a game update renames a material) but the piece must still be registered, or the host deletes the placed ones.
+            try { Model.Build(go, mat, recycler, hitCenter, hitSize); }
+            catch (System.Exception e) { Debug.LogWarning($"Recycler: could not build the look of {prefabName}, it keeps the chest's: {e.Message}"); }
 
             Piece piece = go.GetComponent<Piece>();
             piece.m_name = title;
             piece.m_description = description;
             piece.m_category = Piece.PieceCategory.Misc;
             piece.m_resources = cost;
-            Sprite picture = Icon.Make(go); // the build menu shows the Recycler itself, not the chest it was copied from
-            if (picture != null) piece.m_icon = picture;
+            try
+            {
+                Sprite picture = Icon.Make(go); // the build menu shows the Recycler itself, not the chest it was copied from
+                if (picture != null) piece.m_icon = picture;
+            }
+            catch (System.Exception e) { Debug.LogWarning($"Recycler: could not draw the build-menu picture of {prefabName}: {e.Message}"); }
             go.AddComponent(logic);
             return go;
         }

@@ -99,9 +99,10 @@ namespace ClaudeTools
             {
                 string line = raw.Trim();
                 if (line.Length == 0 || line.StartsWith("#")) continue;
-                if (Player.m_localPlayer == null) { errors.Add("left the world before: " + line); continue; }
                 string[] a = line.Split(new[] { ' ', '\t' }, StringSplitOptions.RemoveEmptyEntries);
                 if (!Commands.TryGetValue(a[0], out Command cmd)) { errors.Add($"unknown command: {a[0]} (\"help\" lists them)"); continue; }
+                if (Player.m_localPlayer == null && !NoWorld.Contains(cmd.Name)) { errors.Add($"{cmd.Name}: needs the player in a world ({line})"); continue; }
+                if (Cheats.Contains(cmd.Name) && !CheatsAllowed()) { errors.Add(CheatRefusal(cmd.Name)); continue; }
 
                 IEnumerator run = null;
                 string name = cmd.Name;

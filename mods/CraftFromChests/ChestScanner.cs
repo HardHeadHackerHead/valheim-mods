@@ -23,7 +23,7 @@ namespace CraftFromChests
 
         /// <summary>True while a patch is doing its own inventory work, so we don't recurse into ourselves.</summary>
         internal static bool Suspend;
-        /// <summary>True only while Player.ConsumeResources is running (i.e. actually crafting).</summary>
+        /// <summary>True only while the game is paying for a craft (Player.ConsumeResources, or InventoryGui.DoCrafting for "any one of these" recipes).</summary>
         internal static bool Consuming;
 
         internal static void Register(Container c)
@@ -52,7 +52,7 @@ namespace CraftFromChests
             if (Suspend || !Plugin.Enabled.Value) return false;
             Player p = Player.m_localPlayer;
             if (p == null || inv != p.GetInventory()) return false;
-            return CraftingNow();
+            return CraftingNow() && OtherChestMods.Which == null; // another chest-crafting mod doing it too would count every chest twice
         }
 
         /// <summary>The inventory screen is open on its crafting tab with no crafting station involved.</summary>
@@ -94,12 +94,24 @@ namespace CraftFromChests
             foreach (Container c in AllContainers)
             {
                 if ((c.transform.position - origin).sqrMagnitude > maxSqr) continue; // cheapest test first
-                if (c.GetInventory() == null || InUse(c)) continue;
+                if (c.GetInventory() == null || !IsStorage(c) || InUse(c)) continue;
                 if (c.m_checkGuardStone && !PrivateArea.CheckAccess(c.transform.position, 0f, false)) continue;
                 if (!(bool)CheckAccess.Invoke(c, new object[] { playerId })) continue;
                 Nearby.Add(c);
             }
             return Nearby;
+        }
+
+        /// <summary>
+        /// A chest someone built. Graves, carts, ships, a companion's bag, its own chest (its stock) and a backpack carried by a player
+        /// (Adventure Backpacks) have a Container too, but they aren't storage to craft from.
+        /// </summary>
+        private static bool IsStorage(Container c)
+        {
+            if (c.GetComponentInParent<Piece>() == null || c.GetComponent<TombStone>() != null) return false;
+            if (c.GetComponentInParent<Character>() != null || c.GetComponentInParent<Vagon>() != null || c.GetComponentInParent<Ship>() != null) return false;
+            ZNetView nview = NView.GetValue(c) as ZNetView;
+            return nview != null && nview.IsValid() && nview.GetZDO().GetLong("dhc_home", 0L) == 0L; // (a companion's own chest)
         }
 
         /// <summary>
@@ -144,6 +156,81 @@ namespace CraftFromChests
             foreach (Container c in GetNearby()) total += c.GetInventory().CountItems(name, quality, matchWorldLevel);
             byKind[kind] = total;
             return total;
+        }
+
+        /// <summary>
+        /// How many of an item the player carries, counted item by item. Inventory.CountItems isn't enough: while crafting, this mod and
+        /// others (a backpack mod) add their own sources to it.
+        /// </summary>
+        internal static int OwnCount(Inventory inv, string name, int quality, bool matchWorldLevel)
+        {
+            int total = 0;
+            foreach (ItemDrop.ItemData item in inv.GetAllItems())
+                if (item.m_shared.m_name == name && (quality < 0 || item.m_quality == quality) && (!matchWorldLevel || item.m_worldLevel >= Game.m_worldLevel))
+                    total += item.m_stack;
+            return total;
+        }
+
+        /// <summary>
+        /// Does the game charge this requirement at this station? Battle idols (m_upgraderResource) are charged only at an upgrader
+        /// station, everything else everywhere but there (as Player.ConsumeResources decides).
+        /// </summary>
+        internal static bool Charged(Piece.Requirement req, CraftingStation station)
+        {
+            if (req.m_resItem == null) return false;
+            return station != null ? station.m_upgrader == req.m_upgraderResource : !req.m_upgraderResource;
+        }
+
+        /// <summary>A material the game is about to charge: its name, how many, and which quality (-1 = any).</summary>
+        internal struct Need
+        {
+            public string Name;
+            public int Amount, Quality;
+        }
+
+        /// <summary>
+        /// The game hands over what you craft before it charges for it, so a shortfall found while paying is too late to refuse. So check
+        /// first: what the chests must supply (what's needed minus what you carry and what other mods' sources, such as a backpack, will
+        /// pay) must really be in them, counted after taking each chest that has some over and reloading it (until then our copy can be a
+        /// second old, and another player may have emptied it). Taking them over also keeps other players' games from changing them
+        /// until we've paid. Returns the first material that's short, or null when everything is there.
+        /// </summary>
+        internal static string FindShortfall(Inventory inv, List<Need> needs)
+        {
+            foreach (Need need in needs)
+            {
+                int others;
+                Suspend = true; // what you have without our chests (the game's count, plus other mods' sources)
+                try { others = inv.CountItems(need.Name, need.Quality, true); }
+                finally { Suspend = false; }
+                int fromChests = need.Amount - others;
+                if (fromChests <= 0) continue;
+
+                int found = 0;
+                foreach (Container c in GetNearby())
+                {
+                    if (found >= fromChests) break;
+                    if (c == null || InUse(c)) continue;
+                    Inventory chest = c.GetInventory();
+                    if (chest.CountItems(need.Name, need.Quality, true) <= 0) continue;
+                    TakeOwnership(c);
+                    found += chest.CountItems(need.Name, need.Quality, true); // counted again: the reload may have changed it
+                }
+                InvalidateCounts();
+                if (found < fromChests) return need.Name;
+            }
+            return null;
+        }
+
+        /// <summary>An item of this kind in a chest in range (for the game to read its name and quality from), or null.</summary>
+        internal static ItemDrop.ItemData FindInChests(string name, int quality)
+        {
+            foreach (Container c in GetNearby())
+            {
+                ItemDrop.ItemData item = c != null ? c.GetInventory().GetItem(name, quality) : null;
+                if (item != null) return item;
+            }
+            return null;
         }
 
         /// <summary>Remove up to <paramref name="amount"/> of an item from nearby chests; returns how many were left unfound.</summary>

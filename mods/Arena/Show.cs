@@ -157,10 +157,28 @@ namespace Arena
                 view.GetZDO().Set(ZDOVars.s_spawnPoint, spot);
                 Plugin.Log.LogInfo($"A tombstone in the arena was carried out to the forecourt, at {spot}");
             }
+            // fighters a fight left in the world (the fighter's game closed or crashed mid-round): taken away by the game that holds them now
+            int fighters = 0;
+            foreach (Character c in Character.GetAllCharacters().ToList())
+            {
+                if (c == null || c is Player) continue;
+                ZNetView view = c.GetComponent<ZNetView>();
+                if (view == null || !view.IsValid() || !view.IsOwner() || !view.GetZDO().GetBool("dh_arena", false)) continue;
+                view.Destroy();
+                fighters++;
+            }
+            if (fighters > 0) Plugin.Log.LogInfo($"Took away {fighters} of the arena's fighters left from a fight that never ended");
             // and no death markers at the arena on the map (you rise there, beside your things)
             if (Minimap.instance != null && HarmonyLib.AccessTools.Field(typeof(Minimap), "m_pins").GetValue(Minimap.instance) is List<Minimap.PinData> pins)
                 foreach (Minimap.PinData pin in pins.Where(p => p.m_type == Minimap.PinType.Death && Travel.Distance(p.m_pos) < Layout.Footprint + 40f).ToList())
                     Minimap.instance.RemovePin(pin);
+        }
+
+        /// <summary>A chest the arena put up (on any game: what it sets on its own copy is not seen by the others).</summary>
+        internal static bool IsArenaChest(Component c)
+        {
+            ZNetView view = c != null ? c.GetComponent<ZNetView>() : null;
+            return view != null && view.IsValid() && view.GetZDO().GetInt(ChestKey, 0) != 0;
         }
 
         private static IEnumerator Rise(Transform t, Vector3 at)
@@ -256,6 +274,19 @@ namespace Arena
                 }
                 yield return new WaitForSeconds(over / Mathf.Max(1, count) * Random.Range(0.5f, 1.5f));
             }
+        }
+    }
+
+    /// <summary>
+    /// The arena's chests are never torn down with the hammer, on anyone's game (the game that puts one up marks only its own copy; on the
+    /// others the hammer would give back the chest's building materials).
+    /// </summary>
+    [HarmonyLib.HarmonyPatch(typeof(Piece), nameof(Piece.CanBeRemoved))]
+    internal static class Piece_CanBeRemoved_ArenaChest
+    {
+        private static void Postfix(Piece __instance, ref bool __result)
+        {
+            if (__result && Show.IsArenaChest(__instance)) __result = false;
         }
     }
 }

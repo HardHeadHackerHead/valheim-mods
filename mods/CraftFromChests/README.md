@@ -5,7 +5,7 @@
 
 <img src="cover.png" alt="CraftFromChests" width="100%">
 
-**Version 1.3.4**  ·  [all the mods](../../README.md)  ·  installs and updates through the in-game [mod manager](https://github.com/HardHeadHackerHead/valheim-mod-manager) (**F7**)
+**Version 1.4.0**  ·  [all the mods](../../README.md)  ·  installs and updates through the in-game [mod manager](https://github.com/HardHeadHackerHead/valheim-mod-manager) (**F7**)
 
 Crafting stations (and hand-crafting) use materials from nearby chests. See lines to every chest in use and change the range from 5 to 30 m.
 
@@ -19,6 +19,16 @@ Crafting stations (and hand-crafting) use materials from nearby chests. See line
 **Close up: the buttons and the counts**
 
 <img src="images/2.jpg" alt="Close up: the buttons and the counts" width="100%">
+## ⚠️ Known clashes
+
+- **Adventure Backpacks** ("Craft From Backpack", on by default): handled. The backpack pays its part first and this mod only takes what is
+  still missing from the chests (before 1.4.0, crafting next to it could cost up to twice as much).
+- **AzuCraftyBoxes**, **CraftFromContainers** (aedenthorn), and **ValheimPlus** with its `CraftFromChest` section on: they also craft from
+  chests, and two such mods count every chest twice (crafts pay half). When one of them is installed (ValheimPlus: while that section is on)
+  this mod stands down and leaves crafting from chests to it; the log says so once.
+- **BuildFromChests** and **FeedFromChests** (ours): fine together. Each one only works in its own moment (crafting, building, feeding a
+  station), and each pays only what the others left.
+- Only built chests are used: graves, carts, ships, a companion's bag and chest, and a backpack you carry are left alone.
 <!-- END HAND-WRITTEN -->
 
 ## 🔍 How it works
@@ -54,7 +64,7 @@ In `BepInEx/config/com.dhack.craftfromchests.cfg` (made the first time the game 
 | Setting | Default | What it does |
 |---|---|---|
 | `Enabled` | `true` | Turn the mod on or off. |
-| `Radius` | `20` | How far (in meters) from the crafting station a chest can be and still be used. |
+| `Radius` | `20` | How far (in meters) from the crafting station a chest can be and still be used. In multiplayer the server's value applies. |
 
 ## 👥 Playing together
 
@@ -62,5 +72,6 @@ See [who needs which mod](../../README.md#playing-together) on the front page.
 
 ## 📜 Changes
 
+- Fix: next to Adventure Backpacks, crafting could cost up to twice as much (the backpack and the chests both paid). Now the backpack pays its part and the chests only what is still missing. Fix: "any one of these" recipes (meads and the like) could be crafted for free from the chests, or failed when you carried none. Fix: a craft the chests can no longer pay for (someone took the materials since the window counted them) is now refused with a message, instead of being handed over for less. Graves, carts, ships, a companion's bag and chest and a backpack are no longer used as storage. With AzuCraftyBoxes, CraftFromContainers or ValheimPlus' craft-from-chest installed, this mod stands down (two would count every chest twice). In multiplayer the server's Radius applies (2 to 50 m).
 - Fix: in multiplayer, crafting with materials from a chest another player had open could lose or duplicate items. Chests in use are now left alone.
 - Smoother: the crafting-screen buttons are only looked after while the inventory is open and aren't repositioned every frame, and the chest checks are worked out once and reused (no more stutter when opening the inventory). Hand-crafting from the inventory uses nearby chests, and the crafting window shows how many of each material you have.

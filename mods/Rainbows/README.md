@@ -5,7 +5,7 @@
 
 <img src="cover.png" alt="Rainbows" width="100%">
 
-**Version 0.1.1**  ·  [all the mods](../../README.md)  ·  installs and updates through the in-game [mod manager](https://github.com/HardHeadHackerHead/valheim-mod-manager) (**F7**)
+**Version 0.2.0**  ·  [all the mods](../../README.md)  ·  installs and updates through the in-game [mod manager](https://github.com/HardHeadHackerHead/valheim-mod-manager) (**F7**)
 
 When a good spell of rain ends and the sun is low, a rainbow arcs across the sky opposite the sun, with a soft chime. Now and then it is a double
 rainbow, with a fainter second bow outside it. It follows the sun, fades into the horizon and goes after a few minutes. Look up at it for
@@ -46,19 +46,19 @@ In `BepInEx/config/com.dhack.rainbows.cfg` (made the first time the game runs wi
 | Setting | Default | What it does |
 |---|---|---|
 | `Enabled` | `true` | Look up at a rainbow and you get Rainbow's Blessing: stamina and health come back faster, and running and jumping cost less stamina. A double rainbow gives a stronger one. |
-| `Minutes` | `5` | How long the blessing lasts (minutes). |
+| `Minutes` | `5` | How long the blessing lasts (minutes). In multiplayer the server's value applies. |
 
 **Rainbow**
 
 | Setting | Default | What it does |
 |---|---|---|
 | `Enabled` | `true` | Rainbows after the rain. |
-| `Chance` | `0.8` | How often a good spell of rain ends in a rainbow (0 never, 1 always), when the sun is low enough to show one. |
-| `MinRainSeconds` | `45` | How long it must have rained (seconds) for the end of it to be worth a rainbow. |
-| `WaitMinutes` | `8` | If the sun is too high or too low when the rain ends, how long (minutes) to wait for it to come into place before giving up. |
+| `Chance` | `0.8` | How often a good spell of rain ends in a rainbow (0 never, 1 always), when the sun is low enough to show one. In multiplayer the server's value applies. |
+| `MinRainSeconds` | `45` | How long it must have rained (seconds) for the end of it to be worth a rainbow. In multiplayer the server's value applies. |
+| `WaitMinutes` | `8` | If the sun is too high or too low when the rain ends, how long (minutes) to wait for it to come into place before giving up. In multiplayer the server's value applies. |
 | `ShowMinutes` | `3` | How long the rainbow stays (minutes), if the sun does not move it out of the sky first. |
 | `Brightness` | `1` | How strong the colours are. |
-| `DoubleChance` | `0.3` | How often a rainbow is a double one : a fainter second rainbow outside the first, its colours the other way round, and a stronger blessing. 0 never, 1 always. |
+| `DoubleChance` | `0.3` | How often a rainbow is a double one : a fainter second rainbow outside the first, its colours the other way round, and a stronger blessing. 0 never, 1 always. In multiplayer the server's value applies. |
 | `Chime` | `true` | A soft chime when a rainbow comes out. |
 | `ChimeVolume` | `0.35` | How loud the chime is. |
 
@@ -68,5 +68,6 @@ See [who needs which mod](../../README.md#playing-together) on the front page.
 
 ## 📜 Changes
 
+- On a server, how often rainbows come (chance, how long it must rain, how long to wait for the sun, double rainbows) and how long the blessing lasts are the server's settings. It must rain at least 10 seconds, and the blessing lasts at most 30 minutes. The chime now follows the game's sound effects volume.
 - Fix: no more stutter every 5 seconds. Looking for Claude Tools searched everything the game had loaded; it now asks BepInEx's list of mods.
 - New: Rainbows. When the rain stops and the sun is low, a rainbow arcs across the sky (sometimes a double rainbow), and looking up at it gives Rainbow's Blessing: more stamina and health back, cheaper running and jumping, and half as strong again for a double rainbow.

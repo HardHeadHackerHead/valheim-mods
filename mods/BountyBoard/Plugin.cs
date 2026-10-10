@@ -20,10 +20,11 @@ namespace BountyBoard
     {
         public const string Guid = "com.dhack.bountyboard";
         public const string Name = "BountyBoard";
-        public const string Version = "1.1.3";
+        public const string Version = "1.2.0";
         public const string PiecePrefab = "piece_bountyboard";
 
         internal static Plugin Instance;
+        internal static DHack.Shared.ServerSettings Synced;   // the settings the server decides in multiplayer
         internal static ConfigEntry<int> RefreshDays, NoticesPerBoard, MaxActive, RewardPercent;
         internal static ConfigEntry<bool> ShowTracker;
         internal static ConfigEntry<float> TrackerX, TrackerY, TrackerScale;
@@ -33,11 +34,13 @@ namespace BountyBoard
 
         private void Awake()
         {
-            // These four are used by the host's game (it decides what is posted and what it pays).
-            RefreshDays = Config.Bind("Notices", "DaysBetweenNewNotices", 1, new ConfigDescription("How many in-game days before the board posts new notices.", new AcceptableValueRange<int>(1, 7)));
-            NoticesPerBoard = Config.Bind("Notices", "NoticesPerBoard", 5, new ConfigDescription("How many notices are posted.", new AcceptableValueRange<int>(3, 8)));
-            MaxActive = Config.Bind("Contracts", "MostAtOnce", 3, new ConfigDescription("How many contracts the group can have going at once. A new one can only be taken when one is finished.", new AcceptableValueRange<int>(1, 5)));
-            RewardPercent = Config.Bind("Contracts", "RewardPercent", 100, new ConfigDescription("Pay as a percentage of the standard rate (50 = half, 200 = double).", new AcceptableValueRange<int>(10, 500)));
+            // These four are used by the host's game (it decides what is posted and what it pays); players are sent its values, so the
+            // menu shows the host's limits.
+            Synced = new DHack.Shared.ServerSettings(Guid, Config, Logger);
+            RefreshDays = Synced.Add(Config.Bind("Notices", "DaysBetweenNewNotices", 1, new ConfigDescription("How many in-game days before the board posts new notices. In multiplayer the server's value applies.", new AcceptableValueRange<int>(1, 7))));
+            NoticesPerBoard = Synced.Add(Config.Bind("Notices", "NoticesPerBoard", 5, new ConfigDescription("How many notices are posted. In multiplayer the server's value applies.", new AcceptableValueRange<int>(3, 8))));
+            MaxActive = Synced.Add(Config.Bind("Contracts", "MostAtOnce", 3, new ConfigDescription("How many contracts the group can have going at once. A new one can only be taken when one is finished. In multiplayer the server's value applies.", new AcceptableValueRange<int>(1, 5))));
+            RewardPercent = Synced.Add(Config.Bind("Contracts", "RewardPercent", 100, new ConfigDescription("Pay as a percentage of the standard rate (50 = half, 200 = double). In multiplayer the server's value applies.", new AcceptableValueRange<int>(10, 500))));
             // These are yours alone.
             ShowTracker = Config.Bind("Tracker", "ShowOnScreen", false, "Show the group's contracts and their progress on your screen (also a switch in the board's menu).");
             TrackerX = Config.Bind("Tracker", "X", 14f, "Distance from the left edge of the screen (UI pixels).");
@@ -60,9 +63,10 @@ namespace BountyBoard
             _harmony?.UnpatchSelf();
             Unregister();
             Styles.Destroy();
+            Synced?.Dispose();
         }
 
-        private void Update() { UpdateNetwork(); Window.Tick(); }
+        private void Update() { Synced?.Update(); UpdateNetwork(); Window.Tick(); }
         private void OnGUI() { Window.Draw(); Tracker.Draw(); }
 
         internal static void Register(ZNetScene scene)
@@ -77,7 +81,9 @@ namespace BountyBoard
                 _holder = new GameObject(Name + "Prefabs");
                 _holder.SetActive(false); // keeps the copy from waking up as a real object
                 Object.DontDestroyOnLoad(_holder);
-                Look.Harvest(scene, source.GetComponentInChildren<Renderer>(true).sharedMaterial);
+                // the look never stops the piece being registered (without it, the host would delete the boards standing in the world)
+                try { Look.Harvest(scene, source.GetComponentInChildren<Renderer>(true).sharedMaterial); }
+                catch (System.Exception e) { Debug.LogWarning(Name + ": could not take the game's materials, the board looks plain: " + e.Message); }
                 _prefab = Make(source, bench != null ? bench.GetComponent<CraftingStation>() : null);
             }
 
@@ -105,7 +111,8 @@ namespace BountyBoard
             box.center = new Vector3(0f, 1.5f, 0f);
             box.size = new Vector3(2.7f, 3.0f, 1.0f);
 
-            ModelBuilder.Build(go.transform, ModelData.Parts, go.layer);
+            try { ModelBuilder.Build(go.transform, ModelData.Parts, go.layer); }
+            catch (System.Exception e) { Debug.LogWarning(Name + ": could not build the board's model: " + e.Message); }
 
             Piece piece = go.GetComponent<Piece>();
             piece.m_name = "Bounty Board";
@@ -113,7 +120,8 @@ namespace BountyBoard
             piece.m_category = Piece.PieceCategory.Misc;
             piece.m_craftingStation = workbench;
             piece.m_resources = new[] { Req("Wood", 20), Req("LeatherScraps", 6), Req("Flint", 4) };
-            piece.m_icon = Icon.Make(go);
+            try { piece.m_icon = Icon.Make(go); }
+            catch (System.Exception e) { Debug.LogWarning(Name + ": could not draw the build-menu picture: " + e.Message); }
             go.AddComponent<BountyBoardStation>();
             return go;
         }

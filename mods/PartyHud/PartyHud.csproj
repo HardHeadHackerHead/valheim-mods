@@ -4,6 +4,9 @@
     <RootNamespace>PartyHud</RootNamespace>
   </PropertyGroup>
   <ItemGroup>
+    <Compile Include="../Shared/ServerSettings.cs" Link="Shared/ServerSettings.cs" />
+  </ItemGroup>
+  <ItemGroup>
     <!-- Valheim's own copy of Steamworks.NET: used to fetch each player's Steam profile picture. -->
     <Reference Include="com.rlabrecque.steamworks.net"><HintPath>$(ManagedDir)\com.rlabrecque.steamworks.net.dll</HintPath><Private>false</Private></Reference>
   </ItemGroup>

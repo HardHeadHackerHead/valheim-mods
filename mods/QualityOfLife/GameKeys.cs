@@ -91,6 +91,43 @@ namespace QualityOfLife
             return told;
         }
 
+        /// <summary>
+        /// Give back the game's actions this mod unbound for a key that none of <paramref name="inUse"/> is any more (the player chose another
+        /// key, or the mod's default changed): each is bound to its key again if it is still unbound. Returns the lines to tell the player.
+        /// </summary>
+        public static List<string> GiveBack(string owner, IEnumerable<KeyCode> inUse)
+        {
+            var told = new List<string>();
+            ZInput input = ZInput.instance;
+            if (input == null) return told;
+            var buttons = AccessTools.Field(typeof(ZInput), "m_buttons")?.GetValue(input) as Dictionary<string, ZInput.ButtonDef>;
+            if (buttons == null) return told;
+            string record = "DHack.FreedGameKeys." + owner;
+            var done = new HashSet<string>(PlayerPrefs.GetString(record, "").Split(new[] { '|' }, StringSplitOptions.RemoveEmptyEntries));
+            var used = new HashSet<string>(inUse.Select(PathOf).Where(p => p != null).Select(p => p.ToLowerInvariant()));
+            bool changed = false;
+            foreach (string mark in done.ToList())
+            {
+                int colon = mark.IndexOf(':');
+                if (colon <= 0) continue;
+                string action = mark.Substring(0, colon), path = mark.Substring(colon + 1);
+                if (used.Contains(path)) continue;
+                done.Remove(mark);
+                changed = true;
+                if (!buttons.TryGetValue(action, out ZInput.ButtonDef def) || def == null || !string.IsNullOrEmpty(def.GetActionPath())) continue; // bound to something since: the player's choice
+                def.Rebind(path);
+                told.Add($"{owner}: the game's \"{Nice(action)}\" key is back on {path.Substring(path.IndexOf('/') + 1).ToUpperInvariant()} (the mod no longer uses that key)");
+            }
+            if (changed)
+            {
+                input.Save();
+                PlayerPrefs.SetString(record, string.Join("|", done.ToArray()));
+                PlayerPrefs.Save();
+                foreach (string line in told) Debug.Log("[" + owner + "] " + line);
+            }
+            return told;
+        }
+
         private static string Nice(string name)
         {
             switch (name)

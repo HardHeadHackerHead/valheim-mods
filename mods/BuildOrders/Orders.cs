@@ -22,9 +22,37 @@ namespace BuildOrders
         }
 
         private const string Rpc = "DHack_BuildOrders";
+        private const string PackedRpc = "DHack_BuildOrders_Z";   // everything we know, compressed (for a player who joins)
 
         private readonly Dictionary<string, Order> _orders = new Dictionary<string, Order>();
-        private readonly HashSet<string> _removed = new HashSet<string>(); // ids deleted, so a stale copy can't bring one back
+        // ids deleted, so a stale copy can't bring one back, with the day each was deleted: forgotten after RemovedDays (by then every
+        // player's copy has long caught up), so the list doesn't grow for ever
+        private readonly Dictionary<string, int> _removed = new Dictionary<string, int>();
+        private const int RemovedDays = 60;
+        private static int Today => (int)(DateTime.UtcNow.Ticks / TimeSpan.TicksPerDay);
+
+        /// <summary>Note an id as deleted (on the earliest day anyone saw it deleted, so every player forgets it at about the same time).</summary>
+        private void NoteRemoved(string id, int day = -1)
+        {
+            if (string.IsNullOrEmpty(id)) return;
+            int today = Today;
+            if (day < 0 || day > today) day = today;
+            _removed[id] = _removed.TryGetValue(id, out int had) ? Math.Min(had, day) : day;
+        }
+
+        /// <summary>A "T|id" line, or "T|id|day" from this version.</summary>
+        private void NoteRemovedLine(string line)
+        {
+            string[] f = line.Split('|');
+            if (f.Length < 2) return;
+            NoteRemoved(f[1], f.Length > 2 && int.TryParse(f[2], NumberStyles.Integer, CultureInfo.InvariantCulture, out int day) ? day : -1);
+        }
+
+        private void ForgetOldRemovals()
+        {
+            int oldest = Today - RemovedDays;
+            foreach (string id in _removed.Where(kv => kv.Value < oldest).Select(kv => kv.Key).ToList()) _removed.Remove(id);
+        }
         private string _loadedWorld, _loadedWorldName;   // the world's UID (its files are named after it), and its name
         private ZNet _worldOf;                           // the session that world belongs to
         private ZRoutedRpc _registeredOn;
@@ -54,9 +82,9 @@ namespace BuildOrders
 
         internal void RemoveOrder(string id, bool broadcast, bool save = true)
         {
-            if (!_orders.Remove(id) && _removed.Contains(id)) return;
+            if (!_orders.Remove(id) && _removed.ContainsKey(id)) return;
             _stabilityDirty = true;
-            _removed.Add(id);
+            NoteRemoved(id);
             DestroyGhost(id);
             if (save) Save();
             if (broadcast) Send("R|" + id);
@@ -94,7 +122,7 @@ namespace BuildOrders
 
         private void MergeOrder(Order o)
         {
-            if (o == null || _removed.Contains(o.Id) || _orders.ContainsKey(o.Id)) return;
+            if (o == null || _removed.ContainsKey(o.Id) || _orders.ContainsKey(o.Id)) return;
             _orders[o.Id] = o;
         }
 
@@ -124,7 +152,8 @@ namespace BuildOrders
             string world = ZNet.World.m_uid.ToString(CultureInfo.InvariantCulture);
             if (world == _loadedWorld) return;
 
-            // Joined a different world: start from that world's saved file.
+            // Joined a different world: start from that world's saved file (after writing the last world's, if a save was waiting).
+            FlushSave();
             _loadedWorld = world;
             _loadedWorldName = ZNet.World.m_name ?? "";
             DropPlacing();
@@ -140,9 +169,10 @@ namespace BuildOrders
                 if (!File.Exists(path)) return;
                 foreach (string line in File.ReadAllLines(path))
                 {
-                    if (line.StartsWith("T|")) _removed.Add(line.Substring(2));
+                    if (line.StartsWith("T|")) NoteRemovedLine(line);
                     else MergeOrder(Decode(line));
                 }
+                ForgetOldRemovals();
             }
             catch (Exception e) { Logger.LogWarning("Could not read saved build orders: " + e.Message); }
         }
@@ -172,13 +202,34 @@ namespace BuildOrders
             catch (Exception e) { Logger.LogWarning("Could not take over this world's older files: " + e.Message); }
         }
 
+        private bool _saveDue;
+        private float _saveAt;
+
+        /// <summary>Save soon: a batch of changes (Build all, a plan removed, a player's whole list arriving) is written once, a moment later.</summary>
         private void Save()
         {
+            if (_saveDue) return;
+            _saveDue = true;
+            _saveAt = Time.unscaledTime + 2f;
+        }
+
+        /// <summary>Called every frame: write the waiting save when its moment comes.</summary>
+        private void UpdateSave()
+        {
+            if (_saveDue && Time.unscaledTime >= _saveAt) FlushSave();
+        }
+
+        /// <summary>Write the waiting save now (before switching worlds, and when the mod unloads).</summary>
+        private void FlushSave()
+        {
+            if (!_saveDue) return;
+            _saveDue = false;
             try
             {
+                ForgetOldRemovals();
                 string path = SavePath();
                 Directory.CreateDirectory(Path.GetDirectoryName(path));
-                var lines = _orders.Values.Select(Encode).Concat(_removed.Select(id => "T|" + id));
+                var lines = _orders.Values.Select(Encode).Concat(_removed.Select(kv => "T|" + kv.Key + "|" + kv.Value.ToString(CultureInfo.InvariantCulture)));
                 File.WriteAllLines(path, lines.ToArray());
             }
             catch (Exception e) { Logger.LogWarning("Could not save build orders: " + e.Message); }
@@ -200,6 +251,7 @@ namespace BuildOrders
                 _registeredOn = rpc;
                 UnregisterRpc(); // Valheim throws if a handler name is registered twice
                 rpc.Register<string>(Rpc, OnMessage);
+                rpc.Register<ZPackage>(PackedRpc, OnPacked);
                 _announcePending = true;
             }
 
@@ -207,7 +259,7 @@ namespace BuildOrders
             if (_announcePending && Player.m_localPlayer != null && WorldKnown)
             {
                 _announcePending = false;
-                Send("Q");
+                Send("Q2"); // (2: answer compressed; older versions read it as a plain Q and answer as before)
             }
         }
 
@@ -216,6 +268,7 @@ namespace BuildOrders
             if (ZRoutedRpc.instance == null) return;
             var table = AccessTools.Field(typeof(ZRoutedRpc), "m_functions").GetValue(ZRoutedRpc.instance) as IDictionary;
             table?.Remove(Rpc.GetStableHashCode());
+            table?.Remove(PackedRpc.GetStableHashCode());
         }
 
         private void Send(string message, long target = 0L)
@@ -240,13 +293,14 @@ namespace BuildOrders
 
                     case 'R': // someone removed or finished one
                         string id = message.Substring(2);
-                        _removed.Add(id);
+                        NoteRemoved(id);
                         if (_orders.Remove(id)) DestroyGhost(id);
                         Save();
                         break;
 
                     case 'Q': // someone joined and wants everything we know
-                        Send(BuildState(), sender);
+                        if (message == "Q2") SendPacked(BuildState(withDays: true), sender);
+                        else Send(BuildState(withDays: false), sender);
                         SendPlanRecords(sender);
                         break;
 
@@ -261,10 +315,10 @@ namespace BuildOrders
                     case 'S': // here is everything someone knows
                         foreach (string line in message.Substring(1).Split('\n'))
                         {
-                            if (line.StartsWith("T|")) _removed.Add(line.Substring(2));
+                            if (line.StartsWith("T|")) NoteRemovedLine(line);
                             else if (line.Length > 0) MergeOrder(Decode(line));
                         }
-                        foreach (string gone in _removed) if (_orders.Remove(gone)) DestroyGhost(gone);
+                        foreach (string gone in _removed.Keys) if (_orders.Remove(gone)) DestroyGhost(gone);
                         Save();
                         break;
                 }
@@ -272,12 +326,39 @@ namespace BuildOrders
             catch (Exception e) { Logger.LogWarning("Bad build-order message: " + e.Message); }
         }
 
-        private string BuildState()
+        /// <param name="withDays">with the day each id was deleted (older versions would read "id|day" as the id)</param>
+        private string BuildState(bool withDays)
         {
+            ForgetOldRemovals();
             var sb = new StringBuilder("S");
             foreach (Order o in _orders.Values) sb.Append('\n').Append(Encode(o));
-            foreach (string id in _removed) sb.Append("\nT|").Append(id);
+            foreach (var kv in _removed)
+            {
+                sb.Append("\nT|").Append(kv.Key);
+                if (withDays) sb.Append('|').Append(kv.Value.ToString(CultureInfo.InvariantCulture));
+            }
             return sb.ToString();
+        }
+
+        /// <summary>A long message, compressed (a big world's list of orders and deleted ids is mostly the same few characters).</summary>
+        private void SendPacked(string message, long target)
+        {
+            if (ZRoutedRpc.instance == null) return;
+            try
+            {
+                var pkg = new ZPackage();
+                pkg.Write(Utils.Compress(Encoding.UTF8.GetBytes(message)));
+                ZRoutedRpc.instance.InvokeRoutedRPC(target, PackedRpc, pkg);
+            }
+            catch (Exception e) { Logger.LogWarning("Could not share build orders: " + e.Message); }
+        }
+
+        private void OnPacked(long sender, ZPackage pkg)
+        {
+            string message;
+            try { message = Encoding.UTF8.GetString(Utils.Decompress(pkg.ReadByteArray())); }
+            catch (Exception e) { Logger.LogWarning("Bad build-order message: " + e.Message); return; }
+            OnMessage(sender, message);
         }
     }
 }

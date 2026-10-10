@@ -5,7 +5,7 @@
 
 <img src="cover.png" alt="BountyBoard" width="100%">
 
-**Version 1.1.3**  ·  [all the mods](../../README.md)  ·  installs and updates through the in-game [mod manager](https://github.com/HardHeadHackerHead/valheim-mod-manager) (**F7**)
+**Version 1.2.0**  ·  [all the mods](../../README.md)  ·  installs and updates through the in-game [mod manager](https://github.com/HardHeadHackerHead/valheim-mod-manager) (**F7**)
 
 A buildable notice board with contracts the whole server works on together: hunt, clear out regions, slay starred creatures or bring in loot, and get paid in coins and materials that match how far you have got (bronze, iron, silver...). Harder contracts as you beat bosses, and a tracker you can keep on screen.
 
@@ -53,15 +53,15 @@ In `BepInEx/config/com.dhack.bountyboard.cfg` (made the first time the game runs
 
 | Setting | Default | What it does |
 |---|---|---|
-| `MostAtOnce` | `3` | How many contracts the group can have going at once. A new one can only be taken when one is finished. |
-| `RewardPercent` | `100` | Pay as a percentage of the standard rate (50 = half, 200 = double). |
+| `MostAtOnce` | `3` | How many contracts the group can have going at once. A new one can only be taken when one is finished. In multiplayer the server's value applies. |
+| `RewardPercent` | `100` | Pay as a percentage of the standard rate (50 = half, 200 = double). In multiplayer the server's value applies. |
 
 **Notices**
 
 | Setting | Default | What it does |
 |---|---|---|
-| `DaysBetweenNewNotices` | `1` | How many in-game days before the board posts new notices. |
-| `NoticesPerBoard` | `5` | How many notices are posted. |
+| `DaysBetweenNewNotices` | `1` | How many in-game days before the board posts new notices. In multiplayer the server's value applies. |
+| `NoticesPerBoard` | `5` | How many notices are posted. In multiplayer the server's value applies. |
 
 **Tracker**
 
@@ -78,6 +78,7 @@ Everyone in the world needs it, **the host above all**. It adds a new build piec
 
 ## 📜 Changes
 
+- **1.2.0** Fix: a finished contract's reward could be collected again and again with new characters. The host now goes by who is actually playing on each connection (not what the message says) and pays only the characters that worked on a contract (took it, made a kill for it or handed loot in) or were playing when it was finished. (Contracts finished before this update can still be collected as before.) In multiplayer the host's notice and contract settings now apply on everyone's screen too. The menu and tracker use the game's fonts, and a problem drawing the board's look can no longer stop it being registered.
 - Fix: after a fresh game start the board was not registered until the mods were reloaded, so the game deleted any it found standing in the world. It is now registered as the world loads. Ones already lost can't be brought back; build them again. Fix: kills by any player now count in multiplayer (before, a kill only counted when the killer's own game was handling that creature). Fix: hosting a different world without restarting the game no longer carries the last world's contracts over and overwrites the new one's. Contracts are now kept by the world's id, so two worlds with the same name no longer share them (your existing contracts carry over).
 - The sign on the board now reads BOUNTIES in gold carved letters (the old marks sat too close to the board and partly disappeared). Restart the game to see it on boards already built.
 - The on-screen tracker is easier to read: taller progress bars with a larger, outlined 3/6, bigger text and more room between contracts.

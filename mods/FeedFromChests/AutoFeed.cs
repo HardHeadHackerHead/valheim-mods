@@ -417,12 +417,15 @@ namespace FeedFromChests
         private static void Postfix(Smelter __instance) => AutoFeed.Register(__instance);
     }
 
-    // A smelter or kiln finished something: if it is set to send its output to chests, put it in the right one.
+    // A smelter or kiln finished something: if it is set to send its output to chests, put it in the right one. Runs after every other
+    // mod's prefix: one that already put the output somewhere (ValheimPlus' autoDeposit) skips the method, and then there's nothing left.
     [HarmonyPatch(typeof(Smelter), "Spawn")]
     internal static class Smelter_Spawn
     {
-        private static bool Prefix(Smelter __instance, string ore, ref int stack)
+        [HarmonyPriority(Priority.Last)]
+        private static bool Prefix(Smelter __instance, string ore, ref int stack, bool __runOriginal)
         {
+            if (!__runOriginal) return false; // another mod has delivered it
             Plugin plugin = Plugin.Instance;
             if (plugin == null || !plugin.AutoEnabled) return true;
             try

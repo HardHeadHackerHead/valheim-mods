@@ -20,16 +20,18 @@ namespace QualityOfLife
     {
         public const string Guid = "com.dhack.qualityoflife";
         public const string Name = "QualityOfLife";
-        public const string Version = "1.10.0";
+        public const string Version = "1.11.0";
 
         private ConfigEntry<bool> _quickSetEnabled, _showBadges, _hammerEnabled, _showMessages;
         private ConfigEntry<KeyboardShortcut> _quickSetKey, _hammerKey;
 
         internal static Plugin Instance;
+        internal static DHack.Shared.ServerSettings Synced; // settings the server decides in multiplayer
 
         private void Awake()
         {
             Instance = this;
+            Synced = new DHack.Shared.ServerSettings(Guid, Config, Logger);
             _showMessages = Config.Bind("General", "ShowMessages", true, "Show a short message in the top-left when something happens.");
 
             _quickSetEnabled = Config.Bind("QuickSet", "Enabled", true, "Turn the quick-set feature on or off.");
@@ -79,6 +81,7 @@ namespace QualityOfLife
             ClearShipPins();
             _harmony?.UnpatchSelf();
             DestroyMenuResources();
+            Synced?.Dispose();
         }
 
         // ---- our keys win over the game's (see GameKeys) ----
@@ -108,6 +111,7 @@ namespace QualityOfLife
                     keys.Add(new System.Collections.Generic.KeyValuePair<KeyCode, string>(sc.MainKey, what));
             }
             _keyNotes.AddRange(GameKeys.Free(Name, keys));
+            _keyNotes.AddRange(GameKeys.GiveBack(Name, keys.Select(k => k.Key))); // a game key we unbound once, for a key none of ours uses any more
         }
 
         private void TellKeyNotes()
@@ -119,6 +123,7 @@ namespace QualityOfLife
 
         private void Update()
         {
+            Synced?.Update(); // notices joining and leaving a server, for the settings it decides
             FreeGameKeys();
             TellKeyNotes();
             UpdateShipPins(); // (also while dead: the map stays useful)

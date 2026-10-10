@@ -5,7 +5,7 @@
 
 <img src="cover.png" alt="BirdTrap" width="100%">
 
-**Version 1.0.1**  ·  [all the mods](../../README.md)  ·  installs and updates through the in-game [mod manager](https://github.com/HardHeadHackerHead/valheim-mod-manager) (**F7**)
+**Version 1.1.0**  ·  [all the mods](../../README.md)  ·  installs and updates through the in-game [mod manager](https://github.com/HardHeadHackerHead/valheim-mod-manager) (**F7**)
 
 A buildable bird trap with its own hand-made look. Bait it with berries or seeds and leave it under the open sky: a gull hops in, the prop
 falls and the door drops. Pluck it for feathers and let it go. Birds come while you are away and at first light, so after a night's sleep every
@@ -51,18 +51,18 @@ In `BepInEx/config/com.dhack.birdtrap.cfg` (made the first time the game runs wi
 
 | Setting | Default | What it does |
 |---|---|---|
-| `MinutesMin` | `8` | Shortest wait (real minutes, in game time) from baiting to a bird. |
-| `MinutesMax` | `14` | Longest wait (real minutes, in game time) from baiting to a bird. |
-| `BaitHeld` | `5` | How many pieces of bait a trap holds (each bird eats one). |
-| `NeedsOpenSky` | `true` | Birds only come to a trap with open sky above it (not under a roof). |
-| `BirdsRoostAtNight` | `true` | No birds come at night: one due then comes in the morning. |
+| `MinutesMin` | `8` | Shortest wait (real minutes, in game time) from baiting to a bird. In multiplayer the server's value applies. |
+| `MinutesMax` | `14` | Longest wait (real minutes, in game time) from baiting to a bird. In multiplayer the server's value applies. |
+| `BaitHeld` | `5` | How many pieces of bait a trap holds (each bird eats one). In multiplayer the server's value applies. |
+| `NeedsOpenSky` | `true` | Birds only come to a trap with open sky above it (not under a roof). In multiplayer the server's value applies. |
+| `BirdsRoostAtNight` | `true` | No birds come at night: one due then comes in the morning. In multiplayer the server's value applies. |
 
 **Plucking**
 
 | Setting | Default | What it does |
 |---|---|---|
-| `FeathersMin` | `2` | Fewest feathers a bird gives. |
-| `FeathersMax` | `3` | Most feathers a bird gives. |
+| `FeathersMin` | `2` | Fewest feathers a bird gives. In multiplayer the server's value applies. |
+| `FeathersMax` | `3` | Most feathers a bird gives. In multiplayer the server's value applies. |
 
 ## 👥 Playing together
 
@@ -70,5 +70,6 @@ Everyone in the world needs it, **the host above all**. It adds a new build piec
 
 ## 📜 Changes
 
+- **1.1.0** Fix: two players plucking the same bird could both get its feathers, and bait could be lost. Whoever presses E now asks the trap's owner, which plucks the bird or takes the bait and answers: the feathers come only on its yes ("The bird is already gone" otherwise), and bait that doesn't fit comes back to you. In multiplayer the server decides the catching and plucking settings. A problem with the trap's look can no longer stop it being registered.
 - Fix: no more stutter every 5 seconds. Looking for Claude Tools searched everything the game had loaded; it now asks BepInEx's list of mods.
 - First version: the Bird Trap. Bait it with berries or seeds under the open sky, and pluck the gull it catches for feathers.

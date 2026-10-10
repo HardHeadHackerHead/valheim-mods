@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System.Linq;
 using BepInEx;
 using BepInEx.Configuration;
 using HarmonyLib;
@@ -19,10 +20,11 @@ namespace SlotMachine
     {
         public const string Guid = "com.dhack.slotmachine";
         public const string Name = "SlotMachine";
-        public const string Version = "1.0.4";
+        public const string Version = "1.1.0";
         public const string PiecePrefab = "piece_slotmachine";
 
         internal static ConfigEntry<int> Bet, PayoutPercent;
+        internal static DHack.Shared.ServerSettings Synced; // the prizes are the server's in multiplayer (or each player could set their own)
         private static readonly int[] Bets = { 5, 10, 25, 50, 100 };
 
         private static GameObject _holder, _prefab;
@@ -30,8 +32,9 @@ namespace SlotMachine
 
         private void Awake()
         {
+            Synced = new DHack.Shared.ServerSettings(Guid, Config, Logger);
             Bet = Config.Bind("Play", "Bet", 10, new ConfigDescription("Coins per pull (change it at the machine with the alternate-use key + use).", new AcceptableValueList<int>(Bets)));
-            PayoutPercent = Config.Bind("Play", "PayoutPercent", 100, new ConfigDescription("Scales every prize (100 = standard, which returns about 93% over time; 50 = half the prizes).", new AcceptableValueRange<int>(10, 300)));
+            PayoutPercent = Synced.Add(Config.Bind("Play", "PayoutPercent", 100, new ConfigDescription("Scales every prize (100 = standard, which returns about 93% over time; 50 = half the prizes; above 107 the machine pays out more than goes in). In multiplayer the server's value applies.", new AcceptableValueRange<int>(10, 300))));
 
             _harmony = new Harmony(Guid);
             _harmony.PatchAll();
@@ -39,10 +42,13 @@ namespace SlotMachine
             Logger.LogInfo($"{Name} {Version} loaded");
         }
 
+        private void Update() => Synced?.Update(); // notices joining and leaving a server, for the settings it decides
+
         private void OnDestroy()
         {
             _harmony?.UnpatchSelf();
             Unregister();
+            Synced?.Dispose();
         }
 
         internal static void NextBet()
@@ -98,7 +104,7 @@ namespace SlotMachine
             piece.m_description = "A slot machine. Put coins in, pull the lever, and three reels spin. Three alike pay out, and the winnings come out of the tray.";
             piece.m_category = Piece.PieceCategory.Misc;
             piece.m_craftingStation = workbench;
-            piece.m_resources = new[] { Req("FineWood", 1) }; // just one for now, while it is being tested
+            piece.m_resources = new[] { Req("FineWood", 15), Req("Bronze", 8), Req("Stone", 10) }.Where(r => r.m_resItem != null).ToArray();
             piece.m_icon = Icon.Make(go);
             go.AddComponent<SlotMachinePiece>();
             return go;

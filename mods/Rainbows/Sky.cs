@@ -24,6 +24,7 @@ namespace Rainbows
         private static Color[] _hue;
         private static Color[] _colors;
         private static AudioClip _chime;
+        private static UnityEngine.Audio.AudioMixerGroup _mixer;   // the game's sound effects, so the chime follows its volume slider
 
         private static float _wetFor, _waited, _shownFor, _fade;
         private static bool _waiting, _showing, _forced, _blessed;
@@ -130,7 +131,7 @@ namespace Rainbows
             if (_mesh != null) Object.Destroy(_mesh);
             if (_material != null) Object.Destroy(_material);
             if (_chime != null) Object.Destroy(_chime);
-            _root = null; _mesh = null; _material = null; _chime = null;
+            _root = null; _mesh = null; _material = null; _chime = null; _mixer = null;
         }
 
         // ---- the drawing ---------------------------------------------------------------------------------------------------
@@ -259,9 +260,12 @@ namespace Rainbows
                 int at = 0;   // (the clip asks for its samples in pieces)
                 _chime = AudioClip.Create("RainbowChime", data.Length, 1, rate, false, block => { for (int i = 0; i < block.Length; i++) block[i] = at < data.Length ? data[at++] : 0f; }, position => at = position);
             }
+            if (_mixer == null && ZNetScene.instance != null)
+                _mixer = ZNetScene.instance.GetPrefab("sfx_chest_open")?.GetComponentInChildren<AudioSource>(true)?.outputAudioMixerGroup;
             var go = new GameObject("RainbowChime");
             var source = go.AddComponent<AudioSource>();
             source.clip = _chime; source.spatialBlend = 0f; source.volume = Plugin.Volume.Value;
+            source.outputAudioMixerGroup = _mixer;
             source.Play();
             Object.Destroy(go, 3.5f);
         }

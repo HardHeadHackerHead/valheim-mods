@@ -171,6 +171,7 @@ if __name__ == "__main__":
     import sys, os
     from modelkit import contact_sheet, icon
     out = sys.argv[1] if len(sys.argv) > 1 else "."
+    os.makedirs(out, exist_ok=True)
     mod = make()
     contact_sheet(mod, os.path.join(out, "board_sheet.png"), target=(0, 1.5, 0), dist=7.6)
     print(len(mod.parts), "parts")

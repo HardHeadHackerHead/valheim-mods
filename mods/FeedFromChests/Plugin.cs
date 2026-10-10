@@ -23,9 +23,10 @@ namespace FeedFromChests
     {
         public const string Guid = "com.dhack.feedfromchests";
         public const string Name = "FeedFromChests";
-        public const string Version = "1.5.0";
+        public const string Version = "1.6.0";
 
         internal static Plugin Instance;
+        internal static DHack.Shared.ServerSettings Synced; // settings the server decides in multiplayer
 
         private ConfigEntry<bool> _enabled, _autoFeed, _alwaysOpenMenu, _stationAuto, _takeOffCooked, _refuelLights, _refuelFires, _collectHoney;
         private ConfigEntry<int> _keepFuel;
@@ -48,8 +49,11 @@ namespace FeedFromChests
         private void Awake()
         {
             Instance = this;
+            Synced = new DHack.Shared.ServerSettings(Guid, Config, Logger);
+            const string server = " In multiplayer the server's value applies.";
             _enabled = Config.Bind("General", "Enabled", true, "Turn the mod on or off.");
-            _radius = Config.Bind("General", "Radius", 15f, "How far (in metres) from the station a chest can be and still be used.");
+            _radius = Synced.Add(Config.Bind("General", "Radius", 15f,
+                new ConfigDescription("How far (in metres) from the station a chest can be and still be used." + server, new AcceptableValueRange<float>(2f, 50f))));
             _autoFeed = Config.Bind("General", "AutoFeedOnUse", true,
                 "Pressing E at a station when you carry nothing it takes, but a nearby chest has some: add it for you (or open the menu if there's a choice).");
             _alwaysOpenMenu = Config.Bind("General", "AlwaysOpenMenu", false,
@@ -59,11 +63,15 @@ namespace FeedFromChests
 
             _stationAuto = Config.Bind("AutoFeed", "Enabled", true,
                 "Allow smelters, kilns and furnaces to be set to keep themselves stocked from nearby chests (set up in the station's menu).");
-            _autoRadius = Config.Bind("AutoFeed", "FeedRadius", 30f, "How far (in metres) from a smelter or kiln a chest can be and still be used to keep it stocked automatically.");
-            _outputRadius = Config.Bind("AutoFeed", "OutputRadius", 30f, "How far (in metres) from a smelter or kiln a chest can be and still receive what it makes.");
+            _autoRadius = Synced.Add(Config.Bind("AutoFeed", "FeedRadius", 30f, new ConfigDescription(
+                "How far (in metres) from a smelter or kiln a chest can be and still be used to keep it stocked automatically." + server, new AcceptableValueRange<float>(2f, 60f))));
+            _outputRadius = Synced.Add(Config.Bind("AutoFeed", "OutputRadius", 30f, new ConfigDescription(
+                "How far (in metres) from a smelter or kiln a chest can be and still receive what it makes (only chests assigned to it, with the chest assign menu, K)." + server,
+                new AcceptableValueRange<float>(2f, 60f))));
             _autoInterval = Config.Bind("AutoFeed", "Interval", 1f, "Seconds between automatic top-ups of each station.");
-            _autoRange = Config.Bind("AutoFeed", "PlayerRange", 40f,
-                "Automatic feeding only runs while you are within this many metres of the station (the game only loads chests near players).");
+            _autoRange = Synced.Add(Config.Bind("AutoFeed", "PlayerRange", 40f, new ConfigDescription(
+                "Automatic feeding only runs while you are within this many metres of the station (the game only loads chests near players)." + server,
+                new AcceptableValueRange<float>(5f, 100f))));
             _takeOffCooked = Config.Bind("Cooking", "TakeOffCooked", true,
                 "Food on a cooking station comes off by itself the moment it is done, so it never burns: into a chest assigned to it or to Food " +
                 "(the chest assign menu, K), else it slides off the side of the spit. Each station can also be switched off in its menu (E).");
@@ -109,10 +117,11 @@ namespace FeedFromChests
             Lights.Clear();
             Hives.Clear();
             Ferment.Clear();
-            Feed.Reserved = null;
+            Feed.Prepaid = null;
             ContainerRegistry.Clear();
             if (Instance == this) Instance = null;
             _harmony?.UnpatchSelf();
+            Synced?.Dispose();
             DestroyMenuResources();
         }
 
@@ -167,6 +176,7 @@ namespace FeedFromChests
 
         private void Update()
         {
+            Synced?.Update(); // notices joining and leaving a server, for the settings it decides
             WatchForSpikes();
             if (_pending != null) { Action a = _pending; _pending = null; a(); }
 
@@ -204,33 +214,39 @@ namespace FeedFromChests
             string name = drop.m_itemData.m_shared.m_name;
             long lookup = clock.ElapsedMilliseconds;
 
-            // Stations that take a stand-in item don't check that you really have one, so we must: never add what we couldn't pay for.
-            int have = (chestsOnly ? 0 : player.GetInventory().CountItems(name)) + Chests.Count(Feed.Chests, name) - Feed.ReservedFor(name);
-            if (have <= 0) return false;
+            // Pay first: from your inventory if you carry one, else take one out of a chest now (a chest can be opened or emptied by
+            // someone else at any moment, so it's taken before the station is asked, never after). If the station then doesn't take it,
+            // it goes back.
+            Inventory inventory = player.GetInventory();
+            bool fromInventory = !chestsOnly && Chests.OwnCount(inventory, name) > 0;
+            Container from = null;
+            ItemDrop.ItemData taken = fromInventory ? null : Chests.TakeOne(Feed.Chests, name, out from);
+            if (!fromInventory && taken == null) return false;
             long counted = clock.ElapsedMilliseconds;
 
             Outcome outcome;
-            Feed.Active = true; // the game's questions about your inventory now include the chests
+            Feed.Prepaid = taken != null ? name : null;
+            Feed.Active = true; // the game's questions about your inventory now include the item taken out
             Feed.ChestsOnly = chestsOnly;
             try { outcome = (isFuel ? info.AddFuel : info.AddInput)(player, Stations.StandIn(drop)); }
             finally { Feed.Active = false; Feed.ChestsOnly = false; }
+            bool unused = Feed.Prepaid != null; // the game's "use one" took it (the fuel route), or not
+            Feed.Prepaid = null;
             long station = clock.ElapsedMilliseconds;
 
-            if (outcome == Outcome.AddedTakeOne) TakeOne(player, name, chestsOnly);
+            if (outcome == Outcome.AddedTakeOne)
+            {
+                // A stand-in went in, so the game used nothing real: the item taken out is the one it used, or one from your inventory.
+                if (taken != null) unused = false;
+                else inventory.RemoveItem(name, 1);
+            }
+            else if (outcome == Outcome.Failed && taken != null) unused = true;
+            if (unused && taken != null) Chests.PutBack(taken, from, player, info.Position);
             long total = clock.ElapsedMilliseconds;
 
             // For tracking down slowness: say where the time went whenever one add takes noticeably long.
-            if (total >= 12) Logger.LogInfo($"Slow add of {name}: {total} ms total (chest lookup {lookup}, counting {counted - lookup}, the station's own add {station - counted}, taking from chests {total - station})");
+            if (total >= 12) Logger.LogInfo($"Slow add of {name}: {total} ms total (chest lookup {lookup}, taking from a chest {counted - lookup}, the station's own add {station - counted}, settling {total - station})");
             return outcome != Outcome.Failed;
-        }
-
-        /// <summary>For stand-in items the game used nothing real, so we take one real item: from your inventory, else a chest.</summary>
-        private void TakeOne(Player player, string itemName, bool chestsOnly = false)
-        {
-            Inventory inventory = player.GetInventory();
-            if (!chestsOnly && inventory.CountItems(itemName) > 0) inventory.RemoveItem(itemName, 1);
-            else if (Feed.Reserved != null) Feed.Reserve(itemName, 1);   // during a big fill the chest is emptied once, at the end
-            else Chests.Take(Feed.Chests, itemName, 1);
         }
 
         // ---- filling (many at once) -----------------------------------------------------------------------
@@ -238,14 +254,13 @@ namespace FeedFromChests
         private bool _filling;
 
         /// <summary>
-        /// Fill up with the given items, a couple per frame (so the station's sounds and effects don't all fire in one frame),
-        /// then take everything we used out of the chests in one go (so each chest is only saved once).
+        /// Fill up with the given items, a couple per frame (so the station's sounds and effects don't all fire in one frame). Each one is
+        /// paid for as it goes in, so stopping half way (the station is destroyed, the mod reloads) never leaves anything unpaid.
         /// </summary>
         private System.Collections.IEnumerator FillRoutine(Player player, StationInfo info, List<Row> rows)
         {
             _filling = true;
             List<Container> chests = Chests.Near(info.Position, _radius.Value);
-            Feed.Reserved = new Dictionary<string, int>();
             var parts = new List<string>();
             try
             {
@@ -254,7 +269,7 @@ namespace FeedFromChests
                     int added = 0;
                     for (int i = 0; i < _fillLimit.Value; i++)
                     {
-                        if (!info.Alive || !AddOne(player, info, row.Drop, row.IsFuel, chests)) break;
+                        if (!info.Alive || player == null || !AddOne(player, info, row.Drop, row.IsFuel, chests)) break;
                         added++;
                         if (added % 2 == 0) yield return null; // two per frame
                     }
@@ -263,10 +278,6 @@ namespace FeedFromChests
             }
             finally
             {
-                // Settle up with the chests: one removal per item type, however many were used.
-                Dictionary<string, int> used = Feed.Reserved;
-                Feed.Reserved = null;
-                if (used != null) foreach (var kv in used) Chests.Take(chests, kv.Key, kv.Value);
                 _filling = false;
             }
 

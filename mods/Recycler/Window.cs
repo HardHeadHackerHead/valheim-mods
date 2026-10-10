@@ -23,6 +23,7 @@ namespace Recycler
 
         private static Texture2D _white;
         private static GUIStyle _title, _text, _small, _button, _bad;
+        private static Font _bodyFont, _titleFont;
 
         private static readonly Color Panel = new Color(0.08f, 0.10f, 0.11f, 0.97f);
         private static readonly Color RowOn = new Color(0.16f, 0.45f, 0.5f, 0.55f);
@@ -91,7 +92,14 @@ namespace Recycler
 
             string name = Localization.instance.Localize(item.m_shared.m_name);
             if (item.m_equipped) player.UnequipItem(item, false);
-            player.GetInventory().RemoveItem(item);
+            // Pay first: only an item that really left the inventory gives anything back (another mod can refuse to let it go, e.g. a
+            // backpack that still holds things).
+            if (!player.GetInventory().RemoveItem(item) || player.GetInventory().ContainsItem(item))
+            {
+                player.Message(MessageHud.MessageType.Center, $"{name} can't be recycled right now (another mod keeps it)");
+                Refresh(player);
+                return;
+            }
 
             var said = new List<string>();
             foreach (Calc.Entry e in quote.Entries)
@@ -135,6 +143,20 @@ namespace Recycler
             _small = new GUIStyle(_text) { fontSize = 12, normal = { textColor = new Color(0.6f, 0.68f, 0.7f) } };
             _bad = new GUIStyle(_text) { normal = { textColor = new Color(1f, 0.6f, 0.45f) } };
             _button = new GUIStyle(GUI.skin.button) { fontSize = 16, fontStyle = FontStyle.Bold };
+            if (_bodyFont == null) _bodyFont = GameFont("AveriaSerifLibre-Bold", "AveriaSerifLibre", "Averia");
+            if (_titleFont == null) _titleFont = GameFont("Norsebold", "Norse") ?? _bodyFont;
+            if (_bodyFont != null) foreach (GUIStyle s in new[] { _text, _small, _bad, _button }) s.font = _bodyFont;
+            if (_titleFont != null) _title.font = _titleFont;
+        }
+
+        /// <summary>The game's own fonts (Averia for text and numbers, Norse for titles), looked up once; null if a game update renamed them.</summary>
+        private static Font GameFont(params string[] names)
+        {
+            Font[] all = Resources.FindObjectsOfTypeAll<Font>();
+            foreach (string name in names)
+                foreach (Font f in all)
+                    if (f != null && f.name.StartsWith(name, System.StringComparison.OrdinalIgnoreCase)) return f;
+            return null;
         }
 
         private static void Fill(Rect r, Color c)
@@ -156,14 +178,24 @@ namespace Recycler
         {
             if (!IsOpen || _station == null || Event.current == null) return;
             Init();
-            float w = Mathf.Min(800f, Screen.width - 40f), h = Mathf.Min(520f, Screen.height - 40f);
-            var win = new Rect((Screen.width - w) / 2f, (Screen.height - h) / 2f, w, h);
+            // Drawn at 1080p size and scaled to the screen, as the game's own windows are.
+            float scale = Mathf.Max(0.8f, Screen.height / 1080f);
+            Matrix4x4 before = GUI.matrix;
+            GUI.matrix = Matrix4x4.Scale(new Vector3(scale, scale, 1f));
+            try { DrawWindow(Screen.width / scale, Screen.height / scale); }
+            finally { GUI.matrix = before; }
+        }
+
+        private static void DrawWindow(float screenW, float screenH)
+        {
+            float w = Mathf.Min(800f, screenW - 40f), h = Mathf.Min(520f, screenH - 40f);
+            var win = new Rect((screenW - w) / 2f, (screenH - h) / 2f, w, h);
             Fill(win, Panel);
 
             GUI.Label(new Rect(win.x + 16, win.y + 10, 300, 32), "Recycler", _title);
             string share = $"Returns {Calc.Percent(_station)}% of the materials   ·   presses {RecyclerPress.CountNear(_station.transform.position)}/2";
             GUI.Label(new Rect(win.x + 140, win.y + 16, win.width - 260, 24), share, _small);
-            if (GUI.Button(new Rect(win.xMax - 92, win.y + 10, 80, 28), "Close")) { Close(); return; }
+            if (GUI.Button(new Rect(win.xMax - 92, win.y + 10, 80, 28), "Close", _button)) { Close(); return; }
 
             var list = new Rect(win.x + 12, win.y + 52, win.width * 0.46f, win.height - 64);
             var right = new Rect(list.xMax + 14, list.y, win.xMax - list.xMax - 26, list.height);
@@ -222,7 +254,9 @@ namespace Recycler
             bool valuable = Plugin.ConfirmValuable.Value && Calc.Valuable(_selected);
             bool confirming = valuable && _confirmFor == _selected && Time.time < _confirmUntil;
             if (valuable && _quote.Blocked == null)
-                GUI.Label(new Rect(area.x, bottom - 100, area.width, 44), _selected.m_equipped ? "This item is equipped. Recycling destroys it." : "This item has been upgraded. Recycling destroys it.", _bad);
+                GUI.Label(new Rect(area.x, bottom - 100, area.width, 44), _selected.m_equipped ? "This item is equipped. Recycling destroys it."
+                    : _selected.m_quality >= 2 ? "This item has been upgraded. Recycling destroys it."
+                    : "This item carries other mods' data (enchantments, a bag's contents). Recycling destroys it.", _bad);
 
             GUI.enabled = _quote.Blocked == null;
             string label = confirming ? "Yes, recycle it" : valuable ? "Recycle…" : "Recycle";

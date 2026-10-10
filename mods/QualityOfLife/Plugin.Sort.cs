@@ -21,9 +21,47 @@ namespace QualityOfLife
             _sortEnabled = Config.Bind("Sort", "Enabled", true, "Show a Sort button under your inventory: it joins split stacks and puts items in order. (Respects ProtectHotbar in the QuickStack settings.)");
         }
 
-        /// <summary>How many inventory rows are ordinary ones (the GearSlots mod adds gear rows below them).</summary>
+        /// <summary>
+        /// How many inventory rows are ordinary ones: GearSlots says where its gear rows start; otherwise every row is (the game's,
+        /// and ValheimPlus' extra ones). With a mod that keeps its own slots in rows below the ordinary ones, Sort is off (see SlotMod).
+        /// </summary>
         private static int OrdinaryRows(Inventory inventory) =>
             AppDomain.CurrentDomain.GetData("DHack.GearSlots.NormalRows") is int rows && rows <= inventory.GetHeight() ? rows : inventory.GetHeight();
+
+        // Mods that keep equipment, quick or quiver slots in rows of your inventory below the ordinary ones. Sort can't tell those rows
+        // from the bag, and would pull their items out (BetterArchery's quiver: into a hidden row, then dropped at the next spawn).
+        private static readonly string[][] SlotMods =
+        {
+            new[] { "shudnal.ExtraSlots", "ExtraSlots" },
+            new[] { "randyknapp.mods.equipmentandquickslots", "Equipment and Quick Slots" },
+            new[] { "Azumatt.AzuExtendedPlayerInventory", "AzuExtendedPlayerInventory" },
+            new[] { "aedenthorn.ExtendedPlayerInventory", "Extended Player Inventory" },
+            new[] { "com.bruce.valheim.comfyquickslots", "ComfyQuickSlots" },
+        };
+
+        private static bool _slotModChecked;
+        private static string _slotMod;
+
+        /// <summary>
+        /// The slot mod installed, or null. Looked up the first time Sort is shown (in a world), not when this mod starts: mods loaded
+        /// later, and every mod ScriptEngine loads, aren't listed yet then. GearSlots, when it is on, says where its rows are instead.
+        /// </summary>
+        private string SlotMod()
+        {
+            if (AppDomain.CurrentDomain.GetData("DHack.GearSlots.NormalRows") is int) return null;
+            if (_slotModChecked) return _slotMod;
+            _slotModChecked = true;
+            foreach (string[] mod in SlotMods)
+                if (BepInEx.Bootstrap.Chainloader.PluginInfos.ContainsKey(mod[0])) { _slotMod = mod[1]; break; }
+            if (_slotMod == null && BepInEx.Bootstrap.Chainloader.PluginInfos.TryGetValue("ishid4.mods.betterarchery", out BepInEx.PluginInfo ba))
+            {
+                ConfigEntry<bool> quiver = null;
+                bool readable = ba.Instance != null && ba.Instance.Config.TryGetEntry("Quiver", "Enable Quiver", out quiver);
+                if (!readable || quiver.Value) _slotMod = "BetterArchery (its quiver)";
+            }
+            if (_slotMod != null) Logger.LogInfo($"{_slotMod} keeps its own slots in your inventory's rows: the Sort button is off");
+            return _slotMod;
+        }
 
         // The order kinds of item appear in, then name.
         private static int KindOrder(ItemDrop.ItemData item)
@@ -34,6 +72,7 @@ namespace QualityOfLife
 
         private void SortInventory(Player player)
         {
+            if (SlotMod() != null) { Tell(player, $"Sort is off: {SlotMod()} keeps its slots in your inventory's rows"); return; }
             Inventory inventory = player.GetInventory();
             int rows = OrdinaryRows(inventory), width = inventory.GetWidth();
             int firstRow = _protectHotbar.Value ? 1 : 0;

@@ -45,7 +45,7 @@ namespace CraftFromChests
 
             // Crafting at a station, or hand-crafting from the inventory screen (then chests are measured from the player).
             bool craftingOpen = player != null && InventoryGui.IsVisible() && Plugin.Enabled.Value
-                                && (station != null || ChestScanner.HandCrafting());
+                                && (station != null || ChestScanner.HandCrafting()) && OtherChestMods.Which == null;
 
             if (Alive(_linesButton)) _linesButton.Root.SetActive(craftingOpen);
             if (Alive(_rangeButton)) _rangeButton.Root.SetActive(craftingOpen);
@@ -163,6 +163,11 @@ namespace CraftFromChests
         /// <summary>Next preset above the current range, wrapping back to the smallest.</summary>
         private static void CycleRange()
         {
+            if (Plugin.Synced != null && Plugin.Synced.FromServer) // on a server with the mod, its range applies to everyone
+            {
+                Player.m_localPlayer?.Message(MessageHud.MessageType.TopLeft, "The server decides the range here");
+                return;
+            }
             float current = Plugin.Radius.Value;
             foreach (float step in RangeSteps)
             {

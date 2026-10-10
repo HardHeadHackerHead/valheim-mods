@@ -126,13 +126,42 @@ namespace GearSlots
                 outline.effectDistance = new Vector2(1.5f, -1.5f);
             }
 
-            _title = MakeLabel(_panel, "Gear", sample.m_amount);
-            _title.fontSize = 17f;
-            _title.color = Gold;
+            // The title as the game writes its window titles: Norse, warm gold, with the braided line under it.
+            TMP_Text norse = Find<TMP_Text>(gui, "root/Crafting/topic");
+            _title = MakeLabel(_panel, "Gear", norse != null ? norse : sample.m_amount);
+            _title.fontSize = norse != null ? 20f : 17f;
+            _title.color = norse != null ? TitleColor : Gold;
             _title.alignment = TextAlignmentOptions.TopLeft;
             var trt = _title.rectTransform;
             trt.anchorMin = Vector2.zero; trt.anchorMax = Vector2.one;
-            trt.offsetMin = new Vector2(Pad, 0f); trt.offsetMax = new Vector2(-Pad, -5f);
+            trt.offsetMin = new Vector2(Pad, 0f); trt.offsetMax = new Vector2(-Pad, -4f);
+
+            Image braid = Find<Image>(gui, "root/Crafting/BraidLineHorisontalMedium");
+            if (braid != null)
+            {
+                var line = new GameObject("GearSlotsBraid", typeof(RectTransform), typeof(Image));
+                var lrt = (RectTransform)line.transform;
+                lrt.SetParent(_panel, false);
+                lrt.SetSiblingIndex(1); // above the board, behind the cells
+                lrt.anchorMin = new Vector2(0f, 1f); lrt.anchorMax = new Vector2(1f, 1f);
+                lrt.pivot = new Vector2(0.5f, 0.5f);
+                lrt.offsetMin = new Vector2(Pad, 0f); lrt.offsetMax = new Vector2(-Pad, 0f);
+                lrt.sizeDelta = new Vector2(-2f * Pad, Mathf.Clamp(braid.rectTransform.rect.height, 6f, 12f));
+                lrt.anchoredPosition = new Vector2(0f, -(Pad + TitleHeight - 4f));
+                var img = line.GetComponent<Image>();
+                img.sprite = braid.sprite; img.type = braid.type; img.material = braid.material; img.color = braid.color;
+                img.pixelsPerUnitMultiplier = braid.pixelsPerUnitMultiplier; img.fillCenter = braid.fillCenter;
+                img.raycastTarget = false;
+            }
+            else Plugin.Log?.LogWarning("The game's title line was not found where expected: the Gear panel's title is plain");
+        }
+
+        private static readonly Color TitleColor = new Color(1f, 0.86f, 0.55f, 1f);
+
+        private static T Find<T>(InventoryGui gui, string path) where T : Component
+        {
+            Transform t = gui.transform.Find(path);
+            return t != null ? t.GetComponent<T>() : null;
         }
 
         /// <summary>The biggest picture directly on the inventory window: its wooden background.</summary>

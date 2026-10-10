@@ -29,7 +29,7 @@ namespace PortalHub
         {
             Minimap map = Minimap.instance;
             if (map == null) return;
-            if (!_enabled.Value || !_mapIcons.Value || Player.m_localPlayer == null) { ClearPins(map); return; }
+            if (!Enabled || !_mapIcons.Value || Player.m_localPlayer == null) { ClearPins(map); return; }
 
             // The list is refreshed while you stand near a portal; also while the big map is open, so it is never stale there.
             if (Minimap.IsOpen() && Time.time >= _nextAsk) { _nextAsk = Time.time + 10f; RequestList(); }
@@ -64,7 +64,7 @@ namespace PortalHub
 
         private void DrawMapLines()
         {
-            if (!_mapLines.Value || !_enabled.Value || !Minimap.IsOpen() || Event.current.type != EventType.Repaint) return;
+            if (!_mapLines.Value || !Enabled || !Minimap.IsOpen() || Event.current.type != EventType.Repaint) return;
 
             var done = new HashSet<string>();
             foreach (PortalInfo from in Portals)

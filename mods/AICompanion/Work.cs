@@ -158,7 +158,7 @@ namespace AICompanion
         /// <summary>Its player's chests at home (not a companion's) it may open (no ward against it), nearest first.</summary>
         internal static IEnumerable<Container> YourChests(Humanoid me, Vector3 center, float radius) =>
             UnityEngine.Object.FindObjectsByType<Container>(FindObjectsSortMode.None)
-                .Where(c => c != null && c.GetInventory() != null && Home.IsChest(c) && Home.IdOn(c) == 0L && !c.IsInUse() && Vector3.Distance(c.transform.position, center) < radius
+                .Where(c => c != null && c.GetInventory() != null && Home.IsChest(c) && Home.IdOn(c) == 0L && !Containers.InUse(c) && Vector3.Distance(c.transform.position, center) < radius
                             && (!c.m_checkGuardStone || PrivateArea.CheckAccess(c.transform.position, 0f, false)))
                 .OrderBy(c => Vector3.Distance(c.transform.position, me.transform.position));
 
@@ -491,7 +491,7 @@ namespace AICompanion
                         if (yours != null) return Ordered(st, New(Kind.Store, yours, Job.None), false);
                     }
                     var stock = inv.GetAllItems().Where(i => !Keeps(me, i) && (!Stows(me) || IsStock(st, i) && StillWanted(st, i) > 0)).Select(i => i.m_shared.m_name).ToList(); // (stock its chests still want: else no trip, or round it would go)
-                    Container own = stock.Count == 0 ? null : Home.Chests(me).Where(c => !c.IsInUse() && HasRoom(c, me) && !Skipped(st, c))
+                    Container own = stock.Count == 0 ? null : Home.Chests(me).Where(c => !Containers.InUse(c) && HasRoom(c, me) && !Skipped(st, c))
                         .OrderByDescending(c => c.GetInventory().GetAllItems().Count(i => stock.Contains(i.m_shared.m_name))).ThenBy(c => Vector3.Distance(c.transform.position, me.transform.position)).FirstOrDefault();
                     if (own != null) return Ordered(st, New(Kind.Store, own, Job.None), false);
                 }
@@ -848,7 +848,7 @@ namespace AICompanion
         {
             if (t.Target == null) return false;
             if (t.Kind == Kind.Pick && Companion.Zdo(t.Target)?.GetBool(ZDOVars.s_picked, false) == true) return false;
-            if ((t.Kind == Kind.Store || t.Kind == Kind.Fetch || t.Kind == Kind.Armory || t.Kind == Kind.Supply) && ((Container)t.Target).IsInUse()) return false;
+            if ((t.Kind == Kind.Store || t.Kind == Kind.Fetch || t.Kind == Kind.Armory || t.Kind == Kind.Supply) && Containers.InUse((Container)t.Target)) return false;
             if (t.Kind == Kind.Mend && ((WearNTear)t.Target).GetHealthPercentage() >= 0.999f) return false;
             return true;
         }
@@ -952,7 +952,7 @@ namespace AICompanion
             if (full || dutyLoad)
             {
                 var stock =inv.GetAllItems().Where(i => !Keeps(me, i) && (!Stows(me) || IsStock(st, i) && StillWanted(st, i) > 0)).Select(i => i.m_shared.m_name).ToList(); // (stock its chests still want: else no trip, or round it would go)
-                Container chest = Home.Chests(me).Where(c => !c.IsInUse() && Vector3.Distance(c.transform.position, center) < radius + 40f && HasRoom(c, me) && !Skipped(st, c))
+                Container chest = Home.Chests(me).Where(c => !Containers.InUse(c) && Vector3.Distance(c.transform.position, center) < radius + 40f && HasRoom(c, me) && !Skipped(st, c))
                                      .OrderByDescending(c => c.GetInventory().GetAllItems().Count(i => stock.Contains(i.m_shared.m_name)))
                                      .ThenBy(c => Vector3.Distance(c.transform.position, me.transform.position)).FirstOrDefault(c => Brain.CanReach(me, c.transform.position));
                 if (chest != null && stock.Count > 0) return New(Kind.Store, chest, Job.None);
@@ -962,7 +962,7 @@ namespace AICompanion
             if (Stows(me) && Time.time >= st.NextTidy)
             {
                 st.NextTidy = Time.time + 600f;
-                Container messy = Home.Chests(me).Where(c => !c.IsInUse() && !Skipped(st, c) && Messy(st, c)).FirstOrDefault(c => Brain.CanReach(me, c.transform.position));
+                Container messy = Home.Chests(me).Where(c => !Containers.InUse(c) && !Skipped(st, c) && Messy(st, c)).FirstOrDefault(c => Brain.CanReach(me, c.transform.position));
                 if (messy != null) return New(Kind.Store, messy, Job.None);
             }
 
@@ -974,7 +974,7 @@ namespace AICompanion
             if (hungry && Time.time >= st.NextFoodLook)
             {
                 st.NextFoodLook = Time.time + 20f;
-                Container pantry = Home.Chests(me).Where(c => !c.IsInUse() && c.GetInventory().GetAllItems().Any(i => Food.IsFood(i) || IsCookable(i)) && !Skipped(st, c))
+                Container pantry = Home.Chests(me).Where(c => !Containers.InUse(c) && c.GetInventory().GetAllItems().Any(i => Food.IsFood(i) || IsCookable(i)) && !Skipped(st, c))
                                        .OrderBy(c => Vector3.Distance(c.transform.position, me.transform.position)).FirstOrDefault(c => Brain.CanReach(me, c.transform.position));
                 if (pantry != null) return New(Kind.Store, pantry, Job.None);
                 if (Food.Meals(me).Count == 0 && UsesPantry(me))
@@ -988,7 +988,7 @@ namespace AICompanion
             if (Gear.FoodShort(me) && Time.time >= st.NextRefillLook)
             {
                 st.NextRefillLook = Time.time + 120f;
-                Container larder = Home.Chests(me).Where(c => !c.IsInUse() && !Skipped(st, c) && c.GetInventory().GetAllItems().Any(i => Gear.WantsFood(me, i)))
+                Container larder = Home.Chests(me).Where(c => !Containers.InUse(c) && !Skipped(st, c) && c.GetInventory().GetAllItems().Any(i => Gear.WantsFood(me, i)))
                                        .OrderBy(c => Vector3.Distance(c.transform.position, me.transform.position)).FirstOrDefault(c => Brain.CanReach(me, c.transform.position));
                 if (larder != null) { st.Remember("went to its chest to fill its food slots"); return New(Kind.Store, larder, Job.None); }
                 if (UsesPantry(me)) // allowed: from your chests (food only)
@@ -1361,33 +1361,37 @@ namespace AICompanion
             return item != null && (Food.IsFood(item) || IsCookable(item));
         }
 
-        /// <summary>Move some of a chest's item into its bag. False if it did not fit.</summary>
+        /// <summary>
+        /// Move some of a chest's item into its bag. False if it did not fit, someone has the chest open, or it is not there after all. Taken
+        /// out of the chest first and only then given to it, so it is never in both.
+        /// </summary>
         internal static bool Move(Container chest, Humanoid me, ItemDrop.ItemData item, int n, bool loan = false)
         {
-            ZNetView view = chest.GetComponent<ZNetView>();
-            if (view == null || !view.IsValid()) return false;
-            if (!view.IsOwner()) view.ClaimOwnership();
-            if (!me.GetInventory().CanAddItem(item, n)) return false;
+            if (!Containers.Take(chest)) return false;
+            Inventory its = chest.GetInventory();
+            if (!its.ContainsItem(item)) // (the chest was just loaded afresh: its own copy of that item, if it is still there)
+                item = its.GetAllItems().FirstOrDefault(i => i.m_shared.m_name == item.m_shared.m_name && i.m_quality == item.m_quality && i.m_worldLevel == item.m_worldLevel && i.m_stack >= n);
+            if (item == null || item.m_stack < n || !me.GetInventory().CanAddItem(item, n)) return false;
             ItemDrop.ItemData copy = item.Clone();
             copy.m_stack = n;
             copy.m_equipped = false;
             if (loan) Loans.Mark(copy, chest); // from your chest: what it does not eat goes back there
-            if (!me.GetInventory().AddItem(copy)) return false;
-            chest.GetInventory().RemoveItem(item, n);
+            if (!its.RemoveItem(item, n)) return false;
+            if (!me.GetInventory().AddItem(copy)) { its.AddItem(copy); return false; } // (back where it was)
             return true;
         }
 
         /// <summary>A chest of its player's at home (not a companion's) with food in it, that it may open (no ward against it).</summary>
         internal static Container YourFood(Humanoid me, Vector3 center, float radius, Func<Container, bool> allowed = null) =>
             UnityEngine.Object.FindObjectsByType<Container>(FindObjectsSortMode.None)
-                .Where(c => c != null && c.GetInventory() != null && Home.IsChest(c) && Home.IdOn(c) == 0L && !c.IsInUse() && Vector3.Distance(c.transform.position, center) < radius && (allowed == null || allowed(c))
+                .Where(c => c != null && c.GetInventory() != null && Home.IsChest(c) && Home.IdOn(c) == 0L && !Containers.InUse(c) && Vector3.Distance(c.transform.position, center) < radius && (allowed == null || allowed(c))
                             && c.GetInventory().GetAllItems().Any(Food.IsFood) && (!c.m_checkGuardStone || PrivateArea.CheckAccess(c.transform.position, 0f, false)))
                 .OrderBy(c => Vector3.Distance(c.transform.position, me.transform.position)).Take(6).FirstOrDefault(c => Brain.CanReach(me, c.transform.position));
 
         /// <summary>Up to "max" of the best food in a chest of yours into its bag. What it took ("3 cooked meat"), or null.</summary>
         internal static string TakeFoodFrom(Humanoid me, Container chest, int max, bool rationed = false)
         {
-            if (chest == null || chest.IsInUse()) return null;
+            if (!Containers.Take(chest)) return null; // (someone has it open; else what is really in it, before it looks)
             var took = new Dictionary<string, int>();
             bool yours = Home.IdOn(chest) == 0L;
             int left = rationed && yours ? Mathf.Min(max, RationLeft(me)) : max; // (never more than its ration of your food a day)
@@ -1535,10 +1539,9 @@ namespace AICompanion
         public static void Store(BrainState st, Container chest)
         {
             Humanoid me = st.Body;
-            ZNetView view = chest.GetComponent<ZNetView>();
-            if (view == null || !view.IsValid() || chest.IsInUse()) return;
+            if (chest == null || Containers.InUse(chest)) return;
             if (chest.m_checkGuardStone && !PrivateArea.CheckAccess(chest.transform.position, 0f, false)) { Skip(st, chest, "it is behind a ward", 5f); return; }
-            if (!view.IsOwner()) view.ClaimOwnership();
+            if (!Containers.Take(chest)) return; // (what is really in it, before it puts in or takes out)
             Inventory mine = me.GetInventory(), its = chest.GetInventory();
             int put = 0, took = 0, tidied = 0;
             bool yours = Home.IdOn(chest) == 0L; // a chest of its player's: it only puts things in
@@ -1639,7 +1642,7 @@ namespace AICompanion
             return gear && i.m_quality < i.m_shared.m_maxQuality;
         }
 
-        internal static List<Container> ChestsNear(Humanoid me, Vector3 at) => Home.Chests(me).Where(c => c != null && !c.IsInUse() && Vector3.Distance(c.transform.position, at) < 25f).ToList();
+        internal static List<Container> ChestsNear(Humanoid me, Vector3 at) => Home.Chests(me).Where(c => c != null && !Containers.InUse(c) && Vector3.Distance(c.transform.position, at) < 25f).ToList();
 
         private static int Have(Humanoid me, List<Container> chests, string name) => me.GetInventory().CountItems(name) + chests.Sum(c => c.GetInventory().CountItems(name));
 
@@ -1712,9 +1715,9 @@ namespace AICompanion
         {
             Humanoid me = st.Body;
             if (r == null || (!forGoal && !WorthMaking(me, r.m_item.m_itemData))) return null;
-            List<Container> chests = ChestsNear(me, station != null ? station.transform.position : me.transform.position); // (no station: its chests near it)
-            if (!Upgrades.Needs(r).All(q => q.m_resItem == null || Have(me, chests, q.m_resItem.m_itemData.m_shared.m_name) >= q.GetAmount(1))) return null;
             if (!me.GetInventory().HaveEmptySlot()) return null;
+            List<Container> chests = Containers.TakeAll(ChestsNear(me, station != null ? station.transform.position : me.transform.position)); // (no station: its chests near it. Taken over and loaded fresh: what is paid is what is really there)
+            if (!Upgrades.Needs(r).All(q => q.m_resItem == null || Have(me, chests, q.m_resItem.m_itemData.m_shared.m_name) >= q.GetAmount(1))) return null;
             Pay(me, chests, r, 1);
             me.GetInventory().AddItem(r.m_item.gameObject.name, Mathf.Max(1, r.m_amount), 1, 0, 0L, Companion.NameOf(me), false);
             if (station != null) station.m_craftItemEffects.Create(station.transform.position, Quaternion.identity);
@@ -1743,9 +1746,7 @@ namespace AICompanion
                     if (left <= 0) break;
                     int take = Mathf.Min(left, chest.GetInventory().CountItems(name));
                     if (take <= 0) continue;
-                    ZNetView v = chest.GetComponent<ZNetView>();
-                    if (v != null && !v.IsOwner()) v.ClaimOwnership();
-                    chest.GetInventory().RemoveItem(name, take);
+                    chest.GetInventory().RemoveItem(name, take); // (taken over above)
                     left -= take;
                 }
             }
@@ -1758,7 +1759,7 @@ namespace AICompanion
             Recipe recipe = ObjectDB.instance?.GetRecipe(item);
             if (recipe == null || !me.GetInventory().ContainsItem(item) || item.m_quality >= item.m_shared.m_maxQuality) return null;
             int next = item.m_quality + 1;
-            List<Container> chests = ChestsNear(me, station.transform.position);
+            List<Container> chests = Containers.TakeAll(ChestsNear(me, station.transform.position)); // (taken over and loaded fresh: what is paid is what is really there)
             if (!Upgrades.Needs(recipe).All(r => r.m_resItem == null || Have(me, chests, r.m_resItem.m_itemData.m_shared.m_name) >= r.GetAmount(next))) return null; // something went meanwhile
             foreach (Piece.Requirement r in Upgrades.Needs(recipe))
             {
@@ -1772,9 +1773,7 @@ namespace AICompanion
                     if (left <= 0) break;
                     int take = Mathf.Min(left, chest.GetInventory().CountItems(name));
                     if (take <= 0) continue;
-                    ZNetView v = chest.GetComponent<ZNetView>();
-                    if (v != null && !v.IsOwner()) v.ClaimOwnership();
-                    chest.GetInventory().RemoveItem(name, take);
+                    chest.GetInventory().RemoveItem(name, take); // (taken over above)
                     left -= take;
                 }
             }

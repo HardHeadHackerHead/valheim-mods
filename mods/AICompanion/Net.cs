@@ -137,13 +137,17 @@ namespace AICompanion
             if (ZNet.instance == null || !ZNet.instance.IsServer() || !long.TryParse(payload, NumberStyles.Integer, CultureInfo.InvariantCulture, out long id)) return;
             AICompanion.Remote.Rescan();
             ZDO z = AICompanion.Remote.Find(id);
-            ZRoutedRpc.instance.InvokeRoutedRPC(sender, RpcWhereIsAnswer, id.ToString(CultureInfo.InvariantCulture) + "|" + (z != null ? "1" : "0"));
+            bool up = z != null && z.GetFloat(ZDOVars.s_health, 1f) > 0f;
+            Vector3? tomb = up ? null : AICompanion.Remote.FindTomb(id); // (not up: where its things are, "id|0|x|y|z")
+            ZRoutedRpc.instance.InvokeRoutedRPC(sender, RpcWhereIsAnswer, id.ToString(CultureInfo.InvariantCulture) + "|" + (up ? "1" : "0")
+                + (tomb != null ? $"|{F(tomb.Value.x)}|{F(tomb.Value.y)}|{F(tomb.Value.z)}" : ""));
         }
 
         private static void OnWhereIsAnswer(long sender, string payload)
         {
             string[] f = (payload ?? "").Split('|');
-            if (f.Length >= 2 && long.TryParse(f[0], NumberStyles.Integer, CultureInfo.InvariantCulture, out long id)) AICompanion.Remote.Heard(id, f[1] == "1");
+            if (f.Length >= 2 && long.TryParse(f[0], NumberStyles.Integer, CultureInfo.InvariantCulture, out long id))
+                AICompanion.Remote.Heard(id, f[1] == "1", f.Length >= 5 ? new Vector3(P(f[2]), P(f[3]), P(f[4])) : (Vector3?)null);
         }
 
         /// <summary>A companion's words for its player, from the game running it: "masterId|name|text".</summary>
@@ -245,13 +249,18 @@ namespace AICompanion
 
         // ---- markers where a companion fell ---------------------------------------------------------------
 
-        /// <summary>Called on the game that ran the companion when it fell, after its gear went into the crate.</summary>
-        public static void AnnounceFall(Humanoid c, Vector3 pos, bool grave)
+        /// <summary>
+        /// Called on the game that ran the companion when it fell, after its things went into its tombstone. "Lost": it lost a fight while
+        /// its player was away (CatchUp) and is still standing: only the marker, never the news that it must wake (that made a second one).
+        /// </summary>
+        public static void AnnounceFall(Humanoid c, Vector3 pos, bool grave, bool lost = false)
         {
-            // "name|master|x|y|z|id|masterId": the marker for everyone, and for its player's game the news that it must wake it later
+            // "name|master|x|y|z|id|masterId|grave|kept|lost": the marker for everyone, and for its player's game the news that it must wake
+            // it later. Its gear is in its tombstone now (kept stays empty; older versions sent it here). A lost fight sends no player id, so
+            // older versions don't wake a second one either.
             Send(RpcFallen, string.Join("|", Clean(Companion.NameOf(c)), Clean(Companion.Zdo(c).GetString(Keys.MasterName, "")), F(pos.x), F(pos.y), F(pos.z),
-                Companion.IdOf(c).ToString(CultureInfo.InvariantCulture), Companion.MasterId(c).ToString(CultureInfo.InvariantCulture), grave ? "1" : "0",
-                Companion.Zdo(c)?.GetString(Companion.KeptKey, "") ?? "")); // (its gear, for its player's game to put back on it)
+                Companion.IdOf(c).ToString(CultureInfo.InvariantCulture), lost ? "0" : Companion.MasterId(c).ToString(CultureInfo.InvariantCulture), grave ? "1" : "0",
+                "", lost ? "lost" : ""));
         }
 
         private static void OnFallen(long sender, string payload)
@@ -260,10 +269,17 @@ namespace AICompanion
             if (f.Length < 5) return;
             var pos = new Vector3(P(f[2]), P(f[3]), P(f[4]));
             AddMarker(pos, f[0]);
+            bool lost = f.Length >= 10 && f[9] == "lost";
             if (f.Length >= 7 && long.TryParse(f[5], NumberStyles.Integer, CultureInfo.InvariantCulture, out long id) && long.TryParse(f[6], NumberStyles.Integer, CultureInfo.InvariantCulture, out long masterId)
-                && Player.m_localPlayer != null && Player.m_localPlayer.GetPlayerID() == masterId)
-                Home.MarkDead(Player.m_localPlayer, id, pos, null, f.Length < 8 || f[7] == "1", f.Length >= 9 ? f[8] : null); // ours, run by another game (or ours): it wakes in its bed later
+                && masterId != 0L && Player.m_localPlayer != null && Player.m_localPlayer.GetPlayerID() == masterId)
+                Home.MarkDead(Player.m_localPlayer, id, pos, null, f.Length < 8 || f[7] == "1", f.Length >= 10 ? "" : f.Length >= 9 ? f[8] : null); // ours, run by another game (or ours): it wakes in its bed later (an older version's game sends the gear it kept)
             if (f[1] == "") return; // a marker re-sent for a player who just joined
+            if (lost)
+            {
+                if (Player.m_localPlayer != null)
+                    Player.m_localPlayer.Message(MessageHud.MessageType.TopLeft, $"{(f[1] != Player.m_localPlayer.GetPlayerName() ? f[1] + "'s companion " : "")}{f[0]} lost a fight at home while nobody was there: their things are in their tombstone (marked on your map)");
+                return;
+            }
             RecentlyFallen.RemoveAll(x => x.Name == f[0] && x.Master == f[1]);
             RecentlyFallen.Add(new Fallen { Name = f[0], Master = f[1], Pos = pos, At = Time.time,
                 Id = f.Length >= 7 && long.TryParse(f[5], out long fid) ? fid : 0L, MasterId = f.Length >= 7 && long.TryParse(f[6], out long fm) ? fm : 0L });

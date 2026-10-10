@@ -10,7 +10,28 @@ or by its origin (`raw`). `check()` lists what the design needs and anything tha
 import json, math, os
 
 HERE = os.path.dirname(os.path.abspath(__file__))
-GAME_BLUEPRINTS = r"D:\SteamLibrary\steamapps\common\Valheim\BepInEx\blueprints"
+def _game_blueprints():
+    """<Valheim>/BepInEx/blueprints: from this script's own place when it lives anywhere inside BepInEx (BuildOrders puts it in
+    BepInEx/blueprints/tools, Claude Tools in BepInEx/claude/modelkit), else VALHEIM_DIR, else the usual Steam folders."""
+    d = HERE
+    while True:
+        if os.path.basename(d).lower() == "bepinex":
+            return os.path.join(d, "blueprints")
+        up = os.path.dirname(d)
+        if up == d:
+            break
+        d = up
+    if os.environ.get("VALHEIM_DIR"):
+        return os.path.join(os.environ["VALHEIM_DIR"], "BepInEx", "blueprints")
+    home = os.path.expanduser("~")
+    for game in (r"C:\Program Files (x86)\Steam\steamapps\common\Valheim", r"D:\SteamLibrary\steamapps\common\Valheim",
+                 os.path.join(home, ".local/share/Steam/steamapps/common/Valheim"), os.path.join(home, ".steam/steam/steamapps/common/Valheim")):
+        if os.path.isdir(os.path.join(game, "BepInEx")):
+            return os.path.join(game, "BepInEx", "blueprints")
+    return os.path.join(r"D:\SteamLibrary\steamapps\common\Valheim", "BepInEx", "blueprints")
+
+
+GAME_BLUEPRINTS = _game_blueprints()
 
 
 def blueprints_dir():

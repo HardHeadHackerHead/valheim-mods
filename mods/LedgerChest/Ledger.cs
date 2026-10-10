@@ -328,11 +328,14 @@ namespace LedgerChest
         private void Send()
         {
             var refused = new List<string>();
-            List<string> sent = Stores.SendOut(_open, Player.m_localPlayer, refused);
-            if (sent.Count == 0 && refused.Count == 0) return;
+            var kept = new List<string>();
+            List<string> sent = Stores.SendOut(_open, Player.m_localPlayer, refused, kept);
+            if (sent.Count == 0 && refused.Count == 0 && kept.Count == 0) return;
             Note((sent.Count > 0 ? "Sent " + string.Join(", ", sent.Take(3).ToArray()) + (sent.Count > 3 ? $" and {sent.Count - 3} more" : "") + ". " : "")
-                 + (refused.Count > 0 ? "No chest has room for " + string.Join(", ", refused.Take(3).ToArray()) + ": back to you." : ""));
-            if (refused.Count > 0) Player.m_localPlayer.Message(MessageHud.MessageType.Center, "No chest has room for " + string.Join(", ", refused.Take(2).ToArray()));
+                 + (refused.Count > 0 ? "No chest has room for " + string.Join(", ", refused.Take(3).ToArray()) + ": back to you. " : "")
+                 + (kept.Count > 0 ? "No room anywhere for " + string.Join(", ", kept.Take(3).ToArray()) + ": it stays in the Ledger Chest." : ""));
+            if (kept.Count > 0) Player.m_localPlayer.Message(MessageHud.MessageType.Center, "No room anywhere: " + string.Join(", ", kept.Take(2).ToArray()) + " stays in the Ledger Chest");
+            else if (refused.Count > 0) Player.m_localPlayer.Message(MessageHud.MessageType.Center, "No chest has room for " + string.Join(", ", refused.Take(2).ToArray()));
             _nextScan = 0f;
         }
 

@@ -198,9 +198,9 @@ namespace LedgerChest
         /// <summary>
         /// The Ledger Chest keeps nothing: everything put in it goes to a chest around it. A chest assigned that item first, then one assigned
         /// its category, then an unassigned chest (one already holding it first); nearest first within each. What fits in no chest goes back
-        /// to you ("refused"). Returns what went where ("50 Wood to a chest 6 m away").
+        /// to you ("refused"); what doesn't fit there either stays in the Ledger Chest ("kept"). Returns what went where ("50 Wood to a chest 6 m away").
         /// </summary>
-        public static List<string> SendOut(Container ledger, Player p, List<string> refused)
+        public static List<string> SendOut(Container ledger, Player p, List<string> refused, List<string> kept)
         {
             var sent = new List<string>();
             Inventory from = ledger.GetInventory();
@@ -228,6 +228,7 @@ namespace LedgerChest
                     back += n;
                 }
                 if (back > 0) refused.Add($"{back} {name}");
+                if (from.ContainsItem(item) && item.m_stack > 0) kept.Add($"{item.m_stack} {name}"); // no room with you either
             }
             int Everywhere(string n) => Total(n) + yours.CountItems(n);
             foreach (var kv in before)

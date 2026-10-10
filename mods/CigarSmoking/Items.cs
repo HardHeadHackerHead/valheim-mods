@@ -29,7 +29,7 @@ namespace CigarSmoking
                 SE_Smoking effect = Smoking.Make(t, icon);
                 Effects.Add(effect);
                 GameObject cigar = MakeItem(source, t.Prefab, t.Display, t.Flavour, ItemDrop.ItemData.ItemType.Consumable, 20, 0.1f, t.Level == 1 ? 20 : 40, icon, null);
-                Cigar.AddModels(cigar, t);
+                Safely(t.Prefab, () => Cigar.AddModels(cigar, t));
                 FitHitbox(cigar, new Bounds(Vector3.zero, new Vector3(Cigar.Length, Cigar.Radius * 4f, Cigar.Radius * 4f)));
                 ItemDrop.ItemData.SharedData shared = cigar.GetComponent<ItemDrop>().m_itemData.m_shared;
                 shared.m_foodEatAnimTime = 2.5f;
@@ -54,7 +54,7 @@ namespace CigarSmoking
             if (model != null)
             {
                 object[][] parts = ModelIndex.Parts(model);
-                ModelBuilder.Build(go.transform, parts, go.layer, "model");
+                Safely(prefab, () => ModelBuilder.Build(go.transform, parts, go.layer, "model"));
                 FitHitbox(go, ModelBuilder.BoundsOf(parts));
             }
 

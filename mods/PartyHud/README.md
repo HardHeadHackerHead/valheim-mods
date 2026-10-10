@@ -5,7 +5,7 @@
 
 <img src="cover.png" alt="PartyHud" width="100%">
 
-**Version 1.7.3**  ·  [all the mods](../../README.md)  ·  installs and updates through the in-game [mod manager](https://github.com/HardHeadHackerHead/valheim-mod-manager) (**F7**)
+**Version 1.8.0**  ·  [all the mods](../../README.md)  ·  installs and updates through the in-game [mod manager](https://github.com/HardHeadHackerHead/valheim-mod-manager) (**F7**)
 
 A party panel with every player's Steam picture, health, stamina and distance, live and at any range.
 
@@ -19,6 +19,12 @@ A party panel with every player's Steam picture, health, stamina and distance, l
 **Close up: health, stamina, distance and the arrow to each player**
 
 <img src="images/2.jpg" alt="Close up: health, stamina, distance and the arrow to each player" width="100%">
+
+## What is shared
+
+Each player with this mod sends their exact health, stamina, Eitr, food and buffs to the others a few times a second, at any distance.
+Sharing/ShareMyStats switches off your own; Sharing/AllowSharing is the server's (in multiplayer its value applies to everyone), for PvP
+servers that want each player to see only what the game shows of players near them.
 <!-- END HAND-WRITTEN -->
 
 ## 🔍 How it works
@@ -71,12 +77,20 @@ In `BepInEx/config/com.dhack.partyhud.cfg` (made the first time the game runs wi
 | `OnLeft` | `false` | Put the panel on the left edge of the screen instead of the right. |
 | `Opacity` | `0.85` | How solid the panel background is (0.2 to 1). |
 
+**Sharing**
+
+| Setting | Default | What it does |
+|---|---|---|
+| `ShareMyStats` | `true` | Send your health, stamina, Eitr, food and buffs to the other players who have this mod (a few times a second, at any distance). Off: they only see what the game itself shows of you when you are near. |
+| `AllowSharing` | `true` | Players with this mod share their exact health, stamina, Eitr, food and buffs with each other at any distance. A PvP server may want this off (each player then sees only what the game shows of players near them). In multiplayer the server's value applies. |
+
 ## 👥 Playing together
 
 See [who needs which mod](../../README.md#playing-together) on the front page.
 
 ## 📜 Changes
 
+- New: Sharing/ShareMyStats (on by default): turn it off and your game stops sending your health, stamina, Eitr, food and buffs to the other players; they then see only what the game itself shows of you nearby. Sharing/AllowSharing is decided by the server in multiplayer, so a PvP server can switch the sharing off for everyone. The panel's names and numbers are now in the game's own lettering.
 - A fallen companion's row says its things are in a tombstone (they keep the gear they wore since AICompanion 0.8), not "gear in a crate".
 - New: a companion's row shows its three food slots under its picture, as players' rows do (empty slots: it is hungry and does not heal).
 - New: a companion's row shows a little picture of its face (AICompanion 0.3.0 takes it) instead of its initial.

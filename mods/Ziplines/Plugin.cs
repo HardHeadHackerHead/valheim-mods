@@ -19,10 +19,11 @@ namespace Ziplines
     {
         public const string Guid = "com.dhack.ziplines";
         public const string Name = "Ziplines";
-        public const string Version = "0.1.1";
+        public const string Version = "0.2.0";
 
         internal static Plugin Instance;
         internal static ManualLogSource Log;
+        internal static DHack.Shared.ServerSettings Synced;   // the gameplay settings the server decides in multiplayer
 
         internal static ConfigEntry<float> MaxLength, MinSlope, TopSpeed, MinSpeed, Hang, SpeedScale, WindVolume;
         internal static ConfigEntry<bool> Wind, WideView, LongFaster, NeedAxe;
@@ -33,14 +34,15 @@ namespace Ziplines
         {
             Instance = this;
             Log = Logger;
-            MaxLength = Config.Bind("Lines", "MaxLength", 12000f, new ConfigDescription("The longest a zipline can be (metres). A line remembers where its other end is, so the far post does not have to be loaded: the world around you loads as you ride.", new AcceptableValueRange<float>(15f, 20000f)));
-            MinSlope = Config.Bind("Lines", "MinSlope", 0.005f, new ConfigDescription("How much a line must fall to be ridden, as a part of its length (0.005 is 5 m in every 1000). A line only runs downhill, from its higher post to its lower.", new AcceptableValueRange<float>(0.001f, 0.1f)));
-            LongFaster = Config.Bind("Riding", "LongLinesFaster", true, "The longer the line, the faster you go (up to eight times), so a line of kilometres takes minutes, not an hour. You slow down for the last stretch either way.");
-            TopSpeed = Config.Bind("Riding", "TopSpeed", 24f, new ConfigDescription("How fast you go downhill at the most (metres per second).", new AcceptableValueRange<float>(6f, 40f)));
-            MinSpeed = Config.Bind("Riding", "MinSpeed", 5f, new ConfigDescription("How fast you go on the flat or uphill at the least (metres per second).", new AcceptableValueRange<float>(2f, 15f)));
+            Synced = new DHack.Shared.ServerSettings(Guid, Config, Logger);
+            MaxLength = Synced.Add(Config.Bind("Lines", "MaxLength", 12000f, new ConfigDescription("The longest a zipline can be (metres). A line remembers where its other end is, so the far post does not have to be loaded: the world around you loads as you ride. In multiplayer the server's value applies.", new AcceptableValueRange<float>(15f, 20000f))));
+            MinSlope = Synced.Add(Config.Bind("Lines", "MinSlope", 0.005f, new ConfigDescription("How much a line must fall to be ridden, as a part of its length (0.005 is 5 m in every 1000). A line only runs downhill, from its higher post to its lower. In multiplayer the server's value applies.", new AcceptableValueRange<float>(0.001f, 0.1f))));
+            LongFaster = Synced.Add(Config.Bind("Riding", "LongLinesFaster", true, "The longer the line, the faster you go (up to eight times), so a line of kilometres takes minutes, not an hour. You slow down for the last stretch either way. In multiplayer the server's value applies."));
+            TopSpeed = Synced.Add(Config.Bind("Riding", "TopSpeed", 24f, new ConfigDescription("How fast you go downhill at the most (metres per second). In multiplayer the server's value applies.", new AcceptableValueRange<float>(6f, 40f))));
+            MinSpeed = Synced.Add(Config.Bind("Riding", "MinSpeed", 5f, new ConfigDescription("How fast you go on the flat or uphill at the least (metres per second). In multiplayer the server's value applies.", new AcceptableValueRange<float>(2f, 15f))));
             Hang = Config.Bind("Riding", "HangBelowRope", 2.5f, new ConfigDescription("How far below the rope your feet hang (metres): your arms reach up to the handle, so this is about your height plus a little.", new AcceptableValueRange<float>(1.5f, 3.5f)));
-            NeedAxe = Config.Bind("Riding", "NeedAnAxe", true, "You hook an axe over the rope and hang from its handle, so you need one with you to ride. Off, you hang from a wooden triangle instead.");
-            SpeedScale = Config.Bind("Riding", "SpeedPercent", 50f, new ConfigDescription("How fast the whole ride is, as a percent of the standard speed (50 is half as fast, 200 twice).", new AcceptableValueRange<float>(10f, 300f)));
+            NeedAxe = Synced.Add(Config.Bind("Riding", "NeedAnAxe", true, "You hook an axe over the rope and hang from its handle, so you need one with you to ride. Off, you hang from a wooden triangle instead. In multiplayer the server's value applies."));
+            SpeedScale = Synced.Add(Config.Bind("Riding", "SpeedPercent", 50f, new ConfigDescription("How fast the whole ride is, as a percent of the standard speed (50 is half as fast, 200 twice). In multiplayer the server's value applies.", new AcceptableValueRange<float>(10f, 300f))));
             WindVolume = Config.Bind("Riding", "WindVolume", 0.12f, new ConfigDescription("How loud the wind is at full speed (0 to 1).", new AcceptableValueRange<float>(0f, 1f)));
             WideView = Config.Bind("Riding", "WideView", true, "The view widens as you speed up, for the feel of it.");
             Wind = Config.Bind("Riding", "WindSound", true, "The sound of the wind, rising with your speed.");
@@ -53,6 +55,7 @@ namespace Ziplines
 
         private void Update()
         {
+            Synced?.Update();
             Ride.Tick();
             Tools.Update();
         }
@@ -64,6 +67,7 @@ namespace Ziplines
             Tools.Unregister();
             Post.ForgetAll();
             Things.Unregister();
+            Synced?.Dispose();
             if (Instance == this) Instance = null;
         }
     }

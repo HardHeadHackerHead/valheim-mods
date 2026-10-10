@@ -28,9 +28,9 @@ namespace AICompanion
         public int Hair, Beard;
         public float SkinT = 0.3f, HairT = 0.5f, HairL = 0.8f;
         public string Skills = "";
-        public string Kept = "";
+        public string Kept = "";  // the gear it wore when it fell, from before 0.22.0 (now it stays in its tombstone: Grave.WearAgain)
         public string JournalText = "", TallyText = "";
-        public int Since = -1;   // the day it joined (Journal)   // the gear it wore when it fell, to put back on when it wakes (Companion.Pack)
+        public int Since = -1;   // the day it joined (Journal)
         public bool HasBed;
         public Vector3 Bed, LastSeen;
         public bool Dead, HasGrave;

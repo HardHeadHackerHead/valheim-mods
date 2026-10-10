@@ -278,7 +278,7 @@ namespace Arena
         private static void Add(Trader trader, string prefab, int stack, int price)
         {
             ItemDrop drop = ZNetScene.instance.GetPrefab(prefab)?.GetComponent<ItemDrop>();
-            if (drop != null) trader.m_items.Add(Item(drop, stack, price, ""));
+            if (drop != null) trader.m_items.Add(Item(drop, stack, price, Kit.Keeps(prefab, Contest.Tier) ? "" : "<color=orange>Lent</color>: from a land your world has not reached, it goes back when the fight is over.\n\n" + drop.m_itemData.GetTooltip(stack)));
         }
 
         private static Trader.TradeItem Item(ItemDrop drop, int stack, int price, string tooltip) =>
@@ -295,6 +295,7 @@ namespace Arena
             Player me = Player.m_localPlayer;
             if (me != null && Armourer.Upgrades.TryGetValue(item, out Armoury.Slot slot)) Armoury.Bought(me, slot, item.m_prefab.gameObject.name, Contest.Style);
             else if (me != null && Armourer.Switches.TryGetValue(item, out var sw)) Armoury.Switched(me, sw.Style, item.m_prefab.gameObject.name, sw.Tier, sw.Quality);
+            else if (me != null) Kit.LendIfFromBeyond(me, item.m_prefab.gameObject.name, Contest.Tier);   // (food, meads, arrows: lent if from a land the world has not reached)
             Net.Sound("cheer");
             Armourer.Restock(__instance);   // (the store lists them again right after)
             return false;                   // (no trader talk: the game's would need a trader's body)

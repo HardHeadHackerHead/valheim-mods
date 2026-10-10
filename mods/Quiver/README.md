@@ -5,7 +5,7 @@
 
 <img src="cover.png" alt="Quiver" width="100%">
 
-**Version 0.1.0**  ·  [all the mods](../../README.md)  ·  installs and updates through the in-game [mod manager](https://github.com/HardHeadHackerHead/valheim-mod-manager) (**F7**)
+**Version 0.2.0**  ·  [all the mods](../../README.md)  ·  installs and updates through the in-game [mod manager](https://github.com/HardHeadHackerHead/valheim-mod-manager) (**F7**)
 
 Pick your arrows back up. Those that hit the ground, a tree or a wall are all kept as arrows you pick up; of those that hit a creature, three
 in four drop with its loot when it dies. A quiver hangs on your back while you have arrows equipped, with the arrows you carry sticking out of it.
@@ -17,6 +17,16 @@ Only you need the mod.
 **The bow and quiver carried on your back**
 
 <img src="images/1.jpg" alt="The bow and quiver carried on your back" width="100%">
+
+## Playing on a server
+
+The arrow settings are the server's when the server has this mod: its values apply to everyone while they play there. A server without it
+sends nothing, and each player's own settings apply.
+
+## Known clashes
+
+- **BetterArchery**: its retrievable arrows and its quiver (both on by default) do the same jobs, so this mod's arrow recovery switches off
+  while its retrievable arrows are on, and this mod's quiver isn't drawn while its quiver is on.
 <!-- END HAND-WRITTEN -->
 
 ## 🔍 How it works
@@ -39,11 +49,11 @@ In `BepInEx/config/com.dhack.quiver.cfg` (made the first time the game runs with
 
 | Setting | Default | What it does |
 |---|---|---|
-| `PickUpArrows` | `true` | Arrows you shoot that hit something land on the ground as arrows you can pick up again. |
-| `ChanceOnGround` | `1` | The chance an arrow that hit the ground, a tree, a wall or the like is kept. 1 keeps every one. |
-| `ChanceOnCreature` | `0.75` | The chance an arrow that hit a creature is kept: it drops with that creature's loot when it dies. 0.75 keeps three in four. |
-| `IncludeBolts` | `true` | Crossbow bolts can be picked up too. |
-| `FireArrowsBurnUp` | `true` | Fire arrows are always used up. |
+| `PickUpArrows` | `true` | Arrows you shoot that hit something land on the ground as arrows you can pick up again. In multiplayer the server's value applies. |
+| `ChanceOnGround` | `1` | The chance an arrow that hit the ground, a tree, a wall or the like is kept. 1 keeps every one. In multiplayer the server's value applies. |
+| `ChanceOnCreature` | `0.75` | The chance an arrow that hit a creature is kept: it drops with that creature's loot when it dies. 0.75 keeps three in four. In multiplayer the server's value applies. |
+| `IncludeBolts` | `true` | Crossbow bolts can be picked up too. In multiplayer the server's value applies. |
+| `FireArrowsBurnUp` | `true` | Fire arrows are always used up. In multiplayer the server's value applies. |
 | `LogHits` | `false` | Write what each arrow hit did (kept, broke, why not) to the BepInEx log. For finding out why an arrow did not come back. |
 
 **Quiver**
@@ -63,4 +73,5 @@ See [who needs which mod](../../README.md#playing-together) on the front page.
 
 ## 📜 Changes
 
+- The arrow settings (PickUpArrows, ChanceOnGround, ChanceOnCreature, IncludeBolts, FireArrowsBurnUp) are now decided by the server in multiplayer when it has the mod, so nobody gets every arrow back on a server that keeps fewer. With BetterArchery installed its own retrievable arrows and quiver (both on by default) take over: this mod's arrow recovery and quiver switch off, so you never get two arrows back for one or wear two quivers. Fix: an arrow picked up from the ground could count as equipped.
 - New: arrows you shoot come back. Those that hit the ground, a tree or a wall are all kept as arrows you pick up; of those that hit a creature, three in four drop with its loot when it dies (only you need the mod). A quiver hangs on your back while you have arrows equipped, with the arrows you carry sticking out of it.

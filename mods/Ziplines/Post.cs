@@ -145,6 +145,8 @@ namespace Ziplines
 
             ZDO zdo = Zdo();
             if (zdo == null) return true;
+            // riding is for anyone; running a line from or to a post needs its ward's leave
+            if (!PrivateArea.CheckAccess(transform.position)) { player.Message(MessageHud.MessageType.Center, "$piece_noaccess"); return true; }
             ZDO pending = PendingZdo();
             if (pending == null)
             {
@@ -203,6 +205,12 @@ namespace Ziplines
         {
             Post to = Partner;
             long far = ToId;
+            // both ends must be yours to change (the far one is checked when it is here: its wards are only known where it is loaded)
+            if (!PrivateArea.CheckAccess(transform.position) || (to != null && !PrivateArea.CheckAccess(to.transform.position)))
+            {
+                player.Message(MessageHud.MessageType.Center, "$piece_noaccess");
+                return;
+            }
             foreach (Post p in new[] { this, to })
             {
                 if (p == null) continue;
@@ -267,7 +275,12 @@ namespace Ziplines
             Material basis = null;
             GameObject wood = ZNetScene.instance != null ? ZNetScene.instance.GetPrefab("Wood") : null;
             if (wood != null) foreach (Renderer r in wood.GetComponentsInChildren<Renderer>(true)) basis = basis ?? r.sharedMaterials.FirstOrDefault(m => m != null && m.name == "wood_item");
-            basis = basis ?? new Material(Shader.Find("Standard") ?? Shader.Find("Sprites/Default"));
+            if (basis == null)
+            {
+                Shader shader = Shader.Find("Standard") ?? Shader.Find("Sprites/Default");
+                if (shader == null) return null; // (no material to copy: the rope keeps Unity's default look)
+                basis = new Material(shader);
+            }
             _ropeMaterial = new Material(basis) { color = new Color(0.82f, 0.72f, 0.48f) };
             if (_ropeMaterial.HasProperty("_MainTex")) _ropeMaterial.mainTexture = null;
             return _ropeMaterial;

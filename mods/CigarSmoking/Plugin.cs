@@ -21,11 +21,12 @@ namespace CigarSmoking
     {
         public const string Guid = "com.dhack.cigarsmoking";
         public const string Name = "Quad's Cigars";
-        public const string Version = "0.2.2";
+        public const string Version = "0.3.0";
         public const string EffectPrefix = "SE_dh_smoking_";
 
         internal static ConfigEntry<float> Minutes, EffectStrength, GrowMinutes, DryMinutes, CureMinutes;
         internal static ConfigEntry<bool> DrawSmoke, DrawGlow;
+        internal static DHack.Shared.ServerSettings Synced;   // the gameplay settings are the server's in multiplayer
 
         public const int SmokingApiVersion = 1;
         private readonly SmokingSlots _smokingSlots = new SmokingSlots();
@@ -41,13 +42,14 @@ namespace CigarSmoking
         private void Awake()
         {
             Instance = this;
-            Minutes = Config.Bind("Smoking", "Minutes", 5f, new ConfigDescription("How long one cigar lasts (minutes).", new AcceptableValueRange<float>(0.5f, 60f)));
-            EffectStrength = Config.Bind("Smoking", "EffectStrength", 100f, new ConfigDescription("How strong the cigars' bonuses are (percent of the default). 0 for none.", new AcceptableValueRange<float>(0f, 300f)));
+            Synced = new DHack.Shared.ServerSettings(Guid, Config, Logger);
+            Minutes = Synced.Add(Config.Bind("Smoking", "Minutes", 5f, new ConfigDescription("How long one cigar lasts (minutes). In multiplayer the server's value applies.", new AcceptableValueRange<float>(0.5f, 60f))));
+            EffectStrength = Synced.Add(Config.Bind("Smoking", "EffectStrength", 100f, new ConfigDescription("How strong the cigars' bonuses are (percent of the default). 0 for none. In multiplayer the server's value applies.", new AcceptableValueRange<float>(0f, 300f))));
             DrawSmoke = Config.Bind("Look", "DrawSmoke", true, "Draw the smoke curling up from smoking players.");
             DrawGlow = Config.Bind("Look", "DrawGlow", true, "Give the ember a small flickering light (nice at night).");
-            GrowMinutes = Config.Bind("Growing", "TobaccoGrowMinutes", 25f, new ConfigDescription("How long a tobacco plant takes to grow (minutes). Needs a restart.", new AcceptableValueRange<float>(1f, 240f)));
-            DryMinutes = Config.Bind("Growing", "DryingMinutes", 2f, new ConfigDescription("How long a batch of leaves takes to dry on the rack (minutes). Needs a restart.", new AcceptableValueRange<float>(0.1f, 120f)));
-            CureMinutes = Config.Bind("Growing", "CuringMinutes", 6f, new ConfigDescription("How long a batch of leaves takes to age in the barrel (minutes). Needs a restart.", new AcceptableValueRange<float>(0.1f, 240f)));
+            GrowMinutes = Synced.Add(Config.Bind("Growing", "TobaccoGrowMinutes", 25f, new ConfigDescription("How long a tobacco plant takes to grow (minutes). Applies to plants as they load. In multiplayer the server's value applies.", new AcceptableValueRange<float>(1f, 240f))));
+            DryMinutes = Synced.Add(Config.Bind("Growing", "DryingMinutes", 2f, new ConfigDescription("How long a batch of leaves takes to dry on the rack (minutes). Applies to batches put in after a change. In multiplayer the server's value applies.", new AcceptableValueRange<float>(0.1f, 120f))));
+            CureMinutes = Synced.Add(Config.Bind("Growing", "CuringMinutes", 6f, new ConfigDescription("How long a batch of leaves takes to age in the barrel (minutes). Applies to batches put in after a change. In multiplayer the server's value applies.", new AcceptableValueRange<float>(0.1f, 240f))));
 
             _harmony = new Harmony(Guid);
             _harmony.PatchAll();
@@ -56,8 +58,11 @@ namespace CigarSmoking
             Logger.LogInfo($"{Name} {Version} loaded");
         }
 
+        private void Update() => Synced?.Update();
+
         private void OnDestroy()
         {
+            Synced?.Dispose();
             _harmony?.UnpatchSelf();
             foreach (Player p in Player.GetAllPlayers()) Smoke.Clear(p, null);
             Things.Unregister();

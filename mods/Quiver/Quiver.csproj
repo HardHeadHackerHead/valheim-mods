@@ -3,4 +3,7 @@
     <AssemblyName>Quiver</AssemblyName>
     <RootNamespace>Quiver</RootNamespace>
   </PropertyGroup>
+  <ItemGroup>
+    <Compile Include="../Shared/ServerSettings.cs" Link="Shared/ServerSettings.cs" />
+  </ItemGroup>
 </Project>

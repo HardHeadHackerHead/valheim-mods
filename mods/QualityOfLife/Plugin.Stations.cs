@@ -7,7 +7,7 @@ namespace QualityOfLife
     /// Longer reach for crafting stations while you build: a workbench, stonecutter, forge or any other station counts as "near" for building
     /// out to Stations/BuildRange metres (when that is more than its own range), so a big build at the edge of the base needs no second
     /// workbench or stonecutter. Only the building check and the circle you see change: the station's base area (where monsters will not
-    /// spawn) and the range for crafting at it stay as the game has them. Each player's own setting counts for their own building.
+    /// spawn) and the range for crafting at it stay as the game has them. In multiplayer the server's setting applies to everyone.
     /// </summary>
     public partial class Plugin
     {
@@ -15,10 +15,11 @@ namespace QualityOfLife
 
         private void BindStationsConfig()
         {
-            StationBuildRange = Config.Bind("Stations", "BuildRange", 0f, new ConfigDescription(
+            StationBuildRange = Synced.Add(Config.Bind("Stations", "BuildRange", 0f, new ConfigDescription(
                 "How far (in metres) from a crafting station (workbench, stonecutter, forge, ...) you can build with it, when that is more than the " +
-                "station's own range (20 m, more with upgrades). 0 leaves the game's ranges. 60 reaches across a big base. Takes effect at once.",
-                new AcceptableValueRange<float>(0f, 150f)));
+                "station's own range (20 m, more with upgrades). 0 leaves the game's ranges. 60 reaches across a big base. Takes effect at once. " +
+                "In multiplayer the server's value applies.",
+                new AcceptableValueRange<float>(0f, 150f))));
         }
     }
 

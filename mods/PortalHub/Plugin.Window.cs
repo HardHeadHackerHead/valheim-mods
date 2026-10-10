@@ -277,13 +277,34 @@ namespace PortalHub
             return t;
         }
 
+        private static Font _gameFont;
+        private static bool _fontLooked;
+
+        /// <summary>The game's own Averia, looked up once (it draws portal names and numbers; Norse would draw 0 as a rune). Null if a game update renamed it.</summary>
+        private static Font GameFont()
+        {
+            if (_fontLooked) return _gameFont;
+            _fontLooked = true;
+            try
+            {
+                Font[] all = Resources.FindObjectsOfTypeAll<Font>();
+                foreach (string name in new[] { "AveriaSerifLibre-Bold", "AveriaSerifLibre", "Averia" })
+                {
+                    _gameFont = all.FirstOrDefault(f => f != null && f.name.StartsWith(name, StringComparison.OrdinalIgnoreCase));
+                    if (_gameFont != null) break;
+                }
+            }
+            catch (Exception) { }
+            return _gameFont;
+        }
+
         private GUIStyle Button(Color fill, Color hover, Color border)
         {
             var s = new GUIStyle(GUI.skin.button)
             {
                 fontSize = 13, fontStyle = FontStyle.Bold, alignment = TextAnchor.MiddleCenter,
                 border = new RectOffset(2, 2, 2, 2), padding = new RectOffset(6, 6, 3, 3), margin = new RectOffset(3, 3, 3, 3),
-            };
+            }; // (buttons keep Unity's font: the star buttons need its star glyphs)
             s.normal.background = Box(fill, border);
             s.hover.background = s.active.background = s.focused.background = Box(hover, border);
             s.normal.textColor = s.hover.textColor = s.active.textColor = s.focused.textColor = new Color(0.95f, 0.9f, 0.8f);
@@ -308,6 +329,7 @@ namespace PortalHub
             _toggle.normal.textColor = _toggle.onNormal.textColor = _toggle.hover.textColor = _toggle.onHover.textColor =
                 _toggle.active.textColor = _toggle.onActive.textColor = new Color(0.95f, 0.9f, 0.8f);
             _field = new GUIStyle(GUI.skin.textField) { fontSize = 13 };
+            foreach (GUIStyle s in new[] { _title, _text, _dim, _warn, _good, _toggle, _field }) s.font = GameFont(); // the game's font, not Unity's
         }
 
         private void DestroyStyles()

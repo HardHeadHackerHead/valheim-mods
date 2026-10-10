@@ -19,7 +19,7 @@ namespace LedgerChest
     {
         public const string Guid = "com.dhack.ledgerchest";
         public const string Name = "LedgerChest";
-        public const string Version = "1.0.1";
+        public const string Version = "1.0.2";
         public const string PiecePrefab = "piece_ledgerchest";
 
         internal static Plugin Instance;
@@ -125,7 +125,8 @@ namespace LedgerChest
                 _holder = new GameObject(Name + "Prefabs");
                 _holder.SetActive(false); // keeps the copy from waking up as a real object
                 Object.DontDestroyOnLoad(_holder);
-                Look.Harvest(scene, source.GetComponentInChildren<Renderer>(true).sharedMaterial);
+                try { Look.Harvest(scene, source.GetComponentInChildren<Renderer>(true).sharedMaterial); }
+                catch (System.Exception e) { Debug.LogWarning($"{Name}: could not find the game's materials: {e.Message}"); }
                 _prefab = Make(source, bench != null ? bench.GetComponent<CraftingStation>() : null);
             }
 
@@ -160,7 +161,14 @@ namespace LedgerChest
             top.center = new Vector3(-0.12f, 0.98f, 0.05f);
             top.size = new Vector3(0.66f, 0.42f, 0.46f);
 
-            ModelBuilder.Build(go.transform, ModelData.Parts, go.layer);
+            // The look can fail (a game update renames a material), but the piece must still be registered: without it the host deletes
+            // every placed Ledger Chest, with what is in it. Then it keeps the wooden chest's look.
+            try { ModelBuilder.Build(go.transform, ModelData.Parts, go.layer); }
+            catch (System.Exception e)
+            {
+                Debug.LogWarning($"{Name}: could not build the Ledger Chest's look, it keeps the wooden chest's: {e.Message}");
+                foreach (Renderer r in go.GetComponentsInChildren<Renderer>(true)) r.enabled = true;
+            }
 
             Piece piece = go.GetComponent<Piece>();
             piece.m_name = "Ledger Chest";
@@ -168,7 +176,8 @@ namespace LedgerChest
             piece.m_category = Piece.PieceCategory.Furniture;
             piece.m_craftingStation = workbench;
             piece.m_resources = new[] { Req("Wood", 10), Req("FineWood", 4), Req("LeatherScraps", 4), Req("Resin", 2) };
-            piece.m_icon = Icon.Make(go);
+            try { Sprite icon = Icon.Make(go); if (icon != null) piece.m_icon = icon; }
+            catch (System.Exception e) { Debug.LogWarning($"{Name}: could not draw the build-menu picture: {e.Message}"); }
             go.AddComponent<LedgerPiece>();
             return go;
         }
@@ -203,7 +212,9 @@ namespace LedgerChest
     public class LedgerPiece : MonoBehaviour { }
 
     // Opening a Ledger Chest asks its owner's game, as any chest. When that is a player without this mod (the nearest player owns what is
-    // around them), nothing answers and it never opens: you take it over first (unless someone has it open). It keeps nothing, so that is safe.
+    // around them), nothing answers and it never opens: you take it over first (unless someone has it open). It can hold things (what fits
+    // in no chest stays in it), but taking it over is as safe as for any chest nobody has open: every game keeps its copy loaded from the
+    // saved contents, so the new owner starts from what the old one saved.
     [HarmonyPatch(typeof(Container), nameof(Container.Interact))]
     internal static class Container_Interact_Ledger
     {

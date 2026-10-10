@@ -99,7 +99,7 @@ namespace AICompanion
         {
             long id = Companion.IdOf(me);
             if (SourceCache.TryGetValue(id, out var hit) && Time.time - hit.Key < 4f) return hit.Value.Where(c => c != null).ToList();
-            List<Container> found = Home.Chests(me).Where(c => !c.IsInUse()).Concat(Work.YourChests(me, Work.Center(me), Work.RadiusOf(me) + 20f)).Distinct().ToList();
+            List<Container> found = Home.Chests(me).Where(c => !Containers.InUse(c)).Concat(Work.YourChests(me, Work.Center(me), Work.RadiusOf(me) + 20f)).Distinct().ToList();
             SourceCache[id] = new KeyValuePair<float, List<Container>>(Time.time, found);
             return found;
         }
@@ -294,10 +294,7 @@ namespace AICompanion
         public static void Take(BrainState st, Container chest)
         {
             Humanoid me = st.Body;
-            if (chest == null || chest.IsInUse()) return;
-            ZNetView view = chest.GetComponent<ZNetView>();
-            if (view == null || !view.IsValid()) return;
-            if (!view.IsOwner()) view.ClaimOwnership();
+            if (!Containers.Take(chest)) return; // (someone has it open; else what is really in it)
             var took = new Dictionary<string, int>();
             foreach (var want in st.BuildWant.ToList())
             {
@@ -393,7 +390,9 @@ namespace AICompanion
         /// <summary>Take what the piece costs from its bag, then its chests and yours. False (and nothing taken) when it is not all there.</summary>
         private static bool Pay(Humanoid me, Dictionary<string, int> needs)
         {
-            List<Container> chests = Sources(me);
+            // The chests holding any of it are taken over and loaded fresh first (another player may have just taken from one), and
+            // counted again: what is paid is what is really there.
+            List<Container> chests = Containers.TakeAll(Sources(me).Where(c => c != null && needs.Keys.Any(k => c.GetInventory().CountItems(k) > 0)));
             var inventories = new List<Inventory> { me.GetInventory() };
             inventories.AddRange(chests.Select(c => c.GetInventory()));
             if (!Covers(Count(inventories), needs)) return false;
@@ -404,8 +403,8 @@ namespace AICompanion
                 {
                     int n = Mathf.Min(left, inventories[k].CountItems(kv.Key));
                     if (n <= 0) continue;
-                    if (k > 0) { ZNetView v = chests[k - 1].GetComponent<ZNetView>(); if (v != null && v.IsValid() && !v.IsOwner()) v.ClaimOwnership(); }
-                    { inventories[k].RemoveItem(kv.Key, n); left -= n; }
+                    inventories[k].RemoveItem(kv.Key, n);
+                    left -= n;
                 }
             }
             return true;

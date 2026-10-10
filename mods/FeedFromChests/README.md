@@ -5,7 +5,7 @@
 
 <img src="cover.png" alt="FeedFromChests" width="100%">
 
-**Version 1.5.0**  ·  [all the mods](../../README.md)  ·  installs and updates through the in-game [mod manager](https://github.com/HardHeadHackerHead/valheim-mod-manager) (**F7**)
+**Version 1.6.0**  ·  [all the mods](../../README.md)  ·  installs and updates through the in-game [mod manager](https://github.com/HardHeadHackerHead/valheim-mod-manager) (**F7**)
 
 Feed smelters, kilns, cooking racks, fires and fermenters straight from your chests, and let smelters and kilns run themselves: choose what they use, keep a minimum in stock, and send what they make into your assigned chests.
 
@@ -15,6 +15,15 @@ Feed smelters, kilns, cooking racks, fires and fermenters straight from your che
 **A row of smelters that feed themselves from the chests round them**
 
 <img src="images/1.jpg" alt="A row of smelters that feed themselves from the chests round them" width="100%">
+## ⚠️ Known clashes
+
+- **ValheimPlus** with `autoDeposit` on for a smelter, kiln or the like: handled. ValheimPlus puts the output in a chest first and this mod
+  then leaves it alone (before 1.6.0 both did, and the output was doubled). The same for mead from a fermenter and food from a cooking station
+  when another mod delivers it.
+- **CraftFromChests**, **BuildFromChests** (ours), **Adventure Backpacks**: fine together; each pays only what the others left.
+- What a station makes goes only into chests a player assigned to it (by item or kind, with the chest assign menu, K, from QualityOfLife);
+  with no such chest it drops as in the game.
+- Only built chests are used: graves, carts, ships, a companion's bag and chest, and a backpack you carry are left alone.
 <!-- END HAND-WRITTEN -->
 
 ## 🔍 How it works
@@ -53,10 +62,10 @@ In `BepInEx/config/com.dhack.feedfromchests.cfg` (made the first time the game r
 | Setting | Default | What it does |
 |---|---|---|
 | `Enabled` | `true` | Allow smelters, kilns and furnaces to be set to keep themselves stocked from nearby chests (set up in the station's menu). |
-| `FeedRadius` | `30` | How far (in metres) from a smelter or kiln a chest can be and still be used to keep it stocked automatically. |
-| `OutputRadius` | `30` | How far (in metres) from a smelter or kiln a chest can be and still receive what it makes. |
+| `FeedRadius` | `30` | How far (in metres) from a smelter or kiln a chest can be and still be used to keep it stocked automatically. In multiplayer the server's value applies. |
+| `OutputRadius` | `30` | How far (in metres) from a smelter or kiln a chest can be and still receive what it makes (only chests assigned to it, with the chest assign menu, K). In multiplayer the server's value applies. |
 | `Interval` | `1` | Seconds between automatic top-ups of each station. |
-| `PlayerRange` | `40` | Automatic feeding only runs while you are within this many metres of the station (the game only loads chests near players). |
+| `PlayerRange` | `40` | Automatic feeding only runs while you are within this many metres of the station (the game only loads chests near players). In multiplayer the server's value applies. |
 
 **Beehives**
 
@@ -91,7 +100,7 @@ In `BepInEx/config/com.dhack.feedfromchests.cfg` (made the first time the game r
 | Setting | Default | What it does |
 |---|---|---|
 | `Enabled` | `true` | Turn the mod on or off. |
-| `Radius` | `15` | How far (in metres) from the station a chest can be and still be used. |
+| `Radius` | `15` | How far (in metres) from the station a chest can be and still be used. In multiplayer the server's value applies. |
 | `AutoFeedOnUse` | `true` | Pressing E at a station when you carry nothing it takes, but a nearby chest has some: add it for you (or open the menu if there's a choice). |
 | `AlwaysOpenMenu` | `false` | Pressing E at a station when you rely on chests: off = add one automatically if there's only one kind to add (menu only for a choice); on = always open the menu (so Fill is always at hand). |
 | `FillLimit` | `100` | Safety limit: the most of one item the menu's Fill button will put in at once. (Fill stops sooner when the station is full or you run out.) |
@@ -102,6 +111,7 @@ See [who needs which mod](../../README.md#playing-together) on the front page.
 
 ## 📜 Changes
 
+- Fix: fuel, ore and food could be added for free when a chest was opened or emptied while a station was being filled, or when the mod reloaded during a Fill. Each item now comes out of a chest before the station is asked to take it, and goes back if the station doesn't. Fix: with ValheimPlus' autoDeposit on, smelter output was put in the chests twice; now whichever mod delivers it first does, once. Graves, carts, ships, a companion's bag and chest and a backpack are no longer fed from or filled. The menu uses the game's fonts. In multiplayer the server's ranges apply (Radius, FeedRadius, OutputRadius, PlayerRange).
 - New: the things that look after a base keep themselves going from nearby chests, all at once: shield generators take their fuel so the shield never runs dry (Defenses, FuelShieldGenerators), ballistas are reloaded with the ammo they hold (ReloadBallistas), and sap extractors empty themselves into a chest assigned to sap or Materials (K), or one that already holds sap (CollectSap). Fuel and ammo leave KeepFuel of each in the chests.
 - Each kind of station now has the limits that make sense for it, in its own words, instead of one "keep at least" for everything. A kiln: "Make coal until the chests hold 100" (counting what is already in the kiln), and optionally some wood it never uses. A smelter or blast furnace smelts all the ore you tick and only asks how much coal to always leave in the chests. A windmill or spinning wheel always leaves 20 barley or flax for planting, and can stop at a target too. An eitr refinery: a target and a fuel reserve. An oven bakes each kind until the chests hold your target; a spit does the same and can keep some raw meat back for taming; a fermenter brews each mead until you have enough of it, so it skips the ones you have plenty of. The menu says for each ticked item why it is or is not being fed. Torches and fires now always leave 10 of their fuel in the chests, for crafting (Fires, KeepFuel).
 - New: fermenters look after themselves. Press E on an empty one for its menu: what is in the barrel and how long is left, Add 1, and auto-load (tick the mead bases it may use: when it is empty and has its roof, it takes one from a chest near it). When the mead is ready it taps itself, and the mead goes into a chest assigned to it or to Potions (K), or one that already holds it; otherwise it drops as usual. Also in this release: new: beehives near you put their honey into a chest (one assigned to honey or to Food with K, or one that already has honey), so they never sit full: a full hive (4 honey) stops making any. Looking at a hive now says when the next honey comes (one every 20 minutes), or why none is coming: the wrong biome (Meadows, Black Forest and Plains only) or too much cover over it (under 60% needed).

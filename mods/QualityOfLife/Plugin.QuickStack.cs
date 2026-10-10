@@ -113,7 +113,9 @@ namespace QualityOfLife
 
             foreach (Container c in ContainerRegistry.Alive())
             {
-                if (c == null || ContainerRegistry.InUse(c)) continue; // (a chest you have open is handled by the game's own button)
+                if (c == null) continue;
+                ContainerRegistry.Watch(c);
+                if (ContainerRegistry.InUse(c)) continue; // (a chest you have open is handled by the game's own button)
                 if (c.GetInventory() == null || (c.transform.position - here).sqrMagnitude > max) continue;
                 // Only built containers (chests, carts): a companion carries a Container for its bag and gear, and Sort chests emptied it
                 if (c.GetComponentInParent<Piece>() == null || c.GetComponent<TombStone>() != null) continue;
@@ -147,9 +149,9 @@ namespace QualityOfLife
         /// </summary>
         private void StackToChests(Player player)
         {
-            // Leave out any chest someone opened since the last scan, and bring the rest up to date before looking inside them.
-            List<Container> chests = _stackChests.Where(c => c != null && !ContainerRegistry.InUse(c)).ToList();
-            if (chests.Count == 0) { Tell(player, "No chest in range."); return; }
+            // Leave out any chest someone opened or is using since the last scan, and bring the rest up to date before looking inside them.
+            List<Container> chests = _stackChests.Where(c => c != null && !ContainerRegistry.Busy(c)).ToList();
+            if (chests.Count == 0) { Tell(player, _stackChests.Count > 0 ? "The chests in range are in use. Try again in a moment." : "No chest in range."); return; }
             foreach (Container c in chests) ContainerRegistry.Reload(c);
 
             Inventory inventory = player.GetInventory();
@@ -194,7 +196,10 @@ namespace QualityOfLife
                         if (n <= 0) continue;
 
                         snapshot.m_stack = n;
-                        record.Add(new Moved { Chest = c, Item = snapshot, Slot = slot });
+                        // The stack itself, when it went in whole as its own stack (not joined to one already there): Undo takes back
+                        // this very item, with its enchantments, contents or wear, and never a different one of the same name.
+                        ItemDrop.ItemData deposited = c.GetInventory().ContainsItem(item) ? item : null;
+                        record.Add(new Moved { Chest = c, Item = snapshot, Slot = slot, Deposited = deposited });
                         used.Add(c);
                     }
                     if (!inventory.ContainsItem(item)) break;
@@ -297,7 +302,7 @@ namespace QualityOfLife
             if (inventory == null || Game.instance == null) return 0;
             float max = radius * radius;
             List<Container> chests = ContainerRegistry.Alive()
-                .Where(c => c != null && c.GetInventory() != null && c.GetInventory() != inventory && !ContainerRegistry.InUse(c)
+                .Where(c => c != null && c.GetInventory() != null && c.GetInventory() != inventory && !ContainerRegistry.Busy(c)
                             && (c.transform.position - here).sqrMagnitude <= max && c.GetComponentInParent<Piece>() != null
                             && c.GetComponentInParent<Vagon>() == null && c.GetComponentInParent<Ship>() == null && c.GetComponent<TombStone>() == null && Usable(c) && !CompanionsOwn(c))
                 .OrderBy(c => (c.transform.position - here).sqrMagnitude).ToList();
@@ -348,7 +353,23 @@ namespace QualityOfLife
         // ---- undo ---------------------------------------------------------------------------------
 
         /// <summary>One stack (or part of one) that was moved into a chest.</summary>
-        private class Moved { public Container Chest; public ItemDrop.ItemData Item; public Vector2i Slot; }
+        private class Moved { public Container Chest; public ItemDrop.ItemData Item; public Vector2i Slot; public ItemDrop.ItemData Deposited; }
+
+        /// <summary>
+        /// Items any one of which is as good as another: stackable, with no data of their own (an enchantment, a backpack's contents).
+        /// Only these may be taken back by name when the moved stack itself is no longer in the chest (it joined another stack).
+        /// </summary>
+        private static bool Plain(ItemDrop.ItemData item) =>
+            item.m_shared.m_maxStackSize > 1 && (item.m_customData == null || item.m_customData.Count == 0);
+
+        /// <summary>Put an item taken out of a chest into your inventory (its old slot if free); if that fails, back into the chest.</summary>
+        private static bool GiveBack(Inventory inventory, Inventory chest, ItemDrop.ItemData item, Vector2i slot)
+        {
+            bool slotFree = inventory.GetItemAt(slot.x, slot.y) == null;
+            if (slotFree ? inventory.AddItem(item, slot) : inventory.AddItem(item)) return true;
+            chest.AddItem(item); // never lose it
+            return false;
+        }
 
         /// <summary>What the last "Stack to chests" moved, or null if there's nothing to undo (never stacked, undone already, or the inventory was closed).</summary>
         private List<Moved> _undo;
@@ -368,22 +389,51 @@ namespace QualityOfLife
             {
                 Inventory chest = m.Chest != null ? m.Chest.GetInventory() : null;
                 if (chest == null) { couldNot += m.Item.m_stack; continue; } // the chest is gone
-                if (ContainerRegistry.InUse(m.Chest)) { couldNot += m.Item.m_stack; continue; } // someone has it open: leave it alone
-                ContainerRegistry.Reload(m.Chest); // count what's really in it now
-
-                string name = m.Item.m_shared.m_name;
-                int n = Math.Min(m.Item.m_stack, chest.CountItems(name, m.Item.m_quality)); // someone may have taken some since
-                if (n <= 0) { couldNot += m.Item.m_stack; continue; }
-
-                m.Item.m_stack = n;
-                if (!inventory.CanAddItem(m.Item, n)) { couldNot += n; continue; } // no room: leave it in the chest rather than lose it
-
+                if (ContainerRegistry.Busy(m.Chest)) { couldNot += m.Item.m_stack; continue; } // someone has it open or is using it: leave it alone
                 ContainerRegistry.TakeOwnership(m.Chest);
-                chest.RemoveItem(name, n, m.Item.m_quality);
+                ContainerRegistry.Reload(m.Chest); // count what's really in it now
+                int wanted = m.Item.m_stack, got = 0;
 
-                bool slotFree = inventory.GetItemAt(m.Slot.x, m.Slot.y) == null;
-                if (slotFree ? inventory.AddItem(m.Item, m.Slot) : inventory.AddItem(m.Item)) back += n;
-                touched.Add(m.Chest);
+                // The very stack that went in, if it is still there (only some of it if someone took part of it).
+                ItemDrop.ItemData mine = m.Deposited != null && chest.ContainsItem(m.Deposited) ? m.Deposited : null;
+                if (mine != null)
+                {
+                    int take = Math.Min(wanted, mine.m_stack);
+                    if (inventory.CanAddItem(mine, take))
+                    {
+                        ContainerRegistry.TakeOwnership(m.Chest);
+                        ItemDrop.ItemData piece = mine;
+                        if (take == mine.m_stack) chest.RemoveItem(mine);
+                        else { piece = mine.Clone(); piece.m_stack = take; chest.RemoveItem(mine, take); }
+                        if (GiveBack(inventory, chest, piece, m.Slot)) got += take;
+                    }
+                }
+
+                // The rest joined other stacks in the chest (or the chest was reloaded): plain stackables come back by name, any one
+                // being as good as another. Exactly what leaves the chest is given back, so nothing is ever doubled.
+                int rest = wanted - got;
+                if (rest > 0 && Plain(m.Item))
+                {
+                    string name = m.Item.m_shared.m_name;
+                    int n = Math.Min(rest, chest.CountItems(name, m.Item.m_quality)); // someone may have taken some since
+                    if (n > 0 && inventory.CanAddItem(m.Item, n))
+                    {
+                        ContainerRegistry.TakeOwnership(m.Chest);
+                        int before = chest.CountItems(name, m.Item.m_quality);
+                        chest.RemoveItem(name, n, m.Item.m_quality);
+                        int removed = before - chest.CountItems(name, m.Item.m_quality); // exactly what left the chest
+                        if (removed > 0)
+                        {
+                            ItemDrop.ItemData piece = m.Item.Clone();
+                            piece.m_stack = removed;
+                            if (GiveBack(inventory, chest, piece, m.Slot)) got += removed;
+                        }
+                    }
+                }
+
+                back += got;
+                couldNot += wanted - got;
+                if (got > 0) touched.Add(m.Chest);
             }
 
             if (back > 0) PlayChestSounds(touched, opening: true);
@@ -446,7 +496,7 @@ namespace QualityOfLife
         {
             if (!_showStackButtons.Value || !ShowStackUi(out Player player, out InventoryGui gui)) return;
             bool stack = _stackEnabled.Value && _stackChests.Count > 0 && OpenChest() == null; // with a chest open the game's own stack/take buttons do the job
-            bool sort = _sortEnabled.Value;
+            bool sort = _sortEnabled.Value && SlotMod() == null; // next to a slot mod Sort would pull items out of its slots
             if (!stack && !sort) return;
             // How far down the buttons (and the hint under Stack to chests) reach, for other mods' panels below the inventory.
             AppDomain.CurrentDomain.SetData("DHack.QoL.UnderInventoryHeight", stack ? 54f : 36f);
@@ -529,6 +579,7 @@ namespace QualityOfLife
                 padding = new RectOffset(0, 0, 0, 0), margin = new RectOffset(0, 0, 0, 0),
             };
             _stackLabel.normal.textColor = new Color(0.95f, 0.9f, 0.8f);
+            UseGameFonts(null, _stackLabel);
         }
 
         private static void Rounded(Rect r, Color c, float radius) =>

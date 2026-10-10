@@ -24,15 +24,19 @@ namespace Arena
                 ParticleSystemRenderer any = torch.GetComponentsInChildren<ParticleSystemRenderer>(true).FirstOrDefault(r => r.sharedMaterial != null);
                 if (any != null) { _fire = any.sharedMaterial; return _fire; }
             }
-            _fire = new Material(Shader.Find("Legacy Shaders/Particles/Additive") ?? Shader.Find("Sprites/Default")) { name = "ArenaFire", mainTexture = SoftDot() };
+            Shader shader = Shader.Find("Legacy Shaders/Particles/Additive") ?? Shader.Find("Sprites/Default");
+            if (shader == null) return null;   // (none to be had: the particles keep the default)
+            _fire = new Material(shader) { name = "ArenaFire", mainTexture = SoftDot() };
             return _fire;
         }
 
-        /// <summary>An unlit colour that glows (embers, the ring on the ground).</summary>
+        /// <summary>An unlit colour that glows (embers, the ring on the ground); without that shader, a copy of a game material in the colour (null: none at all).</summary>
         internal static Material Glow(Color c)
         {
-            var m = new Material(Shader.Find("Sprites/Default")) { color = c, name = "ArenaGlow" };
-            return m;
+            Shader shader = Shader.Find("Sprites/Default");
+            if (shader != null) return new Material(shader) { color = c, name = "ArenaGlow" };
+            Material basis = ZNetScene.instance?.GetPrefab("Wood")?.GetComponentInChildren<Renderer>(true)?.sharedMaterial;
+            return basis != null ? new Material(basis) { color = c, name = "ArenaGlow", mainTexture = null } : null;
         }
 
         private static Texture2D SoftDot()

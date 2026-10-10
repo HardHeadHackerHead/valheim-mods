@@ -12,9 +12,13 @@ namespace Arena
     /// two healing meads) and the kitchen's leftovers (three meals, part spent: fresh food is the crowd's to give). All of it is lent (each
     /// item is marked); the armourer takes his back when a land is beaten, and everything lent goes back when the contest ends.
     ///
-    /// Your own things come back when the contest ends: at once if you walk out, or when you rise again if you fell (your tombstone then holds
-    /// only what the crowd threw you; the lent things are taken before it is made). Anything that went wrong in between (the game closed
-    /// mid-fight, a crash) is put right the next time your character is in the world: lent things go, your own come back.
+    /// Your own things come back when the contest ends: at once if you walk out, or when you rise again if you fell (your tombstone, carried
+    /// out to the forecourt, then holds what the crowd threw you and what you bought; the lent things are taken before it is made, and the
+    /// coins you picked up are the purse, lost with the fall). Anything that went wrong in between (the game closed mid-fight, a crash) is put
+    /// right the next time your character is in the world: lent things go, your own come back.
+    ///
+    /// Nothing from a land the world has not reached leaves the ring: the crowd's gifts and the Armourer's food, meads and arrows from such a
+    /// land are lent too (marked GiftLoan), so the Long Road's later lands are no way to their things before their time.
     /// </summary>
     internal static class Kit
     {
@@ -88,6 +92,49 @@ namespace Arena
         // ---- lending ---------------------------------------------------------------------------------------------------------------
 
         internal static bool IsLoan(ItemDrop.ItemData item) => item != null && item.m_customData != null && item.m_customData.ContainsKey(LoanKey);
+
+        /// <summary>A gift or a purchase lent only because it is from a land the world has not reached (fresh, not one of the kitchen's leftovers).</summary>
+        internal const string GiftLoan = "gift";
+        internal static bool IsGift(ItemDrop.ItemData item) => IsLoan(item) && item.m_customData[LoanKey] == GiftLoan;
+
+        // what the crowd and the Armourer hand out beside the kitchen's meals, the healing meads and the arrows, by the land it belongs to
+        // (the strong meads count as the last land's: lent until the world has reached it)
+        private static readonly Dictionary<string, int> OtherLands = new Dictionary<string, int>
+        {
+            ["Coins"] = 0, ["RottenMeat"] = 0, ["MeadStaminaMinor"] = 0, ["MeadPoisonResist"] = 2, ["BombOoze"] = 2, ["MeadStaminaMedium"] = 3, ["MeadFrostResist"] = 3,
+            ["BarleyWine"] = 4, ["MeadStaminaLingering"] = 5, ["MeadHealthLingering"] = 5, ["BombBile"] = 5, ["BombLava"] = 6,
+            ["MeadBzerker"] = 6, ["MeadHasty"] = 6, ["MeadTasty"] = 6,
+        };
+
+        /// <summary>The land a thing the arena hands out belongs to (the first whose kitchen, armoury or crowd has it; else the land it is handed out in).</summary>
+        internal static int LandOf(string prefab, int handedOutIn)
+        {
+            if (string.IsNullOrEmpty(prefab)) return handedOutIn;
+            if (OtherLands.TryGetValue(prefab, out int known)) return known;
+            for (int land = 0; land < Kitchen.Length; land++) if (Kitchen[land].Any(m => m.Prefab == prefab)) return land;
+            int at = System.Array.IndexOf(Meads, prefab);
+            if (at >= 0) return at;
+            at = System.Array.IndexOf(Arrows, prefab);
+            return at >= 0 ? at : handedOutIn;
+        }
+
+        /// <summary>Whether a gift or a purchase handed out in a land may be kept: only when it belongs to a land the world has reached.</summary>
+        internal static bool Keeps(string prefab, int land) => LandOf(prefab, land) <= Roster.Beaten();
+
+        /// <summary>Marks what was just bought (every unmarked stack of it: the game stacks a purchase onto what you have) as lent, if it may not be kept.</summary>
+        internal static void LendIfFromBeyond(Player player, string prefab, int land)
+        {
+            if (player == null || Keeps(prefab, land)) return;
+            foreach (ItemDrop.ItemData item in player.GetInventory().GetAllItems())
+                if (item.m_dropPrefab != null && item.m_dropPrefab.name == prefab && !IsLoan(item)) item.m_customData[LoanKey] = GiftLoan;
+        }
+
+        /// <summary>A fall in a contest on the arena's steel loses the purse: the coins picked up from the fighters.</summary>
+        internal static void LosePurse(Player player)
+        {
+            Inventory inv = player.GetInventory();
+            foreach (ItemDrop.ItemData coins in inv.GetAllItems().Where(i => i.m_shared.m_name == "$item_coins").ToList()) inv.RemoveItem(coins);
+        }
         internal static bool Stowed(Player p) => p != null && p.m_customData.ContainsKey(StowKey);
 
         /// <summary>Hands everything the player carries to the Arena Master. False (and nothing is touched) when something is already held.</summary>

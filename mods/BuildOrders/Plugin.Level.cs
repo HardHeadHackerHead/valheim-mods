@@ -13,7 +13,8 @@ namespace BuildOrders
     /// <summary>
     /// Level ground for a plan: while placing a blueprint, L flattens the ground under it to the plan's floor level (cutting the high side and
     /// filling the low side), so it needs fewer posts. It starts as soon as the plan is placed and uses the hoe's own "Level ground" operation
-    /// spot by spot (no hoe or stamina needed). Warded ground and places the game keeps unbuildable are left alone.
+    /// spot by spot (no hoe or stamina needed). Warded ground, places the game keeps unbuildable and the ground on and next to pieces already
+    /// standing there are left alone.
     /// A plan waiting for its ground is kept in a file per world (BepInEx/blueprints/_levelling), so it still appears after you walk away, die,
     /// log out or restart: the levelling carries on when you are back in that world.
     /// </summary>
@@ -168,15 +169,25 @@ namespace BuildOrders
         {
             bool Current() => job.Running && _levelJobs.TryGetValue(job.Key, out LevelJob current) && current == job && WorldKnown && job.World == _loadedWorld;
             Quaternion back = Quaternion.Inverse(Quaternion.Euler(0f, job.Yaw, 0f));
+            if (!TerrainAccess())
+            {
+                // this game version's ground can't be written: the plan goes down on the ground as it is
+                job.Running = false; job.Finished = true; job.Next = job.Points.Count; job.Status = "the ground can't be levelled in this game version";
+                System.Action placeAnyway = job.OnDone;
+                job.OnDone = null;
+                placeAnyway?.Invoke();
+                yield break;
+            }
 
-            // the ground is only loaded near you: wait for it
+            // the ground is only loaded near you: wait for it, and for everything standing on it (a zone's ground loads before its pieces,
+            // and levelling must see every building there to leave its ground alone)
             while (Current())
             {
                 Player p = Player.m_localPlayer;
                 if (p == null || p.IsDead()) { job.Running = false; job.Interrupted = true; job.Status = "stopped: carries on when you are back"; yield break; }
                 Vector3 flat = job.Anchor - p.transform.position; flat.y = 0f;
-                if (flat.magnitude <= 60f) break;
-                job.Status = "paused: walk back within 60 m";
+                if (flat.magnitude <= 60f && AreaReady(job.Points)) break;
+                job.Status = flat.magnitude <= 60f ? "waiting for everything around it to load (come closer)" : "paused: walk back within 60 m";
                 yield return new WaitForSeconds(1f);
             }
             if (!Current()) yield break;
@@ -191,6 +202,9 @@ namespace BuildOrders
                 if (!wardCache.TryGetValue(cell, out bool ok)) wardCache[cell] = ok = PrivateArea.CheckAccess(w, 0f, false) && !Location.IsInsideNoBuildLocation(w);
                 return ok;
             }
+            // the ground on and next to pieces already standing there (anyone's) is left as it is: they would lose their footing or be buried
+            float reach = LevelBlend + _levelRadius + 3f;
+            HashSet<long> taken = GroundUnderPieces(job.Points.Min(p => p.x) - reach, job.Points.Max(p => p.x) + reach, job.Points.Min(p => p.z) - reach, job.Points.Max(p => p.z) + reach);
 
             int changed = 0, blocked = 0;
             List<Heightmap> distinct = maps.Distinct().ToList();
@@ -217,7 +231,7 @@ namespace BuildOrders
                         float dx = Mathf.Max(job.Lo.x - l.x, 0f, l.x - job.Hi.x), dz = Mathf.Max(job.Lo.y - l.z, 0f, l.z - job.Hi.y);
                         float outside = Mathf.Sqrt(dx * dx + dz * dz);
                         if (outside >= LevelBlend) continue;
-                        if (!Allowed(w)) { blocked++; continue; }
+                        if (!Allowed(w) || taken.Contains(Cell(w.x, w.z))) { blocked++; continue; }
                         float t = outside <= 0f ? 1f : Mathf.SmoothStep(1f, 0f, outside / LevelBlend);
                         float height = hm.GetHeight(j, i) + origin.y;          // the ground there now
                         float want = Mathf.Lerp(height, job.Target, t);
@@ -234,6 +248,7 @@ namespace BuildOrders
                     hm.Poke(0, false); // rebuild the ground now
                     ClutterSystem.instance?.ResetGrass(hm.transform.position, hm.m_width * hm.m_scale / 2f);
                 }
+                RecordLevelled(job.Key, hm, tc); // what the levelling left, so the undo only puts back ground nobody has worked since
                 job.Next = Mathf.Min(job.Points.Count, job.Next + job.Points.Count / Mathf.Max(1, distinct.Count));
                 yield return null;
                 if (!Current()) yield break;
@@ -245,9 +260,19 @@ namespace BuildOrders
             {
                 job.Status = "painting";
                 int n = 0;
+                TerrainOp stroke = paint.GetComponent<TerrainOp>();
+                int r = Mathf.CeilToInt(stroke != null ? stroke.GetRadius() : 3f);
+                bool NearPiece(Vector3 pt)
+                {
+                    // (dirt over cultivated ground would wither the crops planted there)
+                    for (int dx = -r; dx <= r; dx++)
+                        for (int dz = -r; dz <= r; dz++)
+                            if (taken.Contains(Cell(pt.x + dx, pt.z + dz))) return true;
+                    return false;
+                }
                 foreach (Vector3 pt in job.Points)
                 {
-                    if (!Allowed(pt)) continue;
+                    if (!Allowed(pt) || NearPiece(pt)) continue;
                     Instantiate(paint, new Vector3(pt.x, job.Target, pt.z), Quaternion.identity);
                     if (++n % 8 == 0) yield return null;
                 }
@@ -265,8 +290,8 @@ namespace BuildOrders
             job.Done = changed; job.Skipped = blocked;
             job.Finished = true;
             job.Running = false;
-            Logger.LogInfo($"Levelling '{job.Title}' finished: {changed} ground points set, ground within {job.Worst:0.00} m" + (blocked > 0 ? $", {blocked} points warded or not allowed" : ""));
-            job.Status = blocked > 0 ? "done (some ground is warded or not allowed)" : "done";
+            Logger.LogInfo($"Levelling '{job.Title}' finished: {changed} ground points set, ground within {job.Worst:0.00} m" + (blocked > 0 ? $", {blocked} points warded, not allowed or by a building" : ""));
+            job.Status = blocked > 0 ? "done (some ground is warded, not allowed or by a building)" : "done";
             Player.m_localPlayer?.Message(MessageHud.MessageType.TopLeft, $"Ground levelled for \"{job.Title}\"");
             System.Action done = job.OnDone;
             job.OnDone = null;

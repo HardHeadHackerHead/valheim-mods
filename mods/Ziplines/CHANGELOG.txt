@@ -1,3 +1,5 @@
+0.2.0: Running or taking down a line now needs the ward's leave at both posts, as building does (riding is still for anyone). In multiplayer the server decides the line and riding rules (MaxLength, MinSlope, the speeds, LongLinesFaster and NeedAnAxe). Letting go uses the game's Jump (your own key, or a gamepad), the wind follows the game's sound volume, and a problem with the post's look can no longer stop it being registered. Updating the mod now asks for a restart (it adds a build piece).
+
 Fix: no more stutter every 5 seconds. Looking for Claude Tools searched everything the game had loaded; it now asks BepInEx's list of mods.
 
 New: Zipline Posts. Build two, link them with E, and ride the downhill rope between them hanging from your axe.

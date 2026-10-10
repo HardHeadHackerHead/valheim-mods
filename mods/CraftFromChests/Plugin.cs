@@ -10,7 +10,7 @@ namespace CraftFromChests
     {
         public const string Guid = "com.dhack.craftfromchests";
         public const string Name = "CraftFromChests";
-        public const string Version = "1.3.4";
+        public const string Version = "1.4.0";
 
         internal static ConfigEntry<bool> Enabled;
         internal static ConfigEntry<float> Radius;
@@ -24,10 +24,12 @@ namespace CraftFromChests
         internal static ConfigEntry<float> RangeButtonWidth;
 
         internal static BepInEx.Logging.ManualLogSource Log;
+        internal static DHack.Shared.ServerSettings Synced; // settings the server decides in multiplayer
 
         private void Awake()
         {
             Log = Logger;
+            Synced = new DHack.Shared.ServerSettings(Guid, Config, Logger);
             ShowHaveCounts = Config.Bind("Display", "ShowHaveCounts", true,
                 "In the crafting window, show how many of each material you HAVE (inventory + chests) next to how many you need.");
             ShowLines = Config.Bind("Display", "ShowLines", false, "Draw lines from the crafting station to every chest it can use.");
@@ -39,8 +41,9 @@ namespace CraftFromChests
             gameObject.AddComponent<ChestOverlay>();
 
             Enabled = Config.Bind("General", "Enabled", true, "Turn the mod on or off.");
-            Radius = Config.Bind("General", "Radius", 20f,
-                "How far (in meters) from the crafting station a chest can be and still be used.");
+            Radius = Synced.Add(Config.Bind("General", "Radius", 20f,
+                new ConfigDescription("How far (in meters) from the crafting station a chest can be and still be used. In multiplayer the server's value applies.",
+                    new AcceptableValueRange<float>(2f, 50f))));
 
             _harmony = new Harmony(Guid);
             _harmony.PatchAll();
@@ -87,10 +90,13 @@ namespace CraftFromChests
             }
         }
 
+        private void Update() => Synced?.Update(); // notices joining and leaving a server, for the settings it decides
+
         // ScriptEngine destroys the old plugin instance on reload; remove our patches so they don't stack.
         private void OnDestroy()
         {
             _harmony?.UnpatchSelf();
+            Synced?.Dispose();
             ChestScanner.Suspend = false;
             ChestScanner.Consuming = false;
             HaveLabel.DestroyAll(); // the "you have" numbers live in the game's UI, so remove them ourselves

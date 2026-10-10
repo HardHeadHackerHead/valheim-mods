@@ -9,7 +9,9 @@ namespace BirdTrap
     /// the bird (two or three feathers) and let it go; the door goes back up, and with bait left the next bird is on its way.
     ///
     /// Everything is kept on the trap (how much bait, when the next bird comes, whether one is in), in game time, so birds come while you
-    /// are away and everyone nearby sees the same trap. The game that owns the trap (usually the nearest player's) decides the catch.
+    /// are away and everyone nearby sees the same trap. The game that owns the trap (usually the nearest player's) decides the catch, and
+    /// it alone changes the trap: pressing E asks it (an RPC), and the feathers come only on its yes, so two players plucking one bird at
+    /// once can't both get them.
     /// </summary>
     public class TrapPiece : MonoBehaviour, Interactable, Hoverable
     {
@@ -31,14 +33,31 @@ namespace BirdTrap
         private Quaternion _birdTurn;
         private float _doorAt = 1f;          // 1 = up (set), 0 = down (sprung): where the door is drawn
         private bool _hadBird, _seen;
-        private float _nextThink;
+        private float _nextThink, _pluckAskedAt = -9f;
+        private readonly System.Collections.Generic.List<string> _baitSent = new System.Collections.Generic.List<string>(); // bait on its way to the owner (given back if it doesn't fit)
+        private float _baitSentAt;
 
-        private void OnDestroy() => All.Remove(this);
+        private const string RpcBait = "bt_Bait", RpcBaitTaken = "bt_BaitTaken", RpcPluck = "bt_Pluck", RpcPlucked = "bt_Plucked";
+        private static readonly string[] Rpcs = { RpcBait, RpcBaitTaken, RpcPluck, RpcPlucked };
+
+        private void OnDestroy()
+        {
+            All.Remove(this);
+            if (_nview != null) foreach (string rpc in Rpcs) _nview.Unregister(rpc); // (a reloaded copy registers them again)
+        }
 
         private void Awake()
         {
             _nview = GetComponent<ZNetView>();
-            if (_nview != null && _nview.GetZDO() != null) All.Add(this); // (not the prefab's copy)
+            if (_nview != null && _nview.GetZDO() != null)
+            {
+                All.Add(this); // (not the prefab's copy)
+                foreach (string rpc in Rpcs) _nview.Unregister(rpc); // an older copy's, left behind by a reload
+                _nview.Register<string>(RpcBait, RPC_Bait);
+                _nview.Register<int>(RpcBaitTaken, RPC_BaitTaken);
+                _nview.Register(RpcPluck, RPC_Pluck);
+                _nview.Register<int>(RpcPlucked, RPC_Plucked);
+            }
             foreach (Transform t in GetComponentsInChildren<Transform>(true))
             {
                 switch (t.name)
@@ -183,28 +202,89 @@ namespace BirdTrap
             if (!PrivateArea.CheckAccess(transform.position)) return true;
             ZDO zdo = Zdo;
             if (zdo == null) return false;
-            if (!_nview.IsOwner()) _nview.ClaimOwnership(); // (only the owner may change it)
 
-            if (zdo.GetBool(KeyBird, false)) { Pluck(player, zdo); return true; }
+            // the trap's owner makes the change (whoever presses E asks it): see RPC_Pluck and RPC_Bait
+            if (zdo.GetBool(KeyBird, false))
+            {
+                if (Time.time - _pluckAskedAt > 1f) { _pluckAskedAt = Time.time; _nview.InvokeRPC(RpcPluck); } // (once: the answer is on its way)
+                return true;
+            }
 
             int bait = zdo.GetInt(KeyBait, 0), max = Plugin.MaxBait.Value;
             if (bait >= max) { player.Message(MessageHud.MessageType.Center, "It holds all the bait it can"); return true; }
+            if (_baitSent.Count > 0 && Time.time - _baitSentAt < 5f) return true; // (still waiting for the owner's answer)
+            _baitSent.Clear(); // (no answer came: the owner left, and that bait went with it, as the game's own fermenter does)
             Inventory inv = player.GetInventory();
-            int added = 0;
-            string used = null;
-            while (bait + added < max)
+            var sent = new System.Collections.Generic.List<string>();
+            while (bait + sent.Count < max)
             {
                 ItemDrop.ItemData food = inv.GetAllItems().FirstOrDefault(IsBait);
                 if (food == null) break;
-                used = food.m_shared.m_name;
+                sent.Add(food.m_dropPrefab.name);
                 inv.RemoveItem(food, 1);
-                added++;
                 if (!alt) break; // one at a time; the alternate use fills it
             }
-            if (added == 0) { player.Message(MessageHud.MessageType.Center, "You need berries or seeds for bait"); return true; }
-            zdo.Set(KeyBait, bait + added);
-            player.Message(MessageHud.MessageType.Center, $"Baited with {Localization.instance.Localize(used).ToLowerInvariant()} ({bait + added}/{max})");
+            if (sent.Count == 0) { player.Message(MessageHud.MessageType.Center, "You need berries or seeds for bait"); return true; }
+            _baitSent.AddRange(sent);
+            _baitSentAt = Time.time;
+            _nview.InvokeRPC(RpcBait, string.Join(",", sent.ToArray()));
             return true;
+        }
+
+        // ---- the owner's answers --------------------------------------------------------------------------------------------------------
+
+        /// <summary>The owner: someone puts bait in. It takes what fits and says how many (the rest goes back to them).</summary>
+        private void RPC_Bait(long sender, string items)
+        {
+            ZDO zdo = Zdo;
+            if (zdo == null || !_nview.IsOwner()) { _nview.InvokeRPC(sender, RpcBaitTaken, 0); return; } // (not ours any more: they get it all back)
+            int offered = (items ?? "").Split(new[] { ',' }, System.StringSplitOptions.RemoveEmptyEntries).Length;
+            int bait = zdo.GetInt(KeyBait, 0);
+            int taken = Mathf.Clamp(Plugin.MaxBait.Value - bait, 0, offered);
+            if (zdo.GetBool(KeyBird, false)) taken = 0; // (a bird is in: pluck it first)
+            if (taken > 0) zdo.Set(KeyBait, bait + taken);
+            _nview.InvokeRPC(sender, RpcBaitTaken, taken);
+        }
+
+        /// <summary>The player who baited it: the owner took this many; what it didn't take comes back.</summary>
+        private void RPC_BaitTaken(long sender, int taken)
+        {
+            Player player = Player.m_localPlayer;
+            if (player == null || _baitSent.Count == 0) return;
+            taken = Mathf.Clamp(taken, 0, _baitSent.Count);
+            string used = _baitSent[0];
+            for (int i = taken; i < _baitSent.Count; i++)
+            {
+                GameObject back = ZNetScene.instance != null ? ZNetScene.instance.GetPrefab(_baitSent[i]) : null;
+                if (back == null) continue;
+                if (player.GetInventory().CanAddItem(back, 1)) player.GetInventory().AddItem(back, 1);
+                else Instantiate(back, player.transform.position + Vector3.up, Quaternion.identity);
+            }
+            _baitSent.Clear();
+            ZDO zdo = Zdo;
+            int now = zdo != null ? zdo.GetInt(KeyBait, 0) : taken, max = Plugin.MaxBait.Value;
+            GameObject usedPrefab = ZNetScene.instance != null ? ZNetScene.instance.GetPrefab(used) : null;
+            string name = usedPrefab != null ? Localization.instance.Localize(usedPrefab.GetComponent<ItemDrop>().m_itemData.m_shared.m_name).ToLowerInvariant() : used;
+            player.Message(MessageHud.MessageType.Center, taken > 0 ? $"Baited with {name} ({Mathf.Max(now, taken)}/{max})" : "It holds all the bait it can");
+        }
+
+        /// <summary>The owner: someone plucks the bird. Only the first asker gets it (the bird is gone before the answer goes out).</summary>
+        private void RPC_Pluck(long sender)
+        {
+            ZDO zdo = Zdo;
+            if (zdo == null || !_nview.IsOwner() || !zdo.GetBool(KeyBird, false)) { _nview.InvokeRPC(sender, RpcPlucked, 0); return; }
+            zdo.Set(KeyBird, false);
+            int n = Random.Range(Mathf.Min(Plugin.MinFeathers.Value, Plugin.MaxFeathers.Value), Mathf.Max(Plugin.MinFeathers.Value, Plugin.MaxFeathers.Value) + 1);
+            _nview.InvokeRPC(sender, RpcPlucked, Mathf.Max(1, n));
+        }
+
+        /// <summary>The player who plucked it: the owner's answer (0: someone else got to it first).</summary>
+        private void RPC_Plucked(long sender, int n)
+        {
+            Player player = Player.m_localPlayer;
+            if (player == null) return;
+            if (n <= 0) { player.Message(MessageHud.MessageType.Center, "The bird is already gone"); return; }
+            Pluck(player, n);
         }
 
         /// <summary>Using an item from the hotbar on it: bait goes in (as the use key does with bait you carry).</summary>
@@ -247,10 +327,9 @@ namespace BirdTrap
 
         private static bool IsBait(ItemDrop.ItemData i) => i?.m_dropPrefab != null && Baits.Contains(i.m_dropPrefab.name);
 
-        private void Pluck(Player player, ZDO zdo)
+        /// <summary>The feathers the owner said yes to, into your bag (or at your feet), and the bird flies off.</summary>
+        private void Pluck(Player player, int n)
         {
-            zdo.Set(KeyBird, false);
-            int n = Random.Range(Mathf.Min(Plugin.MinFeathers.Value, Plugin.MaxFeathers.Value), Mathf.Max(Plugin.MinFeathers.Value, Plugin.MaxFeathers.Value) + 1);
             GameObject feathers = ZNetScene.instance != null ? ZNetScene.instance.GetPrefab("Feathers") : null;
             if (feathers != null)
             {

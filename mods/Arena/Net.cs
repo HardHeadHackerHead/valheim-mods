@@ -7,7 +7,7 @@ namespace Arena
 {
     /// <summary>
     /// What players at the arena tell each other. The game running a fight says so every couple of seconds (who, which contest, the round,
-    /// the crowd), so the Arena Master will not start a second one, and everyone near the arena sees and hears it: the announcer's calls, the
+    /// the crowd; a duel too), so the Arena Master will not start a second one, and everyone near the arena sees and hears it: the announcer's calls, the
     /// crowd's roars, the grates rising, the cover on the floor. Each game draws its own arena, so these keep them showing the same fight.
     /// </summary>
     internal static class Net
@@ -46,12 +46,15 @@ namespace Arena
                 rpc.Register<ZPackage>(RpcState, OnState);
                 rpc.Register<ZPackage>(RpcEvent, OnEvent);
             }
-            if (Contest.Active && Time.time > _nextState)
+            if ((Contest.Active || Duel.Active) && Time.time > _nextState)
             {
+                // (a duel says so too: no contest or other duel may start in the ring while it is on)
                 _nextState = Time.time + 2f;
                 var pkg = new ZPackage();
                 pkg.Write(Player.m_localPlayer != null ? Player.m_localPlayer.GetPlayerName() : "");
-                pkg.Write(Contest.Title); pkg.Write(Contest.Round); pkg.Write(Contest.Rounds); pkg.Write(Contest.FoesLeft); pkg.Write(Crowd.Favour);
+                if (Contest.Active) { pkg.Write(Contest.Title); pkg.Write(Contest.Round); pkg.Write(Contest.Rounds); pkg.Write(Contest.FoesLeft); }
+                else { pkg.Write("a duel with " + Duel.OpponentName); pkg.Write(0); pkg.Write(0); pkg.Write(0); }
+                pkg.Write(Crowd.Favour);
                 Send(RpcState, pkg);
             }
             // a fight we were watching has ended: the crowd goes home
@@ -77,7 +80,7 @@ namespace Arena
 
         private static void OnState(long sender, ZPackage pkg)
         {
-            if (sender == ZDOMan.GetSessionID()) return;
+            if (sender == ZDOMan.GetSessionID() || Duel.Involves(sender)) return;
             RemoteName = pkg.ReadString(); RemoteTitle = pkg.ReadString(); RemoteRound = pkg.ReadInt(); RemoteRounds = pkg.ReadInt(); RemoteFoes = pkg.ReadInt(); RemoteFavour = pkg.ReadSingle();
             _remoteFrom = sender; _remoteAt = Time.time;
             if (MeNear && !Contest.Active && !Duel.Active)
@@ -121,7 +124,9 @@ namespace Arena
                 case Kind.Door: Scenery.OpenDoor(f); break;
                 case Kind.Effect:
                     {
-                        // a show effect (fire, sparks: none of the game's harmful ones), by prefab name, at a point
+                        // a show effect (fire, sparks: none of the game's harmful ones), by prefab name, at a point: only those the arena uses
+                        // (another game could otherwise make anything appear here, a creature or a bomb)
+                        if (!ShowEffects.Contains(a)) break;
                         string[] v = b.Split(';');
                         GameObject fx = ZNetScene.instance != null ? ZNetScene.instance.GetPrefab(a) : null;
                         if (fx != null && v.Length == 3 && float.TryParse(v[0], System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture, out float x)
@@ -132,6 +137,8 @@ namespace Arena
                     }
             }
         }
+
+        private static readonly System.Collections.Generic.HashSet<string> ShowEffects = new System.Collections.Generic.HashSet<string> { "fx_fireball_staff_explosion", "fx_fireskeleton_nova" };
 
         internal static void Shout(string text, string sub = "", float seconds = 4f) => Event(Kind.Shout, text, sub, seconds);
         internal static void Sound(string name) => Event(Kind.Sound, name);

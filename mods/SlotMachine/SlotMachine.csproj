@@ -8,4 +8,7 @@
     <EmbeddedResource Include="icon.png" LogicalName="icon.png" />
     <EmbeddedResource Include="symbols.png" LogicalName="symbols.png" />
   </ItemGroup>
+  <ItemGroup>
+    <Compile Include="../Shared/ServerSettings.cs" Link="Shared/ServerSettings.cs" />
+  </ItemGroup>
 </Project>

@@ -4,8 +4,8 @@ namespace SkalTavern
 {
     /// <summary>
     /// How drunk you are (0 sober, 100 very drunk, past it you fall), what each stage does, and the status effects that show it. It rises with
-    /// every drink and falls with time (Drinking: MinutesToSober). Stages: Warm (a little stamina and warmth), Merry, Tipsy (the view sways and
-    /// your feet wander), Drunk (more of both, and now and then you stagger), Sloshed. Falling down sobers you a little; a big night ends in a
+    /// every drink and falls with time (Drinking: MinutesToSober). Stages: Warm (a little stamina), Merry, Tipsy (the view sways, your feet
+    /// wander, and the cold no longer bites), Drunk (more of both, and now and then you stagger), Sloshed. Falling down sobers you a little; a big night ends in a
     /// hangover.
     /// </summary>
     internal static class Tipsy
@@ -141,7 +141,9 @@ namespace SkalTavern
                 : Mathf.Lerp(1.15f, 0.85f, Mathf.InverseLerp(70f, 110f, level));
             m_healthRegenMultiplier = level < 8f ? 1f : 1.1f;
             m_mods.Clear();
-            if (level >= 12f) m_mods.Add(new HitData.DamageModPair { m_type = HitData.DamageType.Frost, m_modifier = HitData.DamageModifier.Resistant });
+            // warm against the cold only once you are properly tipsy (and your feet wander): the game lets any frost resistance, even slight,
+            // keep the cold and freezing off entirely, so a single ale must not do it
+            if (level >= 35f) m_mods.Add(new HitData.DamageModPair { m_type = HitData.DamageType.Frost, m_modifier = HitData.DamageModifier.Resistant });
         }
 
         public override string GetIconText() => Tipsy.Stage(Tipsy.Level);

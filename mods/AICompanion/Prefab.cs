@@ -35,21 +35,25 @@ namespace AICompanion
                 Object.DontDestroyOnLoad(_holder);
                 _prefab = Make(player, scene);
             }
+            // A hot reload: the old copy left its prefab registered (Unregister) so no companion is ever without one; ours replaces it.
+            Dictionary<int, GameObject> named = Named(scene);
+            if (named.TryGetValue(Hash, out GameObject old) && old != null && old != _prefab && old.name == PrefabName)
+            {
+                scene.m_prefabs.Remove(old);
+                if (old.transform.parent != null && old.transform.parent.name == Plugin.Name + "Prefabs") Object.Destroy(old.transform.parent.gameObject);
+            }
             if (!scene.m_prefabs.Contains(_prefab)) scene.m_prefabs.Add(_prefab);
-            Named(scene)[Hash] = _prefab;
+            named[Hash] = _prefab;
         }
 
+        /// <summary>
+        /// Unloading (a hot reload, or the game closing): the prefab stays registered. ScriptEngine destroys the old copy a frame before the
+        /// new one registers, and a host that loads an area in that frame deletes every companion there with everything it carries
+        /// ("Destroyed invalid prefab ZDO"). The prefab is only the game's own components, so leaving it is safe; the new copy replaces it.
+        /// </summary>
         public static void Unregister()
         {
-            if (_prefab == null) return;
-            if (ZNetScene.instance != null)
-            {
-                ZNetScene.instance.m_prefabs.Remove(_prefab);
-                Dictionary<int, GameObject> named = Named(ZNetScene.instance);
-                if (named.TryGetValue(Hash, out GameObject current) && current == _prefab) named.Remove(Hash); // only our own entry
-            }
             _prefab = null;
-            Object.Destroy(_holder);
             _holder = null;
         }
 

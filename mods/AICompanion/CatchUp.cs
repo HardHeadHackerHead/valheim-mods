@@ -91,7 +91,7 @@ namespace AICompanion
             z.Set(Skill.Key, Skill.AfterDeath(z.GetString(Skill.Key, "")));
             Skill.Forget(me);
             Food.Clear(me);
-            if (any) Net.AnnounceFall(me, at, true);
+            if (any) Net.AnnounceFall(me, at, true, lost: true); // (it is still standing: a marker only, no waking)
             return at;
         }
 
@@ -552,9 +552,10 @@ namespace AICompanion
         {
             Inventory mine = me.GetInventory();
             int have = mine.GetAllItems().Where(Food.IsFood).Sum(i => i.m_stack);
-            foreach (Container chest in Home.Chests(me).Where(c => !c.IsInUse()))
+            foreach (Container chest in Home.Chests(me).Where(c => !Containers.InUse(c)))
             {
                 if (have >= 10) break;
+                if (!Containers.Take(chest)) continue; // (what is really in it, before it looks)
                 foreach (ItemDrop.ItemData food in chest.GetInventory().GetAllItems().Where(Food.IsFood).OrderByDescending(i => i.m_shared.m_food + i.m_shared.m_foodStamina).ToList())
                 {
                     if (have >= 10) break;
@@ -624,7 +625,7 @@ namespace AICompanion
                 ItemDrop drop = prefab != null ? prefab.GetComponent<ItemDrop>() : null;
                 if (drop == null) continue;
                 int left = kv.Value;
-                List<Container> own = Home.Chests(me).Where(c => !c.IsInUse()).ToList();
+                List<Container> own = Home.Chests(me).Where(c => !Containers.InUse(c)).ToList();
                 List<Container> yours = Work.Stows(me) ? Work.YourChests(me, Work.Center(me), Work.RadiusOf(me) + 20f).ToList() : new List<Container>();
                 // Its duties work for you: what it brings goes into your chests first (its own keep a little food for itself); without duties,
                 // into its own first, then yours (only put in).
@@ -637,8 +638,7 @@ namespace AICompanion
                     foreach (Container chest in own)
                     {
                         if (toLarder <= 0) break;
-                        ZNetView lv = chest.GetComponent<ZNetView>();
-                        if (lv != null && !lv.IsOwner()) lv.ClaimOwnership();
+                        if (!Containers.Take(chest)) continue; // (taken over and loaded fresh before anything goes in)
                         int had = chest.GetInventory().CountItems(drop.m_itemData.m_shared.m_name);
                         chest.GetInventory().AddItem(prefab, toLarder);
                         int put = chest.GetInventory().CountItems(drop.m_itemData.m_shared.m_name) - had;
@@ -648,8 +648,7 @@ namespace AICompanion
                 foreach (Container chest in chests)
                 {
                     if (left <= 0) break;
-                    ZNetView v = chest.GetComponent<ZNetView>();
-                    if (v != null && !v.IsOwner()) v.ClaimOwnership();
+                    if (!Containers.Take(chest)) continue; // (taken over and loaded fresh before anything goes in)
                     int before = chest.GetInventory().CountItems(drop.m_itemData.m_shared.m_name);
                     chest.GetInventory().AddItem(prefab, left);
                     int added = chest.GetInventory().CountItems(drop.m_itemData.m_shared.m_name) - before;

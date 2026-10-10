@@ -84,6 +84,9 @@ namespace AICompanion
         }
 
         internal static void Forget() => Owned.Clear();
+
+        /// <summary>This game just took the companion over: its next load reads the save (Containers.Take).</summary>
+        internal static void Fresh(Container c) => Owned.Remove(c.GetInstanceID());
     }
 
     [HarmonyPatch(typeof(Container), nameof(Container.Interact))]
@@ -201,7 +204,7 @@ namespace AICompanion
         private static bool Prefix(HitData hit) => !(Aoe_OnHit.HittingCompanion && hit.m_hitType == HitData.HitType.Self);
     }
 
-    // It falls: its gear goes into a crate where it stood. (And a kill of its own is counted, on the game that runs it.)
+    // It falls: everything it has goes into a tombstone where it stood. (And a kill of its own is counted, on the game that runs it.)
     [HarmonyPatch(typeof(Character), nameof(Character.OnDeath))]
     internal static class Character_OnDeath
     {
@@ -226,7 +229,7 @@ namespace AICompanion
             if (!view.IsOwner()) return;
             try
             {
-                int carried = h.GetInventory().NrOfItems() - Companion.Worn(h).Count(i => h.GetInventory().ContainsItem(i)); // (its gear it keeps)
+                int carried = h.GetInventory().NrOfItems();
                 string by = LastHit(h)?.GetAttacker() is Character k ? Localization.instance.Localize(k.m_name) : st != null && Time.time - st.LastHurtAt < 5f ? st.LastHurtBy : null;
                 if (by == null) // poison, fire, frost: damage over time comes with no attacker
                 {
@@ -238,15 +241,15 @@ namespace AICompanion
                 Journal.Fell(h, by, h.transform.position);
                 carried = Companion.DropGear(h);
                 Player master = Companion.Master(h);
-                if (master == Player.m_localPlayer)
+                if (master != null && master == Player.m_localPlayer)
                 {
                     Home.MarkDead(master, Companion.IdOf(h), h.transform.position, h, carried > 0);
                     bool bed = Companion.Zdo(h).GetBool(Keys.HasBed, false);
-                    Plugin.Tell($"{Companion.NameOf(h)} has fallen. They keep the gear they wore; {(carried > 0 ? "what they carried is in their tombstone (the skull on your map)" : "they carried nothing else")}. They wake {(bed ? "in their bed" : "beside you")} in {Plugin.RespawnSeconds.Value:0} s.");
+                    Plugin.Tell($"{Companion.NameOf(h)} has fallen. {(carried > 0 ? "Everything they had is in their tombstone (the skull on your map). " : "")}They wake {(bed ? "in their bed" : "beside you")} in {Plugin.RespawnSeconds.Value:0} s{(carried > 0 ? " and put their gear back on (or go back for it)" : "")}.");
                 }
                 Net.AnnounceFall(h, h.transform.position, carried > 0);
             }
-            catch (System.Exception e) { Plugin.Instance?.Warn("Could not put the fallen companion's gear in a crate: " + e); }
+            catch (System.Exception e) { Plugin.Instance?.Warn("Could not put the fallen companion's gear in a tombstone: " + e); }
         }
     }
 
@@ -282,6 +285,8 @@ namespace AICompanion
                 if (Vector3.Distance(c.transform.position, __instance.transform.position) > 25f) continue;
                 if (distantTeleport && !c.IsTeleportable(false)) { Plugin.Tell($"{Companion.NameOf(c)} cannot go through: they carry something the portal refuses"); continue; }
                 ZNetView view = c.GetComponent<ZNetView>();
+                Container gear = c.GetComponent<Container>();
+                if (gear != null && !Containers.Take(gear)) { Plugin.Tell($"{Companion.NameOf(c)} cannot come through: someone has their gear open"); continue; } // (its bag loaded fresh as it is taken over)
                 if (!view.IsOwner()) view.ClaimOwnership();
                 Vector3 to = pos - rot * Vector3.forward * 2f;
                 c.transform.position = to;
@@ -319,6 +324,20 @@ namespace AICompanion
             ZCursor.Show();
             return false;
         }
+    }
+
+    // Typing a name: other mods and the map ignore their keys (the game's own check for "typing"), and Tab does not open the inventory
+    // (which closes the menu).
+    [HarmonyPatch(typeof(Minimap), nameof(Minimap.InTextInput))]
+    internal static class Minimap_InTextInput_Menu
+    {
+        private static void Postfix(ref bool __result) { if (Plugin.TypingInMenu) __result = true; }
+    }
+
+    [HarmonyPatch(typeof(InventoryGui), "Update")]
+    internal static class InventoryGui_Update_Typing
+    {
+        private static void Prefix() { if (Plugin.TypingInMenu) ZInput.ResetButtonStatus("Inventory"); }
     }
 
     [HarmonyPatch(typeof(ZInput), nameof(ZInput.GetMouseScrollWheel))]

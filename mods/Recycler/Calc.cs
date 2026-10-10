@@ -74,7 +74,13 @@ namespace Recycler
             }
         }
 
-        internal static bool Valuable(ItemDrop.ItemData item) => item.m_equipped || item.m_quality >= 2;
+        internal static bool Valuable(ItemDrop.ItemData item) => item.m_equipped || item.m_quality >= 2 || HasModData(item);
+
+        /// <summary>
+        /// Other mods keep their data on the item itself (a backpack's contents, enchantments): recycling destroys it with the item. The
+        /// game keeps nothing there, and the item lock (L) never reaches the Recycler (locked items aren't listed).
+        /// </summary>
+        internal static bool HasModData(ItemDrop.ItemData item) => item.m_customData != null && item.m_customData.Count > 0;
 
         internal static Quote Evaluate(ItemDrop.ItemData item, RecyclerStation station)
         {
@@ -94,11 +100,13 @@ namespace Recycler
 
             int quality = Mathf.Max(1, item.m_quality);
             double stackShare = item.m_stack / (double)Mathf.Max(1, recipe.m_amount);
+            // Levels above the item's own maximum come from the upgrader station (battle idols, a gamble), not from materials: none back.
+            int levels = Mathf.Min(quality, Mathf.Max(1, item.m_shared.m_maxQuality));
             foreach (Piece.Requirement req in recipe.m_resources)
             {
-                if (req.m_resItem == null) continue;
+                if (req.m_resItem == null || req.m_upgraderResource) continue; // (battle idols are only for the upgrader station: never handed out)
                 int invested = 0;
-                for (int q = 1; q <= quality; q++) invested += req.GetAmount(q);
+                for (int q = 1; q <= levels; q++) invested += req.GetAmount(q);
                 double expected = invested * (quote.Percent / 100.0) * stackShare;
                 int min = (int)System.Math.Floor(expected);
                 int max = Plugin.ChanceRounding.Value && expected - min > 0.001 ? min + 1 : min;

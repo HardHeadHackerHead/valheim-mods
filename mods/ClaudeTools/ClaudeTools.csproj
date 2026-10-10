@@ -13,5 +13,32 @@
   <ItemGroup>
     <!-- The guide for AI assistants; the mod writes it to BepInEx/claude/CLAUDE.md. -->
     <EmbeddedResource Include="CLAUDE.md" LogicalName="guide/CLAUDE.md" />
+    <!-- modelkit: design, preview and check 3D models offline (the same tools BuildOrders ships for blueprints); written to BepInEx/claude/modelkit. -->
+    <EmbeddedResource Include="../../tools/modelkit/KIT.md" LogicalName="modelkit/README.md" />
+    <EmbeddedResource Include="../../tools/modelkit/modelkit.py" LogicalName="modelkit/modelkit.py" />
+    <EmbeddedResource Include="../../tools/modelkit/bountyboard.py" LogicalName="modelkit/bountyboard.py" />
+    <EmbeddedResource Include="../../tools/modelkit/csharp/ModelBuilder.cs" LogicalName="modelkit/ModelBuilder.cs" />
+    <EmbeddedResource Include="../../tools/modelkit/csharp/Look.cs" LogicalName="modelkit/Look.cs" />
+    <EmbeddedResource Include="../../tools/blueprints/tools/blueprint.py" LogicalName="modelkit/blueprint.py" />
+    <EmbeddedResource Include="../../tools/blueprints/tools/preview.py" LogicalName="modelkit/preview.py" />
+    <EmbeddedResource Include="../../tools/blueprints/tools/extract_pieces.py" LogicalName="modelkit/extract_pieces.py" />
+    <EmbeddedResource Include="../../tools/blueprints/tools/extract_meshes.py" LogicalName="modelkit/extract_meshes.py" />
+    <!-- Claude Code skills for mod makers; the mod writes them to BepInEx/claude/.claude/skills. -->
+    <EmbeddedResource Include="Skills/*/SKILL.md" LogicalName="skills/%(RecursiveDir)SKILL.md" />
+    <!-- The patch map of the top Thunderstore mods (facts only, no code), made by tools/PatchMap. -->
+    <EmbeddedResource Include="Shipped/patchmap.json.gz" LogicalName="library/shipped.json.gz" Condition="Exists('Shipped/patchmap.json.gz')" />
   </ItemGroup>
+  <!--
+    modkit (tools/ModKit): the same commands on the command line, without the game. Built here (both: modkit.exe for Windows, modkit.dll for
+    dotnet on Linux and Mac) and carried inside ClaudeTools, which writes them to BepInEx/claude/modkit.
+  -->
+  <Target Name="EmbedModKit" AfterTargets="ResolveProjectReferences" BeforeTargets="PrepareResources" Condition="'$(DesignTimeBuild)' != 'true'">
+    <MSBuild Projects="../../tools/ModKit/ModKit.csproj" Targets="Build" Properties="Configuration=$(Configuration);ValheimDir=$(ValheimDir)" />
+    <ItemGroup>
+      <EmbeddedResource Include="../../tools/ModKit/bin/$(Configuration)/net48/modkit.exe" LogicalName="modkit/modkit.exe" />
+      <EmbeddedResource Include="../../tools/ModKit/bin/$(Configuration)/net48/modkit.exe.config" LogicalName="modkit/modkit.exe.config" />
+      <EmbeddedResource Include="../../tools/ModKit/bin/$(Configuration)/net8.0/modkit.dll" LogicalName="modkit/modkit.dll" />
+      <EmbeddedResource Include="../../tools/ModKit/bin/$(Configuration)/net8.0/modkit.runtimeconfig.json" LogicalName="modkit/modkit.runtimeconfig.json" />
+    </ItemGroup>
+  </Target>
 </Project>

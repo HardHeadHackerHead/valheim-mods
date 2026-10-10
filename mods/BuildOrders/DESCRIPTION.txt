@@ -8,7 +8,7 @@ How it works
 - Stability: while planning, ghosts are coloured by how well they would be supported (blue solid, green to red weaker, red would fall), worked out from the same rules the game uses. F10 shows or hides the colours any time, and the prompt says how well the ghost you are looking at would hold. It is an estimate; the game does the real check once a piece is built.
 - In plan mode, ghosts act like real pieces: you can aim at them and your next piece snaps onto their snap points, so you can lay out a whole structure with the normal snapping and build it later, piece by piece.
 - When you build for real, your placement snaps onto a ghost of the same piece, and the ghost disappears once the real piece is built.
-- G selects the piece you are looking at to build more like it, and Delete removes a ghost. F9 shows or hides all ghosts.
+- U selects the piece you are looking at to build more like it, and Delete removes a ghost. F9 shows or hides all ghosts.
 - A panel totals the materials your orders still need.
 
 Settings: ghost opacity, view distance, snap distance, how close you must be to build with E, and the keys.

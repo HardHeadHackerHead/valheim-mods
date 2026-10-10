@@ -46,6 +46,33 @@ namespace BuildOrders
             _needs = totals.Values.OrderByDescending(n => n.Amount).ToList();
         }
 
+        private static Font _bodyFont, _headingFont;
+        private static bool _fontsLooked;
+
+        /// <summary>The game's own fonts, looked up once: Averia for text and numbers, Norse for headings (null if a game update renamed them).</summary>
+        internal static Font GameFont(bool heading)
+        {
+            if (!_fontsLooked)
+            {
+                _fontsLooked = true;
+                try
+                {
+                    Font[] all = Resources.FindObjectsOfTypeAll<Font>();
+                    Font Find(params string[] names)
+                    {
+                        foreach (string name in names)
+                            foreach (Font f in all)
+                                if (f != null && f.name.StartsWith(name, System.StringComparison.OrdinalIgnoreCase)) return f;
+                        return null;
+                    }
+                    _bodyFont = Find("AveriaSerifLibre-Bold", "AveriaSerifLibre", "Averia");
+                    _headingFont = Find("Norsebold", "Norse") ?? _bodyFont;
+                }
+                catch (System.Exception) { }
+            }
+            return heading ? _headingFont : _bodyFont;
+        }
+
         private void EnsureStyles()
         {
             if (_text != null) return;
@@ -55,6 +82,7 @@ namespace BuildOrders
                 {
                     fontSize = size, fontStyle = style, alignment = anchor, wordWrap = false, clipping = TextClipping.Clip,
                     padding = new RectOffset(0, 0, 0, 0), margin = new RectOffset(0, 0, 0, 0),
+                    font = GameFont(false), // the game's Averia (null keeps Unity's own)
                 };
                 s.normal.textColor = Color.white; // tinted per use through GUI.color
                 return s;

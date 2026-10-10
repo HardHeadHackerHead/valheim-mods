@@ -16,7 +16,7 @@ namespace AICompanion
     {
         public const string Guid = "com.dhack.aicompanion";
         public const string Name = "AICompanion";
-        public const string Version = "0.21.2";
+        public const string Version = "0.22.0";
 
         internal static Plugin Instance;
         internal static ConfigEntry<bool> ShowDecisions;
@@ -28,17 +28,22 @@ namespace AICompanion
         private Harmony _harmony;
         private ConfigFile _more;   // the settings changed in the menu (not listed in the mod manager)
 
+        // The gameplay settings are the server's in multiplayer (how many companions, how strong, how fast they wake, life while away),
+        // or every player sets their own. One for each settings file: the server's values must never be written into a player's file.
+        internal static DHack.Shared.ServerSettings Synced, SyncedMore;
+        private const string ServerDecides = " In multiplayer the server's value applies.";
+
         /// <summary>
         /// A setting kept in the second file. One set in the mod's own file by an older version is moved over once (and taken out of it).
         /// </summary>
-        private ConfigEntry<T> More<T>(string section, string key, T fallback, string description, AcceptableValueBase range = null)
+        private ConfigEntry<T> More<T>(string section, string key, T fallback, string description, AcceptableValueBase range = null, bool synced = false)
         {
-            ConfigEntry<T> entry = _more.Bind(section, key, fallback, new ConfigDescription(description, range));
+            ConfigEntry<T> entry = _more.Bind(section, key, fallback, new ConfigDescription(description + (synced ? ServerDecides : ""), range));
             var def = new ConfigDefinition(section, key);
             ConfigEntry<T> old = Config.Bind(def, fallback, new ConfigDescription("", range));
             if (!Equals(old.Value, fallback) && Equals(entry.Value, fallback)) entry.Value = old.Value;
             Config.Remove(def);
-            return entry;
+            return synced ? SyncedMore.Add(entry) : entry;
         }
 
         /// <summary>Save a setting changed in the menu.</summary>
@@ -47,6 +52,7 @@ namespace AICompanion
         private void Awake()
         {
             Instance = this;
+            Synced = new DHack.Shared.ServerSettings(Guid, Config, Logger);
             // Only a few settings in the mod's own file (and the mod manager): the menu and command keys, how many companions, and life while you
             // are away. Everything else is changed in the companion's menu, where it is explained, and kept in a second file the manager does
             // not list (com.dhack.aicompanion.more.cfg). Values set before 0.6.0 move over by themselves.
@@ -54,21 +60,22 @@ namespace AICompanion
                 "Tap: your companion's menu (or the summon panel). Hold: all your companions near you come with you, or go home. E on a companion opens its menu too.");
             CommandKey = Config.Bind("General", "CommandKey", new KeyboardShortcut(KeyCode.H),
                 "Point at something and press it: an enemy (they attack it), a tree, rock or plant (it works it), your chest (it puts its things in), its tombstone, a free bed (its bed), the ground (it waits there), or the sky (it comes back).");
-            MaxCompanions = Config.Bind("Companion", "MaxCompanions", 3, new ConfigDescription(
-                "How many companions each player can have.", new AcceptableValueRange<int>(1, 10)));
-            WhileAway = Config.Bind("Companion", "WhileAway", AwayMode.Mild,
+            MaxCompanions = Synced.Add(Config.Bind("Companion", "MaxCompanions", 3, new ConfigDescription(
+                "How many companions each player can have." + ServerDecides, new AcceptableValueRange<int>(1, 10))));
+            WhileAway = Synced.Add(Config.Bind("Companion", "WhileAway", AwayMode.Mild,
                 "What a companion living at home does while nobody is near. It always catches up on its work when you come back. " +
-                "Mild: it also fights off a few creatures and keeps their drops, and never falls. Real: those fights can go badly and it can fall. Off: work only.");
+                "Mild: it also fights off a few creatures and keeps their drops, and never falls. Real: those fights can go badly and it can fall. Off: work only." + ServerDecides));
 
             _more = new ConfigFile(System.IO.Path.Combine(Paths.ConfigPath, Guid + ".more.cfg"), true);
+            SyncedMore = new DHack.Shared.ServerSettings(Guid + ".more", _more, Logger);
             EngageRange = More("Companion", "FightRange", 12f, "It fights enemies that come this close (in metres) to it or to you. In the menu: Orders.", new AcceptableValueRange<float>(5f, 50f));
             _more.Bind("Companion", "EngageRange", 20f, ""); _more.Remove(new ConfigDefinition("Companion", "EngageRange")); // (0.6.0's 20 m: too eager)
             ShowDecisions = More("Companion", "ShowDecisions", true, "Show what it decides in a fight above its head. In the menu: Brain.");
-            RespawnSeconds = More("Companion", "RespawnSeconds", 30f, "Seconds after falling before it wakes in its bed (or beside you).", new AcceptableValueRange<float>(5f, 600f));
-            BaseHealth = More("Companion", "BaseHealth", 25f, "Its health before food, as a player's (25).", new AcceptableValueRange<float>(5f, 500f));
-            BaseStamina = More("Companion", "BaseStamina", 75f, "Its stamina before food, as a player's (75).", new AcceptableValueRange<float>(10f, 500f));
-            EatBelow = More("Companion", "EatBelowPercent", 10f, "It eats a food it is already under again once its time left drops below this percent (the game allows it from 50). Lower saves food: a meal lasts 80% of its time instead of 50%, and its effect weakens a little towards the end.", new AcceptableValueRange<float>(1f, 50f));
-            StartingSkill = More("Companion", "StartingSkill", 0f, "The skill level a new companion starts at (a new player: 0).", new AcceptableValueRange<float>(0f, 100f));
+            RespawnSeconds = More("Companion", "RespawnSeconds", 30f, "Seconds after falling before it wakes in its bed (or beside you).", new AcceptableValueRange<float>(5f, 600f), true);
+            BaseHealth = More("Companion", "BaseHealth", 25f, "Its health before food, as a player's (25).", new AcceptableValueRange<float>(5f, 500f), true);
+            BaseStamina = More("Companion", "BaseStamina", 75f, "Its stamina before food, as a player's (75).", new AcceptableValueRange<float>(10f, 500f), true);
+            EatBelow = More("Companion", "EatBelowPercent", 10f, "It eats a food it is already under again once its time left drops below this percent (the game allows it from 50). Lower saves food: a meal lasts 80% of its time instead of 50%, and its effect weakens a little towards the end.", new AcceptableValueRange<float>(1f, 50f), true);
+            StartingSkill = More("Companion", "StartingSkill", 0f, "The skill level a new companion starts at (a new player: 0).", new AcceptableValueRange<float>(0f, 100f), true);
             foreach (string gone in new[] { "Health", "Stamina" }) { Config.Bind("Companion", gone, 0f, ""); Config.Remove(new ConfigDefinition("Companion", gone)); } // from 0.1.0
             Config.Save();   // without the settings that moved
 
@@ -112,11 +119,15 @@ namespace AICompanion
             _harmony?.UnpatchSelf();
             Prefab.Unregister();
             DestroyMenuResources();
+            Synced?.Dispose();
+            SyncedMore?.Dispose();
             if (Instance == this) Instance = null;
         }
 
         private void Update()
         {
+            Synced?.Update();
+            SyncedMore?.Update();
             UpdateClaudeLink();
             Player player = Player.m_localPlayer;
             Net.Update(player);

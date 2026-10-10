@@ -5,7 +5,7 @@
 
 <img src="cover.png" alt="SlotMachine" width="100%">
 
-**Version 1.0.4**  ·  [all the mods](../../README.md)  ·  installs and updates through the in-game [mod manager](https://github.com/HardHeadHackerHead/valheim-mod-manager) (**F7**)
+**Version 1.1.0**  ·  [all the mods](../../README.md)  ·  installs and updates through the in-game [mod manager](https://github.com/HardHeadHackerHead/valheim-mod-manager) (**F7**)
 
 Odin's Fortune: build a slot machine, put coins in, pull the lever and watch three reels spin. Wins are spat out of the tray, and you can change the bet. It pays back about 93% over time, so it is for fun.
 
@@ -57,7 +57,7 @@ In `BepInEx/config/com.dhack.slotmachine.cfg` (made the first time the game runs
 | Setting | Default | What it does |
 |---|---|---|
 | `Bet` | `10` | Coins per pull (change it at the machine with the alternate-use key + use). |
-| `PayoutPercent` | `100` | Scales every prize (100 = standard, which returns about 93% over time; 50 = half the prizes). |
+| `PayoutPercent` | `100` | Scales every prize (100 = standard, which returns about 93% over time; 50 = half the prizes; above 107 the machine pays out more than goes in). In multiplayer the server's value applies. |
 
 ## 👥 Playing together
 
@@ -65,5 +65,6 @@ Everyone in the world needs it, **the host above all**. It adds a new build piec
 
 ## 📜 Changes
 
+- The machine costs what it should again: 15 Fine Wood, 8 Bronze and 10 Stone (at a workbench), no longer the single Fine Wood it cost while it was being tested. In multiplayer the server decides the payout (PayoutPercent), so nobody can set their own machine to pay out more than goes in.
 - Fix: after a fresh game start the slot machine was not registered until the mods were reloaded, so the game deleted any it found standing in the world. It is now registered as the world loads. Ones already lost can't be brought back; build them again. Fix: logging out, or walking away so the machine unloads, before the reels stop no longer loses your bet's winnings: they go into your inventory.
 - For testing, the machine costs a single Fine Wood (at a workbench). The real cost comes back after testing.

@@ -24,22 +24,47 @@ namespace PortalHub
     {
         public const string Guid = "com.dhack.portalhub";
         public const string Name = "PortalHub";
-        public const string Version = "1.1.2";
+        public const string Version = "1.2.0";
 
         internal static Plugin Instance;
+        internal static DHack.Shared.ServerSettings Synced;   // the settings the server decides in multiplayer
 
-        private ConfigEntry<bool> _enabled, _showHoverLine, _linkBothWays;
+        private ConfigEntry<bool> _enabled, _showHoverLine, _linkBothWays, _hideWarded;
         private ConfigEntry<string> _favorites;
         private Harmony _harmony;
         private int _awakeFrame;
 
-        internal bool Enabled => _enabled.Value;
+        internal bool Enabled => _enabled.Value && !XPortalInstalled;
+        internal bool HideWarded => _hideWarded.Value;
+
+        private bool? _xportal;
+
+        /// <summary>
+        /// XPortal (yay.spikehimself.xportal) does the same job its own way and skips the game's portal pairing PortalHub's links rely on
+        /// (they would stop working after a restart), and its menu is on E too: with it installed PortalHub stands down. Worked out once the
+        /// world is up (mods ScriptEngine loads aren't listed yet when this one wakes).
+        /// </summary>
+        internal bool XPortalInstalled
+        {
+            get
+            {
+                if (_xportal.HasValue) return _xportal.Value;
+                if (ZNet.instance == null) return false;
+                _xportal = BepInEx.Bootstrap.Chainloader.PluginInfos.ContainsKey("yay.spikehimself.xportal");
+                if (_xportal.Value) Logger.LogWarning("XPortal is installed: PortalHub stands down and leaves portals to it (both link portals, in ways that undo each other).");
+                return _xportal.Value;
+            }
+        }
         internal bool ShowHoverLine => _showHoverLine.Value;
 
         private void Awake()
         {
             Instance = this;
-            _enabled = Config.Bind("General", "Enabled", true, "Use the portal menu when you press E on a portal. (Off: portals work like in the base game.)");
+            Synced = new DHack.Shared.ServerSettings(Guid, Config, Logger);
+            _enabled = Synced.Add(Config.Bind("General", "Enabled", true, "Use the portal menu when you press E on a portal. (Off: portals work like in the base game.) In multiplayer the server's value applies."));
+            _hideWarded = Synced.Add(Config.Bind("General", "HideWardedPortals", false,
+                "Leave portals inside someone else's protected area (a switched-on ward you are not on) out of each player's list and map, and refuse links to them. " +
+                "(Portals in such an area can never be changed by others either way.) In multiplayer the server's value applies."));
             _showHoverLine = Config.Bind("General", "ShowDestinationOnHover", true, "When you look at a portal, show where it goes.");
             _linkBothWays = Config.Bind("Menu", "LinkBothWays", true, "Picking a destination also links that portal back to this one.");
             _favorites = Config.Bind("Menu", "Favorites", "", "Portals you starred (managed by the menu; you do not need to edit this).");
@@ -62,11 +87,13 @@ namespace PortalHub
             UnregisterRpc();
             _harmony?.UnpatchSelf();
             DestroyStyles();
+            Synced?.Dispose();
             if (Instance == this) Instance = null;
         }
 
         private void Update()
         {
+            Synced?.Update();
             UpdateNetwork();
             UpdateWindow();
             UpdateMap();

@@ -11,12 +11,19 @@ This folder is `BepInEx/claude` in the player's Valheim folder.
 | `requests/` | Write `<name>.txt` here. The game renames it `<name>.taken`, runs it, and writes `<name>.done.json`. |
 | `shots/` | Pictures: `shot`, `view`, `orbit`, `top`, and the player's F12 key. `latest.png` is the newest; screenshots have a `.json` beside them saying where the player stood and looked. |
 | `_survey.json` | The ground around a spot (`survey`, or the player's Ctrl+F12 key). |
+| `library/` | The mod library: popular mods and what they patch (see "which other mods change the same things" below). |
+| `console/` | The full answers to commands the player typed in the game's console (`claude <command>`). |
+| `modkit/` | **modkit**: the mod-maker commands on the command line, without the game (see "For mod makers" below). |
+| `.claude/skills/` | Skills for making mods: starting one, the game's code, other mods, looking native, pitfalls, releasing, fixing errors. |
+| `modelkit/` | Design, preview and check 3D models offline, and draw the game's real pieces (Python; see its README). |
 
 ## Before you start
 
 - **Ask the player** before looking at or doing things in their game, and tell them what you are about to do.
-- Requests only run when `AllowRequests = true` in `BepInEx/config/com.dhack.claudetools.cfg` (the player switches it on) and the player
-  is **in a world**. If a request stays as `.txt`, one of those is not true: ask the player.
+- Requests only run when `AllowRequests = true` in `BepInEx/config/com.dhack.claudetools.cfg` (the player switches it on) and the game is
+  running. Most commands need the player **in a world**; the mod-maker ones (`modcheck`, `who`, `clashes`, `patches`, `game`, `gameupdate`,
+  `library`, `systems`) and `help`, `mods`, `config`, `log`, `errors`, `waitfor` also run from the main menu. If a request stays as `.txt`,
+  one of those is not true: ask the player. For mod-maker commands with the game closed, use **modkit** instead.
 - Requests run one at a time, in name order, within a second or two. Wait for `<name>.done.json`, then read it (and any pictures it names).
 - Run `help` first in a new session: it lists every command, including those other mods add (BuildOrders adds blueprint commands).
 
@@ -103,6 +110,74 @@ is `BepInEx/blueprints/CLAUDE.md`: read it before designing builds.
 
 Some commands change the world: `import` places ghosts (and levels the ground), `build` spends the player's materials, `takedown` removes
 built pieces (giving the materials back). Ask first.
+
+## For mod makers
+
+Making or fixing a mod? The skills in `.claude/skills` (Claude Code loads them when you start in this folder; copy them to a mod
+project's `.claude/skills`, or to `~/.claude/skills` for every project) walk through it: **valheim-mod-start**, **valheim-game-code**,
+**valheim-compat**, **valheim-look**, **valheim-pitfalls**, **valheim-prerelease**, **valheim-fix-errors**. The commands they use:
+
+| Command | What it does |
+|---|---|
+| `modcheck <mod \| path.dll>` | The pre-release check: mistakes that have lost players' items and buildings or broken other mods, each with where, why and how to fix. |
+| `game find <text>` / `game <Type>` / `game <Type.Member>` | The game's real code: signatures, who calls a method, who changes a field, which popular mods patch it. Never guess names. |
+| `who <Type.Method>` | Which mods (installed, and popular ones) patch a game method, and how. `who system <name>` covers a whole game system. |
+| `clashes [mod] [all]` | Installed mods that change the same methods, or do the same job through different methods, as each other or as popular mods. `likely` first, then `check` (read both patches); `all` adds those that only stack. |
+| `patches [text]` | Every patch in the installed mods, by game method, with what each one can do. |
+| `systems` | The game systems: groups of methods that do one job (crafting payment, recipe list, inventory size, portals...). |
+| `gameupdate` | After a game update: methods gone, changed signature or changed code, and which mods patch them. |
+| `library` / `library get <Namespace-Name>` / `library drop <Namespace-Name>` / `library update` | The mod library: what is in it, download one mod's DLL (code only) by its Thunderstore name, remove it, refresh the top list. |
+
+### Without the game: modkit
+
+The same commands as a program, reading files only:
+
+```
+BepInEx/claude/modkit/modkit.exe modcheck MyMod            (Windows)
+dotnet BepInEx/claude/modkit/modkit.dll modcheck MyMod     (Linux, Mac: needs the .NET 8 runtime or later)
+modkit help                                              (every command; --json for the raw answer)
+```
+
+It finds the Valheim folder from where it is (or `VALHEIM_DIR`, or `--valheim <folder>`). "Installed" means the DLLs in `BepInEx/plugins`
+and `BepInEx/scripts`; with the game running, the in-game commands use what is actually loaded instead (Harmony's own list).
+
+### The mod library
+
+`library/` knows what the most-downloaded Valheim mods on Thunderstore patch. A patch map of the top 100 is **built into Claude Tools**, so
+`who`, `clashes` and `modcheck` know them from the start, offline. With `DownloadMods = true` (the `Library` section of the config) it keeps
+the `TopMods` most-downloaded ones fresh (every `RefreshDays`) and keeps their DLLs; `library get` fetches any other mod.
+
+| Path | What it is |
+|---|---|
+| `library/index.json` | The mods known: rank, version, downloads, Thunderstore page, plugin GUIDs, how many patches, and whether their DLL is here. |
+| `library/patchmap.json` | Every known mod's patches, by game method: who patches `Player.ConsumeResources`, and how. |
+| `library/clashes.json` | The clashes report Claude Tools makes after each launch (it logs a one-line summary). |
+| `library/mods/<Namespace-Name>/scan.json` | One downloaded mod's plugins (GUID, dependencies, incompatibilities) and patches. |
+| `library/mods/<Namespace-Name>/dll/` | Its DLLs, code only (embedded assets stripped). Never loaded or run. |
+| `library/game/` | A snapshot of the game's methods per game version, and the reports after each game update. |
+
+Each patch says: `target` (the game method), `kind` (prefix, postfix, transpiler, finalizer, hook for MonoMod `On.` hooks, `patch (in code)`
+for `harmony.Patch(...)` calls, whose target is read from the code and may be wrong), `skips` for prefixes (`never`, `sometimes`, `always`
+skip the game's method), `changesResult`, `changesArgs` (ref arguments it can change), `priority`, and `method`: where the patch is in the mod.
+
+Two mods patching one method is normal (postfixes stack). A clash needs one of them to **take the method over** (a prefix that always
+returns false), both to **rewrite** it (transpilers), or both to **change the same answer** (two mods each adding chest items to what the
+player has: crafts paid half). To see what a patch actually does, decompile the DLL (`dotnet tool install -g ilspycmd` once), into a
+scratch folder, then search for the `method` name:
+
+```
+ilspycmd library/mods/RandyKnapp-EpicLoot/dll/EpicLoot.dll -o <scratch>/EpicLoot
+```
+
+Read the code before calling something a clash: a prefix that returns false only for its own items, or a postfix that only adds to a list,
+is normal. Tell the player what you found, with the method and the line that clashes.
+
+**Licences.** The library is for reading: understanding how other mods work so yours works with them. It stays on the player's computer.
+Don't copy other mods' code into a mod, and don't publish their DLLs or decompiled code. The patch map built into Claude Tools lists only
+facts about mods (which game methods they patch), none of their code.
+
+The player can run every command in the game's console too: `claude modcheck MyMod`, `claude who InventoryGui.UpdateRecipeList`. Answers are
+also saved in `console/<command>.json`.
 
 ## For mod makers: adding commands
 

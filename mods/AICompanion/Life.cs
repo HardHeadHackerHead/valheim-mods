@@ -11,14 +11,15 @@ namespace AICompanion
     /// Food, as a player's: a companion starts with little health and stamina (Companion, BaseHealth and BaseStamina: a player's 25 and 75)
     /// and up to three foods add theirs, fading as they burn down (the game's own curve), and give health back every 10 seconds. It eats
     /// from its bag when a slot is free or a food is half gone (never the same food twice), and takes food from its chests. Without food it
-    /// does not heal, as a player does not. Its meals are kept in its ZDO ("prefab:seconds left,...") by the game that runs it.
+    /// does not heal, as a player does not. Its meals are kept in its ZDO ("prefab:seconds left,...") by the game that runs it, written when a
+    /// meal starts or ends and once a minute.
     /// </summary>
     internal static class Food
     {
         private const string Key = "dhc_food", MaxStaminaKey = "dhc_maxst";
 
         internal class Meal { public ItemDrop.ItemData Item; public float Time; public float Fraction => Mathf.Clamp01(Time / Mathf.Max(1f, Item.m_shared.m_foodBurnTime)); }
-        private class State { public List<Meal> Meals = new List<Meal>(); public float NextTick, NextRegen, NextEat; }
+        private class State { public List<Meal> Meals = new List<Meal>(); public float NextTick, NextRegen, NextEat, NextSave; public string Saved; }
         private static readonly Dictionary<Humanoid, State> States = new Dictionary<Humanoid, State>();
 
         public static bool IsFood(ItemDrop.ItemData i) => i.m_shared.m_itemType == ItemDrop.ItemData.ItemType.Consumable && i.m_shared.m_foodBurnTime > 0f && (i.m_shared.m_food > 0f || i.m_shared.m_foodStamina > 0f);
@@ -64,9 +65,18 @@ namespace AICompanion
                 foreach (Meal m in s.Meals) m.Time -= 1f * Game.m_foodRate;
                 foreach (Meal done in s.Meals.Where(m => m.Time <= 0f).ToList()) { s.Meals.Remove(done); st.Remember($"finished its {Name(done.Item)}"); }
                 c.SetMaxHealth(MaxHealth(c));
+                // Into its save only when something changed: a meal started or ended (or once a minute, for whoever runs it next), and its
+                // most stamina by a whole point. Each write sends its whole save, its bag too, to every player (it was every second).
                 ZDO z = Companion.Zdo(c);
-                z.Set(MaxStaminaKey, MaxStamina(c));
-                z.Set(Key, string.Join(",", s.Meals.Where(m => m.Item.m_dropPrefab != null).Select(m => Utils.GetPrefabName(m.Item.m_dropPrefab) + ":" + m.Time.ToString("0", CultureInfo.InvariantCulture))));
+                float maxSt = Mathf.Round(MaxStamina(c));
+                if (z.GetFloat(MaxStaminaKey, -1f) != maxSt) z.Set(MaxStaminaKey, maxSt);
+                string meals = string.Join(",", s.Meals.Where(m => m.Item.m_dropPrefab != null).Select(m => Utils.GetPrefabName(m.Item.m_dropPrefab)));
+                if (meals != s.Saved || Time.time >= s.NextSave)
+                {
+                    s.Saved = meals;
+                    s.NextSave = Time.time + 60f;
+                    z.Set(Key, string.Join(",", s.Meals.Where(m => m.Item.m_dropPrefab != null).Select(m => Utils.GetPrefabName(m.Item.m_dropPrefab) + ":" + m.Time.ToString("0", CultureInfo.InvariantCulture))));
+                }
             }
             if (Time.time >= s.NextRegen)
             {
@@ -131,6 +141,7 @@ namespace AICompanion
                 TryEat(c, s, st);
             }
             s.NextTick = 0f;
+            s.NextSave = 0f; // (into its save at once)
         }
 
         /// <summary>A fallen companion has eaten nothing (as a player after death).</summary>

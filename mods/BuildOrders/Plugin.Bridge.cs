@@ -16,7 +16,20 @@ namespace BuildOrders
     {
         internal const string BridgeToolPrefab = "piece_bo_bridge";
         private static GameObject _bridgeHolder, _bridgeTool;
-        private static readonly AccessTools.FieldRef<Player, GameObject> PlacementGhost = AccessTools.FieldRefAccess<Player, GameObject>("m_placementGhost");
+        private static AccessTools.FieldRef<Player, GameObject> _placementGhost;
+        private static bool _placementGhostLooked;
+
+        /// <summary>The game's placement ghost (a private field, looked up once: if a game update renames it, there is just no ghost to read).</summary>
+        private static GameObject PlacementGhost(Player player)
+        {
+            if (!_placementGhostLooked)
+            {
+                _placementGhostLooked = true;
+                try { _placementGhost = AccessTools.FieldRefAccess<Player, GameObject>("m_placementGhost"); }
+                catch (System.Exception e) { Log?.LogWarning("Can't read the game's placement ghost: " + e.Message); }
+            }
+            return _placementGhost != null && player != null ? _placementGhost(player) : null;
+        }
 
         // ---- the tool in the hammer's menu ----
 

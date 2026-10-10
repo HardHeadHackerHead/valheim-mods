@@ -38,10 +38,22 @@ namespace FeedFromChests
             Load?.Invoke(c, null); // the game's own reload: does nothing if our copy is already the latest
         }
 
+        /// <summary>
+        /// A chest someone built. Graves, carts, ships, a companion's bag, its own chest (its stock) and a backpack carried by a player
+        /// (Adventure Backpacks) have a Container too, but their things aren't there to feed stations with, or to fill.
+        /// </summary>
+        private static bool IsStorage(Container c)
+        {
+            if (c.GetComponentInParent<Piece>() == null || c.GetComponent<TombStone>() != null) return false;
+            if (c.GetComponentInParent<Character>() != null || c.GetComponentInParent<Vagon>() != null || c.GetComponentInParent<Ship>() != null) return false;
+            ZNetView view = ViewOf(c);
+            return view != null && view.IsValid() && view.GetZDO().GetLong("dhc_home", 0L) == 0L; // (a companion's own chest)
+        }
+
         /// <summary>Can this player use this chest (not in use by someone else, not warded off, not someone's private chest)?</summary>
         private static bool Usable(Container c)
         {
-            if (c == null || c.GetInventory() == null || InUse(c)) return false;
+            if (c == null || c.GetInventory() == null || !IsStorage(c) || InUse(c)) return false;
             if (c.m_checkGuardStone && !PrivateArea.CheckAccess(c.transform.position, 0f, false)) return false;
             long playerId = Game.instance.GetPlayerProfile().GetPlayerID();
             return (bool)CheckAccess.Invoke(c, new object[] { playerId });
@@ -103,6 +115,54 @@ namespace FeedFromChests
             return taken;
         }
     
+        /// <summary>
+        /// Take one of an item out of the chests (nearest first) before a station is asked to take it, so whatever goes in is already paid
+        /// for. Returns a copy of the item taken (null when no chest could give one) and the chest it came from, for <see cref="PutBack"/>.
+        /// </summary>
+        public static ItemDrop.ItemData TakeOne(IEnumerable<Container> chests, string itemName, out Container from)
+        {
+            from = null;
+            foreach (Container c in chests)
+            {
+                if (c == null || InUse(c)) continue; // someone opened it since we looked it up
+                if (c.GetInventory().CountItems(itemName) <= 0) continue;
+
+                TakeOwnership(c);
+                Inventory inventory = c.GetInventory(); // (looked up again after the reload)
+                ItemDrop.ItemData stack = inventory.GetAllItems().FirstOrDefault(i => i.m_shared.m_name == itemName && i.m_worldLevel >= Game.m_worldLevel);
+                if (stack == null) continue; // the reload changed it
+
+                ItemDrop.ItemData one = stack.Clone();
+                one.m_stack = 1;
+                if (!inventory.RemoveItem(stack, 1)) continue;
+                from = c;
+                return one;
+            }
+            return null;
+        }
+
+        /// <summary>A station didn't take what we took out for it: back into its chest, else your inventory, else on the ground by the station.</summary>
+        public static void PutBack(ItemDrop.ItemData item, Container from, Player player, Vector3 at)
+        {
+            if (item == null) return;
+            if (from != null && !InUse(from))
+            {
+                TakeOwnership(from);
+                if (from.GetInventory().AddItem(item)) return;
+            }
+            if (player != null && player.GetInventory().AddItem(item)) return;
+            ItemDrop.DropItem(item, 1, at + Vector3.up, Quaternion.identity);
+        }
+
+        /// <summary>How many of an item the player carries, counted item by item (other mods add their own sources to Inventory.CountItems).</summary>
+        public static int OwnCount(Inventory inventory, string itemName)
+        {
+            int total = 0;
+            foreach (ItemDrop.ItemData item in inventory.GetAllItems())
+                if (item.m_shared.m_name == itemName && item.m_worldLevel >= Game.m_worldLevel) total += item.m_stack;
+            return total;
+        }
+
         /// <summary>Put items into a chest near <paramref name="origin"/> that already holds some of them (for when no chest is assigned).
         /// Returns how many went in, checked by counting before and after.</summary>
         public static int AddToChestHolding(Vector3 origin, ItemDrop item, int count, float radius)

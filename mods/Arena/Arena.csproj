@@ -4,6 +4,9 @@
     <RootNamespace>Arena</RootNamespace>
   </PropertyGroup>
   <ItemGroup>
+    <Compile Include="../Shared/ServerSettings.cs" Link="Shared/ServerSettings.cs" />
+  </ItemGroup>
+  <ItemGroup>
     <!-- the arena's layout, designed offline (design/arena.py) -->
     <EmbeddedResource Include="Layout.json" LogicalName="Layout.json" />
     <!-- the crowd's recordings (see Sound.cs for where they are from) -->

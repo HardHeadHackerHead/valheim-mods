@@ -18,14 +18,15 @@ namespace Arena
     ///
     /// Fighters come in through the gates round the ring. Each round you clear adds to your purse (more with the rules and the crowd's favour).
     /// Between rounds you can take the purse and leave. Win and it is paid in full with a bonus, your stake doubled and the champions' trophies;
-    /// give up mid-round, run out of time or leave the ring and you get half; die and you get nothing, and your tombstone is carried out of the
+    /// give up mid-round, run out of time, leave the ring or leave the game and you get half; die and you get nothing, and your tombstone is carried out of the
     /// ring for you to collect.
     /// </summary>
     internal static class Contest
     {
         internal enum PhaseKind { None, Ready, Arming, Countdown, Spawning, Fighting, Break, Victory }
         internal enum KindOf { Road, Champion, Endless, Trial }
-        private enum Outcome { Win, CashOut, Yield, Died, TimeUp, LeftRing, Carried, Aborted }
+        // (Aborted: the fighter's game left or the mod unloaded; CalledOff: the arena had no one to send in)
+        private enum Outcome { Win, CashOut, Yield, Died, TimeUp, LeftRing, Carried, Aborted, CalledOff }
 
         internal static PhaseKind Phase;
         internal static KindOf Kind;
@@ -349,7 +350,7 @@ namespace Arena
                 // (its stars by what its land's gear can take: Roster.ChampionLevel)
                 if (prefab != null) Queue.Enqueue(new Item { Prefab = prefab, Name = Roster.ChampionName(), Level = Roster.ChampionLevel(Tier, prefab, Kind, n, Rules.Hard), Champion = true });
             }
-            if (Queue.Count == 0) { End(Outcome.Aborted); return; }
+            if (Queue.Count == 0) { End(Outcome.CalledOff); return; }   // (not your doing: paid as if you had taken your purse)
             _roundLeft = Rules.RoundSeconds + (champion ? 30f : 0f);
             Phase = PhaseKind.Spawning;
             _spawnTimer = 1.4f;
@@ -609,7 +610,10 @@ namespace Arena
             Foes.Clear(); Queue.Clear();
         }
 
-        /// <summary>Ends the contest without a result (the mod unloaded, the player logged out): the stake comes back, and the purse is paid.</summary>
+        /// <summary>
+        /// Ends the contest without a result (the mod unloaded, the player logged out). Before the fight began the fee and the stake come back;
+        /// once it has begun it counts as giving up (half the purse, the stake lost), so leaving the game never pays better than losing.
+        /// </summary>
         internal static void Abort(string why)
         {
             if (!Active) return;
@@ -742,11 +746,12 @@ namespace Arena
             int carried = player.GetInventory().CountItems("$item_coins");
             // (the bonus: on the Long Road about a land's coins more for going all the way; a trial, a third of that for its three rounds)
             if (Lent) { _purseCoins = win ? (Kind == KindOf.Road ? 250f : 80f) * (Tier + 1) * Rules.Multiplier * Plugin.Rewards.Value / 100f : 0f; Mats.Clear(); }
-            float share = outcome == Outcome.Win ? 1.25f : outcome == Outcome.CashOut || outcome == Outcome.Aborted ? 1f : outcome == Outcome.Died ? 0f : 0.5f;
+            // (leaving mid-fight, Aborted, is paid as giving up: never better than losing)
+            float share = outcome == Outcome.Win ? 1.25f : outcome == Outcome.CashOut || outcome == Outcome.CalledOff ? 1f : outcome == Outcome.Died ? 0f : 0.5f;
             bool dailyBonus = win && Daily && !Ladder.DailyDone;
             if (dailyBonus) { share *= 1.5f; Ladder.Set("daily", Ladder.Today); }
             int coins = Mathf.RoundToInt(_purseCoins * share);
-            int stakeBack = win ? Stake * 2 : outcome == Outcome.Aborted ? Stake : 0;
+            int stakeBack = win ? Stake * 2 : outcome == Outcome.CalledOff ? Stake : 0;
             List<string> trophies = outcome != Outcome.Died ? Trophies.Distinct().ToList() : new List<string>();
 
             // (after a win the prize goes in the prize chest that rises in the ring)
@@ -772,7 +777,7 @@ namespace Arena
             string what = Kind == KindOf.Road ? (win ? "The Long Road, to the very end" : $"The Long Road, to the {Roster.TierNames[Tier]} (round {Round} of {Rounds})")
                         : (Kind == KindOf.Endless ? "Endless, wave " + Round : Kind == KindOf.Trial ? "Trial, round " + Round : "Champion Bout") + " (" + Roster.TierNames[Tier] + ")";
             string kindKey = Kind == KindOf.Road ? "road" : Kind == KindOf.Champion ? "champion" : Kind == KindOf.Endless ? "endless" : "trial";
-            bool crowned = _crowned = outcome != Outcome.Aborted && Ladder.Enter(kindKey, player.GetPlayerName(), what, score, _look);   // (as they fought: their statue wears it)
+            bool crowned = _crowned = outcome != Outcome.Aborted && outcome != Outcome.CalledOff && Ladder.Enter(kindKey, player.GetPlayerName(), what, score, _look);   // (as they fought: their statue wears it)
             string hall = crowned ? $"   -   the new Champion of {KindName(Kind).Replace("The ", "the ")}!" : "";
             if (crowned) Net.Sound("roar");
 
@@ -780,11 +785,12 @@ namespace Arena
             {
                 case Outcome.Win: Net.Shout("VICTORY!", Lines.Victory() + "   " + prize + hall, 7f); break;
                 case Outcome.CashOut: Net.Shout("YOU TAKE YOUR PURSE", prize + hall, 6f); break;
-                case Outcome.Died: Net.Shout("YOU HAVE FALLEN", Lent ? "Your purse is lost. The Arena Master gives your things back when you rise." : "Your purse is lost. Your tombstone waits in the forecourt, by the Hall of Fame.", 7f); break;
+                case Outcome.Died: Net.Shout("YOU HAVE FALLEN", Lent ? "Your purse is lost. The Arena Master gives your things back when you rise, and anything else you won waits in your tombstone in the forecourt." : "Your purse is lost. Your tombstone waits in the forecourt, by the Hall of Fame.", 7f); break;
                 case Outcome.TimeUp: Net.Shout("TIME!", "Half your purse: " + prize, 5f); break;
                 case Outcome.LeftRing: Net.Shout("YOU LEFT THE RING", "Half your purse: " + prize, 5f); break;
                 case Outcome.Yield: Net.Shout("YOU YIELD", "Half your purse: " + prize, 5f); break;
                 case Outcome.Carried: Net.Shout("CARRIED OUT", "Half your purse: " + prize, 5f); break;
+                case Outcome.CalledOff: Net.Shout("CALLED OFF", "The Arena Master has no one to send in: " + prize, 5f); break;
                 default: break;
             }
             if (outcome != Outcome.Aborted && outcome != Outcome.Died && !_toChest) player.Message(MessageHud.MessageType.Center, "Prize: " + prize);

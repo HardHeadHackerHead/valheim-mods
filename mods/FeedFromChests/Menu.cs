@@ -83,7 +83,6 @@ namespace FeedFromChests
         {
             MenuOpen = false;
             _station = null;
-            if (!_filling) Feed.Reserved = null; // never leave a stale "reserved" count behind: it would make stock look lower than it is
         }
 
         private void UpdateMenu(Player player)
@@ -536,9 +535,23 @@ namespace FeedFromChests
             return s;
         }
 
+        private static Font _bodyFont, _titleFont;
+
+        /// <summary>The game's own fonts (Averia for text and numbers, Norse for the title), looked up once; null if a game update renamed them.</summary>
+        private static Font GameFont(params string[] names)
+        {
+            Font[] all = Resources.FindObjectsOfTypeAll<Font>();
+            foreach (string name in names)
+                foreach (Font f in all)
+                    if (f != null && f.name.StartsWith(name, StringComparison.OrdinalIgnoreCase)) return f;
+            return null;
+        }
+
         private void EnsureStyles()
         {
             if (_title != null) return;
+            if (_bodyFont == null) _bodyFont = GameFont("AveriaSerifLibre-Bold", "AveriaSerifLibre", "Averia");
+            if (_titleFont == null) _titleFont = GameFont("Norsebold", "Norse") ?? _bodyFont;
             _title = new GUIStyle(GUI.skin.label) { fontSize = 18, fontStyle = FontStyle.Bold };
             _title.normal.textColor = Gold;
             _text = new GUIStyle(GUI.skin.label) { fontSize = 14, fontStyle = FontStyle.Bold };
@@ -550,6 +563,8 @@ namespace FeedFromChests
             _bad = new GUIStyle(_dim); _bad.normal.textColor = new Color(1f, 0.55f, 0.4f);
             _button = ButtonLook(new Color(0.22f, 0.19f, 0.15f), new Color(0.33f, 0.27f, 0.18f), new Color(0.45f, 0.36f, 0.2f));
             _buttonOn = ButtonLook(new Color(0.55f, 0.42f, 0.16f), new Color(0.62f, 0.48f, 0.2f), new Color(0.95f, 0.78f, 0.35f));
+            if (_bodyFont != null) foreach (GUIStyle style in new[] { _text, _dim, _good, _warn, _bad, _button, _buttonOn }) style.font = _bodyFont;
+            if (_titleFont != null) _title.font = _titleFont;
         }
 
         private void DestroyMenuResources()

@@ -90,10 +90,8 @@ namespace AICompanion
         public static string TakeFrom(BrainState st, Container chest, bool force = false)
         {
             Humanoid me = st.Body;
-            if (chest == null || chest.IsInUse() || !force && !Allowed(me) || Home.IdOn(chest) != 0L) return null;
-            ZNetView view = chest.GetComponent<ZNetView>();
-            if (view == null || !view.IsValid()) return null;
-            if (!view.IsOwner()) view.ClaimOwnership();
+            if (chest == null || !force && !Allowed(me) || Home.IdOn(chest) != 0L) return null;
+            if (!Containers.Take(chest)) return null; // (someone has it open; else what is really in it, before it picks)
             Inventory mine = me.GetInventory(), its = chest.GetInventory();
             var changes = new List<string>();
             foreach (ItemDrop.ItemData pick in Picks(me, chest))

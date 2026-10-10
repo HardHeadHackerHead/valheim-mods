@@ -150,6 +150,7 @@ namespace BuildOrders
             {
                 fontSize = 13, fontStyle = FontStyle.Bold, alignment = TextAnchor.MiddleCenter,
                 border = new RectOffset(2, 2, 2, 2), padding = new RectOffset(8, 8, 3, 3), margin = new RectOffset(3, 3, 3, 3),
+                font = GameFont(false),
             };
             s.normal.background = Box(fill, border);
             s.hover.background = s.active.background = s.focused.background = Box(hover, border);
@@ -173,6 +174,9 @@ namespace BuildOrders
             _wButtonBad = MakeButton(new Color(0.4f, 0.14f, 0.12f), new Color(0.52f, 0.18f, 0.15f), new Color(0.9f, 0.45f, 0.4f));
             _wToggle = new GUIStyle(GUI.skin.toggle) { fontSize = 14 };
             _wToggle.normal.textColor = _wToggle.onNormal.textColor = _wToggle.hover.textColor = _wToggle.onHover.textColor = new Color(0.94f, 0.92f, 0.88f);
+            // the game's fonts: Norse for the window titles (words only), Averia for the rest (Norse draws 0 as a rune)
+            _wTitle.font = GameFont(true);
+            foreach (GUIStyle s in new[] { _wText, _wBold, _wDim, _wToggle }) s.font = GameFont(false);
         }
 
         private void DestroyWindowResources()

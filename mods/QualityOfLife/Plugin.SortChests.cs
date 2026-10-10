@@ -22,10 +22,10 @@ namespace QualityOfLife
 
         private void SortChests(Player player)
         {
-            List<Container> chests = _stackChests.Where(c => c != null && c.GetInventory() != null && !ContainerRegistry.InUse(c)
+            List<Container> chests = _stackChests.Where(c => c != null && c.GetInventory() != null && !ContainerRegistry.Busy(c)
                                                            && c.GetComponentInParent<Vagon>() == null && c.GetComponentInParent<Ship>() == null
                                                            && c.GetComponent<TombStone>() == null).ToList();
-            if (chests.Count == 0) { Tell(player, "No chest in range."); return; }
+            if (chests.Count == 0) { Tell(player, _stackChests.Count > 0 ? "The chests in range are in use. Try again in a moment." : "No chest in range."); return; }
 
             // Own them all and load their latest contents first: taking a chest over reloads it, which would swap the items under us mid-move.
             foreach (Container c in chests) { ContainerRegistry.TakeOwnership(c); ContainerRegistry.Reload(c); }

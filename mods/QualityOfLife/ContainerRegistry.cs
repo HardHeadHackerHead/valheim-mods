@@ -29,7 +29,37 @@ namespace QualityOfLife
             return All;
         }
 
-        public static void Clear() => All.Clear();
+        public static void Clear() { All.Clear(); Seen.Clear(); }
+
+        // When each chest's saved contents last changed, as far as this game has seen (chests near you, while the inventory is open).
+        private static readonly Dictionary<Container, KeyValuePair<uint, float>> Seen = new Dictionary<Container, KeyValuePair<uint, float>>();
+        private const float SettleSeconds = 3f;
+
+        /// <summary>Note the chest's save revision (call when chests are scanned), so a change made by someone else can be noticed.</summary>
+        public static void Watch(Container c)
+        {
+            var view = NView.GetValue(c) as ZNetView;
+            if (view == null || !view.IsValid()) return;
+            uint revision = view.GetZDO().DataRevision;
+            if (!Seen.TryGetValue(c, out KeyValuePair<uint, float> seen))
+                Seen[c] = new KeyValuePair<uint, float>(revision, float.NegativeInfinity); // first look: settled as far as we know
+            else if (seen.Key != revision)
+                Seen[c] = new KeyValuePair<uint, float>(revision, UnityEngine.Time.time);
+        }
+
+        /// <summary>
+        /// Leave this chest alone for now: someone has it open, or another player's game owns it and its contents changed in the last
+        /// few seconds (they are using it, and our copy may not have their latest change yet: moving items now could undo theirs).
+        /// </summary>
+        public static bool Busy(Container c)
+        {
+            if (InUse(c)) return true;
+            var view = NView.GetValue(c) as ZNetView;
+            if (view == null || !view.IsValid() || view.IsOwner()) return false;
+            uint revision = view.GetZDO().DataRevision;
+            if (!Seen.TryGetValue(c, out KeyValuePair<uint, float> seen)) return false;
+            return seen.Key != revision || UnityEngine.Time.time - seen.Value < SettleSeconds;
+        }
 
         private static readonly System.Reflection.FieldInfo NView = AccessTools.Field(typeof(Container), "m_nview");
         private static readonly System.Reflection.MethodInfo Load = AccessTools.Method(typeof(Container), "Load");

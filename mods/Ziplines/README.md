@@ -5,7 +5,7 @@
 
 <img src="cover.png" alt="Ziplines" width="100%">
 
-**Version 0.1.1**  ·  [all the mods](../../README.md)  ·  installs and updates through the in-game [mod manager](https://github.com/HardHeadHackerHead/valheim-mod-manager) (**F7**)
+**Version 0.2.0**  ·  [all the mods](../../README.md)  ·  installs and updates through the in-game [mod manager](https://github.com/HardHeadHackerHead/valheim-mod-manager) (**F7**)
 
 Build two Zipline Posts (hammer, Misc) and link them with **E**: a rope runs between them, up to kilometres long. It only runs downhill. Press **E**
 on the higher post, hook your axe over the rope and hang from its handle, both hands on it and your feet dangling, and slide down with the
@@ -51,28 +51,29 @@ In `BepInEx/config/com.dhack.ziplines.cfg` (made the first time the game runs wi
 
 | Setting | Default | What it does |
 |---|---|---|
-| `MaxLength` | `12000` | The longest a zipline can be (metres). A line remembers where its other end is, so the far post does not have to be loaded: the world around you loads as you ride. |
-| `MinSlope` | `0.005` | How much a line must fall to be ridden, as a part of its length (0.005 is 5 m in every 1000). A line only runs downhill, from its higher post to its lower. |
+| `MaxLength` | `12000` | The longest a zipline can be (metres). A line remembers where its other end is, so the far post does not have to be loaded: the world around you loads as you ride. In multiplayer the server's value applies. |
+| `MinSlope` | `0.005` | How much a line must fall to be ridden, as a part of its length (0.005 is 5 m in every 1000). A line only runs downhill, from its higher post to its lower. In multiplayer the server's value applies. |
 
 **Riding**
 
 | Setting | Default | What it does |
 |---|---|---|
-| `LongLinesFaster` | `true` | The longer the line, the faster you go (up to eight times), so a line of kilometres takes minutes, not an hour. You slow down for the last stretch either way. |
-| `TopSpeed` | `24` | How fast you go downhill at the most (metres per second). |
-| `MinSpeed` | `5` | How fast you go on the flat or uphill at the least (metres per second). |
+| `LongLinesFaster` | `true` | The longer the line, the faster you go (up to eight times), so a line of kilometres takes minutes, not an hour. You slow down for the last stretch either way. In multiplayer the server's value applies. |
+| `TopSpeed` | `24` | How fast you go downhill at the most (metres per second). In multiplayer the server's value applies. |
+| `MinSpeed` | `5` | How fast you go on the flat or uphill at the least (metres per second). In multiplayer the server's value applies. |
 | `HangBelowRope` | `2.5` | How far below the rope your feet hang (metres): your arms reach up to the handle, so this is about your height plus a little. |
-| `NeedAnAxe` | `true` | You hook an axe over the rope and hang from its handle, so you need one with you to ride. Off, you hang from a wooden triangle instead. |
-| `SpeedPercent` | `50` | How fast the whole ride is, as a percent of the standard speed (50 is half as fast, 200 twice). |
+| `NeedAnAxe` | `true` | You hook an axe over the rope and hang from its handle, so you need one with you to ride. Off, you hang from a wooden triangle instead. In multiplayer the server's value applies. |
+| `SpeedPercent` | `50` | How fast the whole ride is, as a percent of the standard speed (50 is half as fast, 200 twice). In multiplayer the server's value applies. |
 | `WindVolume` | `0.12` | How loud the wind is at full speed (0 to 1). |
 | `WideView` | `true` | The view widens as you speed up, for the feel of it. |
 | `WindSound` | `true` | The sound of the wind, rising with your speed. |
 
 ## 👥 Playing together
 
-See [who needs which mod](../../README.md#playing-together) on the front page.
+Everyone in the world needs it, **the host above all**. It adds a new build piece. Restart the game after updating so it registers cleanly.
 
 ## 📜 Changes
 
+- **0.2.0** Running or taking down a line now needs the ward's leave at both posts, as building does (riding is still for anyone). In multiplayer the server decides the line and riding rules (MaxLength, MinSlope, the speeds, LongLinesFaster and NeedAnAxe). Letting go uses the game's Jump (your own key, or a gamepad), the wind follows the game's sound volume, and a problem with the post's look can no longer stop it being registered. Updating the mod now asks for a restart (it adds a build piece).
 - Fix: no more stutter every 5 seconds. Looking for Claude Tools searched everything the game had loaded; it now asks BepInEx's list of mods.
 - New: Zipline Posts. Build two, link them with E, and ride the downhill rope between them hanging from your axe.

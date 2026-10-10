@@ -139,12 +139,14 @@ namespace FeedFromChests
         private static void Postfix(Fermenter __instance) => Ferment.Register(__instance);
     }
 
-    // The mead coming out of the tap: into chests when it can.
+    // The mead coming out of the tap: into chests when it can. After every other mod's prefix, and not when one of them has delivered it.
     [HarmonyPatch(typeof(Fermenter), "DelayedTap")]
     internal static class Fermenter_DelayedTap
     {
-        private static bool Prefix(Fermenter __instance)
+        [HarmonyPriority(Priority.Last)]
+        private static bool Prefix(Fermenter __instance, bool __runOriginal)
         {
+            if (!__runOriginal) return false;
             try { return Ferment.Deliver(__instance); }
             catch (System.Exception e) { Plugin.Instance?.Log("Could not put the mead in a chest, dropping it instead: " + e.Message); return true; }
         }

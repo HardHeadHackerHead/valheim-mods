@@ -11,8 +11,8 @@ namespace AICompanion
     /// (see the patches below), so swings, blocks and guard breaks work exactly as they do for players. Running drains it, and it comes back
     /// after a short pause; status effects that change stamina (Eikthyr's power, meads) apply through the game's own modifiers.
     ///
-    /// The pool is kept by the game that runs the companion, and copied into its ZDO a few times a second for the menu and the party panel
-    /// (and for whoever runs it next).
+    /// The pool is kept by the game that runs the companion, and copied into its ZDO on a big change or every few seconds, for the menu on
+    /// other games (and for whoever runs it next); the party panel gets the live value from the game running it (Net).
     /// </summary>
     internal static class Stamina
     {
@@ -103,7 +103,9 @@ namespace AICompanion
 
         private static void Save(Character c, Pool p, bool now)
         {
-            if (!now && Time.time - p.LastSave < 0.25f && Mathf.Abs(p.Value - p.Saved) < 5f) return;
+            // Each write sends its whole save (its bag too) to every player: only a big change at once, else every few seconds while it changes.
+            float change = Mathf.Abs(p.Value - p.Saved);
+            if (!now && change < 5f && (Time.time - p.LastSave < 3f || change < 0.5f)) return;
             ZNetView v = c.GetComponent<ZNetView>();
             if (v == null || !v.IsValid() || !v.IsOwner()) return;
             p.LastSave = Time.time;

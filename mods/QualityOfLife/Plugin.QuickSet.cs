@@ -110,6 +110,7 @@ namespace QualityOfLife
             {
                 _badgeStyle = new GUIStyle(GUI.skin.label) { fontSize = 11, fontStyle = FontStyle.Bold, alignment = TextAnchor.MiddleCenter };
                 _badgeStyle.normal.textColor = new Color(0.1f, 0.07f, 0.02f);
+                UseGameFonts(null, _badgeStyle);
             }
 
             Inventory inventory = player.GetInventory();

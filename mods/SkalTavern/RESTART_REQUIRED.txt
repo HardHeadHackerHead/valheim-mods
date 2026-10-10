@@ -1,0 +1,1 @@
+It adds new items (the four drinks). Restart the game after updating so they register cleanly.

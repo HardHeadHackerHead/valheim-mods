@@ -18,13 +18,14 @@ namespace Rainbows
     {
         public const string Guid = "com.dhack.rainbows";
         public const string Name = "Rainbows";
-        public const string Version = "0.1.1";
+        public const string Version = "0.2.0";
 
         internal static Plugin Instance;
         internal static ManualLogSource Log;
 
         internal static ConfigEntry<bool> Enabled, Chime, Buff;
         internal static ConfigEntry<float> Chance, MinRainSeconds, WaitMinutes, ShowMinutes, BuffMinutes, Brightness, Volume, DoubleChance;
+        internal static DHack.Shared.ServerSettings Synced;   // how often rainbows come and what the blessing gives are the server's in multiplayer
 
         private Harmony _harmony;
 
@@ -32,17 +33,18 @@ namespace Rainbows
         {
             Instance = this;
             Log = Logger;
+            Synced = new DHack.Shared.ServerSettings(Guid, Config, Logger);
             Enabled = Config.Bind("Rainbow", "Enabled", true, "Rainbows after the rain.");
-            Chance = Config.Bind("Rainbow", "Chance", 0.8f, new ConfigDescription("How often a good spell of rain ends in a rainbow (0 never, 1 always), when the sun is low enough to show one.", new AcceptableValueRange<float>(0f, 1f)));
-            MinRainSeconds = Config.Bind("Rainbow", "MinRainSeconds", 45f, new ConfigDescription("How long it must have rained (seconds) for the end of it to be worth a rainbow.", new AcceptableValueRange<float>(0f, 600f)));
-            WaitMinutes = Config.Bind("Rainbow", "WaitMinutes", 8f, new ConfigDescription("If the sun is too high or too low when the rain ends, how long (minutes) to wait for it to come into place before giving up.", new AcceptableValueRange<float>(0f, 60f)));
+            Chance = Synced.Add(Config.Bind("Rainbow", "Chance", 0.8f, new ConfigDescription("How often a good spell of rain ends in a rainbow (0 never, 1 always), when the sun is low enough to show one. In multiplayer the server's value applies.", new AcceptableValueRange<float>(0f, 1f))));
+            MinRainSeconds = Synced.Add(Config.Bind("Rainbow", "MinRainSeconds", 45f, new ConfigDescription("How long it must have rained (seconds) for the end of it to be worth a rainbow. In multiplayer the server's value applies.", new AcceptableValueRange<float>(10f, 600f))));
+            WaitMinutes = Synced.Add(Config.Bind("Rainbow", "WaitMinutes", 8f, new ConfigDescription("If the sun is too high or too low when the rain ends, how long (minutes) to wait for it to come into place before giving up. In multiplayer the server's value applies.", new AcceptableValueRange<float>(0f, 60f))));
             ShowMinutes = Config.Bind("Rainbow", "ShowMinutes", 3f, new ConfigDescription("How long the rainbow stays (minutes), if the sun does not move it out of the sky first.", new AcceptableValueRange<float>(0.5f, 30f)));
             Brightness = Config.Bind("Rainbow", "Brightness", 1f, new ConfigDescription("How strong the colours are.", new AcceptableValueRange<float>(0.2f, 2f)));
-            DoubleChance = Config.Bind("Rainbow", "DoubleChance", 0.3f, new ConfigDescription("How often a rainbow is a double one : a fainter second rainbow outside the first, its colours the other way round, and a stronger blessing. 0 never, 1 always.", new AcceptableValueRange<float>(0f, 1f)));
+            DoubleChance = Synced.Add(Config.Bind("Rainbow", "DoubleChance", 0.3f, new ConfigDescription("How often a rainbow is a double one : a fainter second rainbow outside the first, its colours the other way round, and a stronger blessing. 0 never, 1 always. In multiplayer the server's value applies.", new AcceptableValueRange<float>(0f, 1f))));
             Chime = Config.Bind("Rainbow", "Chime", true, "A soft chime when a rainbow comes out.");
             Volume = Config.Bind("Rainbow", "ChimeVolume", 0.35f, new ConfigDescription("How loud the chime is.", new AcceptableValueRange<float>(0f, 1f)));
             Buff = Config.Bind("Blessing", "Enabled", true, "Look up at a rainbow and you get Rainbow's Blessing: stamina and health come back faster, and running and jumping cost less stamina. A double rainbow gives a stronger one.");
-            BuffMinutes = Config.Bind("Blessing", "Minutes", 5f, new ConfigDescription("How long the blessing lasts (minutes).", new AcceptableValueRange<float>(0.5f, 60f)));
+            BuffMinutes = Synced.Add(Config.Bind("Blessing", "Minutes", 5f, new ConfigDescription("How long the blessing lasts (minutes). In multiplayer the server's value applies.", new AcceptableValueRange<float>(0.5f, 30f))));
 
             _harmony = new Harmony(Guid);
             _harmony.PatchAll(typeof(Plugin).Assembly);
@@ -52,6 +54,7 @@ namespace Rainbows
 
         private void Update()
         {
+            Synced?.Update();
             Tools.Update();
             Sky.Tick(Time.deltaTime);
         }
@@ -60,6 +63,7 @@ namespace Rainbows
 
         private void OnDestroy()
         {
+            Synced?.Dispose();
             _harmony?.UnpatchSelf();
             Tools.Unregister();
             Sky.Clear();

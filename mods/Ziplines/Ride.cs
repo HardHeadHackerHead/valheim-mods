@@ -17,6 +17,7 @@ namespace Ziplines
         private static int _phase;   // 0 lifting on, 1 riding, 2 coming down
         private static AudioSource _wind;
         private static AudioClip _windClip;
+        private static UnityEngine.Audio.AudioMixerGroup _mixer;
 
         /// <summary>Where the rope is above the carriage now.</summary>
         public static Vector3 RopePoint;
@@ -79,7 +80,8 @@ namespace Ziplines
         {
             if (_rider == null) return;
             if (_rider.IsDead() || !_rider.IsAttached() || _trolley == null) { Finish(); return; }
-            if (Input.GetKeyDown(KeyCode.Space) && _phase == 1) { _rider.AttachStop(); Finish(); return; }
+            // let go with the game's Jump (whatever key or gamepad button the player has it on)
+            if ((ZInput.GetButtonDown("Jump") || ZInput.GetButtonDown("JoyJump")) && _phase == 1) { _rider.AttachStop(); Finish(); return; }
 
             float dt = Time.deltaTime;
             _trolley.rotation = Quaternion.Slerp(_trolley.rotation, Quaternion.LookRotation(Flat(_b - _a)), dt * 6f);
@@ -191,6 +193,10 @@ namespace Ziplines
             go.transform.SetParent(_trolley, false);
             _wind = go.AddComponent<AudioSource>();
             _wind.clip = _windClip; _wind.loop = true; _wind.spatialBlend = 0f; _wind.volume = 0f;
+            // through the game's sound effects channel, so the player's volume slider applies
+            if (_mixer == null && ZNetScene.instance != null)
+                _mixer = ZNetScene.instance.GetPrefab("sfx_chest_open")?.GetComponentInChildren<AudioSource>(true)?.outputAudioMixerGroup;
+            _wind.outputAudioMixerGroup = _mixer;
             _wind.Play();
         }
 

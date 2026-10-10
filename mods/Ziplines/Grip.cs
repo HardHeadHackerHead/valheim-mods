@@ -94,7 +94,12 @@ namespace Ziplines
             Material basis = null;
             GameObject wood = ZNetScene.instance != null ? ZNetScene.instance.GetPrefab("Wood") : null;
             if (wood != null) foreach (Renderer r in wood.GetComponentsInChildren<Renderer>(true)) basis = basis ?? r.sharedMaterials.FirstOrDefault(m => m != null && m.name == "wood_item");
-            basis = basis ?? new Material(Shader.Find("Standard") ?? Shader.Find("Sprites/Default"));
+            if (basis == null)
+            {
+                Shader shader = Shader.Find("Standard") ?? Shader.Find("Sprites/Default");
+                if (shader == null) return; // (no material to copy: the handle keeps Unity's default look)
+                basis = new Material(shader);
+            }
             _wood = Plain(basis, new Color(0.52f, 0.35f, 0.2f), 0.05f);
             _iron = Plain(basis, new Color(0.17f, 0.17f, 0.18f), 0.5f);
         }

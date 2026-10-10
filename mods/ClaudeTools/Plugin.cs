@@ -29,7 +29,7 @@ namespace ClaudeTools
     {
         public const string Guid = "com.dhack.claudetools";
         public const string Name = "ClaudeTools";
-        public const string Version = "1.1.7";
+        public const string Version = "1.2.0";
 
         internal static Plugin Instance;
         internal static BepInEx.Logging.ManualLogSource Log;
@@ -57,11 +57,16 @@ namespace ClaudeTools
                 "Write the ground heights, water and buildings around where you look into BepInEx/claude/_survey.json.");
             _surveyRadius = Config.Bind("Keys", "SurveyRadius", 24f, new ConfigDescription("How far a survey reaches (metres).", new AcceptableValueRange<float>(4f, 64f)));
             RegisterBuiltIns();
+            BindLibrary();
+            RegisterConsole();
             Logger.LogInfo($"{Name} {Version} loaded (requests {( _allowRequests.Value ? "on" : "off")}, folder {Folder})");
         }
 
         private void OnDestroy()
         {
+            _stopping = true;
+            UnregisterConsole();
+            ForgetCaches();
             if (Instance == this) Instance = null;
         }
 
@@ -72,9 +77,8 @@ namespace ClaudeTools
         {
             if (!_guideWritten) { _guideWritten = true; WriteGuide(); }
             Player player = Player.m_localPlayer;
-            if (player == null) return;
 
-            if (!TypingOrMenuOpen())
+            if (player != null && !TypingOrMenuOpen())
             {
                 KeyboardShortcut survey = _surveyKey.Value;
                 bool surveyPressed = survey.MainKey != KeyCode.None && Input.GetKeyDown(survey.MainKey) && survey.Modifiers.All(Input.GetKey);
@@ -116,20 +120,35 @@ namespace ClaudeTools
             return true;
         }
 
-        /// <summary>Write CLAUDE.md (the assistants' guide) into BepInEx/claude, refreshed whenever it changes.</summary>
+        /// <summary>Write CLAUDE.md (the assistants' guide) and the skills into BepInEx/claude, refreshed whenever they change.</summary>
         private void WriteGuide()
         {
             try
             {
                 Directory.CreateDirectory(RequestDir);
                 Directory.CreateDirectory(ShotDir);
-                using (Stream s = typeof(Plugin).Assembly.GetManifestResourceStream("guide/CLAUDE.md"))
+                // the guide, the skills for mod makers (Claude Code finds .claude/skills in the folder it starts in), modkit (the same
+                // commands on the command line, for when the game isn't running) and modelkit (making and checking 3D models offline)
+                foreach (string name in typeof(Plugin).Assembly.GetManifestResourceNames())
                 {
-                    if (s == null) return;
-                    var reader = new StreamReader(s);
-                    string text = reader.ReadToEnd();
-                    string path = Path.Combine(Folder, "CLAUDE.md");
-                    if (!File.Exists(path) || File.ReadAllText(path) != text) File.WriteAllText(path, text);
+                    string rel = name == "guide/CLAUDE.md" ? "CLAUDE.md"
+                               : name.StartsWith("skills/") ? ".claude/" + name.Replace('\\', '/')
+                               : name.StartsWith("modkit/") || name.StartsWith("modelkit/") ? name : null;
+                    if (rel == null) continue;
+                    try
+                    {
+                        using (Stream s = typeof(Plugin).Assembly.GetManifestResourceStream(name))
+                        {
+                            if (s == null) continue;
+                            var data = new MemoryStream();
+                            s.CopyTo(data);
+                            byte[] bytes = data.ToArray();
+                            string path = Path.Combine(Folder, rel.Replace('/', Path.DirectorySeparatorChar));
+                            Directory.CreateDirectory(Path.GetDirectoryName(path));
+                            if (!File.Exists(path) || !File.ReadAllBytes(path).SequenceEqual(bytes)) File.WriteAllBytes(path, bytes);
+                        }
+                    }
+                    catch (Exception e) { Logger.LogWarning($"Could not write {rel}: {e.Message}"); } // (modkit.exe may be running)
                 }
             }
             catch (Exception e) { Logger.LogWarning("Could not write the guide: " + e.Message); }

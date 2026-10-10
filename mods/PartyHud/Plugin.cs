@@ -26,8 +26,10 @@ namespace PartyHud
     {
         public const string Guid = "com.dhack.partyhud";
         public const string Name = "PartyHud";
-        public const string Version = "1.7.3";
+        public const string Version = "1.8.0";
 
+        internal static DHack.Shared.ServerSettings Synced; // settings the server decides in multiplayer
+        private ConfigEntry<bool> _shareMine, _allowSharing;
         private ConfigEntry<bool> _enabled, _showSelf, _showPortraits, _showDistance, _hideInMenus, _avoidShipHud, _compact, _onLeft, _showArrow, _showEffects, _showFood, _showCompanions;
         private ConfigEntry<float> _offsetX, _offsetY, _scale, _opacity;
         private ConfigEntry<int> _maxRows;
@@ -82,6 +84,14 @@ namespace PartyHud
             _showCompanions = Config.Bind("General", "ShowCompanions", true, "With the AICompanion mod: show each player's companion under them (health, distance, what it is doing).");
             _opacity = Config.Bind("Layout", "Opacity", 0.85f, "How solid the panel background is (0.2 to 1).");
 
+            Synced = new DHack.Shared.ServerSettings(Guid, Config, Logger);
+            _shareMine = Config.Bind("Sharing", "ShareMyStats", true,
+                "Send your health, stamina, Eitr, food and buffs to the other players who have this mod (a few times a second, at any distance). " +
+                "Off: they only see what the game itself shows of you when you are near.");
+            _allowSharing = Synced.Add(Config.Bind("Sharing", "AllowSharing", true,
+                "Players with this mod share their exact health, stamina, Eitr, food and buffs with each other at any distance. A PvP server may " +
+                "want this off (each player then sees only what the game shows of players near them). In multiplayer the server's value applies."));
+
             _awakeFrame = Time.frameCount;
             Logger.LogInfo($"{Name} {Version} loaded");
 
@@ -95,12 +105,14 @@ namespace PartyHud
         {
             UnregisterRpc();
             _remote.Clear();
+            Synced?.Dispose();
             SteamAvatars.Clear();
             DestroyDrawResources();
         }
 
         private void Update()
         {
+            Synced?.Update(); // notices joining and leaving a server, for the settings it decides
             if (!_enabled.Value) return;
 
             // (Not IsDown(): that ignores the key while another modifier, like the Shift you hold to run, is down.)
@@ -162,7 +174,7 @@ namespace PartyHud
                 var m = new Member { Id = id, Name = info.m_name, SteamId = SteamIdOf(info) };
                 if (info.m_publicPosition) { m.Distance = Vector3.Distance(me.transform.position, info.m_position); m.Pos = info.m_position; m.HasPos = true; }
 
-                if (_remote.TryGetValue(id, out Remote r) && Time.time - r.Seen < 5f)
+                if (_allowSharing.Value && _remote.TryGetValue(id, out Remote r) && Time.time - r.Seen < 5f)
                 {
                     // Best case: that player's own game told us, so the numbers are exact and work at any distance.
                     m.HasData = true;

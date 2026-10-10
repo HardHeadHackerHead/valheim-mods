@@ -39,7 +39,7 @@ namespace CigarSmoking
             var box = hit.AddComponent<BoxCollider>();
             box.center = b.center;
             box.size = b.size;
-            ModelBuilder.Build(go.transform, parts, go.layer);
+            Safely(go.name, () => ModelBuilder.Build(go.transform, parts, go.layer));
         }
 
         private static void SetPiece(GameObject go, string name, string description, string icon, params Piece.Requirement[] cost)
@@ -97,7 +97,7 @@ namespace CigarSmoking
                 SetPiece(rack, "Tobacco Drying Rack", "Hang fresh tobacco leaves here to dry in the air.", "rack", Req("Wood", 8), Req("Resin", 2));
                 rack.GetComponent<Piece>().m_craftingStation = workbench;
                 Curer c = rack.AddComponent<Curer>();
-                c.Title = "Tobacco Drying Rack"; c.Doing = "Drying"; c.Done = "dried"; c.Capacity = 8; c.Seconds = Plugin.DryMinutes.Value * 60f;
+                c.Title = "Tobacco Drying Rack"; c.Doing = "Drying"; c.Done = "dried"; c.Capacity = 8;
                 c.Drying = true;
                 HammerPieces.Add(rack);
             }
@@ -110,7 +110,7 @@ namespace CigarSmoking
                          Req("Wood", 12), Req("Resin", 4), Req("LeatherScraps", 2));
                 barrel.GetComponent<Piece>().m_craftingStation = workbench;
                 Curer c = barrel.AddComponent<Curer>();
-                c.Title = "Tobacco Curing Barrel"; c.Doing = "Curing"; c.Done = "aged"; c.Capacity = 8; c.Seconds = Plugin.CureMinutes.Value * 60f;
+                c.Title = "Tobacco Curing Barrel"; c.Doing = "Curing"; c.Done = "aged"; c.Capacity = 8;
                 c.Drying = false;
                 HammerPieces.Add(barrel);
             }
@@ -121,13 +121,14 @@ namespace CigarSmoking
 
         private static void Replace(Transform at, object[][] parts)
         {
+            if (at == null) return;   // (a game update renamed the part: the plant keeps the game's look)
             for (int i = at.childCount - 1; i >= 0; i--) Object.DestroyImmediate(at.GetChild(i).gameObject);
             foreach (MeshRenderer r in at.GetComponents<MeshRenderer>()) Object.DestroyImmediate(r);
             foreach (MeshFilter m in at.GetComponents<MeshFilter>()) Object.DestroyImmediate(m);
             // the game's own parts are imported meshes, turned and scaled to suit them: ours want a plain, upright place
             at.localRotation = Quaternion.identity;
             at.localScale = Vector3.one;
-            ModelBuilder.Build(at, parts, at.gameObject.layer);
+            Safely(at.name, () => ModelBuilder.Build(at, parts, at.gameObject.layer));
         }
 
         private static void BuildPlants(ZNetScene scene, Strain s)
@@ -143,9 +144,11 @@ namespace CigarSmoking
             {
                 foreach (LODGroup lod in ripe.GetComponentsInChildren<LODGroup>(true)) Object.DestroyImmediate(lod);
                 for (int i = ripe.transform.childCount - 1; i >= 0; i--) Object.DestroyImmediate(ripe.transform.GetChild(i).gameObject);
-                GameObject model = ModelBuilder.Build(ripe.transform, mature, ripe.layer);
+                Safely(s.Pickable, () => ModelBuilder.Build(ripe.transform, mature, ripe.layer));
                 Pickable p = ripe.GetComponent<Pickable>();
-                p.m_hideWhenPicked = model;
+                // nothing to hide: with no regrowth and nothing hidden, the game removes a picked plant (as it does its own crops),
+                // where a hidden one would stay in the save for ever
+                p.m_hideWhenPicked = null;
                 p.m_itemPrefab = fresh != null ? fresh.gameObject : null;
                 p.m_amount = 3;
                 p.m_overrideName = tobacco;
@@ -160,7 +163,7 @@ namespace CigarSmoking
             {
                 Transform visual = wild.transform.Find("visual");
                 foreach (LODGroup lod in wild.GetComponentsInChildren<LODGroup>(true)) Object.DestroyImmediate(lod);
-                GameObject model;
+                GameObject model = null;
                 if (visual != null)
                 {
                     foreach (Collider c in visual.GetComponents<Collider>()) Object.DestroyImmediate(c);
@@ -170,7 +173,7 @@ namespace CigarSmoking
                 else
                 {
                     for (int i = wild.transform.childCount - 1; i >= 0; i--) Object.DestroyImmediate(wild.transform.GetChild(i).gameObject);
-                    model = ModelBuilder.Build(wild.transform, mature, wild.layer);
+                    Safely(s.WildPickable, () => model = ModelBuilder.Build(wild.transform, mature, wild.layer));
                 }
                 Pickable p = wild.GetComponent<Pickable>();
                 p.m_hideWhenPicked = model;
@@ -239,6 +242,23 @@ namespace CigarSmoking
             foreach (Strain s in Strains.All)
                 if (s.Sapling == name && Things.Made.TryGetValue(s.Pickable, out GameObject ripe) && ripe != null)
                     __instance.m_grownPrefabs = new[] { ripe };
+        }
+    }
+
+    // A planted sapling takes its growing time from the setting as it loads, not from the copy made when the game started: in multiplayer
+    // the server's value arrives after that, and the plant's owner (whoever is nearest) decides when it grows.
+    [HarmonyLib.HarmonyPatch(typeof(Plant), "Awake")]
+    internal static class Plant_Awake
+    {
+        private static void Postfix(Plant __instance)
+        {
+            string name = Utils.GetPrefabName(__instance.gameObject);
+            foreach (Strain s in Strains.All)
+                if (s.Sapling == name)
+                {
+                    __instance.m_growTime = Plugin.GrowMinutes.Value * 60f;
+                    __instance.m_growTimeMax = __instance.m_growTime * 1.4f;
+                }
         }
     }
 }

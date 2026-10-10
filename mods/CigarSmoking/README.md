@@ -5,7 +5,7 @@
 
 <img src="cover.png" alt="Quad&#x27;s Cigars" width="100%">
 
-**Version 0.2.2**  ·  [all the mods](../../README.md)  ·  installs and updates through the in-game [mod manager](https://github.com/HardHeadHackerHead/valheim-mod-manager) (**F7**)
+**Version 0.3.0**  ·  [all the mods](../../README.md)  ·  installs and updates through the in-game [mod manager](https://github.com/HardHeadHackerHead/valheim-mod-manager) (**F7**)
 
 Tobacco from the wild plant to the cigar in your mouth. Three strains grow in the Meadows, the Black Forest and the Plains; farm them with the
 cultivator, dry the leaves on a rack, age them in a barrel, and roll four kinds of cigar (Connecticut, Maduro, Corojo, Habano) at a Cigar
@@ -66,9 +66,9 @@ In `BepInEx/config/com.dhack.cigarsmoking.cfg` (made the first time the game run
 
 | Setting | Default | What it does |
 |---|---|---|
-| `TobaccoGrowMinutes` | `25` | How long a tobacco plant takes to grow (minutes). Needs a restart. |
-| `DryingMinutes` | `2` | How long a batch of leaves takes to dry on the rack (minutes). Needs a restart. |
-| `CuringMinutes` | `6` | How long a batch of leaves takes to age in the barrel (minutes). Needs a restart. |
+| `TobaccoGrowMinutes` | `25` | How long a tobacco plant takes to grow (minutes). Applies to plants as they load. In multiplayer the server's value applies. |
+| `DryingMinutes` | `2` | How long a batch of leaves takes to dry on the rack (minutes). Applies to batches put in after a change. In multiplayer the server's value applies. |
+| `CuringMinutes` | `6` | How long a batch of leaves takes to age in the barrel (minutes). Applies to batches put in after a change. In multiplayer the server's value applies. |
 
 **Look**
 
@@ -81,8 +81,8 @@ In `BepInEx/config/com.dhack.cigarsmoking.cfg` (made the first time the game run
 
 | Setting | Default | What it does |
 |---|---|---|
-| `Minutes` | `5` | How long one cigar lasts (minutes). |
-| `EffectStrength` | `100` | How strong the cigars' bonuses are (percent of the default). 0 for none. |
+| `Minutes` | `5` | How long one cigar lasts (minutes). In multiplayer the server's value applies. |
+| `EffectStrength` | `100` | How strong the cigars' bonuses are (percent of the default). 0 for none. In multiplayer the server's value applies. |
 
 ## 👥 Playing together
 
@@ -90,6 +90,7 @@ Everyone in the world needs it, **the host above all**. It adds a new item. Rest
 
 ## 📜 Changes
 
+- **0.3.0** The Drying Rack and Curing Barrel are safe with friends around: putting leaves in and taking them out now goes through the piece's owner, as the game's fermenter does, so two players taking a batch at once no longer both get it, and leaves put in at the same moment as someone else's come back to you instead of vanishing. They respect wards, can't be torn down while they hold leaves (the game says it can't be removed now), and drop what they held when broken. A tobacco plant you sowed and harvested is now removed like the game's own crops, instead of staying hidden in the world for ever (old ones are cleared as their area loads). On a server, the cigar length and strength and the growing, drying and curing times are the server's, and a batch's finish time is saved when it goes in. A model that fails to build no longer stops the pieces registering, and lighting cigars no longer makes a new material each time.
 - **0.2.2** Public smoking API v1 lets add-ons register status-effect names and share the one-active-smoke rule with cigars. Lighting a cigar stops registered pipe effects; add-ons can stop cigars before lighting. Registrations belong to the live plugin and are re-established after reloads.
 - Fixes: a Drying Rack or Curing Barrel you built had nothing to turn leaves into (its list was only on the build-menu copy), so it took no leaves: it now works from the strains themselves. Tobacco items dropped on the ground could not be picked up (now on the item layer). When your bag is full, the rest of what a rack, barrel or plant gives you lands at your feet as a stack (it used to drop one and lose the rest), with a message. Leaves taken from a rack or barrel count from any world level. And a model that ever comes out with invalid points (seen once at game start) is made again, with a note in the log naming it.
 - New: a whole tobacco system. Three strains grow wild in the Meadows, Black Forest and Plains and can be farmed with the cultivator. Dry leaves on a Drying Rack, age them in a Curing Barrel, and roll four kinds of cigar (Connecticut, Maduro, Corojo, Habano) at a Cigar Rolling Table, with a Humidor for the finer ones. Each cigar has its own look and status effect. Smoking now holds the cigar in your hand and brings it up for a puff.

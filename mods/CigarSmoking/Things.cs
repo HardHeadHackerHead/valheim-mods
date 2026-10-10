@@ -71,6 +71,28 @@ namespace CigarSmoking
             player.Message(MessageHud.MessageType.Center, "Your bag is full: the rest is on the ground");
         }
 
+        /// <summary>Puts items on the ground as one stack (what a broken rack or barrel held).</summary>
+        internal static void Drop(string prefab, int amount, Vector3 at)
+        {
+            GameObject go = Find(prefab);
+            ItemDrop drop = go != null ? go.GetComponent<ItemDrop>() : null;
+            if (drop == null || amount <= 0) return;
+            ItemDrop.ItemData data = drop.m_itemData.Clone();
+            data.m_dropPrefab = go;
+            data.m_worldLevel = (byte)Game.m_worldLevel;
+            ItemDrop.DropItem(data, amount, at, Quaternion.Euler(0f, Random.Range(0f, 360f), 0f));
+        }
+
+        /// <summary>
+        /// Runs the part of building something that only makes it look right (models, materials). If it fails, the thing is still
+        /// registered, only plainer: a piece that is not registered is deleted from the world by the host (docs/modding-pitfalls.md).
+        /// </summary>
+        private static void Safely(string what, System.Action look)
+        {
+            try { look(); }
+            catch (System.Exception e) { Debug.LogWarning("[" + Plugin.Name + "] could not build the look of " + what + ": " + e.Message); }
+        }
+
         /// <summary>The game's crafting sound and sparks, played when something is put in or taken out.</summary>
         internal static void PlayEffects(Vector3 at)
         {
@@ -100,13 +122,13 @@ namespace CigarSmoking
 
             if (!_items)
             {
-                if (!Look.Ready) Look.Harvest(scene);
+                if (!Look.Ready) Safely("the materials", () => Look.Harvest(scene));
                 if (!BuildItems()) return;
                 _items = true;
             }
             if (scene != null && !_pieces)
             {
-                Look.Harvest(scene);   // now with the game's own wood, stone and iron
+                Safely("the materials", () => Look.Harvest(scene));   // now with the game's own wood, stone and iron
                 BuildPieces(scene);
                 _pieces = true;
             }

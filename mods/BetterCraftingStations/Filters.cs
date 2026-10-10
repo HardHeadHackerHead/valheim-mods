@@ -37,9 +37,12 @@ namespace BetterCraftingStations
         {
             if (!Active(s)) return all;
             Player player = Player.m_localPlayer;
-            return all.Where(r => r != null && (s.Type == null || Classify.TypeOf(r) == s.Type)
-                                          && (s.Tier < 0 || Classify.TierOf(r) == s.Tier)
-                                          && (!s.CanCraft || player != null && player.HaveRequirements(r, false, 1))).ToList();
+            return all.Where(r => Passes(r, s, player)).ToList();
         }
+
+        public static bool Passes(Recipe r, State s, Player player) =>
+            r != null && (s.Type == null || Classify.TypeOf(r) == s.Type)
+                      && (s.Tier < 0 || Classify.TierOf(r) == s.Tier)
+                      && (!s.CanCraft || player != null && player.HaveRequirements(r, false, 1));
     }
 }

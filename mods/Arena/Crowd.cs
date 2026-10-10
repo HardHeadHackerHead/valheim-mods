@@ -158,6 +158,8 @@ namespace Arena
             if (drop != null)
             {
                 setup?.Invoke(drop);
+                // (from a land the world has not reached: only lent, it goes back when the fight is over)
+                if (!Kit.IsLoan(drop.m_itemData) && !Kit.Keeps(item, Contest.Tier)) drop.m_itemData.m_customData[Kit.LoanKey] = Kit.GiftLoan;
                 drop.SetStack(Mathf.Max(1, amount));   // (and saves it, with whatever setup changed)
             }
             Rigidbody body = go.GetComponent<Rigidbody>();

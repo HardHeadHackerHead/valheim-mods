@@ -44,7 +44,47 @@ namespace AICompanion
             return Answers.TryGetValue(id, out a) ? a.Key : (bool?)null;
         }
 
-        public static void Heard(long id, bool found) => Answers[id] = new KeyValuePair<bool, float>(found, Time.unscaledTime);
+        public static void Heard(long id, bool found, Vector3? tomb = null)
+        {
+            Answers[id] = new KeyValuePair<bool, float>(found, Time.unscaledTime);
+            if (tomb != null) Tombs[id] = tomb.Value;
+        }
+
+        private static readonly Dictionary<long, Vector3> Tombs = new Dictionary<long, Vector3>();
+
+        /// <summary>
+        /// Where its tombstone is (its last one), for bringing back one whose fall its player's game never heard of (it fell while they were
+        /// offline): the game hosting the world looks through its saves; another player's game has what the host said (Net.AskWhere).
+        /// </summary>
+        public static Vector3? TombOf(long id)
+        {
+            if (ZNet.instance != null && ZNet.instance.IsServer() && (!TombLook.TryGetValue(id, out float at) || Time.unscaledTime - at > 5f))
+            {
+                TombLook[id] = Time.unscaledTime; // (the menu asks every frame: look at most every 5 s)
+                if (FindTomb(id) is Vector3 found) Tombs[id] = found; else Tombs.Remove(id);
+            }
+            return Tombs.TryGetValue(id, out Vector3 pos) ? pos : (Vector3?)null;
+        }
+
+        private static readonly Dictionary<long, float> TombLook = new Dictionary<long, float>();
+
+        /// <summary>The host: its newest tombstone in the world, from the saves (a look through every tombstone: only when asked).</summary>
+        public static Vector3? FindTomb(long id)
+        {
+            if (ZDOMan.instance == null || ZNetScene.instance == null) return null;
+            GameObject player = ZNetScene.instance.GetPrefab("Player");
+            string name = player != null && player.GetComponent<Player>()?.m_tombstone != null ? player.GetComponent<Player>().m_tombstone.name : "Player_tombstone";
+            var list = new List<ZDO>();
+            int index = 0;
+            for (int guard = 0; guard < 1000 && !ZDOMan.instance.GetAllZDOsWithPrefabIterative(name, list, ref index); guard++) { }
+            ZDO newest = null;
+            foreach (ZDO z in list)
+                if (z != null && z.GetLong(Grave.OfKey, 0L) == id && (newest == null || z.GetLong(ZDOVars.s_timeOfDeath, 0L) > newest.GetLong(ZDOVars.s_timeOfDeath, 0L))) newest = z;
+            return newest?.GetPosition();
+        }
+
+        /// <summary>It just fell: an answer from before is out of date.</summary>
+        public static void Forget(long id) { Answers.Remove(id); Asked.Remove(id); Tombs.Remove(id); TombLook.Remove(id); }
 
         private static void Scan()
         {

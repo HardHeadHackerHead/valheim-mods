@@ -4,6 +4,9 @@
     <RootNamespace>QualityOfLife</RootNamespace>
   </PropertyGroup>
   <ItemGroup>
+    <Compile Include="../Shared/ServerSettings.cs" Link="Shared/ServerSettings.cs" />
+  </ItemGroup>
+  <ItemGroup>
     <!-- the longship picture for ship pins on the map -->
     <EmbeddedResource Include="ship.png" LogicalName="ship.png" />
   </ItemGroup>

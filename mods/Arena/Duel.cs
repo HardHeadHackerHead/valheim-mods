@@ -50,6 +50,9 @@ namespace Arena
 
         internal static void Init() => _awakeFrame = Time.frameCount;
 
+        /// <summary>The player I am fighting, or have just challenged (their game's word about our duel is not another fight).</summary>
+        internal static bool Involves(long peer) => peer != 0L && ((Active && peer == _opponent) || (peer == _outTo && Time.unscaledTime < _outUntil));
+
         // ---- the network -----------------------------------------------------------------------------------------------
 
         private static long MyId => ZDOMan.GetSessionID();
@@ -95,6 +98,7 @@ namespace Arena
             Player me = Player.m_localPlayer;
             if (me == null || other == null) return "Not now.";
             if (Active || Contest.Active) return "You are already in a fight.";
+            if (Net.RemoteFight) return Net.BusyText + ". Wait for the ring to be free.";
             if (me.GetInventory().CountItems("$item_coins") < wager) return "You have not got the coins for that wager.";
             _outTo = other.GetOwner(); _outWager = wager; _outAt = at; _outUntil = Time.unscaledTime + 30f;
             var pkg = new ZPackage();
@@ -107,7 +111,7 @@ namespace Arena
         {
             int wager = pkg.ReadInt(); string name = pkg.ReadString(); Vector3 at = pkg.ReadVector3();
             if (Player.m_localPlayer == null) return;
-            if (Active || Contest.Active || HasIncoming) { Reply(sender, false); return; }
+            if (Active || Contest.Active || HasIncoming || Net.RemoteFight) { Reply(sender, false); return; }   // (one fight in the ring at a time)
             _inFrom = sender; _inName = name; _inWager = wager; _inAt = at; _inUntil = Time.unscaledTime + 30f;
             Player.m_localPlayer.Message(MessageHud.MessageType.Center, name + " challenges you to a duel!");
             Window.Open(Window.Context.Master, null, 1);
@@ -125,6 +129,7 @@ namespace Arena
             Player me = Player.m_localPlayer;
             if (me == null || !HasIncoming) return "That challenge has run out.";
             if (Active || Contest.Active) return "You are already in a fight.";
+            if (Net.RemoteFight) { Decline(); return Net.BusyText + ": the ring is taken."; }
             if (me.GetInventory().CountItems("$item_coins") < _inWager) { Decline(); return "You have not got the coins for that wager."; }
             if (Travel.Distance(me.transform.position) > 90f) return "Come to the arena first.";
             long from = _inFrom; string name = _inName; int wager = _inWager; Vector3 at = _inAt;
@@ -148,7 +153,7 @@ namespace Arena
             if (me == null || sender != _outTo || Time.unscaledTime > _outUntil) return;
             _outTo = 0L;
             if (!accepted) { Hud.Say(NameOf(sender) + " did not take the challenge."); return; }
-            if (Active || Contest.Active || me.GetInventory().CountItems("$item_coins") < _outWager) { End(sender, false, "cancel"); return; }
+            if (Active || Contest.Active || Net.RemoteFight || me.GetInventory().CountItems("$item_coins") < _outWager) { End(sender, false, "cancel"); return; }
             Begin(sender, NameOf(sender), _outWager, _outAt);
         }
 
@@ -229,7 +234,14 @@ namespace Arena
             if (!me.IsPVPEnabled()) { me.SetPVP(true); Hud.Say("PvP stays on until the duel is over"); }
 
             if (!Player.GetAllPlayers().Any(p => p != null && p.GetOwner() == _opponent)) _missing += dt; else _missing = 0f;
-            if (_missing > 8f) { Finish(true, "Your opponent left."); return; }
+            // gone without a word (their game crashed or was killed): their wager was never really paid, so only yours comes back. (One who
+            // leaves properly forfeits by message, and the pot is yours.)
+            if (_missing > 8f)
+            {
+                if (_wager > 0) Contest.Give("Coins", _wager, me);
+                Finish(null, "Your opponent is gone: the duel is off, and your wager is back.");
+                return;
+            }
             if (!Site.OnFloor(me.transform.position, 1.5f))
             {
                 _outside += dt;

@@ -26,6 +26,26 @@ namespace BountyBoard
         private static bool IsServer => ZNet.instance != null && ZNet.instance.IsServer();
         private static long MyId => ZDOMan.GetSessionID();
 
+        /// <summary>
+        /// On the host: the character (its player id) playing on the connection a message came from. Worked out from the connection, never
+        /// from what the message says, so nobody can collect a reward for another character. 0 when it can't be told.
+        /// </summary>
+        private static long CharacterOf(long sender)
+        {
+            if (sender == MyId) return Player.m_localPlayer != null ? Player.m_localPlayer.GetPlayerID() : 0L;
+            ZNetPeer peer = ZNet.instance != null ? ZNet.instance.GetPeer(sender) : null;
+            if (peer == null) return 0L;
+            ZDO character = !peer.m_characterID.IsNone() ? ZDOMan.instance.GetZDO(peer.m_characterID) : null;
+            long id = character != null ? character.GetLong(ZDOVars.s_playerID, 0L) : 0L;
+            return id != 0L ? id : peer.m_playerID;
+        }
+
+        /// <summary>Note a character as having earned a contract's reward.</summary>
+        private static void Earn(Bounty b, long character)
+        {
+            if (character != 0L) (b.Earned ?? (b.Earned = new HashSet<long>())).Add(character);
+        }
+
         // ---- wiring ----
 
         private void UpdateNetwork()
@@ -192,6 +212,8 @@ namespace BountyBoard
             }
             Bounty taken = posted.Copy();
             taken.Progress = 0;
+            taken.Earned = new HashSet<long>();
+            Earn(taken, CharacterOf(sender));
             s.Active.Add(taken);
             Broadcast(RpcMsg, "top|Contract taken: " + Rules.Describe(taken));
             Changed();
@@ -214,7 +236,10 @@ namespace BountyBoard
             if (f.Length < 2) return;
             string prefab = f[0];
             bool starred = f[1] == "1";
-            if (f.Length > 2 && long.TryParse(f[2], NumberStyles.Integer, CultureInfo.InvariantCulture, out long killer) && killer != 0) sender = killer;
+            // (the game that owns the creature reports it, for the player who killed it: credit that player if they are playing here)
+            if (f.Length > 2 && long.TryParse(f[2], NumberStyles.Integer, CultureInfo.InvariantCulture, out long killer) && killer != 0 &&
+                (killer == MyId || ZNet.instance.GetPeer(killer) != null)) sender = killer;
+            long who = CharacterOf(sender);
             State s = Server();
             bool any = false;
             foreach (Bounty b in s.Active.ToList())
@@ -223,6 +248,7 @@ namespace BountyBoard
                 bool match = b.Kind == Kind.Sweep ? Rules.InTier(int.Parse(b.Target), prefab) : b.Target == prefab && (b.Kind != Kind.Elite || starred);
                 if (!match) continue;
                 b.Progress++;
+                Earn(b, who);
                 any = true;
                 if (b.Progress >= b.Count) Finish(s, b);
                 else Reply(sender, RpcMsg, "top|Contract: " + Rules.TargetName(b) + " " + b.Progress + "/" + b.Count);
@@ -240,6 +266,7 @@ namespace BountyBoard
             if (b == null || b.Kind != Kind.Gather) { Reply(sender, RpcRefund, f.Length > 2 ? f[2] + "|" + n : "|" + n); return; }
             int take = Mathf.Min(n, b.Count - b.Progress);
             b.Progress += take;
+            if (take > 0) Earn(b, CharacterOf(sender));
             if (n > take) Reply(sender, RpcRefund, b.Target + "|" + (n - take));
             if (b.Progress >= b.Count) Finish(s, b);
             else Reply(sender, RpcMsg, "top|Handed in " + take + ". " + b.Progress + "/" + b.Count);
@@ -251,6 +278,9 @@ namespace BountyBoard
         {
             s.Active.Remove(b);
             b.Progress = b.Count;
+            // everyone playing when it is finished has a share too (holding the fort counts)
+            Earn(b, CharacterOf(MyId));
+            foreach (ZNetPeer peer in ZNet.instance.GetPeers()) Earn(b, CharacterOf(peer.m_uid));
             s.Done.Insert(0, b);
             while (s.Done.Count > 12) s.Done.RemoveAt(s.Done.Count - 1);
             s.Total++;
@@ -260,11 +290,14 @@ namespace BountyBoard
         private void ServerClaim(long sender, string payload)
         {
             if (!IsServer) return;
-            string[] f = payload.Split('|');
-            if (f.Length < 2 || !long.TryParse(f[1], NumberStyles.Integer, CultureInfo.InvariantCulture, out long player)) return;
+            string[] f = payload.Split('|'); // (the player id older versions add is not used: the host goes by who sent it)
+            long player = CharacterOf(sender);
+            if (player == 0L) return;
             State s = Server();
             Bounty b = s.Done.FirstOrDefault(d => d.Id == f[0]);
-            if (b == null || !b.Claimed.Add(player)) return;
+            if (b == null) return;
+            if (b.Earned != null && !b.Earned.Contains(player)) { Reply(sender, RpcMsg, "center|Only those who worked on that contract share its reward."); return; }
+            if (!b.Claimed.Add(player)) return;
 
             int coins = Rules.WithBonus(b.Coins, s.Total);
             string items = string.Join(",", b.Items.Select(i => i.Key + ":" + Rules.WithBonus(i.Value, s.Total)).ToArray());
@@ -383,7 +416,8 @@ namespace BountyBoard
         internal static bool IsReady(Bounty b, Player player) =>
             b.Kind == Kind.Gather ? player.GetInventory().CountItems(Rules.ItemName(b.Target)) > 0 : false;
 
-        internal bool Claimable(Bounty done) => Player.m_localPlayer != null && !done.Claimed.Contains(Player.m_localPlayer.GetPlayerID());
+        internal bool Claimable(Bounty done) => Player.m_localPlayer != null && !done.Claimed.Contains(Player.m_localPlayer.GetPlayerID()) &&
+                                                (done.Earned == null || done.Earned.Contains(Player.m_localPlayer.GetPlayerID()));
 
         internal int ToClaim() => Current == null || Player.m_localPlayer == null ? 0 : Current.Done.Count(Claimable);
     }

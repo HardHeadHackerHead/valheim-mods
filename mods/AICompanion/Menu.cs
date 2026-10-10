@@ -32,6 +32,7 @@ namespace AICompanion
         private long _forgetArmed;   // "Forget" pressed once (a second press forgets)
         private Vector2 _scroll, _logScroll, _jsonScroll;
         private readonly List<Texture2D> _textures = new List<Texture2D>();
+        private Font _monoFont; // (made from the system's Consolas: destroyed with the styles)
         private GUIStyle _statNum, _title, _h2, _text, _bold, _dim, _small, _good, _warn, _bad, _mono, _button, _buttonOn, _tab0, _tab1, _check, _field, _card, _row, _rowOn, _num;
 
         // Valheim's colours: dark wood, a warm brass edge, gold headings, parchment text.
@@ -91,8 +92,13 @@ namespace AICompanion
 
         // ==== the window ===================================================================================
 
+        /// <summary>A name field in the menu has the keyboard: the game's keys (M for the map, Tab for the inventory) must not act on what you type.</summary>
+        internal static bool TypingInMenu => MenuOpen && _typing;
+        private static bool _typing;
+
         private void OnGUI()
         {
+            _typing = MenuOpen && GUIUtility.keyboardControl != 0; // (only the name fields take the keyboard in this window)
             if (!MenuOpen) return;
             FreeTheMouse();
             EnsureStyles();
@@ -133,6 +139,7 @@ namespace AICompanion
             if (GUILayout.Button("Close", _button, GUILayout.Width(90), GUILayout.Height(30))) CloseMenu();
             GUILayout.EndHorizontal();
             GUILayout.Space(6);
+            if (!string.IsNullOrEmpty(_note)) Note(_note, _warn);
             Player me = Player.m_localPlayer;
             List<Profile> mine = me != null ? Profile.Here(me) : new List<Profile>();
 
@@ -158,7 +165,7 @@ namespace AICompanion
                     double left = Mathf.Max(0f, (float)(prof.DiedAt + RespawnSeconds.Value - ZNet.instance.GetTimeSeconds()));
                     GUILayout.Label(prof.Name, _h2);
                     Note($"Has fallen. Wakes {(prof.HasBed ? "in their bed" : "beside you")} in {left:0} s. Their things are in their tombstone (the skull on your map).", _warn);
-                    if (GUILayout.Button($"Wake {prof.Name} now", _buttonOn, GUILayout.Height(30))) { Profile p2 = prof; _pending = () => { Humanoid c = Home.Respawn(Player.m_localPlayer, p2); if (c != null) OpenMenuFor(Player.m_localPlayer, c); }; }
+                    if (GUILayout.Button($"Wake {prof.Name} now", _buttonOn, GUILayout.Height(30))) { Profile p2 = prof; _pending = () => { Humanoid c = Home.Respawn(Player.m_localPlayer, p2); if (c != null) OpenMenuFor(Player.m_localPlayer, c); else if (p2.Dead || Remote.InWorld(p2.Id) == null) _note = $"Asking the host whether {p2.Name} is up somewhere: try again in a moment."; }; }
                 }
                 else
                 {
@@ -183,9 +190,11 @@ namespace AICompanion
                     else if (Remote.InWorld(prof.Id) == false)
                     {
                         // Lost: nothing of them is in the world, yet they never woke (their fall was not kept). They come back as they were.
-                        Note($"{prof.Name} is nowhere in the world: they fell and never woke up. Bring them back: they wake {(prof.HasBed ? "in their bed" : "beside you")}, with their skills, looks and settings.", _warn);
+                        Vector3? tomb = Remote.TombOf(prof.Id);
+                        Note($"{prof.Name} is nowhere in the world: they fell and never woke up. Bring them back: they wake {(prof.HasBed ? "in their bed" : "beside you")}, with their skills, looks and settings. "
+                             + (tomb != null && me != null ? $"Their things are in their tombstone, {Remote.Where(tomb.Value, me.transform.position)}: near it they put their gear back on." : "Their things are in their tombstone where they fell."), _warn);
                         if (GUILayout.Button($"Bring {prof.Name} back", _buttonOn, GUILayout.Height(30)))
-                        { Profile p2 = prof; _pending = () => { Humanoid c = Home.Respawn(Player.m_localPlayer, p2); if (c != null) OpenMenuFor(Player.m_localPlayer, c); }; }
+                        { Profile p2 = prof; _pending = () => { Humanoid c = Home.Respawn(Player.m_localPlayer, p2); if (c != null) OpenMenuFor(Player.m_localPlayer, c); else if (p2.Dead || Remote.InWorld(p2.Id) == null) _note = $"Asking the host whether {p2.Name} is up somewhere: try again in a moment."; }; }
                         Note("Or, if they are gone for good, forget them:", _dim);
                         if (GUILayout.Button(_forgetArmed == prof.Id ? $"Click again to forget {prof.Name}" : $"Forget {prof.Name}", _button, GUILayout.Height(26)))
                         {
@@ -1267,7 +1276,7 @@ namespace AICompanion
             _warn = Label(font, 15, ColWarn);
             _bad = Label(font, 15, ColBad);
             _mono = Label(null, 12, new Color(0.8f, 0.88f, 0.82f));
-            try { _mono.font = Font.CreateDynamicFontFromOSFont("Consolas", 12); } catch (Exception) { }
+            try { if (_monoFont == null) _monoFont = Font.CreateDynamicFontFromOSFont("Consolas", 12); _mono.font = _monoFont; } catch (Exception) { }
             _button = ButtonLook(heading, new Color(0.13f, 0.095f, 0.06f), new Color(0.22f, 0.16f, 0.1f), new Color(0.45f, 0.33f, 0.17f), Text);
             _buttonOn = ButtonLook(heading, new Color(0.38f, 0.24f, 0.08f), new Color(0.45f, 0.29f, 0.1f), Gold, new Color(1f, 0.95f, 0.85f));
             _tab0 = ButtonLook(heading, new Color(0.075f, 0.055f, 0.035f), new Color(0.16f, 0.115f, 0.07f), new Color(0.34f, 0.24f, 0.12f), Dim, 16);
@@ -1293,6 +1302,7 @@ namespace AICompanion
         {
             foreach (Texture2D t in _textures) if (t != null) Destroy(t);
             _textures.Clear();
+            if (_monoFont != null) { Destroy(_monoFont); _monoFont = null; }
             _title = _h2 = _text = _bold = _dim = _small = _good = _warn = _bad = _mono = _button = _buttonOn = _tab0 = _tab1 = _check = _field = _card = _row = _rowOn = _num = _barText = _statNum = null;
         }
     }

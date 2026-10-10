@@ -45,6 +45,9 @@ namespace PartyHud
             _barStyle = Make(11, TextAnchor.MiddleCenter);
             _initialStyle = Make(26, TextAnchor.MiddleCenter);
             _headerStyle = Make(11, TextAnchor.MiddleLeft);
+            // The game's lettering (Averia), not Unity's default font. The arrow keeps the default: Averia may not have the arrow sign.
+            Font averia = GameFont("AveriaSerifLibre-Bold", "AveriaSerifLibre", "Averia");
+            if (averia != null) foreach (GUIStyle style in new[] { _nameStyle, _nameCompactStyle, _distanceStyle, _barStyle, _initialStyle, _headerStyle }) style.font = averia;
 
             // A tiny top-to-bottom light-to-dark strip that gives the bars a subtle glossy look when tinted.
             const int h = 16;
@@ -55,6 +58,16 @@ namespace PartyHud
                 _gradient.SetPixel(0, y, new Color(v, v, v, 1f));
             }
             _gradient.Apply();
+        }
+
+        /// <summary>One of the game's own fonts, looked up once per style build; null if a game update renamed them.</summary>
+        private static Font GameFont(params string[] names)
+        {
+            Font[] all = Resources.FindObjectsOfTypeAll<Font>();
+            foreach (string name in names)
+                foreach (Font f in all)
+                    if (f != null && f.name.StartsWith(name, StringComparison.OrdinalIgnoreCase)) return f;
+            return null;
         }
 
         private void DestroyDrawResources()

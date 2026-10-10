@@ -58,9 +58,10 @@ namespace Arena
     }
 
     /// <summary>
-    /// Dying in a contest. On the arena's steel nothing of yours was in the ring: what the arena lent and the crowd threw goes back, so no
-    /// tombstone is made at all. With your own gear the tombstone is carried out to the forecourt, where you rise again. Either way there is no
-    /// death marker on the map (you rise beside your things), and the game's "where you died" point is the forecourt.
+    /// Dying in a contest. On the arena's steel nothing of yours was in the ring: what the arena lent goes back and the coins you picked up
+    /// (the purse) are lost, and the rest (the crowd's gifts, what you bought) goes in the tombstone as the game makes it. The tombstone, of
+    /// that or of your own gear, is carried out to the forecourt, where you rise again. There is no death marker on the map (you rise beside
+    /// your things), and the game's "where you died" point is the forecourt.
     /// </summary>
     [HarmonyPatch(typeof(Player), nameof(Player.OnDeath))]
     internal static class Player_OnDeath_Tomb
@@ -81,13 +82,12 @@ namespace Arena
                 Character by = hit?.GetAttacker();
                 Plugin.Log.LogWarning($"Died at the arena (in a contest: {Contest.Active}): {(hit != null ? hit.m_hitType + " " + hit.GetTotalDamage().ToString("0.0") + " from " + (by != null ? by.name : "nothing") + " at " + hit.m_point : "no hit known")}, at {Site.Local(__instance.transform.position)} in the arena's frame");
             }
-            // the arena's lent things go back to the armourer, and what the crowd threw goes with the purse: nothing is left for a tombstone
-            // (your own things are with the Arena Master, and come back when you rise)
+            // the arena's lent things go back to the armourer and the purse is lost; what is left (gifts, purchases) the game puts in the
+            // tombstone, never deleted (your own things are with the Arena Master, and come back when you rise)
             if (__instance == Player.m_localPlayer && Kit.Stowed(__instance))
             {
                 Kit.TakeBack(__instance);
-                __instance.UnequipAllItems();
-                __instance.GetInventory().RemoveAll();
+                if (Contest.Active) Kit.LosePurse(__instance);
             }
             if (__instance != Player.m_localPlayer || !Contest.Active) return;
             _inContest = true;

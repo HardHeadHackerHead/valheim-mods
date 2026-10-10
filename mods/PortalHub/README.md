@@ -5,7 +5,7 @@
 
 <img src="cover.png" alt="PortalHub" width="100%">
 
-**Version 1.1.2**  ·  [all the mods](../../README.md)  ·  installs and updates through the in-game [mod manager](https://github.com/HardHeadHackerHead/valheim-mod-manager) (**F7**)
+**Version 1.2.0**  ·  [all the mods](../../README.md)  ·  installs and updates through the in-game [mod manager](https://github.com/HardHeadHackerHead/valheim-mod-manager) (**F7**)
 
 Press **E** on a portal and pick where it goes from a list of every portal in the world: nearest first, searchable, with favourites. Every portal shows on the map with lines between linked ones. One click links it both ways, and no more matching names on two portals. (Install it on the host too.)
 
@@ -15,6 +15,19 @@ Press **E** on a portal and pick where it goes from a list of every portal in th
 **Pick where a portal goes from the list: names, lands, distances**
 
 <img src="images/1.jpg" alt="Pick where a portal goes from the list: names, lands, distances" width="100%">
+
+## Good to know
+
+- **E on any portal opens the PortalHub menu** instead of the game's name box (press **Shift+E** for the game's own name box).
+- **Protected areas:** a portal inside someone else's switched-on ward can't be relinked or renamed by you, and "link it back" leaves such a
+  portal as it is (you get a one-way link). The host checks this, whatever a player's game says. With `HideWardedPortals` on (the host's
+  choice), those portals also stay out of your list and map.
+
+## Known clashes
+
+- **XPortal** (`yay.spikehimself.xportal`) links portals its own way and skips the game's portal pairing that PortalHub's links rely on
+  (they would stop working after a restart), and both want E. With XPortal installed, PortalHub stands down (it says so in the log): use
+  one or the other.
 <!-- END HAND-WRITTEN -->
 
 ## 🔍 How it works
@@ -45,7 +58,8 @@ In `BepInEx/config/com.dhack.portalhub.cfg` (made the first time the game runs w
 
 | Setting | Default | What it does |
 |---|---|---|
-| `Enabled` | `true` | Use the portal menu when you press E on a portal. (Off: portals work like in the base game.) |
+| `Enabled` | `true` | Use the portal menu when you press E on a portal. (Off: portals work like in the base game.) In multiplayer the server's value applies. |
+| `HideWardedPortals` | `false` | Leave portals inside someone else's protected area (a switched-on ward you are not on) out of each player's list and map, and refuse links to them. (Portals in such an area can never be changed by others either way.) In multiplayer the server's value applies. |
 | `ShowDestinationOnHover` | `true` | When you look at a portal, show where it goes. |
 
 **Map**
@@ -68,6 +82,7 @@ See [who needs which mod](../../README.md#playing-together) on the front page.
 
 ## 📜 Changes
 
+- **1.2.0** Fix: anyone could relink a portal inside someone else's protected area, and "link it back" changed the other portal even in someone's base. The host now checks the wards itself and refuses to change a portal in a switched-on ward you are not on; linking to such a portal only goes one way. A new host setting, HideWardedPortals (off by default), keeps those portals out of other players' lists and maps. In multiplayer the server decides Enabled and HideWardedPortals. With XPortal installed PortalHub now stands down (the two undo each other's links). The menu uses the game's font.
 - Fix: away from portals, PortalHub looked for portals nearby every frame; it now looks once a second.
 - Fix: after restarting the game, linked portals sent you to a random place (the game renumbers everything when a world loads, and links were saved by number). Each portal now keeps its own id, so links and starred portals survive restarts. Links made with the old version are cleared once: link your portals again in the menu. Also: the last world's portals no longer show on a new world's map, and a newly built portal no longer lists itself as a destination.
 - Portals now show on the map with their names, and the big map draws a line (with an arrow if one-way) between linked portals. Rename a portal inside the menu. The list warns when linking back would replace another portal's link.

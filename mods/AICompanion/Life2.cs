@@ -35,9 +35,7 @@ namespace AICompanion
                 grave.Interact(user, false, false); // look inside, take what you like; it collects the rest itself when it wakes
                 return false;
             }
-            ZNetView view = tomb.GetComponent<ZNetView>();
-            if (grave.IsInUse()) { p.Message(MessageHud.MessageType.Center, "Someone has it open"); return false; }
-            if (!view.IsOwner()) view.ClaimOwnership();
+            if (!Containers.Take(grave)) { p.Message(MessageHud.MessageType.Center, "Someone has it open"); return false; }
             if (!Companion.Write(owner, _ => { })) { p.Message(MessageHud.MessageType.Center, $"Someone is going through {Companion.NameOf(owner)}'s things"); return false; }
             Inventory its = grave.GetInventory(), theirs = owner.GetInventory();
             int gave = 0, left = 0;
@@ -53,6 +51,38 @@ namespace AICompanion
             p.Message(MessageHud.MessageType.Center, left == 0 ? $"Gave {Companion.NameOf(owner)} their things back" : $"Gave {Companion.NameOf(owner)} {gave} things back; {left} did not fit");
             Plugin.Instance?.Note($"{p.GetPlayerName()} gave {Companion.NameOf(owner)} {gave} item stacks back from its tombstone ({left} left)");
             return false;
+        }
+
+        /// <summary>
+        /// Waking: the gear it wore when it fell (its two gear rows, in the tombstone in the cells they had) goes back on it, out of its
+        /// tombstone from that fall, when the tombstone is loaded on this game (it fell near its player, or near its bed). Only through the
+        /// tombstone, so the gear is in exactly one place at any time. "Left": the tombstone still holds things (what it carried), or was not
+        /// here to look in. How many stacks it got back.
+        /// </summary>
+        public static int WearAgain(Humanoid c, Vector3 fellAt, out bool left)
+        {
+            left = true;
+            long id = Companion.IdOf(c);
+            Vector3 near = fellAt != Vector3.zero ? fellAt : c.transform.position;
+            TombStone tomb = UnityEngine.Object.FindObjectsByType<TombStone>(FindObjectsSortMode.None)
+                .Where(t => (Companion.Zdo(t)?.GetLong(OfKey, 0L) ?? 0L) == id && (t.GetComponent<Container>()?.GetInventory()?.GetAllItems().Any(Gear.InSlot) ?? false))
+                .OrderBy(t => Vector3.Distance(t.transform.position, near)).FirstOrDefault();
+            Container grave = tomb != null ? tomb.GetComponent<Container>() : null;
+            if (grave == null || !Containers.Take(grave)) return 0;
+            Inventory mine = c.GetInventory(), its = grave.GetInventory();
+            int got = 0;
+            foreach (ItemDrop.ItemData item in its.GetAllItems().Where(Gear.InSlot).ToList())
+            {
+                item.m_equipped = false;
+                Vector2i cell = item.m_gridPos;
+                if (mine.GetItemAt(cell.x, cell.y) == null && mine.MoveItemToThis(its, item, item.m_stack, cell.x, cell.y)) got++; // (into the same gear slot)
+                else if (its.ContainsItem(item) && mine.CanAddItem(item)) { mine.MoveItemToThis(its, item); got++; } // (into its bag: it sorts it into its slots)
+            }
+            left = its.NrOfItems() > 0;
+            if (!left) Net.Recovered(tomb.transform.position); // (the game takes the empty tombstone away; its skull off the map)
+            Companion.SaveBag(c);
+            Plugin.Instance?.Note($"{Companion.NameOf(c)} took its gear back out of its tombstone at {tomb.transform.position:F0} ({got} stacks{(left ? $", {its.NrOfItems()} left in it" : "")})");
+            return got;
         }
 
         public static bool Has(Component c) => Companion.Zdo(c)?.GetBool(HasKey, false) ?? false;
@@ -144,9 +174,7 @@ namespace AICompanion
             st.GraveBest = float.MaxValue;
             stop();
             Container grave = tomb.GetComponent<Container>();
-            ZNetView view = tomb.GetComponent<ZNetView>();
-            if (grave == null || view == null || grave.IsInUse()) return true;
-            if (!view.IsOwner()) view.ClaimOwnership();
+            if (!Containers.Take(grave)) return true; // (someone has it open: it waits)
             Inventory mine = me.GetInventory(), its = grave.GetInventory();
             int took = 0, left = 0;
             foreach (ItemDrop.ItemData item in its.GetAllItems().ToList())
@@ -370,10 +398,8 @@ namespace AICompanion
                 if (me.GetInventory().CountItems(name) > 0) me.GetInventory().RemoveItem(name, 1);
                 else
                 {
-                    Container chest = Home.Chests(me).FirstOrDefault(c => !c.IsInUse() && c.GetInventory().CountItems(name) > 0);
-                    if (chest == null) break;
-                    ZNetView cv = chest.GetComponent<ZNetView>();
-                    if (cv != null && !cv.IsOwner()) cv.ClaimOwnership();
+                    Container chest = Home.Chests(me).FirstOrDefault(c => !Containers.InUse(c) && c.GetInventory().CountItems(name) > 0);
+                    if (chest == null || !Containers.Take(chest) || chest.GetInventory().CountItems(name) <= 0) break; // (loaded fresh: still there?)
                     chest.GetInventory().RemoveItem(name, 1);
                 }
                 view.InvokeRPC("RPC_AddFuel");
@@ -415,12 +441,7 @@ namespace AICompanion
             if (stove == null) return 0;
             int done = 0;
             var sources = new List<Inventory> { me.GetInventory() };
-            foreach (Container c in Home.Chests(me).Where(c => !c.IsInUse()))
-            {
-                ZNetView v = c.GetComponent<ZNetView>();
-                if (v != null && !v.IsOwner()) v.ClaimOwnership();
-                sources.Add(c.GetInventory());
-            }
+            foreach (Container c in Home.Chests(me).Where(c => Containers.Take(c))) sources.Add(c.GetInventory()); // (taken over and loaded fresh first)
             foreach (Inventory inv in sources)
                 foreach (ItemDrop.ItemData raw in inv.GetAllItems().ToList())
                 {

@@ -22,9 +22,10 @@ namespace GearSlots
     {
         public const string Guid = "com.dhack.gearslots";
         public const string Name = "GearSlots";
-        public const string Version = "1.1.0";
+        public const string Version = "1.2.0";
 
         internal static Plugin Instance;
+        internal static BepInEx.Logging.ManualLogSource Log;
 
         private ConfigEntry<bool> _showPanel, _autoEat, _showMessages, _autoFill, _shieldFollows, _showQuickBar;
         private ConfigEntry<int> _eatBelow;
@@ -40,6 +41,7 @@ namespace GearSlots
         private void Awake()
         {
             Instance = this;
+            Log = Logger;
             _showPanel = Config.Bind("General", "ShowPanel", true, "Show the Gear panel next to your inventory. (Turn off and your gear slots hide; the items stay where they are.)");
             _showMessages = Config.Bind("General", "ShowMessages", true, "Short messages when something happens (auto-eat, a quick slot is empty).");
             _autoEat = Config.Bind("Food", "AutoEat", false,
@@ -84,7 +86,7 @@ namespace GearSlots
             Panel.Dispose(restoreCells: true);
             _hotbar.Destroy();
             AppDomain.CurrentDomain.SetData("DHack.GearSlots.IsGear", null);
-            if (Instance == this) Instance = null;
+            if (Instance == this) { Instance = null; Log = null; }
         }
 
         internal string QuickKeyName(int quick)
@@ -94,7 +96,7 @@ namespace GearSlots
         }
 
         private static bool IsInGearSlot(ItemDrop.ItemData item) =>
-            item != null && Player.m_localPlayer != null && Layout.InExtraRows(item.m_gridPos) &&
+            item != null && Player.m_localPlayer != null && !Compat.StandingDown && Layout.InExtraRows(item.m_gridPos) &&
             Player.m_localPlayer.GetInventory().GetAllItems().Contains(item);
 
         // ---- each frame ----
@@ -120,6 +122,7 @@ namespace GearSlots
                 if (k.MainKey != KeyCode.None && !k.Modifiers.Any()) keys.Add(new KeyValuePair<KeyCode, string>(k.MainKey, "quick slot " + (i + 1)));
             }
             _keyNotes.AddRange(GameKeys.Free(Name, keys));
+            _keyNotes.AddRange(GameKeys.GiveBack(Name, keys.Select(k => k.Key))); // a game key we unbound once, for a key none of ours uses any more
 
             // With its key unbound nothing can switch auto-pickup back on, so make sure it is on (the game's default).
             var autoPickup = AccessTools.Field(typeof(Player), "m_enableAutoPickup");
@@ -131,9 +134,34 @@ namespace GearSlots
             }
         }
 
+        /// <summary>Another slot mod uses the same cells (see Compat): say so once, with what happened to the gear-slot items.</summary>
+        internal void StoodDown(int moved, int left)
+        {
+            if (_toldStandDown) return;
+            _toldStandDown = true;
+            string note = $"{Name}: the gear slots are off because {Compat.StandDownFor} uses the same inventory cells.";
+            if (moved > 0) note += $" {moved} item(s) from your gear slots were moved into your bag.";
+            if (left > 0) note += $" {left} didn't fit and are still in the old gear cells: make room in your bag and log in again.";
+            _keyNotes.Add(note);
+            Logger.LogInfo(note);
+            _keyNotes.AddRange(GameKeys.GiveBack(Name, new KeyCode[0])); // the quick keys are off too: the game gets back any key we took
+        }
+
+        private bool _toldStandDown;
+
         private void Update()
         {
-            FreeGameKeys();
+            if (Player.m_localPlayer != null && Compat.StandingDown)
+            {
+                StoodDown(0, 0); // when the character loaded nothing needed moving
+                if (_keyNotes.Count > 0 && Chat.instance != null)
+                {
+                    foreach (string note in _keyNotes) Chat.instance.AddString("[Mod]", note, Talker.Type.Normal);
+                    _keyNotes.Clear();
+                }
+                return;
+            }
+            if (Player.m_localPlayer != null) FreeGameKeys(); // in a world, once we know the mod is on
             if (_keyNotes.Count > 0 && Chat.instance != null && Player.m_localPlayer != null)
             {
                 foreach (string note in _keyNotes) Chat.instance.AddString("[Mod]", note, Talker.Type.Normal);

@@ -96,8 +96,7 @@ namespace AICompanion
                 Humanoid extra = args.Length > 1 ? Companion.All().FirstOrDefault(h => Companion.IdOf(h).ToString() == args[1]) : null;
                 if (extra == null) { error("retire <id> (see: companion list)"); yield break; }
                 if (!Companion.IsMine(extra, p)) { error("that companion is not yours"); yield break; }
-                ZNetView view = extra.GetComponent<ZNetView>();
-                if (!view.IsOwner()) view.ClaimOwnership();
+                if (!Containers.Take(extra.GetComponent<Container>())) { error("someone has its gear open"); yield break; } // (what is really in its bag)
                 Inventory inv = extra.GetInventory();
                 var before = inv.GetAllItems().Select(i => $"{Localization.instance.Localize(i.m_shared.m_name)} x{i.m_stack}").ToList();
                 foreach (ItemDrop.ItemData item in inv.GetAllItems().ToList())
@@ -113,9 +112,7 @@ namespace AICompanion
                 {
                     foreach (Container chest in Work.YourChests(extra, extra.transform.position, 40f))
                     {
-                        if (!chest.GetInventory().CanAddItem(item)) continue;
-                        ZNetView cv = chest.GetComponent<ZNetView>();
-                        if (cv != null && !cv.IsOwner()) cv.ClaimOwnership();
+                        if (!chest.GetInventory().CanAddItem(item) || !Containers.Take(chest) || !chest.GetInventory().CanAddItem(item)) continue; // (loaded fresh: room still?)
                         string what = $"{Localization.instance.Localize(item.m_shared.m_name)} x{item.m_stack}";
                         chest.GetInventory().MoveItemToThis(inv, item);
                         put.Add($"{what} -> chest at {chest.transform.position:F0}");
@@ -150,8 +147,7 @@ namespace AICompanion
                 Humanoid extra = args.Length > 1 ? Companion.All().FirstOrDefault(h => Companion.IdOf(h).ToString() == args[1]) : null;
                 if (extra == null) { error("remove <id> (see: companion list)"); yield break; }
                 if (!Companion.IsMine(extra, p)) { error("that companion is not yours"); yield break; }
-                ZNetView view = extra.GetComponent<ZNetView>();
-                if (!view.IsOwner()) view.ClaimOwnership();
+                if (!Containers.Take(extra.GetComponent<Container>())) { error("someone has its gear open"); yield break; } // (what is really in its bag)
                 int items = extra.GetInventory().NrOfItems();
                 if (items > 0) Companion.DropGear(extra);
                 Profile.Forget(p, Companion.IdOf(extra));

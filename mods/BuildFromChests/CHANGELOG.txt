@@ -1,3 +1,5 @@
+Fix: next to Adventure Backpacks, building could cost up to twice as much (the backpack and the chests both paid). Now the backpack pays its part and the chests only what is still missing. Fix: a piece the chests can no longer pay for (someone took the materials since the menu counted them) is no longer placed for less: you get a message instead. Graves, carts, ships, a companion's bag and chest and a backpack are no longer used as storage. With AzuCraftyBoxes, CraftFromContainers or ValheimPlus' craft-from-chest installed, this mod stands down (two would count every chest twice). In multiplayer the server's Radius applies.
+
 Radius can now be set anywhere from 2 to 150 m (a slider in the configuration manager), and takes effect at once: raise it to build far from your storehouse, for instance a big BuildOrders blueprint at the edge of your base (BuildOrders' ghosts, hold-E build-all and fetch key use the same range).
 
 Fix: in multiplayer, building with materials from a chest another player had open could lose or duplicate items. Chests in use are now left alone.

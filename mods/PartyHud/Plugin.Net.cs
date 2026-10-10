@@ -48,7 +48,7 @@ namespace PartyHud
             }
 
             Player me = Player.m_localPlayer;
-            if (me != null && Time.time >= _nextSend)
+            if (me != null && _shareMine.Value && _allowSharing.Value && Time.time >= _nextSend)
             {
                 _nextSend = Time.time + 0.33f;
                 SendStats(me);

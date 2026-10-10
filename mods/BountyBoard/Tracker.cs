@@ -64,7 +64,7 @@ namespace BountyBoard
         {
             if (_center == null)
             {
-                _center = new GUIStyle(GUI.skin.label) { fontSize = 13, alignment = TextAnchor.MiddleCenter, fontStyle = FontStyle.Bold, clipping = TextClipping.Overflow };
+                _center = new GUIStyle(GUI.skin.label) { fontSize = 13, alignment = TextAnchor.MiddleCenter, fontStyle = FontStyle.Bold, clipping = TextClipping.Overflow, font = Styles.GameFont(false) };
                 _center.normal.textColor = Color.white;
             }
             Color old = GUI.color;
@@ -77,10 +77,10 @@ namespace BountyBoard
 
         private static GUIStyle Small(bool header, bool centered = false, int size = 12)
         {
-            if (centered) { var c = new GUIStyle(GUI.skin.label) { fontSize = size, alignment = TextAnchor.MiddleCenter, fontStyle = FontStyle.Bold }; c.normal.textColor = Color.white; return c; }
+            if (centered) { var c = new GUIStyle(GUI.skin.label) { fontSize = size, alignment = TextAnchor.MiddleCenter, fontStyle = FontStyle.Bold, font = Styles.GameFont(false) }; c.normal.textColor = Color.white; return c; }
             if (_small == null)
             {
-                _small = new GUIStyle(GUI.skin.label) { fontSize = 14, clipping = TextClipping.Clip };
+                _small = new GUIStyle(GUI.skin.label) { fontSize = 14, clipping = TextClipping.Clip, font = Styles.GameFont(false) };
                 _small.normal.textColor = new Color(0.95f, 0.91f, 0.84f);
                 _header = new GUIStyle(_small) { fontSize = 15, fontStyle = FontStyle.Bold };
                 _header.normal.textColor = new Color(0.95f, 0.78f, 0.35f);

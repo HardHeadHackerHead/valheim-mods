@@ -240,7 +240,7 @@ namespace Arena
     {
         private static void Postfix(Player __instance, ItemDrop.ItemData item, bool __result)
         {
-            if (!__result || __instance != Player.m_localPlayer || !Contest.Active || !Contest.Lent || !Kit.IsLoan(item) || item.m_shared.m_foodBurnTime <= 0f) return;
+            if (!__result || __instance != Player.m_localPlayer || !Contest.Active || !Contest.Lent || !Kit.IsLoan(item) || Kit.IsGift(item) || item.m_shared.m_foodBurnTime <= 0f) return;
             Player.Food food = __instance.GetFoods().FirstOrDefault(f => f.m_item != null && f.m_item.m_shared.m_name == item.m_shared.m_name);
             if (food == null) return;
             food.m_time = Mathf.Min(food.m_time, item.m_shared.m_foodBurnTime * Mathf.Clamp01(Plugin.MealFreshness.Value / 100f));

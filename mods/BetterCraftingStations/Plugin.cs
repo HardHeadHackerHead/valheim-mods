@@ -18,7 +18,7 @@ namespace BetterCraftingStations
     {
         public const string Guid = "com.dhack.bettercraftingstations";
         public const string Name = "BetterCraftingStations";
-        public const string Version = "0.1.0";
+        public const string Version = "0.1.1";
 
         internal static ManualLogSource Log;
         private static ConfigEntry<bool> _enabled;
@@ -41,15 +41,19 @@ namespace BetterCraftingStations
         }
     }
 
-    // The list the game is about to show: remember all of it (the chips count from it) and show only what the chips pass.
+    // The list the game is about to show: remember all of it (the chips count from it) and show only what the chips pass. The list is
+    // narrowed in place, never replaced: other mods' patches on this method hold the same list and must see what will be shown.
     [HarmonyPatch(typeof(InventoryGui), "UpdateRecipeList")]
     internal static class InventoryGui_UpdateRecipeList
     {
-        private static void Prefix(InventoryGui __instance, ref List<Recipe> recipes)
+        private static void Prefix(InventoryGui __instance, List<Recipe> recipes)
         {
             Bar.All = recipes != null ? new List<Recipe>(recipes) : null;
             if (!Plugin.Enabled || recipes == null || __instance.InUpradeTab()) return;
-            recipes = Filters.Apply(Bar.All, Filters.Of(Filters.StationKey()));
+            Filters.State state = Filters.Of(Filters.StationKey());
+            if (!Filters.Active(state)) return;
+            Player player = Player.m_localPlayer;
+            recipes.RemoveAll(r => !Filters.Passes(r, state, player));
         }
     }
 

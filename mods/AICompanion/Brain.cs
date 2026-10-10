@@ -451,7 +451,7 @@ namespace AICompanion
             if (Ride.Tick(st, master)) return true; // on a boat with its player: it sits and rides
             Loot.PassBy(st);                         // what is on its list, as it goes by
             if (Time.time >= st.NextGear) { st.NextGear = Time.time + 0.5f; Companion.Maintain(me, st.Current.Ranged, st.InCombat ? null : st.WorkTool, st.InCombat ? st.Current.Target : null); }
-            if (gear != null && gear.IsInUse()) { ai.StopMoving(); Blocking(me) = false; SetStatus(st, "waiting while you sort its gear"); return true; }
+            if (gear != null && Containers.InUse(gear)) { ai.StopMoving(); Blocking(me) = false; SetStatus(st, "waiting while you sort its gear"); return true; }
             if (!st.Asleep && Carts.Tick(st, (p, dd, run) => MoveTo(ai, dt, p, dd, run), () => ai.StopMoving())) return true; // getting hold of a cart
 
             if (Time.time >= st.NextEnemyScan) { st.NextEnemyScan = Time.time + 0.25f; ScanEnemies(st, master); }

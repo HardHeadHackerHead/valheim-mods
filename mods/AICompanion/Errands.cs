@@ -54,7 +54,7 @@ namespace AICompanion
             float radius = Work.RadiusOf(me);
             if (Vector3.Distance(center, me.transform.position) > radius) return null;
             if (me.GetInventory().GetAllItems().Where(Food.IsFood).Sum(i => i.m_stack) >= 12) return null;
-            Container mine = Home.Chests(me).Where(c => !c.IsInUse() && c.GetInventory().GetAllItems().Any(i => Gear.WantsFood(me, i)))
+            Container mine = Home.Chests(me).Where(c => !Containers.InUse(c) && c.GetInventory().GetAllItems().Any(i => Gear.WantsFood(me, i)))
                                  .OrderBy(c => Vector3.Distance(c.transform.position, me.transform.position)).FirstOrDefault(c => Reach(me, c));
             if (mine != null && Go(st, Work.Kind.Store, mine)) { Talk.Say(me, "I'll grab some food for the road."); return "food from its chest"; }
             if (Work.UsesPantry(me) && Work.RationLeft(me) > 0)
@@ -76,7 +76,7 @@ namespace AICompanion
                     int sorted = Work.SortHome(st); // (QualityOfLife: into your chests by your rules, at once)
                     bool rest = me.GetInventory().GetAllItems().Any(i => !Work.Keeps(me, i));
                     if (!rest) return sorted > 0 ? $"Put {sorted} things away in your chests." : "I've nothing to put away.";
-                    Container chest = Home.Chests(me).Where(c => !c.IsInUse() && c.GetInventory().HaveEmptySlot()).OrderBy(c => Vector3.Distance(c.transform.position, me.transform.position)).FirstOrDefault(c => Reach(me, c))
+                    Container chest = Home.Chests(me).Where(c => !Containers.InUse(c) && c.GetInventory().HaveEmptySlot()).OrderBy(c => Vector3.Distance(c.transform.position, me.transform.position)).FirstOrDefault(c => Reach(me, c))
                                       ?? (Work.Stows(me) ? Work.YourChests(me, center, radius + 20f).Where(c => c.GetInventory().HaveEmptySlot()).Take(6).FirstOrDefault(c => Reach(me, c)) : null);
                     if (chest == null) return "There's no chest with room I can get to.";
                     going = Go(st, Work.Kind.Store, chest);
@@ -85,7 +85,7 @@ namespace AICompanion
                 case Errand.Restock:
                 {
                     if (!Gear.FoodLow(me)) return "My food slots are full.";
-                    Container mine = Home.Chests(me).Where(c => !c.IsInUse() && c.GetInventory().GetAllItems().Any(i => Gear.WantsFood(me, i)))
+                    Container mine = Home.Chests(me).Where(c => !Containers.InUse(c) && c.GetInventory().GetAllItems().Any(i => Gear.WantsFood(me, i)))
                                          .OrderBy(c => Vector3.Distance(c.transform.position, me.transform.position)).FirstOrDefault(c => Reach(me, c));
                     if (mine != null) { going = Go(st, Work.Kind.Store, mine); return "Getting food from my chest."; }
                     Container yours = Work.YourFood(me, center, radius + 20f); // (you sent it: from your chests even with that setting off)

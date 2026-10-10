@@ -11,62 +11,123 @@ namespace GearSlots
     /// </summary>
     internal static class Patches
     {
+        /// <summary>Make the inventory tall enough for the gear rows (never lower: other mods may have made it taller still).</summary>
         public static void Extend(Inventory inv)
         {
-            if (inv == null) return;
-            if (!(System.AppDomain.CurrentDomain.GetData("DHack.GearSlots.NormalRows") is int))
-                Layout.RememberNormalRows(inv.GetHeight());
+            if (inv == null || Compat.StandingDown) return;
+            if (!(System.AppDomain.CurrentDomain.GetData("DHack.GearSlots.NormalRows") is int) && Player.m_localPlayer != null)
+                Layout.RememberNormalRows(Layout.WorkOutBase(Player.m_localPlayer)); // installed (or reloaded) with a player in the world
             int wanted = Layout.NormalRows + Layout.ExtraRows;
             if (inv.GetHeight() < wanted) inv.SetHeight(wanted);
         }
 
-        [HarmonyPatch(typeof(Player), "Awake")]
-        private static class PlayerAwake
-        {
-            private static void Postfix(Player __instance) => Extend(__instance.GetInventory());
-        }
-
-        // How many ordinary rows this character has: the game keeps it in the "invrows" key (rows can be bought from the trader).
-        private static int SavedRows(Player player) =>
-            player.TryGetUniqueKeyValue(Player.InventoryRowsKey, out string value) && int.TryParse(value, out int rows) ? Mathf.Clamp(rows, 0, 9) : 4;
-
-        // The character's items are loaded before it spawns (positions are not checked then), so take its row count from the save
-        // and size the inventory for it straight away. Switching to a character with a different row count lands its gear right.
+        // The character's items are loaded before it spawns (positions are not checked then), so find where its gear rows are and
+        // make the inventory tall enough for them straight away. Other mods (ValheimPlus' extra rows) may already have made it
+        // taller: it is only ever raised.
         [HarmonyPatch(typeof(Player), nameof(Player.Load))]
         private static class PlayerLoad
         {
+            [HarmonyPriority(Priority.First)] // before other slot mods look at those cells
             private static void Postfix(Player __instance)
             {
-                if (__instance != Player.m_localPlayer && Player.m_localPlayer != null) return;
-                Layout.RememberNormalRows(SavedRows(__instance));
-                Inventory inv = __instance.GetInventory();
-                inv.SetHeight(Layout.NormalRows + Layout.ExtraRows);
+                if (__instance != Player.m_localPlayer) return; // the main menu's preview, or someone else
+                if (Compat.StandingDown)
+                {
+                    var (moved, left) = Layout.EmptyGearRows(__instance);
+                    Plugin.Instance?.StoodDown(moved, left);
+                    return;
+                }
+                Place(__instance, Layout.WorkOutBase(__instance));
             }
         }
 
-        // On every spawn (and when a row is bought) the game sets the inventory to its ordinary height and then drops anything
-        // below it, which used to throw the gear slots on the ground. Do the same job but keep the gear rows under the ordinary
-        // ones, moving them down when a row is added.
+        private static Player _placed; // the character whose gear rows were found when it loaded
+
+        private static void Place(Player player, int gearBase)
+        {
+            Layout.RememberNormalRows(gearBase);
+            Layout.SaveBase(player, gearBase);
+            Inventory inv = player.GetInventory();
+            inv.SetHeight(Mathf.Max(inv.GetHeight(), gearBase + Layout.ExtraRows));
+            _placed = player;
+        }
+
+        // A brand-new character has nothing to load (the game skips Player.Load), and its first spawn doesn't resize the inventory.
+        // Its gear rows go under whatever the game and other mods made it by the end of that spawn (ValheimPlus adds its rows then).
+        [HarmonyPatch(typeof(Player), nameof(Player.OnSpawned))]
+        private static class OnSpawned
+        {
+            [HarmonyPriority(Priority.Last)]
+            private static void Postfix(Player __instance)
+            {
+                if (__instance != Player.m_localPlayer || Compat.StandingDown) return;
+                if (__instance != _placed) Place(__instance, __instance.GetInventory().GetHeight());
+                // Mods that size the inventory window to the whole height (ValheimPlus does, after its rows) would leave room for the
+                // gear rows in it: they show in their own panel, so the window is as tall as the ordinary rows.
+                if (InventoryGui.instance != null) InventoryGui.instance.SetInventorySize(Layout.NormalRows);
+            }
+        }
+
+        // On every spawn (and when a row is bought) the game sets the inventory to its ordinary height and then drops anything below
+        // it. The game's method runs as it is, with every other mod's changes to it (ValheimPlus makes it taller); this only notes
+        // where the gear rows were, so DropInvalidItems below can move them under the new height before anything is dropped.
         [HarmonyPatch(typeof(Player), nameof(Player.SetInventorySize))]
         private static class SetInventorySize
         {
-            private static bool Prefix(Player __instance, int rows)
+            internal static bool Resizing;
+            internal static int OldBase;
+
+            [HarmonyPriority(Priority.First)]
+            private static void Prefix(Player __instance)
             {
-                rows = Mathf.Clamp(rows, 0, 9);
-                Inventory inv = __instance.GetInventory();
-                int before = Layout.NormalRows;
-                if (rows != before)
-                    foreach (ItemDrop.ItemData item in inv.GetAllItems())
-                    {
-                        if (item.m_gridPos.y >= before) item.m_gridPos.y += rows - before;        // gear rows follow the ordinary ones
-                        else if (item.m_gridPos.y >= rows) item.m_gridPos = new Vector2i(-1, -1); // a removed ordinary row: dropped, as in the game
-                    }
-                Layout.RememberNormalRows(rows);
-                inv.SetHeight(rows + Layout.ExtraRows);
-                __instance.AddUniqueKeyValue(Player.InventoryRowsKey, rows.ToString());
-                if (InventoryGui.instance != null) InventoryGui.instance.SetInventorySize(rows);
-                __instance.DropInvalidItems();
-                return false;
+                if (__instance != Player.m_localPlayer || Compat.StandingDown) return;
+                Resizing = true;
+                OldBase = Layout.NormalRows;
+            }
+
+            // If a mod after us lowered the height again, raise it (anything it dropped is already gone, but nothing more will be).
+            [HarmonyPriority(Priority.Last)]
+            private static void Postfix(Player __instance)
+            {
+                if (__instance != Player.m_localPlayer || Compat.StandingDown) return;
+                Extend(__instance.GetInventory());
+            }
+
+            [HarmonyFinalizer]
+            private static void Finalizer() => Resizing = false;
+        }
+
+        // The game calls this only from SetInventorySize, right after setting the height. The height it finds here is the new
+        // number of ordinary rows (the game's, or what ValheimPlus and the like made it): the gear rows move to just below them and
+        // the inventory grows to fit, so the game finds nothing out of place to drop.
+        [HarmonyPatch(typeof(Humanoid), nameof(Humanoid.DropInvalidItems))]
+        private static class DropInvalidItems
+        {
+            [HarmonyPriority(Priority.First)]
+            private static void Prefix(Humanoid __instance)
+            {
+                if (!SetInventorySize.Resizing || __instance != Player.m_localPlayer) return;
+                Player player = (Player)__instance;
+                Inventory inv = player.GetInventory();
+                int oldBase = SetInventorySize.OldBase, newBase = inv.GetHeight();
+
+                var gear = new System.Collections.Generic.List<ItemDrop.ItemData>();
+                foreach (ItemDrop.ItemData item in inv.GetAllItems())
+                    if (item.m_gridPos.y >= oldBase && item.m_gridPos.y < oldBase + Layout.ExtraRows) gear.Add(item);
+                foreach (ItemDrop.ItemData item in gear) item.m_gridPos.y += newBase - oldBase; // the gear rows follow the ordinary ones
+
+                Layout.RememberNormalRows(newBase);
+                Layout.SaveBase(player, newBase);
+                inv.SetHeight(newBase + Layout.ExtraRows);
+
+                // Anything else now below the ordinary rows (a row taken away, when ValheimPlus is removed or set lower) goes into a
+                // free cell of the bag. Only if the bag is full is it dropped, as the game would.
+                foreach (ItemDrop.ItemData item in inv.GetAllItems())
+                {
+                    if (gear.Contains(item) || item.m_gridPos.y < newBase) continue;
+                    Vector2i free = Layout.FindFreeNormalCell(inv, topFirst: false);
+                    item.m_gridPos = free.x >= 0 ? free : new Vector2i(-1, -1);
+                }
             }
         }
 

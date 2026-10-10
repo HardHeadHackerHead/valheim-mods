@@ -235,8 +235,10 @@ namespace FeedFromChests
     [HarmonyPatch(typeof(CookingStation), "SpawnItem")]
     internal static class CookingStation_SpawnItem
     {
-        private static bool Prefix(CookingStation __instance, string name, int slot, Vector3 userPoint)
+        [HarmonyPriority(Priority.Last)]
+        private static bool Prefix(CookingStation __instance, string name, int slot, Vector3 userPoint, bool __runOriginal)
         {
+            if (!__runOriginal) return false; // another mod has delivered it
             try { return Cooking.Deliver(__instance, name, slot, userPoint); }
             catch (System.Exception e) { Plugin.Instance?.Log("Could not place cooked food, the game throws it out instead: " + e.Message); return true; }
         }

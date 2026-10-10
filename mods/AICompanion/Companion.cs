@@ -91,8 +91,8 @@ namespace AICompanion
             Container gear = c.GetComponent<Container>();
             if (!view.IsOwner())
             {
-                if (gear != null && gear.IsInUse()) return false;
-                view.ClaimOwnership();
+                if (gear != null) { if (!Containers.Take(gear)) return false; } // (its bag loaded fresh as it is taken over, before anything is moved)
+                else view.ClaimOwnership();
             }
             change(view.GetZDO());
             return true;
@@ -112,13 +112,24 @@ namespace AICompanion
                 if (view.IsOwner()) continue;
                 // Near you it runs on your game. Further away too, when nobody runs it (the game that did has left): else it stood frozen
                 // wherever it was (once in the sea, where it had fled).
-                long owner = view.GetZDO().GetOwner();
-                bool orphan = owner == 0L || ZNet.instance == null || ZNet.instance.GetPeer(owner) == null;
+                bool orphan = !Running(view.GetZDO().GetOwner());
                 if (!orphan && Vector3.Distance(c.transform.position, p.transform.position) > 64f) continue;
                 Container gear = c.GetComponent<Container>();
-                if (gear != null && gear.IsInUse()) continue;
-                view.ClaimOwnership();
+                if (gear != null) Containers.Take(gear, orphan); // (not while its gear is open; its bag loaded fresh as it is taken over)
+                else view.ClaimOwnership();
             }
+        }
+
+        /// <summary>
+        /// A game that is in the world right now (it runs what it owns). The host knows every player's game (GetPeer); another player's game
+        /// knows only the host's, so it looks for the owner among the players in the world (each one's character carries their game's id).
+        /// </summary>
+        private static bool Running(long owner)
+        {
+            if (owner == 0L || ZNet.instance == null) return false;
+            if (owner == ZDOMan.GetSessionID() || ZNet.instance.GetPeer(owner) != null) return true;
+            foreach (ZNet.PlayerInfo info in ZNet.instance.GetPlayerList()) if (info.m_characterID.UserID == owner) return true;
+            return false;
         }
 
         // ---- summoning -----------------------------------------------------------------------------------
@@ -157,8 +168,9 @@ namespace AICompanion
         public static bool Dismiss(Humanoid c, out string why)
         {
             Container gear = c.GetComponent<Container>();
-            if (gear != null && gear.GetInventory().NrOfItems() > 0) { why = "Take its gear first (Open its inventory)"; return false; }
             ZNetView view = c.GetComponent<ZNetView>();
+            if (gear != null && !Containers.Take(gear)) { why = "Someone has its gear open."; return false; } // (what is really in its bag, before it is checked)
+            if (gear != null && gear.GetInventory().NrOfItems() > 0) { why = "Take its gear first (Open its inventory)"; return false; }
             if (!view.IsOwner()) view.ClaimOwnership();
             Plugin.Instance?.Note($"The companion {NameOf(c)} was sent home");
             if (Player.m_localPlayer != null) Profile.Forget(Player.m_localPlayer, IdOf(c));
@@ -167,7 +179,6 @@ namespace AICompanion
             return true;
         }
 
-        /// <summary>It fell: everything it carried goes into a crate where it stood (the game's own floating cargo crate), so nothing is lost.</summary>
         /// <summary>
         /// Save its bag now. The bag (its gear chest) saves itself when items come and go, but not when an item itself changes: an upgrade, a
         /// repair, wear. Without this those were lost whenever the companion was made again from its save (its area reloading, a new body).
@@ -177,29 +188,24 @@ namespace AICompanion
             if (c != null && c.GetComponent<ZNetView>() is ZNetView v && v.IsValid() && v.IsOwner()) c.GetInventory().m_onChanged?.Invoke();
         }
 
+        /// <summary>From before 0.22.0: the gear it wore when it fell, kept on its save and its player's character (Profile.Kept).</summary>
         public const string KeptKey = "dhc_kept";
 
         /// <summary>
-        /// It fell: what is in its gear slots (Gear: weapons, shield, bow and arrows, axe, pickaxe, hammer, armour, cape, belt) it keeps, and
-        /// wakes with; everything in its bag (what it gathered and looted on the way) goes into a tombstone where it fell. The kept gear is written to its save
-        /// ("dhc_kept", the game's own item format) for its player's game to put back on it when it wakes (Profile.Kept). Returns how many
-        /// stacks went into the tombstone (0: no tombstone).
+        /// It fell (or is sent away for good): everything it has, the gear in its gear slots too, goes into a tombstone where it is, as a
+        /// player's does, each item in the cell it had (its gear in the two gear rows). The tombstone is part of the world, so nothing depends
+        /// on who is online or on a save that has not happened yet: before 0.22.0 its worn gear was kept on its own save (gone with its body)
+        /// and on its player's character (saved only every half hour, and not at all when that player was offline), and was lost when it fell
+        /// on another player's game. When it wakes, its player's game takes its gear rows back out of the tombstone (Grave.WearAgain); a
+        /// tombstone too far to reach then, it goes back to. Returns how many stacks went into the tombstone.
         /// </summary>
         public static int DropGear(Humanoid c)
         {
             Container gear = c.GetComponent<Container>();
             Inventory inv = gear != null ? gear.GetInventory() : null;
-            if (inv == null || inv.NrOfItems() == 0) { Zdo(c)?.Set(KeptKey, ""); return 0; }
-            var worn = new HashSet<ItemDrop.ItemData>(inv.GetAllItems().Where(Gear.InSlot)); // its gear slots
-            foreach (ItemDrop.ItemData item in inv.GetAllItems()) item.m_equipped = worn.Contains(item); // the game's move leaves equipped items out
-            Zdo(c)?.Set(KeptKey, Pack(worn));
-            int carried = inv.NrOfItems() - worn.Count;
-            if (carried <= 0)
-            {
-                Plugin.Instance?.Note($"{NameOf(c)} fell at {c.transform.position:F0} carrying only its gear ({worn.Count}): no tombstone");
-                foreach (ItemDrop.ItemData item in inv.GetAllItems()) item.m_equipped = false;
-                return 0;
-            }
+            if (inv == null || inv.NrOfItems() == 0) return 0;
+            int had = inv.NrOfItems(), worn = inv.GetAllItems().Count(Gear.InSlot);
+            foreach (ItemDrop.ItemData item in inv.GetAllItems()) item.m_equipped = false; // (the game's move leaves equipped items out)
 
             // A tombstone like a player's: its player can take everything back with one E. The game's own move (MoveInventoryToGrave) makes
             // the tombstone as big as the bag it empties: adding items one by one only fitted the tombstone's own 4 slots, and the rest was lost.
@@ -216,18 +222,17 @@ namespace AICompanion
                 grave.GetComponent<ZNetView>().GetZDO().Set(Grave.OfKey, IdOf(c));
             }
 
-            // Anything still in the bag besides its gear (no grave could be made): on the ground beside it, never lost.
+            // Anything still in the bag (no grave could be made): on the ground beside it, never lost.
             int dropped = 0;
-            foreach (ItemDrop.ItemData item in inv.GetAllItems().Where(i => !worn.Contains(i)).ToList())
+            foreach (ItemDrop.ItemData item in inv.GetAllItems().ToList())
             {
                 ItemDrop.DropItem(item, item.m_stack, c.transform.position + Vector3.up + Random.insideUnitSphere * 0.5f, Quaternion.identity);
+                inv.RemoveItem(item);
                 dropped++;
             }
-            foreach (ItemDrop.ItemData item in inv.GetAllItems().Where(i => !worn.Contains(i)).ToList()) inv.RemoveItem(item); // (what was dropped)
-            foreach (ItemDrop.ItemData item in inv.GetAllItems()) item.m_equipped = false;
             int saved = grave != null ? grave.GetInventory().NrOfItems() : 0;
-            Plugin.Instance?.Note($"{NameOf(c)} fell at {c.transform.position:F0}: kept its gear ({worn.Count}), {saved} of {carried} item stacks in their tombstone" + (dropped > 0 ? $", {dropped} dropped beside it" : ""));
-            if (saved + dropped < carried) Plugin.Instance?.Warn($"{carried - saved - dropped} item stacks of {NameOf(c)} could not be placed");
+            Plugin.Instance?.Note($"{NameOf(c)} fell at {c.transform.position:F0}: {saved} of {had} item stacks in their tombstone ({worn} of them its gear)" + (dropped > 0 ? $", {dropped} dropped beside it" : ""));
+            if (saved + dropped < had) Plugin.Instance?.Warn($"{had - saved - dropped} item stacks of {NameOf(c)} could not be placed");
             return saved;
         }
 

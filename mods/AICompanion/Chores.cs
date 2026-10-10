@@ -199,10 +199,9 @@ namespace AICompanion
                 string[] f = item.m_customData[Tag].Split(',');
                 if (f.Length != 3 || !float.TryParse(f[0], out float x) || !float.TryParse(f[1], out float y) || !float.TryParse(f[2], out float z)) continue;
                 var spot = new Vector3(x, y, z);
-                Container chest = UnityEngine.Object.FindObjectsByType<Container>(FindObjectsSortMode.None).FirstOrDefault(c => Vector3.Distance(c.transform.position, spot) < 1f && !c.IsInUse());
+                Container chest = UnityEngine.Object.FindObjectsByType<Container>(FindObjectsSortMode.None).FirstOrDefault(c => Vector3.Distance(c.transform.position, spot) < 1f && !Containers.InUse(c));
                 if (chest == null || Vector3.Distance(chest.transform.position, me.transform.position) > 60f) continue;
-                ZNetView v = chest.GetComponent<ZNetView>();
-                if (v != null && !v.IsOwner()) v.ClaimOwnership();
+                if (!Containers.Take(chest)) continue; // (taken over and loaded fresh before it goes in)
                 int n = item.m_stack;
                 item.m_customData.Remove(Tag);
                 if (chest.GetInventory().AddItem(item)) { inv.RemoveItem(item); back += n; }
@@ -228,10 +227,14 @@ namespace AICompanion
                 bool one = Food.IsFood(item) || item.m_shared.m_itemType == ItemDrop.ItemData.ItemType.Consumable;
                 if (one)
                 {
+                    // Only the game running it can change its bag (a change anywhere else is not saved, and the next save there wipes it): a
+                    // friend's game takes it over first, its bag loaded fresh. And out of your inventory before into its bag, so never both.
+                    if (!Companion.Write(c, _ => { })) { p.Message(MessageHud.MessageType.Center, $"Someone has {Companion.NameOf(c)}'s gear open"); return false; }
                     ItemDrop.ItemData copy = item.Clone();
                     copy.m_stack = 1;
-                    if (!c.GetInventory().AddItem(copy)) { p.Message(MessageHud.MessageType.Center, $"{Companion.NameOf(c)} has no room"); return false; }
-                    p.GetInventory().RemoveItem(item, 1);
+                    if (!c.GetInventory().CanAddItem(copy)) { p.Message(MessageHud.MessageType.Center, $"{Companion.NameOf(c)} has no room"); return false; }
+                    if (!p.GetInventory().RemoveItem(item, 1)) return false;
+                    if (!c.GetInventory().AddItem(copy)) { p.GetInventory().AddItem(copy); p.Message(MessageHud.MessageType.Center, $"{Companion.NameOf(c)} has no room"); return false; }
                     Companion.SaveBag(c);
                     Talk.Say(c, Food.IsFood(item) ? "Thanks! I'll eat that." : "Thanks, I'll keep that for a bad moment.");
                     Idle.Queue(Brain.Get(c), "thumbsup", 0.3f, p);

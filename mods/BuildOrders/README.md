@@ -5,7 +5,7 @@
 
 <img src="cover.png" alt="BuildOrders" width="100%">
 
-**Version 1.11.2**  ·  [all the mods](../../README.md)  ·  installs and updates through the in-game [mod manager](https://github.com/HardHeadHackerHead/valheim-mod-manager) (**F7**)
+**Version 1.12.0**  ·  [all the mods](../../README.md)  ·  installs and updates through the in-game [mod manager](https://github.com/HardHeadHackerHead/valheim-mod-manager) (**F7**)
 
 Plan pieces as shared ghost build orders. Your party sees them, you can build one by just walking up and pressing **E**, and a panel totals the materials you still need. Pick a blueprint in the Plans window (**F11**), turn its preview into place, and a whole structure appears as ghosts (share blueprints with your friends from the same window): ask an AI assistant to design a fort for you.
 
@@ -34,7 +34,7 @@ Plan pieces as shared ghost build orders for everyone in your party, and build t
 - Stability: while planning, ghosts are coloured by how well they would be supported (blue solid, green to red weaker, red would fall), worked out from the same rules the game uses. F10 shows or hides the colours any time, and the prompt says how well the ghost you are looking at would hold. It is an estimate; the game does the real check once a piece is built.
 - In plan mode, ghosts act like real pieces: you can aim at them and your next piece snaps onto their snap points, so you can lay out a whole structure with the normal snapping and build it later, piece by piece.
 - When you build for real, your placement snaps onto a ghost of the same piece, and the ghost disappears once the real piece is built.
-- G selects the piece you are looking at to build more like it, and Delete removes a ghost. F9 shows or hides all ghosts.
+- U selects the piece you are looking at to build more like it, and Delete removes a ghost. F9 shows or hides all ghosts.
 - A panel totals the materials your orders still need.
 
 Settings: ghost opacity, view distance, snap distance, how close you must be to build with E, and the keys.
@@ -102,9 +102,9 @@ In `BepInEx/config/com.dhack.buildorders.cfg` (made the first time the game runs
 | `ShowGhosts` | `true` | Show the glowing ghosts of planned pieces. |
 | `BuildByPressingUse` | `true` | Walk up to a ghost and press E to build it, no hammer needed. It costs the normal materials (from your inventory, then nearby chests if BuildFromChests is installed). |
 | `BuildWhileSwimming` | `true` | Keep your hammer in your hand while swimming so you can plan and build from the water (equip it before you jump in: the game does not let you equip things while swimming). |
-| `BuildAllRadius` | `24` | Holding E at a ghost (or Build nearby in the Plans window) builds every ghost within this many metres, lowest first, as far as your materials go. |
+| `BuildAllRadius` | `24` | Holding E at a ghost (or Build nearby in the Plans window) builds every ghost within this many metres, lowest first, as far as your materials go. In multiplayer the server's value applies. |
 | `StabilityInPlanMode` | `true` | Show the stability colours automatically while plan mode is on. |
-| `UseReach` | `6` | How close (in metres) you must be to a ghost to build it by pressing E. |
+| `UseReach` | `6` | How close (in metres) you must be to a ghost to build it by pressing E. In multiplayer the server's value applies. |
 | `ViewDistance` | `80` | Ghosts further than this many metres away are hidden (saves performance). |
 | `MaxGhosts` | `600` | Most ghosts shown at once (the nearest first). Big plans need more; very high numbers can cost frame rate. |
 | `SnapDistance` | `1.5` | When you're placing the same piece as a nearby order, your placement ghost snaps onto the order if it's within this many metres. |
@@ -117,7 +117,7 @@ In `BepInEx/config/com.dhack.buildorders.cfg` (made the first time the game runs
 | `StabilityKey` | `F10` | Show or hide the estimated stability colours on the ghosts (blue = solid, green to red = weaker, red = would fall). |
 | `PlanKey` | `LeftAlt` | With the hammer out, press this to turn plan mode on or off (or hold it, see PlanIsToggle). In plan mode, placing a piece records a build order instead of building it. Costs nothing. |
 | `PlanIsToggle` | `true` | On: press the plan key once to turn plan mode on, again to turn it off (it also ends when you put the hammer away). Off: plan mode only while the key is held. |
-| `SelectKey` | `G` | Aim at a build order and press this to select that piece in your hammer. |
+| `SelectKey` | `U` | Aim at a build order and press this to select that piece in your hammer. (Pick a key the game doesn't use: G, the old default, also opens the game's radial menu.) |
 | `RemoveKey` | `Delete` | Aim at a build order and press this to remove it. Hold Shift to remove every order within 8 m of it. |
 | `ToggleGhostsKey` | `F9` | Show or hide all the ghosts. |
 
@@ -142,6 +142,7 @@ See [who needs which mod](../../README.md#playing-together) on the front page.
 
 ## 📜 Changes
 
+- **1.12.0** Fix: removing a levelled plan could bring other buildings down. Putting the ground back now waits until everything standing there has loaded, never touches the ground on or next to any piece (anyone's), and only puts back ground still exactly as the levelling left it (later digging stays); when in doubt the level ground stays. Levelling also leaves the ground under and around pieces already standing there alone. (Plans levelled by older versions keep their level ground.) Fix: with Adventure Backpacks, pressing E on a ghost could build it for free: building by hand now takes the materials first and places the piece only when the full cost was taken (otherwise you get them back). The select key's default is now U (G also opened the game's radial menu; if you keep G it no longer unbinds the radial menu, and if you change it the radial menu gets G back). In multiplayer the server decides UseReach (now 2 to 10 m) and BuildAllRadius. The list of deleted orders forgets ids after 60 days, is saved once per batch and sent compressed to players who join. The windows use the game's fonts, and a game update renaming its ground fields only switches levelling off instead of stopping the mod.
 - Fix: no more stutter every 5 seconds. Looking for Claude Tools searched everything the game had loaded; it now asks BepInEx's list of mods.
 - New: a blueprint can be made for the land as it is: "level": false in its file places its ghosts straight onto the ground, never levelling it (for builds that follow a hillside or bridge a creek, with posts down to the ground). Placed by its world coordinates, it fits exactly.
 - Add-ons can plan a whole building at once: TryCreateBuildingShell takes up to 2,048 pieces, checks every pose, unlock, reach and protected area before adding any ghost (so a bad piece never leaves a partial plan), and undo takes down only what is still a ghost. Also a ghost-ray query and a planning-input check for shape tools (from Bob, for Hallwright and BuildShapes), and the helper hooks a companion uses to build your plans.

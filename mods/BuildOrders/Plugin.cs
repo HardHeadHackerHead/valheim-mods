@@ -22,9 +22,10 @@ namespace BuildOrders
     {
         public const string Guid = "com.dhack.buildorders";
         public const string Name = "BuildOrders";
-        public const string Version = "1.11.2";
+        public const string Version = "1.12.0";
 
         internal static Plugin Instance;
+        internal static DHack.Shared.ServerSettings Synced;   // the gameplay settings the server decides in multiplayer
 
         private ConfigEntry<bool> _enabled, _showGhosts, _alwaysShowPanel, _buildByHand;
         private ConfigEntry<float> _buildReach, _buildAllRadius;
@@ -45,6 +46,7 @@ namespace BuildOrders
         private void Awake()
         {
             Instance = this;
+            Synced = new DHack.Shared.ServerSettings(Guid, Config, Logger);
             PublishHelperHooks();
             _enabled = Config.Bind("General", "Enabled", true, "Turn the mod on or off.");
             BindBlueprintConfig();
@@ -54,10 +56,10 @@ namespace BuildOrders
             BindFetch();
             _swimBuild = Config.Bind("General", "BuildWhileSwimming", true,
                 "Keep your hammer in your hand while swimming so you can plan and build from the water (equip it before you jump in: the game does not let you equip things while swimming).");
-            _buildAllRadius = Config.Bind("General", "BuildAllRadius", 24f, new ConfigDescription("Holding E at a ghost (or Build nearby in the Plans window) builds every ghost within this many metres, lowest first, as far as your materials go.", new AcceptableValueRange<float>(4f, 64f)));
+            _buildAllRadius = Synced.Add(Config.Bind("General", "BuildAllRadius", 24f, new ConfigDescription("Holding E at a ghost (or Build nearby in the Plans window) builds every ghost within this many metres, lowest first, as far as your materials go. In multiplayer the server's value applies.", new AcceptableValueRange<float>(4f, 64f))));
             _stabilityKey = Config.Bind("Keys", "StabilityKey", KeyCode.F10, "Show or hide the estimated stability colours on the ghosts (blue = solid, green to red = weaker, red = would fall).");
             _stabilityInPlan = Config.Bind("General", "StabilityInPlanMode", true, "Show the stability colours automatically while plan mode is on.");
-            _buildReach = Config.Bind("General", "UseReach", 6f, "How close (in metres) you must be to a ghost to build it by pressing E.");
+            _buildReach = Synced.Add(Config.Bind("General", "UseReach", 6f, new ConfigDescription("How close (in metres) you must be to a ghost to build it by pressing E. In multiplayer the server's value applies.", new AcceptableValueRange<float>(2f, 10f))));
             _ghostOpacity = Config.Bind("Look", "GhostOpacity", 0.18f,
                 "How solid the ghosts are: 0.05 = barely there, 0.3 = clearly visible, 1 = solid. (Aimed-at ghosts are shown more solid.)");
             _shaderOverride = Config.Bind("Look", "GhostShader", "",
@@ -70,8 +72,8 @@ namespace BuildOrders
                 "With the hammer out, press this to turn plan mode on or off (or hold it, see PlanIsToggle). In plan mode, placing a piece records a build order instead of building it. Costs nothing.");
             _planToggle = Config.Bind("Keys", "PlanIsToggle", true,
                 "On: press the plan key once to turn plan mode on, again to turn it off (it also ends when you put the hammer away). Off: plan mode only while the key is held.");
-            _selectKey = Config.Bind("Keys", "SelectKey", KeyCode.G,
-                "Aim at a build order and press this to select that piece in your hammer.");
+            _selectKey = Config.Bind("Keys", "SelectKey", KeyCode.U,
+                "Aim at a build order and press this to select that piece in your hammer. (Pick a key the game doesn't use: G, the old default, also opens the game's radial menu.)");
             _removeKey = Config.Bind("Keys", "RemoveKey", KeyCode.Delete,
                 "Aim at a build order and press this to remove it. Hold Shift to remove every order within 8 m of it.");
             _toggleGhostsKey = Config.Bind("Keys", "ToggleGhostsKey", KeyCode.F9, "Show or hide all the ghosts.");
@@ -101,6 +103,7 @@ namespace BuildOrders
         private void OnDestroy()
         {
             CancelPlacement();
+            FlushSave();
             PlansWindowOpen = false;
             DestroyWindowResources();
             _harmony?.UnpatchSelf();
@@ -109,6 +112,7 @@ namespace BuildOrders
             UnregisterClaudeCommands();
             UnregisterBridgeTool();
             DestroyAllGhosts();
+            Synced?.Dispose();
             if (Instance == this) Instance = null;
         }
 
@@ -132,8 +136,14 @@ namespace BuildOrders
             if (_keysChecked || ZInput.instance == null) return;
             _keysChecked = true;
             var keys = new System.Collections.Generic.List<System.Collections.Generic.KeyValuePair<KeyCode, string>>();
+            var ours = new System.Collections.Generic.List<KeyCode>();
             foreach (ConfigEntryBase entry in Config.Select(kv => kv.Value))
             {
+                if (entry.BoxedValue is KeyCode mine) ours.Add(mine);
+                else if (entry.BoxedValue is KeyboardShortcut both) ours.Add(both.MainKey);
+                // The select key only works while you aim at a ghost: the game's action on that key stays (unbinding it everywhere for
+                // that was too much: G took the radial menu away for good).
+                if (entry == _selectKey) continue;
                 string what = entry.Definition.Section + " " + entry.Definition.Key;
                 if (entry.BoxedValue is KeyCode code && code != KeyCode.None)
                     keys.Add(new System.Collections.Generic.KeyValuePair<KeyCode, string>(code, what));
@@ -141,6 +151,7 @@ namespace BuildOrders
                     keys.Add(new System.Collections.Generic.KeyValuePair<KeyCode, string>(sc.MainKey, what));
             }
             _keyNotes.AddRange(GameKeys.Free(Name, keys));
+            _keyNotes.AddRange(GameKeys.GiveBack(Name, ours)); // a game key we unbound once, for a key none of ours uses any more
         }
 
         private void TellKeyNotes()
@@ -152,6 +163,8 @@ namespace BuildOrders
 
         private void Update()
         {
+            Synced?.Update();
+            UpdateSave();
             FreeGameKeys();
             TellKeyNotes();
             if (!_enabled.Value) { DestroyAllGhosts(); return; }
@@ -600,15 +613,33 @@ namespace BuildOrders
             if (Location.IsInsideNoBuildLocation(order.Pos)) { Say("You can't build there"); return false; }
             if (!CanAfford(player, piece)) { Say($"Missing materials for {name}"); return false; }
 
+            // Pay first, then place, and only when the whole cost was really taken. Counted here, outside the game's HaveRequirements: other
+            // mods (Adventure Backpacks) count extra sources only inside it, but the payment below runs outside it and never reaches them.
+            Dictionary<GameObject, int> cost = CostOf(player, piece);
+            var taken = new Dictionary<GameObject, int>();
+            bool paid = false;
             ForceBuildContext(true); // so the materials come from nearby chests too, exactly as when building with the hammer
             try
             {
+                Inventory inv = player.GetInventory();
+                var before = cost.Keys.ToDictionary(k => k, k => inv.CountItems(ItemName(k)));
+                if (cost.Any(kv => before[kv.Key] < kv.Value)) { Say($"Missing materials for {name}"); return false; }
+                if (cost.Count > 0) player.ConsumeResources(piece.m_resources, 0);
+                foreach (var kv in cost) taken[kv.Key] = Mathf.Max(0, before[kv.Key] - inv.CountItems(ItemName(kv.Key)));
+                if (cost.Any(kv => taken[kv.Key] < kv.Value))
+                {
+                    Logger.LogWarning($"Not built {name}: paying took less than it costs ({string.Join(", ", cost.Select(kv => $"{taken[kv.Key]}/{kv.Value} {kv.Key.name}").ToArray())}); what was taken is given back");
+                    GiveItems(player, taken);
+                    Say($"Missing materials for {name}");
+                    return false;
+                }
+                paid = true;
                 player.PlacePiece(piece, order.Pos, order.Rot, doAttack: false);
-                if (!ZoneSystem.instance.GetGlobalKey(piece.FreeBuildKey())) player.ConsumeResources(piece.m_resources, 0);
             }
             catch (System.Exception e)
             {
                 Logger.LogError($"Could not build {name}: {e}");
+                if (paid) GiveItems(player, taken);
                 Say($"Could not build {name} (see the BepInEx log)");
                 return false;
             }
@@ -618,6 +649,53 @@ namespace BuildOrders
             if (!quiet) player.Message(MessageHud.MessageType.TopLeft, $"Built: {name}");
             _stabilityDirty = true;
             return true;
+        }
+
+        /// <summary>What building this piece by hand takes, item prefab -> amount, as the game's ConsumeResources counts it (nothing when building is free).</summary>
+        private static Dictionary<GameObject, int> CostOf(Player player, Piece piece)
+        {
+            var cost = new Dictionary<GameObject, int>();
+            if (ZoneSystem.instance.GetGlobalKey(piece.FreeBuildKey())) return cost;
+            CraftingStation station = player.GetCurrentCraftingStation();
+            foreach (Piece.Requirement req in piece.m_resources)
+            {
+                if (req.m_resItem == null) continue;
+                if (station != null ? station.m_upgrader != req.m_upgraderResource : req.m_upgraderResource) continue;
+                int amount = req.GetAmount(0);
+                if (amount <= 0) continue;
+                GameObject item = req.m_resItem.gameObject;
+                cost[item] = (cost.TryGetValue(item, out int n) ? n : 0) + amount;
+            }
+            return cost;
+        }
+
+        private static string ItemName(GameObject item) => item.GetComponent<ItemDrop>().m_itemData.m_shared.m_name;
+
+        /// <summary>Items into your inventory, the rest at your feet (bags full). Returns how many went to the ground.</summary>
+        private static int GiveItems(Player player, Dictionary<GameObject, int> items)
+        {
+            Inventory inv = player.GetInventory();
+            int dropped = 0;
+            foreach (var kv in items)
+            {
+                ItemDrop drop = kv.Key != null ? kv.Key.GetComponent<ItemDrop>() : null;
+                if (drop == null) continue;
+                int amount = kv.Value, max = Mathf.Max(1, drop.m_itemData.m_shared.m_maxStackSize);
+                while (amount > 0)
+                {
+                    int stack = Mathf.Min(amount, max);
+                    if (inv.CanAddItem(kv.Key, stack)) inv.AddItem(kv.Key, stack);
+                    else
+                    {
+                        // a fresh copy of the item: the prefab's own ItemData has no drop prefab set, so ItemDrop.DropItem would throw
+                        GameObject loose = Instantiate(kv.Key, player.transform.position + Vector3.up, Quaternion.identity);
+                        loose.GetComponent<ItemDrop>().SetStack(stack);
+                        dropped += stack;
+                    }
+                    amount -= stack;
+                }
+            }
+            return dropped;
         }
 
         private void SelectPieceOf(Player player, Order order)

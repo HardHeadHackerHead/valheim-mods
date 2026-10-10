@@ -25,16 +25,17 @@ namespace Arena
         private static AudioMixerGroup _mixer;
         private static AudioClip[] _yea, _laugh;
         private static AudioClip _bell;
-        private static bool _loading;
+        private static bool _loading, _tried;
 
         internal static bool Ready => Clips.Count > 0;
 
         // ---- loading ------------------------------------------------------------------------------------------------------
 
+        /// <summary>Loads the recordings, once (where they cannot be loaded, a dedicated server for one, it is not tried again every frame).</summary>
         internal static void Load()
         {
-            if (_loading || Ready || Plugin.Instance == null) return;
-            _loading = true;
+            if (_loading || _tried || Ready || Plugin.Instance == null) return;
+            _loading = true; _tried = true;
             Plugin.Instance.StartCoroutine(LoadAll());
         }
 

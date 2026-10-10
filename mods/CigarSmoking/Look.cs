@@ -11,6 +11,7 @@ namespace CigarSmoking
     internal static class Look
     {
         private static readonly Dictionary<string, Material> Materials = new Dictionary<string, Material>();
+        private static readonly Dictionary<Color, Material> Tints = new Dictionary<Color, Material>();
 
         // every other colour a model names comes from the model kit (Palette.cs, made by tools/modelkit/build_cigars.py)
 
@@ -29,6 +30,7 @@ namespace CigarSmoking
         internal static void Harvest(ZNetScene scene)
         {
             Materials.Clear();
+            Tints.Clear();
             Materials["Stone"] = Find(scene, "stone_wall_1x1", "stone_mat");
             Materials["Planks"] = Find(scene, "wood_floor", "woodwall");
             Materials["Dark"] = Find(scene, "darkwood_pole", "DarkWood_mat");
@@ -50,11 +52,15 @@ namespace CigarSmoking
                 if (Materials[kv.Key] == null) Materials[kv.Key] = new Material(basis) { color = kv.Value };
         }
 
-        /// <summary>A plain colour on the same flat material (used for the cigars, whose colours depend on the type).</summary>
+        /// <summary>
+        /// A plain colour on the same flat material (used for the cigars, whose colours depend on the type). One per colour, kept: a cigar is
+        /// built each time someone lights one, and a new material each time would never be freed.
+        /// </summary>
         internal static Material Tint(Color color)
         {
+            if (Tints.TryGetValue(color, out Material made) && made != null) return made;
             Material basis = Materials.TryGetValue("Seed", out Material seed) ? seed : new Material(Shader.Find("Standard") ?? Shader.Find("Sprites/Default"));
-            return Plainly(basis, color);
+            return Tints[color] = Plainly(basis, color);
         }
 
         /// <summary>A flat, matt colour on the given material.</summary>
@@ -76,6 +82,10 @@ namespace CigarSmoking
             return Materials.Values.FirstOrDefault();
         }
 
-        internal static void Clear() => Materials.Clear();
+        internal static void Clear()
+        {
+            Materials.Clear();
+            Tints.Clear();
+        }
     }
 }

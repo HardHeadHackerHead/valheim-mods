@@ -17,6 +17,9 @@ namespace BountyBoard
         public int Count, Tier, Stars, Coins, Progress;
         public List<KeyValuePair<string, int>> Items = new List<KeyValuePair<string, int>>(); // reward materials
         public HashSet<long> Claimed = new HashSet<long>();                                    // players who have collected the reward (finished contracts)
+        // characters that earned the reward: took the contract, made a kill for it, handed in for it, or were playing when it was finished
+        // (null: finished before this was kept, so anyone who hasn't collected it may, as before)
+        public HashSet<long> Earned = new HashSet<long>();
 
         public Bounty Copy() => Parse(Serialize());
 
@@ -24,6 +27,7 @@ namespace BountyBoard
         {
             Id, ((int)Kind).ToString(), Target, Count.ToString(), Tier.ToString(), Stars.ToString(), Coins.ToString(), Progress.ToString(),
             string.Join(",", Items.Select(i => i.Key + ":" + i.Value).ToArray()), string.Join(",", Claimed.Select(c => c.ToString(CultureInfo.InvariantCulture)).ToArray()),
+            Earned == null ? "*" : string.Join(",", Earned.Select(c => c.ToString(CultureInfo.InvariantCulture)).ToArray()), // (older versions read only the fields before it)
         });
 
         public static Bounty Parse(string text)
@@ -43,6 +47,8 @@ namespace BountyBoard
                     if (kv.Length == 2) b.Items.Add(new KeyValuePair<string, int>(kv[0], int.Parse(kv[1])));
                 }
                 foreach (string c in f[9].Split(new[] { ',' }, StringSplitOptions.RemoveEmptyEntries)) b.Claimed.Add(long.Parse(c, CultureInfo.InvariantCulture));
+                if (f.Length < 11 || f[10] == "*") b.Earned = null; // saved by an older version
+                else foreach (string c in f[10].Split(new[] { ',' }, StringSplitOptions.RemoveEmptyEntries)) b.Earned.Add(long.Parse(c, CultureInfo.InvariantCulture));
                 return b;
             }
             catch (FormatException) { return null; }

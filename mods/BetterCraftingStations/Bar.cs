@@ -69,7 +69,6 @@ namespace BetterCraftingStations
             float height = Build(gui, list, station, state);
             _root.SetActive(height > 0f);
             if (height > 0f) Take(gui, list, height);
-            Plugin.Log.LogInfo($"Chips for {station}: {All.Count} recipes, {Chips.Count} chips, bar {height:0} px, list {list.rect.size}, active {_root.activeSelf}");
         }
 
         public static void Hide()
@@ -199,7 +198,12 @@ namespace BetterCraftingStations
         {
             GameObject go = UnityEngine.Object.Instantiate(template.gameObject, _root.transform);
             go.name = "Chip " + label;
-            foreach (Component c in go.GetComponents<Component>().Where(c => c != null && c.GetType().Name == "UIGamePad").ToList()) UnityEngine.Object.Destroy(c);
+            // The copy keeps the tab's gamepad binding (UIGamePad, which would press the real tab, and its hint) and its ButtonTextColor
+            // (wired to the real tab: errors every frame). Remove them all, on the copy and everything under it.
+            foreach (Transform hint in go.GetComponentsInChildren<Transform>(true).Where(t => t != go.transform && t.name.StartsWith("gamepad_hint")).ToList())
+                UnityEngine.Object.DestroyImmediate(hint.gameObject);
+            foreach (Component c in go.GetComponentsInChildren<Component>(true).Where(c => c != null && (c.GetType().Name == "UIGamePad" || c.GetType().Name == "ButtonTextColor")).ToList())
+                UnityEngine.Object.Destroy(c);
             var rt = (RectTransform)go.transform;
             rt.anchorMin = rt.anchorMax = new Vector2(0f, 1f);
             rt.pivot = new Vector2(0f, 1f);
@@ -209,7 +213,7 @@ namespace BetterCraftingStations
             button.onClick = new Button.ButtonClickedEvent();   // (not the tab's own: its listeners come along with the copy)
             button.interactable = !on;                          // (the chosen one looks like the chosen tab)
             button.onClick.AddListener(() => { click(); _signature = ""; UpdateCraftingPanel(gui, false); });
-            TMP_Text text = go.GetComponentInChildren<TMP_Text>();
+            TMP_Text text = go.transform.Find("Text")?.GetComponent<TMP_Text>() ?? go.GetComponentInChildren<TMP_Text>();
             if (text != null)
             {
                 text.text = label;

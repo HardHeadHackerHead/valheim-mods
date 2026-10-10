@@ -462,6 +462,27 @@ namespace QualityOfLife
             return s;
         }
 
+        private static Font _bodyFont, _titleFont;
+
+        /// <summary>The game's own fonts (Averia for text and numbers, Norse for titles), looked up once; null if a game update renamed them.</summary>
+        private static Font GameFont(params string[] names)
+        {
+            Font[] all = Resources.FindObjectsOfTypeAll<Font>();
+            foreach (string name in names)
+                foreach (Font f in all)
+                    if (f != null && f.name.StartsWith(name, System.StringComparison.OrdinalIgnoreCase)) return f;
+            return null;
+        }
+
+        /// <summary>Use the game's fonts in these styles (Unity's default font is the first thing that looks out of place).</summary>
+        internal static void UseGameFonts(GUIStyle title, params GUIStyle[] body)
+        {
+            if (_bodyFont == null) _bodyFont = GameFont("AveriaSerifLibre-Bold", "AveriaSerifLibre", "Averia");
+            if (_titleFont == null) _titleFont = GameFont("Norsebold", "Norse") ?? _bodyFont;
+            if (title != null && _titleFont != null) title.font = _titleFont;
+            if (_bodyFont != null) foreach (GUIStyle style in body) if (style != null) style.font = _bodyFont;
+        }
+
         private void EnsureMenuStyles()
         {
             if (_rTitle != null) return;
@@ -481,6 +502,7 @@ namespace QualityOfLife
                 _rToggle.active.textColor = _rToggle.onActive.textColor = new Color(0.95f, 0.9f, 0.8f);
 
             _rField = new GUIStyle(GUI.skin.textField) { fontSize = 13 };
+            UseGameFonts(_rTitle, _rText, _rDim, _rBtn, _rBtnOn, _rToggle, _rField);
         }
 
         private void DestroyMenuResources()

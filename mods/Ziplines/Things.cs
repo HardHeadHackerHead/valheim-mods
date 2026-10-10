@@ -103,7 +103,9 @@ namespace Ziplines
             GameObject src = scene.GetPrefab("wood_pole2");
             if (src == null) { Plugin.Log.LogWarning("The wood_pole2 prefab was not found, so there is no Zipline Post"); return null; }
             // plain tinted materials (the game's pole material needs the pole's own mesh and looks white on ours)
-            Material wood = Plain(scene, new Color(0.50f, 0.34f, 0.19f), 0.05f), iron = Plain(scene, new Color(0.15f, 0.15f, 0.16f), 0.5f);
+            Material wood = null, iron = null;
+            try { wood = Plain(scene, new Color(0.50f, 0.34f, 0.19f), 0.05f); iron = Plain(scene, new Color(0.15f, 0.15f, 0.16f), 0.5f); }
+            catch (System.Exception e) { Plugin.Log.LogWarning("No materials for the Zipline Post (it looks plain): " + e.Message); }
 
             GameObject go = Object.Instantiate(src, _holder.transform);
             go.name = PostPrefab;
@@ -114,12 +116,17 @@ namespace Ziplines
             int layer = LayerMask.NameToLayer("piece");
             if (layer < 0) layer = go.layer;
 
-            // the post: a round pole, a block on top, and a pulley wheel for the rope
-            Part(go, PrimitiveType.Cylinder, "Pole", new Vector3(0.28f, 1.95f, 0.28f), new Vector3(0f, 1.95f, 0f), Quaternion.identity, wood);
-            Part(go, PrimitiveType.Cube, "Block", new Vector3(0.34f, 0.3f, 0.34f), new Vector3(0f, 4.05f, 0f), Quaternion.identity, wood);
-            Part(go, PrimitiveType.Cylinder, "Wheel", new Vector3(0.34f, 0.025f, 0.34f), new Vector3(0f, 4.2f, 0f), Quaternion.Euler(90f, 0f, 0f), iron);
-            Part(go, PrimitiveType.Cube, "Bracket", new Vector3(0.05f, 0.24f, 0.05f), new Vector3(0f, 4.17f, 0f), Quaternion.identity, iron);
-            Part(go, PrimitiveType.Cube, "Foot", new Vector3(0.5f, 0.12f, 0.5f), new Vector3(0f, 0.06f, 0f), Quaternion.identity, wood);
+            // the post: a round pole, a block on top, and a pulley wheel for the rope (the look never stops the piece being registered: without
+            // it, the host would delete the posts standing in the world)
+            try
+            {
+                Part(go, PrimitiveType.Cylinder, "Pole", new Vector3(0.28f, 1.95f, 0.28f), new Vector3(0f, 1.95f, 0f), Quaternion.identity, wood);
+                Part(go, PrimitiveType.Cube, "Block", new Vector3(0.34f, 0.3f, 0.34f), new Vector3(0f, 4.05f, 0f), Quaternion.identity, wood);
+                Part(go, PrimitiveType.Cylinder, "Wheel", new Vector3(0.34f, 0.025f, 0.34f), new Vector3(0f, 4.2f, 0f), Quaternion.Euler(90f, 0f, 0f), iron);
+                Part(go, PrimitiveType.Cube, "Bracket", new Vector3(0.05f, 0.24f, 0.05f), new Vector3(0f, 4.17f, 0f), Quaternion.identity, iron);
+                Part(go, PrimitiveType.Cube, "Foot", new Vector3(0.5f, 0.12f, 0.5f), new Vector3(0f, 0.06f, 0f), Quaternion.identity, wood);
+            }
+            catch (System.Exception e) { Plugin.Log.LogWarning("Could not build the Zipline Post's model: " + e.Message); }
             foreach (Transform child in go.transform) if (child.name != "Pole" && child.name != "Block" && child.name != "Wheel" && child.name != "Bracket" && child.name != "Foot" && child.GetComponent<MeshRenderer>() != null) child.gameObject.layer = layer;
 
             var hit = new GameObject("Hitbox") { layer = layer };
@@ -131,7 +138,8 @@ namespace Ziplines
             Piece piece = go.GetComponent<Piece>();
             piece.m_name = "Zipline Post";
             piece.m_description = "A tall post with a pulley on top. Build two, press E on one and then on the other to run a rope between them, then press E to ride it.";
-            piece.m_icon = Icon();
+            try { piece.m_icon = Icon(); }
+            catch (System.Exception e) { Plugin.Log.LogWarning("Could not draw the Zipline Post's build-menu picture: " + e.Message); }
             piece.m_category = Piece.PieceCategory.Misc;
             piece.m_craftingStation = scene.GetPrefab("piece_workbench")?.GetComponent<CraftingStation>();
             piece.m_resources = new[] { Req(scene, "Wood", 15), Req(scene, "Resin", 4), Req(scene, "LeatherScraps", 4) }.Where(r => r.m_resItem != null).ToArray();
@@ -142,7 +150,13 @@ namespace Ziplines
         /// <summary>A flat colour: the game's wood item material (a Standard one) with its picture taken off, as Quad's Cigars does.</summary>
         private static Material Plain(ZNetScene scene, Color color, float metal)
         {
-            Material basis = Find(scene, "Wood", "wood_item") ?? new Material(Shader.Find("Standard") ?? Shader.Find("Sprites/Default"));
+            Material basis = Find(scene, "Wood", "wood_item");
+            if (basis == null)
+            {
+                Shader shader = Shader.Find("Standard") ?? Shader.Find("Sprites/Default");
+                if (shader == null) return null; // (the parts keep Unity's default look)
+                basis = new Material(shader);
+            }
             var m = new Material(basis) { color = color };
             if (m.HasProperty("_MainTex")) m.mainTexture = null;
             if (m.HasProperty("_Glossiness")) m.SetFloat("_Glossiness", 0.15f);

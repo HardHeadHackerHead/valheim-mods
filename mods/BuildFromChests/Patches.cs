@@ -35,32 +35,49 @@ namespace BuildFromChests
     [HarmonyPatch(typeof(Player), nameof(Player.ConsumeResources))]
     internal static class Player_ConsumeResources
     {
-        private static void Prefix() => ChestScanner.Consuming = true;
-        private static void Finalizer() => ChestScanner.Consuming = false;
+        private static void Prefix(out bool __state) { __state = ChestScanner.Consuming; ChestScanner.Consuming = true; }
+        private static void Finalizer(bool __state) => ChestScanner.Consuming = __state;
     }
 
-    // While paying for a piece: take from the player's inventory first, then top up from nearby chests.
+    // Placing a piece. The game places it first and charges after, so this is where a piece the chests can no longer pay for (someone
+    // emptied one since the build menu counted it) is refused: by the time the game charges it's too late.
+    [HarmonyPatch(typeof(Player), nameof(Player.TryPlacePiece))]
+    internal static class Player_TryPlacePiece
+    {
+        [HarmonyPriority(Priority.Last)]
+        private static bool Prefix(Player __instance, Piece piece, ref bool __result, bool __runOriginal)
+        {
+            if (!__runOriginal) return false; // another mod already said no
+            if (piece == null || __instance != Player.m_localPlayer || !ChestScanner.Applies(__instance.GetInventory())) return true;
+            if (__instance.NoCostCheat() || ZoneSystem.instance.GetGlobalKey(piece.FreeBuildKey())) return true; // nothing will be charged
+
+            string missing = ChestScanner.FindShortfall(__instance.GetInventory(), piece.m_resources);
+            if (missing == null) return true;
+            __instance.Message(MessageHud.MessageType.Center, $"Not enough {Localization.instance.Localize(missing)} in the chests any more");
+            __result = false;
+            return false;
+        }
+    }
+
+    // While paying for a piece: take from the player's inventory first, then top up from nearby chests. Runs after every other mod's
+    // prefix: one that pays from somewhere else (Adventure Backpacks pays from the backpack) lowers the amount or skips the method, and
+    // only what's left is ours to find.
     [HarmonyPatch(typeof(Inventory), nameof(Inventory.RemoveItem), typeof(string), typeof(int), typeof(int), typeof(bool))]
     internal static class Inventory_RemoveItem
     {
-        private static bool Prefix(Inventory __instance, string name, int amount, int itemQuality, bool worldLevelBased)
+        [HarmonyPriority(Priority.Last)]
+        private static bool Prefix(Inventory __instance, string name, ref int amount, int itemQuality, bool worldLevelBased, bool __runOriginal)
         {
+            if (!__runOriginal) return false; // another mod has paid all of it
             if (!ChestScanner.Consuming || !ChestScanner.Applies(__instance)) return true;
 
-            ChestScanner.Suspend = true; // so our own calls below hit the original methods
-            try
-            {
-                int have = __instance.CountItems(name, itemQuality, worldLevelBased);
-                if (have >= amount) return true; // player has enough, run vanilla
+            int own = ChestScanner.OwnCount(__instance, name, itemQuality, worldLevelBased);
+            if (own >= amount) return true; // player has enough, run vanilla
 
-                if (have > 0) __instance.RemoveItem(name, have, itemQuality, worldLevelBased);
-                ChestScanner.RemoveFromChests(name, amount - have, itemQuality, worldLevelBased);
-                return false;
-            }
-            finally
-            {
-                ChestScanner.Suspend = false;
-            }
+            int left = ChestScanner.RemoveFromChests(name, amount - own, itemQuality, worldLevelBased);
+            if (left > 0) Plugin.Log.LogWarning($"Building: the chests were {left} {name} short after all"); // (checked just before, so it shouldn't happen)
+            amount = own; // the game takes the rest from the inventory
+            return own > 0;
         }
     }
 }

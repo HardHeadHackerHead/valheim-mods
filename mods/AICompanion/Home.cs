@@ -109,7 +109,7 @@ namespace AICompanion
             {
                 Vector3 at = bed.transform.position;
                 List<Container> empty = Object.FindObjectsOfType<Container>()
-                    .Where(x => IsChest(x) && IdOn(x) == 0L && !x.IsInUse() && x.GetInventory().NrOfItems() == 0 && Vector3.Distance(x.transform.position, at) < 8f)
+                    .Where(x => IsChest(x) && IdOn(x) == 0L && !Containers.InUse(x) && x.GetInventory().NrOfItems() == 0 && Vector3.Distance(x.transform.position, at) < 8f)
                     .OrderBy(x => Vector3.Distance(x.transform.position, at)).Take(2).ToList();
                 foreach (Container ch in empty) GiveChest(ch, c);
                 if (empty.Count > 0) took.Add(empty.Count == 1 ? "the empty chest beside it" : "the two empty chests beside it");
@@ -175,7 +175,7 @@ namespace AICompanion
             ZDO z = Companion.Zdo(chest);
             long id = Companion.IdOf(c);
             if (z == null) return;
-            if (chest.IsInUse()) { Plugin.Tell("Someone has that chest open"); return; }
+            if (Containers.InUse(chest)) { Plugin.Tell("Someone has that chest open"); return; }
             bool mine = z.GetLong(HomeKey, 0L) == id;
             if (!mine && z.GetLong(HomeKey, 0L) != 0L) { Plugin.Tell($"That chest is {z.GetString(HomeName, "another companion")}'s"); return; }
             Claim(chest);
@@ -258,23 +258,31 @@ namespace AICompanion
             prof.DiedAt = ZNet.instance.GetTimeSeconds();
             prof.DiedPos = where;
             prof.HasGrave = grave;   // it goes back for its things when it wakes
-            if (kept != null) prof.Kept = kept; // (told by the game that ran it)
+            Remote.Forget(id);       // (whether it is up somewhere: ask afresh)
+            if (kept != null) prof.Kept = kept; // (told by an older version's game that ran it: it kept the gear apart; now it is in the tombstone)
             Profile.Save(p, prof);
             Plugin.Instance?.Note($"{prof.Name} will wake {(prof.HasBed ? "in their bed" : "beside you")} in {Plugin.RespawnSeconds.Value:0} s");
         }
 
+        /// <summary>
+        /// Wake it (its time is up, "Wake now", or "Bring back"). Never a second one: if it is up anywhere in the world its record just
+        /// stops saying it fell. Only the game hosting the world knows that for sure; another player's game asks it first (Remote.InWorld)
+        /// and wakes it only once the answer is "nowhere" (null until then: asked again on the next tick).
+        /// </summary>
         public static Humanoid Respawn(Player p, Profile prof)
         {
-            // Already up somewhere (woken by another way, or never really gone): no second one; its record just stops saying it fell.
             Humanoid up = Companion.All().FirstOrDefault(h => Companion.IdOf(h) == prof.Id && !h.IsDead() && h.GetHealth() > 0f);
             ZDO away = up == null && Remote.Sure ? Remote.Find(prof.Id) : null;
-            if (up != null || (away != null && away.GetFloat(ZDOVars.s_health, 1f) > 0f))
+            bool? elsewhere = up != null || Remote.Sure ? (bool?)false : Remote.InWorld(prof.Id); // (a client: what the host says)
+            if (up != null || (away != null && away.GetFloat(ZDOVars.s_health, 1f) > 0f) || elsewhere == true)
             {
                 prof.Dead = false;
+                if (elsewhere != true) prof.Kept = ""; // (seen up: what it kept was given back. Only the host's word: keep it, in case it was old news)
                 Profile.Save(p, prof);
                 Plugin.Instance?.Note($"{prof.Name} is already up: not woken again");
                 return up;
             }
+            if (elsewhere == null) return null; // (the host has not answered yet)
             GameObject prefab = Prefab.Get();
             if (prefab == null) return null;
             Vector3 pos = prof.HasBed ? prof.Bed : p.transform.position - p.transform.forward * 2f;
@@ -284,11 +292,15 @@ namespace AICompanion
             ZDO z = Companion.Zdo(c);
             z.Set(Keys.Master, p.GetPlayerID());
             z.Set(Keys.MasterName, p.GetPlayerName());
+            if (!prof.Dead && Remote.TombOf(prof.Id) is Vector3 tomb) { prof.DiedPos = tomb; prof.HasGrave = true; } // (brought back: it fell where its player's game never heard of it)
             prof.ApplyTo(c);
-            int kept = Companion.Unpack(c, prof.Kept); // the gear it wore when it fell
+            int kept = Companion.Unpack(c, prof.Kept); // (a fall from before 0.22.0: the gear it wore was kept apart)
+            kept += Grave.WearAgain(c, prof.HasGrave || prof.Dead ? prof.DiedPos : Vector3.zero, out bool left); // its gear back out of its tombstone, when it is here
             if (kept > 0) Plugin.Instance?.Note($"{prof.Name} woke wearing its gear ({kept})");
             prof.Kept = "";
             Companion.Zdo(c)?.Set(Companion.KeptKey, "");
+            prof.HasGrave = prof.HasGrave && left;
+            Companion.Zdo(c)?.Set(Grave.HasKey, prof.HasGrave);
             prof.Dead = false;
             Profile.Save(p, prof);
             string where = prof.HasBed ? $"in {(prof.Model == 1 ? "her" : "his")} bed" : "beside you";

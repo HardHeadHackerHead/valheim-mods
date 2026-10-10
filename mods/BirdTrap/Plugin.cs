@@ -19,7 +19,7 @@ namespace BirdTrap
     {
         public const string Guid = "com.dhack.birdtrap";
         public const string Name = "BirdTrap";
-        public const string Version = "1.0.1";
+        public const string Version = "1.1.0";
         public const string PiecePrefab = "piece_birdtrap";
 
         internal static ConfigEntry<float> MinMinutes, MaxMinutes;
@@ -28,18 +28,21 @@ namespace BirdTrap
 
         private static GameObject _holder, _prefab;
         internal static EffectList DoorShut, DoorOpen;
+        internal static DHack.Shared.ServerSettings Synced;   // the gameplay settings the server decides in multiplayer
         private Harmony _harmony;
 
         private void Awake()
         {
-            // These decide when birds come, so they count on the game that owns the trap (usually the nearest player's).
-            MinMinutes = Config.Bind("Catching", "MinutesMin", 8f, new ConfigDescription("Shortest wait (real minutes, in game time) from baiting to a bird.", new AcceptableValueRange<float>(0.5f, 120f)));
-            MaxMinutes = Config.Bind("Catching", "MinutesMax", 14f, new ConfigDescription("Longest wait (real minutes, in game time) from baiting to a bird.", new AcceptableValueRange<float>(0.5f, 240f)));
-            MaxBait = Config.Bind("Catching", "BaitHeld", 5, new ConfigDescription("How many pieces of bait a trap holds (each bird eats one).", new AcceptableValueRange<int>(1, 20)));
-            NeedsSky = Config.Bind("Catching", "NeedsOpenSky", true, "Birds only come to a trap with open sky above it (not under a roof).");
-            RestsAtNight = Config.Bind("Catching", "BirdsRoostAtNight", true, "No birds come at night: one due then comes in the morning.");
-            MinFeathers = Config.Bind("Plucking", "FeathersMin", 2, new ConfigDescription("Fewest feathers a bird gives.", new AcceptableValueRange<int>(1, 20)));
-            MaxFeathers = Config.Bind("Plucking", "FeathersMax", 3, new ConfigDescription("Most feathers a bird gives.", new AcceptableValueRange<int>(1, 20)));
+            // These decide when birds come and what they give, so they count on the game that owns the trap (usually the nearest player's);
+            // in multiplayer every game uses the server's.
+            Synced = new DHack.Shared.ServerSettings(Guid, Config, Logger);
+            MinMinutes = Synced.Add(Config.Bind("Catching", "MinutesMin", 8f, new ConfigDescription("Shortest wait (real minutes, in game time) from baiting to a bird. In multiplayer the server's value applies.", new AcceptableValueRange<float>(0.5f, 120f))));
+            MaxMinutes = Synced.Add(Config.Bind("Catching", "MinutesMax", 14f, new ConfigDescription("Longest wait (real minutes, in game time) from baiting to a bird. In multiplayer the server's value applies.", new AcceptableValueRange<float>(0.5f, 240f))));
+            MaxBait = Synced.Add(Config.Bind("Catching", "BaitHeld", 5, new ConfigDescription("How many pieces of bait a trap holds (each bird eats one). In multiplayer the server's value applies.", new AcceptableValueRange<int>(1, 20))));
+            NeedsSky = Synced.Add(Config.Bind("Catching", "NeedsOpenSky", true, "Birds only come to a trap with open sky above it (not under a roof). In multiplayer the server's value applies."));
+            RestsAtNight = Synced.Add(Config.Bind("Catching", "BirdsRoostAtNight", true, "No birds come at night: one due then comes in the morning. In multiplayer the server's value applies."));
+            MinFeathers = Synced.Add(Config.Bind("Plucking", "FeathersMin", 2, new ConfigDescription("Fewest feathers a bird gives. In multiplayer the server's value applies.", new AcceptableValueRange<int>(1, 20))));
+            MaxFeathers = Synced.Add(Config.Bind("Plucking", "FeathersMax", 3, new ConfigDescription("Most feathers a bird gives. In multiplayer the server's value applies.", new AcceptableValueRange<int>(1, 20))));
 
             _harmony = new Harmony(Guid);
             _harmony.PatchAll();
@@ -53,6 +56,7 @@ namespace BirdTrap
 
         private void Update()
         {
+            Synced?.Update();
             if (Time.unscaledTime < _nextClaudeCheck) return;
             _nextClaudeCheck = Time.unscaledTime + 5f;
             BaseUnityPlugin found = BepInEx.Bootstrap.Chainloader.PluginInfos.TryGetValue("com.dhack.claudetools", out PluginInfo info) ? info.Instance : null;
@@ -80,6 +84,7 @@ namespace BirdTrap
             try { _claudeTools?.GetType().GetMethod("UnregisterAll", System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Static)?.Invoke(null, new object[] { Name }); } catch { }
             _harmony?.UnpatchSelf();
             Unregister();
+            Synced?.Dispose();
         }
 
         internal static void Register(ZNetScene scene)
@@ -94,7 +99,9 @@ namespace BirdTrap
                 _holder = new GameObject(Name + "Prefabs");
                 _holder.SetActive(false); // keeps the copy from waking up as a real object
                 Object.DontDestroyOnLoad(_holder);
-                Look.Harvest(scene, source.GetComponentInChildren<Renderer>(true).sharedMaterial);
+                // the look never stops the piece being registered (without it, the host would delete the traps standing in the world)
+                try { Look.Harvest(scene, source.GetComponentInChildren<Renderer>(true).sharedMaterial); }
+                catch (System.Exception e) { Debug.LogWarning(Name + ": could not take the game's materials, the trap looks plain: " + e.Message); }
                 Container chest = source.GetComponent<Container>();
                 DoorShut = chest != null ? chest.m_closeEffects : null; // the chest lid's thunk for the door dropping
                 DoorOpen = chest != null ? chest.m_openEffects : null;
@@ -143,7 +150,8 @@ namespace BirdTrap
             box.center = new Vector3(0f, 0.42f, 0f);
             box.size = new Vector3(0.92f, 0.84f, 0.66f);
 
-            ModelBuilder.Build(go.transform, ModelData.Parts, go.layer);
+            try { ModelBuilder.Build(go.transform, ModelData.Parts, go.layer); }
+            catch (System.Exception e) { Debug.LogWarning(Name + ": could not build the trap's model: " + e.Message); }
 
             Piece piece = go.GetComponent<Piece>();
             piece.m_name = "Bird Trap";
@@ -151,7 +159,8 @@ namespace BirdTrap
             piece.m_category = Piece.PieceCategory.Misc;
             piece.m_craftingStation = workbench;
             piece.m_resources = new[] { Req("Wood", 8), Req("LeatherScraps", 2) };
-            piece.m_icon = Icon.Make(go);
+            try { piece.m_icon = Icon.Make(go); }
+            catch (System.Exception e) { Debug.LogWarning(Name + ": could not draw the build-menu picture: " + e.Message); }
             go.AddComponent<TrapPiece>();
             return go;
         }

@@ -270,12 +270,40 @@ namespace BountyBoard
             return t;
         }
 
+        private static Font _bodyFont, _headingFont;
+        private static bool _fontsLooked;
+
+        /// <summary>The game's own fonts, looked up once: Averia for text and numbers, Norse for headings (null if a game update renamed them).</summary>
+        internal static Font GameFont(bool heading)
+        {
+            if (!_fontsLooked)
+            {
+                _fontsLooked = true;
+                try
+                {
+                    Font[] all = Resources.FindObjectsOfTypeAll<Font>();
+                    Font Find(params string[] names)
+                    {
+                        foreach (string name in names)
+                            foreach (Font f in all)
+                                if (f != null && f.name.StartsWith(name, System.StringComparison.OrdinalIgnoreCase)) return f;
+                        return null;
+                    }
+                    _bodyFont = Find("AveriaSerifLibre-Bold", "AveriaSerifLibre", "Averia");
+                    _headingFont = Find("Norsebold", "Norse") ?? _bodyFont;
+                }
+                catch (System.Exception) { }
+            }
+            return heading ? _headingFont : _bodyFont;
+        }
+
         private static GUIStyle Make(Color fill, Color hover, Color border, int font)
         {
             var s = new GUIStyle(GUI.skin.button)
             {
                 fontSize = font, fontStyle = FontStyle.Bold, alignment = TextAnchor.MiddleCenter,
                 border = new RectOffset(2, 2, 2, 2), padding = new RectOffset(6, 6, 3, 3), margin = new RectOffset(3, 3, 3, 3),
+                font = GameFont(false),
             };
             s.normal.background = Box(fill, border);
             s.hover.background = s.active.background = s.focused.background = Box(hover, border);
@@ -305,6 +333,9 @@ namespace BountyBoard
             ButtonOn = Make(new Color(0.55f, 0.42f, 0.16f), new Color(0.62f, 0.48f, 0.2f), new Color(0.95f, 0.78f, 0.35f), 13);
             ButtonGood = Make(new Color(0.2f, 0.36f, 0.2f), new Color(0.28f, 0.48f, 0.26f), new Color(0.5f, 0.8f, 0.45f), 13);
             Small = Make(new Color(0.2f, 0.12f, 0.1f), new Color(0.35f, 0.16f, 0.12f), new Color(0.5f, 0.25f, 0.2f), 11);
+            // the game's fonts: Norse for the title (words only), Averia for the rest (Norse draws 0 as a rune)
+            Title.font = GameFont(true);
+            foreach (GUIStyle s in new[] { Dim, Row, Good, BarText, ChipText, Toggle }) s.font = GameFont(false);
         }
 
         internal static void Destroy()
