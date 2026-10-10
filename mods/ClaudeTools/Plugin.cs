@@ -29,7 +29,7 @@ namespace ClaudeTools
     {
         public const string Guid = "com.dhack.claudetools";
         public const string Name = "ClaudeTools";
-        public const string Version = "1.2.0";
+        public const string Version = "1.2.1";
 
         internal static Plugin Instance;
         internal static BepInEx.Logging.ManualLogSource Log;

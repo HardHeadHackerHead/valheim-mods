@@ -1,4 +1,4 @@
-Lets an AI assistant like Claude Code see your game and help you, through files on your computer: no network port, and it never moves your character or presses keys.
+Lets an AI assistant like Claude Code see your game and help you, through files on your computer: no network port, and it only moves your character or presses keys for you (the shoot command, for screenshots) where the game allows cheats.
 
 How it works
 - The assistant writes a request (a text file of commands) into BepInEx/claude/requests. While you are in a world, the game carries it out and writes the answer next to it. Pictures go to BepInEx/claude/shots.

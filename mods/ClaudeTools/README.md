@@ -5,7 +5,7 @@
 
 <img src="cover.png" alt="ClaudeTools" width="100%">
 
-**Version 1.2.0**  ·  [all the mods](../../README.md)  ·  installs and updates through the in-game [mod manager](https://github.com/HardHeadHackerHead/valheim-mod-manager) (**F7**)
+**Version 1.2.1**  ·  [all the mods](../../README.md)  ·  installs and updates through the in-game [mod manager](https://github.com/HardHeadHackerHead/valheim-mod-manager) (**F7**)
 
 Lets an AI assistant like [Claude Code](https://claude.com/claude-code) see your game and help, through a **request mailbox** of files on your computer: pictures from any angle, ground surveys, your status, inventory, what is nearby and what you look at, the chests around you and what each is assigned, the mods running and their settings, the log, a message on screen or a pin on your map. Other mods add their own commands (BuildOrders: place, check and photograph blueprints). No network port; it never moves your character. Off until you switch requests on.
 
@@ -23,7 +23,7 @@ Lets an AI assistant like [Claude Code](https://claude.com/claude-code) see your
 
 ## 🔍 How it works
 
-Lets an AI assistant like Claude Code see your game and help you, through files on your computer: no network port, and it never moves your character or presses keys.
+Lets an AI assistant like Claude Code see your game and help you, through files on your computer: no network port, and it only moves your character or presses keys for you (the shoot command, for screenshots) where the game allows cheats.
 
 ### How it works
 
@@ -77,6 +77,7 @@ See [who needs which mod](../../README.md#playing-together) on the front page.
 
 ## 📜 Changes
 
+- New: shoot, for setting up screenshots of a mod: find pieces, stand the player somewhere looking somewhere, open the inventory, map, build menu or a mod's window, close them all, hide the HUD (moved here from Arena's own tools). shoot tp and shoot use only work where the game allows cheats. New: objects <prefab>: every object of a kind in the world, loaded or not, and objects <prefab> remove to delete them (where cheats are allowed). The pre-release check is now modcheck (BuildOrders already has a check).
 - New, for mod makers: tools that keep a mod from breaking players' games or other mods. modcheck <mod> (a pre-release check of a mod's DLL: mistakes that have lost players' items and buildings or broken other mods, with why and how to fix), who <method> and clashes (which installed and popular mods change the same things, most likely clashes first), game <Type.Method> (the game's real code: signatures, callers, fields) and gameupdate (after a game update: which methods changed and which mods patch them). What the top 100 Thunderstore mods patch is built in (facts only, no code); DownloadMods keeps it fresh, and library get <mod> fetches any other mod's code to read. Six skills for Claude Code (starting a mod, the game's code, other mods, pitfalls, releasing, fixing errors) and modkit, the same commands as a program for when the game is closed, are written to BepInEx/claude. A clashes report is made after each launch, and claude <command> in the game's console (F5) runs any command.
 - Faster: mods and waitfor read BepInEx's list of mods instead of searching everything the game has loaded. The guide for mod makers shows the fast way to find Claude Tools.
 - New: comfort: the comfort level a set of pieces would give together (with each piece's comfort and comfort group, as the game counts them), or the player's comfort now and the pieces giving it.

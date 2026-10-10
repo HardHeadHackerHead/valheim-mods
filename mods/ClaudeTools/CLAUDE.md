@@ -2,7 +2,9 @@
 
 You are working with a Valheim player who has the **Claude Tools** mod. It gives you a **request mailbox**: you write commands into a
 text file, the game carries them out while the player is in a world, and writes back what happened. Pictures are saved as files you can
-read. Nothing you do moves the player's character or presses keys: cameras are separate, and commands only do what is listed below.
+read. Cameras are separate, and commands only do what is listed below. Only `shoot` acts as the player (it turns them, opens their windows,
+and with `tp` and `use` moves them or presses E): ask first, and `tp`, `use`, `give` and `grow` only work where the game allows cheats
+(single player, the host, or devcommands on).
 
 This folder is `BepInEx/claude` in the player's Valheim folder.
 
@@ -77,6 +79,8 @@ for the newest; use `_` for spaces). Positions in a place are metres: x right, y
 | `say <text>` | A message in the middle of the player's screen. |
 | `pin <place\|x z> <text>` | A labelled pin on the player's map. |
 | `wait <seconds>` | Pause, so things happen before the next picture. |
+| `objects <prefab> [remove]` | Every object of that prefab in the world, loaded or not, nearest first (where, loaded, who built it). `remove` deletes them all: ask the player first; exact prefab name; only where cheats are allowed. On a client it only sees what is near the players. |
+| `shoot find <name> [radius]` / `tp x y z yaw [pitch]` / `look yaw [pitch]` / `inv` / `close` / `map on\|off` / `build` / `unbuild` / `hud on\|off` / `use <name>` / `open qolrules\|recycler` | Set up a screenshot: find pieces (position and facing), stand the player somewhere looking somewhere (`tp`), open the inventory, map, build menu or a mod's window, close every window, hide the HUD, press E on something up to 12 m away (`use`). Then `shot`. `tp` and `use` only where cheats are allowed. |
 | `render <prefab> [yaw=25] [pitch=12] [views=1\|4] [focus=x,y,z] [dist=m] [fov=30] [size=WxH] [bg=sky\|dark\|clear]` | A picture of any piece, item or creature **on its own**, built out of sight with its real materials and its own light (nothing is placed). `yaw=0` is its front (-z); `views=4` gives front, three-quarter, side and back; `focus` (metres from its origin) and `dist` give a close-up of one part. Use it to check and improve mods' models. |
 | `inspect <prefab> [depth=3]` | What an object is made of: its parts with positions, rotations and sizes, colliders, components, meshes and materials (with colours). |
 | `colliders <prefab> [prefab...]` | Each piece's solid colliders in its own frame as the game's support check sees them (box centre, rotation, size), its centre of mass, material and whether it holds others up. |
