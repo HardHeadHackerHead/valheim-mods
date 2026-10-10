@@ -6,7 +6,7 @@ schemaVersion = "0.0.1"
 [package]
 namespace = "Quads_Lab"
 name = "Quads_Companion"
-versionNumber = "0.22.1"
+versionNumber = "0.22.2"
 description = "A viking companion who plays like a player: comes on your adventures, lives its own life at home, and gets better as it goes."
 websiteUrl = "https://github.com/HardHeadHackerHead/valheim-mods/tree/main/mods/AICompanion"
 containsNsfwContent = false
