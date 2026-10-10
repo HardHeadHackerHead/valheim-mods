@@ -1,15 +1,23 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using HarmonyLib;
+using TMPro;
 using UnityEngine;
 
 namespace FeedFromChests
 {
-    /// <summary>The window for choosing what to put into a station: each usable item, how many you have, and Add 1 / Add all buttons.</summary>
+    /// <summary>
+    /// The station menu, in the game's own look (GameUi.cs): on the left what you can put in by hand (each usable item, how many you and
+    /// the chests have, Add 1 / Fill, Fill station); on the right, for smelters, kilns, cooking stations and fermenters, what is inside and
+    /// the station's auto-feed settings (saved on the station). Built again only when what it shows changes; counts update in place.
+    /// </summary>
     public partial class Plugin
     {
-        internal static bool MenuOpen;
+        /// <summary>True while the menu is on screen.</summary>
+        internal static bool MenuOpen => Instance != null && Instance._window != null;
+
+        /// <summary>When the menu last closed: the E that closed it must not open it again (see Player_Interact).</summary>
+        internal static float MenuClosedAt = -1f;
 
         internal void Log(string message) => Logger.LogWarning(message);
 
@@ -41,16 +49,7 @@ namespace FeedFromChests
         private StationInfo _station;
         private List<Row> _rows = new List<Row>();
         private float _nextRefresh;
-        private Vector2 _scroll;
-        private Rect _rect;
-        private bool _placed;
         private string _status = "";
-
-        private readonly List<Texture2D> _textures = new List<Texture2D>();
-        private GUIStyle _title, _text, _dim, _button, _buttonOn, _good, _warn, _bad;
-
-        private static readonly Color Gold = new Color(0.95f, 0.78f, 0.35f);
-        private static readonly Color Dim = new Color(0.68f, 0.66f, 0.62f);
 
         // ---- opening, closing, refreshing -------------------------------------------------------------
 
@@ -74,26 +73,46 @@ namespace FeedFromChests
                 _station = null;
                 return;
             }
-            MenuOpen = true;
+            if (!GameUi.Ready()) { _station = null; return; }   // (it logs why: a game update moved the inventory's parts)
+            GameUi.IsOpen = () => MenuOpen;                    // the game stops taking input while it is open
+            GameUi_EscapeCloses.Close = CloseFromEscape;
+            if (InventoryGui.IsVisible()) InventoryGui.instance.Hide();
+            _openedAt = Time.unscaledTime;
+            BuildWindow(true);
         }
 
+        /// <summary>Closes the menu, as Escape does (static: Claude Tools' "shoot close" can call it before a screenshot).</summary>
         internal static void CloseFromEscape() => Instance?.CloseMenu();
 
         private void CloseMenu()
         {
-            MenuOpen = false;
+            bool wasOpen = _station != null || _window != null;
+            if (_window != null) Destroy(_window.gameObject);
+            _window = null; _addList = null; _autoList = null; _shown = "";
+            _live.Clear();
             _station = null;
+            if (!wasOpen) return;
+            MenuClosedAt = Time.unscaledTime;
+            UITooltip.HideTooltip();
         }
 
         private void UpdateMenu(Player player)
         {
-            if (_station == null || !_station.Alive || Menu.IsVisible() ||
+            bool useAgain = Time.unscaledTime > _openedAt + 0.2f && ZInput.GetButtonDown("Use"); // E closes it again, as it does a chest
+            // (_window null: the game rebuilt its interface, a world change)
+            if (_window == null || player == null || player.IsDead() || _station == null || !_station.Alive || Menu.IsVisible() || useAgain ||
                 (_station.Position - player.transform.position).sqrMagnitude > 12f * 12f)
             {
                 CloseMenu();
                 return;
             }
             if (Time.unscaledTime >= _nextRefresh) RefreshRows(player);
+            if (Time.unscaledTime >= _nextCheck)
+            {
+                _nextCheck = Time.unscaledTime + 0.2f;
+                if (Signature() != _shown) BuildWindow(false);
+                else UpdateLive();
+            }
         }
 
         /// <summary>Everything this station takes that you or the chests have, with counts.</summary>
@@ -206,6 +225,7 @@ namespace FeedFromChests
         private void RefreshRowsCore(Player player)
         {
             _nextRefresh = Time.unscaledTime + 0.5f;
+            if (_station == null || player == null) return;
             if (_supportsAuto && _station != null && _station.Alive)
             {
                 _auto = AutoFeed.Read(_station.Component); // others may have changed it
@@ -240,8 +260,8 @@ namespace FeedFromChests
                     IsFuel = _station.Fuel != null && drop == _station.Fuel,
                     InInventory = inventory.CountItems(name), InChests = Chests.Count(chests, name),
                 };
-                row.Title = row.Display + (row.IsFuel ? "   (fuel)" : "");
-                row.CountsText = $"In your inventory: {row.InInventory}     In chests: {row.InChests}";
+                row.Title = row.Display + (row.IsFuel ? "  <size=80%><color=#bdb7a9>(fuel)</color></size>" : "");
+                row.CountsText = $"In your inventory: {row.InInventory}\nIn chests: {row.InChests}";
                 if (row.InInventory + row.InChests > 0) rows.Add(row);
             }
             // Things to add first, fuel after; each group from the lesser item to the greater (wood, fine wood, core wood...).
@@ -277,354 +297,298 @@ namespace FeedFromChests
             StartCoroutine(FillRoutine(player, _station, _rows.OrderByDescending(r => r.IsFuel).ToList()));
         }
 
-        // ---- drawing -----------------------------------------------------------------------------------
+        // ---- the window ----------------------------------------------------------------------------------
 
-        private void OnGUI()
+        private const string WindowName = "FeedFromChestsMenu";
+        private const float Pad = 30f, ColW = 480f, ColGap = 20f, Below = 90f;   // (Below: where the columns start, under the title and braid)
+
+        private RectTransform _window, _addList, _autoList;
+        private float _openedAt, _nextCheck;
+        private string _shown = "";
+
+        /// <summary>A text that changes while the menu is open (counts, cooking progress, the status line): updated in place, no rebuild.</summary>
+        private class LiveText { public TMP_Text Label; public Func<string> Text; public bool Fit; }
+        private readonly List<LiveText> _live = new List<LiveText>();
+
+        /// <summary>Keep <paramref name="label"/> showing <paramref name="text"/>. With fit, a text that no longer fits its height builds the window again.</summary>
+        private TMP_Text Live(TMP_Text label, Func<string> text, bool fit = false)
         {
-            if (!MenuOpen || _station == null) return;
-            FreeTheMouse();
-            EnsureStyles();
-
-            Matrix4x4 previous = GUI.matrix;
-            float s = Mathf.Max(0.8f, Screen.height / 1080f);
-            GUI.matrix = Matrix4x4.Scale(new Vector3(s, s, 1f));
-            float sw = Screen.width / s, sh = Screen.height / s;
-
-            float w = Mathf.Min(520f, sw - 40f), h = Mathf.Min(_supportsAuto ? 900f : 520f, sh - 60f);
-            if (!_placed) { _rect = new Rect((sw - w) / 2f, (sh - h) / 2f, w, h); _placed = true; }
-            _rect.width = w; _rect.height = h;
-
-            _rect = GUI.Window(8851, _rect, DrawContents, GUIContent.none, GUIStyle.none);
-            _rect.x = Mathf.Clamp(_rect.x, 0f, Mathf.Max(0f, sw - w));
-            _rect.y = Mathf.Clamp(_rect.y, 0f, Mathf.Max(0f, sh - h));
-            GUI.matrix = previous;
+            _live.Add(new LiveText { Label = label, Text = text, Fit = fit });
+            return label;
         }
 
-        private void DrawContents(int id)
+        private void UpdateLive()
         {
-            float w = _rect.width, h = _rect.height;
-            Rounded(new Rect(0, 0, w, h), new Color(0.07f, 0.06f, 0.05f, 0.98f), 9f);
-            Outline(new Rect(0, 0, w, h), new Color(0.62f, 0.47f, 0.22f, 1f), 9f);
-
-            GUILayout.BeginArea(new Rect(16f, 12f, w - 32f, h - 24f));
-
-            GUILayout.BeginHorizontal();
-            GUILayout.Label(_stationTitle, _title);
-            GUILayout.FlexibleSpace();
-            if (GUILayout.Button("Close", _button, GUILayout.Width(80), GUILayout.Height(28))) CloseMenu();
-            GUILayout.EndHorizontal();
-            GUILayout.Label(_subtitle, _dim);
-            GUILayout.Space(6);
-
-            if (_supportsAuto) { DrawInsidePanel(); DrawAutoPanel(); }
-
-            Player player = Player.m_localPlayer;
-            if (_rows.Count == 0) GUILayout.Label("Nothing to add by hand right now: none of what this takes is in your inventory or the nearby chests.", _dim);
-            _scroll = GUILayout.BeginScrollView(_scroll, GUILayout.ExpandHeight(true));
-            foreach (Row row in _rows)
+            foreach (LiveText l in _live)
             {
-                GUILayout.BeginHorizontal(GUILayout.Height(40));
-
-                Rect icon = GUILayoutUtility.GetRect(34f, 34f, GUILayout.Width(34), GUILayout.Height(34));
-                DrawIcon(icon, row.Drop.m_itemData.GetIcon());
-
-                GUILayout.BeginVertical();
-                GUILayout.Label(row.Title, _text);
-                GUILayout.Label(row.CountsText, _dim);
-                GUILayout.EndVertical();
-
-                GUILayout.FlexibleSpace();
-                Row r = row;
-                if (GUILayout.Button("Add 1", _button, GUILayout.Width(70), GUILayout.Height(30))) _pending = () => AddOneFromMenu(player, r);
-                if (GUILayout.Button("Fill", _buttonOn, GUILayout.Width(70), GUILayout.Height(30))) _pending = () => FillFromMenu(player, r);
-                GUILayout.EndHorizontal();
-                GUILayout.Space(4);
+                if (l.Label == null) continue;
+                string text = l.Text() ?? "";
+                if (l.Label.text == text) continue;
+                l.Label.text = text;
+                if (!l.Fit) continue;
+                var r = (RectTransform)l.Label.transform;
+                if (Mathf.Abs(Mathf.Ceil(l.Label.GetPreferredValues(text, r.sizeDelta.x, 0f).y) - r.sizeDelta.y) > 1f) _shown = ""; // (wraps differently now)
             }
-            GUILayout.EndScrollView();
-
-            GUILayout.Space(4);
-            GUILayout.BeginHorizontal();
-            GUILayout.Label(_status, _dim);
-            GUILayout.FlexibleSpace();
-            if (GUILayout.Button("Fill station", _buttonOn, GUILayout.Width(120), GUILayout.Height(30))) _pending = () => FillStation(player);
-            GUILayout.EndHorizontal();
-            GUILayout.EndArea();
-            GUI.DragWindow(new Rect(0, 0, w, 40));
         }
 
-        /// <summary>What is loaded into the station right now: the ore waiting to be processed, the fuel, and what is ready to collect.</summary>
-        private void DrawInsidePanel()
+        /// <summary>Sizes a wrapping text to the height it needs and returns that height (so what comes under it starts below it).</summary>
+        private static float Fit(TMP_Text t, float width)
         {
-            if (IsFermenter)
-            {
-                GUILayout.Label("In the barrel", _text);
-                GUILayout.Label(_fermentLine, _dim);
-                GUILayout.Space(8);
-                return;
-            }
-            if (IsCooking)
-            {
-                GUILayout.Label("On the station", _text);
-                foreach (string line in _cookLines) GUILayout.Label(line, _dim);
-                GUILayout.Space(8);
-                return;
-            }
-            AutoFeed.Inside i = _inside;
-            GUILayout.Label("Inside", _text);
-            GUILayout.BeginHorizontal(GUILayout.Height(30));
-            if (i.Queue.Count == 0) GUILayout.Label("Nothing is loaded.", _dim);
-            foreach (var entry in i.Queue)
-            {
-                Rect icon = GUILayoutUtility.GetRect(28f, 28f, GUILayout.Width(28), GUILayout.Height(28));
-                DrawIcon(icon, AutoFeed.IconOf(entry.Key));
-                GUILayout.Label($"{entry.Value} {AutoFeed.NameOf(entry.Key)}", _text, GUILayout.ExpandWidth(false));
-                GUILayout.Space(10);
-            }
-            GUILayout.FlexibleSpace();
-            GUILayout.EndHorizontal();
-
-            string status = $"Loaded {i.QueueSize}/{i.MaxOre}";
-            if (i.MaxFuel > 0) status += $"     Fuel {Mathf.Floor(i.Fuel):0}/{i.MaxFuel}";
-            if (i.Ready > 0) status += $"     Ready to collect: {i.Ready} {i.ReadyName}";
-            GUILayout.Label(status, _dim);
-            GUILayout.Space(8);
+            float h = Mathf.Ceil(t.GetPreferredValues(t.text, width, 0f).y);
+            ((RectTransform)t.transform).sizeDelta = new Vector2(width, h);
+            return h;
         }
 
-        /// <summary>The auto-feed switch and the list of items it may use.</summary>
-        private void DrawAutoPanel()
+        private bool FuelSwitchedOff => _supportsAuto && _auto.On && _station != null && _station.Fuel != null &&
+                                        !_auto.Allowed.Contains(_station.Fuel.m_itemData.m_shared.m_name);
+
+        private Row RowNamed(string name) => _rows.FirstOrDefault(r => r.Name == name);
+        private static int Total(Row row) => row != null ? row.InInventory + row.InChests : 0;
+        private static string Shown(int value, bool offWhenZero) => value == 0 && offWhenZero ? "off" : value.ToString();
+
+        /// <summary>A click's action, run in Update with the local player (never from the click itself).</summary>
+        private void Later(Action<Player> act) => _pending = () => { Player p = Player.m_localPlayer; if (p != null) act(p); };
+
+        /// <summary>What decides the window's layout (the live texts are left out: they update in place), so it is built again only when this changes.</summary>
+        private string Signature()
         {
-            GUILayout.BeginHorizontal();
-            GUILayout.Label("Auto-feed from chests", _text);
-            GUILayout.FlexibleSpace();
-            if (GUILayout.Button(_auto.On ? "ON" : "OFF", _auto.On ? _buttonOn : _button, GUILayout.Width(80), GUILayout.Height(28))) _pending = ToggleAuto;
-            GUILayout.EndHorizontal();
-            GUILayout.Label(_auto.On
-                ? $"Keeps this stocked from chests within {_autoRadius.Value:0} m, by itself. It only uses the items ticked below, plain ones first."
-                : "Turn on to keep this stocked from nearby chests without pressing anything. You choose which items it may use.", _dim);
-
-            DrawLimits();
-
-            if (IsFermenter)
+            if (_station == null) return "";
+            var sb = new System.Text.StringBuilder();
+            sb.Append(_station.Component != null ? _station.Component.GetInstanceID() : 0).Append('|').Append(_supportsAuto).Append(_filling)
+              .Append(_takeOffCooked.Value).Append('|').Append(_autoRadius.Value).Append('|').Append(_subtitle);
+            foreach (Row row in _rows) sb.Append("|r").Append(row.Name);
+            if (_supportsAuto)
             {
-                GUILayout.Space(2);
-                GUILayout.BeginHorizontal();
-                GUILayout.Label("Taps itself when ready", _text);
-                GUILayout.FlexibleSpace();
-                if (GUILayout.Button(_auto.TakeOff ? "ON" : "OFF", _auto.TakeOff ? _buttonOn : _button, GUILayout.Width(80), GUILayout.Height(26))) _pending = ToggleTakeOff;
-                GUILayout.EndHorizontal();
-                GUILayout.Label("When the mead is ready it comes out by itself (and with auto-load on, the next base goes straight in).", _dim);
+                sb.Append("|a").Append(_auto.On).Append(_auto.Output).Append(_auto.TakeOff).Append(FuelSwitchedOff).Append(':')
+                  .Append(string.Join(",", _auto.Allowed.OrderBy(n => n).ToArray()));
+                foreach (KeyValuePair<string, int> q in _inside.Queue) sb.Append("|q").Append(q.Key);
+                sb.Append("|c").Append(_cookLines.Count);
+                foreach (KeyValuePair<string, bool> line in _limitLines) sb.Append("|l").Append(line.Value);
             }
-            if (IsCooking)
+            return sb.ToString();
+        }
+
+        private void BuildWindow(bool fresh)
+        {
+            if (!GameUi.Ready() || _station == null) { CloseMenu(); return; }
+            float addScrolled = !fresh && _addList != null ? _addList.anchoredPosition.y : 0f;
+            float autoScrolled = !fresh && _autoList != null ? _autoList.anchoredPosition.y : 0f;
+            if (_window != null) Destroy(_window.gameObject);
+            _addList = _autoList = null;
+            UITooltip.HideTooltip();
+            _live.Clear();
+            _shown = Signature();
+
+            // two columns for a station with auto-feed (by hand | auto-feed), one for the rest (fires, torches...)
+            float w = _supportsAuto ? Pad * 2f + ColW * 2f + ColGap : Pad * 2f + ColW, h = _supportsAuto ? 740f : 600f;
+            _window = GameUi.Window(WindowName, new Vector2(w, h));
+            Transform win = _window;
+            TMP_Text title = GameUi.Label(win, _stationTitle, new Vector2(Pad, -20f), new Vector2(w - Pad * 2f - 130f, 44f), 34f, GameUi.Warm, GameUi.Norse);
+            title.enableWordWrapping = false;
+            title.overflowMode = TextOverflowModes.Ellipsis;
+            GameUi.Button(win, "Close", new Vector2(w - Pad - 110f, -24f), new Vector2(110f, 40f), () => _pending = CloseMenu);
+            GameUi.Braid(win, new Vector2(0f, -76f), w - Pad * 2f);
+
+            DrawAddColumn(win, Pad, h);
+            if (_supportsAuto) DrawAutoColumn(win, Pad + ColW + ColGap, h);
+
+            if (_addList != null) _addList.anchoredPosition = new Vector2(0f, Mathf.Clamp(addScrolled, 0f, Mathf.Max(0f, _addList.sizeDelta.y)));
+            if (_autoList != null) _autoList.anchoredPosition = new Vector2(0f, Mathf.Clamp(autoScrolled, 0f, Mathf.Max(0f, _autoList.sizeDelta.y)));
+        }
+
+        /// <summary>The left side: what you can put in by hand (your inventory first, then the chests), and the status line with Fill station.</summary>
+        private void DrawAddColumn(Transform win, float x, float h)
+        {
+            float y = Below;
+            y += Fit(GameUi.Label(win, _subtitle, new Vector2(x, -y), new Vector2(ColW, 40f), 16f, GameUi.Dim), ColW) + 8f;
+            RectTransform box = GameUi.Box(win, new Vector2(x - 6f, -y), new Vector2(ColW + 12f, h - Pad - 62f - y));
+            _addList = GameUi.Scroll(box, 8f);
+            float cw = _addList.sizeDelta.x;
+
+            if (_rows.Count == 0)
             {
-                GUILayout.Space(2);
-                GUILayout.BeginHorizontal();
-                GUILayout.Label("Done food comes off by itself", _text);
-                GUILayout.FlexibleSpace();
-                if (GUILayout.Button(_auto.TakeOff ? "ON" : "OFF", _auto.TakeOff ? _buttonOn : _button, GUILayout.Width(80), GUILayout.Height(26))) _pending = ToggleTakeOff;
-                GUILayout.EndHorizontal();
-                GUILayout.Label(_takeOffCooked.Value
-                    ? "The moment something is done it comes off, so it never burns: into a chest (below), or it slides off the side of the spit towards you."
-                    : "Switched off for every station in the config (Cooking, TakeOffCooked).", _dim);
+                TMP_Text none = GameUi.Label(_addList, "Nothing to add by hand right now: none of what this takes is in your inventory or the nearby chests.",
+                    new Vector2(8f, -8f), new Vector2(cw - 16f, 40f), 17f, GameUi.Dim);
+                _addList.sizeDelta = new Vector2(cw, Fit(none, cw - 16f) + 16f);
             }
-
-            GUILayout.Space(2);
-            GUILayout.BeginHorizontal();
-            GUILayout.Label(IsCooking ? "Done food goes into chests" : IsFermenter ? "Mead goes into chests" : "What it makes goes into chests", _text);
-            GUILayout.FlexibleSpace();
-            if (GUILayout.Button(_auto.Output ? "ON" : "OFF", _auto.Output ? _buttonOn : _button, GUILayout.Width(80), GUILayout.Height(26))) _pending = ToggleOutput;
-            GUILayout.EndHorizontal();
-            GUILayout.Label(IsFermenter
-                ? "Goes to a chest assigned to that mead or to Potions (K), or one that already holds it. With none, it drops as usual."
-                : IsCooking
-                ? "Goes to the chests assigned to that food or to Food (the chest assign menu, K), nearest first. With none, it slides off the spit."
-                : "Goes to the chests assigned to that item (the chest assign menu, K), nearest first. With none assigned it drops on the ground as usual.", _dim);
-
-            GUILayout.Space(2);
-            for (int i = 0; i < _autoItems.Count; i += 3)
+            else
             {
-                GUILayout.BeginHorizontal();
-                for (int j = i; j < Mathf.Min(i + 3, _autoItems.Count); j++)
+                // one line per item: the inventory's own cell (the game's tooltip; the number is how many you and the chests have), its name
+                // and counts, Add 1 and Fill
+                float space = GameUi.CellSpace, bw = 74f, ry = 4f, tx = 4f + 64f + 12f, textW = cw - tx - bw * 2f - 14f;
+                foreach (Row row in _rows)
                 {
-                    AutoItem item = _autoItems[j];
-                    bool on = _auto.Allowed.Contains(item.Name);
-                    string label = (on ? "[x] " : "[  ] ") + item.Display + (item.IsFuel ? " (fuel)" : "");
-                    if (GUILayout.Button(label, on ? _buttonOn : _button, GUILayout.Height(26))) { string name = item.Name; _pending = () => ToggleAutoItem(name); }
+                    Row r = row;
+                    string name = row.Name;
+                    InventoryElement cell = GameUi.Cell(_addList, new Vector2(4f, -ry), row.Drop.m_itemData, Total(row).ToString(), false, null);
+                    Live(cell.m_amount, () => Total(RowNamed(name)).ToString());
+                    TMP_Text t = GameUi.Label(_addList, row.Title, new Vector2(tx, -ry - 4f), new Vector2(textW, 26f), 19f, GameUi.Text);
+                    t.enableWordWrapping = false;
+                    t.overflowMode = TextOverflowModes.Ellipsis;
+                    Live(GameUi.Label(_addList, row.CountsText, new Vector2(tx, -ry - 28f), new Vector2(textW, 38f), 14f, GameUi.Dim), () => RowNamed(name)?.CountsText ?? "");
+                    GameUi.Button(_addList, "Add 1", new Vector2(cw - bw * 2f - 6f, -ry - 12f), new Vector2(bw, 40f), () => Later(p => AddOneFromMenu(p, r)), !_filling, 17f);
+                    var fill = GameUi.Button(_addList, "Fill", new Vector2(cw - bw, -ry - 12f), new Vector2(bw, 40f), () => Later(p => FillFromMenu(p, r)), !_filling, 17f);
+                    if (!_filling) GameUi.Label(fill).color = GameUi.Gold;
+                    ry += space;
                 }
-                GUILayout.EndHorizontal();
+                _addList.sizeDelta = new Vector2(cw, ry - space + 64f + 4f);   // (exactly: a few pixels more and a scrollbar shows for nothing)
             }
-            // For each ticked item: how many the chests hold against the minimum, so it is clear why it is or is not being fed.
-            // And a warning if the fuel is not ticked (the smelter would run out and stop).
-            if (_station != null && _station.Fuel != null && !_auto.Allowed.Contains(_station.Fuel.m_itemData.m_shared.m_name) && _auto.On)
-                GUILayout.Label($"{Localization.instance.Localize(_station.Fuel.m_itemData.m_shared.m_name)} is not ticked, so this will run out of fuel and stop.", _bad);
-            foreach (var line in _limitLines) GUILayout.Label(line.Key, line.Value ? _good : _warn);
-            GUILayout.Space(8);
-        }
 
-        /// <summary>The limits that make sense for this station (see Limits), each as one row: label, -/+ buttons, value.</summary>
-        private void DrawLimits()
-        {
-            if (_plan.Target) NumberRow(_plan.TargetLabel, _auto.Target, true, _plan.TargetHelp, AdjustTarget);
-            if (_plan.Reserve) NumberRow(_plan.ReserveLabel, _auto.Reserve, false, _plan.ReserveHelp, AdjustReserve);
-            if (_plan.FuelReserve) NumberRow(_plan.FuelLabel, _auto.FuelReserve, false, _plan.FuelHelp, AdjustFuelReserve);
-        }
-
-        private void NumberRow(string label, int value, bool offWhenZero, string help, Action<int> adjust)
-        {
-            GUILayout.Space(2);
-            GUILayout.BeginHorizontal();
-            GUILayout.Label(label, _text, GUILayout.ExpandWidth(true));
-            if (GUILayout.Button("-10", _button, GUILayout.Width(44), GUILayout.Height(24))) _pending = () => adjust(-10);
-            if (GUILayout.Button("-1", _button, GUILayout.Width(36), GUILayout.Height(24))) _pending = () => adjust(-1);
-            GUILayout.Label(value == 0 && offWhenZero ? "off" : value.ToString(), _text, GUILayout.Width(48));
-            if (GUILayout.Button("+1", _button, GUILayout.Width(36), GUILayout.Height(24))) _pending = () => adjust(1);
-            if (GUILayout.Button("+10", _button, GUILayout.Width(44), GUILayout.Height(24))) _pending = () => adjust(10);
-            GUILayout.EndHorizontal();
-            if (!string.IsNullOrEmpty(help)) GUILayout.Label(help, _dim);
+            // the bottom line: what just happened, and Fill station (the fuel first, then each item in the list)
+            float by = h - Pad - 50f;
+            Live(GameUi.Label(win, _status, new Vector2(x, -by), new Vector2(ColW - 196f, 50f), 15f, GameUi.Dim, null, TextAlignmentOptions.MidlineLeft), () => _status);
+            bool any = !_filling && _rows.Count > 0;
+            var all = GameUi.Button(win, "Fill station", new Vector2(x + ColW - 184f, -by), new Vector2(184f, 48f), () => Later(FillStation), any, 19f);
+            if (any) GameUi.Label(all).color = GameUi.Gold;
         }
 
         /// <summary>
-        /// Make sure the mouse can move. The game only frees the cursor when it thinks the mouse is the active input device, which on
-        /// some setups (Linux, Steam Deck/Steam Input, a controller plugged in) it doesn't, leaving the cursor stuck in the middle of
-        /// the screen. So while our window is open we set Unity's cursor directly, every time we draw (which happens after the game's own
-        /// per-frame cursor handling, so ours wins).
+        /// The right side, for stations that can feed themselves: what is inside, the auto-feed switch, the limits that make sense for this
+        /// station, its other switches, the items it may use, and why each is or isn't being fed. Every change is saved on the station.
         /// </summary>
-        private static void FreeTheMouse()
+        private void DrawAutoColumn(Transform win, float x, float h)
         {
-            if (Cursor.lockState != CursorLockMode.None) Cursor.lockState = CursorLockMode.None;
-            if (!Cursor.visible) Cursor.visible = true;
-        }
+            RectTransform box = GameUi.Box(win, new Vector2(x - 6f, -Below), new Vector2(ColW + 12f, h - Below - Pad));
+            _autoList = GameUi.Scroll(box, 8f);
+            RectTransform c = _autoList;
+            float cw = c.sizeDelta.x - 8f, y = 6f;   // (usable width, from x = 4)
 
-        private static void DrawIcon(Rect r, Sprite sprite)
-        {
-            if (sprite == null || sprite.texture == null || Event.current.type != EventType.Repaint) return;
-            Texture2D tex = sprite.texture;
-            Rect t = sprite.textureRect;
-            GUI.DrawTextureWithTexCoords(r, tex, new Rect(t.x / tex.width, t.y / tex.height, t.width / tex.width, t.height / tex.height));
-        }
-
-        private static void Rounded(Rect r, Color c, float radius) =>
-            GUI.DrawTexture(r, Texture2D.whiteTexture, ScaleMode.StretchToFill, true, 0f, c, Vector4.zero, new Vector4(radius, radius, radius, radius));
-
-        private static void Outline(Rect r, Color c, float radius) =>
-            GUI.DrawTexture(r, Texture2D.whiteTexture, ScaleMode.StretchToFill, true, 0f, c, Vector4.one, new Vector4(radius, radius, radius, radius));
-
-        // ---- styles ---------------------------------------------------------------------------------------
-
-        private Texture2D MakeBox(Color fill, Color border)
-        {
-            const int size = 6;
-            var t = new Texture2D(size, size, TextureFormat.RGBA32, false) { hideFlags = HideFlags.HideAndDontSave, filterMode = FilterMode.Point };
-            for (int x = 0; x < size; x++)
-                for (int y = 0; y < size; y++)
-                    t.SetPixel(x, y, (x < 2 || y < 2 || x >= size - 2 || y >= size - 2) ? border : fill);
-            t.Apply();
-            _textures.Add(t);
-            return t;
-        }
-
-        private GUIStyle ButtonLook(Color fill, Color hover, Color border)
-        {
-            var s = new GUIStyle(GUI.skin.button)
+            TMP_Text Line(string text, float size, Color color, float gap, TMP_FontAsset font = null)
             {
-                fontSize = 13, fontStyle = FontStyle.Bold, alignment = TextAnchor.MiddleCenter,
-                border = new RectOffset(2, 2, 2, 2), padding = new RectOffset(8, 8, 3, 3), margin = new RectOffset(3, 3, 3, 3),
-            };
-            s.normal.background = MakeBox(fill, border);
-            s.hover.background = s.active.background = s.focused.background = MakeBox(hover, border);
-            s.normal.textColor = s.hover.textColor = s.active.textColor = s.focused.textColor = new Color(0.95f, 0.9f, 0.8f);
-            return s;
+                TMP_Text t = GameUi.Label(c, text, new Vector2(4f, -y), new Vector2(cw, 30f), size, color, font);
+                y += Fit(t, cw) + gap;
+                return t;
+            }
+            void Heading(string text) => Line(text, 20f, GameUi.Warm, 6f, GameUi.Serif);
+            void OnOff(string text, bool on, Action act)
+            {
+                GameUi.Toggle(c, text, on, new Vector2(4f, -y), new Vector2(cw, 40f), () => _pending = act, 17f);
+                y += 46f;
+            }
+            void Number(string label, Func<int> value, bool offWhenZero, string help, Action<int> adjust)
+            {
+                Line(label, 17f, GameUi.Text, 6f);
+                TMP_Text v = GameUi.Stepper(c, new Vector2(4f, -y), 34f, Shown(value(), offWhenZero), new[] { 10, 1 }, d => _pending = () => adjust(d));
+                Live(v, () => Shown(value(), offWhenZero));
+                y += 40f;
+                if (!string.IsNullOrEmpty(help)) Line(help, 15f, GameUi.Dim, 12f);
+                else y += 8f;
+            }
+
+            // what is in it right now
+            if (IsFermenter)
+            {
+                Heading("In the barrel");
+                Live(Line(_fermentLine, 16f, GameUi.Text, 10f), () => _fermentLine, true);
+            }
+            else if (IsCooking)
+            {
+                Heading("On the station");
+                for (int i = 0; i < _cookLines.Count; i++)
+                {
+                    int k = i;
+                    Live(Line(_cookLines[i], 16f, GameUi.Text, 2f), () => k < _cookLines.Count ? _cookLines[k] : "", true);
+                }
+                y += 8f;
+            }
+            else
+            {
+                Heading("Inside");
+                if (_inside.Queue.Count == 0) Line("Nothing is loaded.", 16f, GameUi.Dim, 4f);
+                else
+                {
+                    // each ore waiting: its icon and "4 Copper ore", as many on a line as fit
+                    float qx = 4f;
+                    foreach (KeyValuePair<string, int> entry in _inside.Queue)
+                    {
+                        string key = entry.Key;
+                        string text = QueueText(key);
+                        TMP_Text t = GameUi.Label(c, text, Vector2.zero, new Vector2(cw, 28f), 16f, GameUi.Text);
+                        t.enableWordWrapping = false;
+                        Live(t, () => QueueText(key));
+                        float tw = t.GetPreferredValues(text, cw, 0f).x + 20f;   // (room for the count to grow)
+                        if (qx > 4f && qx + 32f + tw > cw) { qx = 4f; y += 34f; }
+                        GameUi.Icon(c, new Vector2(qx, -y), new Vector2(28f, 28f), AutoFeed.IconOf(key));
+                        var tr = (RectTransform)t.transform;
+                        tr.anchoredPosition = new Vector2(qx + 32f, -y - 3f);
+                        tr.sizeDelta = new Vector2(tw, 28f);
+                        qx += 32f + tw + 6f;
+                    }
+                    y += 34f;
+                }
+                Live(Line(InsideStatus(), 15f, GameUi.Dim, 6f), InsideStatus, true);
+            }
+            GameUi.Braid(c, new Vector2(0f, -y - 8f), cw - 40f);
+            y += 20f;
+
+            // auto-feed itself
+            OnOff("Auto-feed from chests", _auto.On, ToggleAuto);
+            Line(_auto.On
+                ? $"Keeps this stocked from chests within {_autoRadius.Value:0} m, by itself. It only uses the items switched on below, plain ones first."
+                : "Turn on to keep this stocked from nearby chests without pressing anything. You choose which items it may use.", 15f, GameUi.Dim, 12f);
+
+            if (_plan.Target) Number(_plan.TargetLabel, () => _auto.Target, true, _plan.TargetHelp, AdjustTarget);
+            if (_plan.Reserve) Number(_plan.ReserveLabel, () => _auto.Reserve, false, _plan.ReserveHelp, AdjustReserve);
+            if (_plan.FuelReserve) Number(_plan.FuelLabel, () => _auto.FuelReserve, false, _plan.FuelHelp, AdjustFuelReserve);
+
+            if (IsFermenter)
+            {
+                OnOff("Taps itself when ready", _auto.TakeOff, ToggleTakeOff);
+                Line("When the mead is ready it comes out by itself (and with auto-load on, the next base goes straight in).", 15f, GameUi.Dim, 12f);
+            }
+            if (IsCooking)
+            {
+                OnOff("Done food comes off by itself", _auto.TakeOff, ToggleTakeOff);
+                Line(_takeOffCooked.Value
+                    ? "The moment something is done it comes off, so it never burns: into a chest (below), or it slides off the side of the spit towards you."
+                    : "Switched off for every station in the config (Cooking, TakeOffCooked).", 15f, GameUi.Dim, 12f);
+            }
+            OnOff(IsCooking ? "Done food goes into chests" : IsFermenter ? "Mead goes into chests" : "What it makes goes into chests", _auto.Output, ToggleOutput);
+            Line(IsFermenter
+                ? "Goes to a chest assigned to that mead or to Potions (K), or one that already holds it. With none, it drops as usual."
+                : IsCooking
+                ? "Goes to the chests assigned to that food or to Food (the chest assign menu, K), nearest first. With none, it slides off the spit."
+                : "Goes to the chests assigned to that item (the chest assign menu, K), nearest first. With none assigned it drops on the ground as usual.", 15f, GameUi.Dim, 12f);
+
+            // the items it may use: one switch each, two to a line
+            Line("Items it may use", 17f, GameUi.Text, 6f);
+            float iw = (cw - 6f) / 2f;
+            for (int i = 0; i < _autoItems.Count; i++)
+            {
+                AutoItem item = _autoItems[i];
+                string name = item.Name;
+                GameUi.Toggle(c, item.Display + (item.IsFuel ? " (fuel)" : ""), _auto.Allowed.Contains(name), new Vector2(4f + i % 2 * (iw + 6f), -y - i / 2 * 44f),
+                    new Vector2(iw, 40f), () => _pending = () => ToggleAutoItem(name), 15f, item.Drop.m_itemData.GetIcon());
+            }
+            y += (_autoItems.Count + 1) / 2 * 44f + 6f;
+
+            // for each item switched on: how many the chests hold against the limits, so it is clear why it is or is not being fed; and a
+            // warning if the fuel is off (the smelter would run out and stop)
+            if (FuelSwitchedOff)
+                Line($"{Localization.instance.Localize(_station.Fuel.m_itemData.m_shared.m_name)} is off, so this will run out of fuel and stop.", 15f, GameUi.Warn, 4f);
+            for (int i = 0; i < _limitLines.Count; i++)
+            {
+                int k = i;
+                Live(Line(_limitLines[i].Key, 15f, _limitLines[i].Value ? GameUi.Good : GameUi.Gold, 4f), () => k < _limitLines.Count ? _limitLines[k].Key : "", true);
+            }
+            c.sizeDelta = new Vector2(c.sizeDelta.x, y + 2f);
         }
 
-        private static Font _bodyFont, _titleFont;
-
-        /// <summary>The game's own fonts (Averia for text and numbers, Norse for the title), looked up once; null if a game update renamed them.</summary>
-        private static Font GameFont(params string[] names)
+        private string QueueText(string prefab)
         {
-            Font[] all = Resources.FindObjectsOfTypeAll<Font>();
-            foreach (string name in names)
-                foreach (Font f in all)
-                    if (f != null && f.name.StartsWith(name, StringComparison.OrdinalIgnoreCase)) return f;
-            return null;
+            foreach (KeyValuePair<string, int> q in _inside.Queue)
+                if (q.Key == prefab) return $"{q.Value} {AutoFeed.NameOf(q.Key)}";
+            return "";
         }
 
-        private void EnsureStyles()
+        /// <summary>"Loaded 4/10 · Fuel 8/20 · Ready to collect: 3 Copper".</summary>
+        private string InsideStatus()
         {
-            if (_title != null) return;
-            if (_bodyFont == null) _bodyFont = GameFont("AveriaSerifLibre-Bold", "AveriaSerifLibre", "Averia");
-            if (_titleFont == null) _titleFont = GameFont("Norsebold", "Norse") ?? _bodyFont;
-            _title = new GUIStyle(GUI.skin.label) { fontSize = 18, fontStyle = FontStyle.Bold };
-            _title.normal.textColor = Gold;
-            _text = new GUIStyle(GUI.skin.label) { fontSize = 14, fontStyle = FontStyle.Bold };
-            _text.normal.textColor = new Color(0.95f, 0.92f, 0.86f);
-            _dim = new GUIStyle(GUI.skin.label) { fontSize = 11, wordWrap = true };
-            _dim.normal.textColor = Dim;
-            _good = new GUIStyle(_dim); _good.normal.textColor = new Color(0.6f, 0.9f, 0.6f);
-            _warn = new GUIStyle(_dim); _warn.normal.textColor = new Color(1f, 0.75f, 0.35f);
-            _bad = new GUIStyle(_dim); _bad.normal.textColor = new Color(1f, 0.55f, 0.4f);
-            _button = ButtonLook(new Color(0.22f, 0.19f, 0.15f), new Color(0.33f, 0.27f, 0.18f), new Color(0.45f, 0.36f, 0.2f));
-            _buttonOn = ButtonLook(new Color(0.55f, 0.42f, 0.16f), new Color(0.62f, 0.48f, 0.2f), new Color(0.95f, 0.78f, 0.35f));
-            if (_bodyFont != null) foreach (GUIStyle style in new[] { _text, _dim, _good, _warn, _bad, _button, _buttonOn }) style.font = _bodyFont;
-            if (_titleFont != null) _title.font = _titleFont;
-        }
-
-        private void DestroyMenuResources()
-        {
-            foreach (Texture2D t in _textures) if (t != null) Destroy(t);
-            _textures.Clear();
-            _title = _text = _dim = _button = _buttonOn = _good = _warn = _bad = null;
-        }
-    }
-
-    // While the menu is open: keep the game from reacting to your clicks and typing, and show the mouse.
-    [HarmonyPatch(typeof(PlayerController), "TakeInput")]
-    internal static class PlayerController_TakeInput
-    {
-        private static void Postfix(ref bool __result) { if (Plugin.MenuOpen) __result = false; }
-    }
-
-    [HarmonyPatch(typeof(Player), "TakeInput")]
-    internal static class Player_TakeInput
-    {
-        private static void Postfix(ref bool __result) { if (Plugin.MenuOpen) __result = false; }
-    }
-
-    [HarmonyPatch(typeof(GameCamera), nameof(GameCamera.UpdateMouseCapture))]
-    internal static class GameCamera_UpdateMouseCapture
-    {
-        // While our window is open, skip the game's own cursor handling entirely. If we let it run and then undo it, the game locks the
-        // cursor every frame, and on Linux locking physically snaps the pointer to the middle of the screen, so it looks stuck there.
-        private static bool Prefix()
-        {
-            if (!Plugin.MenuOpen) return true;
-            ZCursor.LockState = CursorLockMode.None;
-            ZCursor.Show();
-            return false;
-        }
-    }
-}
-
-namespace FeedFromChests
-{
-    // While one of our windows is open, the mouse wheel should scroll the window, not zoom the camera (or cycle the hotbar).
-    [HarmonyLib.HarmonyPatch(typeof(ZInput), nameof(ZInput.GetMouseScrollWheel))]
-    internal static class ZInput_GetMouseScrollWheel
-    {
-        private static void Postfix(ref float __result) { if (Plugin.MenuOpen) __result = 0f; }
-    }
-}
-
-namespace FeedFromChests
-{
-    // Escape closes our window, and only that: the game's own menu does not open (so the game is not paused by it).
-    [HarmonyLib.HarmonyPatch(typeof(Menu), "Update")]
-    internal static class Menu_Update_EscapeCloses
-    {
-        private static bool Prefix()
-        {
-            if (!(Plugin.MenuOpen)) return true;
-            if (!(ZInput.GetKeyDown(UnityEngine.KeyCode.Escape) || ZInput.GetButtonDown("JoyMenu"))) return true;
-            Plugin.CloseFromEscape();
-            return false; // skip the game's menu handling for this frame
+            AutoFeed.Inside i = _inside;
+            string status = $"Loaded {i.QueueSize}/{i.MaxOre}";
+            if (i.MaxFuel > 0) status += $"   ·   Fuel {Mathf.Floor(i.Fuel):0}/{i.MaxFuel}";
+            if (i.Ready > 0) status += $"   ·   Ready to collect: {i.Ready} {i.ReadyName}";
+            return status;
         }
     }
 }
