@@ -17,7 +17,8 @@ namespace PortalHub
     /// teleporting). Portals you never pick a destination for keep working the old way, by matching names.
     ///
     /// Split across files: Plugin.cs (setup), Plugin.Net.cs (the list, links and messages), Plugin.Window.cs (the menu),
-    /// Patches.cs (game hooks).
+    /// Plugin.Map.cs (pins and link lines on the map), GameUi.cs (the game's own interface parts and the input patches while the menu
+    /// is open), Patches.cs (game hooks).
     /// </summary>
     [BepInPlugin(Guid, Name, Version)]
     public partial class Plugin : BaseUnityPlugin
@@ -81,14 +82,15 @@ namespace PortalHub
                 Chat.instance.AddString("[Mod]", $"{Name} v{Version} reloaded", Talker.Type.Normal);
         }
 
-        // ScriptEngine destroys this copy on a reload: put back everything we hooked into the game.
+        // ScriptEngine destroys this copy on a reload: put back everything we hooked into the game, and remove what we made.
         private void OnDestroy()
         {
-            WindowOpen = false;
+            CloseWindow();
+            GameUi.Destroy();
+            DestroyMapLines();
             ClearPins(Minimap.instance);
             UnregisterRpc();
             _harmony?.UnpatchSelf();
-            DestroyStyles();
             Synced?.Dispose();
             if (Instance == this) Instance = null;
         }
@@ -100,6 +102,8 @@ namespace PortalHub
             UpdateWindow();
             UpdateMap();
         }
+
+        private void LateUpdate() => UpdateMapLines();   // (after the map has placed its pins this frame)
 
         private void Tell(string message)
         {

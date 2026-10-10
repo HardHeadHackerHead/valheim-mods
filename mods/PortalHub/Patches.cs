@@ -19,7 +19,9 @@ namespace PortalHub
                 __result = true;
                 return false;
             }
-            plugin.OpenWindow(__instance);
+            // the E that just closed the menu mustn't open it again (nor the game's name box)
+            if (Time.unscaledTime < Plugin.ClosedAt + 0.25f) { __result = false; return false; }
+            if (!plugin.OpenWindow(__instance)) return true;   // (the game's interface wasn't found: its own name box, as without the mod)
             __result = true;
             return false;
         }
@@ -73,55 +75,6 @@ namespace PortalHub
         }
     }
 
-    // ---- while the menu is open: the game must not react to clicks and typing, and the mouse must be free ----
-
-    [HarmonyPatch(typeof(PlayerController), "TakeInput")]
-    internal static class PlayerController_TakeInput
-    {
-        private static void Postfix(ref bool __result) { if (Plugin.WindowOpen) __result = false; }
-    }
-
-    [HarmonyPatch(typeof(Player), "TakeInput")]
-    internal static class Player_TakeInput
-    {
-        private static void Postfix(ref bool __result) { if (Plugin.WindowOpen) __result = false; }
-    }
-
-    // Other mods treat "typing in a box" as a reason to ignore their hotkeys; the search box is one.
-    [HarmonyPatch(typeof(Minimap), nameof(Minimap.InTextInput))]
-    internal static class Minimap_InTextInput
-    {
-        private static void Postfix(ref bool __result) { if (Plugin.WindowOpen) __result = true; }
-    }
-
-    [HarmonyPatch(typeof(GameCamera), nameof(GameCamera.UpdateMouseCapture))]
-    internal static class GameCamera_UpdateMouseCapture
-    {
-        private static bool Prefix()
-        {
-            if (!Plugin.WindowOpen) return true;
-            ZCursor.LockState = CursorLockMode.None;
-            ZCursor.Show();
-            return false;
-        }
-    }
-
-    [HarmonyPatch(typeof(ZInput), nameof(ZInput.GetMouseScrollWheel))]
-    internal static class ZInput_GetMouseScrollWheel
-    {
-        private static void Postfix(ref float __result) { if (Plugin.WindowOpen) __result = 0f; }
-    }
-
-    // Escape closes our menu, and only that (the game is not paused).
-    [HarmonyPatch(typeof(Menu), "Update")]
-    internal static class Menu_Update_EscapeCloses
-    {
-        private static bool Prefix()
-        {
-            if (!Plugin.WindowOpen) return true;
-            if (!(ZInput.GetKeyDown(KeyCode.Escape) || ZInput.GetButtonDown("JoyMenu"))) return true;
-            Plugin.CloseFromEscape();
-            return false;
-        }
-    }
+    // While the menu is open the game must not react to clicks and typing: GameUi.cs has those patches (input, mouse, wheel, Escape, Tab,
+    // other mods' hotkeys), switched on by GameUi.IsOpen.
 }
