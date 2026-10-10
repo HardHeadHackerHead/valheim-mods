@@ -16,7 +16,7 @@ namespace DHack.Shared
     ///      nothing). So the new copy swaps them for its own (Reattach). Their fields start at their defaults: read what a component needs
     ///      in its Awake, not from fields set on the prefab.
     /// Pieces only. Items aren't covered: an item in a bag or chest keeps the old copy's data until the game restarts.
-    /// Shared source (mods/Shared/PieceReload.cs), linked into the mods that use it: BountyBoard, Recycler. Claude Tools ships it as a template.
+    /// Shared source (mods/Shared/PieceReload.cs), linked into the mods that use it: BountyBoard, LedgerChest, Recycler. Claude Tools ships it as a template.
     /// </summary>
     internal static class PieceReload
     {

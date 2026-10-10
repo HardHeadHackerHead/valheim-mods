@@ -15,7 +15,7 @@ Two ways in:
 | `ServerSettings.cs` | Settings the host decides in multiplayer, with no library. Also a Claude Tools template. | most mods (their csproj) |
 | `TestCommands.cs` | The game's cheat rule for test commands that change the game. | Arena, Rainbows, SkalTavern, Ziplines |
 | `SpecialContainers.cs` | Built pieces with a chest's Container that aren't storage (the Obliterator, a Ledger Chest, the Recycler, Arena's chests, anything marked `dh_notstorage`): mods that pick or fill chests leave them alone. | AICompanion, BuildFromChests, CraftFromChests, FeedFromChests, LedgerChest, QualityOfLife |
-| `PieceReload.cs` | Build pieces that reload while you play, with nothing deleted. Also a Claude Tools template. | BountyBoard, Recycler |
+| `PieceReload.cs` | Build pieces that reload while you play, with nothing deleted. Also a Claude Tools template. | BountyBoard, LedgerChest, Recycler |
 
 Before adding a file: is it needed by more than one mod, small, and tested in a real mod? Say at its top why it exists, which mods use
 it and how it gets in. Code other mod makers would want goes to Claude Tools' `Templates/` too (with namespace `YourMod`).

@@ -7,5 +7,5 @@
     <!-- the build-menu picture (used if the game cannot draw one itself)  -->
     <EmbeddedResource Include="icon.png" LogicalName="icon.png" />
   </ItemGroup>
-  <ItemGroup><Compile Include="../Shared/SpecialContainers.cs" Link="Shared/SpecialContainers.cs" /></ItemGroup>
+  <ItemGroup><Compile Include="../Shared/SpecialContainers.cs" Link="Shared/SpecialContainers.cs" /><Compile Include="../Shared/PieceReload.cs" Link="Shared/PieceReload.cs" /></ItemGroup>
 </Project>

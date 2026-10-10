@@ -4,6 +4,9 @@ using BepInEx.Configuration;
 using HarmonyLib;
 using UnityEngine;
 
+// Its pieces reload while you play: they stay registered across a reload and the ones standing get the new copy (Shared/PieceReload.cs).
+[assembly: System.Reflection.AssemblyMetadata("ClaudeTools.Reload", "world")]
+
 namespace LedgerChest
 {
     /// <summary>
@@ -133,11 +136,11 @@ namespace LedgerChest
                 _prefab = Make(source, bench != null ? bench.GetComponent<CraftingStation>() : null);
             }
 
-            var named = (Dictionary<int, GameObject>)AccessTools.Field(typeof(ZNetScene), "m_namedPrefabs").GetValue(scene);
-            PieceTable table = hammer.GetComponent<ItemDrop>().m_itemData.m_shared.m_buildPieces;
-            if (!scene.m_prefabs.Contains(_prefab)) scene.m_prefabs.Add(_prefab);
-            named[_prefab.name.GetStableHashCode()] = _prefab; // lets it be placed and loaded from saves
-            if (!table.m_pieces.Contains(_prefab)) table.m_pieces.Add(_prefab);
+            // registered in place of an older copy's (a hot reload while playing), and the chests standing get this copy's marker
+            // (what is in them is the game's own Container, untouched)
+            DHack.Shared.PieceReload.ReplacePrefab(scene, _prefab, hammer.GetComponent<ItemDrop>().m_itemData.m_shared.m_buildPieces);
+            int swapped = DHack.Shared.PieceReload.Reattach(scene, _prefab);
+            if (swapped > 0) Debug.Log($"{Name}: {swapped} Ledger Chest(s) in the world now run this copy");
         }
 
         private static GameObject Make(GameObject source, CraftingStation workbench)
@@ -185,20 +188,16 @@ namespace LedgerChest
             return go;
         }
 
+        /// <summary>
+        /// When this copy unloads: out of the build menu, but still registered, so no area loading before the next copy is up loses its
+        /// Ledger Chests, or what is in them (Shared/PieceReload.cs). The next copy replaces it.
+        /// </summary>
         internal static void Unregister()
         {
             if (_prefab == null) return;
-            if (ZNetScene.instance != null)
-            {
-                ZNetScene.instance.m_prefabs.Remove(_prefab);
-                var named = (Dictionary<int, GameObject>)AccessTools.Field(typeof(ZNetScene), "m_namedPrefabs").GetValue(ZNetScene.instance);
-                int hash = _prefab.name.GetStableHashCode();
-                if (named.TryGetValue(hash, out GameObject current) && current == _prefab) named.Remove(hash); // only our own entry
-            }
             GameObject hammer = ObjectDB.instance != null ? ObjectDB.instance.GetItemPrefab("Hammer") : null;
-            if (hammer != null) hammer.GetComponent<ItemDrop>().m_itemData.m_shared.m_buildPieces.m_pieces.Remove(_prefab);
+            DHack.Shared.PieceReload.UnloadPiece(_prefab, hammer != null ? hammer.GetComponent<ItemDrop>().m_itemData.m_shared.m_buildPieces : null);
             _prefab = null;
-            Object.Destroy(_holder);
             _holder = null;
             Look.Clear();
         }
