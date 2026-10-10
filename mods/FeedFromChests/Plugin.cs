@@ -113,7 +113,8 @@ namespace FeedFromChests
 
         private void OnDestroy()
         {
-            MenuOpen = false;
+            CloseMenu();       // a hot reload must not leave the window or its canvas behind
+            GameUi.Destroy();
             AutoFeed.Clear();
             Cooking.Clear();
             Lights.Clear();
@@ -124,7 +125,6 @@ namespace FeedFromChests
             if (Instance == this) Instance = null;
             _harmony?.UnpatchSelf();
             Synced?.Dispose();
-            DestroyMenuResources();
         }
 
         // ---- finding slowness -------------------------------------------------------------------------
@@ -183,6 +183,7 @@ namespace FeedFromChests
             if (_pending != null) { Action a = _pending; _pending = null; a(); }
 
             Player player = Player.m_localPlayer;
+            if (_station != null) UpdateMenu(player); // (first: it closes the menu when you die or leave the world)
             if (!_enabled.Value || player == null || player.IsDead()) return;
 
             if (_stationAuto.Value && !_filling) AutoFeed.Tick(this, player, _autoInterval.Value, _autoRange.Value); // stations set to feed themselves
@@ -191,15 +192,13 @@ namespace FeedFromChests
             if (!_filling && _collectHoney.Value) Hives.Tick(this, player, _autoRange.Value, _outputRadius.Value); // hives never sit full
             if (!_filling) Defenses.Tick(this, player, _autoRange.Value, _autoRadius.Value, _outputRadius.Value, _fuelShields.Value, _reloadBallistas.Value, _collectSap.Value);
             if (_stationAuto.Value && !_filling) Ferment.Tick(this, player, _autoRange.Value);                    // fermenters reload and tap themselves
-
-            if (MenuOpen) UpdateMenu(player);
         }
 
         private static bool TypingOrMenuOpen() =>
             (Chat.instance != null && Chat.instance.HasFocus()) || Console.IsVisible() || TextInput.IsVisible() ||
             Minimap.InTextInput() || Menu.IsVisible() || InventoryGui.IsVisible();
 
-        private Action _pending; // button clicks run from Update, not mid-draw, so the layout never changes under IMGUI
+        private Action _pending; // button clicks run from Update, never from the click itself (the window is being drawn)
 
         // ---- adding things --------------------------------------------------------------------------
 
@@ -284,8 +283,11 @@ namespace FeedFromChests
             }
 
             _status = parts.Count > 0 ? "Filled: " + string.Join(", ", parts.ToArray()) : "Nothing more fits right now.";
-            RefreshRows(player);
-            if (_rows.Count == 0) CloseMenu();
+            if (_station == info && player != null) // (the menu may have been closed while it filled)
+            {
+                RefreshRows(player);
+                if (_rows.Count == 0) CloseMenu();
+            }
         }
 
         // ---- pressing E ------------------------------------------------------------------------------
@@ -381,6 +383,8 @@ namespace FeedFromChests
         {
             Plugin plugin = Plugin.Instance;
             if (plugin == null || hold || __instance != Player.m_localPlayer) return true;
+            // the E that just closed the menu: neither open it again nor let the game add an item from your inventory
+            if (Time.unscaledTime < Plugin.MenuClosedAt + 0.25f) return false;
             try { return !plugin.TryAutoFeed(__instance, go, alt); }
             catch (Exception e) { plugin.Log("Auto-feed failed, using the normal behaviour: " + e.Message); return true; }
         }
