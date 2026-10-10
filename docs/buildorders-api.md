@@ -31,7 +31,7 @@ group, with reach and ward checks before removal. Completed/removed groups retur
 remain intact. The API itself does not erase built-piece records; normal planner cleanup still applies. Keep the key associated with the
 current world; discard session undo state on world changes.
 
-Add-ons should declare a dependency on `com.dhack.buildorders`. ScriptEngine ignores dependency attributes and reloads each DLL with a new
+Add-ons should declare a dependency on `com.quad.buildorders` (`com.dhack.buildorders` before October 2026: to work with both, make it a soft dependency and look up either GUID). ScriptEngine ignores dependency attributes and reloads each DLL with a new
 assembly identity, so also check `BepInEx.Bootstrap.Chainloader.PluginInfos` for its live instance, verify `PlanningApiVersion`, and resolve
 these public methods on that instance. Retry when the instance is temporarily null, and rebind when it changes. Avoid assembly references
 to custom BuildOrders types: this interface uses only game, Unity, and standard .NET types. Normal BepInEx plugins may use direct calls.

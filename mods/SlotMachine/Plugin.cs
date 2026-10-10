@@ -18,9 +18,10 @@ namespace SlotMachine
     [BepInPlugin(Guid, Name, Version)]
     public class Plugin : BaseUnityPlugin
     {
-        public const string Guid = "com.dhack.slotmachine";
+        public const string Guid = "com.quad.slotmachine";
+        public const string OldGuid = "com.dhack.slotmachine"; // (its id until 2026-10: settings move over by themselves, see Shared/Migration.cs)
         public const string Name = "SlotMachine";
-        public const string Version = "1.1.0";
+        public const string Version = "1.1.1";
         public const string PiecePrefab = "piece_slotmachine";
 
         internal static ConfigEntry<int> Bet, PayoutPercent;
@@ -32,6 +33,7 @@ namespace SlotMachine
 
         private void Awake()
         {
+            DHack.Shared.Migration.FromOldGuid(this, OldGuid); // first: before any setting is read
             Synced = new DHack.Shared.ServerSettings(Guid, Config, Logger);
             Bet = Config.Bind("Play", "Bet", 10, new ConfigDescription("Coins per pull (change it at the machine with the alternate-use key + use).", new AcceptableValueList<int>(Bets)));
             PayoutPercent = Synced.Add(Config.Bind("Play", "PayoutPercent", 100, new ConfigDescription("Scales every prize (100 = standard, which returns about 93% over time; 50 = half the prizes; above 107 the machine pays out more than goes in). In multiplayer the server's value applies.", new AcceptableValueRange<int>(10, 300))));

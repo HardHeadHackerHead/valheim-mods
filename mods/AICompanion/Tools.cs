@@ -15,7 +15,7 @@ namespace AICompanion
     /// </summary>
     public partial class Plugin
     {
-        private const string ClaudeToolsGuid = "com.dhack.claudetools";
+        private const string ClaudeToolsGuid = "com.quad.claudetools";
         private BaseUnityPlugin _claudeTools;
         private float _nextClaudeCheck;
 

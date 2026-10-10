@@ -17,9 +17,10 @@ namespace BirdTrap
     [BepInPlugin(Guid, Name, Version)]
     public class Plugin : BaseUnityPlugin
     {
-        public const string Guid = "com.dhack.birdtrap";
+        public const string Guid = "com.quad.birdtrap";
+        public const string OldGuid = "com.dhack.birdtrap"; // (its id until 2026-10: settings move over by themselves, see Shared/Migration.cs)
         public const string Name = "BirdTrap";
-        public const string Version = "1.1.0";
+        public const string Version = "1.1.1";
         public const string PiecePrefab = "piece_birdtrap";
 
         internal static ConfigEntry<float> MinMinutes, MaxMinutes;
@@ -33,6 +34,7 @@ namespace BirdTrap
 
         private void Awake()
         {
+            DHack.Shared.Migration.FromOldGuid(this, OldGuid); // first: before any setting is read
             // These decide when birds come and what they give, so they count on the game that owns the trap (usually the nearest player's);
             // in multiplayer every game uses the server's.
             Synced = new DHack.Shared.ServerSettings(Guid, Config, Logger);
@@ -59,7 +61,7 @@ namespace BirdTrap
             Synced?.Update();
             if (Time.unscaledTime < _nextClaudeCheck) return;
             _nextClaudeCheck = Time.unscaledTime + 5f;
-            BaseUnityPlugin found = BepInEx.Bootstrap.Chainloader.PluginInfos.TryGetValue("com.dhack.claudetools", out PluginInfo info) ? info.Instance : null;
+            BaseUnityPlugin found = BepInEx.Bootstrap.Chainloader.PluginInfos.TryGetValue("com.quad.claudetools", out PluginInfo info) ? info.Instance : null;
             if (found == _claudeTools) return;
             _claudeTools = found;
             if (found == null) return;

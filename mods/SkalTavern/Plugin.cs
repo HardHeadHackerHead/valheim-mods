@@ -19,9 +19,10 @@ namespace SkalTavern
     [BepInPlugin(Guid, Name, Version)]
     public class Plugin : BaseUnityPlugin
     {
-        public const string Guid = "com.dhack.skaltavern";
+        public const string Guid = "com.quad.skaltavern";
+        public const string OldGuid = "com.dhack.skaltavern"; // (its id until 2026-10: settings move over by themselves, see Shared/Migration.cs)
         public const string Name = "SkalTavern";
-        public const string Version = "0.3.0";
+        public const string Version = "0.3.1";
 
         internal static Plugin Instance;
         internal static ManualLogSource Log;
@@ -36,6 +37,7 @@ namespace SkalTavern
 
         private void Awake()
         {
+            DHack.Shared.Migration.FromOldGuid(this, OldGuid); // first: before any setting is read
             Instance = this;
             Log = Logger;
             AwakeFrame = Time.frameCount;

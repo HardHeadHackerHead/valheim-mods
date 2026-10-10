@@ -16,16 +16,24 @@ namespace ClaudeTools
         private static int Main(string[] args)
         {
             var rest = new List<string>(args);
-            string valheim = null;
-            int at = rest.IndexOf("--valheim");
-            if (at >= 0 && at + 1 < rest.Count) { valheim = rest[at + 1]; rest.RemoveRange(at, 2); }
-            valheim = valheim ?? FindValheim();
+            string Take(string flag)
+            {
+                int at = rest.IndexOf(flag);
+                if (at < 0 || at + 1 >= rest.Count) return null;
+                string v = rest[at + 1];
+                rest.RemoveRange(at, 2);
+                return v;
+            }
+            string valheim = Take("--valheim") ?? FindValheim();
             if (valheim == null)
             {
-                Console.Error.WriteLine("modkit: can't find the Valheim folder. Run it from BepInEx/claude/modkit, set VALHEIM_DIR, or add --valheim <folder>.");
+                Console.Error.WriteLine("modkit: can't find the Valheim folder. Set VALHEIM_DIR, or add --valheim <folder>.");
                 return 2;
             }
-            string[] dirs = { Path.Combine(valheim, "BepInEx", "core"), Path.Combine(valheim, "valheim_Data", "Managed") };
+            // BepInEx: given, or the one this program lives in (BepInEx/claude/modkit: a mod manager's profile keeps it outside the game), or the game's
+            string bepinex = Take("--bepinex") ?? Environment.GetEnvironmentVariable("BEPINEX_DIR");
+            if (!IsBepInEx(bepinex)) bepinex = Ancestors(AppContext.BaseDirectory).FirstOrDefault(IsBepInEx) ?? Path.Combine(valheim, "BepInEx");
+            string[] dirs = { Path.Combine(bepinex, "core"), Path.Combine(valheim, "valheim_Data", "Managed") };
             AppDomain.CurrentDomain.AssemblyResolve += (s, e) =>
             {
                 string file = new AssemblyName(e.Name).Name + ".dll";
@@ -36,16 +44,23 @@ namespace ClaudeTools
                 }
                 return null;
             };
-            return Start(rest.ToArray(), valheim);
+            return Start(rest.ToArray(), valheim, bepinex);
         }
 
         [MethodImpl(MethodImplOptions.NoInlining)] // (so Cecil and Newtonsoft load only after the resolver is in place)
-        private static int Start(string[] args, string valheim) => Cli.Run(args, valheim);
+        private static int Start(string[] args, string valheim, string bepinex) => Cli.Run(args, valheim, bepinex);
+
+        private static bool IsBepInEx(string d) => !string.IsNullOrEmpty(d) && File.Exists(Path.Combine(d, "core", "BepInEx.dll"));
+
+        private static IEnumerable<string> Ancestors(string d)
+        {
+            for (; !string.IsNullOrEmpty(d); d = Path.GetDirectoryName(d.TrimEnd('/', '\\'))) yield return d;
+        }
 
         /// <summary>The Valheim folder: VALHEIM_DIR, a folder above this program (it lives in BepInEx/claude/modkit), or Steam's usual places.</summary>
         private static string FindValheim()
         {
-            bool IsGame(string d) => d != null && Directory.Exists(Path.Combine(d, "valheim_Data")) && Directory.Exists(Path.Combine(d, "BepInEx"));
+            bool IsGame(string d) => d != null && Directory.Exists(Path.Combine(d, "valheim_Data"));
             string env = Environment.GetEnvironmentVariable("VALHEIM_DIR");
             if (IsGame(env)) return env;
             for (string d = AppContext.BaseDirectory; !string.IsNullOrEmpty(d); d = Path.GetDirectoryName(d.TrimEnd('/', '\\')))

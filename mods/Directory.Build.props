@@ -43,6 +43,11 @@
     <Reference Include="UnityEngine.InputLegacyModule"><HintPath>$(ManagedDir)/UnityEngine.InputLegacyModule.dll</HintPath><Private>false</Private></Reference>
     <Reference Include="UnityEngine"><HintPath>$(ManagedDir)/UnityEngine.dll</HintPath><Private>false</Private></Reference>
     <Reference Include="UnityEngine.CoreModule"><HintPath>$(ManagedDir)/UnityEngine.CoreModule.dll</HintPath><Private>false</Private></Reference>
+
+    <!-- Says in every mod's DLL that it was made with AI, as Thunderstore asks (as an attribute in code: GenerateAssemblyInfo is off). -->
+    <Compile Include="$(MSBuildThisFileDirectory)Shared/AiDisclosure.cs" Link="Shared/AiDisclosure.cs" />
+    <!-- Moving settings over from a mod's old GUID (com.dhack.* became com.quad.*), and standing down next to an old copy. -->
+    <Compile Include="$(MSBuildThisFileDirectory)Shared/Migration.cs" Link="Shared/Migration.cs" />
   </ItemGroup>
 
   <Target Name="ValidateValheimReferences" BeforeTargets="ResolveReferences" Condition="'$(DesignTimeBuild)' != 'true'">

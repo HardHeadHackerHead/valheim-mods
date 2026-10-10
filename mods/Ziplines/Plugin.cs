@@ -17,9 +17,10 @@ namespace Ziplines
     [BepInPlugin(Guid, Name, Version)]
     public class Plugin : BaseUnityPlugin
     {
-        public const string Guid = "com.dhack.ziplines";
+        public const string Guid = "com.quad.ziplines";
+        public const string OldGuid = "com.dhack.ziplines"; // (its id until 2026-10: settings move over by themselves, see Shared/Migration.cs)
         public const string Name = "Ziplines";
-        public const string Version = "0.2.0";
+        public const string Version = "0.2.1";
 
         internal static Plugin Instance;
         internal static ManualLogSource Log;
@@ -32,6 +33,7 @@ namespace Ziplines
 
         private void Awake()
         {
+            DHack.Shared.Migration.FromOldGuid(this, OldGuid); // first: before any setting is read
             Instance = this;
             Log = Logger;
             Synced = new DHack.Shared.ServerSettings(Guid, Config, Logger);
@@ -51,6 +53,17 @@ namespace Ziplines
             _harmony.PatchAll(typeof(Plugin).Assembly);
             Things.Register(); // a hot reload while in a world
             Logger.LogInfo($"{Name} {Version} loaded");
+            StartCoroutine(OtherZiplines());
+        }
+
+        /// <summary>Einherjer's Ziplines (anwo.Ziplines) is a different mod with the same name: both installed means two kinds of zipline.</summary>
+        private System.Collections.IEnumerator OtherZiplines()
+        {
+            yield return null; // (mods loaded after this one, and ScriptEngine's, are in the list a frame or two later)
+            yield return null;
+            if (BepInEx.Bootstrap.Chainloader.PluginInfos.ContainsKey("anwo.Ziplines"))
+                Logger.LogWarning("Einherjer's Ziplines (anwo.Ziplines) is installed too: it's a different mod with the same name. Both work, " +
+                                  "with their own posts and ropes; keep one if you only want one kind of zipline.");
         }
 
         private void Update()

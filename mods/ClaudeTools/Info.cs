@@ -231,7 +231,7 @@ namespace ClaudeTools
                 ConfigFile cfg = mod.Config;
                 if (set)
                 {
-                    if (!_allowConfigChanges.Value) { error("changing settings is off (AllowConfigChanges in com.dhack.claudetools.cfg)"); return null; }
+                    if (!_allowConfigChanges.Value) { error("changing settings is off (AllowConfigChanges in com.quad.claudetools.cfg)"); return null; }
                     if (a.Length < at + 4) { error("config set <mod> <section> <key> <value>"); return null; }
                     var def = cfg.Keys.FirstOrDefault(k => k.Section.Equals(a[at + 1], StringComparison.OrdinalIgnoreCase) && k.Key.Equals(a[at + 2], StringComparison.OrdinalIgnoreCase));
                     if (def == null) { error($"{a[at]} has no setting {a[at + 1]}/{a[at + 2]}"); return null; }

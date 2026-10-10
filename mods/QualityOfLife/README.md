@@ -5,7 +5,7 @@
 
 <img src="cover.png" alt="QualityOfLife" width="100%">
 
-**Version 1.11.0**  ·  [all the mods](../../README.md)  ·  installs and updates through the in-game [mod manager](https://github.com/HardHeadHackerHead/valheim-mod-manager) (**F7**)
+**Version 1.11.1**  ·  [all the mods](../../README.md)  ·  install it from [Thunderstore](https://thunderstore.io/c/valheim/p/Quads_Lab/Quads_Quality_Of_Life/) (r2modman, Thunderstore Mod Manager) or the in-game [mod manager](https://github.com/HardHeadHackerHead/valheim-mod-manager) (**F7**)
 
 Quick gear sets on **Q**, hammer on **B**, a **Sort** button that joins stacks, **Stack to chests** with undo, chest assignment on **K** (look at a chest to see what it receives), **Sort chests** to send everything in the chests around you to the chest assigned it, item locks on **L**, your ships on the map with their own icon, and tap **P** next to a boat to push it. It will not let you plant a seed, sapling or crop where it has no room to grow up.
 
@@ -53,14 +53,14 @@ Keys are configurable. Q and B work while you are running.
 
 ## ⚙️ Settings
 
-In `BepInEx/config/com.dhack.qualityoflife.cfg` (made the first time the game runs with the mod).
+In `BepInEx/config/com.quad.qualityoflife.cfg` (made the first time the game runs with the mod).
 
 **BoatPush**
 
 | Setting | Default | What it does |
 |---|---|---|
 | `Enabled` | `true` | Turn boat pushing on or off. |
-| `Key` | `P` | Tap (or hold) this next to a boat, not in it, to push it the way you are looking. |
+| `Key` | `KeyCode.P` | Tap (or hold) this next to a boat, not in it, to push it the way you are looking. |
 | `Strength` | `3` | How hard you push (metres per second, per second). Higher gets a heavy boat moving faster. |
 | `MaxSpeed` | `2.5` | The fastest your pushing can move a boat (metres per second). Walking pace is about 5. |
 | `Seconds` | `3` | One tap of the key keeps pushing for this long (holding it keeps pushing as long as you hold). |
@@ -74,53 +74,32 @@ In `BepInEx/config/com.dhack.qualityoflife.cfg` (made the first time the game ru
 | `MaxDistance` | `20` | How far out the camera can go on foot (metres). The game's own limit is 6. |
 | `MaxDistanceBoat` | `40` | How far out the camera can go while steering a boat (metres). |
 
-**General**
-
-| Setting | Default | What it does |
-|---|---|---|
-| `ShowMessages` | `true` | Show a short message in the top-left when something happens. |
-
-**Hammer**
-
-| Setting | Default | What it does |
-|---|---|---|
-| `Enabled` | `true` | Turn the hammer shortcut on or off. |
-| `Key` | `B` | Press to equip your hammer and start building. Press again to go back to what you had equipped. |
-
-**Map**
-
-| Setting | Default | What it does |
-|---|---|---|
-| `ShowShips` | `true` | Show every ship in the world on the minimap and the map, with a longship icon, wherever it is. |
-| `ShipPinType` | `Icon4` | Which of the map's pin kinds the ship pins count as (their picture is the longship either way). Hiding that kind with the map's pin filters hides them too. |
-
 **Planting**
 
 | Setting | Default | What it does |
 |---|---|---|
-| `NeedRoomToGrow` | `true` | A seed, sapling or crop can only be planted where it has the room to grow up: the same check the game makes later (a plant with another plant, a rock, a tree or a building too close never grows), made before you plant, so the ghost turns red and you are told. Takes effect at once. |
-
-**QuickSet**
-
-| Setting | Default | What it does |
-|---|---|---|
-| `Enabled` | `true` | Turn the quick-set feature on or off. |
-| `Key` | `Q` | Inventory open: hover an item and press to add/remove it from your quick set. Inventory closed: press to swap to the quick set, press again to go back to what you had. |
-| `ShowBadges` | `true` | Mark quick-set items in your inventory with a small gold badge. |
+| `NeedRoomToGrow` | `true` | A seed, sapling or crop can only be planted where it has the room to grow up: the same check the game makes later (a plant with another plant, a rock,  |
 
 **QuickStack**
 
 | Setting | Default | What it does |
 |---|---|---|
 | `Enabled` | `true` | Turn the quick-stack buttons and item locking on or off. |
-| `Radius` | `20` | How far (in metres) from you a chest can be and still be used by Stack to chests and Sort chests. Raise it to put things away into your storehouse from across a big base: 60 reaches a long way. Chests only count while their area is loaded around you (about 100 m and more). Takes effect at once. |
-| `LockKey` | `L` | Inventory open: hover an item and press this to lock it (it will never be moved by the buttons) or unlock it. |
-| `StackKey` | `None` | Optional key that does 'Stack to chests' while your inventory is open (useful with a controller). None = off. |
+| `Radius` | `20` | How far (in metres) from you a chest can be and still be used by Stack to chests  |
+| `LockKey` | `KeyCode.L` | Inventory open: hover an item and press this to lock it (it will never be moved by the buttons) or unlock it. |
+| `StackKey` | `KeyCode.None` | Optional key that does 'Stack to chests' while your inventory is open (useful with a controller). None = off. |
 | `ProtectHotbar` | `true` | Never move items in your top inventory row (the hotbar). |
 | `ShowButtons` | `true` | Show the buttons under your inventory when a chest is in range. |
 | `PlaySounds` | `true` | Play the chests' own sounds when you stack (a thunk from each chest that takes items) and when you undo. |
 | `ShowChestLabels` | `true` | Show what a chest is assigned to receive: under its Assign button when it's open, and in the hover text when you look at it. |
-| `AssignKey` | `K` | Look at a chest (or have one open) and press this to choose what it should receive when you stack: whole categories or individual items. |
+| `AssignKey` | `KeyCode.K` | Look at a chest (or have one open) and press this to choose what it should receive when you stack: whole categories or individual items. |
+
+**Map**
+
+| Setting | Default | What it does |
+|---|---|---|
+| `ShowShips` | `true` | Show every ship in the world on the minimap and the map, with a longship icon, wherever it is. |
+| `ShipPinType` | `Minimap.PinType.Icon4` | Which of the map's pin kinds the ship pins count as (their picture is the longship either way). Hiding that kind with the map's pin filters hides them too. |
 
 **Sort**
 
@@ -132,14 +111,40 @@ In `BepInEx/config/com.dhack.qualityoflife.cfg` (made the first time the game ru
 
 | Setting | Default | What it does |
 |---|---|---|
-| `BuildRange` | `0` | How far (in metres) from a crafting station (workbench, stonecutter, forge, ...) you can build with it, when that is more than the station's own range (20 m, more with upgrades). 0 leaves the game's ranges. 60 reaches across a big base. Takes effect at once. In multiplayer the server's value applies. |
+| `BuildRange` | `0` | How far (in metres) from a crafting station (workbench, stonecutter, forge, ...) you can build with it, when that is more than the  |
+
+**General**
+
+| Setting | Default | What it does |
+|---|---|---|
+| `ShowMessages` | `true` | Show a short message in the top-left when something happens. |
+
+**QuickSet**
+
+| Setting | Default | What it does |
+|---|---|---|
+| `Enabled` | `true` | Turn the quick-set feature on or off. |
+| `Key` | `Q` | Inventory open: hover an item and press to add/remove it from your quick set.  |
+| `ShowBadges` | `true` | Mark quick-set items in your inventory with a small gold badge. |
+
+**Hammer**
+
+| Setting | Default | What it does |
+|---|---|---|
+| `Enabled` | `true` | Turn the hammer shortcut on or off. |
+| `Key` | `B` | Press to equip your hammer and start building. Press again to go back to what you had equipped. |
 
 ## 👥 Playing together
 
 See [who needs which mod](../../README.md#playing-together) on the front page.
 
+## 🤖 Made with AI
+
+Made with the help of Claude (Anthropic), with Claude Code: designed, written and checked together, and tried in the game.
+
 ## 📜 Changes
 
+- **1.11.1** A new id, com.quad.qualityoflife (it was com.dhack.qualityoflife): your settings move over by themselves the first time it starts, and the old settings file is kept as a backup. Restart the game after this update. If an old copy is still installed beside it, this one stands down and says which file to delete, so the two never both run. The DLL now says it was made with AI, as Thunderstore asks.
 - Fix: Undo after Stack to chests could double an item or swap it for another: it took back the first item of that name in the chest (often an older one) and gave you a copy of the one you had put in, so an enchanted sword, a filled backpack or a worn tool could come back twice or come back as a different one. Undo now takes back the very item you put in; only plain stackable things (wood, stone, arrows) come back by name, and exactly as many as leave the chest. Stack to chests, Sort chests and Undo now also leave alone a chest another player is using or has just changed ("The chests in range are in use"), so your moves and theirs never undo each other. Sort is off (the button is hidden) next to a mod that keeps its own slots in your inventory's rows (ExtraSlots, Equipment and Quick Slots, AzuExtendedPlayerInventory, Extended Player Inventory, ComfyQuickSlots, BetterArchery with its quiver on): it pulled their items out of their slots. Stations/BuildRange is now decided by the server in multiplayer. If you change a key the mod freed from the game (Q: auto-run), the game gets its key back. The buttons under the inventory and the assign window now use the game's own lettering.
 - New: Planting/NeedRoomToGrow: you cannot plant a seed, sapling or crop where it has no room to grow up (another plant, a rock, a tree or a building too close). The game only finds this out after planting, and then the plant never grows; now the ghost turns red and says there is not enough space. On by default.
 - New: Stations/BuildRange: crafting stations (workbench, stonecutter, forge...) reach farther for building, up to 150 m, so a big build at the edge of the base needs no second workbench or stonecutter. 0 (the default) leaves the game's ranges. Only building changes: a station's base area and crafting at it stay as they were.

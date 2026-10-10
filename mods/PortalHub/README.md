@@ -5,7 +5,7 @@
 
 <img src="cover.png" alt="PortalHub" width="100%">
 
-**Version 1.2.0**  ·  [all the mods](../../README.md)  ·  installs and updates through the in-game [mod manager](https://github.com/HardHeadHackerHead/valheim-mod-manager) (**F7**)
+**Version 1.2.1**  ·  [all the mods](../../README.md)  ·  install it from [Thunderstore](https://thunderstore.io/c/valheim/p/Quads_Lab/Quads_Portal_Hub/) (r2modman, Thunderstore Mod Manager) or the in-game [mod manager](https://github.com/HardHeadHackerHead/valheim-mod-manager) (**F7**)
 
 Press **E** on a portal and pick where it goes from a list of every portal in the world: nearest first, searchable, with favourites. Every portal shows on the map with lines between linked ones. One click links it both ways, and no more matching names on two portals. (Install it on the host too.)
 
@@ -52,15 +52,7 @@ Portals you can actually use: press E on a portal and pick where it goes from a 
 
 ## ⚙️ Settings
 
-In `BepInEx/config/com.dhack.portalhub.cfg` (made the first time the game runs with the mod).
-
-**General**
-
-| Setting | Default | What it does |
-|---|---|---|
-| `Enabled` | `true` | Use the portal menu when you press E on a portal. (Off: portals work like in the base game.) In multiplayer the server's value applies. |
-| `HideWardedPortals` | `false` | Leave portals inside someone else's protected area (a switched-on ward you are not on) out of each player's list and map, and refuse links to them. (Portals in such an area can never be changed by others either way.) In multiplayer the server's value applies. |
-| `ShowDestinationOnHover` | `true` | When you look at a portal, show where it goes. |
+In `BepInEx/config/com.quad.portalhub.cfg` (made the first time the game runs with the mod).
 
 **Map**
 
@@ -69,19 +61,32 @@ In `BepInEx/config/com.dhack.portalhub.cfg` (made the first time the game runs w
 | `ShowPortals` | `true` | Show every portal on the map with its name. |
 | `ShowLinks` | `true` | On the big map, draw a line from each portal to where it goes (an arrow if it only goes one way). |
 
+**General**
+
+| Setting | Default | What it does |
+|---|---|---|
+| `Enabled` | `true` | Use the portal menu when you press E on a portal. (Off: portals work like in the base game.) In multiplayer the server's value applies. |
+| `HideWardedPortals` | `false` | Leave portals inside someone else's protected area (a switched-on ward you are not on) out of each player's list and map, and refuse links to them.  |
+| `ShowDestinationOnHover` | `true` | When you look at a portal, show where it goes. |
+
 **Menu**
 
 | Setting | Default | What it does |
 |---|---|---|
 | `LinkBothWays` | `true` | Picking a destination also links that portal back to this one. |
-| `Favorites` | `` | Portals you starred (managed by the menu; you do not need to edit this). |
+| `Favorites` | `""` | Portals you starred (managed by the menu; you do not need to edit this). |
 
 ## 👥 Playing together
 
 See [who needs which mod](../../README.md#playing-together) on the front page.
 
+## 🤖 Made with AI
+
+Made with the help of Claude (Anthropic), with Claude Code: designed, written and checked together, and tried in the game.
+
 ## 📜 Changes
 
+- **1.2.1** A new id, com.quad.portalhub (it was com.dhack.portalhub): your settings move over by themselves the first time it starts, and the old settings file is kept as a backup. Restart the game after this update. If an old copy is still installed beside it, this one stands down and says which file to delete, so the two never both run. The DLL now says it was made with AI, as Thunderstore asks.
 - **1.2.0** Fix: anyone could relink a portal inside someone else's protected area, and "link it back" changed the other portal even in someone's base. The host now checks the wards itself and refuses to change a portal in a switched-on ward you are not on; linking to such a portal only goes one way. A new host setting, HideWardedPortals (off by default), keeps those portals out of other players' lists and maps. In multiplayer the server decides Enabled and HideWardedPortals. With XPortal installed PortalHub now stands down (the two undo each other's links). The menu uses the game's font.
 - Fix: away from portals, PortalHub looked for portals nearby every frame; it now looks once a second.
 - Fix: after restarting the game, linked portals sent you to a random place (the game renumbers everything when a world loads, and links were saved by number). Each portal now keeps its own id, so links and starred portals survive restarts. Links made with the old version are cleared once: link your portals again in the menu. Also: the last world's portals no longer show on a new world's map, and a newly built portal no longer lists itself as a destination.

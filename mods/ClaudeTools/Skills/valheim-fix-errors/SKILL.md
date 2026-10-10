@@ -5,7 +5,7 @@ description: Find out why Valheim or a mod is broken from the BepInEx log: read 
 
 # Fixing a broken mod setup
 
-> **Game closed?** The mod-maker commands (`modcheck`, `who`, `clashes`, `patches`, `game`, `gameupdate`, `library`, `systems`) also run as a program: `BepInEx/claude/modkit/modkit.exe <command>` on Windows, `dotnet BepInEx/claude/modkit/modkit.dll <command>` on Linux and Mac (`modkit help` lists them). The others (`errors`, `log`, `waitfor`, pictures...) need the game running; its log is `BepInEx/LogOutput.log`.
+> **Game closed?** The mod-maker commands (`modcheck`, `who`, `clashes`, `patches`, `game`, `gameupdate`, `library`, `systems`) also run as a program: `BepInEx/claude/modkit/modkit.exe <command>` on Windows, `dotnet BepInEx/claude/modkit/modkit.dll <command>` on Linux and Mac (the command `help` lists them all). The others (`errors`, `log`, `waitfor`, pictures...) need the game running; its log is `BepInEx/LogOutput.log`.
 
 ## 1. Get the errors
 
@@ -17,7 +17,7 @@ log 300 <text>         the last lines of the log containing some text (e.g. log 
 mods                   the mods running, with versions
 ```
 
-Without the game: `BepInEx/LogOutput.log` (this session) in the Valheim folder.
+Without the game: `BepInEx/LogOutput.log` (the last session's log; the next launch replaces it, so copy it first).
 
 ## 2. Read the stack trace
 
@@ -36,6 +36,10 @@ Without the game: `BepInEx/LogOutput.log` (this session) in the Valheim folder.
 | `Expected an embedded resource translations/English...` | A mod using LocalizationManager was built without its English file. |
 | An AssetBundle "already loaded" | A mod loaded its bundle twice (usually after a hot reload): restart the game; the mod should reuse a loaded bundle. |
 | Every mod stops working after one is updated or reloaded | Possibly `UnpatchAll()` with no id in that mod (`modcheck <mod>` finds it). |
+| `An item with the same key has already been added` in `ZRoutedRpc.Register` or `ZNetView.Register` | Two mods (or one mod's old and new copy after a reload) register the same RPC name: names must start with the mod's, and a mod removes its own on unload. |
+| A console command does another mod's thing | Two mods use one command name; the later replaces the earlier. `help` lists who owns each. |
+| Things fine after a reload, broken after a restart (or the reverse) | Registration timing (pieces, items) or static state the old copy kept: always confirm with a full restart. |
+| Items on the ground after spawning | An inventory-size clash (`who Player.SetInventorySize`, `who Humanoid.DropInvalidItems`). |
 
 ## 3. Clashes between mods
 

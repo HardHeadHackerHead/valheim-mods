@@ -5,7 +5,7 @@
 
 <img src="cover.png" alt="LedgerChest" width="100%">
 
-**Version 1.0.2**  ·  [all the mods](../../README.md)  ·  installs and updates through the in-game [mod manager](https://github.com/HardHeadHackerHead/valheim-mod-manager) (**F7**)
+**Version 1.0.3**  ·  [all the mods](../../README.md)  ·  install it from [Thunderstore](https://thunderstore.io/c/valheim/p/Quads_Lab/Quads_Ledger_Chest/) (r2modman, Thunderstore Mod Manager) or the in-game [mod manager](https://github.com/HardHeadHackerHead/valheim-mod-manager) (**F7**)
 
 A chest you build that shows everything in every chest within 30 m, in the game's own chest window: search it, pick a category button
 (Wood, Ores & metals, Food, Weapons...), and click to take what you need from wherever it is. It keeps nothing itself: drop things on it and
@@ -57,7 +57,7 @@ A chest you build that shows everything in every chest around it, with a search:
 
 ## ⚙️ Settings
 
-In `BepInEx/config/com.dhack.ledgerchest.cfg` (made the first time the game runs with the mod).
+In `BepInEx/config/com.quad.ledgerchest.cfg` (made the first time the game runs with the mod).
 
 **Ledger**
 
@@ -70,8 +70,13 @@ In `BepInEx/config/com.dhack.ledgerchest.cfg` (made the first time the game runs
 
 Everyone in the world needs it, **the host above all**. It adds a new build piece. Restart the game after updating so it registers cleanly.
 
+## 🤖 Made with AI
+
+Made with the help of Claude (Anthropic), with Claude Code: designed, written and checked together, and tried in the game.
+
 ## 📜 Changes
 
+- **1.0.3** A new id, com.quad.ledgerchest (it was com.dhack.ledgerchest): your settings move over by themselves the first time it starts, and the old settings file is kept as a backup. Restart the game after this update. If an old copy is still installed beside it, this one stands down and says which file to delete, so the two never both run. The DLL now says it was made with AI, as Thunderstore asks.
 - Things that fit in no chest and not in your inventory either stay in the Ledger Chest, and now you're told so. The page now says plainly that the server and every player need the mod (a game without it deletes the Ledger Chests with what is in them), and a problem drawing its look can no longer stop it being registered.
 - Fix: no more stutter every 5 seconds. Looking for Claude Tools searched everything the game had loaded; it now asks BepInEx's list of mods.
 - First version: the Ledger Chest. Open it to see and search everything in the chests around it, by category (a button for each kind of thing), and take what you need. It keeps nothing itself: put things in it and they go on to the chest assigned them (QualityOfLife's chest assignments), else to a chest with nothing assigned, else back to you.

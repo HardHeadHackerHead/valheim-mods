@@ -14,9 +14,10 @@ namespace AICompanion
     [BepInPlugin(Guid, Name, Version)]
     public partial class Plugin : BaseUnityPlugin
     {
-        public const string Guid = "com.dhack.aicompanion";
+        public const string Guid = "com.quad.aicompanion";
+        public const string OldGuid = "com.dhack.aicompanion"; // (its id until 2026-10: settings move over by themselves, see Shared/Migration.cs)
         public const string Name = "AICompanion";
-        public const string Version = "0.22.0";
+        public const string Version = "0.22.1";
 
         internal static Plugin Instance;
         internal static ConfigEntry<bool> ShowDecisions;
@@ -51,11 +52,12 @@ namespace AICompanion
 
         private void Awake()
         {
+            DHack.Shared.Migration.FromOldGuid(this, OldGuid); // first: before any setting is read
             Instance = this;
             Synced = new DHack.Shared.ServerSettings(Guid, Config, Logger);
             // Only a few settings in the mod's own file (and the mod manager): the menu and command keys, how many companions, and life while you
             // are away. Everything else is changed in the companion's menu, where it is explained, and kept in a second file the manager does
-            // not list (com.dhack.aicompanion.more.cfg). Values set before 0.6.0 move over by themselves.
+            // not list (com.quad.aicompanion.more.cfg). Values set before 0.6.0 move over by themselves.
             MenuKey = Config.Bind("General", "MenuKey", new KeyboardShortcut(KeyCode.J),
                 "Tap: your companion's menu (or the summon panel). Hold: all your companions near you come with you, or go home. E on a companion opens its menu too.");
             CommandKey = Config.Bind("General", "CommandKey", new KeyboardShortcut(KeyCode.H),

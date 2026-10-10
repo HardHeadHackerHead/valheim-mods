@@ -13,7 +13,23 @@ namespace ClaudeTools
     /// </summary>
     public partial class Plugin
     {
-        private void RegisterObjectCommands() =>
+        private void RegisterObjectCommands()
+        {
+            Builtin("prefabs", "prefabs <text>: every prefab name (pieces, items, creatures, effects) containing the text: the exact name objects, " +
+                "render, inspect and give need", (a, output, error) =>
+            {
+                string text = Rest(a, 1).ToLowerInvariant();
+                if (text.Length == 0) { error("say what to look for, e.g. prefabs warstone"); return null; }
+                if (ZNetScene.instance == null) { error("no world loaded"); return null; }
+                var names = ZNetScene.instance.m_prefabs.Where(p => p != null && p.name.ToLowerInvariant().Contains(text))
+                    .Select(p => p.name).Distinct().OrderBy(n => n).ToList();
+                output(new JObject { ["count"] = names.Count, ["prefabs"] = new JArray(names.Take(150)) });
+                return null;
+            });
+            RegisterObjectsCommand();
+        }
+
+        private void RegisterObjectsCommand() =>
             Builtin("objects", "objects <prefab> [remove]: every object of that prefab in the world (where, loaded or not); remove deletes them all " +
                 "(exact prefab name; only where cheats are allowed)", (a, output, error) =>
             {

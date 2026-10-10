@@ -16,9 +16,10 @@ namespace BetterCraftingStations
     [BepInPlugin(Guid, Name, Version)]
     public class Plugin : BaseUnityPlugin
     {
-        public const string Guid = "com.dhack.bettercraftingstations";
+        public const string Guid = "com.quad.bettercraftingstations";
+        public const string OldGuid = "com.dhack.bettercraftingstations"; // (its id until 2026-10: settings move over by themselves, see Shared/Migration.cs)
         public const string Name = "BetterCraftingStations";
-        public const string Version = "0.1.1";
+        public const string Version = "0.1.2";
 
         internal static ManualLogSource Log;
         private static ConfigEntry<bool> _enabled;
@@ -28,6 +29,7 @@ namespace BetterCraftingStations
 
         private void Awake()
         {
+            DHack.Shared.Migration.FromOldGuid(this, OldGuid); // first: before any setting is read
             Log = Logger;
             _enabled = Config.Bind("General", "Enabled", true, "Show the filter chips above the crafting list. Off, the list is the game's own.");
             _harmony = new Harmony(Guid);

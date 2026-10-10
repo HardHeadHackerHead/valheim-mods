@@ -1,6 +1,6 @@
 # Quad's Cigars add-on API (v1)
 
-The live BepInEx plugin `com.dhack.cigarsmoking` exposes `SmokingApiVersion = 1` and these instance methods:
+The live BepInEx plugin `com.quad.cigarsmoking` (`com.dhack.cigarsmoking` before October 2026: look up either) exposes `SmokingApiVersion = 1` and these instance methods:
 
 ```csharp
 bool RegisterSmokingEffect(string effectName);

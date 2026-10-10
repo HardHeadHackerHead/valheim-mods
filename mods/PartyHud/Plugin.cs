@@ -24,9 +24,10 @@ namespace PartyHud
     [BepInPlugin(Guid, Name, Version)]
     public partial class Plugin : BaseUnityPlugin
     {
-        public const string Guid = "com.dhack.partyhud";
+        public const string Guid = "com.quad.partyhud";
+        public const string OldGuid = "com.dhack.partyhud"; // (its id until 2026-10: settings move over by themselves, see Shared/Migration.cs)
         public const string Name = "PartyHud";
-        public const string Version = "1.8.0";
+        public const string Version = "1.8.1";
 
         internal static DHack.Shared.ServerSettings Synced; // settings the server decides in multiplayer
         private ConfigEntry<bool> _shareMine, _allowSharing;
@@ -63,6 +64,7 @@ namespace PartyHud
 
         private void Awake()
         {
+            DHack.Shared.Migration.FromOldGuid(this, OldGuid); // first: before any setting is read
             _enabled = Config.Bind("General", "Enabled", true, "Show the party panel.");
             _showSelf = Config.Bind("General", "ShowSelf", true, "Include yourself in the panel.");
             _showPortraits = Config.Bind("General", "ShowPortraits", true,

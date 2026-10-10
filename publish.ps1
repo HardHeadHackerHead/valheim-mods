@@ -5,6 +5,7 @@ $dist = Join-Path $root "dist"
 New-Item -ItemType Directory -Force $dist | Out-Null
 
 $manifest = @()   # becomes dist\manifest.json, which the in-game mod manager reads
+$GuidSwitchRelease = $true   # see $restart below: $false once the com.dhack -> com.quad release is out
 
 foreach ($proj in Get-ChildItem (Join-Path $root "mods") -Directory) {
     $csproj = Join-Path $proj.FullName "$($proj.Name).csproj"
@@ -24,6 +25,8 @@ foreach ($proj in Get-ChildItem (Join-Path $root "mods") -Directory) {
     $guid = [regex]::Match($src, 'const string Guid\s*=\s*"([^"]+)"').Groups[1].Value
     $name = [regex]::Match($src, 'const string Name\s*=\s*"([^"]+)"').Groups[1].Value
     $ver  = [regex]::Match($src, 'const string Version\s*=\s*"([^"]+)"').Groups[1].Value
+    # The mod's GUID before it changed (com.dhack.* until 2026-10): the manager treats the old one as an older copy of this mod.
+    $oldGuid = [regex]::Match($src, 'const string OldGuid\s*=\s*"([^"]+)"').Groups[1].Value
     if (-not $guid -or -not $ver) { Write-Error "Couldn't find Guid/Version constants in $($proj.Name)"; exit 1 }
     $descFile = Join-Path $proj.FullName "DESCRIPTION.txt"
     $desc = if (Test-Path $descFile) { (Get-Content $descFile -Raw).Trim() } else { "" }
@@ -43,6 +46,9 @@ foreach ($proj in Get-ChildItem (Join-Path $root "mods") -Directory) {
     # Optional RESTART_REQUIRED.txt: the mod can't be hot-reloaded safely, so the manager asks for a game restart. The file's text is the reason.
     $restartFile = Join-Path $proj.FullName "RESTART_REQUIRED.txt"
     $restart = if (Test-Path $restartFile) { (Get-Content $restartFile -Raw).Trim() } else { "" }
+    # The release that moved every mod to its com.quad.* GUID: a manager that doesn't know "was" would hot-load the new copy next to the
+    # old one (two GUIDs, so both run), so this one release asks for a restart. Set $GuidSwitchRelease to $false after it.
+    if ($GuidSwitchRelease -and $oldGuid -and -not $restart) { $restart = "This update gives the mod a new id ($guid; it was $oldGuid). Restart the game to finish: your settings move over by themselves." }
 
     # Optional cover image (cover.png or cover.jpg in the mod folder), shown on the mod's card in the manager. Keep it small: about 640x360, under 1 MB.
     $cover = ""
@@ -59,6 +65,7 @@ foreach ($proj in Get-ChildItem (Join-Path $root "mods") -Directory) {
     $manifest += [ordered]@{
         guid = $guid; name = $name; version = $ver; description = $desc; notes = $notes; restart = $restart; cover = $cover
         files = @("$($proj.Name).dll", "$($proj.Name).pdb")
+        was = @($oldGuid | Where-Object { $_ })
     }
 }
 
@@ -72,3 +79,4 @@ else { Write-Warning "Python not found: the mods' own pages were not made again 
 Write-Host "`nReady in $dist :"
 Get-ChildItem $dist | Select-Object Name, Length, LastWriteTime
 Write-Host "`nNext: git add dist; git commit -m 'Update mods'; git push"
+Write-Host "Thunderstore (each mod its own package, team Quads_Lab): .	hunderstore.ps1 to package and check, .	hunderstore.ps1 -Mods <names> -Publish to upload."

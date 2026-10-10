@@ -17,9 +17,10 @@ namespace LedgerChest
     [BepInPlugin(Guid, Name, Version)]
     public class Plugin : BaseUnityPlugin
     {
-        public const string Guid = "com.dhack.ledgerchest";
+        public const string Guid = "com.quad.ledgerchest";
+        public const string OldGuid = "com.dhack.ledgerchest"; // (its id until 2026-10: settings move over by themselves, see Shared/Migration.cs)
         public const string Name = "LedgerChest";
-        public const string Version = "1.0.2";
+        public const string Version = "1.0.3";
         public const string PiecePrefab = "piece_ledgerchest";
 
         internal static Plugin Instance;
@@ -31,6 +32,7 @@ namespace LedgerChest
 
         private void Awake()
         {
+            DHack.Shared.Migration.FromOldGuid(this, OldGuid); // first: before any setting is read
             Instance = this;
             Radius = Config.Bind("Ledger", "Radius", 30f, new ConfigDescription("How far from the Ledger Chest (metres) the chests it lists can be.", new AcceptableValueRange<float>(5f, 60f)));
             Scale = Config.Bind("Ledger", "Scale", 1f, new ConfigDescription("Size of the list beside the chest.", new AcceptableValueRange<float>(0.6f, 2f)));
@@ -64,7 +66,7 @@ namespace LedgerChest
         {
             if (Time.unscaledTime < _nextClaudeCheck) return;
             _nextClaudeCheck = Time.unscaledTime + 5f;
-            BaseUnityPlugin found = BepInEx.Bootstrap.Chainloader.PluginInfos.TryGetValue("com.dhack.claudetools", out PluginInfo info) ? info.Instance : null;
+            BaseUnityPlugin found = BepInEx.Bootstrap.Chainloader.PluginInfos.TryGetValue("com.quad.claudetools", out PluginInfo info) ? info.Instance : null;
             if (found == _claudeTools) return;
             _claudeTools = found;
             if (found == null) return;

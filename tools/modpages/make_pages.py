@@ -18,6 +18,7 @@ MODS = os.path.join(ROOT, "mods")
 GAME_CONFIG = os.environ.get("VALHEIM_CONFIG", r"D:\SteamLibrary\steamapps\common\Valheim\BepInEx\config")
 SHOTS = json.load(io.open(os.path.join(os.path.dirname(__file__), "shots.json"), encoding="utf-8"))
 BEGIN, END = "<!-- HAND-WRITTEN: kept when this page is made again -->", "<!-- END HAND-WRITTEN -->"
+THUNDERSTORE_TEAM = "Quads_Lab"  # our team on Thunderstore: each mod is its own package there
 COMMITTED = "--committed" in sys.argv
 
 
@@ -170,7 +171,13 @@ def page(folder, cards, keys):
            "# " + title, ""]
     if cover:
         out += ['<img src="%s" alt="%s" width="100%%">' % (cover, html.escape(plain)), ""]
-    out += ["**Version %s**  ·  [all the mods](../../README.md)  ·  installs and updates through the in-game [mod manager](https://github.com/HardHeadHackerHead/valheim-mod-manager) (**F7**)" % version, ""]
+    # the Thunderstore package name: from the mod's thunderstore.toml (made by modkit package), else from its name
+    toml = read(os.path.join(d, "thunderstore.toml")) or ""
+    named = re.search(r'(?m)^name\s*=\s*"([^"]+)"', toml)
+    package = named.group(1) if named else (re.sub(r"[^A-Za-z0-9_]", "", re.sub(r"[\s\-.]+", "_", name)) or folder)
+    out += ["**Version %s**  ·  [all the mods](../../README.md)  ·  install it from [Thunderstore](https://thunderstore.io/c/valheim/p/%s/%s/) "
+            "(r2modman, Thunderstore Mod Manager) or the in-game [mod manager](https://github.com/HardHeadHackerHead/valheim-mod-manager) (**F7**)"
+            % (version, THUNDERSTORE_TEAM, package), ""]
     if pitch:
         out += [pitch, ""]
 
@@ -221,6 +228,9 @@ def page(folder, cards, keys):
         out += ["Everyone in the world needs it, **the host above all**. %s" % restart, ""]
     else:
         out += ["See [who needs which mod](../../README.md#playing-together) on the front page.", ""]
+
+    # Thunderstore asks mods made with AI to say so (and so do we)
+    out += ["## 🤖 Made with AI", "", "Made with the help of Claude (Anthropic), with Claude Code: designed, written and checked together, and tried in the game.", ""]
 
     if log.strip():
         out += ["## 📜 Changes", ""]

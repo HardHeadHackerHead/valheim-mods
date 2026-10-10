@@ -22,7 +22,7 @@ namespace SkalTavern
         {
             if (Time.unscaledTime < _next) return;
             _next = Time.unscaledTime + 5f;
-            BaseUnityPlugin found = Chainloader.PluginInfos.TryGetValue("com.dhack.claudetools", out PluginInfo info) ? info.Instance : null;
+            BaseUnityPlugin found = Chainloader.PluginInfos.TryGetValue("com.quad.claudetools", out PluginInfo info) ? info.Instance : null;
             if (found == _claudeTools) return;
             _claudeTools = found;
             if (found == null) return;

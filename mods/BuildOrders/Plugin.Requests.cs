@@ -19,7 +19,7 @@ namespace BuildOrders
     /// </summary>
     public partial class Plugin
     {
-        private const string ClaudeToolsGuid = "com.dhack.claudetools";
+        private const string ClaudeToolsGuid = "com.quad.claudetools";
         private static string ImportsFile => Path.Combine(BlueprintDir, "_imports.json");
         private BaseUnityPlugin _claudeTools;
         private float _nextClaudeCheck;

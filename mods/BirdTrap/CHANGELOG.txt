@@ -1,3 +1,5 @@
+1.1.1: A new id, com.quad.birdtrap (it was com.dhack.birdtrap): your settings move over by themselves the first time it starts, and the old settings file is kept as a backup. Restart the game after this update. If an old copy is still installed beside it, this one stands down and says which file to delete, so the two never both run. The DLL now says it was made with AI, as Thunderstore asks.
+
 1.1.0: Fix: two players plucking the same bird could both get its feathers, and bait could be lost. Whoever presses E now asks the trap's owner, which plucks the bird or takes the bait and answers: the feathers come only on its yes ("The bird is already gone" otherwise), and bait that doesn't fit comes back to you. In multiplayer the server decides the catching and plucking settings. A problem with the trap's look can no longer stop it being registered.
 
 Fix: no more stutter every 5 seconds. Looking for Claude Tools searched everything the game had loaded; it now asks BepInEx's list of mods.

@@ -27,9 +27,10 @@ namespace ClaudeTools
     [BepInPlugin(Guid, Name, Version)]
     public partial class Plugin : BaseUnityPlugin
     {
-        public const string Guid = "com.dhack.claudetools";
+        public const string Guid = "com.quad.claudetools";
+        public const string OldGuid = "com.dhack.claudetools"; // (its id until 2026-10: settings move over by themselves, see Shared/Migration.cs)
         public const string Name = "ClaudeTools";
-        public const string Version = "1.2.1";
+        public const string Version = "1.2.2";
 
         internal static Plugin Instance;
         internal static BepInEx.Logging.ManualLogSource Log;
@@ -45,6 +46,7 @@ namespace ClaudeTools
 
         private void Awake()
         {
+            DHack.Shared.Migration.FromOldGuid(this, OldGuid); // first: before any setting is read
             Instance = this;
             Log = Logger;
             _allowRequests = Config.Bind("Requests", "AllowRequests", false,
@@ -58,9 +60,12 @@ namespace ClaudeTools
             _surveyRadius = Config.Bind("Keys", "SurveyRadius", 24f, new ConfigDescription("How far a survey reaches (metres).", new AcceptableValueRange<float>(4f, 64f)));
             RegisterBuiltIns();
             BindLibrary();
+            BindDev();
             RegisterConsole();
             Logger.LogInfo($"{Name} {Version} loaded (requests {( _allowRequests.Value ? "on" : "off")}, folder {Folder})");
         }
+
+        private void Start() => StartCoroutine(LoadScriptsAtStart());
 
         private void OnDestroy()
         {
@@ -76,6 +81,7 @@ namespace ClaudeTools
         private void Update()
         {
             if (!_guideWritten) { _guideWritten = true; WriteGuide(); }
+            WatchScripts();
             Player player = Player.m_localPlayer;
 
             if (player != null && !TypingOrMenuOpen())
@@ -133,7 +139,7 @@ namespace ClaudeTools
                 {
                     string rel = name == "guide/CLAUDE.md" ? "CLAUDE.md"
                                : name.StartsWith("skills/") ? ".claude/" + name.Replace('\\', '/')
-                               : name.StartsWith("modkit/") || name.StartsWith("modelkit/") ? name : null;
+                               : name.StartsWith("modkit/") || name.StartsWith("modelkit/") || name.StartsWith("templates/") ? name : null;
                     if (rel == null) continue;
                     try
                     {

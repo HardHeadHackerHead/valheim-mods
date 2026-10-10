@@ -25,6 +25,11 @@
     <EmbeddedResource Include="../../tools/blueprints/tools/extract_meshes.py" LogicalName="modelkit/extract_meshes.py" />
     <!-- Claude Code skills for mod makers; the mod writes them to BepInEx/claude/.claude/skills. -->
     <EmbeddedResource Include="Skills/*/SKILL.md" LogicalName="skills/%(RecursiveDir)SKILL.md" />
+    <!-- Code for mod makers to copy into their own mods (not part of ClaudeTools); written to BepInEx/claude/templates. -->
+    <Compile Remove="Templates/**" />
+    <EmbeddedResource Include="Templates/README.md" LogicalName="templates/README.md" />
+    <EmbeddedResource Include="Templates/ContainerAccess.cs" LogicalName="templates/ContainerAccess.cs" />
+    <EmbeddedResource Include="../Shared/ServerSettings.cs" LogicalName="templates/ServerSettings.cs" />
     <!-- The patch map of the top Thunderstore mods (facts only, no code), made by tools/PatchMap. -->
     <EmbeddedResource Include="Shipped/patchmap.json.gz" LogicalName="library/shipped.json.gz" Condition="Exists('Shipped/patchmap.json.gz')" />
   </ItemGroup>

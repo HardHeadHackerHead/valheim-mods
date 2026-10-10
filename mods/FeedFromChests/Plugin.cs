@@ -21,9 +21,10 @@ namespace FeedFromChests
     [BepInPlugin(Guid, Name, Version)]
     public partial class Plugin : BaseUnityPlugin
     {
-        public const string Guid = "com.dhack.feedfromchests";
+        public const string Guid = "com.quad.feedfromchests";
+        public const string OldGuid = "com.dhack.feedfromchests"; // (its id until 2026-10: settings move over by themselves, see Shared/Migration.cs)
         public const string Name = "FeedFromChests";
-        public const string Version = "1.6.0";
+        public const string Version = "1.6.1";
 
         internal static Plugin Instance;
         internal static DHack.Shared.ServerSettings Synced; // settings the server decides in multiplayer
@@ -48,6 +49,7 @@ namespace FeedFromChests
 
         private void Awake()
         {
+            DHack.Shared.Migration.FromOldGuid(this, OldGuid); // first: before any setting is read
             Instance = this;
             Synced = new DHack.Shared.ServerSettings(Guid, Config, Logger);
             const string server = " In multiplayer the server's value applies.";

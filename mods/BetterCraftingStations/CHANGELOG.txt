@@ -1,3 +1,5 @@
+0.1.2: A new id, com.quad.bettercraftingstations (it was com.dhack.bettercraftingstations): your settings move over by themselves the first time it starts, and the old settings file is kept as a backup. Restart the game after this update. If an old copy is still installed beside it, this one stands down and says which file to delete, so the two never both run. The DLL now says it was made with AI, as Thunderstore asks.
+
 Fix: the chips no longer swap the game's recipe list for a new one (other mods that change the list now see what is shown), the chips can't be pressed by the gamepad buttons of the real tabs any more and no longer cause errors every frame, and clicking a chip no longer writes a line to the log.
 
 New: filter chips above the crafting list at every station: a type (weapons, armor, tools, ammo, food, potions), how far into the game (wood and flint, bronze, iron, silver...) or just what you can make now, each with its count.

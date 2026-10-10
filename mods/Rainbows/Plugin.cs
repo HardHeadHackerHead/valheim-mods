@@ -16,9 +16,10 @@ namespace Rainbows
     [BepInPlugin(Guid, Name, Version)]
     public class Plugin : BaseUnityPlugin
     {
-        public const string Guid = "com.dhack.rainbows";
+        public const string Guid = "com.quad.rainbows";
+        public const string OldGuid = "com.dhack.rainbows"; // (its id until 2026-10: settings move over by themselves, see Shared/Migration.cs)
         public const string Name = "Rainbows";
-        public const string Version = "0.2.0";
+        public const string Version = "0.2.1";
 
         internal static Plugin Instance;
         internal static ManualLogSource Log;
@@ -31,6 +32,7 @@ namespace Rainbows
 
         private void Awake()
         {
+            DHack.Shared.Migration.FromOldGuid(this, OldGuid); // first: before any setting is read
             Instance = this;
             Log = Logger;
             Synced = new DHack.Shared.ServerSettings(Guid, Config, Logger);

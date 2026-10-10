@@ -5,7 +5,7 @@
 
 <img src="cover.png" alt="BetterCraftingStations" width="100%">
 
-**Version 0.1.1**  ·  [all the mods](../../README.md)  ·  installs and updates through the in-game [mod manager](https://github.com/HardHeadHackerHead/valheim-mod-manager) (**F7**)
+**Version 0.1.2**  ·  [all the mods](../../README.md)  ·  install it from [Thunderstore](https://thunderstore.io/c/valheim/p/Quads_Lab/Quads_Crafting_Filters/) (r2modman, Thunderstore Mod Manager) or the in-game [mod manager](https://github.com/HardHeadHackerHead/valheim-mod-manager) (**F7**)
 
 Filter chips above the crafting list at every station: pick a type (weapons, armor, tools, ammo, food, potions), how far into the game it is
 (wood and flint, bronze, iron, silver...), or just what you can make now, each with how many recipes it has. The list below is the game's own,
@@ -42,7 +42,7 @@ The only setting is Enabled.
 
 ## ⚙️ Settings
 
-In `BepInEx/config/com.dhack.bettercraftingstations.cfg` (made the first time the game runs with the mod).
+In `BepInEx/config/com.quad.bettercraftingstations.cfg` (made the first time the game runs with the mod).
 
 **General**
 
@@ -54,7 +54,12 @@ In `BepInEx/config/com.dhack.bettercraftingstations.cfg` (made the first time th
 
 See [who needs which mod](../../README.md#playing-together) on the front page.
 
+## 🤖 Made with AI
+
+Made with the help of Claude (Anthropic), with Claude Code: designed, written and checked together, and tried in the game.
+
 ## 📜 Changes
 
+- **0.1.2** A new id, com.quad.bettercraftingstations (it was com.dhack.bettercraftingstations): your settings move over by themselves the first time it starts, and the old settings file is kept as a backup. Restart the game after this update. If an old copy is still installed beside it, this one stands down and says which file to delete, so the two never both run. The DLL now says it was made with AI, as Thunderstore asks.
 - Fix: the chips no longer swap the game's recipe list for a new one (other mods that change the list now see what is shown), the chips can't be pressed by the gamepad buttons of the real tabs any more and no longer cause errors every frame, and clicking a chip no longer writes a line to the log.
 - New: filter chips above the crafting list at every station: a type (weapons, armor, tools, ammo, food, potions), how far into the game (wood and flint, bronze, iron, silver...) or just what you can make now, each with its count.

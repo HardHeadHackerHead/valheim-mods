@@ -20,9 +20,10 @@ namespace GearSlots
     [BepInPlugin(Guid, Name, Version)]
     public class Plugin : BaseUnityPlugin
     {
-        public const string Guid = "com.dhack.gearslots";
+        public const string Guid = "com.quad.gearslots";
+        public const string OldGuid = "com.dhack.gearslots"; // (its id until 2026-10: settings move over by themselves, see Shared/Migration.cs)
         public const string Name = "GearSlots";
-        public const string Version = "1.2.0";
+        public const string Version = "1.2.1";
 
         internal static Plugin Instance;
         internal static BepInEx.Logging.ManualLogSource Log;
@@ -40,6 +41,7 @@ namespace GearSlots
 
         private void Awake()
         {
+            DHack.Shared.Migration.FromOldGuid(this, OldGuid); // first: before any setting is read
             Instance = this;
             Log = Logger;
             _showPanel = Config.Bind("General", "ShowPanel", true, "Show the Gear panel next to your inventory. (Turn off and your gear slots hide; the items stay where they are.)");

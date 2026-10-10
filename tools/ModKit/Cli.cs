@@ -27,18 +27,21 @@ namespace ClaudeTools
   modkit library get <Namespace-Name> [...]          download a Thunderstore mod's DLL (code only) into the library
   modkit library drop <Namespace-Name> [...]         remove one
   modkit library update [count]                      fetch the most-downloaded mods (count, 10 by default)
+  modkit package <mod folder> [--namespace Team]     get a mod ready for Thunderstore: writes its thunderstore.toml (for tcli) and checks
+                                                     everything an upload needs (first time: --namespace, the Thunderstore team)
+  modkit package check <built .zip>                  check the zip tcli build made, before testing and publishing it
 
-Options: --json (the raw answer), --valheim <folder> (if it can't find the game).";
+Options: --json (the raw answer), --valheim <folder> (the game), --bepinex <folder> (BepInEx, when a mod manager keeps it in a profile).";
 
         private static string _valheim, _bepinex, _managed, _library;
         private static string[] _search;
 
-        public static int Run(string[] args, string valheim)
+        public static int Run(string[] args, string valheim, string bepinex)
         {
             bool json = args.Contains("--json");
             string[] a = args.Where(x => x != "--json").ToArray();
             _valheim = valheim;
-            _bepinex = Path.Combine(valheim, "BepInEx");
+            _bepinex = bepinex;
             _managed = Path.Combine(valheim, "valheim_Data", "Managed");
             _library = Path.Combine(_bepinex, "claude", "library");
             _search = new[] { Path.Combine(_bepinex, "core"), _managed, Path.Combine(_bepinex, "plugins") };
@@ -88,7 +91,7 @@ Options: --json (the raw answer), --valheim <folder> (if it can't find the game)
                     }
                     else guid = (string)(Scan.Dll(dll, _search)["plugins"] as JArray)?.FirstOrDefault()?["guid"];
                     List<Use> installed = UsesFromInstalled(scans);
-                    JObject result = Check.Run(dll, _search, OthersFor(guid, installed.Concat(Library(installed))));
+                    JObject result = Check.Run(dll, _search, OthersFor(guid, installed.Concat(Library(installed)), LibraryScans(Path.Combine(_library, "mods"), Shipped())));
                     result["note"] = "Candidates, not certainties: read the code at \"where\" before changing it. Rules come from real bugs (lost items, deleted buildings, broken mods).";
                     return result;
                 }
@@ -155,9 +158,20 @@ Options: --json (the raw answer), --valheim <folder> (if it can't find the game)
 
                 case "library": return LibraryCommand(a);
 
+                case "package":
+                    return Package.Run(a, _search, CheckFull, () => LibraryScans(Path.Combine(_library, "mods"), Shipped()));
+
                 default:
                     return Fail($"modkit: no command '{a[0]}' (modkit help lists them)");
             }
+        }
+
+        /// <summary>modcheck on any DLL, with the installed and popular mods to compare against (as the modcheck command does).</summary>
+        private static JObject CheckFull(string dll)
+        {
+            string guid = (string)(Scan.Dll(dll, _search)["plugins"] as JArray)?.FirstOrDefault()?["guid"];
+            List<Use> installed = UsesFromInstalled(Installed());
+            return Check.Run(dll, _search, OthersFor(guid, installed.Concat(Library(installed)), LibraryScans(Path.Combine(_library, "mods"), Shipped())));
         }
 
         private static bool Is(JToken plugin, string what) =>
@@ -295,8 +309,9 @@ Options: --json (the raw answer), --valheim <folder> (if it can't find the game)
         /// <summary>The game's AlsoKeep setting (mods to keep whatever their rank), from Claude Tools' config file.</summary>
         private static List<string> AlsoKeep()
         {
-            string cfg = Path.Combine(_bepinex, "config", "com.dhack.claudetools.cfg");
-            if (!File.Exists(cfg)) return new List<string>();
+            string cfg = new[] { "com.quad.claudetools.cfg", "com.dhack.claudetools.cfg" } // (its id before 2026-10)
+                .Select(f => Path.Combine(_bepinex, "config", f)).FirstOrDefault(File.Exists);
+            if (cfg == null) return new List<string>();
             string line = File.ReadAllLines(cfg).FirstOrDefault(l => l.TrimStart().StartsWith("AlsoKeep", StringComparison.Ordinal) && l.Contains("="));
             if (line == null) return new List<string>();
             return line.Substring(line.IndexOf('=') + 1).Split(',').Select(x => x.Trim()).Where(IsPackage).ToList();

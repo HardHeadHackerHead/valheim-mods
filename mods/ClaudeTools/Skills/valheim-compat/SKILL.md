@@ -5,7 +5,7 @@ description: Make a Valheim mod work alongside other mods, find which popular mo
 
 # Playing well with other mods
 
-> **Game closed?** The mod-maker commands (`modcheck`, `who`, `clashes`, `patches`, `game`, `gameupdate`, `library`, `systems`) also run as a program: `BepInEx/claude/modkit/modkit.exe <command>` on Windows, `dotnet BepInEx/claude/modkit/modkit.dll <command>` on Linux and Mac (`modkit help` lists them). The others (`errors`, `log`, `waitfor`, pictures...) need the game running; its log is `BepInEx/LogOutput.log`.
+> **Game closed?** The mod-maker commands (`modcheck`, `who`, `clashes`, `patches`, `game`, `gameupdate`, `library`, `systems`) also run as a program: `BepInEx/claude/modkit/modkit.exe <command>` on Windows, `dotnet BepInEx/claude/modkit/modkit.dll <command>` on Linux and Mac (the command `help` lists them all). The others (`errors`, `log`, `waitfor`, pictures...) need the game running; its log is `BepInEx/LogOutput.log`.
 
 Players run dozens of mods, and they all patch the same game. A patch is a guest in someone else's method: other mods' patches run on it
 too. Two mods patching one method is normal; a clash needs one of them to take the method away from the others.
@@ -21,7 +21,7 @@ too. Two mods patching one method is normal; a clash needs one of them to take t
    create the dictionary when it is null.
 6. **Undo your patches on unload** (`OnDestroy` → `_harmony?.UnpatchSelf()`).
 7. **Don't answer the same question twice.** If another mod already adds chest items to what the player has, adding them too makes
-   crafts pay half. Doing one job through different methods still clashes (see "systems").
+   crafts pay half. Doing one job through different methods still clashes (`systems` lists the game's jobs, `who system <name>` who does each).
 8. **A Container isn't always a chest.** Creatures, carts, tombstones and other mods' objects have one too: a mod that uses "every container
    nearby" (crafting from chests, auto-feeding, quick stacking) must keep to built pieces (`GetComponent<Piece>() != null`), or it empties
    a companion's bag or a grave.
@@ -29,6 +29,11 @@ too. Two mods patching one method is normal; a clash needs one of them to take t
    moves or gives must take `bool __runOriginal`, return at once when it's already false (someone did it), and usually run at
    `[HarmonyPriority(Priority.Last)]`.
 10. **Never let a shortfall pass silently.** If you take payment from somewhere and can't find enough, refuse the action.
+11. **Name everything you register after your mod**: prefabs, RPCs, ZDO and `m_customData` keys, commands, `$` keys, asset bundles, the
+    Harmony id (your GUID). One namespace is shared by every mod: two `check` commands, and one hides the other.
+12. **Ask the game's rules, don't copy them.** Where the game has a check (ward access `PrivateArea.CheckAccess`, a chest's lock,
+    `Player.HaveRequirements`, `ZNetView.IsOwner`), call it rather than re-implementing it: other mods patch those checks, and your copy
+    would ignore them.
 
 ## What the popular mods do (the 100 most downloaded, from their code)
 
@@ -37,8 +42,8 @@ too. Two mods patching one method is normal; a clash needs one of them to take t
   after everyone else; `[HarmonyBefore]`/`[HarmonyAfter]` name a specific mod's Harmony id when one must come first.
 - **Saying "incompatible" is normal**: about a quarter of them use `[BepInIncompatibility]` (most often against ValheimPlus, and the
   inventory and quick-slot mods against each other). An honest refusal beats a broken game. But **ScriptEngine ignores
-  `[BepInIncompatibility]` and `[BepInDependency]`** for mods it loads from `BepInEx/scripts` (as the mod manager installs them): there,
-  only a check in your own code stands down.
+  `[BepInIncompatibility]` and `[BepInDependency]`** for mods it loads from `BepInEx/scripts` (some players' mod managers install
+  there; BepInEx itself and Claude Tools' dev loader honour them): there, only a check in your own code stands down.
 - **Every prefix runs**: in the HarmonyX that BepInEx ships, a prefix returning false skips only the game's method; every other mod's
   prefixes and postfixes on it still run. Two mods that both "take over" a method both do their work.
 - **Detect, don't depend**: a `Compatibility` folder with one small class per other mod; detect each **lazily** (the first time it matters,
@@ -50,7 +55,7 @@ too. Two mods patching one method is normal; a clash needs one of them to take t
 
 ## Finding who else changes the same thing
 
-With the game running (request file or `claude <command>` in the console):
+With the game running (request file or `claude <command>` in the console; the console needs Settings → Gameplay → "Enable console"):
 
 | Command | Use |
 |---|---|
@@ -63,8 +68,17 @@ Without the game: `BepInEx/claude/library/patchmap.json` (every popular mod's pa
 fresh when the player switches `DownloadMods` on), `library/index.json` (the mods), `library/clashes.json` (the last clashes report).
 
 Each patch entry: `kind` (prefix, postfix, transpiler, finalizer, hook), `skips` (`never`, `sometimes`, `always`), `changesResult`,
-`changesArgs`, `priority`, `method` (where it is in that mod). `likely` means one mod took the method over while the other changes it
-too, or both rewrite it. `check` means read both patches: most are fine.
+`changesArgs`, `runOriginal` (a prefix that reads `__runOriginal`), `args` (which overload, when the method has several: patches on
+different overloads don't meet), `priority`, `method` (where it is in that mod).
+
+A clash pair has a `level`:
+- `likely`: one mod took the method over while the other changes it too, or both rewrite it, or two prefixes on a method that pays or
+  hands out both skip it and the later one doesn't read `__runOriginal` (both do the job: paid twice, given twice).
+- `check`: either can skip the method, rewrites it, or changes its result or arguments. Read both patches: most are fine.
+- `stacks`: they only add to each other (postfixes, prefixes that never skip). Normal; shown only with `clashes all`.
+
+`highStakes` marks pairs in a system where two mods doing one job costs players items (crafting payment, inventory, saving, death,
+containers): read those first, even at `check`. `sameJob` means different methods doing one job (both count chest items for crafting).
 
 ## Reading another mod's code
 
@@ -79,8 +93,11 @@ decompiled code. Credit ideas you take. The library stays on the player's comput
 ## Working with another mod
 
 - **Detect it**: `Chainloader.PluginInfos.TryGetValue("their.guid", out var info)` (GUIDs are in `library/index.json` and each
-  `scan.json`). Check once, when your mod starts, not every frame.
+  `scan.json`). Check the first time it matters (the player spawns, a chest opens), not in your `Awake` (mods loaded after yours, and every
+  ScriptEngine mod, aren't in the list yet) and not every frame, and keep the answer.
 - **Soft dependency** (`[BepInDependency("their.guid", BepInDependency.DependencyFlags.SoftDependency)]`): load after them if present.
+  BepInEx honours it for mods in `BepInEx/plugins` (Thunderstore installs) and Claude Tools' dev loader for `scripts`; ScriptEngine
+  ignores it. Either way, detect the other mod when it matters rather than relying on the order.
 - **Use their public API by reflection** so your mod still loads without theirs. Read their code for the method to call.
 - **Stand down** when you would do the same job twice: turn your part off when they're installed, and say so in the log and README.
 - **Truly incompatible**: `[BepInIncompatibility("their.guid")]` stops yours from loading next to theirs from `BepInEx/plugins`, but not

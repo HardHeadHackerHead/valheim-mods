@@ -20,9 +20,10 @@ namespace BuildOrders
     [BepInPlugin(Guid, Name, Version)]
     public partial class Plugin : BaseUnityPlugin
     {
-        public const string Guid = "com.dhack.buildorders";
+        public const string Guid = "com.quad.buildorders";
+        public const string OldGuid = "com.dhack.buildorders"; // (its id until 2026-10: settings move over by themselves, see Shared/Migration.cs)
         public const string Name = "BuildOrders";
-        public const string Version = "1.12.0";
+        public const string Version = "1.12.1";
 
         internal static Plugin Instance;
         internal static DHack.Shared.ServerSettings Synced;   // the gameplay settings the server decides in multiplayer
@@ -45,6 +46,7 @@ namespace BuildOrders
 
         private void Awake()
         {
+            DHack.Shared.Migration.FromOldGuid(this, OldGuid); // first: before any setting is read
             Instance = this;
             Synced = new DHack.Shared.ServerSettings(Guid, Config, Logger);
             PublishHelperHooks();

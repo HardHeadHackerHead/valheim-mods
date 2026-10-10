@@ -1,3 +1,5 @@
+1.1.1: A new id, com.quad.slotmachine (it was com.dhack.slotmachine): your settings move over by themselves the first time it starts, and the old settings file is kept as a backup. Restart the game after this update. If an old copy is still installed beside it, this one stands down and says which file to delete, so the two never both run. The DLL now says it was made with AI, as Thunderstore asks.
+
 The machine costs what it should again: 15 Fine Wood, 8 Bronze and 10 Stone (at a workbench), no longer the single Fine Wood it cost while it was being tested. In multiplayer the server decides the payout (PayoutPercent), so nobody can set their own machine to pay out more than goes in.
 
 Fix: after a fresh game start the slot machine was not registered until the mods were reloaded, so the game deleted any it found standing in the world. It is now registered as the world loads. Ones already lost can't be brought back; build them again. Fix: logging out, or walking away so the machine unloads, before the reels stop no longer loses your bet's winnings: they go into your inventory.

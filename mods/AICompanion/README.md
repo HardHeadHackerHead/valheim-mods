@@ -63,7 +63,7 @@ On a dedicated server, put the host's mods in the server's `BepInEx\scripts` (wi
 
 <img src="cover.png" alt="Option 1" width="100%">
 
-**Version 0.22.0**  ·  [all the mods](../../README.md)  ·  installs and updates through the in-game [mod manager](https://github.com/HardHeadHackerHead/valheim-mod-manager) (**F7**)
+**Version 0.22.1**  ·  [all the mods](../../README.md)  ·  install it from [Thunderstore](https://thunderstore.io/c/valheim/p/Quads_Lab/Quads_Companion/) (r2modman, Thunderstore Mod Manager) or the in-game [mod manager](https://github.com/HardHeadHackerHead/valheim-mod-manager) (**F7**)
 
 Press **J** to summon a viking companion. It comes on your adventures and fights like a player: timed parries, rolls out of sweeps, gets round
 behind what you are hitting, kites with a bow, drinks the right mead, and follows you through portals, crypts, doors and onto boats. Point with
@@ -125,14 +125,7 @@ A viking companion who plays like a player: comes on your adventures, lives its 
 
 ## ⚙️ Settings
 
-In `BepInEx/config/com.dhack.aicompanion.cfg` (made the first time the game runs with the mod).
-
-**Companion**
-
-| Setting | Default | What it does |
-|---|---|---|
-| `MaxCompanions` | `3` | How many companions each player can have. In multiplayer the server's value applies. |
-| `WhileAway` | `Mild` | What a companion living at home does while nobody is near. It always catches up on its work when you come back. Mild: it also fights off a few creatures and keeps their drops, and never falls. Real: those fights can go badly and it can fall. Off: work only. In multiplayer the server's value applies. |
+In `BepInEx/config/com.quad.aicompanion.cfg` (made the first time the game runs with the mod).
 
 **General**
 
@@ -145,20 +138,21 @@ In `BepInEx/config/com.dhack.aicompanion.cfg` (made the first time the game runs
 
 | Setting | Default | What it does |
 |---|---|---|
-| `FightRange` | `12` | It fights enemies that come this close (in metres) to it or to you. In the menu: Orders. |
-| `ShowDecisions` | `true` | Show what it decides in a fight above its head. In the menu: Brain. |
-| `RespawnSeconds` | `30` | Seconds after falling before it wakes in its bed (or beside you). In multiplayer the server's value applies. |
-| `BaseHealth` | `25` | Its health before food, as a player's (25). In multiplayer the server's value applies. |
-| `BaseStamina` | `75` | Its stamina before food, as a player's (75). In multiplayer the server's value applies. |
-| `EatBelowPercent` | `10` | It eats a food it is already under again once its time left drops below this percent (the game allows it from 50). Lower saves food: a meal lasts 80% of its time instead of 50%, and its effect weakens a little towards the end. In multiplayer the server's value applies. |
-| `StartingSkill` | `0` | The skill level a new companion starts at (a new player: 0). In multiplayer the server's value applies. |
+| `MaxCompanions` | `3` | How many companions each player can have. |
+| `WhileAway` | `AwayMode.Mild` | What a companion living at home does while nobody is near. It always catches up on its work when you come back.  |
+| `EngageRange` | `20` |  |
 
 ## 👥 Playing together
 
 Everyone in the world needs it, **the host above all**. It adds the companion (a new creature the world saves). Restart the game after updating so it registers cleanly: a companion whose area loads while it is not registered is deleted by the host, with everything it carries.
 
+## 🤖 Made with AI
+
+Made with the help of Claude (Anthropic), with Claude Code: designed, written and checked together, and tried in the game.
+
 ## 📜 Changes
 
+- **0.22.1** A new id, com.quad.aicompanion (it was com.dhack.aicompanion): your settings move over by themselves the first time it starts, and the old settings file is kept as a backup. Restart the game after this update. If an old copy is still installed beside it, this one stands down and says which file to delete, so the two never both run. The DLL now says it was made with AI, as Thunderstore asks.
 - When it falls, everything it has now goes into its tombstone, its gear too, and it puts its gear back on when it wakes if its tombstone is near (else it says where it is and goes back for it; at home it fetches it by itself). Before, the gear it wore was kept apart on your character, and was lost for good when it fell on another player's game while you were offline, or before your game saved. A companion brought back from the companions menu now finds its tombstone too (the menu says where). Multiplayer fixes: it no longer takes from or puts into a chest someone else has open, and loads what is really in a chest (or its tombstone, or its own bag) before it touches it, so items are no longer doubled or lost at shared bases; food or a potion a friend gives it with a hotbar key is no longer lost; a lost fight while you are away (WhileAway: Real) no longer makes a second copy of it; it no longer takes over other players' companions from afar. The gameplay settings (MaxCompanions, WhileAway, RespawnSeconds, BaseHealth, BaseStamina, EatBelowPercent, StartingSkill) are the server's in multiplayer. Typing its name in the menu no longer opens the map or the inventory. It sends far less over the network (its food and stamina were saved every second). Restart the game after updating: the companion is a creature the world saves, and a hot reload could let the host delete one with everything it carries; a reload now leaves it registered.
 - Fix: no more stutter every 5 seconds. Looking for Claude Tools searched everything the game had loaded; it now asks BepInEx's list of mods.
 - Building your plans, when it lacks what the plan needs: it works out what the next pieces of your plan still need less what is in its bag and the chests, as a goal like its gear goals: it gathers it (wood, stone, ore, resin, flint and the like, near home first and then on a trip as far as the world is loaded), smelts or makes it at a station near home (nails and the like), and asks you in chat only for what it cannot get itself ("For your plan I need 30 iron nails, and I can't get that myself"). What it gathers it keeps on it for the building instead of putting it away. When pieces cannot be built at all it says why: pieces you have not unlocked, a station (a stonecutter, say) not built near them, ground you may not build on, or nothing that will stand yet. Its menu shows what it is getting for the plan. While you are away it does the same when you come back: builds what it can pay for, gathers what is missing with its share of the time (a far trip if it must), makes what needs making, and builds what that brings, and the report says what it built and what it still lacks. Also fixed: a companion with an active duty and nothing to do for a moment threw an error (in the log every few minutes) that cut short its idle behaviour (the fire, a chair, a stroll).

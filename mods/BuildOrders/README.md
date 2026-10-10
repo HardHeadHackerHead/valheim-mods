@@ -5,7 +5,7 @@
 
 <img src="cover.png" alt="BuildOrders" width="100%">
 
-**Version 1.12.0**  ·  [all the mods](../../README.md)  ·  installs and updates through the in-game [mod manager](https://github.com/HardHeadHackerHead/valheim-mod-manager) (**F7**)
+**Version 1.12.1**  ·  [all the mods](../../README.md)  ·  install it from [Thunderstore](https://thunderstore.io/c/valheim/p/Quads_Lab/Quads_Build_Orders/) (r2modman, Thunderstore Mod Manager) or the in-game [mod manager](https://github.com/HardHeadHackerHead/valheim-mod-manager) (**F7**)
 
 Plan pieces as shared ghost build orders. Your party sees them, you can build one by just walking up and pressing **E**, and a panel totals the materials you still need. Pick a blueprint in the Plans window (**F11**), turn its preview into place, and a whole structure appears as ghosts (share blueprints with your friends from the same window): ask an AI assistant to design a fort for you.
 
@@ -73,25 +73,31 @@ Fetching materials: with the hammer out and a piece selected, a hint appears whe
 
 ## ⚙️ Settings
 
-In `BepInEx/config/com.dhack.buildorders.cfg` (made the first time the game runs with the mod).
+In `BepInEx/config/com.quad.buildorders.cfg` (made the first time the game runs with the mod).
+
+**Keys**
+
+| Setting | Default | What it does |
+|---|---|---|
+| `FetchKey` | `KeyCode.Y` | With the hammer out and a piece selected: press this to take exactly what it needs out of the chests around you (topping you up to one piece's worth, or another piece's worth when you have enough) and put it in your inventory (needs BuildFromChests). |
 
 **Blueprints**
 
 | Setting | Default | What it does |
 |---|---|---|
-| `ImportKey` | `F11` | Opens the Plans window: place blueprints from BepInEx/blueprints with a preview, see and remove placed plans, change build settings. |
+| `ImportKey` | `KeyCode.F11` | Opens the Plans window: place blueprints from BepInEx/blueprints with a preview, see and remove placed plans, change build settings. |
 
 **Bridge**
 
 | Setting | Default | What it does |
 |---|---|---|
 | `Width` | `2` | Deck width in metres (2, 4 or 6). The last bridge's choices are kept. |
-| `Material` | `Wood` | Wood; CoreWood (round logs from pines: stronger, reaches deeper water); Darkwood (needs tar); Stone (stone floors on stone pillars, needs a stonecutter). |
-| `Sides` | `Rails` | Rails (posts and a handrail), HalfWalls (a low wall along each side) or None (cheapest). |
+| `Material` | `BridgeMaterial.Wood` | Wood; CoreWood (round logs from pines: stronger, reaches deeper water); Darkwood (needs tar); Stone (stone floors on stone pillars, needs a stonecutter). |
+| `Sides` | `BridgeSides.Rails` | Rails (posts and a handrail), HalfWalls (a low wall along each side) or None (cheapest). |
 | `Roof` | `false` | A roof over the deck on tall posts (a covered bridge). |
-| `Supports` | `Auto` | Posts down to the riverbed: Auto (every 2 m in deep water, else 4 m), Every2m (strongest) or Every4m (cheapest). Stone always has a pillar under every slab. |
-| `Shape` | `Straight` | Straight from end to end, or Arched (the middle raised in a gentle curve). |
-| `Ends` | `Sloped` | Sloped (the deck slopes from one bank's height to the other's) or Steps (a level deck, with steps down at the lower end). |
+| `Supports` | `BridgeSupports.Auto` | Posts down to the riverbed: Auto (every 2 m in deep water, else 4 m), Every2m (strongest) or Every4m (cheapest). Stone always has a pillar under every slab. |
+| `Shape` | `BridgeShape.Straight` | Straight from end to end, or Arched (the middle raised in a gentle curve). |
+| `Ends` | `BridgeEnds.Sloped` | Sloped (the deck slopes from one bank's height to the other's) or Steps (a level deck, with steps down at the lower end). |
 | `Torches` | `false` | Standing torches along the deck every 8 m (wood and resin). |
 
 **General**
@@ -103,8 +109,31 @@ In `BepInEx/config/com.dhack.buildorders.cfg` (made the first time the game runs
 | `BuildByPressingUse` | `true` | Walk up to a ghost and press E to build it, no hammer needed. It costs the normal materials (from your inventory, then nearby chests if BuildFromChests is installed). |
 | `BuildWhileSwimming` | `true` | Keep your hammer in your hand while swimming so you can plan and build from the water (equip it before you jump in: the game does not let you equip things while swimming). |
 | `BuildAllRadius` | `24` | Holding E at a ghost (or Build nearby in the Plans window) builds every ghost within this many metres, lowest first, as far as your materials go. In multiplayer the server's value applies. |
+
+**Keys**
+
+| Setting | Default | What it does |
+|---|---|---|
+| `StabilityKey` | `KeyCode.F10` | Show or hide the estimated stability colours on the ghosts (blue = solid, green to red = weaker, red = would fall). |
+
+**General**
+
+| Setting | Default | What it does |
+|---|---|---|
 | `StabilityInPlanMode` | `true` | Show the stability colours automatically while plan mode is on. |
 | `UseReach` | `6` | How close (in metres) you must be to a ghost to build it by pressing E. In multiplayer the server's value applies. |
+
+**Look**
+
+| Setting | Default | What it does |
+|---|---|---|
+| `GhostOpacity` | `0.18` | How solid the ghosts are: 0.05 = barely there, 0.3 = clearly visible, 1 = solid. (Aimed-at ghosts are shown more solid.) |
+| `GhostShader` | `""` | Advanced: force a particular shader name for the ghosts. Leave blank to pick the best transparent one automatically (the choice is written to the BepInEx log). |
+
+**General**
+
+| Setting | Default | What it does |
+|---|---|---|
 | `ViewDistance` | `80` | Ghosts further than this many metres away are hidden (saves performance). |
 | `MaxGhosts` | `600` | Most ghosts shown at once (the nearest first). Big plans need more; very high numbers can cost frame rate. |
 | `SnapDistance` | `1.5` | When you're placing the same piece as a nearby order, your placement ghost snaps onto the order if it's within this many metres. |
@@ -113,20 +142,11 @@ In `BepInEx/config/com.dhack.buildorders.cfg` (made the first time the game runs
 
 | Setting | Default | What it does |
 |---|---|---|
-| `FetchKey` | `Y` | With the hammer out and a piece selected: press this to take exactly what it needs out of the chests around you (topping you up to one piece's worth, or another piece's worth when you have enough) and put it in your inventory (needs BuildFromChests). |
-| `StabilityKey` | `F10` | Show or hide the estimated stability colours on the ghosts (blue = solid, green to red = weaker, red = would fall). |
-| `PlanKey` | `LeftAlt` | With the hammer out, press this to turn plan mode on or off (or hold it, see PlanIsToggle). In plan mode, placing a piece records a build order instead of building it. Costs nothing. |
+| `PlanKey` | `KeyCode.LeftAlt` | With the hammer out, press this to turn plan mode on or off (or hold it, see PlanIsToggle). In plan mode, placing a piece records a build order instead of building it. Costs nothing. |
 | `PlanIsToggle` | `true` | On: press the plan key once to turn plan mode on, again to turn it off (it also ends when you put the hammer away). Off: plan mode only while the key is held. |
-| `SelectKey` | `U` | Aim at a build order and press this to select that piece in your hammer. (Pick a key the game doesn't use: G, the old default, also opens the game's radial menu.) |
-| `RemoveKey` | `Delete` | Aim at a build order and press this to remove it. Hold Shift to remove every order within 8 m of it. |
-| `ToggleGhostsKey` | `F9` | Show or hide all the ghosts. |
-
-**Look**
-
-| Setting | Default | What it does |
-|---|---|---|
-| `GhostOpacity` | `0.18` | How solid the ghosts are: 0.05 = barely there, 0.3 = clearly visible, 1 = solid. (Aimed-at ghosts are shown more solid.) |
-| `GhostShader` | `` | Advanced: force a particular shader name for the ghosts. Leave blank to pick the best transparent one automatically (the choice is written to the BepInEx log). |
+| `SelectKey` | `KeyCode.U` | Aim at a build order and press this to select that piece in your hammer. (Pick a key the game doesn't use: G, the old default, also opens the game's radial menu.) |
+| `RemoveKey` | `KeyCode.Delete` | Aim at a build order and press this to remove it. Hold Shift to remove every order within 8 m of it. |
+| `ToggleGhostsKey` | `KeyCode.F9` | Show or hide all the ghosts. |
 
 **Panel**
 
@@ -140,8 +160,13 @@ In `BepInEx/config/com.dhack.buildorders.cfg` (made the first time the game runs
 
 See [who needs which mod](../../README.md#playing-together) on the front page.
 
+## 🤖 Made with AI
+
+Made with the help of Claude (Anthropic), with Claude Code: designed, written and checked together, and tried in the game.
+
 ## 📜 Changes
 
+- **1.12.1** A new id, com.quad.buildorders (it was com.dhack.buildorders): your settings move over by themselves the first time it starts, and the old settings file is kept as a backup. Restart the game after this update. If an old copy is still installed beside it, this one stands down and says which file to delete, so the two never both run. The DLL now says it was made with AI, as Thunderstore asks.
 - **1.12.0** Fix: removing a levelled plan could bring other buildings down. Putting the ground back now waits until everything standing there has loaded, never touches the ground on or next to any piece (anyone's), and only puts back ground still exactly as the levelling left it (later digging stays); when in doubt the level ground stays. Levelling also leaves the ground under and around pieces already standing there alone. (Plans levelled by older versions keep their level ground.) Fix: with Adventure Backpacks, pressing E on a ghost could build it for free: building by hand now takes the materials first and places the piece only when the full cost was taken (otherwise you get them back). The select key's default is now U (G also opened the game's radial menu; if you keep G it no longer unbinds the radial menu, and if you change it the radial menu gets G back). In multiplayer the server decides UseReach (now 2 to 10 m) and BuildAllRadius. The list of deleted orders forgets ids after 60 days, is saved once per batch and sent compressed to players who join. The windows use the game's fonts, and a game update renaming its ground fields only switches levelling off instead of stopping the mod.
 - Fix: no more stutter every 5 seconds. Looking for Claude Tools searched everything the game had loaded; it now asks BepInEx's list of mods.
 - New: a blueprint can be made for the land as it is: "level": false in its file places its ghosts straight onto the ground, never levelling it (for builds that follow a hillside or bridge a creek, with posts down to the ground). Placed by its world coordinates, it fits exactly.

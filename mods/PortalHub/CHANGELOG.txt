@@ -1,3 +1,5 @@
+1.2.1: A new id, com.quad.portalhub (it was com.dhack.portalhub): your settings move over by themselves the first time it starts, and the old settings file is kept as a backup. Restart the game after this update. If an old copy is still installed beside it, this one stands down and says which file to delete, so the two never both run. The DLL now says it was made with AI, as Thunderstore asks.
+
 1.2.0: Fix: anyone could relink a portal inside someone else's protected area, and "link it back" changed the other portal even in someone's base. The host now checks the wards itself and refuses to change a portal in a switched-on ward you are not on; linking to such a portal only goes one way. A new host setting, HideWardedPortals (off by default), keeps those portals out of other players' lists and maps. In multiplayer the server decides Enabled and HideWardedPortals. With XPortal installed PortalHub now stands down (the two undo each other's links). The menu uses the game's font.
 
 Fix: away from portals, PortalHub looked for portals nearby every frame; it now looks once a second.

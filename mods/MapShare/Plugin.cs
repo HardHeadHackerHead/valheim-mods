@@ -20,9 +20,10 @@ namespace MapShare
     [BepInPlugin(Guid, Name, Version)]
     public class Plugin : BaseUnityPlugin
     {
-        public const string Guid = "com.dhack.mapshare";
+        public const string Guid = "com.quad.mapshare";
+        public const string OldGuid = "com.dhack.mapshare"; // (its id until 2026-10: settings move over by themselves, see Shared/Migration.cs)
         public const string Name = "MapShare";
-        public const string Version = "1.1.0";
+        public const string Version = "1.1.1";
 
         private const string RpcCells = "DHack_MapCells";   // newly explored cells
         private const string RpcHello = "DHack_MapHello";   // "I just joined: send me the map"
@@ -44,6 +45,7 @@ namespace MapShare
 
         private void Awake()
         {
+            DHack.Shared.Migration.FromOldGuid(this, OldGuid); // first: before any setting is read
             Instance = this;
             _send = Config.Bind("General", "ShareMyMap", true, "Send the parts of the map you uncover to the other players in the world.");
             _receive = Config.Bind("General", "ReceiveSharedMap", true, "Show the parts of the map other players uncover on your own map.");

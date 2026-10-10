@@ -5,7 +5,7 @@
 
 <img src="cover.png" alt="GearSlots" width="100%">
 
-**Version 1.2.0**  ·  [all the mods](../../README.md)  ·  installs and updates through the in-game [mod manager](https://github.com/HardHeadHackerHead/valheim-mod-manager) (**F7**)
+**Version 1.2.1**  ·  [all the mods](../../README.md)  ·  install it from [Thunderstore](https://thunderstore.io/c/valheim/p/Quads_Lab/Quads_Gear_Slots/) (r2modman, Thunderstore Mod Manager) or the in-game [mod manager](https://github.com/HardHeadHackerHead/valheim-mod-manager) (**F7**)
 
 A Gear panel next to your inventory: Head, Chest, Legs, Cape, Belt, Trinket, Ammo and Shield slots (drop gear in and you wear it), three Food slots, and five Quick slots with hotkeys that also show in a row under your hotbar. Your shield follows your one-handed weapon, and worn gear moves into its slot by itself. Auto-eat keeps you fed: the food slots are eaten when a meal is below 20% of its time left, so your food goes about 1.6 times as far.
 
@@ -50,7 +50,14 @@ Every key and option is in the settings (the manager's Mod settings tab).
 
 ## ⚙️ Settings
 
-In `BepInEx/config/com.dhack.gearslots.cfg` (made the first time the game runs with the mod).
+In `BepInEx/config/com.quad.gearslots.cfg` (made the first time the game runs with the mod).
+
+**General**
+
+| Setting | Default | What it does |
+|---|---|---|
+| `ShowPanel` | `true` | Show the Gear panel next to your inventory. (Turn off and your gear slots hide; the items stay where they are.) |
+| `ShowMessages` | `true` | Short messages when something happens (auto-eat, a quick slot is empty). |
 
 **Food**
 
@@ -63,9 +70,18 @@ In `BepInEx/config/com.dhack.gearslots.cfg` (made the first time the game runs w
 
 | Setting | Default | What it does |
 |---|---|---|
-| `ShowPanel` | `true` | Show the Gear panel next to your inventory. (Turn off and your gear slots hide; the items stay where they are.) |
-| `ShowMessages` | `true` | Short messages when something happens (auto-eat, a quick slot is empty). |
 | `ShieldFollowsWeapon` | `true` | When you switch to a one-handed weapon, put on the shield from your Shield slot too. (Two-handed weapons and bows take the shield off, as in the game.) |
+
+**Quick slots**
+
+| Setting | Default | What it does |
+|---|---|---|
+| `ShowUnderHotbar` | `true` | Show what is in your Quick slots, with their keys, in a row under the hotbar (the 1-8 on screen) while the inventory is closed. |
+
+**General**
+
+| Setting | Default | What it does |
+|---|---|---|
 | `AutoFill` | `true` | When you put on a piece of gear (or the game loads with it on), move it into its matching gear slot if that slot is empty. |
 
 **Layout**
@@ -76,23 +92,17 @@ In `BepInEx/config/com.dhack.gearslots.cfg` (made the first time the game runs w
 | `OffsetX` | `0` | Move the Gear panel right (negative = left). |
 | `OffsetY` | `0` | Move the Gear panel up (negative = down). |
 
-**Quick slots**
-
-| Setting | Default | What it does |
-|---|---|---|
-| `ShowUnderHotbar` | `true` | Show what is in your Quick slots, with their keys, in a row under the hotbar (the 1-8 on screen) while the inventory is closed. |
-| `Key1` | `Z` | Press to use what is in quick slot 1: equips or unequips a weapon, tool or shield, or drinks a potion. Set to None to turn it off. If the game uses the same key for something (V: auto-pickup, X: sit, C: walk), the game's key is unbound once, so only this one works; bind it again in the game's Settings, Controls. |
-| `Key2` | `X` | Press to use what is in quick slot 2: equips or unequips a weapon, tool or shield, or drinks a potion. Set to None to turn it off. If the game uses the same key for something (V: auto-pickup, X: sit, C: walk), the game's key is unbound once, so only this one works; bind it again in the game's Settings, Controls. |
-| `Key3` | `C` | Press to use what is in quick slot 3: equips or unequips a weapon, tool or shield, or drinks a potion. Set to None to turn it off. If the game uses the same key for something (V: auto-pickup, X: sit, C: walk), the game's key is unbound once, so only this one works; bind it again in the game's Settings, Controls. |
-| `Key4` | `V` | Press to use what is in quick slot 4: equips or unequips a weapon, tool or shield, or drinks a potion. Set to None to turn it off. If the game uses the same key for something (V: auto-pickup, X: sit, C: walk), the game's key is unbound once, so only this one works; bind it again in the game's Settings, Controls. |
-| `Key5` | `None` | Press to use what is in quick slot 5: equips or unequips a weapon, tool or shield, or drinks a potion. Set to None to turn it off. If the game uses the same key for something (V: auto-pickup, X: sit, C: walk), the game's key is unbound once, so only this one works; bind it again in the game's Settings, Controls. |
-
 ## 👥 Playing together
 
 See [who needs which mod](../../README.md#playing-together) on the front page.
 
+## 🤖 Made with AI
+
+Made with the help of Claude (Anthropic), with Claude Code: designed, written and checked together, and tried in the game.
+
 ## 📜 Changes
 
+- **1.2.1** A new id, com.quad.gearslots (it was com.dhack.gearslots): your settings move over by themselves the first time it starts, and the old settings file is kept as a backup. Restart the game after this update. If an old copy is still installed beside it, this one stands down and says which file to delete, so the two never both run. The DLL now says it was made with AI, as Thunderstore asks.
 - Fix: next to other mods that change the inventory size, items were dropped on the ground at every spawn: with ValheimPlus at 7 to 9 rows everything in its extra rows, and with BetterArchery's quiver your armour row. The game now sizes the inventory as it does without this mod (with every other mod's changes), and the gear rows move to just under whatever height that gives, so with ValheimPlus you keep all its rows and the gear slots sit below them. Where the gear rows are is saved with your character. With a mod that keeps its own slots in the same cells (ExtraSlots, Equipment and Quick Slots, AzuExtendedPlayerInventory, Extended Player Inventory, ComfyQuickSlots, or BetterArchery with its quiver on) the gear slots now switch off: what was in them moves into your bag, and you are told in chat. The Gear panel's title is now in the game's own title lettering, with the braided line under it.
 - Auto-eat now waits until a food you are already under is below 20% of its time left (setting Food / EatBelowPercent, 1 to 50; the game allows eating again from 50%). A meal lasts 80% of its time instead of half, so your food goes about 1.6 times as far; its effect weakens a little towards the end.
 - Fix: quick slots 2-4 (X, C, V) also did the game's sit, walk and auto-pickup toggle: pressing V for quick slot 4 turned auto-pickup off. The game's own key for those is now unbound (once, and you are told in chat), so only the quick slot happens; give them another key in the game's Settings, Controls if you want them. Auto-pickup is switched back on if it was left off.

@@ -21,3 +21,6 @@ __pycache__/
 
 # PatchMap tool: downloaded mods (never committed)
 tools/PatchMap/cache/
+
+# Thunderstore packages (made by thunderstore.ps1 / modkit package / tcli build)
+thunderstore-build/

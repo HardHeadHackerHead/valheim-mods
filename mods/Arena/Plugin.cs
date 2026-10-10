@@ -19,9 +19,10 @@ namespace Arena
     [BepInPlugin(Guid, Name, Version)]
     public class Plugin : BaseUnityPlugin
     {
-        public const string Guid = "com.dhack.arena";
+        public const string Guid = "com.quad.arena";
+        public const string OldGuid = "com.dhack.arena"; // (its id until 2026-10: settings move over by themselves, see Shared/Migration.cs)
         public const string Name = "Arena";
-        public const string Version = "0.3.0";
+        public const string Version = "0.3.1";
 
         internal static Plugin Instance;
         internal static ManualLogSource Log;
@@ -35,6 +36,7 @@ namespace Arena
 
         private void Awake()
         {
+            DHack.Shared.Migration.FromOldGuid(this, OldGuid); // first: before any setting is read
             Instance = this;
             Log = Logger;
             Synced = new DHack.Shared.ServerSettings(Guid, Config, Logger);

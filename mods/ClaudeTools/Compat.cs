@@ -344,8 +344,20 @@ namespace ClaudeTools
         // ---- the pre-release check's view of other mods ----
 
         /// <summary>What other mods (all but <paramref name="guid"/>) risk on each game method and system, for Check.</summary>
-        internal static Check.Others OthersFor(string guid, IEnumerable<Use> all)
+        internal static Check.Others OthersFor(string guid, IEnumerable<Use> all, IEnumerable<JObject> libraryScans = null)
         {
+            // assembly names of the library's mods (other than this one), for the assembly-name rule
+            var byAssembly = new Dictionary<string, List<string>>(StringComparer.OrdinalIgnoreCase);
+            foreach (JObject scan in libraryScans ?? Enumerable.Empty<JObject>())
+                foreach (JToken d in scan["dlls"] as JArray ?? new JArray())
+                {
+                    if ((d["plugins"] as JArray)?.Any(p => (string)p["guid"] == guid) ?? false) continue;
+                    string name = (string)d["assembly"] ?? Path.GetFileNameWithoutExtension((string)d["dll"] ?? "");
+                    if (string.IsNullOrEmpty(name)) continue;
+                    if (!byAssembly.TryGetValue(name, out var list)) byAssembly[name] = list = new List<string>();
+                    string package = (string)scan["package"] ?? name;
+                    if (!list.Contains(package)) list.Add(package);
+                }
             var others = all.Where(u => u.Guid != guid && u.Risky).ToList();
             var byTarget = others.GroupBy(u => u.Target).ToDictionary(x => x.Key, x => x.Select(u => $"{u.Mod} ({u.From}): {u.Describe()}").Distinct().ToList());
             var bySystem = others.GroupBy(u => SystemOf(u.Target) ?? "").ToDictionary(x => x.Key, x => x.Select(u => $"{u.Target} ({u.Mod})").Distinct().ToList());
@@ -354,6 +366,7 @@ namespace ClaudeTools
                 SameMethod = t => byTarget.TryGetValue(t, out var l) ? l : new List<string>(),
                 SameSystem = s => bySystem.TryGetValue(s, out var l) ? l : new List<string>(),
                 SystemOf = SystemOf,
+                SameAssembly = a => byAssembly.TryGetValue(a ?? "", out var l) ? l : new List<string>(),
             };
         }
 

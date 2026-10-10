@@ -5,7 +5,7 @@
 
 <img src="cover.png" alt="CraftFromChests" width="100%">
 
-**Version 1.4.0**  ·  [all the mods](../../README.md)  ·  installs and updates through the in-game [mod manager](https://github.com/HardHeadHackerHead/valheim-mod-manager) (**F7**)
+**Version 1.4.1**  ·  [all the mods](../../README.md)  ·  install it from [Thunderstore](https://thunderstore.io/c/valheim/p/Quads_Lab/Quads_Craft_From_Chests/) (r2modman, Thunderstore Mod Manager) or the in-game [mod manager](https://github.com/HardHeadHackerHead/valheim-mod-manager) (**F7**)
 
 Crafting stations (and hand-crafting) use materials from nearby chests. See lines to every chest in use and change the range from 5 to 30 m.
 
@@ -45,7 +45,7 @@ Settings: range (default 20 m), whether counts and lines show, and the position 
 
 ## ⚙️ Settings
 
-In `BepInEx/config/com.dhack.craftfromchests.cfg` (made the first time the game runs with the mod).
+In `BepInEx/config/com.quad.craftfromchests.cfg` (made the first time the game runs with the mod).
 
 **Display**
 
@@ -70,8 +70,13 @@ In `BepInEx/config/com.dhack.craftfromchests.cfg` (made the first time the game 
 
 See [who needs which mod](../../README.md#playing-together) on the front page.
 
+## 🤖 Made with AI
+
+Made with the help of Claude (Anthropic), with Claude Code: designed, written and checked together, and tried in the game.
+
 ## 📜 Changes
 
+- **1.4.1** A new id, com.quad.craftfromchests (it was com.dhack.craftfromchests): your settings move over by themselves the first time it starts, and the old settings file is kept as a backup. Restart the game after this update. If an old copy is still installed beside it, this one stands down and says which file to delete, so the two never both run. The DLL now says it was made with AI, as Thunderstore asks. It also stands down next to Toxo's Craft From Chests, CraftFromChestsPlus, Teflon Ted's Craft From Chests, StoreAndCraft and SmartCraft-Storage, as it already did next to AzuCraftyBoxes and CraftFromContainers: two such mods count every chest twice.
 - Fix: next to Adventure Backpacks, crafting could cost up to twice as much (the backpack and the chests both paid). Now the backpack pays its part and the chests only what is still missing. Fix: "any one of these" recipes (meads and the like) could be crafted for free from the chests, or failed when you carried none. Fix: a craft the chests can no longer pay for (someone took the materials since the window counted them) is now refused with a message, instead of being handed over for less. Graves, carts, ships, a companion's bag and chest and a backpack are no longer used as storage. With AzuCraftyBoxes, CraftFromContainers or ValheimPlus' craft-from-chest installed, this mod stands down (two would count every chest twice). In multiplayer the server's Radius applies (2 to 50 m).
 - Fix: in multiplayer, crafting with materials from a chest another player had open could lose or duplicate items. Chests in use are now left alone.
 - Smoother: the crafting-screen buttons are only looked after while the inventory is open and aren't repositioned every frame, and the chest checks are worked out once and reused (no more stutter when opening the inventory). Hand-crafting from the inventory uses nearby chests, and the crafting window shows how many of each material you have.

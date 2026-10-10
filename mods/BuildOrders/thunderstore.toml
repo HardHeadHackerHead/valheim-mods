@@ -1,0 +1,35 @@
+# Thunderstore package for this mod, read by the Thunderstore CLI (tcli build, tcli publish). Made by Claude Tools' modkit package,
+# which keeps versionNumber and the dependencies up to date from the DLL; everything else is yours to edit.
+[config]
+schemaVersion = "0.0.1"
+
+[package]
+namespace = "Quads_Lab"
+name = "Quads_Build_Orders"
+versionNumber = "1.12.1"
+description = "Shared ghost build orders and blueprints: plan pieces (or import a blueprint) for everyone in your party, then build them by walking up and pressing E."
+websiteUrl = "https://github.com/HardHeadHackerHead/valheim-mods/tree/main/mods/BuildOrders"
+containsNsfwContent = false
+
+[package.dependencies]
+denikson-BepInExPack_Valheim = "5.4.2351"
+
+[build]
+icon = "./thunderstore/icon.png"
+readme = "./thunderstore-build/README.md"
+outdir = "./thunderstore-build"
+
+[[build.copy]]
+source = "./bin/Release/net48/BuildOrders.dll"
+target = "plugins/BuildOrders.dll"
+
+[[build.copy]]
+source = "./thunderstore-build/CHANGELOG.md"
+target = "CHANGELOG.md"
+
+[publish]
+repository = "https://thunderstore.io"
+communities = [ "valheim" ]
+
+[publish.categories]
+valheim = [ "mods", "building", "utility", "ai-generated" ]

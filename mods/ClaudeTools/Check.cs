@@ -20,6 +20,7 @@ namespace ClaudeTools
             public Func<string, List<string>> SameMethod = t => new List<string>();   // other mods' risky patches on a game method
             public Func<string, List<string>> SameSystem = s => new List<string>();   // other mods' risky patches in a game system
             public Func<string, string> SystemOf = t => null;
+            public Func<string, List<string>> SameAssembly = a => new List<string>(); // popular mods whose DLL has this assembly name
         }
 
         // The game's own default keys (ZInput.AddButton): a mod's default on one of these also triggers the game's action.
@@ -66,7 +67,8 @@ namespace ClaudeTools
             var resolver = new DefaultAssemblyResolver();
             foreach (string d in searchDirs.Concat(new[] { Path.GetDirectoryName(dll) }).Where(Directory.Exists).Distinct()) resolver.AddSearchDirectory(d);
             bool readsUpgrader = false, unpatches = false, addsPrefabs = false, freesKeys = false, disposesWatcher = false;
-            bool usesPiece = false, syncs = false, networked = false, binds = false;
+            bool usesPiece = false, syncs = false, networked = false, binds = false, addsToObjectDB = false;
+            string declaredReload = null, managers = null;
             string watcherWhere = null;
             string resourcesWhere = null, prefabsWhere = null, heightWhere = null;
             var keyFindings = new List<JObject>();
@@ -76,6 +78,18 @@ namespace ClaudeTools
                 using (var stream = new MemoryStream(File.ReadAllBytes(dll)))
                 using (AssemblyDefinition asm = AssemblyDefinition.ReadAssembly(stream, new ReaderParameters { AssemblyResolver = resolver }))
                 {
+                    List<string> sameName = others.SameAssembly(asm.Name.Name);
+                    if (sameName.Count > 0)
+                        Add("warning", "assembly-name", Path.GetFileName(dll), $"Its assembly name \"{asm.Name.Name}\" is also the name of {string.Join(", ", sameName.Take(4).ToArray())}.",
+                            "Mods are told apart by GUID, but .NET also knows a DLL by its assembly name: with both installed, the game can hand one mod's " +
+                            "assembly to code looking for the other's (another mod's lookup, a reference by name), and a player copying DLLs into one folder overwrites one.",
+                            "Give the assembly a name that is yours (<AssemblyName>YourName.ModName</AssemblyName>); for a mod already out, weigh it against " +
+                            "the old file left behind by an update (a mod manager replaces files by name).");
+                    // how it may be reloaded: what the author says ([assembly: AssemblyMetadata("ClaudeTools.Reload", "world|menu|restart")]),
+                    // and libraries merged in that patch with their own Harmony ids (blaxxun-boop's managers), which unloading can't undo
+                    foreach (CustomAttribute a in asm.CustomAttributes.Where(a => a.AttributeType.Name == "AssemblyMetadataAttribute" && a.ConstructorArguments.Count == 2))
+                        if ((string)a.ConstructorArguments[0].Value == "ClaudeTools.Reload") declaredReload = ((string)a.ConstructorArguments[1].Value ?? "").Trim().ToLowerInvariant();
+                    managers = asm.MainModule.Types.Select(t => t.Namespace).FirstOrDefault(n => ManagerNamespaces.Contains(n));
                     foreach (TypeDefinition type in asm.MainModule.Types.SelectMany(All))
                     foreach (MethodDefinition m in type.Methods.Where(x => x.HasBody))
                     {
@@ -95,6 +109,8 @@ namespace ClaudeTools
                                 if (f.Name == "m_upgraderResource") readsUpgrader = true;
                                 if (owner == "ZNetScene" && (f.Name == "m_prefabs" || f.Name == "m_namedPrefabs") && ins.OpCode == OpCodes.Ldfld && AddsTo(code, i))
                                     { addsPrefabs = true; prefabsWhere = prefabsWhere ?? where; }
+                                if (owner == "ObjectDB" && (f.Name == "m_items" || f.Name == "m_recipes" || f.Name == "m_StatusEffects") && ins.OpCode == OpCodes.Ldfld && AddsTo(code, i))
+                                    addsToObjectDB = true;
                                 if (f.Name == "m_customData" && ins.OpCode == OpCodes.Stfld && !NullGuarded(code, i))
                                     Add("warning", "replaces-custom-data", where, $"It replaces a {owner}.m_customData dictionary (not only when it is missing).",
                                         "m_customData is shared: every mod keeps its own keys in it. Replacing the dictionary of an item or player that has one wipes " +
@@ -179,7 +195,7 @@ namespace ClaudeTools
                 Add("note", "own-settings", plugins.FirstOrDefault()?["class"]?.ToString() ?? Path.GetFileName(dll),
                     "It has settings and works in multiplayer, but nothing makes the server decide them.",
                     "On a server, each player sets their own: rewards, ranges, timers and strengths become whatever a player wants.",
-                    "Let the server decide the gameplay settings (mods/Shared/ServerSettings.cs, ServerSync or Jotunn); keep look-and-feel settings local.");
+                    "Let the server decide the gameplay settings (BepInEx/claude/templates/ServerSettings.cs, ServerSync or Jotunn); keep look-and-feel settings local.");
             if (watcherWhere != null && !disposesWatcher)
                 Add("warning", "watcher-not-disposed", watcherWhere, "It watches files (FileSystemWatcher) but never disposes the watcher.",
                     "After a hot reload the old copy's watcher keeps firing into the unloaded mod (errors, settings applied twice).",
@@ -214,6 +230,26 @@ namespace ClaudeTools
                     "Read how they do it (library get <mod>, then decompile), and detect them: stand down or work with them when they're installed.");
             }
 
+            // ---- whether it can be reloaded while playing ----
+            var why = new List<string>();
+            int level = 0; // 0 world, 1 main menu, 2 restart
+            void Need(int l, string reason) { level = Math.Max(level, l); why.Add(reason); }
+            if (usesJotunn) Need(2, "it uses Jotunn, which registers its things once per game");
+            if (managers != null) Need(2, $"it includes {managers}, which patches with its own Harmony id: unloading can't undo it");
+            if (addsPrefabs) Need(1, "it registers prefabs (pieces, items or creatures): for a moment they're missing, and placed ones and items in bags " +
+                                     "point at the old copy");
+            if (addsToObjectDB) Need(1, "it adds items, recipes or status effects to ObjectDB");
+            if (heightWhere != null) Need(1, "it changes an inventory's size: unloading can drop items from the extra rows");
+            if (patches.Count > 0 && !unpatches) Need(1, "it never removes its patches: a reload runs them twice");
+            int declared = Array.IndexOf(ReloadLevels, declaredReload ?? "");
+            if (declared > level) Need(declared, "its author says so (AssemblyMetadata \"ClaudeTools.Reload\")");
+            var reload = new JObject
+            {
+                ["level"] = ReloadLevels[level],
+                ["means"] = level == 0 ? "safe to reload in a world" : level == 1 ? "reload only at the main menu (or restart)" : "restart the game to load a new build",
+                ["why"] = new JArray(why), ["declared"] = declaredReload,
+            };
+
             string[] order = { "problem", "warning", "note" };
             var sorted = findings.OrderBy(f => Array.IndexOf(order, (string)f["level"])).ToList();
             return new JObject
@@ -222,9 +258,16 @@ namespace ClaudeTools
                 ["patches"] = patches.Count,
                 ["problems"] = sorted.Count(f => (string)f["level"] == "problem"), ["warnings"] = sorted.Count(f => (string)f["level"] == "warning"),
                 ["notes"] = sorted.Count(f => (string)f["level"] == "note"),
-                ["findings"] = new JArray(sorted),
+                ["findings"] = new JArray(sorted), ["reload"] = reload,
             };
         }
+
+        /// <summary>Reload levels, safest first: in a world, at the main menu only, only with a restart.</summary>
+        internal static readonly string[] ReloadLevels = { "world", "menu", "restart" };
+
+        /// <summary>blaxxun-boop's managers (merged into a mod as source or with ILRepack) patch the game with their own Harmony ids.</summary>
+        private static readonly HashSet<string> ManagerNamespaces = new HashSet<string>
+            { "ItemManager", "PieceManager", "CreatureManager", "LocationManager", "SkillManager", "StatusEffectManager" };
 
         private static bool Risky(JObject p) =>
             (string)p["kind"] == "transpiler" || (string)p["kind"] == "hook" || ((string)p["skips"] ?? "never") != "never" || (bool?)p["changesResult"] == true || p["changesArgs"] != null;

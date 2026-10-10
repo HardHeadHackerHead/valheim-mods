@@ -18,9 +18,10 @@ namespace BountyBoard
     [BepInPlugin(Guid, Name, Version)]
     public partial class Plugin : BaseUnityPlugin
     {
-        public const string Guid = "com.dhack.bountyboard";
+        public const string Guid = "com.quad.bountyboard";
+        public const string OldGuid = "com.dhack.bountyboard"; // (its id until 2026-10: settings move over by themselves, see Shared/Migration.cs)
         public const string Name = "BountyBoard";
-        public const string Version = "1.2.0";
+        public const string Version = "1.2.1";
         public const string PiecePrefab = "piece_bountyboard";
 
         internal static Plugin Instance;
@@ -34,6 +35,7 @@ namespace BountyBoard
 
         private void Awake()
         {
+            DHack.Shared.Migration.FromOldGuid(this, OldGuid); // first: before any setting is read
             // These four are used by the host's game (it decides what is posted and what it pays); players are sent its values, so the
             // menu shows the host's limits.
             Synced = new DHack.Shared.ServerSettings(Guid, Config, Logger);

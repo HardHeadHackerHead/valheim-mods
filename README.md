@@ -457,3 +457,5 @@ Copy the `template/` folder from the [mod manager repo](https://github.com/HardH
 
 The Arena's crowd sounds are from OpenGameArt: "Free Crowd Cheering Sounds" by Gregor Quendel
 ([CC-BY 4.0](https://creativecommons.org/licenses/by/4.0/)) and "Crowd Shouting" by StarNinjas (CC0), converted to OGG.
+
+Cover artwork and Thunderstore package icons are AI-generated with the built-in image creation tool. The icons (`mods/<Mod>/thunderstore/icon.png`) form a matched, text-free Viking series.

@@ -19,9 +19,10 @@ namespace CigarSmoking
     [BepInPlugin(Guid, Name, Version)]
     public class Plugin : BaseUnityPlugin
     {
-        public const string Guid = "com.dhack.cigarsmoking";
+        public const string Guid = "com.quad.cigarsmoking";
+        public const string OldGuid = "com.dhack.cigarsmoking"; // (its id until 2026-10: settings move over by themselves, see Shared/Migration.cs)
         public const string Name = "Quad's Cigars";
-        public const string Version = "0.3.0";
+        public const string Version = "0.3.1";
         public const string EffectPrefix = "SE_dh_smoking_";
 
         internal static ConfigEntry<float> Minutes, EffectStrength, GrowMinutes, DryMinutes, CureMinutes;
@@ -41,6 +42,7 @@ namespace CigarSmoking
 
         private void Awake()
         {
+            DHack.Shared.Migration.FromOldGuid(this, OldGuid); // first: before any setting is read
             Instance = this;
             Synced = new DHack.Shared.ServerSettings(Guid, Config, Logger);
             Minutes = Synced.Add(Config.Bind("Smoking", "Minutes", 5f, new ConfigDescription("How long one cigar lasts (minutes). In multiplayer the server's value applies.", new AcceptableValueRange<float>(0.5f, 60f))));

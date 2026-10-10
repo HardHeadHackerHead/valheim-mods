@@ -2,29 +2,31 @@
 
 You are working with a Valheim player who has the **Claude Tools** mod. It gives you a **request mailbox**: you write commands into a
 text file, the game carries them out while the player is in a world, and writes back what happened. Pictures are saved as files you can
-read. Cameras are separate, and commands only do what is listed below. Only `shoot` acts as the player (it turns them, opens their windows,
-and with `tp` and `use` moves them or presses E): ask first, and `tp`, `use`, `give` and `grow` only work where the game allows cheats
-(single player, the host, or devcommands on).
+read. Cameras are separate, and commands only do what is listed below. A few act as the player (`shoot` turns them and opens their
+windows, `use`, `drop` and `pickup` handle their items): ask first. Those that cheat (`shoot tp`, `shoot use`, `give`, `grow`, `fixlevels`,
+`chestrule`, `objects ... remove`) only work where the game allows cheats (single player, the host, or devcommands on).
 
-This folder is `BepInEx/claude` in the player's Valheim folder.
+This folder is `BepInEx/claude` in the BepInEx folder the game uses: `<Valheim>/BepInEx` when BepInEx was installed by hand, or the
+profile's `BepInEx` folder with r2modman or Thunderstore Mod Manager (Settings → "Browse profile folder").
 
 | Path | What it is |
 |---|---|
 | `requests/` | Write `<name>.txt` here. The game renames it `<name>.taken`, runs it, and writes `<name>.done.json`. |
 | `shots/` | Pictures: `shot`, `view`, `orbit`, `top`, and the player's F12 key. `latest.png` is the newest; screenshots have a `.json` beside them saying where the player stood and looked. |
 | `_survey.json` | The ground around a spot (`survey`, or the player's Ctrl+F12 key). |
-| `library/` | The mod library: popular mods and what they patch (see "which other mods change the same things" below). |
+| `library/` | The mod library: popular mods and what they patch (see "The mod library" below). |
 | `console/` | The full answers to commands the player typed in the game's console (`claude <command>`). |
 | `modkit/` | **modkit**: the mod-maker commands on the command line, without the game (see "For mod makers" below). |
-| `.claude/skills/` | Skills for making mods: starting one, the game's code, other mods, looking native, pitfalls, releasing, fixing errors. |
+| `.claude/skills/` | Skills for making mods: starting one, the game's code, other mods, looking native, pitfalls, releasing (and on Thunderstore), fixing errors. |
 | `modelkit/` | Design, preview and check 3D models offline, and draw the game's real pieces (Python; see its README). |
+| `templates/` | Code to copy into a mod: server-decided settings, and taking from chests safely in multiplayer (see its README). |
 
 ## Before you start
 
 - **Ask the player** before looking at or doing things in their game, and tell them what you are about to do.
-- Requests only run when `AllowRequests = true` in `BepInEx/config/com.dhack.claudetools.cfg` (the player switches it on) and the game is
+- Requests only run when `AllowRequests = true` in `BepInEx/config/com.quad.claudetools.cfg` (the player switches it on) and the game is
   running. Most commands need the player **in a world**; the mod-maker ones (`modcheck`, `who`, `clashes`, `patches`, `game`, `gameupdate`,
-  `library`, `systems`) and `help`, `mods`, `config`, `log`, `errors`, `waitfor` also run from the main menu. If a request stays as `.txt`,
+  `library`, `systems`) and `help`, `mods`, `config`, `log`, `errors`, `waitfor`, `reload`, `devmods` also run from the main menu. If a request stays as `.txt`,
   one of those is not true: ask the player. For mod-maker commands with the game closed, use **modkit** instead.
 - Requests run one at a time, in name order, within a second or two. Wait for `<name>.done.json`, then read it (and any pictures it names).
 - Run `help` first in a new session: it lists every command, including those other mods add (BuildOrders adds blueprint commands).
@@ -73,12 +75,17 @@ for the newest; use `_` for spaces). Positions in a place are metres: x right, y
 | `mods` | The mods running, with versions. |
 | `config <mod> [section] [key]` | A mod's settings (value, default, description). `config set <mod> <section> <key> <value>` changes one, only if the player allows it (`AllowConfigChanges`). |
 | `log [lines] [text]` | The last lines of the BepInEx log, optionally only those containing some text: for checking a mod's messages and errors. |
-| `give <item prefab> [amount]` | Put an item in the player's bag (for trying out a mod's new item). |
+| `chests [radius]` | The chests around the player: where, what is in them, whose (and their QualityOfLife assignment). Run `inventory` and `chests` before and after a test to measure what a mod really took or gave. |
+| `give <item prefab> [amount]` | Put an item in the player's bag (for trying out a mod's new item). Only where cheats are allowed. |
+| `fixlevels <prefix>` | Give bag items whose prefab starts with the prefix this world's level (items from an older `give` that recipes wouldn't count). Only where cheats are allowed. |
+| `drop <item prefab> [amount]` / `pickup <item prefab>` | Drop an item from the bag in front of the player, or pick up the nearest one within 4 m, as the player would. |
+| `chestrule <x> <y> <z> <rule>` | Set QualityOfLife's assignment of the chest there (nothing in it is touched). Only where cheats are allowed. |
 | `use <item prefab>` | Use an item from the player's bag, as a double-click does (eat, drink, light). |
 | `grow <seconds> [radius]` | Age the cultivated plants near the player by that many seconds, so they grow without the wait; `grow 0` makes them grow now and says what came of it. |
 | `say <text>` | A message in the middle of the player's screen. |
 | `pin <place\|x z> <text>` | A labelled pin on the player's map. |
 | `wait <seconds>` | Pause, so things happen before the next picture. |
+| `prefabs <text>` | Every prefab name (pieces, items, creatures, effects) containing the text: the exact name `objects`, `render`, `inspect` and `give` need. A player's "war stone" may be `BobWarstone`: look it up rather than guess. |
 | `objects <prefab> [remove]` | Every object of that prefab in the world, loaded or not, nearest first (where, loaded, who built it). `remove` deletes them all: ask the player first; exact prefab name; only where cheats are allowed. On a client it only sees what is near the players. |
 | `shoot find <name> [radius]` / `tp x y z yaw [pitch]` / `look yaw [pitch]` / `inv` / `close` / `map on\|off` / `build` / `unbuild` / `hud on\|off` / `use <name>` / `open qolrules\|recycler` | Set up a screenshot: find pieces (position and facing), stand the player somewhere looking somewhere (`tp`), open the inventory, map, build menu or a mod's window, close every window, hide the HUD, press E on something up to 12 m away (`use`). Then `shot`. `tp` and `use` only where cheats are allowed. |
 | `render <prefab> [yaw=25] [pitch=12] [views=1\|4] [focus=x,y,z] [dist=m] [fov=30] [size=WxH] [bg=sky\|dark\|clear]` | A picture of any piece, item or creature **on its own**, built out of sight with its real materials and its own light (nothing is placed). `yaw=0` is its front (-z); `views=4` gives front, three-quarter, side and back; `focus` (metres from its origin) and `dist` give a close-up of one part. Use it to check and improve mods' models. |
@@ -87,14 +94,35 @@ for the newest; use `_` for spaces). Positions in a place are metres: x right, y
 | `support [radius=20] [place=look] [filter]` | Built pieces near a place with the support the game gives them now, their material's minimum and maximum, and health: weakest first. |
 | `comfort [prefab...]` | With prefabs: the comfort level they would give together (under a roof, within 10 m), each piece's comfort and group, which count. Without: the player's comfort now and the pieces giving it. |
 | `errors` | The new errors and exceptions in the log since you last asked, with their stack traces. Run it after every rebuild. |
-| `waitfor <mod> [version] [seconds=30]` | Wait until a mod (that version) is loaded: after a rebuild, before looking at it. |
+| `waitfor <mod> [version] [seconds=30]` | Wait until a mod (that version) is loaded: after a rebuild, before looking at it. It proves a reload only if the version was raised. |
+| `reload <mod> [force]` | Unload a mod from `BepInEx/scripts` and load its new build, if its reload level allows it now (see below). |
+| `devmods` | The mods in `BepInEx/scripts`: loaded or not, their reload level and why, and whether a newer build is waiting. |
 
 Pictures can only show what is loaded, which is the world near the player (about 60 m or more).
 
+## Reloading a mod you are making
+
+Claude Tools has its own **dev loader**: the mods in `BepInEx/scripts` (where a mod project's build puts its DLL) load when the game
+starts, and `reload <mod>` unloads one and loads its new build without restarting the game. Mods in `BepInEx/plugins` (what a mod manager
+installs) load only at start. With ScriptEngine installed, it loads `scripts` instead, and `reload` still reloads one mod at a time.
+
+Each mod has a **reload level**, from its code (`modcheck` and `devmods` show it), and `reload` keeps to it:
+
+| Level | What the mod does | When it reloads |
+|---|---|---|
+| `world` | patches methods, UI, commands, settings | anywhere |
+| `menu` | registers pieces, items, creatures, recipes or status effects, or changes inventory sizes | at the main menu only: in a world, for a moment its prefabs are missing (the host deletes objects in areas that load) and items in bags point at the old copy |
+| `restart` | uses Jotunn or blaxxun-boop's managers | only by restarting the game |
+
+`reload <mod> force` ignores the level: only in a test world, and only after asking the player. `AutoReload` (section `Dev` of the
+config) reloads a rebuilt mod on its own when its level allows it.
+
 ## Improving a mod's model
 
-A hot reload rebuilds a mod's piece in the build menu, but pieces already standing in the world keep their old model until the game
-restarts. So check models with `render`, which always builds a fresh copy: change the model, rebuild, then
+A reload rebuilds a mod's piece in the build menu, but pieces already standing in the world keep their old model until the game
+restarts. So check models with `render`, which always builds a fresh copy. A mod that adds pieces reloads only at the main menu (see
+"Reloading a mod you are making"): change the model, rebuild, have the player quit to the main menu, `reload BountyBoard`, load the world
+again, then
 
 ```
 waitfor BountyBoard 1.1.2
@@ -119,7 +147,8 @@ built pieces (giving the materials back). Ask first.
 
 Making or fixing a mod? The skills in `.claude/skills` (Claude Code loads them when you start in this folder; copy them to a mod
 project's `.claude/skills`, or to `~/.claude/skills` for every project) walk through it: **valheim-mod-start**, **valheim-game-code**,
-**valheim-compat**, **valheim-look**, **valheim-pitfalls**, **valheim-prerelease**, **valheim-fix-errors**. The commands they use:
+**valheim-compat**, **valheim-look**, **valheim-pitfalls**, **valheim-prerelease**, **valheim-fix-errors**, **valheim-thunderstore**
+(releasing on Thunderstore). The commands they use:
 
 | Command | What it does |
 |---|---|
@@ -129,6 +158,7 @@ project's `.claude/skills`, or to `~/.claude/skills` for every project) walk thr
 | `clashes [mod] [all]` | Installed mods that change the same methods, or do the same job through different methods, as each other or as popular mods. `likely` first, then `check` (read both patches); `all` adds those that only stack. |
 | `patches [text]` | Every patch in the installed mods, by game method, with what each one can do. |
 | `systems` | The game systems: groups of methods that do one job (crafting payment, recipe list, inventory size, portals...). |
+| `modkit package <mod folder>` / `modkit package check <zip>` | (modkit only) Get a mod ready for Thunderstore: writes its `thunderstore.toml` for the Thunderstore CLI and checks everything an upload needs; then the zip `tcli build` made. See **valheim-thunderstore**. |
 | `gameupdate` | After a game update: methods gone, changed signature or changed code, and which mods patch them. |
 | `library` / `library get <Namespace-Name>` / `library drop <Namespace-Name>` / `library update` | The mod library: what is in it, download one mod's DLL (code only) by its Thunderstore name, remove it, refresh the top list. |
 
@@ -139,7 +169,7 @@ The same commands as a program, reading files only:
 ```
 BepInEx/claude/modkit/modkit.exe modcheck MyMod            (Windows)
 dotnet BepInEx/claude/modkit/modkit.dll modcheck MyMod     (Linux, Mac: needs the .NET 8 runtime or later)
-modkit help                                              (every command; --json for the raw answer)
+BepInEx/claude/modkit/modkit.exe help                      (every command; --json for the raw answer)
 ```
 
 It finds the Valheim folder from where it is (or `VALHEIM_DIR`, or `--valheim <folder>`). "Installed" means the DLLs in `BepInEx/plugins`
@@ -181,7 +211,8 @@ Don't copy other mods' code into a mod, and don't publish their DLLs or decompil
 facts about mods (which game methods they patch), none of their code.
 
 The player can run every command in the game's console too: `claude modcheck MyMod`, `claude who InventoryGui.UpdateRecipeList`. Answers are
-also saved in `console/<command>.json`.
+also saved in `console/<command>.json`. The console (F5) only opens once it is switched on: Settings → Gameplay → "Enable console", or the
+`-console` launch option in Steam. Commands that act as a cheat also need `devcommands` typed in it on a server where the player isn't the host.
 
 ## For mod makers: adding commands
 
@@ -189,10 +220,11 @@ A mod adds commands without referencing Claude Tools (so it works without it), b
 plugin list and calling its public static methods by reflection:
 
 ```csharp
-BaseUnityPlugin found = Chainloader.PluginInfos.TryGetValue("com.dhack.claudetools", out PluginInfo info) ? info.Instance : null;
+BaseUnityPlugin found = Chainloader.PluginInfos.TryGetValue("com.quad.claudetools", out PluginInfo info) ? info.Instance : null;
 ```
 
-That is a dictionary lookup, and hot reload keeps it current (ScriptEngine adds its plugins to `Chainloader.PluginInfos` and updates
+(Claude Tools was `com.dhack.claudetools` before October 2026: a mod that must work with older copies looks up both.) That is a
+dictionary lookup, and hot reload keeps it current (Claude Tools' dev loader and ScriptEngine add their plugins to `Chainloader.PluginInfos` and update
 `Instance` on every reload). Don't search with `Resources.FindObjectsOfTypeAll<BaseUnityPlugin>()`: it walks every loaded object,
 textures and meshes included, about 10 ms a call. Mods that check every few seconds all start at the same moment, so their checks land
 in the same frame and the game stutters.
@@ -207,4 +239,4 @@ UnregisterAll(string owner)
 
 `run` gets the words of the line (`args[0]` is the command), reports results with `output(JObject)` and problems with `error(string)`, and
 returns `null` when done or an `IEnumerator` to take its time (it runs as a coroutine). Register again whenever a new Claude Tools appears
-(it may be hot-reloaded); call `UnregisterAll` when your mod unloads. See `mods/BuildOrders/Plugin.Requests.cs` in the valheim-mods repo.
+(it may be hot-reloaded); call `UnregisterAll` when your mod unloads. See `mods/BuildOrders/Plugin.Requests.cs` in https://github.com/HardHeadHackerHead/valheim-mods.

@@ -163,7 +163,7 @@ namespace ClaudeTools
             }
             if (dll == null) { error($"no installed mod called {what} (use its name or GUID as in \"mods\", its DLL's name, or a path to its .dll)"); yield break; }
 
-            Check.Others help = OthersFor(guid, installed.Concat(LibraryUses()));
+            Check.Others help = OthersFor(guid, installed.Concat(LibraryUses()), LibraryScans());
             JObject result = null;
             Exception failed = null;
             string[] search = SearchDirs();

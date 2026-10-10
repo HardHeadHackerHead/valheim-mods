@@ -8,9 +8,10 @@ namespace CraftFromChests
     [BepInPlugin(Guid, Name, Version)]
     public class Plugin : BaseUnityPlugin
     {
-        public const string Guid = "com.dhack.craftfromchests";
+        public const string Guid = "com.quad.craftfromchests";
+        public const string OldGuid = "com.dhack.craftfromchests"; // (its id until 2026-10: settings move over by themselves, see Shared/Migration.cs)
         public const string Name = "CraftFromChests";
-        public const string Version = "1.4.0";
+        public const string Version = "1.4.1";
 
         internal static ConfigEntry<bool> Enabled;
         internal static ConfigEntry<float> Radius;
@@ -28,6 +29,7 @@ namespace CraftFromChests
 
         private void Awake()
         {
+            DHack.Shared.Migration.FromOldGuid(this, OldGuid); // first: before any setting is read
             Log = Logger;
             Synced = new DHack.Shared.ServerSettings(Guid, Config, Logger);
             ShowHaveCounts = Config.Bind("Display", "ShowHaveCounts", true,

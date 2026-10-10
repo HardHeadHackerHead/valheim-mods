@@ -49,6 +49,8 @@ volume slider. The game already has everything you need. **Take it from the game
   34 pt with the braid line under it; a selected tab in gold.
 - **Rebuild rather than patch** a window when what it shows changes (check at most once a second); close it on distance, death or
   `Menu.IsVisible()`.
+- **A public static `Close()`** on your window class (and `IsOpen`), so other mods and tools can close it as Escape does: Claude Tools'
+  `shoot close` calls it by reflection before a screenshot.
 
 **3. IMGUI (OnGUI) only as a fallback**, made to fit: scale with `GUI.matrix` by `max(0.8, Screen.height / 1080)`; draw an opaque dark
 board (0.07, 0.06, 0.05, 0.98) with a brass edge (0.62, 0.47, 0.22) (a single translucent layer lets the world show through); the game's
@@ -130,3 +132,21 @@ re-runs layout); if UI code fails every frame, log once and hide the panel inste
 7. Sounds through the game's mixer.
 8. IMGUI windows set the game's fonts (Averia, Norse) in **every** GUIStyle: Unity's default font is the first thing that looks wrong.
 9. Survives hot reload and a world change; a `shot` and a `render` of every new thing before calling it done.
+
+## Pictures for checking and for the mod's page
+
+`render <prefab> views=4` for a model on its own. For a window or a piece in place, set the scene with `shoot` (a request file, or
+`claude shoot ...` in the console), then `shot`:
+
+```
+shoot find mything            where your pieces stand and which way they face
+shoot tp x y z yaw pitch      stand the player there, looking that way (cheat: single player or the host)
+shoot inv / shoot build       open the inventory / the build menu with the hammer
+shoot hud off                 hide the HUD for a clean picture
+shot 1920
+shoot close                   close every window again (yours too, through its Close())
+shoot hud on
+```
+
+Look at every picture yourself before calling the look done: text cut off, Arial anywhere, a panel that lets the world show through, a
+button without its frame.

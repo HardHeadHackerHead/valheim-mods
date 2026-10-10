@@ -15,9 +15,10 @@ namespace Quiver
     [BepInPlugin(Guid, Name, Version)]
     public class Plugin : BaseUnityPlugin
     {
-        public const string Guid = "com.dhack.quiver";
+        public const string Guid = "com.quad.quiver";
+        public const string OldGuid = "com.dhack.quiver"; // (its id until 2026-10: settings move over by themselves, see Shared/Migration.cs)
         public const string Name = "Quiver";
-        public const string Version = "0.2.0";
+        public const string Version = "0.2.1";
 
         internal static ManualLogSource Log;
         internal static DHack.Shared.ServerSettings Synced; // settings the server decides in multiplayer
@@ -29,6 +30,7 @@ namespace Quiver
 
         private void Awake()
         {
+            DHack.Shared.Migration.FromOldGuid(this, OldGuid); // first: before any setting is read
             Log = Logger;
             Synced = new DHack.Shared.ServerSettings(Guid, Config, Logger);
             const string ServerNote = " In multiplayer the server's value applies.";

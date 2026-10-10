@@ -16,9 +16,10 @@ namespace Recycler
     [BepInPlugin(Guid, Name, Version)]
     public class Plugin : BaseUnityPlugin
     {
-        public const string Guid = "com.dhack.recycler";
+        public const string Guid = "com.quad.recycler";
+        public const string OldGuid = "com.dhack.recycler"; // (its id until 2026-10: settings move over by themselves, see Shared/Migration.cs)
         public const string Name = "Recycler";
-        public const string Version = "1.1.0";
+        public const string Version = "1.1.1";
         public const string RecyclerPrefab = "piece_recycler";
         public const string PressPrefab = "piece_recycler_press";
 
@@ -33,6 +34,7 @@ namespace Recycler
 
         private void Awake()
         {
+            DHack.Shared.Migration.FromOldGuid(this, OldGuid); // first: before any setting is read
             // What it gives back and what it takes are the server's to decide in multiplayer; the rest (asking twice, messages) is each player's.
             Synced = new DHack.Shared.ServerSettings(Guid, Config, Logger);
             const string server = " In multiplayer the server's value applies.";

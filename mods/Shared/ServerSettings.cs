@@ -14,7 +14,8 @@ namespace DHack.Shared
     /// they play there (the config file keeps the player's own), and come back when they leave. A server without the mod sends nothing, and
     /// the player's own values stay.
     ///
-    /// Shared source (mods/Shared/ServerSettings.cs), compiled into each mod that uses it:
+    /// Shared source (mods/Shared/ServerSettings.cs in the valheim-mods repo), compiled into each mod that uses it. Claude Tools also ships it as
+    /// BepInEx/claude/templates/ServerSettings.cs: copy it into your mod and change the namespace to yours. Then:
     ///
     ///   Synced = new ServerSettings(Guid, Config, Logger);
     ///   Reward = Synced.Add(Config.Bind("Rewards", "Percent", 100, "..."));
@@ -43,7 +44,7 @@ namespace DHack.Shared
             _log = log;
         }
 
-        /// <summary>Mark a setting as the server's in multiplayer (its description says so in the config file).</summary>
+        /// <summary>Mark a setting as the server's in multiplayer. Say so in its description yourself ("[Synced with Server]").</summary>
         public ConfigEntry<T> Add<T>(ConfigEntry<T> entry)
         {
             if (entry == null || _entries.Contains(entry)) return entry;

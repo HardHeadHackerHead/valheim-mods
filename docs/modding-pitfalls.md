@@ -136,3 +136,15 @@ timers) are the server's in multiplayer (`mods/Shared/ServerSettings.cs`), or ev
 CraftFromChests and BuildFromChests add chest items in `Inventory.CountItems`; ValheimPlus (craft from chest, off by default) and
 AzuCraftyBoxes add them in `Player.HaveRequirementItems`/`HaveRequirements`. Installed together, chests count twice and crafts pay half. Stand
 down when one of them is installed.
+
+## Name everything after your mod
+
+Prefabs, RPCs, ZDO and `m_customData` keys, `$` keys, commands and the Harmony id share one space with every other mod. ClaudeTools' `check`
+command hid BuildOrders' `check` until it was renamed `modcheck`. Start every name with the mod's, and pick prefab names a player can find
+(`prefabs <text>` in ClaudeTools lists them: a "war stone" was `BobWarstone`).
+
+## Ship only what you mean to
+
+`publish.ps1` builds every mod from the working folder, so uncommitted code ships (Arena 0.2.3 nearly went out with the screenshot tool).
+Stash or commit first, and check the built DLL (strings are UTF-16). Debug commands that give, move or remove follow the game's cheat rule
+(`CheatsAllowed()` in ClaudeTools) or stay out. F6 reloads every mod in `scripts`: test mods with `RESTART_REQUIRED.txt` with a full restart.

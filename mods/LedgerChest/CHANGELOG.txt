@@ -1,3 +1,5 @@
+1.0.3: A new id, com.quad.ledgerchest (it was com.dhack.ledgerchest): your settings move over by themselves the first time it starts, and the old settings file is kept as a backup. Restart the game after this update. If an old copy is still installed beside it, this one stands down and says which file to delete, so the two never both run. The DLL now says it was made with AI, as Thunderstore asks.
+
 Things that fit in no chest and not in your inventory either stay in the Ledger Chest, and now you're told so. The page now says plainly that the server and every player need the mod (a game without it deletes the Ledger Chests with what is in them), and a problem drawing its look can no longer stop it being registered.
 
 Fix: no more stutter every 5 seconds. Looking for Claude Tools searched everything the game had loaded; it now asks BepInEx's list of mods.

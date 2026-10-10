@@ -14,8 +14,17 @@ namespace BuildFromChests
     /// </summary>
     internal static class OtherChestMods
     {
-        private const string AzuCraftyBoxes = "Azumatt.AzuCraftyBoxes";
-        private const string CraftFromContainers = "aedenthorn.CraftFromContainers";
+        // Mods that always use chests for crafting and building when installed (GUID, name), from reading their code (Claude Tools' library).
+        private static readonly string[][] Always =
+        {
+            new[] { "Azumatt.AzuCraftyBoxes", "AzuCraftyBoxes" },
+            new[] { "aedenthorn.CraftFromContainers", "CraftFromContainers" },          // (its forks keep this GUID)
+            new[] { "toxo.craftfromchests", "Craft From Chests (Toxo)" },
+            new[] { "poneis.valheim.CraftFromChestsPlus", "CraftFromChestsPlus" },
+            new[] { "com.teflonted.valheim.craftfromchests", "Teflon Ted's Craft From Chests" },
+            new[] { "com.morda.storeandcraft", "StoreAndCraft" },
+            new[] { "com.zellds.smartcraftstorage", "SmartCraft-Storage" },
+        };
         private const string ValheimPlus = "org.bepinex.plugins.valheim_plus";
 
         private static bool _looked;
@@ -45,8 +54,8 @@ namespace BuildFromChests
         private static void Look()
         {
             _looked = true;
-            if (Chainloader.PluginInfos.ContainsKey(AzuCraftyBoxes)) _always = "AzuCraftyBoxes";
-            else if (Chainloader.PluginInfos.ContainsKey(CraftFromContainers)) _always = "CraftFromContainers";
+            foreach (string[] mod in Always)
+                if (_always == null && Chainloader.PluginInfos.ContainsKey(mod[0])) _always = mod[1];
 
             if (Chainloader.PluginInfos.TryGetValue(ValheimPlus, out var info) && info.Instance != null)
             {

@@ -5,7 +5,7 @@ description: The Valheim modding mistakes that have cost players items and build
 
 # Valheim modding pitfalls
 
-> **Game closed?** The mod-maker commands (`modcheck`, `who`, `clashes`, `patches`, `game`, `gameupdate`, `library`, `systems`) also run as a program: `BepInEx/claude/modkit/modkit.exe <command>` on Windows, `dotnet BepInEx/claude/modkit/modkit.dll <command>` on Linux and Mac (`modkit help` lists them). The others (`errors`, `log`, `waitfor`, pictures...) need the game running; its log is `BepInEx/LogOutput.log`.
+> **Game closed?** The mod-maker commands (`modcheck`, `who`, `clashes`, `patches`, `game`, `gameupdate`, `library`, `systems`) also run as a program: `BepInEx/claude/modkit/modkit.exe <command>` on Windows, `dotnet BepInEx/claude/modkit/modkit.dll <command>` on Linux and Mac (the command `help` lists them all). The others (`errors`, `log`, `waitfor`, pictures...) need the game running; its log is `BepInEx/LogOutput.log`.
 
 Each of these lost players' things in a released mod. Most only show after a real restart or next to other mods, so hot reload hides
 them. `modcheck <mod>` finds many of them automatically (see **valheim-prerelease**).
@@ -14,8 +14,12 @@ them. `modcheck <mod>` finds many of them automatically (see **valheim-prereleas
 
 A placed piece is saved by its prefab name. If the **host** loads a zone before the prefab is in `ZNetScene`, the game logs
 `Missing prefab hash` then `Destroyed invalid prefab ZDO`, and the piece is gone for good. `ZNetScene.Awake` can run before
-`ObjectDB.Awake`, so: get the hammer and cost items from `ZNetScene` (`scene.GetPrefab("Hammer")`), register from a `ZNetScene.Awake`
-postfix **and** an `ObjectDB.Awake` postfix (and in `Awake` for hot reload). On unload, remove only entries that still point at your prefab.
+`ObjectDB.Awake`, so: get the hammer and cost items from `ZNetScene` (`scene.GetPrefab("Hammer")`), and register from all of:
+- a `ZNetScene.Awake` postfix (pieces, creatures and items into `ZNetScene`),
+- an `ObjectDB.Awake` postfix (items, recipes, status effects into `ObjectDB`),
+- an `ObjectDB.CopyOtherDB` postfix (the main menu's copy of `ObjectDB`, which the character preview uses),
+- your plugin's `Awake` when `ZNetScene.instance` / `ObjectDB.instance` already exist (after a reload).
+Registering twice must be harmless (check by name first). On unload, remove only entries that still point at your prefab.
 
 ## The player's inventory height is reset at every spawn
 
@@ -102,6 +106,12 @@ terrain loads before its pieces). When in doubt, leave it.
 `m_customData` holds every mod's saved data (backpack contents, enchantments). Never replace the dictionary; only your own prefixed keys.
 Moving items through `Inventory.Save`/`Load` keeps it.
 
+## Name everything after your mod
+
+Prefab names, RPC names, ZDO keys, `m_customData` keys, `$` localization keys, console and Claude Tools commands, asset bundle names, the
+Harmony id and the DLL's assembly name all share one space with every other mod. A plain name (`Lantern`, `check`, `"level"`) collides sooner or later: the later one
+replaces the earlier, or the game throws. Start each with your mod's name (`yourmod_lantern`, `YourMod_RequestTake`, `"YourMod.level"`).
+
 ## Check default keys against the game's
 
 The game reads its own keys whatever a mod does: V auto-pickup, X sit, C walk, Q auto-run, G radial menu, F forsaken power, R hide,
@@ -117,9 +127,10 @@ problem never stops the piece being registered (the host would delete the placed
 
 `Container.IsInUse()` reads a flag only the container's **owner** sets. On anyone else's game it says "free" while another player has
 the chest open, and that game's copy of the contents can be a second old. Before taking from or putting into a container that isn't
-yours: read the saved flag (`zdo.GetBool(ZDOVars.s_inUse)`), skip it if set, then `ClaimOwnership()` and **reload it**
-(`Container.Load`, private) before touching items. Without the reload, your change and the other player's overwrite each other (whichever
-copy is newer wins): items duplicated or lost. CraftFromChests' `ChestScanner` does this right.
+yours: read the saved flag (`zdo.GetInt(ZDOVars.s_inUse) == 1`: an int, not a bool), skip it if set, then `ClaimOwnership()` and
+**reload it** (`Container.Load`, private) before touching items. Without the reload, your change and the other player's overwrite each
+other (whichever copy is newer wins): items duplicated or lost. `BepInEx/claude/templates/ContainerAccess.cs` does all of this (and keeps
+to built chests: see "A Container isn't always a chest" in **valheim-compat**).
 
 ## Recovery data must live in the world
 
@@ -154,9 +165,14 @@ away you can't read.
 ## Clean up for hot reload
 
 Everything a mod starts must stop in `OnDestroy`: patches (`UnpatchSelf`), file watchers (`Dispose`), coroutines and objects it made,
-commands it registered. The game never unloads a mod's old copy, so its **static fields live for the whole session**: set big static caches
-to null in `OnDestroy`, or every reload keeps another copy in memory. Libraries that patch with their own Harmony id (blaxxun-boop's managers) can't be undone: mark such a mod as
-needing a restart.
+commands and RPCs it registered (registering an RPC name twice throws, so remove yours first). The game never unloads a mod's old copy, so
+its **static fields live for the whole session**: set big static caches to null in `OnDestroy`, or every reload keeps another copy in
+memory. Libraries that patch with their own Harmony id (blaxxun-boop's managers) can't be undone: mark such a mod as needing a restart.
+
+A mod that registers pieces, items, creatures, recipes or status effects, or changes inventory sizes, can't be reloaded safely in a world:
+its reload level is `menu` (`modcheck` shows it, and Claude Tools' `reload` refuses it in a world). Reload it at the main menu, or restart.
+ScriptEngine's F6 reloads **every** mod in `BepInEx/scripts` at once with no such check, so one mod's problem hits a player who only
+updated another.
 
 ## Test with a real restart
 
