@@ -24,7 +24,7 @@ namespace BuildOrders
         public const string Guid = "com.quad.buildorders";
         public const string OldGuid = "com.dhack.buildorders"; // (its id until 2026-10: settings move over by themselves, see Shared/Migration.cs)
         public const string Name = "BuildOrders";
-        public const string Version = "1.12.2";
+        public const string Version = "1.13.0";
 
         internal static Plugin Instance;
         internal static DHack.Shared.ServerSettings Synced;   // the gameplay settings the server decides in multiplayer

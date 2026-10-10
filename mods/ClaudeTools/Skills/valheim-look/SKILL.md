@@ -50,16 +50,47 @@ shows a whole window. The Recycler's and the Bounty Board's windows are built wi
   then colour the label yourself (dim when the button is disabled).
 - **Tabs:** the game shows the chosen tab by making it **not clickable** (`interactable = false`), which draws it pressed in; its label in
   gold. A tab with news (rewards waiting) can have a green label.
-- **An on/off setting** in a window: the inventory screen has no tick box to clone. Use a button that says its state ("Contracts on
-  screen: On"), its label gold when on.
-- **Symbols:** the game's fonts lack many (★, ✓, arrows): they show as empty boxes. Use words ("Hard", "Brutal") or the game's icons.
+- **An on/off setting:** a button that says its state ("Auto-feed: On"), its label gold when on (`GameUi.Toggle`; with an item icon for
+  a list of items to allow). (`InventoryGui.m_pvp` is a real game Toggle, untried as a clone.)
+- **Numbers:** open-ended values (a reserve, a target), `GameUi.Stepper`: "-10 -1 [value] +1 +10" of cloned buttons around a sunken box.
+  A fixed range (a radius, an opacity), `GameUi.Slider`, a clone of the split-stack slider (`InventoryGui.m_splitDialog.m_splitSlider`,
+  whose event is empty: the game wires it in code). Never rebuild a window because a slider moved (that destroys it mid-drag): leave
+  slider values out of the signature, update their labels from the slider's callback, and copy outside changes back only while the mouse
+  is up (`SetValueWithoutNotify`).
+- **Text boxes:** `GameUi.InputField`, a copy of the game's own (`TextInput.instance`'s `TMP_InputField`, the sign and portal name box;
+  else the map's pin-name box). It is a `GuiInputField` from gui_framework.dll, which mods don't reference: take it as `TMP_InputField`.
+  The copy keeps the sign dialog's saved listeners (`TextInput.OnEnter`, `GuiInputField.OnInputSubmit`): replace every UnityEvent field
+  by reflection right after Instantiate (inside a switched-off holder, before its Start), and destroy its `UIGamePad`, `gamepad_hint*`,
+  `Localize` (it would translate a typed "$word") and `TMP_SelectionCaret`. Then SingleLine, `characterLimit`, `richText = false`, and set
+  `.text` before adding listeners. Built from parts instead: build it inactive and switch it on after `textComponent`/`textViewport` are
+  set (the caret is made in OnEnable). Make text boxes **once** and rebuild the rest of the window around them, or typing loses focus;
+  while `GameUi.Typing`, E, Tab and your mod's keys are letters, not commands. Show what a player typed in a rich-text label through
+  `GameUi.NoParse` (a "<b>" in a name stays letters).
+- **Symbols:** the game's fonts lack many (★, ✓, arrows, "−", "…"): they show as empty boxes. Use words ("Hard", "Brutal"), "-" and "...",
+  or the game's icons (the minimap's player marker, `Minimap.instance.m_smallMarker`, is an arrow that points up: turn it with
+  `localRotation = Quaternion.Euler(0, 0, -degrees)`). Show keys the game's way, `[<color=yellow><b>$KEY_Use</b></color>]` through
+  `Localization.instance.Localize`, not drawn key caps.
+- **Boxes taller than the letters:** with `overflowMode` Ellipsis (or Truncate), TMP hides a whole line that is even a little taller
+  than its box, and Averia's lines are about 1.3 times the font size. Make a one-line label at least 1.4 times its font size tall
+  (PartyHud's names never showed in 18-high boxes at 16 pt). `GameUi.Line` does it.
 - **Colours** that match the game's: text (0.94, 0.9, 0.82), dim (0.75, 0.72, 0.66), warm title (1, 0.86, 0.55), gold (1, 0.78, 0.3),
   warning (1, 0.55, 0.35), good (0.6, 0.9, 0.55); rich-text accent `#ffd27a`, notes `<size=70%><color=#bdb7a9>`. Title in Norse about
   34 pt with the braid line under it; a selected tab in gold.
-- **Rebuild rather than patch** a window when what it shows changes: keep a signature string of everything it shows and build again
-  only when it differs (checking a few times a second is cheap); keep the scroll position across a rebuild. Close it on distance, death
-  or `Menu.IsVisible()`, and on **E** again as a chest closes (ignore E for 0.2 s after opening, and have your piece's `Interact` ignore
-  the same press for 0.25 s after closing, or it opens again at once).
+- **Rebuild for layout, update numbers in place.** Keep a signature string of what decides the window's layout (which rows, which tab,
+  which buttons, their states) and build again only when it differs (checking a few times a second is cheap); keep the scroll position
+  across a rebuild. Numbers that change all the time (health, counts, timers, cooking %, distance) are **not** in the signature: keep the
+  label or bar and set it in place several times a second (`GameUi.SetText` assigns only when the string differs: TMP rebuilds its mesh
+  on every assignment; `GameUi.SetBar` moves a bar's fill). Rebuilding for every number swallows clicks mid-press. Never rebuild while
+  the player types, drags a slider or holds the mouse button. A window with many live values can run its own drawing code in a
+  "signature only" pass and build only when that differs. Leave item identity out of a signature for a creature's or another game's
+  container (its items are new copies whenever its save data changes). If a live text that wraps no longer fits its height, rebuild then.
+- **Closing:** on distance, death, `global::Menu.IsVisible()`, Escape, Tab (as a chest closes), and E again (ignore E for 0.2 s after
+  opening). The E that closes it mustn't open it again: your piece's `Interact` ignores E for 0.25 s after closing, and a window opened
+  from a `Player.Interact` prefix (a station, a portal) returns false (skips the game) in that time, or the closing E also runs the game's
+  interact (puts an item in the station). Not while typing.
+- **Long lists** (hundreds of portals or items): build only the rows in view. Fixed row height, content sized `count * rowHeight - gap`,
+  rows for the visible range plus a few, filled again from the `ScrollRect`'s `onValueChanged` and in Update.
+- **Fit the screen:** `GameUi.ScreenSize` is the canvas in UI units; a tall window takes the smaller of its height and that.
 - **Never change the inventory from a click handler**: set a flag and act on it in `Update` (the window is mid-draw).
 - **Text that may wrap** (an item's name, a long line): size it before placing what comes under it,
   `label.GetPreferredValues(text, width, 0).y`, or the next line runs into it.
@@ -83,7 +114,22 @@ shows a whole window. The Recycler's and the Bounty Board's windows are built wi
 - **A window that waits for the host** (the host keeps the data): say "Reading..." at first and, after a few seconds without an answer,
   why (the host needs the mod too), instead of an empty window.
 - **A public static `Close()`** on your window class (and `IsOpen`), so other mods and tools can close it as Escape does: Claude Tools'
-  `shoot close` calls it by reflection before a screenshot.
+  `shoot close` calls it by reflection before a screenshot. A class of yours named `Menu` hides the game's `Menu` in your namespace: write
+  `global::Menu` (the template does).
+- **Drive windows from the mod's own open flags** (open, build, close in Update), so commands and other code that set the flags keep working.
+
+**Adding to the game's own screens** (level 1 with parts of yours): a part that belongs with a game window (a search box on a chest, a
+button under the inventory, a tag on an item cell) is a child of that window's own objects (`InventoryGui.m_player`, `m_container`,
+`m_crafting`, the cells): it moves, scales and hides with it. Give it `LayoutElement.ignoreLayout` (the panel may have a layout group);
+update it in `LateUpdate` (cells are recreated in `InventoryGrid.UpdateGui`); after a hot reload, remove the old copy's parts by name
+(buttons especially: their listeners point at the old copy). `GameUi.Board` is the game's wood inside such a parent; `GameUi.Over` lays a
+window over a game panel (QualityOfLife's assign menu covers the crafting panel while a chest stays open). Then Escape closes the
+inventory too: `InventoryGui.Update` reads `ZInput.GetKeyDown(Escape)`, which can't be reset. Saving to the ZDO of a chest the player has
+open is safe for its items (`Container.Load` skips a chest in use), but code that refuses "in use" chests must except the one you have open.
+
+**On the big map:** draw under `Minimap.instance.m_pinRootLarge`, on a stretched layer that is its first child (the map adds pins after it,
+so they draw on top). Position from `LateUpdate` (after `Minimap.UpdatePins`) by `layer.InverseTransformPoint(pin.m_uiElement.position)`;
+`raycastTarget = false`; skip a pin whose `m_uiElement` is null or not under the large root (markers out of view are destroyed).
 
 **3. IMGUI (OnGUI) only as a fallback**, made to fit: scale with `GUI.matrix` by `max(0.8, Screen.height / 1080)`; draw an opaque dark
 board (0.07, 0.06, 0.05, 0.98) with a brass edge (0.62, 0.47, 0.22) (a single translucent layer lets the world show through); the game's
@@ -93,17 +139,21 @@ rows of long lists; queue button actions and run them in `Update`, never inside 
 
 ## While a window is open: input
 
-These five patches, or the game keeps playing under your window:
+These seven patches (all in `templates/GameUi.cs`), or the game keeps playing under your window:
 - `PlayerController.TakeInput` and `Player.TakeInput`: postfix `__result = false` while open.
 - `GameCamera.UpdateMouseCapture`: prefix `ZCursor.LockState = None; ZCursor.Show(); return false;` (skip the game's: otherwise it locks
   the cursor every frame and snaps it to the centre on Linux). IMGUI windows also set `Cursor.lockState`/`visible` every draw.
 - `ZInput.GetMouseScrollWheel`: postfix `0`, so the wheel scrolls your list instead of zooming the camera.
 - `Menu.Update`: prefix that closes your window on `Escape` or `ZInput.GetButtonDown("JoyMenu")` and returns false, so the pause menu
-  doesn't open too.
+  doesn't open too. A mod that uses Escape outside its windows too (cancelling a placement) keeps its own prefix beside it, with an "Escape
+  used this frame" guard.
+- `InventoryGui.Update`: prefix that, on `Inventory` or `JoyButtonY`, resets them (`ZInput.ResetButtonStatus`) and closes your window
+  (unless typing): without it **Tab opens the inventory under every window** (it did under our Recycler's and Bounty Board's).
+- `Minimap.InTextInput`: postfix true while your window is open: the chat (Enter), the map key (M) and other mods' hotkeys stay quiet.
 
-Also: `InventoryGui.instance.Hide()` when opening (clicks must not reach the inventory below). Text fields: postfix `Minimap.InTextInput`
-to true while typing (other mods then ignore their hotkeys); inside the inventory, `ZInput.ResetButtonStatus("Use")`/`("Inventory")` so E
-and Tab type instead of closing it. Each prefix that returns false does so **only while your window is open**.
+Also: `InventoryGui.instance.Hide()` when opening (clicks must not reach the inventory below). Each prefix that returns false does so
+**only while your window is open**. A HUD-only mod (no window) deletes the template's patch section: patches it never applies still count
+in `modcheck` (a "never unpatches" warning, and a worse reload level).
 
 ## Messages and the HUD
 
@@ -113,7 +163,7 @@ and Tab type instead of closing it. Each prefix that returns false does so **onl
 | `MessageType.Center` | One important line (a countdown at `<size=150%>`, "bag full"). |
 | `MessageHud.instance.ShowBiomeFoundMsg(text, false)` | Big moments, in the large Norse title. It queues: at most one every few seconds, send the rest to Center. |
 | `player.Message(type, text)` | A message to a player; on another player's character it reaches them over the network. |
-| A panel on the HUD | Something to keep an eye on while playing (the group's contracts): build it under `Hud.instance.m_rootObject` (it hides with the HUD and scales with it), from the same parts as a window (a sunken box, labels, bars). Hide it while the inventory, the menu, the map, a store or your own window is open; build it again only when what it shows changes; remove the old copy's by name after a hot reload. |
+| A panel on the HUD | Something to keep an eye on while playing (the group's contracts, the party): build it under `Hud.instance.m_rootObject` (it hides with the HUD and scales with it), from the same parts as a window (a sunken box, labels, bars). Hide it while the inventory, the menu, the map, a store or your own window is open. Build its rows only when the set of rows or a setting changes, and update values in place each frame (`GameUi.LiveBar`, `SetText`, an arrow's `localRotation`) from `LateUpdate`, so arrows follow this frame's camera; give the panel's root its own `Canvas` so per-frame changes don't rebuild the whole HUD. The HUD hides by moving `m_rootObject` off screen, not by switching it off (`activeInHierarchy` stays true). Remove the old copy's by name after a hot reload. |
 | A cloned boss bar | Progress: `Instantiate(EnemyHud.instance.m_baseHudBoss, EnemyHud.instance.m_hudRoot.transform)`, hide the parts you don't need, drive its `GuiBar`s (`SetValue`, `SetColor`). Under the HUD root it hides with the HUD. |
 
 Hover prompts in the game's own format, localized: `"[<color=yellow><b>$KEY_Use</b></color>] Open"` through

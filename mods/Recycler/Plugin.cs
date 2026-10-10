@@ -22,7 +22,7 @@ namespace Recycler
         public const string Guid = "com.quad.recycler";
         public const string OldGuid = "com.dhack.recycler"; // (its id until 2026-10: settings move over by themselves, see Shared/Migration.cs)
         public const string Name = "Recycler";
-        public const string Version = "1.2.0";
+        public const string Version = "1.2.1";
         public const string RecyclerPrefab = "piece_recycler";
         public const string PressPrefab = "piece_recycler_press";
 

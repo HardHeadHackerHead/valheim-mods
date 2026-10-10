@@ -149,8 +149,8 @@ namespace ClaudeTools
             if (StoreGui.IsVisible()) StoreGui.instance.Hide();
             string[] closers =
             {
-                "Arena.Window:Close", "PortalHub.Plugin:CloseFromEscape", "Recycler.Window:Close", "BountyBoard.Window:Close", "LedgerChest.Window:Close",
-                "SlotMachine.Window:Close", "AICompanion.Menu:Close", "QualityOfLife.Plugin:CloseFromEscape", "FeedFromChests.Plugin:CloseFromEscape",
+                "Arena.Window:Close", "Recycler.Window:Close", "BountyBoard.Window:Close", "LedgerChest.Window:Close",
+                "SlotMachine.Window:Close", "AICompanion.Menu:Close", "QualityOfLife.Plugin:CloseFromEscape", "FeedFromChests.Plugin:CloseFromEscape", "BuildOrders.Plugin:Close", "PortalHub.Plugin:CloseFromEscape",
             };
             foreach (string c in closers)
             {

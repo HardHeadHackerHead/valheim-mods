@@ -24,7 +24,7 @@ namespace BountyBoard
         public const string Guid = "com.quad.bountyboard";
         public const string OldGuid = "com.dhack.bountyboard"; // (its id until 2026-10: settings move over by themselves, see Shared/Migration.cs)
         public const string Name = "BountyBoard";
-        public const string Version = "1.3.0";
+        public const string Version = "1.3.1";
         public const string PiecePrefab = "piece_bountyboard";
 
         internal static Plugin Instance;

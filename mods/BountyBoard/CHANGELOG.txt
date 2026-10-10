@@ -1,3 +1,5 @@
+1.3.1: Tab no longer opens your inventory under the board's menu (it closes the menu, as it closes a chest), and the chat and map keys stay quiet while it's open.
+
 1.3.0: The board's menu and the contracts on your screen are now part of the game's look: the crafting screen's wood panel, title and tabs, each contract on its own card with its trophy, the reward in the inventory's own cells (with their tooltips) and the group's progress as a bar, the game's own buttons; the contracts on your screen sit in the HUD and hide with it. E closes the menu again, as it does a chest.
 
 1.2.2: A clearer page: what it does, who needs it in multiplayer, how it gets on with other mods, and where to report a bug. The game itself is unchanged.

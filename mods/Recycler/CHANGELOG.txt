@@ -1,3 +1,5 @@
+1.2.1: Tab no longer opens your inventory under the Recycler's window (it closes the window, as it closes a chest), and the chat and map keys stay quiet while it's open.
+
 1.2.0: The Recycler's window is now part of the game's look: the crafting screen's wood panel and title, your gear in the inventory's own cells (icons, durability, quality, what you wear, the game's tooltips), the materials you get back in cells with their amounts, and the game's own button. E closes it again, as it does a chest.
 
 1.1.2: A clearer page: what it does, who needs it in multiplayer, how it gets on with other mods, and where to report a bug. The game itself is unchanged.

@@ -1,8 +1,11 @@
 using System;
 using System.Linq;
+using System.Reflection;
 using HarmonyLib;
 using TMPro;
 using UnityEngine;
+using UnityEngine.Events;
+using UnityEngine.EventSystems;
 using UnityEngine.UI;
 using Object = UnityEngine.Object;
 
@@ -12,8 +15,15 @@ namespace BountyBoard
     /// Windows in Valheim's own look, built from the game's own interface: the wood panel, the sunken list box, buttons, the braided line
     /// under a title, the inventory's item cells (icons, durability, quality, tooltips) and the fonts (Norse for titles, Averia for the rest),
     /// all cloned from the inventory screen. A template from Claude Tools (BepInEx/claude/templates): copy it into your mod and change the
-    /// namespace and CanvasName. The same code runs the Recycler's window. Needs references to Unity.TextMeshPro, UnityEngine.UI and
-    /// assembly_guiutils (the mod template has them).
+    /// namespace and CanvasName. Our AICompanion, Recycler, Bounty Board, BuildOrders, FeedFromChests, QualityOfLife, PortalHub, LedgerChest and PartyHud are built
+    /// with it. Needs references to Unity.TextMeshPro, UnityEngine.UI and assembly_guiutils (the mod template has them).
+    ///
+    /// What's in it: Window, Box, Board (wood inside something else), Over (a window laid over a game panel, inside the inventory screen),
+    /// Braid, Label, Line (one line, cut with ...), Width, Button, Tab, Toggle (On/Off), Stepper (-10 -1 [n] +1 +10), Slider (the split-stack one), InputField (a copy of the game's text box) with Typing and
+    /// NoParse, Cell (the inventory's item cell), Chip (icon + amount), Icon, Picture (a texture: a Steam avatar), Bar, SetBar, LiveBar (a bar you
+    /// update in place), Tag, Frame, ArrowSprite, Scroll (the game's scroll speed and scrollbar), ScreenSize, HudRoot, and the patches that keep the
+    /// game quiet under a window (walking, the camera, the cursor, the wheel, Escape, Tab, chat and other mods' keys).
+    /// A HUD-only mod (no window) deletes the patch section at the end: patches it never applies still make modcheck's reload level worse.
     ///
     /// A window with it (see valheim-look for why each line is there):
     ///
@@ -39,7 +49,7 @@ namespace BountyBoard
     ///       {
     ///           if (_window == null) return;
     ///           bool useAgain = Time.unscaledTime > _openedAt + 0.2f && ZInput.GetButtonDown("Use");   // E closes it, as it does a chest
-    ///           if (Player.m_localPlayer == null || Player.m_localPlayer.IsDead() || Menu.IsVisible() || useAgain || tooFarAway) { Close(); return; }
+    ///           if (Player.m_localPlayer == null || Player.m_localPlayer.IsDead() || global::Menu.IsVisible() || useAgain || tooFarAway) { Close(); return; }
     ///           if (Signature() != _shown) Build();     // build again only when what it shows changed
     ///       }
     ///       static void Build()
@@ -74,6 +84,7 @@ namespace BountyBoard
         private static Button _button, _tab;
         private static GameObject _cell;
         private static float _cellSpace = 70f;
+        private static bool _warned;
 
         // the game's own colours (text, dim notes, warm titles, gold, warnings, good news); in rich text: accent #ffd27a, notes #bdb7a9
         internal static readonly Color Warm = new Color(1f, 0.86f, 0.55f), Text = new Color(0.94f, 0.9f, 0.82f), Dim = new Color(0.75f, 0.72f, 0.66f);
@@ -144,7 +155,7 @@ namespace BountyBoard
             Sans = Find<TMP_Text>("root/Crafting/Decription/Description")?.font ?? Serif;
             InventoryGrid grid = gui.m_playerGrid;
             if (grid != null) { _cell = grid.m_elementPrefab; _cellSpace = grid.m_elementSpace > 1f ? grid.m_elementSpace : 70f; }
-            if (_button == null || _panel == null || _cell == null) Debug.LogWarning($"{CanvasName}: the game's interface was not found where expected (a game update moved it?)");
+            if ((_button == null || _panel == null || _cell == null) && !_warned) { _warned = true; Debug.LogWarning($"{CanvasName}: the game's interface was not found where expected (a game update moved it?)"); }
             return _button != null && _panel != null && _cell != null;
         }
 
@@ -210,7 +221,7 @@ namespace BountyBoard
             var t = r.gameObject.AddComponent<TextMeshProUGUI>();
             t.font = font ?? Sans;
             t.fontSize = fontSize; t.color = color; t.alignment = align; t.richText = true;
-            t.enableWordWrapping = true; t.overflowMode = TextOverflowModes.Overflow;
+            t.textWrappingMode = TextWrappingModes.Normal; t.overflowMode = TextOverflowModes.Overflow;
             t.text = text;
             t.raycastTarget = false;
             return t;
@@ -255,6 +266,7 @@ namespace BountyBoard
                 if (child.name.StartsWith("gamepad_hint")) Object.Destroy(child.gameObject);
             foreach (UIGamePad pad in go.GetComponentsInChildren<UIGamePad>(true)) Object.Destroy(pad);
             foreach (ButtonTextColor tint in go.GetComponentsInChildren<ButtonTextColor>(true)) Object.Destroy(tint);
+            foreach (Localize loc in go.GetComponentsInChildren<Localize>(true)) Object.Destroy(loc);   // (it would translate a "$word" in your label)
             var r = (RectTransform)go.transform;
             r.anchorMin = r.anchorMax = new Vector2(0f, 1f);
             r.pivot = new Vector2(0f, 1f);
@@ -271,7 +283,7 @@ namespace BountyBoard
             label.text = text;
             label.fontSize = fontSize;
             label.enableAutoSizing = false;
-            label.enableWordWrapping = false;
+            label.textWrappingMode = TextWrappingModes.NoWrap;
             label.overflowMode = TextOverflowModes.Ellipsis;
             var lr = (RectTransform)label.transform;
             lr.anchorMin = Vector2.zero; lr.anchorMax = Vector2.one; lr.offsetMin = new Vector2(4f, 0f); lr.offsetMax = new Vector2(-4f, 0f);
@@ -295,7 +307,7 @@ namespace BountyBoard
         /// A compact item with an amount ("156" beside a coin): its icon and the number in readable text, with the game's item tooltip on
         /// the icon. For costs and rewards inside a line, where a whole inventory cell is too big. Returns the width it took.
         /// </summary>
-        internal static float Chip(Transform parent, Vector2 pos, ItemDrop.ItemData item, string amount, float size = 28f, float fontSize = 17f)
+        internal static float Chip(Transform parent, Vector2 pos, ItemDrop.ItemData item, string amount, float size = 28f, float fontSize = 17f, Color? color = null)
         {
             Image icon = Icon(parent, pos, new Vector2(size, size), item.GetIcon());
             icon.raycastTarget = true;   // (the tooltip needs the pointer)
@@ -306,8 +318,8 @@ namespace BountyBoard
                 tip.m_tooltipPrefab = cellTip.m_tooltipPrefab;   // (the inventory's tooltip window)
                 tip.Set(item.m_shared.m_name, item.GetTooltip());
             }
-            TMP_Text label = Label(parent, amount, new Vector2(pos.x + size + 3f, pos.y - (size - fontSize * 1.3f) / 2f), new Vector2(80f, size), fontSize, Text);
-            label.enableWordWrapping = false;
+            TMP_Text label = Label(parent, amount, new Vector2(pos.x + size + 3f, pos.y - (size - fontSize * 1.3f) / 2f), new Vector2(80f, size), fontSize, color ?? Text);
+            label.textWrappingMode = TextWrappingModes.NoWrap;
             float w = label.GetPreferredValues(amount, 200f, 0f).x;
             ((RectTransform)label.transform).sizeDelta = new Vector2(w + 2f, size);
             return size + 3f + w + 12f;
@@ -333,7 +345,7 @@ namespace BountyBoard
                 {
                     TMP_Text t = Label(groove, text, new Vector2(shadow ? 1f : 0f, shadow ? -1f : 0f), size, fontSize, shadow ? new Color(0f, 0f, 0f, 0.85f) : Color.white,
                                        Sans, TextAlignmentOptions.Center);
-                    t.enableWordWrapping = false;
+                    t.textWrappingMode = TextWrappingModes.NoWrap;
                 }
             }
             return groove;
@@ -436,6 +448,564 @@ namespace BountyBoard
             }
             return content;
         }
+
+
+        // ---- controls: on/off, numbers ---------------------------------------------------------------------------------------------
+
+        /// <summary>
+        /// An on/off setting (the inventory's one tick box, the PvP switch InventoryGui.m_pvp, is untried as a clone): a plain button that says its state ("Auto-feed: On"), its
+        /// label gold when on. With an <paramref name="icon"/> (an item's), the icon sits at the button's left, greyed when off, and the
+        /// label is left-aligned beside it: a list of items to allow, one button each. click runs from the click: change the game in Update.
+        /// </summary>
+        internal static Button Toggle(Transform parent, string text, bool on, Vector2 pos, Vector2 size, Action click, float fontSize = 17f, Sprite icon = null)
+        {
+            Button b = Button(parent, text + (on ? ": On" : ": Off"), pos, size, click, true, fontSize);
+            TMP_Text label = Label(b);
+            label.color = on ? Gold : Text;
+            if (icon != null)
+            {
+                float s = Mathf.Max(16f, size.y - 12f);
+                Image img = Icon(b.transform, new Vector2(8f, -(size.y - s) / 2f), new Vector2(s, s), icon);
+                img.color = on ? Color.white : new Color(1f, 1f, 1f, 0.4f);
+                ((RectTransform)label.transform).offsetMin = new Vector2(s + 14f, 0f);
+                label.alignment = TextAlignmentOptions.Left;
+            }
+            return b;
+        }
+
+        /// <summary>
+        /// A number setting: the game's buttons around the value in a sunken box, "-10  -1  [ 25 ]  +1  +10" for steps {10, 1} (larger
+        /// first). The value is in Averia (Norse draws 0 as a rune). change gets the signed step (-10, +1...) and runs from the click: change
+        /// the game in Update. Returns the value's label, so it can be updated in place without building the window again; its width is
+        /// StepperWidth.
+        /// </summary>
+        internal static TMP_Text Stepper(Transform parent, Vector2 pos, float height, string value, int[] steps, Action<int> change,
+                                         float buttonW = 48f, float valueW = 76f, float fontSize = 16f)
+        {
+            float x = pos.x;
+            foreach (int step in steps)
+            {
+                int d = -step;
+                Button(parent, "-" + step, new Vector2(x, pos.y), new Vector2(buttonW, height), () => change(d), true, fontSize);
+                x += buttonW + 4f;
+            }
+            RectTransform box = Box(parent, new Vector2(x, pos.y), new Vector2(valueW, height));
+            TMP_Text label = Label(box, value, Vector2.zero, new Vector2(valueW, height), fontSize + 2f, Text, Sans, TextAlignmentOptions.Center);
+            label.textWrappingMode = TextWrappingModes.NoWrap;
+            x += valueW + 4f;
+            foreach (int step in steps.Reverse())
+            {
+                int d = step;
+                Button(parent, "+" + step, new Vector2(x, pos.y), new Vector2(buttonW, height), () => change(d), true, fontSize);
+                x += buttonW + 4f;
+            }
+            return label;
+        }
+
+        /// <summary>How wide a Stepper with this many steps is.</summary>
+        internal static float StepperWidth(int steps, float buttonW = 48f, float valueW = 76f) => steps * 2f * (buttonW + 4f) + valueW;
+
+        /// <summary>One line of text that never wraps: what doesn't fit ends in "..." (a name in a card, a line on a banner).</summary>
+        internal static TMP_Text Line(Transform parent, string text, Vector2 pos, float width, float fontSize, Color color, TMP_FontAsset font = null,
+                                      TextAlignmentOptions align = TextAlignmentOptions.TopLeft, Vector2? anchor = null)
+        {
+            TMP_Text t = Label(parent, text, pos, new Vector2(width, fontSize * 1.35f), fontSize, color, font, align, anchor);
+            t.textWrappingMode = TextWrappingModes.NoWrap;
+            t.overflowMode = TextOverflowModes.Ellipsis;
+            return t;
+        }
+
+        /// <summary>How wide a line of text is in the game's body font (to size a panel around it).</summary>
+        internal static float Width(TMP_Text like, string text) => like.GetPreferredValues(text, 4000f, 0f).x;
+
+        /// <summary>
+        /// A picture from a texture (a blueprint's photo), fitted inside the box and kept in proportion, centred. The texture stays the
+        /// caller's: it is not destroyed with the picture.
+        /// </summary>
+        internal static RawImage Picture(Transform parent, Vector2 pos, Vector2 size, Texture texture)
+        {
+            RectTransform box = Rect(parent, "Picture", new Vector2(0f, 1f), new Vector2(0f, 1f), pos, size);
+            Vector2 fit = size;
+            if (texture != null && texture.width > 0 && texture.height > 0)
+            {
+                float scale = Mathf.Min(size.x / texture.width, size.y / texture.height);
+                fit = new Vector2(texture.width * scale, texture.height * scale);
+            }
+            RectTransform r = Rect(box, "Image", new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), Vector2.zero, fit);
+            var img = r.gameObject.AddComponent<RawImage>();
+            img.texture = texture;
+            img.raycastTarget = false;
+            img.enabled = texture != null;
+            return img;
+        }
+
+        /// <summary>
+        /// A slider: the inventory's split-stack slider (InventoryGui.m_splitDialog.m_splitSlider), with its own look. Values snap to
+        /// <paramref name="step"/>; <paramref name="changed"/> runs with each new value while it is dragged. If a game update moved the
+        /// slider, "-" and "+" buttons at either end do the same instead (and null is returned).
+        /// </summary>
+        internal static Slider Slider(Transform parent, Vector2 pos, Vector2 size, float min, float max, float value, float step, Action<float> changed)
+        {
+            float Snap(float v) => Mathf.Clamp(step > 0f ? Mathf.Round(v / step) * step : v, min, max);
+            Slider template = InventoryGui.instance != null && InventoryGui.instance.m_splitDialog != null ? InventoryGui.instance.m_splitDialog.m_splitSlider : null;
+            if (template == null)
+            {
+                float current = Snap(value);
+                Button(parent, "-", pos, new Vector2(size.y + 8f, size.y), () => { current = Snap(current - step); changed(current); });
+                Button(parent, "+", new Vector2(pos.x + size.x - size.y - 8f, pos.y), new Vector2(size.y + 8f, size.y), () => { current = Snap(current + step); changed(current); });
+                return null;
+            }
+            GameObject go = Object.Instantiate(template.gameObject, parent, false);
+            go.name = "Slider";
+            go.SetActive(true);
+            foreach (Transform child in go.GetComponentsInChildren<Transform>(true).Where(t => t.name.StartsWith("gamepad_hint")).ToList()) Object.Destroy(child.gameObject);
+            foreach (UIGamePad pad in go.GetComponentsInChildren<UIGamePad>(true)) Object.Destroy(pad);
+            var r = (RectTransform)go.transform;
+            r.anchorMin = r.anchorMax = new Vector2(0f, 1f);
+            r.pivot = new Vector2(0f, 0.5f);
+            r.anchoredPosition = new Vector2(pos.x, pos.y - size.y / 2f);
+            r.sizeDelta = size;
+            Slider s = go.GetComponent<Slider>();
+            s.onValueChanged = new Slider.SliderEvent();   // (not the split dialog's)
+            s.navigation = new Navigation { mode = Navigation.Mode.None };   // (arrow keys don't move it)
+            s.wholeNumbers = false;
+            s.minValue = min; s.maxValue = max;
+            s.SetValueWithoutNotify(Snap(value));
+            s.interactable = true;
+            s.onValueChanged.AddListener(v =>
+            {
+                float snapped = Snap(v);
+                if (!Mathf.Approximately(snapped, v)) s.SetValueWithoutNotify(snapped);
+                changed(snapped);
+            });
+            return s;
+        }
+
+        /// <summary>
+        /// The screen's size in the canvas's units (what the player's interface scale leaves for a window): size a tall window to fit it,
+        /// Mathf.Min(wanted, ScreenSize.y - 40). Worked out from the scaler's settings, so it is right on the frame the canvas is made.
+        /// </summary>
+        internal static Vector2 ScreenSize
+        {
+            get
+            {
+                Transform t = Canvas;
+                CanvasScaler s = t != null ? t.GetComponent<CanvasScaler>() : null;
+                var screen = new Vector2(Screen.width, Screen.height);
+                float k = 1f;
+                if (s != null && s.uiScaleMode == CanvasScaler.ScaleMode.ConstantPixelSize) k = s.scaleFactor;
+                else if (s != null && s.uiScaleMode == CanvasScaler.ScaleMode.ScaleWithScreenSize && s.referenceResolution.x > 0f && s.referenceResolution.y > 0f)
+                {
+                    float w = screen.x / s.referenceResolution.x, h = screen.y / s.referenceResolution.y;
+                    k = s.screenMatchMode == CanvasScaler.ScreenMatchMode.Expand ? Mathf.Min(w, h)
+                      : s.screenMatchMode == CanvasScaler.ScreenMatchMode.Shrink ? Mathf.Max(w, h)
+                      : Mathf.Pow(2f, Mathf.Lerp(Mathf.Log(w, 2f), Mathf.Log(h, 2f), s.matchWidthOrHeight));
+                }
+                else if (_canvas != null) k = _canvas.scaleFactor;
+                return screen / Mathf.Max(0.01f, k);
+            }
+        }
+
+        /// <summary>
+        /// Changes a bar made by Bar in place (a value that changes all the time: health, a timer), without building the window again.
+        /// Only what changed is touched (moving a RectTransform makes the canvas lay out again).
+        /// </summary>
+        internal static void SetBar(RectTransform bar, float fraction, string text = null, Color? fill = null)
+        {
+            if (bar == null) return;
+            var f = bar.Find("Fill") as RectTransform;
+            if (f != null)
+            {
+                var want = new Vector2(2f + (bar.sizeDelta.x - 4f) * Mathf.Clamp01(fraction), -2f);
+                if (f.offsetMax != want) f.offsetMax = want;
+                if (fill != null && f.GetComponent<Image>() is Image img)
+                {
+                    Color c = fill.Value, shade = new Color(c.r * 0.8f, c.g * 0.8f, c.b * 0.8f, 0.9f);
+                    if (img.color != shade) img.color = shade;
+                }
+            }
+            if (text != null)
+                foreach (TMP_Text t in bar.GetComponentsInChildren<TMP_Text>(true))
+                    if (t.text != text) t.text = text;
+        }
+
+        // ---- parts of the game's own screens ------------------------------------------------------------------------------------
+
+        /// <summary>
+        /// A board of the game's panel wood inside something else (Window makes one on its own in the middle of the screen): a part that
+        /// hangs off a game window, say. Positions from the parent's top-left corner.
+        /// </summary>
+        internal static RectTransform Board(Transform parent, string name, Vector2 pos, Vector2 size)
+        {
+            RectTransform r = Rect(parent, name, new Vector2(0f, 1f), new Vector2(0f, 1f), pos, size);
+            Copy(_panel, r.gameObject.AddComponent<Image>());
+            return r;
+        }
+
+        /// <summary>
+        /// A window laid over one of the inventory screen's own panels (InventoryGui.m_crafting: the crafting panel), for a menu that belongs
+        /// with the open inventory or chest: it is made inside the inventory's interface, just after that panel, so it moves, scales and hides
+        /// with the inventory and covers the panel (its clicks don't reach it). It grows right and down to at least minSize. Don't hide the
+        /// inventory for it, and close it when the inventory closes. A hot reload's leftover of the same name is removed.
+        /// </summary>
+        internal static RectTransform Over(RectTransform panel, string name, Vector2 minSize)
+        {
+            Transform parent = panel.parent;
+            foreach (Transform old in parent.Cast<Transform>().Where(t => t.name == name).ToList()) Object.Destroy(old.gameObject);
+            // the area the panel and its background take (its background can reach a little past it)
+            var corners = new Vector3[4];
+            panel.GetWorldCorners(corners);
+            Vector2 min = parent.InverseTransformPoint(corners[0]), max = parent.InverseTransformPoint(corners[2]);
+            Transform bkg = panel.Find("Bkg");
+            if (bkg is RectTransform b)
+            {
+                b.GetWorldCorners(corners);
+                min = Vector2.Min(min, parent.InverseTransformPoint(corners[0]));
+                max = Vector2.Max(max, parent.InverseTransformPoint(corners[2]));
+            }
+            Vector2 size = Vector2.Max(max - min, minSize);
+            Rect area = ((RectTransform)parent).rect;
+            RectTransform r = Rect(parent, name, new Vector2(0.5f, 0.5f), new Vector2(0f, 1f), new Vector2(min.x, max.y) - area.center, size);
+            r.SetSiblingIndex(panel.GetSiblingIndex() + 1);
+            Copy(_panel, r.gameObject.AddComponent<Image>());
+            return r;
+        }
+
+        /// <summary>Makes a rect fill its parent, inset by the given offsets (left/bottom, right/top as negative).</summary>
+        internal static RectTransform Stretch(RectTransform r, Vector2 offsetMin, Vector2 offsetMax)
+        {
+            r.anchorMin = Vector2.zero; r.anchorMax = Vector2.one;
+            r.pivot = new Vector2(0.5f, 0.5f);
+            r.offsetMin = offsetMin; r.offsetMax = offsetMax;
+            return r;
+        }
+
+        /// <summary>
+        /// A small coloured tag with a word on it (a marker on an inventory cell, a label in a row of tags), as wide as its text. anchor is
+        /// also its pivot (default top-left). Nothing in it catches the mouse. Its width: tag.sizeDelta.x.
+        /// </summary>
+        internal static RectTransform Tag(Transform parent, string text, Vector2 pos, float height, float fontSize, Color fill, Color textColor, Vector2? anchor = null)
+        {
+            Vector2 a = anchor ?? new Vector2(0f, 1f);
+            RectTransform r = Rect(parent, "Tag", a, a, pos, new Vector2(height, height));
+            var img = r.gameObject.AddComponent<Image>();
+            img.color = fill;
+            img.raycastTarget = false;
+            TMP_Text t = Label(r, text, Vector2.zero, new Vector2(height, height), fontSize, textColor, Sans, TextAlignmentOptions.Center, new Vector2(0.5f, 0.5f));
+            t.textWrappingMode = TextWrappingModes.NoWrap;
+            Stretch((RectTransform)t.transform, Vector2.zero, Vector2.zero);
+            float pad = Mathf.Max(3f, height * 0.3f);
+            r.sizeDelta = new Vector2(Mathf.Max(height, t.GetPreferredValues(text, 1000f, 0f).x + pad * 2f), height);
+            return r;
+        }
+
+        /// <summary>A rectangle placed from its parent's top-left corner, x right and y down (as IMGUI and a layout on paper count).</summary>
+        internal static RectTransform At(Transform parent, string name, float x, float y, float w, float h) =>
+            Rect(parent, name, new Vector2(0f, 1f), new Vector2(0f, 1f), new Vector2(x, -y), new Vector2(w, h));
+
+        /// <summary>A rectangle stretched over its parent, its edges moved by the offsets (positive grows it: left, bottom, right, top).</summary>
+        internal static RectTransform Stretch(Transform parent, string name, float left = 0f, float bottom = 0f, float right = 0f, float top = 0f)
+        {
+            RectTransform r = Rect(parent, name, Vector2.zero, new Vector2(0.5f, 0.5f), Vector2.zero, Vector2.zero);
+            r.anchorMin = Vector2.zero; r.anchorMax = Vector2.one;
+            r.offsetMin = new Vector2(-left, -bottom); r.offsetMax = new Vector2(right, top);
+            return r;
+        }
+
+        /// <summary>A plain coloured rectangle (no sprite): a backing behind a translucent box, a line, a coloured square.</summary>
+        internal static Image Plain(RectTransform r, Color color)
+        {
+            var img = r.gameObject.AddComponent<Image>();
+            img.color = color;
+            img.raycastTarget = false;
+            return img;
+        }
+
+        /// <summary>
+        /// A texture on screen (a Steam profile picture, a camera's picture): a RawImage, cropped to fill its square as IMGUI's ScaleAndCrop
+        /// did. It does not own the texture: whoever made it destroys it. Change it later with <see cref="Show(RawImage, Texture, Color)"/>.
+        /// </summary>
+        internal static RawImage Picture(Transform parent, Vector2 pos, Vector2 size)
+        {
+            var img = Rect(parent, "Picture", new Vector2(0f, 1f), new Vector2(0f, 1f), pos, size).gameObject.AddComponent<RawImage>();
+            img.raycastTarget = false;
+            img.enabled = false;
+            return img;
+        }
+
+        /// <summary>Show a texture (or nothing, for null) in a <see cref="Picture"/>, cropped to fill it; only touches it when something changed.</summary>
+        internal static void Show(RawImage img, Texture texture, Color tint)
+        {
+            if (img == null) return;
+            if (img.color != tint) img.color = tint;
+            if (img.texture == texture) return;
+            img.texture = texture;
+            img.enabled = texture != null;
+            if (texture == null || texture.width <= 0 || texture.height <= 0) return;
+            Vector2 size = img.rectTransform.rect.size;
+            float have = texture.width / (float)texture.height, want = size.y > 0f ? size.x / size.y : 1f;
+            img.uvRect = have > want ? new Rect(0.5f - want / have / 2f, 0f, want / have, 1f) : new Rect(0f, 0.5f - have / want / 2f, 1f, have / want);
+        }
+
+        /// <summary>Set a text only when it differs (TextMeshPro rebuilds its mesh on every assignment, even of the same string).</summary>
+        internal static void SetText(TMP_Text label, string text)
+        {
+            if (label != null && label.text != text) label.text = text;
+        }
+
+        /// <summary>
+        /// The minimap's arrow for the player (it points up when not turned): a direction arrow in the game's look. The game's fonts have no
+        /// arrow signs. Turn its RectTransform with localRotation = Quaternion.Euler(0, 0, -degrees) (degrees clockwise from up). Null
+        /// before the minimap exists.
+        /// </summary>
+        internal static Sprite ArrowSprite()
+        {
+            Minimap map = Minimap.instance;
+            Image marker = map != null && map.m_smallMarker != null ? map.m_smallMarker.GetComponentInChildren<Image>(true) : null;
+            return marker != null ? marker.sprite : null;
+        }
+
+        /// <summary>
+        /// A thin frame around a rectangle (four plain lines), outside it by <paramref name="outset"/>: a coloured edge that says "this one is
+        /// you" or pulses red when someone is in trouble. Colour it in place each frame with <see cref="Edge.SetColor"/> (alpha 0 hides it).
+        /// </summary>
+        internal static Edge Frame(Transform parent, float width, float outset, Color color)
+        {
+            var e = new Edge();
+            float o = outset, w = width;
+            RectTransform Side(string name, Vector2 min, Vector2 max, Vector2 offMin, Vector2 offMax)
+            {
+                RectTransform r = Rect(parent, name, Vector2.zero, new Vector2(0.5f, 0.5f), Vector2.zero, Vector2.zero);
+                r.anchorMin = min; r.anchorMax = max; r.offsetMin = offMin; r.offsetMax = offMax;
+                return r;
+            }
+            e.Sides = new[]
+            {
+                Plain(Side("EdgeTop", new Vector2(0f, 1f), Vector2.one, new Vector2(-o, o - w), new Vector2(o, o)), color),
+                Plain(Side("EdgeBottom", Vector2.zero, new Vector2(1f, 0f), new Vector2(-o, -o), new Vector2(o, w - o)), color),
+                Plain(Side("EdgeLeft", Vector2.zero, new Vector2(0f, 1f), new Vector2(-o, w - o), new Vector2(w - o, o - w)), color),
+                Plain(Side("EdgeRight", new Vector2(1f, 0f), Vector2.one, new Vector2(o - w, w - o), new Vector2(o, o - w)), color),
+            };
+            e.SetColor(color, true);
+            return e;
+        }
+
+        internal sealed class Edge
+        {
+            internal Image[] Sides;
+            private Color _color;
+
+            internal void SetColor(Color color, bool force = false)
+            {
+                if (!force && color == _color) return;
+                _color = color;
+                foreach (Image side in Sides)
+                {
+                    side.color = color;
+                    side.enabled = color.a > 0.01f;
+                }
+            }
+        }
+
+        /// <summary>
+        /// A bar you update in place (health, stamina, a timer), for things that change every frame: GameUi.Bar builds a fixed one, and
+        /// building again every frame makes garbage and redraws the whole canvas. The groove is the game's sunken box (a plain dark one when
+        /// thinner than 10, where the box's sliced edges don't fit), the fill a plain colour; optionally a pale trail behind the fill (recent
+        /// damage, as the game's own health bar shows it) and text in the middle with a dark copy under it. Then each frame:
+        /// meter.Set(fraction, trail), meter.SetColor(c), meter.SetText("78 / 78"); each only touches Unity when the value changed.
+        /// </summary>
+        internal static Meter LiveBar(Transform parent, Vector2 pos, Vector2 size, Color fill, bool trail = false, float fontSize = 0f)
+        {
+            var m = new Meter();
+            bool thick = size.y >= 10f && _sunken != null;
+            if (thick) { m.Groove = Box(parent, pos, size); m.Groove.GetComponent<Image>().raycastTarget = false; }
+            else { m.Groove = Rect(parent, "Groove", new Vector2(0f, 1f), new Vector2(0f, 1f), pos, size); Plain(m.Groove, new Color(0f, 0f, 0f, 0.6f)); }
+            float inset = thick ? 2f : size.y >= 4f ? 1f : 0f;   // (a line of 2 or 3: the fill takes its whole height)
+            RectTransform inner = Stretch(m.Groove, "Inner", -inset, -inset, -inset, -inset);
+            Image Fill(string name, Color color)
+            {
+                RectTransform r = Rect(inner, name, Vector2.zero, Vector2.zero, Vector2.zero, Vector2.zero);
+                r.anchorMin = Vector2.zero; r.anchorMax = new Vector2(0f, 1f); r.offsetMin = r.offsetMax = Vector2.zero;
+                return Plain(r, color);
+            }
+            if (trail) m.Trail = Fill("Trail", new Color(1f, 0.92f, 0.85f, 0.55f));
+            m.Fill = Fill("Fill", fill);
+            if (fontSize > 0f)
+            {
+                foreach (bool shadow in new[] { true, false })
+                {
+                    TMP_Text t = Label(m.Groove, "", Vector2.zero, size, fontSize, shadow ? new Color(0f, 0f, 0f, 0.85f) : Color.white, Sans, TextAlignmentOptions.Center);
+                    var tr = (RectTransform)t.transform;
+                    tr.anchorMin = Vector2.zero; tr.anchorMax = Vector2.one;
+                    tr.offsetMin = shadow ? new Vector2(1f, -1f) : Vector2.zero; tr.offsetMax = shadow ? new Vector2(1f, -1f) : Vector2.zero;
+                    t.textWrappingMode = TextWrappingModes.NoWrap;
+                    t.overflowMode = TextOverflowModes.Overflow;
+                    if (shadow) m.Shadow = t; else m.Text = t;
+                }
+            }
+            m.Set(0f, 0f, true);
+            return m;
+        }
+
+        internal sealed class Meter
+        {
+            internal RectTransform Groove;
+            internal Image Fill, Trail;
+            internal TMP_Text Text, Shadow;
+            private float _fill = -1f, _trail = -1f;
+
+            /// <summary>The fill (0 to 1) and, with a trail, where the trail reaches (it never shows below the fill).</summary>
+            internal void Set(float fraction, float trail = -1f, bool force = false)
+            {
+                fraction = Mathf.Clamp01(fraction);
+                if (force || Mathf.Abs(fraction - _fill) > 0.0005f)
+                {
+                    _fill = fraction;
+                    Fill.rectTransform.anchorMax = new Vector2(fraction, 1f);
+                    Fill.enabled = fraction > 0.002f;
+                }
+                if (Trail == null) return;
+                trail = Mathf.Clamp01(Mathf.Max(trail, _fill));
+                if (force || Mathf.Abs(trail - _trail) > 0.0005f)
+                {
+                    _trail = trail;
+                    Trail.rectTransform.anchorMax = new Vector2(trail, 1f);
+                }
+                Trail.enabled = _trail > _fill + 0.002f;
+            }
+
+            internal void SetColor(Color color) { if (Fill.color != color) Fill.color = color; }
+
+            internal void SetText(string text)
+            {
+                GameUi.SetText(Text, text ?? "");
+                GameUi.SetText(Shadow, text ?? "");
+            }
+
+            internal void SetActive(bool on) { if (Groove.gameObject.activeSelf != on) Groove.gameObject.SetActive(on); }
+        }
+
+        // ---- text boxes --------------------------------------------------
+
+        /// <summary>
+        /// A text box: a copy of the game's own (the sign and portal name box, TextInput; else the map's pin-name box), so it has the
+        /// game's look, caret, selection colour and Ctrl+Backspace; built from TMP parts in the game's font if neither is found.
+        /// <paramref name="changed"/> runs on every edit, <paramref name="submit"/> on Enter (both while the window is being drawn: set
+        /// flags, act in your Tick). While the player types in it, <see cref="Typing"/> is true: don't close on E then (the patches below
+        /// already keep Tab and other mods' hotkeys quiet). The text is the player's: show it elsewhere with <see cref="NoParse"/>.
+        /// </summary>
+        internal static TMP_InputField InputField(Transform parent, Vector2 pos, Vector2 size, string text, string placeholder, int limit,
+                                                  Action<string> changed, Action<string> submit = null, float fontSize = 18f)
+        {
+            TMP_InputField like = TextInput.instance != null ? TextInput.instance.GetComponentInChildren<TMP_InputField>(true) : null;
+            if (like == null && Minimap.instance != null) like = Minimap.instance.GetComponentsInChildren<TMP_InputField>(true).FirstOrDefault();
+            if (like == null) Debug.LogWarning($"{CanvasName}: the game's text box was not found (a game update moved it?): building one");
+
+            // made inside a switched-off holder, so nothing on the copy wakes up before it is cleaned
+            var holder = new GameObject(CanvasName + "Holder");
+            holder.SetActive(false);
+            TMP_InputField field;
+            if (like != null)
+            {
+                GameObject copy = Object.Instantiate(like.gameObject, holder.transform, false);
+                field = copy.GetComponent<TMP_InputField>();
+                // the original's events call the game's dialog (TextInput.OnEnter, Hide...) through listeners saved with it: fresh ones
+                // for the copy. (The game's GuiInputField adds its own in Start, which runs later, onto these.)
+                for (Type t = field.GetType(); t != null && t != typeof(MonoBehaviour); t = t.BaseType)
+                    foreach (FieldInfo f in t.GetFields(BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.DeclaredOnly))
+                        if (typeof(UnityEventBase).IsAssignableFrom(f.FieldType) && !f.FieldType.IsAbstract)
+                            try { f.SetValue(field, Activator.CreateInstance(f.FieldType)); } catch (Exception) { }
+                foreach (UIGamePad pad in copy.GetComponentsInChildren<UIGamePad>(true)) Object.DestroyImmediate(pad);
+                foreach (Transform child in copy.GetComponentsInChildren<Transform>(true).Where(c => c != copy.transform && c.name.StartsWith("gamepad_hint")).ToList())
+                    if (child != null) Object.DestroyImmediate(child.gameObject);
+                // the game's Localize (if any) would turn a "$word" the player typed into a translation on its first frame
+                foreach (Localize loc in copy.GetComponentsInChildren<Localize>(true)) Object.DestroyImmediate(loc);
+                // a caret the original made for itself when it was shown (the copy makes its own)
+                foreach (TMP_SelectionCaret caret in copy.GetComponentsInChildren<TMP_SelectionCaret>(true)) Object.DestroyImmediate(caret.gameObject);
+            }
+            else field = BuildInputField(holder.transform);
+
+            GameObject go = field.gameObject;
+            go.name = "InputField";
+            go.SetActive(true);
+            var r = (RectTransform)go.transform;
+            r.SetParent(parent, false);
+            Object.Destroy(holder);
+            r.anchorMin = r.anchorMax = new Vector2(0f, 1f);
+            r.pivot = new Vector2(0f, 1f);
+            r.anchoredPosition = pos;
+            r.sizeDelta = size;
+            r.localScale = Vector3.one;
+            r.localRotation = Quaternion.identity;
+
+            field.contentType = TMP_InputField.ContentType.Standard;
+            field.lineType = TMP_InputField.LineType.SingleLine;   // (Enter submits; the sign box's copy could take several lines)
+            field.characterLimit = limit;
+            field.interactable = true;
+            field.richText = false;   // (a typed "<b>" stays letters)
+            foreach (TMP_Text t in new[] { field.textComponent, field.placeholder as TMP_Text })
+            {
+                if (t == null) continue;
+                if (t.font == null) t.font = Sans;
+                t.fontSize = fontSize;
+                t.enableAutoSizing = false;
+                t.textWrappingMode = TextWrappingModes.NoWrap;
+                t.alignment = TextAlignmentOptions.MidlineLeft;
+            }
+            if (field.placeholder is TMP_Text hint) hint.text = placeholder ?? "";
+            else if (field.placeholder != null) field.placeholder.gameObject.SetActive(false);
+            field.text = text ?? "";   // (before the listeners: setting it is no edit)
+            if (changed != null) field.onValueChanged.AddListener(s => changed(s ?? ""));
+            if (submit != null) field.onSubmit.AddListener(s => submit(s ?? ""));
+            return field;
+        }
+
+        /// <summary>A text box from TMP parts in the game's font and sunken look, if the game's own can't be found.</summary>
+        private static TMP_InputField BuildInputField(Transform holder)
+        {
+            RectTransform box = Rect(holder, "InputField", new Vector2(0f, 1f), new Vector2(0f, 1f), Vector2.zero, new Vector2(200f, 36f));
+            var bg = box.gameObject.AddComponent<Image>();
+            if (_sunken != null) Copy(_sunken, bg); else bg.color = new Color(0f, 0f, 0f, 0.45f);
+            RectTransform area = Rect(box, "Text Area", Vector2.zero, new Vector2(0.5f, 0.5f), Vector2.zero, Vector2.zero);
+            area.anchorMax = Vector2.one; area.offsetMin = new Vector2(10f, 2f); area.offsetMax = new Vector2(-10f, -2f);
+            area.gameObject.AddComponent<RectMask2D>();
+            TMP_Text Part(string name, Color color)
+            {
+                TMP_Text t = Label(area, "", Vector2.zero, Vector2.zero, 18f, color, Sans, TextAlignmentOptions.MidlineLeft, Vector2.zero);
+                t.name = name;
+                var tr = (RectTransform)t.transform;
+                tr.anchorMin = Vector2.zero; tr.anchorMax = Vector2.one; tr.offsetMin = tr.offsetMax = Vector2.zero;
+                return t;
+            }
+            TMP_Text placeholder = Part("Placeholder", Dim);
+            placeholder.fontStyle = FontStyles.Italic;
+            TMP_Text text = Part("Text", Text);
+            TMP_InputField field = box.gameObject.AddComponent<TMP_InputField>();   // (switched off: it wakes up with its parts in place)
+            field.textViewport = area;
+            field.textComponent = text;
+            field.placeholder = placeholder;
+            field.targetGraphic = bg;
+            field.fontAsset = Sans;
+            field.customCaretColor = true;
+            field.caretColor = Text;
+            field.selectionColor = new Color(1f, 0.78f, 0.3f, 0.35f);
+            return field;
+        }
+
+        /// <summary>True while the player is typing in a text box (yours or the game's): E and other keys are letters then.</summary>
+        internal static bool Typing
+        {
+            get
+            {
+                EventSystem events = EventSystem.current;
+                GameObject selected = events != null ? events.currentSelectedGameObject : null;
+                TMP_InputField field = selected != null ? selected.GetComponent<TMP_InputField>() : null;
+                return field != null && field.isFocused;
+            }
+        }
+
+        /// <summary>Text the player wrote (a name), shown as it is inside a rich-text label: a "&lt;b&gt;" in it stays letters.</summary>
+        internal static string NoParse(string text) => "<noparse>" + (text ?? "").Replace("</noparse>", "") + "</noparse>";
     }
 
     // ---- while a window is open: the game must not play underneath it ---------------------------------------------------------------
@@ -471,7 +1041,7 @@ namespace BountyBoard
         private static void Postfix(ref float __result) { if (GameUi.IsOpen()) __result = 0f; }   // the wheel scrolls the window, not the camera
     }
 
-    [HarmonyPatch(typeof(Menu), "Update")]
+    [HarmonyPatch(typeof(global::Menu), "Update")]   // (global::: a mod with its own class named Menu would patch that one)
     internal static class GameUi_EscapeCloses
     {
         /// <summary>What Escape closes: set it to your window's Close.</summary>
@@ -484,6 +1054,31 @@ namespace BountyBoard
             if (!(ZInput.GetKeyDown(KeyCode.Escape) || ZInput.GetButtonDown("JoyMenu"))) return true;
             Close();
             return false;
+        }
+    }
+
+    // ---- keys that would act under the window -----------------------------------------
+
+    [HarmonyPatch(typeof(Minimap), nameof(Minimap.InTextInput))]
+    internal static class GameUi_InTextInput
+    {
+        // the game's chat (Enter) and map (M) keys, and other mods' hotkeys, stay quiet while the game says "typing in a box": so while a
+        // window is open (typing in its text boxes or not), it says so
+        private static void Postfix(ref bool __result) { if (GameUi.IsOpen()) __result = true; }
+    }
+
+    [HarmonyPatch(typeof(InventoryGui), "Update")]
+    internal static class GameUi_InventoryKey
+    {
+        // Tab would open the inventory under the window: instead it closes the window, as it closes a chest (what Escape closes), and
+        // while typing in a text box it does nothing. Here, before the inventory looks, whichever runs first in the frame.
+        private static void Prefix()
+        {
+            if (!GameUi.IsOpen() || !(ZInput.GetButtonDown("Inventory") || ZInput.GetButtonDown("JoyButtonY"))) return;
+            bool typing = GameUi.Typing;
+            ZInput.ResetButtonStatus("Inventory");
+            ZInput.ResetButtonStatus("JoyButtonY");
+            if (!typing) GameUi_EscapeCloses.Close();
         }
     }
 }

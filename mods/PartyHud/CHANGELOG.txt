@@ -1,3 +1,5 @@
+1.9.0: The party panel is now part of the game's own HUD, made from its own pieces: the inventory's sunken boxes and bars, the game's lettering, and the minimap's arrow for which way each player is. It hides with the HUD (and in cutscenes), follows the interface scale you set in the game's settings, and is lighter to draw: rows are only built again when someone joins or leaves or you change a setting. Every setting still works.
+
 1.8.2: A clearer page: what it does, who needs it in multiplayer, how it gets on with other mods, and where to report a bug. The game itself is unchanged.
 
 1.8.1: A new id, com.quad.partyhud (it was com.dhack.partyhud): your settings move over by themselves the first time it starts, and the old settings file is kept as a backup. Restart the game after this update. If an old copy is still installed beside it, this one stands down and says which file to delete, so the two never both run. The DLL now says it was made with AI, as Thunderstore asks.
