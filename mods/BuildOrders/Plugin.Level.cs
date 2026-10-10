@@ -434,14 +434,11 @@ namespace BuildOrders
             return $"The ground is levelled when you place it: cutting up to {pl.Cut:0.0} m, filling up to {pl.Fill:0.0} m{limit}";
         }
 
-        private void DrawLevelBanner(float sw)
+        /// <summary>The bar shown while the ground is being levelled (on the HUD: see Panel.cs).</summary>
+        private Line[] LevelBannerLines()
         {
             LevelJob job = ActiveLevelJob;
-            if (job == null || _placing != null) return;
-            var r = new Rect(sw / 2f - 260f, 70f, 520f, 30f);
-            Round(r, new Color(0.12f, 0.09f, 0.04f, 0.88f), 7f);
-            Outline(r, new Color(0.85f, 0.65f, 0.35f, 0.9f), 7f);
-            Label(r, $"LEVELLING \"{job.Title}\"   {(job.OnDone != null ? "(the ghosts appear when it is done)   " : "")}{job.Next}/{job.Points.Count}   {job.Status}   ({_blueprintKey.Value}: stop it in Placed plans)", _bold, new Color(1f, 0.85f, 0.6f), TextAnchor.MiddleCenter);
+            return new[] { new Line($"Levelling \"{job.Title}\"   {(job.OnDone != null ? "(the ghosts appear when it is done)   " : "")}{job.Next}/{job.Points.Count}   {job.Status}   ({_blueprintKey.Value}: stop it in Placed plans)", 17f, GameUi.Gold) };
         }
     }
 }
