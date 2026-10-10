@@ -22,7 +22,7 @@ namespace SkalTavern
         public const string Guid = "com.quad.skaltavern";
         public const string OldGuid = "com.dhack.skaltavern"; // (its id until 2026-10: settings move over by themselves, see Shared/Migration.cs)
         public const string Name = "SkalTavern";
-        public const string Version = "0.3.1";
+        public const string Version = "0.3.2";
 
         internal static Plugin Instance;
         internal static ManualLogSource Log;

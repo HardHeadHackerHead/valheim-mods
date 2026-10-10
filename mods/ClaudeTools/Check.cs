@@ -90,6 +90,27 @@ namespace ClaudeTools
                     foreach (CustomAttribute a in asm.CustomAttributes.Where(a => a.AttributeType.Name == "AssemblyMetadataAttribute" && a.ConstructorArguments.Count == 2))
                         if ((string)a.ConstructorArguments[0].Value == "ClaudeTools.Reload") declaredReload = ((string)a.ConstructorArguments[1].Value ?? "").Trim().ToLowerInvariant();
                     managers = asm.MainModule.Types.Select(t => t.Namespace).FirstOrDefault(n => ManagerNamespaces.Contains(n));
+                    // test commands that act as a cheat: a class that registers commands (Claude Tools' RegisterCommand by reflection, or the game's
+                    // Terminal.ConsoleCommand) and whose code gives items, teleports, hurts or removes things, with no check of the game's cheat rule
+                    foreach (TypeDefinition type in asm.MainModule.Types.Where(t => !t.Name.StartsWith("<")))
+                    {
+                        var methods = All(type).SelectMany(t => t.Methods).Where(x => x.HasBody).ToList();
+                        bool registers = methods.Any(x => x.Body.Instructions.Any(i => (i.OpCode == OpCodes.Ldstr && (string)i.Operand == "RegisterCommand")
+                            || (i.OpCode == OpCodes.Newobj && i.Operand is MethodReference c && c.DeclaringType.Name == "ConsoleCommand")));
+                        if (!registers) continue;
+                        bool gated = methods.Any(x => x.Body.Instructions.Any(i => i.Operand is MethodReference c &&
+                            (c.Name == "IsCheatsEnabled" || c.Name == "CheatsAllowed" || (c.Name == "IsServer" && c.DeclaringType.Name == "ZNet")
+                             || (c.Name == "CheckAccess" && c.DeclaringType.Name == "PrivateArea"))));   // (checks wards: acts as a player may)
+                        if (gated) continue;
+                        string does = methods.SelectMany(x => x.Body.Instructions).Select(i => i.Operand as MethodReference)
+                            .Where(c => c != null).Select(c => c.DeclaringType.Name + "." + c.Name).FirstOrDefault(CheatCalls.ContainsKey);
+                        if (does != null)
+                            Add("warning", "command-not-cheat-gated", Scan.Name(type), $"Its commands (in {Scan.Name(type)}) can {CheatCalls[does]} ({does}), with no check of the game's cheat rule.",
+                                "On a server, any player who can type the command (the game's console, or Claude Tools' claude <command>) can use it: a cheat.",
+                                "Allow such commands only in single player, for the host or with devcommands: ZNet.instance == null || ZNet.instance.IsServer() || " +
+                                "Console.instance.IsCheatsEnabled(); or leave test commands out of the release build.");
+                    }
+
                     foreach (TypeDefinition type in asm.MainModule.Types.SelectMany(All))
                     foreach (MethodDefinition m in type.Methods.Where(x => x.HasBody))
                     {
@@ -261,6 +282,14 @@ namespace ClaudeTools
                 ["findings"] = new JArray(sorted), ["reload"] = reload,
             };
         }
+
+        /// <summary>What a test command shouldn't do without the cheat rule, by the game method it calls.</summary>
+        private static readonly Dictionary<string, string> CheatCalls = new Dictionary<string, string>
+        {
+            ["Inventory.AddItem"] = "give items", ["Player.TeleportTo"] = "teleport the player", ["Character.Damage"] = "hurt creatures",
+            ["Character.SetHealth"] = "set health", ["ZNetScene.Destroy"] = "remove things from the world", ["ZDOMan.DestroyZDO"] = "remove things from the world",
+            ["Player.AddKnownItem"] = "unlock recipes", ["Player.RaiseSkill"] = "raise skills", ["Skills.CheatRaiseSkill"] = "raise skills",
+        };
 
         /// <summary>Reload levels, safest first: in a world, at the main menu only, only with a restart.</summary>
         internal static readonly string[] ReloadLevels = { "world", "menu", "restart" };

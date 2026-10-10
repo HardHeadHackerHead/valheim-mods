@@ -5,7 +5,7 @@
 
 <img src="cover.png" alt="Ziplines" width="100%">
 
-**Version 0.2.1**  ·  [all the mods](../../README.md)  ·  install it from [Thunderstore](https://thunderstore.io/c/valheim/p/Quads_Lab/Quads_Ziplines/) (r2modman, Thunderstore Mod Manager) or the in-game [mod manager](https://github.com/HardHeadHackerHead/valheim-mod-manager) (**F7**)
+**Version 0.2.2**  ·  [all the mods](../../README.md)  ·  install it from [Thunderstore](https://thunderstore.io/c/valheim/p/Quads_Lab/Quads_Ziplines/) (r2modman, Thunderstore Mod Manager) or the in-game [mod manager](https://github.com/HardHeadHackerHead/valheim-mod-manager) (**F7**)
 
 Build two Zipline Posts (hammer, Misc) and link them with **E**: a rope runs between them, up to kilometres long. It only runs downhill. Press **E**
 on the higher post, hook your axe over the rope and hang from its handle, both hands on it and your feet dangling, and slide down with the
@@ -78,6 +78,7 @@ Made with the help of Claude (Anthropic), with Claude Code: designed, written an
 
 ## 📜 Changes
 
+- **0.2.2** Its test command for Claude Tools (zip ...) follows the game's cheat rule: spawning, removing and riding test lines and tp work only in single player, for the host or with devcommands; status, posts and hover still work for everyone.
 - **0.2.1** A new id, com.quad.ziplines (it was com.dhack.ziplines): your settings move over by themselves the first time it starts, and the old settings file is kept as a backup. Restart the game after this update. If an old copy is still installed beside it, this one stands down and says which file to delete, so the two never both run. The DLL now says it was made with AI, as Thunderstore asks. The log says so when Einherjer's Ziplines, a different mod with the same name, is installed too.
 - **0.2.0** Running or taking down a line now needs the ward's leave at both posts, as building does (riding is still for anyone). In multiplayer the server decides the line and riding rules (MaxLength, MinSlope, the speeds, LongLinesFaster and NeedAnAxe). Letting go uses the game's Jump (your own key, or a gamepad), the wind follows the game's sound volume, and a problem with the post's look can no longer stop it being registered. Updating the mod now asks for a restart (it adds a build piece).
 - Fix: no more stutter every 5 seconds. Looking for Claude Tools searched everything the game had loaded; it now asks BepInEx's list of mods.

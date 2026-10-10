@@ -49,19 +49,19 @@ The contracts are kept by the host's game, so BountyBoard has to be installed on
 
 In `BepInEx/config/com.quad.bountyboard.cfg` (made the first time the game runs with the mod).
 
-**Notices**
-
-| Setting | Default | What it does |
-|---|---|---|
-| `DaysBetweenNewNotices` | `1` | How many in-game days before the board posts new notices. In multiplayer the server's value applies. |
-| `NoticesPerBoard` | `5` | How many notices are posted. In multiplayer the server's value applies. |
-
 **Contracts**
 
 | Setting | Default | What it does |
 |---|---|---|
 | `MostAtOnce` | `3` | How many contracts the group can have going at once. A new one can only be taken when one is finished. In multiplayer the server's value applies. |
 | `RewardPercent` | `100` | Pay as a percentage of the standard rate (50 = half, 200 = double). In multiplayer the server's value applies. |
+
+**Notices**
+
+| Setting | Default | What it does |
+|---|---|---|
+| `DaysBetweenNewNotices` | `1` | How many in-game days before the board posts new notices. In multiplayer the server's value applies. |
+| `NoticesPerBoard` | `5` | How many notices are posted. In multiplayer the server's value applies. |
 
 **Tracker**
 

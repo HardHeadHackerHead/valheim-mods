@@ -42,6 +42,7 @@ It reads the DLL and lists **problems**, **warnings** and **notes**, each with w
 | container-not-chest | Collects containers without checking they're built pieces: a companion's bag, a cart or a grave gets emptied. |
 | sellable-item | Gives an item a trader price (`m_value`): cheap to make, sold for coins. |
 | own-settings | Settings and multiplayer, but nothing makes the server decide them: each player sets their own rewards. |
+| command-not-cheat-gated | The mod's commands (Claude Tools' or the console's) give items, teleport, hurt or remove things with no check of the cheat rule. |
 | assembly-name | The DLL's .NET assembly name is a popular mod's too: with both installed, one can be handed the other's assembly. |
 | monomod-hook | A MonoMod `On.` hook: it can skip the game's method like a prefix (read it as one). |
 

@@ -5,7 +5,7 @@
 
 <img src="cover.png" alt="Arena" width="100%">
 
-**Version 0.3.1**  ·  [all the mods](../../README.md)  ·  install it from [Thunderstore](https://thunderstore.io/c/valheim/p/Quads_Lab/Quads_Arena/) (r2modman, Thunderstore Mod Manager) or the in-game [mod manager](https://github.com/HardHeadHackerHead/valheim-mod-manager) (**F7**)
+**Version 0.3.2**  ·  [all the mods](../../README.md)  ·  install it from [Thunderstore](https://thunderstore.io/c/valheim/p/Quads_Lab/Quads_Arena/) (r2modman, Thunderstore Mod Manager) or the in-game [mod manager](https://github.com/HardHeadHackerHead/valheim-mod-manager) (**F7**)
 
 A stone colosseum, after the arena of the first Fable, builds itself on open ground in your world. Arena Waystones (hammer, Misc) take you
 to its forecourt, where the champions of each contest stand in stone and the **Arena Master** takes your fee. Walk **the Long Road** from the
@@ -82,34 +82,24 @@ In `BepInEx/config/com.quad.arena.cfg` (made the first time the game runs with t
 
 | Setting | Default | What it does |
 |---|---|---|
-| `RewardPercent` | `100` | How big the prizes are (percent). |
-| `DeathIsReal` | `true` | You can die in a contest. Your tombstone is carried just outside the ring for you to collect, and the purse and stake are lost. Off: beaten, you are carried out at a third of your health with half your purse. (Duels never kill.) |
-| `EntryFeePercent` | `100` | How much it costs to enter a contest (percent of the usual: 150 coins for the Long Road; today's trial 60, a Champion Bout 50 and the Endless Horde 40 in the Meadows, more in each land after). The first fight of a character is free. |
-| `RespawnAtArena` | `true` | Fall in a contest and you rise again in the arena's forecourt (not at your bed). |
+| `RewardPercent` | `100` | How big the prizes are (percent). In multiplayer the server's value applies. |
+| `DeathIsReal` | `true` | You can die in a contest. Your tombstone is carried just outside the ring for you to collect, and the purse and stake are lost. Off: beaten, you are carried out at a third of your health with half your purse. (Duels never kill.) In multiplayer the server's value applies. |
+| `EntryFeePercent` | `100` | How much it costs to enter a contest (percent of the usual: 150 coins for the Long Road; today's trial 60, a Champion Bout 50 and the Endless Horde 40 in the Meadows, more in each land after). The first fight of a character is free. In multiplayer the server's value applies. |
+| `RespawnAtArena` | `true` | Fall in a contest and you rise again in the arena's forecourt (not at your bed). In multiplayer the server's value applies. |
 | `MapPin` | `true` | The Arena is marked on your map. |
-| `AllTiers` | `false` | Every land's fighters can be chosen in a Champion Bout or the Endless Horde at once (normally each opens as you beat the boss before it). For trying them out: the arena still pays metals and trophies only from lands your world has reached, today's trial stays among them, and what the crowd throws from a land your world has not reached is only lent (it goes back after the fight). |
-
-**Crowd**
-
-| Setting | Default | What it does |
-|---|---|---|
-| `Gifts` | `true` | When the crowd likes you it throws you things now and then: food and meads, then arrows, bombs and strong meads, and (on the arena's steel) the next land's weapon, more often and better the more they love you. |
-| `LeftoverMeals` | `50` | On the arena's steel: how much of its time one of the kitchen's meals (yesterday's leftovers) has left once eaten, percent. 100 is a fresh meal. |
-| `RingHunger` | `2.5` | On the arena's steel: how many times faster food burns (fighting is hungry work), so a fresh meal lasts about a land and the crowd's gifts matter. 1 is as outside. |
-| `Spectators` | `true` | A crowd fills the stands during a fight. |
-| `FullHouse` | `30` | How full the stands are during a fight (percent of the seats). Fewer is lighter on the frame rate. |
-| `Announcer` | `true` | The announcer's calls across the top of the screen. |
-
-**Arena**
-
-| Setting | Default | What it does |
-|---|---|---|
+| `AllTiers` | `false` | Every land's fighters can be chosen in a Champion Bout or the Endless Horde at once (normally each opens as you beat the boss before it). For trying them out: the arena still pays metals and trophies only from lands your world has reached, today's trial stays among them, and what the crowd throws from a land your world has not reached is only lent (it goes back after the fight). In multiplayer the server's value applies. |
 | `YieldKey` | `Backspace` | Press twice to give up a contest (you keep what you have earned so far, at a lower rate). |
 
 **Crowd**
 
 | Setting | Default | What it does |
 |---|---|---|
+| `Gifts` | `true` | When the crowd likes you it throws you things now and then: food and meads, then arrows, bombs and strong meads, and (on the arena's steel) the next land's weapon, more often and better the more they love you. In multiplayer the server's value applies. |
+| `LeftoverMeals` | `50` | On the arena's steel: how much of its time one of the kitchen's meals (yesterday's leftovers) has left once eaten, percent. 100 is a fresh meal. In multiplayer the server's value applies. |
+| `RingHunger` | `2.5` | On the arena's steel: how many times faster food burns (fighting is hungry work), so a fresh meal lasts about a land and the crowd's gifts matter. 1 is as outside. In multiplayer the server's value applies. |
+| `Spectators` | `true` | A crowd fills the stands during a fight. |
+| `FullHouse` | `30` | How full the stands are during a fight (percent of the seats). Fewer is lighter on the frame rate. |
+| `Announcer` | `true` | The announcer's calls across the top of the screen. |
 | `Volume` | `0.5` | How loud the crowd is. |
 
 ## 👥 Playing together
@@ -122,6 +112,7 @@ Made with the help of Claude (Anthropic), with Claude Code: designed, written an
 
 ## 📜 Changes
 
+- **0.3.2** Its test command for Claude Tools (arena ...) follows the game's cheat rule: anything that changes a contest (favour, clear, start, tp, crowd, gifts...) works only in single player, for the host or with devcommands; status and the checks still work for everyone. New: arena crowd fills the stands and has them cheer (crowd off sends them home), for trying the crowd out.
 - **0.3.1** A new id, com.quad.arena (it was com.dhack.arena): your settings move over by themselves the first time it starts, and the old settings file is kept as a backup. Restart the game after this update. If an old copy is still installed beside it, this one stands down and says which file to delete, so the two never both run. The DLL now says it was made with AI, as Thunderstore asks.
 - **0.3.0** Fairer rewards, and safer together. Leaving the game (or the mod unloading) once a fight has begun now counts as giving up: half the purse, the stake lost; only before you walk into the ring is everything given back. Nothing from a land your world has not reached comes home with you: on the Long Road the crowd's gifts and the Armourer's food, meads and arrows from such a land are lent like the arena's gear (the Armourer's window says so), and the crowd's strong meads and bombs are lent until your world has reached their land. Fall on the arena's steel and the coins you picked up are lost as before, but the crowd's gifts and what you bought are no longer deleted: they wait in your tombstone in the forecourt. In multiplayer the server decides the prizes, the entry fee, whether death is real, AllTiers, the crowd's gifts, the leftover meals, ring hunger and rising at the arena. A duel now tells everyone at the arena it is on, so no contest or other duel can start in the ring at the same time; and if your opponent's game vanishes mid-duel you get your own wager back (the pot only when they forfeit or are beaten). Fighters left in the world by a game that closed mid-fight are taken away, the arena's chests can no longer be torn down with the hammer on another player's game, the arena only shows its own effects when another game asks, the Arena Waystone is always registered even if its look cannot be made, and the crowd's sounds are not loaded over and over where they cannot be.
 - **0.2.3** The arena is dressed for it: a paved border round the fighting floor, shields of old fights flanking every pen's gate, straw, bones and skulls in the pens, torches round the top of the stands and at the stairs for night fights, and a forecourt with a bear rug before the Arena Master's desk, benches, barrels and fires. A champion's entrance comes with a fanfare and a burst of fire at its gate. Duels: walking in, each duellist is taken to their own end of the ring, facing the other, and held there through a five-second countdown; PvP comes on at FIGHT!, stays on (it cannot be switched off mid-fight) and goes back as it was after. Between lands the floor is always the same: a platform in the middle with the reward chest on it, and each land's own cover goes up with its first round. Cover never traps you: put up where you stand, it lifts you onto it or moves you clear. Today's Trial never has the no-food rule (on the arena's gear it left you 25 health), and it and the metals and trophies the arena pays follow the bosses your world has really beaten. The stands over the main gate are whole again.

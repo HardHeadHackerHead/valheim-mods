@@ -54,6 +54,14 @@ Portals you can actually use: press E on a portal and pick where it goes from a 
 
 In `BepInEx/config/com.quad.portalhub.cfg` (made the first time the game runs with the mod).
 
+**General**
+
+| Setting | Default | What it does |
+|---|---|---|
+| `Enabled` | `true` | Use the portal menu when you press E on a portal. (Off: portals work like in the base game.) In multiplayer the server's value applies. |
+| `HideWardedPortals` | `false` | Leave portals inside someone else's protected area (a switched-on ward you are not on) out of each player's list and map, and refuse links to them. (Portals in such an area can never be changed by others either way.) In multiplayer the server's value applies. |
+| `ShowDestinationOnHover` | `true` | When you look at a portal, show where it goes. |
+
 **Map**
 
 | Setting | Default | What it does |
@@ -61,20 +69,12 @@ In `BepInEx/config/com.quad.portalhub.cfg` (made the first time the game runs wi
 | `ShowPortals` | `true` | Show every portal on the map with its name. |
 | `ShowLinks` | `true` | On the big map, draw a line from each portal to where it goes (an arrow if it only goes one way). |
 
-**General**
-
-| Setting | Default | What it does |
-|---|---|---|
-| `Enabled` | `true` | Use the portal menu when you press E on a portal. (Off: portals work like in the base game.) In multiplayer the server's value applies. |
-| `HideWardedPortals` | `false` | Leave portals inside someone else's protected area (a switched-on ward you are not on) out of each player's list and map, and refuse links to them.  |
-| `ShowDestinationOnHover` | `true` | When you look at a portal, show where it goes. |
-
 **Menu**
 
 | Setting | Default | What it does |
 |---|---|---|
 | `LinkBothWays` | `true` | Picking a destination also links that portal back to this one. |
-| `Favorites` | `""` | Portals you starred (managed by the menu; you do not need to edit this). |
+| `Favorites` | `` | Portals you starred (managed by the menu; you do not need to edit this). |
 
 ## 👥 Playing together
 

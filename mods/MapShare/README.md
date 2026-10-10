@@ -46,7 +46,7 @@ In `BepInEx/config/com.quad.mapshare.cfg` (made the first time the game runs wit
 | `ShareMyMap` | `true` | Send the parts of the map you uncover to the other players in the world. |
 | `ReceiveSharedMap` | `true` | Show the parts of the map other players uncover on your own map. |
 | `SendInterval` | `2` | Seconds between sending newly uncovered map cells. |
-| `AllowSharing` | `true` | Players with this mod share the map they uncover with each other. A server that wants everyone to explore for themselves turns  |
+| `AllowSharing` | `true` | Players with this mod share the map they uncover with each other. A server that wants everyone to explore for themselves turns this off. In multiplayer the server's value applies. |
 
 ## 👥 Playing together
 

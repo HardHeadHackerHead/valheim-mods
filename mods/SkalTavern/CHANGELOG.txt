@@ -1,3 +1,5 @@
+0.3.2: Its test command for Claude Tools (skal ...) follows the game's cheat rule: level, sober and puke work only in single player, for the host or with devcommands; status, find, drink and drop (what a player does anyway) still work for everyone.
+
 0.3.1: A new id, com.quad.skaltavern (it was com.dhack.skaltavern): your settings move over by themselves the first time it starts, and the old settings file is kept as a backup. Restart the game after this update. If an old copy is still installed beside it, this one stands down and says which file to delete, so the two never both run. The DLL now says it was made with AI, as Thunderstore asks.
 
 The drinks no longer sell at the trader (a beehive and a cauldron made endless coins), and the cold no longer bites only once you are properly tipsy (one ale used to keep off the cold and freezing entirely). In multiplayer the server decides how drinking treats you: how long it lasts, how strong it is, how far your feet wander, staggering, falling down, throwing up, the hangover and the toast's window; the picture, sound and other looks stay your own.

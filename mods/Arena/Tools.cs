@@ -45,6 +45,9 @@ namespace Arena
             if (player == null) { error("no player in the world"); yield break; }
             args = args.Skip(1).ToArray();   // (the first word is the command's own name)
             string sub = args.Length > 0 ? args[0].ToLowerInvariant() : "status";
+            // only these just read; the rest changes the game, so it follows the game's cheat rule (Shared/TestCommands.cs)
+            if (System.Array.IndexOf(new[] { "status", "roster", "probe", "holes", "railtest", "kittest", "items", "prefabs", "scan", "ground", "uidebug" }, sub) < 0 && !DHack.Shared.TestCommands.CheatsAllowed())
+            { error(DHack.Shared.TestCommands.Refusal("arena " + sub)); yield break; }
 
             if (sub == "roster")
             {
@@ -152,6 +155,7 @@ namespace Arena
                 output(new JObject { ["holes"] = holes });
                 yield break;
             }
+            if (sub == "crowd") { if (args.Length > 1 && args[1] == "off") Crowd.Close(true); else { Crowd.Open(); Crowd.Gain(70f, true); } output(new JObject { ["crowd"] = Crowd.IsOpen }); yield break; }
             if (sub == "fireworks") { Show.Fireworks(12, 6f); output(new JObject { ["fireworks"] = 12 }); yield break; }
             if (sub == "kittest") { output(new JObject { ["kit"] = Kit.SelfTest(player), ["stowed"] = Kit.Stowed(player) }); yield break; }
             if (sub == "railtest")

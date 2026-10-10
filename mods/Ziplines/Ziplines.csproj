@@ -11,6 +11,6 @@
   </ItemGroup>
   <ItemGroup>
     <!-- The settings the server decides in multiplayer (shared with our other mods). -->
-    <Compile Include="../Shared/ServerSettings.cs" Link="Shared/ServerSettings.cs" />
+    <Compile Include="../Shared/ServerSettings.cs" Link="Shared/ServerSettings.cs" /> <Compile Include="../Shared/TestCommands.cs" Link="Shared/TestCommands.cs" />
   </ItemGroup>
 </Project>

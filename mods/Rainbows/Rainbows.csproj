@@ -8,6 +8,6 @@
     <Reference Include="UnityEngine.AudioModule"><HintPath>$(ManagedDir)/UnityEngine.AudioModule.dll</HintPath><Private>false</Private></Reference>
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="../Shared/ServerSettings.cs" Link="Shared/ServerSettings.cs" />
+    <Compile Include="../Shared/ServerSettings.cs" Link="Shared/ServerSettings.cs" /> <Compile Include="../Shared/TestCommands.cs" Link="Shared/TestCommands.cs" />
   </ItemGroup>
 </Project>

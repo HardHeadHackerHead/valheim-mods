@@ -62,12 +62,13 @@ Wild tobacco only appears in parts of the world you have not visited yet. It add
 
 In `BepInEx/config/com.quad.cigarsmoking.cfg` (made the first time the game runs with the mod).
 
-**Smoking**
+**Growing**
 
 | Setting | Default | What it does |
 |---|---|---|
-| `Minutes` | `5` | How long one cigar lasts (minutes). In multiplayer the server's value applies. |
-| `EffectStrength` | `100` | How strong the cigars' bonuses are (percent of the default). 0 for none. In multiplayer the server's value applies. |
+| `TobaccoGrowMinutes` | `25` | How long a tobacco plant takes to grow (minutes). Applies to plants as they load. In multiplayer the server's value applies. |
+| `DryingMinutes` | `2` | How long a batch of leaves takes to dry on the rack (minutes). Applies to batches put in after a change. In multiplayer the server's value applies. |
+| `CuringMinutes` | `6` | How long a batch of leaves takes to age in the barrel (minutes). Applies to batches put in after a change. In multiplayer the server's value applies. |
 
 **Look**
 
@@ -76,13 +77,12 @@ In `BepInEx/config/com.quad.cigarsmoking.cfg` (made the first time the game runs
 | `DrawSmoke` | `true` | Draw the smoke curling up from smoking players. |
 | `DrawGlow` | `true` | Give the ember a small flickering light (nice at night). |
 
-**Growing**
+**Smoking**
 
 | Setting | Default | What it does |
 |---|---|---|
-| `TobaccoGrowMinutes` | `25` | How long a tobacco plant takes to grow (minutes). Applies to plants as they load. In multiplayer the server's value applies. |
-| `DryingMinutes` | `2` | How long a batch of leaves takes to dry on the rack (minutes). Applies to batches put in after a change. In multiplayer the server's value applies. |
-| `CuringMinutes` | `6` | How long a batch of leaves takes to age in the barrel (minutes). Applies to batches put in after a change. In multiplayer the server's value applies. |
+| `Minutes` | `5` | How long one cigar lasts (minutes). In multiplayer the server's value applies. |
+| `EffectStrength` | `100` | How strong the cigars' bonuses are (percent of the default). 0 for none. In multiplayer the server's value applies. |
 
 ## 👥 Playing together
 

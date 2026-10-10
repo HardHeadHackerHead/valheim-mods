@@ -49,11 +49,11 @@ In `BepInEx/config/com.quad.quiver.cfg` (made the first time the game runs with 
 
 | Setting | Default | What it does |
 |---|---|---|
-| `PickUpArrows` | `true` | Arrows you shoot that hit something land on the ground as arrows you can pick up again. |
-| `ChanceOnGround` | `1` | The chance an arrow that hit the ground, a tree, a wall or the like is kept. 1 keeps every one. |
-| `ChanceOnCreature` | `0.75` | The chance an arrow that hit a creature is kept: it drops with that creature's loot when it dies. 0.75 keeps three in four. |
-| `IncludeBolts` | `true` | Crossbow bolts can be picked up too. |
-| `FireArrowsBurnUp` | `true` | Fire arrows are always used up. |
+| `PickUpArrows` | `true` | Arrows you shoot that hit something land on the ground as arrows you can pick up again. In multiplayer the server's value applies. |
+| `ChanceOnGround` | `1` | The chance an arrow that hit the ground, a tree, a wall or the like is kept. 1 keeps every one. In multiplayer the server's value applies. |
+| `ChanceOnCreature` | `0.75` | The chance an arrow that hit a creature is kept: it drops with that creature's loot when it dies. 0.75 keeps three in four. In multiplayer the server's value applies. |
+| `IncludeBolts` | `true` | Crossbow bolts can be picked up too. In multiplayer the server's value applies. |
+| `FireArrowsBurnUp` | `true` | Fire arrows are always used up. In multiplayer the server's value applies. |
 | `LogHits` | `false` | Write what each arrow hit did (kept, broke, why not) to the BepInEx log. For finding out why an arrow did not come back. |
 
 **Quiver**

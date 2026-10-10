@@ -19,7 +19,7 @@ namespace Rainbows
         public const string Guid = "com.quad.rainbows";
         public const string OldGuid = "com.dhack.rainbows"; // (its id until 2026-10: settings move over by themselves, see Shared/Migration.cs)
         public const string Name = "Rainbows";
-        public const string Version = "0.2.1";
+        public const string Version = "0.2.2";
 
         internal static Plugin Instance;
         internal static ManualLogSource Log;

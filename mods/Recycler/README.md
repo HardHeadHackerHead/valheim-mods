@@ -41,30 +41,30 @@ Settings: refund percentages, chance rounding, which gear types are allowed.
 
 In `BepInEx/config/com.quad.recycler.cfg` (made the first time the game runs with the mod).
 
-**Refund**
-
-| Setting | Default | What it does |
-|---|---|---|
-| `BasePercent` | `50` | Share of the materials you get back with no Press nearby (0-100). |
-| `OnePressBonus` | `10` | Extra percentage points with one Press within 8 m. |
-| `TwoPressBonus` | `20` | Extra percentage points with two Presses within 8 m. |
-| `ChanceRounding` | `true` | Instead of always rounding down, a leftover fraction becomes a matching chance of one more (so 50% averages out to 50%). |
-
-**Rules**
-
-| Setting | Default | What it does |
-|---|---|---|
-| `RequireCraftingStation` | `true` | Gear can only be recycled with the crafting station (and level) it was made at nearby. |
-| `ConfirmValuable` | `true` | Ask for a second click before recycling equipped or upgraded gear, or gear carrying other mods' data (enchantments, a bag's contents). |
-| `AllowWeapons` | `true` | Weapons, bows and ammo launchers. |
-| `AllowArmor` | `true` | Armor, capes and shields. |
-| `AllowTools` | `true` | Tools and torches. |
-
 **General**
 
 | Setting | Default | What it does |
 |---|---|---|
 | `ShowMessages` | `true` | Show a short message in the top-left when something is recycled. |
+
+**Refund**
+
+| Setting | Default | What it does |
+|---|---|---|
+| `BasePercent` | `50` | Share of the materials you get back with no Press nearby (0-100). In multiplayer the server's value applies. |
+| `OnePressBonus` | `10` | Extra percentage points with one Press within 8 m. In multiplayer the server's value applies. |
+| `TwoPressBonus` | `20` | Extra percentage points with two Presses within 8 m. In multiplayer the server's value applies. |
+| `ChanceRounding` | `true` | Instead of always rounding down, a leftover fraction becomes a matching chance of one more (so 50% averages out to 50%). In multiplayer the server's value applies. |
+
+**Rules**
+
+| Setting | Default | What it does |
+|---|---|---|
+| `RequireCraftingStation` | `true` | Gear can only be recycled with the crafting station (and level) it was made at nearby. In multiplayer the server's value applies. |
+| `ConfirmValuable` | `true` | Ask for a second click before recycling equipped or upgraded gear, or gear carrying other mods' data (enchantments, a bag's contents). |
+| `AllowWeapons` | `true` | Weapons, bows and ammo launchers. In multiplayer the server's value applies. |
+| `AllowArmor` | `true` | Armor, capes and shields. In multiplayer the server's value applies. |
+| `AllowTools` | `true` | Tools and torches. In multiplayer the server's value applies. |
 
 ## 👥 Playing together
 

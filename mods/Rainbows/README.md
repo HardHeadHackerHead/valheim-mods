@@ -5,7 +5,7 @@
 
 <img src="cover.png" alt="Rainbows" width="100%">
 
-**Version 0.2.1**  ·  [all the mods](../../README.md)  ·  install it from [Thunderstore](https://thunderstore.io/c/valheim/p/Quads_Lab/Quads_Rainbows/) (r2modman, Thunderstore Mod Manager) or the in-game [mod manager](https://github.com/HardHeadHackerHead/valheim-mod-manager) (**F7**)
+**Version 0.2.2**  ·  [all the mods](../../README.md)  ·  install it from [Thunderstore](https://thunderstore.io/c/valheim/p/Quads_Lab/Quads_Rainbows/) (r2modman, Thunderstore Mod Manager) or the in-game [mod manager](https://github.com/HardHeadHackerHead/valheim-mod-manager) (**F7**)
 
 When a good spell of rain ends and the sun is low, a rainbow arcs across the sky opposite the sun, with a soft chime. Now and then it is a double
 rainbow, with a fainter second bow outside it. It follows the sun, fades into the horizon and goes after a few minutes. Look up at it for
@@ -41,6 +41,13 @@ Only you need it: the sky is drawn for you from the weather the game already has
 
 In `BepInEx/config/com.quad.rainbows.cfg` (made the first time the game runs with the mod).
 
+**Blessing**
+
+| Setting | Default | What it does |
+|---|---|---|
+| `Enabled` | `true` | Look up at a rainbow and you get Rainbow's Blessing: stamina and health come back faster, and running and jumping cost less stamina. A double rainbow gives a stronger one. |
+| `Minutes` | `5` | How long the blessing lasts (minutes). In multiplayer the server's value applies. |
+
 **Rainbow**
 
 | Setting | Default | What it does |
@@ -55,13 +62,6 @@ In `BepInEx/config/com.quad.rainbows.cfg` (made the first time the game runs wit
 | `Chime` | `true` | A soft chime when a rainbow comes out. |
 | `ChimeVolume` | `0.35` | How loud the chime is. |
 
-**Blessing**
-
-| Setting | Default | What it does |
-|---|---|---|
-| `Enabled` | `true` | Look up at a rainbow and you get Rainbow's Blessing: stamina and health come back faster, and running and jumping cost less stamina. A double rainbow gives a stronger one. |
-| `Minutes` | `5` | How long the blessing lasts (minutes). In multiplayer the server's value applies. |
-
 ## 👥 Playing together
 
 See [who needs which mod](../../README.md#playing-together) on the front page.
@@ -72,6 +72,7 @@ Made with the help of Claude (Anthropic), with Claude Code: designed, written an
 
 ## 📜 Changes
 
+- **0.2.2** Its test command for Claude Tools (rainbow ...) follows the game's cheat rule: a rainbow now, stopping it and giving the blessing work only in single player, for the host or with devcommands; status still works for everyone.
 - **0.2.1** A new id, com.quad.rainbows (it was com.dhack.rainbows): your settings move over by themselves the first time it starts, and the old settings file is kept as a backup. Restart the game after this update. If an old copy is still installed beside it, this one stands down and says which file to delete, so the two never both run. The DLL now says it was made with AI, as Thunderstore asks.
 - On a server, how often rainbows come (chance, how long it must rain, how long to wait for the sun, double rainbows) and how long the blessing lasts are the server's settings. It must rain at least 10 seconds, and the blessing lasts at most 30 minutes. The chime now follows the game's sound effects volume.
 - Fix: no more stutter every 5 seconds. Looking for Claude Tools searched everything the game had loaded; it now asks BepInEx's list of mods.

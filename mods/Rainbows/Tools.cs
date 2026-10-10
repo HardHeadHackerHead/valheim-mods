@@ -45,6 +45,9 @@ namespace Rainbows
             if (player == null) { error("no player in the world"); yield break; }
             args = args.Skip(1).ToArray();   // (the first word is the command's own name)
             string sub = args.Length > 0 ? args[0].ToLowerInvariant() : "status";
+            // only these just read; the rest changes the game, so it follows the game's cheat rule (Shared/TestCommands.cs)
+            if (System.Array.IndexOf(new[] { "status", "shader" }, sub) < 0 && !DHack.Shared.TestCommands.CheatsAllowed())
+            { error(DHack.Shared.TestCommands.Refusal("rainbow " + sub)); yield break; }
 
             if (sub == "now")
             {

@@ -60,7 +60,7 @@ In `BepInEx/config/com.quad.qualityoflife.cfg` (made the first time the game run
 | Setting | Default | What it does |
 |---|---|---|
 | `Enabled` | `true` | Turn boat pushing on or off. |
-| `Key` | `KeyCode.P` | Tap (or hold) this next to a boat, not in it, to push it the way you are looking. |
+| `Key` | `P` | Tap (or hold) this next to a boat, not in it, to push it the way you are looking. |
 | `Strength` | `3` | How hard you push (metres per second, per second). Higher gets a heavy boat moving faster. |
 | `MaxSpeed` | `2.5` | The fastest your pushing can move a boat (metres per second). Walking pace is about 5. |
 | `Seconds` | `3` | One tap of the key keeps pushing for this long (holding it keeps pushing as long as you hold). |
@@ -74,32 +74,53 @@ In `BepInEx/config/com.quad.qualityoflife.cfg` (made the first time the game run
 | `MaxDistance` | `20` | How far out the camera can go on foot (metres). The game's own limit is 6. |
 | `MaxDistanceBoat` | `40` | How far out the camera can go while steering a boat (metres). |
 
-**Planting**
+**General**
 
 | Setting | Default | What it does |
 |---|---|---|
-| `NeedRoomToGrow` | `true` | A seed, sapling or crop can only be planted where it has the room to grow up: the same check the game makes later (a plant with another plant, a rock,  |
+| `ShowMessages` | `true` | Show a short message in the top-left when something happens. |
 
-**QuickStack**
+**Hammer**
 
 | Setting | Default | What it does |
 |---|---|---|
-| `Enabled` | `true` | Turn the quick-stack buttons and item locking on or off. |
-| `Radius` | `20` | How far (in metres) from you a chest can be and still be used by Stack to chests  |
-| `LockKey` | `KeyCode.L` | Inventory open: hover an item and press this to lock it (it will never be moved by the buttons) or unlock it. |
-| `StackKey` | `KeyCode.None` | Optional key that does 'Stack to chests' while your inventory is open (useful with a controller). None = off. |
-| `ProtectHotbar` | `true` | Never move items in your top inventory row (the hotbar). |
-| `ShowButtons` | `true` | Show the buttons under your inventory when a chest is in range. |
-| `PlaySounds` | `true` | Play the chests' own sounds when you stack (a thunk from each chest that takes items) and when you undo. |
-| `ShowChestLabels` | `true` | Show what a chest is assigned to receive: under its Assign button when it's open, and in the hover text when you look at it. |
-| `AssignKey` | `KeyCode.K` | Look at a chest (or have one open) and press this to choose what it should receive when you stack: whole categories or individual items. |
+| `Enabled` | `true` | Turn the hammer shortcut on or off. |
+| `Key` | `B` | Press to equip your hammer and start building. Press again to go back to what you had equipped. |
 
 **Map**
 
 | Setting | Default | What it does |
 |---|---|---|
 | `ShowShips` | `true` | Show every ship in the world on the minimap and the map, with a longship icon, wherever it is. |
-| `ShipPinType` | `Minimap.PinType.Icon4` | Which of the map's pin kinds the ship pins count as (their picture is the longship either way). Hiding that kind with the map's pin filters hides them too. |
+| `ShipPinType` | `Icon4` | Which of the map's pin kinds the ship pins count as (their picture is the longship either way). Hiding that kind with the map's pin filters hides them too. |
+
+**Planting**
+
+| Setting | Default | What it does |
+|---|---|---|
+| `NeedRoomToGrow` | `true` | A seed, sapling or crop can only be planted where it has the room to grow up: the same check the game makes later (a plant with another plant, a rock, a tree or a building too close never grows), made before you plant, so the ghost turns red and you are told. Takes effect at once. |
+
+**QuickSet**
+
+| Setting | Default | What it does |
+|---|---|---|
+| `Enabled` | `true` | Turn the quick-set feature on or off. |
+| `Key` | `Q` | Inventory open: hover an item and press to add/remove it from your quick set. Inventory closed: press to swap to the quick set, press again to go back to what you had. |
+| `ShowBadges` | `true` | Mark quick-set items in your inventory with a small gold badge. |
+
+**QuickStack**
+
+| Setting | Default | What it does |
+|---|---|---|
+| `Enabled` | `true` | Turn the quick-stack buttons and item locking on or off. |
+| `Radius` | `20` | How far (in metres) from you a chest can be and still be used by Stack to chests and Sort chests. Raise it to put things away into your storehouse from across a big base: 60 reaches a long way. Chests only count while their area is loaded around you (about 100 m and more). Takes effect at once. |
+| `LockKey` | `L` | Inventory open: hover an item and press this to lock it (it will never be moved by the buttons) or unlock it. |
+| `StackKey` | `None` | Optional key that does 'Stack to chests' while your inventory is open (useful with a controller). None = off. |
+| `ProtectHotbar` | `true` | Never move items in your top inventory row (the hotbar). |
+| `ShowButtons` | `true` | Show the buttons under your inventory when a chest is in range. |
+| `PlaySounds` | `true` | Play the chests' own sounds when you stack (a thunk from each chest that takes items) and when you undo. |
+| `ShowChestLabels` | `true` | Show what a chest is assigned to receive: under its Assign button when it's open, and in the hover text when you look at it. |
+| `AssignKey` | `K` | Look at a chest (or have one open) and press this to choose what it should receive when you stack: whole categories or individual items. |
 
 **Sort**
 
@@ -111,28 +132,7 @@ In `BepInEx/config/com.quad.qualityoflife.cfg` (made the first time the game run
 
 | Setting | Default | What it does |
 |---|---|---|
-| `BuildRange` | `0` | How far (in metres) from a crafting station (workbench, stonecutter, forge, ...) you can build with it, when that is more than the  |
-
-**General**
-
-| Setting | Default | What it does |
-|---|---|---|
-| `ShowMessages` | `true` | Show a short message in the top-left when something happens. |
-
-**QuickSet**
-
-| Setting | Default | What it does |
-|---|---|---|
-| `Enabled` | `true` | Turn the quick-set feature on or off. |
-| `Key` | `Q` | Inventory open: hover an item and press to add/remove it from your quick set.  |
-| `ShowBadges` | `true` | Mark quick-set items in your inventory with a small gold badge. |
-
-**Hammer**
-
-| Setting | Default | What it does |
-|---|---|---|
-| `Enabled` | `true` | Turn the hammer shortcut on or off. |
-| `Key` | `B` | Press to equip your hammer and start building. Press again to go back to what you had equipped. |
+| `BuildRange` | `0` | How far (in metres) from a crafting station (workbench, stonecutter, forge, ...) you can build with it, when that is more than the station's own range (20 m, more with upgrades). 0 leaves the game's ranges. 60 reaches across a big base. Takes effect at once. In multiplayer the server's value applies. |
 
 ## 👥 Playing together
 

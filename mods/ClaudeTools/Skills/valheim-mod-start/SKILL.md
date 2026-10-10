@@ -197,7 +197,8 @@ and lock respected, taken over and reloaded before touching it.
 
 **Commands that cheat**: a debug command that gives items, moves the player or removes things must follow the game's own rule, or be
 left out of the release build: allowed in single player and for the host (`ZNet.instance.IsServer()`), otherwise only with devcommands on
-(`Console.instance.IsCheatsEnabled()`). Without that check, any player on a server can cheat with it.
+(`Console.instance.IsCheatsEnabled()`). Without that check, any player on a server can cheat with it. Leave read-only parts (status,
+lists) open and check the rest; `modcheck` warns about commands that give, teleport, hurt or remove with no check.
 
 ## 8. Share it
 

@@ -127,6 +127,13 @@ A viking companion who plays like a player: comes on your adventures, lives its 
 
 In `BepInEx/config/com.quad.aicompanion.cfg` (made the first time the game runs with the mod).
 
+**Companion**
+
+| Setting | Default | What it does |
+|---|---|---|
+| `MaxCompanions` | `3` | How many companions each player can have. In multiplayer the server's value applies. |
+| `WhileAway` | `Mild` | What a companion living at home does while nobody is near. It always catches up on its work when you come back. Mild: it also fights off a few creatures and keeps their drops, and never falls. Real: those fights can go badly and it can fall. Off: work only. In multiplayer the server's value applies. |
+
 **General**
 
 | Setting | Default | What it does |
@@ -138,9 +145,13 @@ In `BepInEx/config/com.quad.aicompanion.cfg` (made the first time the game runs 
 
 | Setting | Default | What it does |
 |---|---|---|
-| `MaxCompanions` | `3` | How many companions each player can have. |
-| `WhileAway` | `AwayMode.Mild` | What a companion living at home does while nobody is near. It always catches up on its work when you come back.  |
-| `EngageRange` | `20` |  |
+| `FightRange` | `12` | It fights enemies that come this close (in metres) to it or to you. In the menu: Orders. |
+| `ShowDecisions` | `true` | Show what it decides in a fight above its head. In the menu: Brain. |
+| `RespawnSeconds` | `30` | Seconds after falling before it wakes in its bed (or beside you). In multiplayer the server's value applies. |
+| `BaseHealth` | `25` | Its health before food, as a player's (25). In multiplayer the server's value applies. |
+| `BaseStamina` | `75` | Its stamina before food, as a player's (75). In multiplayer the server's value applies. |
+| `EatBelowPercent` | `10` | It eats a food it is already under again once its time left drops below this percent (the game allows it from 50). Lower saves food: a meal lasts 80% of its time instead of 50%, and its effect weakens a little towards the end. In multiplayer the server's value applies. |
+| `StartingSkill` | `0` | The skill level a new companion starts at (a new player: 0). In multiplayer the server's value applies. |
 
 ## 👥 Playing together
 

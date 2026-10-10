@@ -60,6 +60,10 @@ In `BepInEx/config/com.quad.partyhud.cfg` (made the first time the game runs wit
 | `HideInMenus` | `true` | Hide the panel while the inventory, crafting window, build menu, trader or big map is open, so it doesn't overlap them. |
 | `MaxPlayers` | `8` | Most players to show (you first, then the rest alphabetically). |
 | `ToggleKey` | `F8` | Press to hide or show the panel (handy for screenshots). |
+| `ShowDirectionArrow` | `true` | Next to each player's distance, an arrow pointing the way they are, relative to where you are looking. |
+| `ShowFood` | `true` | Show three food slots under each player's picture: what they are eating and how long it has left. Only for players who also have this mod. |
+| `ShowStatusEffects` | `true` | Show each player's buffs and debuffs (food, rested, wet, poison...) as small icons under their bars. Only for players who also have this mod. |
+| `ShowCompanions` | `true` | With the AICompanion mod: show each player's companion under them (health, distance, what it is doing). |
 
 **Layout**
 
@@ -71,28 +75,14 @@ In `BepInEx/config/com.quad.partyhud.cfg` (made the first time the game runs wit
 | `AvoidShipHud` | `true` | While you are steering a ship, move the panel down so it does not cover the wind indicator and the rest of the ship display. |
 | `Compact` | `false` | A smaller, tighter panel: a small picture and thinner bars, for when you want it out of the way. |
 | `OnLeft` | `false` | Put the panel on the left edge of the screen instead of the right. |
-
-**General**
-
-| Setting | Default | What it does |
-|---|---|---|
-| `ShowDirectionArrow` | `true` | Next to each player's distance, an arrow pointing the way they are, relative to where you are looking. |
-| `ShowFood` | `true` | Show three food slots under each player's picture: what they are eating and how long it has left. Only for players who also have this mod. |
-| `ShowStatusEffects` | `true` | Show each player's buffs and debuffs (food, rested, wet, poison...) as small icons under their bars. Only for players who also have this mod. |
-| `ShowCompanions` | `true` | With the AICompanion mod: show each player's companion under them (health, distance, what it is doing). |
-
-**Layout**
-
-| Setting | Default | What it does |
-|---|---|---|
 | `Opacity` | `0.85` | How solid the panel background is (0.2 to 1). |
 
 **Sharing**
 
 | Setting | Default | What it does |
 |---|---|---|
-| `ShareMyStats` | `true` | Send your health, stamina, Eitr, food and buffs to the other players who have this mod (a few times a second, at any distance).  |
-| `AllowSharing` | `true` | Players with this mod share their exact health, stamina, Eitr, food and buffs with each other at any distance. A PvP server may  |
+| `ShareMyStats` | `true` | Send your health, stamina, Eitr, food and buffs to the other players who have this mod (a few times a second, at any distance). Off: they only see what the game itself shows of you when you are near. |
+| `AllowSharing` | `true` | Players with this mod share their exact health, stamina, Eitr, food and buffs with each other at any distance. A PvP server may want this off (each player then sees only what the game shows of players near them). In multiplayer the server's value applies. |
 
 ## 👥 Playing together
 

@@ -52,13 +52,6 @@ Every key and option is in the settings (the manager's Mod settings tab).
 
 In `BepInEx/config/com.quad.gearslots.cfg` (made the first time the game runs with the mod).
 
-**General**
-
-| Setting | Default | What it does |
-|---|---|---|
-| `ShowPanel` | `true` | Show the Gear panel next to your inventory. (Turn off and your gear slots hide; the items stay where they are.) |
-| `ShowMessages` | `true` | Short messages when something happens (auto-eat, a quick slot is empty). |
-
 **Food**
 
 | Setting | Default | What it does |
@@ -70,18 +63,9 @@ In `BepInEx/config/com.quad.gearslots.cfg` (made the first time the game runs wi
 
 | Setting | Default | What it does |
 |---|---|---|
+| `ShowPanel` | `true` | Show the Gear panel next to your inventory. (Turn off and your gear slots hide; the items stay where they are.) |
+| `ShowMessages` | `true` | Short messages when something happens (auto-eat, a quick slot is empty). |
 | `ShieldFollowsWeapon` | `true` | When you switch to a one-handed weapon, put on the shield from your Shield slot too. (Two-handed weapons and bows take the shield off, as in the game.) |
-
-**Quick slots**
-
-| Setting | Default | What it does |
-|---|---|---|
-| `ShowUnderHotbar` | `true` | Show what is in your Quick slots, with their keys, in a row under the hotbar (the 1-8 on screen) while the inventory is closed. |
-
-**General**
-
-| Setting | Default | What it does |
-|---|---|---|
 | `AutoFill` | `true` | When you put on a piece of gear (or the game loads with it on), move it into its matching gear slot if that slot is empty. |
 
 **Layout**
@@ -91,6 +75,17 @@ In `BepInEx/config/com.quad.gearslots.cfg` (made the first time the game runs wi
 | `Gap` | `6` | Space between the Gear panel and the inventory (UI pixels). |
 | `OffsetX` | `0` | Move the Gear panel right (negative = left). |
 | `OffsetY` | `0` | Move the Gear panel up (negative = down). |
+
+**Quick slots**
+
+| Setting | Default | What it does |
+|---|---|---|
+| `ShowUnderHotbar` | `true` | Show what is in your Quick slots, with their keys, in a row under the hotbar (the 1-8 on screen) while the inventory is closed. |
+| `Key1` | `Z` | Press to use what is in quick slot 1: equips or unequips a weapon, tool or shield, or drinks a potion. Set to None to turn it off. If the game uses the same key for something (V: auto-pickup, X: sit, C: walk), the game's key is unbound once, so only this one works; bind it again in the game's Settings, Controls. |
+| `Key2` | `X` | Press to use what is in quick slot 2: equips or unequips a weapon, tool or shield, or drinks a potion. Set to None to turn it off. If the game uses the same key for something (V: auto-pickup, X: sit, C: walk), the game's key is unbound once, so only this one works; bind it again in the game's Settings, Controls. |
+| `Key3` | `C` | Press to use what is in quick slot 3: equips or unequips a weapon, tool or shield, or drinks a potion. Set to None to turn it off. If the game uses the same key for something (V: auto-pickup, X: sit, C: walk), the game's key is unbound once, so only this one works; bind it again in the game's Settings, Controls. |
+| `Key4` | `V` | Press to use what is in quick slot 4: equips or unequips a weapon, tool or shield, or drinks a potion. Set to None to turn it off. If the game uses the same key for something (V: auto-pickup, X: sit, C: walk), the game's key is unbound once, so only this one works; bind it again in the game's Settings, Controls. |
+| `Key5` | `None` | Press to use what is in quick slot 5: equips or unequips a weapon, tool or shield, or drinks a potion. Set to None to turn it off. If the game uses the same key for something (V: auto-pickup, X: sit, C: walk), the game's key is unbound once, so only this one works; bind it again in the game's Settings, Controls. |
 
 ## 👥 Playing together
 

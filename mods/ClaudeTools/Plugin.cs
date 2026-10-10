@@ -30,7 +30,7 @@ namespace ClaudeTools
         public const string Guid = "com.quad.claudetools";
         public const string OldGuid = "com.dhack.claudetools"; // (its id until 2026-10: settings move over by themselves, see Shared/Migration.cs)
         public const string Name = "ClaudeTools";
-        public const string Version = "1.2.2";
+        public const string Version = "1.2.3";
 
         internal static Plugin Instance;
         internal static BepInEx.Logging.ManualLogSource Log;

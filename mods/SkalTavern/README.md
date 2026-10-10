@@ -5,7 +5,7 @@
 
 <img src="cover.png" alt="SkalTavern" width="100%">
 
-**Version 0.3.1**  ·  [all the mods](../../README.md)  ·  install it from [Thunderstore](https://thunderstore.io/c/valheim/p/Quads_Lab/Quads_Skal_Tavern/) (r2modman, Thunderstore Mod Manager) or the in-game [mod manager](https://github.com/HardHeadHackerHead/valheim-mod-manager) (**F7**)
+**Version 0.3.2**  ·  [all the mods](../../README.md)  ·  install it from [Thunderstore](https://thunderstore.io/c/valheim/p/Quads_Lab/Quads_Skal_Tavern/) (r2modman, Thunderstore Mod Manager) or the in-game [mod manager](https://github.com/HardHeadHackerHead/valheim-mod-manager) (**F7**)
 
 Ale and mead that actually get you drunk. Four drinks from the cauldron (ale, honey mead, blueberry wine, skaldic mead), each the real tankard
 in your hand. A little warms you and gives some stamina. More and the screen darkens, blurs and doubles, colours drift, your body leans and weaves,
@@ -51,8 +51,13 @@ In `BepInEx/config/com.quad.skaltavern.cfg` (made the first time the game runs w
 
 | Setting | Default | What it does |
 |---|---|---|
-| `MinutesToSober` | `8` | How many minutes it takes to sober up from very drunk (100). Longer and you stay tipsy for longer. |
-| `EffectStrength` | `100` | How strong everything about being drunk is (percent): the picture, the sway, your steering, the sound. 0 for none, 200 for a night you will not remember. |
+| `MinutesToSober` | `8` | How many minutes it takes to sober up from very drunk (100). Longer and you stay tipsy for longer. In multiplayer the server's value applies. |
+| `EffectStrength` | `100` | How strong everything about being drunk is (percent): the picture, the sway, your steering, the sound. 0 for none, 200 for a night you will not remember. In multiplayer the server's value applies. |
+| `ScreenSway` | `100` | How much the view sways when you are drunk (percent). 0 for none. |
+| `FeetDrift` | `100` | How much your walking wanders when you are drunk (percent). 0 for none. In multiplayer the server's value applies. |
+| `Stumble` | `true` | Very drunk, you stagger now and then. In multiplayer the server's value applies. |
+| `PassOut` | `true` | Too much drink knocks you down (and sobers you a little). In multiplayer the server's value applies. |
+| `Hangover` | `true` | After a big night you wake with a hangover: slower stamina and health for a few minutes. In multiplayer the server's value applies. |
 
 **Effects**
 
@@ -64,25 +69,15 @@ In `BepInEx/config/com.quad.skaltavern.cfg` (made the first time the game runs w
 | `Weave` | `true` | Your body leans and weaves when you are drunk. |
 | `Hiccups` | `true` | Hiccups now and then, and a drunken cheer when you stand still. |
 | `SlurredChat` | `true` | What you say in chat comes out slurred when you are drunk. |
-| `ReversedControls` | `true` | Sloshed, your controls reverse for a moment now and then. |
-| `Puke` | `true` | Too much drink and you throw up. |
-
-**Drinking**
-
-| Setting | Default | What it does |
-|---|---|---|
-| `ScreenSway` | `100` | How much the view sways when you are drunk (percent). 0 for none. |
-| `FeetDrift` | `100` | How much your walking wanders when you are drunk (percent). 0 for none. |
-| `Stumble` | `true` | Very drunk, you stagger now and then. |
-| `PassOut` | `true` | Too much drink knocks you down (and sobers you a little). |
-| `Hangover` | `true` | After a big night you wake with a hangover: slower stamina and health for a few minutes. |
+| `ReversedControls` | `true` | Sloshed, your controls reverse for a moment now and then. In multiplayer the server's value applies. |
+| `Puke` | `true` | Too much drink and you throw up. In multiplayer the server's value applies. |
 
 **Toast**
 
 | Setting | Default | What it does |
 |---|---|---|
 | `Key` | `B` | Raise a cup: a toast with whoever is near. Friends who toast at the same time (and your companions) give each other a Skal! buff. |
-| `Window` | `6` | How many seconds apart two toasts can be and still count as together. |
+| `Window` | `6` | How many seconds apart two toasts can be and still count as together. In multiplayer the server's value applies. |
 
 ## 👥 Playing together
 
@@ -94,6 +89,7 @@ Made with the help of Claude (Anthropic), with Claude Code: designed, written an
 
 ## 📜 Changes
 
+- **0.3.2** Its test command for Claude Tools (skal ...) follows the game's cheat rule: level, sober and puke work only in single player, for the host or with devcommands; status, find, drink and drop (what a player does anyway) still work for everyone.
 - **0.3.1** A new id, com.quad.skaltavern (it was com.dhack.skaltavern): your settings move over by themselves the first time it starts, and the old settings file is kept as a backup. Restart the game after this update. If an old copy is still installed beside it, this one stands down and says which file to delete, so the two never both run. The DLL now says it was made with AI, as Thunderstore asks.
 - The drinks no longer sell at the trader (a beehive and a cauldron made endless coins), and the cold no longer bites only once you are properly tipsy (one ale used to keep off the cold and freezing entirely). In multiplayer the server decides how drinking treats you: how long it lasts, how strong it is, how far your feet wander, staggering, falling down, throwing up, the hangover and the toast's window; the picture, sound and other looks stay your own.
 - Fix: no more stutter every 5 seconds. Looking for Claude Tools searched everything the game had loaded; it now asks BepInEx's list of mods.

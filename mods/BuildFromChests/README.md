@@ -53,7 +53,7 @@ In `BepInEx/config/com.quad.buildfromchests.cfg` (made the first time the game r
 | Setting | Default | What it does |
 |---|---|---|
 | `Enabled` | `true` | Turn the mod on or off. |
-| `Radius` | `20` | How far (in meters) from YOU a chest can be and still be used while building (also for BuildOrders: building its ghosts,  |
+| `Radius` | `20` | How far (in meters) from YOU a chest can be and still be used while building (also for BuildOrders: building its ghosts, hold E to build all, and its fetch key). Raise it to build far from your storehouse: 60 reaches across a big base. Chests only count while their area is loaded around you (about 100 m and more). Takes effect at once. In multiplayer the server's value applies. |
 
 ## 👥 Playing together
 
