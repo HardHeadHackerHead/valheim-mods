@@ -3,12 +3,14 @@ using System.Linq;
 using BepInEx.Configuration;
 using HarmonyLib;
 using UnityEngine;
+using UnityEngine.UI;
 
 namespace PortalHub
 {
     /// <summary>
     /// Portals on the map: each one gets the game's own portal icon with its name (so it follows the map's zoom and the pin
-    /// filters), and the big map draws a line from each portal to where it goes, with an arrow when it is one-way.
+    /// filters), and the big map draws a line from each portal to where it goes, with an arrow when it is one-way. The lines are part
+    /// of the map's own interface (a layer under its pins), so they move, scale and hide with it and never cover a pin or a window.
     /// </summary>
     public partial class Plugin
     {
@@ -62,60 +64,118 @@ namespace PortalHub
 
         // ---- the links on the big map ----
 
-        private void DrawMapLines()
-        {
-            if (!_mapLines.Value || !Enabled || !Minimap.IsOpen() || Event.current.type != EventType.Repaint) return;
+        private const string LinkLayerName = "PortalHubLinks";
+        private const float LinkWidth = 2.5f;
 
+        private RectTransform _linkLayer;
+        private readonly List<LinkPart> _linkParts = new List<LinkPart>();
+        private Dictionary<string, PortalInfo> _byId = new Dictionary<string, PortalInfo>();
+        private float _byIdFor = -1f;
+
+        /// <summary>One straight piece of a link (a line, or one side of an arrowhead), and where it was last put.</summary>
+        private class LinkPart { public RectTransform Rect; public Image Image; public Vector2 A, B; public Color Color; }
+
+        /// <summary>
+        /// After the map has placed its pins this frame (from LateUpdate): a line from each linked portal's pin to its destination's, on a
+        /// layer under the pins inside the big map. The pieces are kept, and moved only when a pin moved (panning, zooming).
+        /// </summary>
+        private void UpdateMapLines()
+        {
+            Minimap map = Minimap.instance;
+            RectTransform root = map != null ? map.m_pinRootLarge : null;
+            if (root == null || !_mapLines.Value || !Enabled || !Minimap.IsOpen() || _pins.Count == 0)
+            {
+                if (_linkLayer != null && _linkLayer.gameObject.activeSelf) _linkLayer.gameObject.SetActive(false);
+                return;
+            }
+            if (_linkLayer == null || _linkLayer.parent != root)
+            {
+                DestroyMapLines();
+                // a hot reload leaves the old copy's layer behind (its types differ from ours): find it by name
+                foreach (Transform old in root.Cast<Transform>().Where(t => t.name == LinkLayerName).ToList()) Destroy(old.gameObject);
+                var go = new GameObject(LinkLayerName, typeof(RectTransform));
+                _linkLayer = (RectTransform)go.transform;
+                _linkLayer.SetParent(root, false);
+                _linkLayer.anchorMin = Vector2.zero;
+                _linkLayer.anchorMax = Vector2.one;
+                _linkLayer.offsetMin = _linkLayer.offsetMax = Vector2.zero;
+            }
+            if (!_linkLayer.gameObject.activeSelf) _linkLayer.gameObject.SetActive(true);
+            if (_linkLayer.GetSiblingIndex() != 0) _linkLayer.SetAsFirstSibling();   // under the pins (the map adds new pins after it)
+
+            if (_byIdFor != PortalsAt)
+            {
+                _byIdFor = PortalsAt;
+                _byId = new Dictionary<string, PortalInfo>();
+                foreach (PortalInfo p in Portals) _byId[p.Id] = p;
+            }
+
+            int used = 0;
             var done = new HashSet<string>();
             foreach (PortalInfo from in Portals)
             {
                 if (from.Dest.Length == 0 || !_pins.TryGetValue(from.Id, out Minimap.PinData a)) continue;
-                PortalInfo to = Find(from.Dest);
-                if (to == null || !_pins.TryGetValue(to.Id, out Minimap.PinData b)) continue;
+                if (!_byId.TryGetValue(from.Dest, out PortalInfo to) || !_pins.TryGetValue(to.Id, out Minimap.PinData b)) continue;
 
                 bool mutual = to.Dest == from.Id;
                 if (mutual && !done.Add(to.Id + ">" + from.Id)) continue; // a two-way link is drawn once
                 if (mutual) done.Add(from.Id + ">" + to.Id);
 
-                if (!OnScreen(a, out Vector2 pa) || !OnScreen(b, out Vector2 pb)) continue;
+                if (!OnMap(a, root, out Vector2 pa) || !OnMap(b, root, out Vector2 pb)) continue;
                 Color color = mutual ? new Color(0.95f, 0.78f, 0.35f, 0.85f) : new Color(0.55f, 0.85f, 1f, 0.85f);
-                Line(pa, pb, color, 2.5f);
-                if (!mutual) Arrow(pa, pb, color);
+                Piece(used++, pa, pb, color);
+                if (mutual || (pb - pa).magnitude < 60f) continue;
+                // an arrowhead a little before the destination end, pointing at it
+                Vector2 dir = (pb - pa).normalized, side = new Vector2(-dir.y, dir.x), tip = pb - dir * 18f;
+                Piece(used++, tip, tip - dir * 12f + side * 7f, color);
+                Piece(used++, tip, tip - dir * 12f - side * 7f, color);
             }
+            for (int i = used; i < _linkParts.Count; i++)
+                if (_linkParts[i].Rect != null && _linkParts[i].Rect.gameObject.activeSelf) _linkParts[i].Rect.gameObject.SetActive(false);
         }
 
-        /// <summary>Where this pin's icon is on the screen right now (IMGUI coordinates), if it is drawn.</summary>
-        private static bool OnScreen(Minimap.PinData pin, out Vector2 position)
+        /// <summary>Where this pin's icon is, in the link layer's space, if the big map shows it now.</summary>
+        private bool OnMap(Minimap.PinData pin, RectTransform root, out Vector2 position)
         {
             position = Vector2.zero;
             RectTransform ui = pin.m_uiElement;
-            if (ui == null || !ui.gameObject.activeInHierarchy) return false;
-            Camera cam = ui.GetComponentInParent<Canvas>()?.worldCamera;
-            Vector2 screen = RectTransformUtility.WorldToScreenPoint(cam, ui.position);
-            position = new Vector2(screen.x, Screen.height - screen.y);
+            if (ui == null || ui.parent != root || !ui.gameObject.activeInHierarchy) return false;
+            position = _linkLayer.InverseTransformPoint(ui.position);
             return true;
         }
 
-        private static void Line(Vector2 a, Vector2 b, Color color, float width)
+        /// <summary>Puts piece <paramref name="index"/> from a to b (made the first time it is needed; moved only if it changed).</summary>
+        private void Piece(int index, Vector2 a, Vector2 b, Color color)
         {
-            Matrix4x4 saved = GUI.matrix;
-            float angle = Mathf.Atan2(b.y - a.y, b.x - a.x) * Mathf.Rad2Deg;
-            GUIUtility.RotateAroundPivot(angle, a);
-            GUI.color = color;
-            GUI.DrawTexture(new Rect(a.x, a.y - width / 2f, (b - a).magnitude, width), Texture2D.whiteTexture);
-            GUI.color = Color.white;
-            GUI.matrix = saved;
+            while (_linkParts.Count <= index) _linkParts.Add(new LinkPart());
+            LinkPart part = _linkParts[index];
+            if (part.Rect == null)
+            {
+                var go = new GameObject("Link", typeof(RectTransform));
+                part.Rect = (RectTransform)go.transform;
+                part.Rect.SetParent(_linkLayer, false);
+                part.Rect.anchorMin = part.Rect.anchorMax = new Vector2(0.5f, 0.5f);
+                part.Rect.pivot = new Vector2(0f, 0.5f);
+                part.Image = go.AddComponent<Image>();
+                part.Image.raycastTarget = false;   // (clicks go to the map: its pins, panning)
+                part.A = part.B = new Vector2(float.NaN, float.NaN);
+                part.Color = Color.clear;
+            }
+            if (!part.Rect.gameObject.activeSelf) part.Rect.gameObject.SetActive(true);
+            if (part.Color != color) { part.Color = color; part.Image.color = color; }
+            if ((part.A - a).sqrMagnitude < 0.01f && (part.B - b).sqrMagnitude < 0.01f) return;
+            part.A = a; part.B = b;
+            Vector2 d = b - a;
+            part.Rect.localPosition = a;
+            part.Rect.sizeDelta = new Vector2(d.magnitude, LinkWidth);
+            part.Rect.localRotation = Quaternion.Euler(0f, 0f, Mathf.Atan2(d.y, d.x) * Mathf.Rad2Deg);
         }
 
-        /// <summary>An arrowhead a little before the destination end, pointing at it.</summary>
-        private static void Arrow(Vector2 from, Vector2 to, Color color)
+        private void DestroyMapLines()
         {
-            Vector2 dir = (to - from).normalized;
-            if ((to - from).magnitude < 60f) return;
-            Vector2 tip = to - dir * 18f;
-            Vector2 side = new Vector2(-dir.y, dir.x);
-            Line(tip, tip - dir * 12f + side * 7f, color, 2.5f);
-            Line(tip, tip - dir * 12f - side * 7f, color, 2.5f);
+            if (_linkLayer != null) Destroy(_linkLayer.gameObject);
+            _linkLayer = null;
+            _linkParts.Clear();
         }
     }
 }
