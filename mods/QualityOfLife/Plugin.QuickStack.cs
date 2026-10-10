@@ -98,6 +98,7 @@ namespace QualityOfLife
         private static bool Usable(Container c)
         {
             if (c == null || c.GetInventory() == null) return false;
+            if (DHack.Shared.SpecialContainers.NotStorage(c)) return false; // (never stack into the Obliterator, a Ledger Chest or the Arena's chests)
             long playerId = Game.instance.GetPlayerProfile().GetPlayerID();
             if (c.m_checkGuardStone && !PrivateArea.CheckAccess(c.transform.position, 0f, false)) return false;
             return (bool)CheckAccess.Invoke(c, new object[] { playerId });

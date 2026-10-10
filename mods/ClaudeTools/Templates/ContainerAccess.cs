@@ -35,7 +35,24 @@ namespace YourMod
             if (c.GetComponentInParent<Piece>() == null || c.GetComponent<TombStone>() != null) return false;
             if (c.GetComponentInParent<Character>() != null || c.GetComponentInParent<Vagon>() != null || c.GetComponentInParent<Ship>() != null) return false;
             ZNetView view = View(c);
-            return view != null && view.IsValid();
+            return view != null && view.IsValid() && !NotStorage(c, view.GetZDO());
+        }
+
+        /// <summary>Other mods' special pieces, by prefab name (add yours and those you know of).</summary>
+        private static readonly string[] SpecialPrefabs = { "piece_ledgerchest", "piece_recycler" };
+
+        /// <summary>
+        /// Built, with a Container, but not for keeping things: the game's Obliterator (what is in it burns when the lever is pulled), other
+        /// mods' machines (SpecialPrefabs), Arena's prize chests ("dh_arena_chest"), and any piece that marks itself with a ZDO bool
+        /// "dh_notstorage" (do that on a piece of yours that keeps a Container but isn't storage).
+        /// </summary>
+        public static bool NotStorage(Container c, ZDO zdo)
+        {
+            Piece piece = c.GetComponentInParent<Piece>();
+            string name = piece != null ? piece.gameObject.name : c.gameObject.name;
+            foreach (string prefab in SpecialPrefabs) if (name.StartsWith(prefab, System.StringComparison.Ordinal)) return true;
+            if ((piece != null ? piece.GetComponentInChildren<Incinerator>(true) : c.GetComponentInParent<Incinerator>()) != null) return true;
+            return zdo != null && (zdo.GetInt("dh_arena_chest", 0) != 0 || zdo.GetBool("dh_notstorage", false));
         }
 
         /// <summary>

@@ -184,5 +184,6 @@ shoot close                   close every window again (yours too, through its C
 shoot hud on
 ```
 
-Look at every picture yourself before calling the look done: text cut off, Arial anywhere, a panel that lets the world show through, a
+For the mod's page, take `shot` with **no width** (the full screen, sharpest), crop to what matters, and save it as PNG (or JPG at
+quality 92 or more); a width shrinks it, which is fine for checking but loses detail. Look at every picture yourself before calling the look done: text cut off, Arial anywhere, a panel that lets the world show through, a
 button without its frame.

@@ -112,6 +112,13 @@ Creatures (AICompanion's companions), carts, ships, tombstones and Adventure Bac
 "every container nearby" must keep to built pieces (a `Piece` in the parent chain, no `Character`), or they spend a companion's arrows, a
 grave's contents, or the backpack a second time.
 
+A built piece with a Container isn't always storage either: the game's **Obliterator** burns what is in it, LedgerChest's Ledger Chest
+sends on what goes in, and Arena's ring chests hold lent gear. AICompanion's companion took an empty Obliterator beside its bed as one of
+its chests and filled it (0.22.2 and older). Mods that pick or fill chests by themselves skip them all through one rule,
+`mods/Shared/SpecialContainers.cs` (by prefab name, the `Incinerator` component, or a ZDO key: `dh_arena_chest`, `dh_notstorage`). A mod
+that clones `piece_chest_wood` for a piece that isn't storage must `DestroyImmediate` the Container on its prefab (Recycler, BountyBoard,
+SlotMachine, BirdTrap do); one that keeps a Container sets `dh_notstorage` on its ZDO, or goes on the list.
+
 ## Recovery data must live in the world
 
 `Player.m_customData` is saved on logout and every 30 minutes, and can't change while its player is offline. A companion's kept gear stored

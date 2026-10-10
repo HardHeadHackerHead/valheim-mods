@@ -4,7 +4,7 @@
     <RootNamespace>QualityOfLife</RootNamespace>
   </PropertyGroup>
   <ItemGroup>
-    <Compile Include="../Shared/ServerSettings.cs" Link="Shared/ServerSettings.cs" />
+    <Compile Include="../Shared/ServerSettings.cs" Link="Shared/ServerSettings.cs" /> <Compile Include="../Shared/SpecialContainers.cs" Link="Shared/SpecialContainers.cs" />
   </ItemGroup>
   <ItemGroup>
     <!-- the longship picture for ship pins on the map -->

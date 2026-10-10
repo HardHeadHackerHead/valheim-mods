@@ -197,29 +197,8 @@ namespace AICompanion
             return Companion.Zdo(c) != null && !NotStorage(c); // (its own save data: where its claim is kept)
         }
 
-        /// <summary>
-        /// Other mods' pieces (by prefab name) that have a chest's Container but are not for keeping things: LedgerChest's Ledger Chest keeps
-        /// nothing (what goes in is sent on to the chests around it, or back to whoever opens it), the Recycler and its Press.
-        /// </summary>
-        private static readonly string[] NotStoragePrefabs = { "piece_ledgerchest", "piece_recycler" };
-
-        /// <summary>
-        /// Built, with a Container, but not a chest to keep things in: the Obliterator (what is in it burns when the lever is pulled), Arena's
-        /// chests in the ring (lent gear, prizes), and other mods' special pieces (NotStoragePrefabs).
-        /// </summary>
-        public static bool NotStorage(Container c)
-        {
-            if (c == null) return false;
-            Piece piece = c.GetComponentInParent<Piece>();
-            string name = (piece != null ? piece.gameObject : c.gameObject).name;
-            foreach (string prefab in NotStoragePrefabs)
-                if (name.StartsWith(prefab, System.StringComparison.Ordinal) || c.gameObject.name.StartsWith(prefab, System.StringComparison.Ordinal)) return true;
-            if ((piece != null ? piece.GetComponentInChildren<Incinerator>(true) : c.GetComponentInParent<Incinerator>()) != null) return true;
-            ZDO z = Companion.Zdo(c);
-            return z != null && z.GetInt(ArenaChestKey, 0) != 0;
-        }
-
-        private const string ArenaChestKey = "dh_arena_chest"; // (Arena: Show.ChestKey, the kind of chest standing in the ring)
+        /// <summary>Built, with a Container, but not a chest to keep things in (the Obliterator, a Ledger Chest, the Arena's chests...): Shared/SpecialContainers.cs.</summary>
+        public static bool NotStorage(Container c) => DHack.Shared.SpecialContainers.NotStorage(c);
 
         /// <summary>
         /// A companion that took one of those before they were left out (0.22.2 and older: an empty Ledger Chest or Obliterator beside its

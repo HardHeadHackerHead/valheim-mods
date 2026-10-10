@@ -24,7 +24,10 @@ too. Two mods patching one method is normal; a clash needs one of them to take t
    crafts pay half. Doing one job through different methods still clashes (`systems` lists the game's jobs, `who system <name>` who does each).
 8. **A Container isn't always a chest.** Creatures, carts, tombstones and other mods' objects have one too: a mod that uses "every container
    nearby" (crafting from chests, auto-feeding, quick stacking) must keep to built pieces (`GetComponent<Piece>() != null`), or it empties
-   a companion's bag or a grave.
+   a companion's bag or a grave. Built isn't enough either: the game's **Obliterator** is a piece with a Container (what is in it burns
+   when the lever is pulled), and other mods' machines may be (a Ledger Chest, an arena's prize chest). Skip an `Incinerator` in the piece
+   and known special prefabs (`templates/ContainerAccess.cs` does); a piece of yours that keeps a Container but isn't storage sets a ZDO
+   bool `dh_notstorage` so mods that know the convention leave it alone.
 9. **A prefix that does the job reads `__runOriginal`.** Every prefix runs even after another returned false, so one that pays, deposits,
    moves or gives must take `bool __runOriginal`, return at once when it's already false (someone did it), and usually run at
    `[HarmonyPriority(Priority.Last)]`.

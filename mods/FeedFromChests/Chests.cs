@@ -46,6 +46,7 @@ namespace FeedFromChests
         {
             if (c.GetComponentInParent<Piece>() == null || c.GetComponent<TombStone>() != null) return false;
             if (c.GetComponentInParent<Character>() != null || c.GetComponentInParent<Vagon>() != null || c.GetComponentInParent<Ship>() != null) return false;
+            if (DHack.Shared.SpecialContainers.NotStorage(c)) return false; // (the Obliterator, a Ledger Chest, the Arena's chests)
             ZNetView view = ViewOf(c);
             return view != null && view.IsValid() && view.GetZDO().GetLong("dhc_home", 0L) == 0L; // (a companion's own chest)
         }

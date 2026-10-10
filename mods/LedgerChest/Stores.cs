@@ -41,7 +41,7 @@ namespace LedgerChest
             if (c == null || c == ledger || !c.isActiveAndEnabled || c.GetInventory() == null) return false;
             if (c.GetComponentInParent<Piece>() == null || c.GetComponent<TombStone>() != null || c.GetComponentInParent<Character>() != null) return false;
             if (c.GetComponentInParent<Vagon>() != null || c.GetComponentInParent<Ship>() != null) return false;
-            if (c.gameObject.name.StartsWith("piece_recycler", StringComparison.Ordinal)) return false;
+            if (DHack.Shared.SpecialContainers.NotStorage(c)) return false; // (the Obliterator, another Ledger Chest, the Recycler, the Arena's chests)
             if ((c.transform.position - at).sqrMagnitude > radius * radius) return false;
             ZNetView v = View(c);
             if (v == null || !v.IsValid() || v.GetZDO().GetLong("dhc_home", 0L) != 0L) return false; // (a companion's own chest: its stock)

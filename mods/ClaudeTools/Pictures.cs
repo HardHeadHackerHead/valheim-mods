@@ -28,13 +28,32 @@ namespace ClaudeTools
             done?.Invoke(saved);
         }
 
+        /// <summary>
+        /// The screenshot made smaller. The copies are Linear render textures: the screenshot's bytes are already the colours you see,
+        /// and an sRGB copy (Unity's default in a linear-colour game like this one) converts them again, which washes the whole picture
+        /// out like a haze. Big reductions go in halves, each a plain average of the last, so detail stays sharp instead of shimmering.
+        /// </summary>
         private static Texture2D Shrink(Texture2D tex, int width)
         {
             int height = Mathf.RoundToInt(tex.height * (width / (float)tex.width));
-            RenderTexture rt = RenderTexture.GetTemporary(width, height, 0);
-            Graphics.Blit(tex, rt);
+            Texture source = tex;
+            RenderTexture step = null;
+            int w = tex.width, h = tex.height;
+            while (w / 2 >= width)
+            {
+                w /= 2; h /= 2;
+                RenderTexture half = RenderTexture.GetTemporary(w, h, 0, RenderTextureFormat.ARGB32, RenderTextureReadWrite.Linear);
+                half.filterMode = FilterMode.Bilinear;
+                Graphics.Blit(source, half);
+                if (step != null) RenderTexture.ReleaseTemporary(step);
+                source = step = half;
+            }
+            RenderTexture rt = RenderTexture.GetTemporary(width, height, 0, RenderTextureFormat.ARGB32, RenderTextureReadWrite.Linear);
+            rt.filterMode = FilterMode.Bilinear;
+            Graphics.Blit(source, rt);
             Texture2D small = ReadBack(rt);
             RenderTexture.ReleaseTemporary(rt);
+            if (step != null) RenderTexture.ReleaseTemporary(step);
             Destroy(tex);
             return small;
         }
