@@ -6,7 +6,7 @@ schemaVersion = "0.0.1"
 [package]
 namespace = "Quads_Lab"
 name = "Quads_Crafting_Filters"
-versionNumber = "0.1.2"
+versionNumber = "0.1.3"
 description = "Filter chips above the crafting list: pick a type, a tier or what you can make now."
 websiteUrl = "https://github.com/HardHeadHackerHead/valheim-mods/tree/main/mods/BetterCraftingStations"
 containsNsfwContent = false

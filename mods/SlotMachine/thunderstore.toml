@@ -6,7 +6,7 @@ schemaVersion = "0.0.1"
 [package]
 namespace = "Quads_Lab"
 name = "Quads_Slot_Machine"
-versionNumber = "1.1.1"
+versionNumber = "1.1.2"
 description = "Odin's Fortune: a buildable slot machine. Put coins in, pull the lever, and the winnings come out of the tray."
 websiteUrl = "https://github.com/HardHeadHackerHead/valheim-mods/tree/main/mods/SlotMachine"
 containsNsfwContent = false

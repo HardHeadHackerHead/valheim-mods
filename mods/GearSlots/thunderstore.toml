@@ -6,7 +6,7 @@ schemaVersion = "0.0.1"
 [package]
 namespace = "Quads_Lab"
 name = "Quads_Gear_Slots"
-versionNumber = "1.2.1"
+versionNumber = "1.2.2"
 description = "Extra inventory slots for what you wear, eat and use, in a Gear panel next to your inventory."
 websiteUrl = "https://github.com/HardHeadHackerHead/valheim-mods/tree/main/mods/GearSlots"
 containsNsfwContent = false

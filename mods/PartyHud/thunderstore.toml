@@ -6,7 +6,7 @@ schemaVersion = "0.0.1"
 [package]
 namespace = "Quads_Lab"
 name = "Quads_Party_HUD"
-versionNumber = "1.8.1"
+versionNumber = "1.8.2"
 description = "A party panel on the right of the screen showing every player in your world."
 websiteUrl = "https://github.com/HardHeadHackerHead/valheim-mods/tree/main/mods/PartyHud"
 containsNsfwContent = false

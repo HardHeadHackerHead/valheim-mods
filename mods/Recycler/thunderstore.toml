@@ -6,7 +6,7 @@ schemaVersion = "0.0.1"
 [package]
 namespace = "Quads_Lab"
 name = "Quads_Recycler"
-versionNumber = "1.1.1"
+versionNumber = "1.1.2"
 description = "Build a Recycler with the hammer and turn old gear back into a share of the materials it was made from."
 websiteUrl = "https://github.com/HardHeadHackerHead/valheim-mods/tree/main/mods/Recycler"
 containsNsfwContent = false

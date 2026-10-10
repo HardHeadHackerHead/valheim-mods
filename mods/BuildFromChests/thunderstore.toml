@@ -6,7 +6,7 @@ schemaVersion = "0.0.1"
 [package]
 namespace = "Quads_Lab"
 name = "Quads_Build_From_Chests"
-versionNumber = "1.4.1"
+versionNumber = "1.4.2"
 description = "Building with the hammer uses materials from chests near you, not just your inventory."
 websiteUrl = "https://github.com/HardHeadHackerHead/valheim-mods/tree/main/mods/BuildFromChests"
 containsNsfwContent = false

@@ -6,7 +6,7 @@ schemaVersion = "0.0.1"
 [package]
 namespace = "Quads_Lab"
 name = "Quads_Quiver"
-versionNumber = "0.2.1"
+versionNumber = "0.2.2"
 description = "Pick your shot arrows back up, and carry them in a quiver on your back."
 websiteUrl = "https://github.com/HardHeadHackerHead/valheim-mods/tree/main/mods/Quiver"
 containsNsfwContent = false
