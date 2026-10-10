@@ -7,7 +7,7 @@
 
 **A party HUD: health bars, stamina and distance for every player in your group, live and at any range, on the right of the screen.**
 
-![version: 1.8.2](https://img.shields.io/badge/version-1.8.2-3b6e8f?style=flat-square)  ![multiplayer: only who wants it](https://img.shields.io/badge/multiplayer-only%20who%20wants%20it-7a5c2e?style=flat-square)  ![made with: Claude Code](https://img.shields.io/badge/made%20with-Claude%20Code-c26a3d?style=flat-square)
+![version: 1.9.0](https://img.shields.io/badge/version-1.9.0-3b6e8f?style=flat-square)  ![multiplayer: only who wants it](https://img.shields.io/badge/multiplayer-only%20who%20wants%20it-7a5c2e?style=flat-square)  ![made with: Claude Code](https://img.shields.io/badge/made%20with-Claude%20Code-c26a3d?style=flat-square)
 
 <!-- GITHUB-ONLY -->[Thunderstore](https://thunderstore.io/c/valheim/p/Quads_Lab/Quads_Party_HUD/)  ·  <!-- END GITHUB-ONLY -->[Source code](https://github.com/HardHeadHackerHead/valheim-mods/tree/main/mods/PartyHud)  ·  [Report a bug](https://github.com/HardHeadHackerHead/valheim-mods/issues/new?template=bug.yml&title=%5BQuad%27s%20Party%20HUD%5D%20)  ·  [Discord](https://discord.gg/EwTjQxEZPy)
 
@@ -121,8 +121,8 @@ and tested in our own world, with **bobisme** as our tester.
 
 ## 📜 Recent changes
 
+- **1.9.0** The party panel is now part of the game's own HUD, made from its own pieces: the inventory's sunken boxes and bars, the game's lettering, and the minimap's arrow for which way each player is. It hides with the HUD (and in cutscenes), follows the interface scale you set in the game's settings, and is lighter to draw: rows are only built again when someone joins or leaves or you change a setting. Every setting still works.
 - **1.8.2** A clearer page: what it does, who needs it in multiplayer, how it gets on with other mods, and where to report a bug. The game itself is unchanged.
 - **1.8.1** A new id, com.quad.partyhud (it was com.dhack.partyhud): your settings move over by themselves the first time it starts, and the old settings file is kept as a backup. Restart the game after this update. If an old copy is still installed beside it, this one stands down and says which file to delete, so the two never both run. The DLL now says it was made with AI, as Thunderstore asks.
-- New: Sharing/ShareMyStats (on by default): turn it off and your game stops sending your health, stamina, Eitr, food and buffs to the other players; they then see only what the game itself shows of you nearby. Sharing/AllowSharing is decided by the server in multiplayer, so a PvP server can switch the sharing off for everyone. The panel's names and numbers are now in the game's own lettering.
 
 <!-- GITHUB-ONLY -->[Every change](CHANGELOG.txt)<!-- END GITHUB-ONLY --><!-- THUNDERSTORE-ONLY: Every change is on the Changelog tab. -->

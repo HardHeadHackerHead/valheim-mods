@@ -7,7 +7,7 @@
 
 **Smelters, kilns, cooking racks, fires and fermenters refuel and fill themselves from nearby chests (auto fuel and ore), and smelters and kilns can run themselves.**
 
-![version: 1.6.2](https://img.shields.io/badge/version-1.6.2-3b6e8f?style=flat-square)  ![multiplayer: only who wants it](https://img.shields.io/badge/multiplayer-only%20who%20wants%20it-7a5c2e?style=flat-square)  ![made with: Claude Code](https://img.shields.io/badge/made%20with-Claude%20Code-c26a3d?style=flat-square)
+![version: 1.7.0](https://img.shields.io/badge/version-1.7.0-3b6e8f?style=flat-square)  ![multiplayer: only who wants it](https://img.shields.io/badge/multiplayer-only%20who%20wants%20it-7a5c2e?style=flat-square)  ![made with: Claude Code](https://img.shields.io/badge/made%20with-Claude%20Code-c26a3d?style=flat-square)
 
 <!-- GITHUB-ONLY -->[Thunderstore](https://thunderstore.io/c/valheim/p/Quads_Lab/Quads_Feed_From_Chests/)  ·  <!-- END GITHUB-ONLY -->[Source code](https://github.com/HardHeadHackerHead/valheim-mods/tree/main/mods/FeedFromChests)  ·  [Report a bug](https://github.com/HardHeadHackerHead/valheim-mods/issues/new?template=bug.yml&title=%5BQuad%27s%20Feed%20From%20Chests%5D%20)  ·  [Discord](https://discord.gg/EwTjQxEZPy)
 
@@ -148,8 +148,8 @@ and tested in our own world, with **bobisme** as our tester.
 
 ## 📜 Recent changes
 
+- **1.7.0** The station menu (E on a smelter, kiln, cooking station, fermenter or fire) now looks like part of the game: its wood panel, buttons, fonts and item slots with their tooltips, in two columns (add by hand on the left, the station's auto-feed settings on the right). Settings are switches that say On or Off and numbers you change with -10, -1, +1 and +10, and the counts update as you watch. E closes the menu again, as it does a chest, without putting anything in. Fixed: it never takes from or puts into the game's Obliterator (what is in it burns when the lever is pulled), a Ledger Chest or the Arena's chests; only ordinary storage chests count.
 - **1.6.2** A clearer page: what it does, who needs it in multiplayer, how it gets on with other mods, and where to report a bug. The game itself is unchanged.
 - **1.6.1** A new id, com.quad.feedfromchests (it was com.dhack.feedfromchests): your settings move over by themselves the first time it starts, and the old settings file is kept as a backup. Restart the game after this update. If an old copy is still installed beside it, this one stands down and says which file to delete, so the two never both run. The DLL now says it was made with AI, as Thunderstore asks.
-- Fix: fuel, ore and food could be added for free when a chest was opened or emptied while a station was being filled, or when the mod reloaded during a Fill. Each item now comes out of a chest before the station is asked to take it, and goes back if the station doesn't. Fix: with ValheimPlus' autoDeposit on, smelter output was put in the chests twice; now whichever mod delivers it first does, once. Graves, carts, ships, a companion's bag and chest and a backpack are no longer fed from or filled. The menu uses the game's fonts. In multiplayer the server's ranges apply (Radius, FeedRadius, OutputRadius, PlayerRange).
 
 <!-- GITHUB-ONLY -->[Every change](CHANGELOG.txt)<!-- END GITHUB-ONLY --><!-- THUNDERSTORE-ONLY: Every change is on the Changelog tab. -->

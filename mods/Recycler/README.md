@@ -7,7 +7,7 @@
 
 **Build a Recycler and turn old weapons, armor and tools back into a share of their materials: recycle, salvage and reclaim the gear you've outgrown.**
 
-![version: 1.2.0](https://img.shields.io/badge/version-1.2.0-3b6e8f?style=flat-square)  ![multiplayer: everyone + host](https://img.shields.io/badge/multiplayer-everyone%20%2B%20host-7a5c2e?style=flat-square)  ![made with: Claude Code](https://img.shields.io/badge/made%20with-Claude%20Code-c26a3d?style=flat-square)
+![version: 1.2.1](https://img.shields.io/badge/version-1.2.1-3b6e8f?style=flat-square)  ![multiplayer: everyone + host](https://img.shields.io/badge/multiplayer-everyone%20%2B%20host-7a5c2e?style=flat-square)  ![made with: Claude Code](https://img.shields.io/badge/made%20with-Claude%20Code-c26a3d?style=flat-square)
 
 <!-- GITHUB-ONLY -->[Thunderstore](https://thunderstore.io/c/valheim/p/Quads_Lab/Quads_Recycler/)  ·  <!-- END GITHUB-ONLY -->[Source code](https://github.com/HardHeadHackerHead/valheim-mods/tree/main/mods/Recycler)  ·  [Report a bug](https://github.com/HardHeadHackerHead/valheim-mods/issues/new?template=bug.yml&title=%5BQuad%27s%20Recycler%5D%20)  ·  [Discord](https://discord.gg/EwTjQxEZPy)
 
@@ -109,8 +109,8 @@ and tested in our own world, with **bobisme** as our tester.
 
 ## 📜 Recent changes
 
+- **1.2.1** Tab no longer opens your inventory under the Recycler's window (it closes the window, as it closes a chest), and the chat and map keys stay quiet while it's open.
 - **1.2.0** The Recycler's window is now part of the game's look: the crafting screen's wood panel and title, your gear in the inventory's own cells (icons, durability, quality, what you wear, the game's tooltips), the materials you get back in cells with their amounts, and the game's own button. E closes it again, as it does a chest.
 - **1.1.2** A clearer page: what it does, who needs it in multiplayer, how it gets on with other mods, and where to report a bug. The game itself is unchanged.
-- **1.1.1** A new id, com.quad.recycler (it was com.dhack.recycler): your settings move over by themselves the first time it starts, and the old settings file is kept as a backup. Restart the game after this update. If an old copy is still installed beside it, this one stands down and says which file to delete, so the two never both run. The DLL now says it was made with AI, as Thunderstore asks.
 
 <!-- GITHUB-ONLY -->[Every change](CHANGELOG.txt)<!-- END GITHUB-ONLY --><!-- THUNDERSTORE-ONLY: Every change is on the Changelog tab. -->

@@ -7,7 +7,7 @@
 
 **A chest you build that shows everything in every chest around it, with a search: search all your chests and storage, and take anything from wherever it is.**
 
-![version: 1.0.4](https://img.shields.io/badge/version-1.0.4-3b6e8f?style=flat-square)  ![multiplayer: everyone + host](https://img.shields.io/badge/multiplayer-everyone%20%2B%20host-7a5c2e?style=flat-square)  ![made with: Claude Code](https://img.shields.io/badge/made%20with-Claude%20Code-c26a3d?style=flat-square)
+![version: 1.1.0](https://img.shields.io/badge/version-1.1.0-3b6e8f?style=flat-square)  ![multiplayer: everyone + host](https://img.shields.io/badge/multiplayer-everyone%20%2B%20host-7a5c2e?style=flat-square)  ![made with: Claude Code](https://img.shields.io/badge/made%20with-Claude%20Code-c26a3d?style=flat-square)
 
 <!-- GITHUB-ONLY -->[Thunderstore](https://thunderstore.io/c/valheim/p/Quads_Lab/Quads_Ledger_Chest/)  ·  <!-- END GITHUB-ONLY -->[Source code](https://github.com/HardHeadHackerHead/valheim-mods/tree/main/mods/LedgerChest)  ·  [Report a bug](https://github.com/HardHeadHackerHead/valheim-mods/issues/new?template=bug.yml&title=%5BQuad%27s%20Ledger%20Chest%5D%20)  ·  [Discord](https://discord.gg/EwTjQxEZPy)
 
@@ -79,7 +79,7 @@ In `BepInEx/config/com.quad.ledgerchest.cfg`, made the first time the game runs 
 | Setting | Default | What it does |
 |---|---|---|
 | `Radius` | `30` | How far from the Ledger Chest (metres) the chests it lists can be. |
-| `Scale` | `1` | Size of the list beside the chest. |
+| `Scale` | `1` | Size of the category buttons and notes under the ledger. |
 
 ## 🤖 Made with AI
 
@@ -99,8 +99,8 @@ and tested in our own world, with **bobisme** as our tester.
 
 ## 📜 Recent changes
 
+- **1.1.0** The Ledger Chest's search, its Clear and order buttons, the category buttons and the notes under the list are now made from the game's own interface (its text box, buttons and tabs on a board of its wood), follow the game's interface scale and look like the rest of the chest window. Fixed: it never takes from or puts into the game's Obliterator (what is in it burns when the lever is pulled), a Ledger Chest or the Arena's chests; only ordinary storage chests count.
 - **1.0.4** A clearer page: what it does, who needs it in multiplayer, how it gets on with other mods, and where to report a bug. The game itself is unchanged.
 - **1.0.3** A new id, com.quad.ledgerchest (it was com.dhack.ledgerchest): your settings move over by themselves the first time it starts, and the old settings file is kept as a backup. Restart the game after this update. If an old copy is still installed beside it, this one stands down and says which file to delete, so the two never both run. The DLL now says it was made with AI, as Thunderstore asks.
-- Things that fit in no chest and not in your inventory either stay in the Ledger Chest, and now you're told so. The page now says plainly that the server and every player need the mod (a game without it deletes the Ledger Chests with what is in them), and a problem drawing its look can no longer stop it being registered.
 
 <!-- GITHUB-ONLY -->[Every change](CHANGELOG.txt)<!-- END GITHUB-ONLY --><!-- THUNDERSTORE-ONLY: Every change is on the Changelog tab. -->

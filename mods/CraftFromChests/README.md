@@ -7,7 +7,7 @@
 
 **Craft from chests: crafting stations, and hand-crafting from your inventory, use materials from nearby chests and containers.**
 
-![version: 1.4.2](https://img.shields.io/badge/version-1.4.2-3b6e8f?style=flat-square)  ![multiplayer: only who wants it](https://img.shields.io/badge/multiplayer-only%20who%20wants%20it-7a5c2e?style=flat-square)  ![made with: Claude Code](https://img.shields.io/badge/made%20with-Claude%20Code-c26a3d?style=flat-square)
+![version: 1.4.3](https://img.shields.io/badge/version-1.4.3-3b6e8f?style=flat-square)  ![multiplayer: only who wants it](https://img.shields.io/badge/multiplayer-only%20who%20wants%20it-7a5c2e?style=flat-square)  ![made with: Claude Code](https://img.shields.io/badge/made%20with-Claude%20Code-c26a3d?style=flat-square)
 
 <!-- GITHUB-ONLY -->[Thunderstore](https://thunderstore.io/c/valheim/p/Quads_Lab/Quads_Craft_From_Chests/)  ·  <!-- END GITHUB-ONLY -->[Source code](https://github.com/HardHeadHackerHead/valheim-mods/tree/main/mods/CraftFromChests)  ·  [Report a bug](https://github.com/HardHeadHackerHead/valheim-mods/issues/new?template=bug.yml&title=%5BQuad%27s%20Craft%20From%20Chests%5D%20)  ·  [Discord](https://discord.gg/EwTjQxEZPy)
 
@@ -103,8 +103,8 @@ and tested in our own world, with **bobisme** as our tester.
 
 ## 📜 Recent changes
 
+- **1.4.3** Fixed: it never takes from or puts into the game's Obliterator (what is in it burns when the lever is pulled), a Ledger Chest or the Arena's chests; only ordinary storage chests count.
 - **1.4.2** A clearer page: what it does, who needs it in multiplayer, how it gets on with other mods, and where to report a bug. The game itself is unchanged.
 - **1.4.1** A new id, com.quad.craftfromchests (it was com.dhack.craftfromchests): your settings move over by themselves the first time it starts, and the old settings file is kept as a backup. Restart the game after this update. If an old copy is still installed beside it, this one stands down and says which file to delete, so the two never both run. The DLL now says it was made with AI, as Thunderstore asks. It also stands down next to Toxo's Craft From Chests, CraftFromChestsPlus, Teflon Ted's Craft From Chests, StoreAndCraft and SmartCraft-Storage, as it already did next to AzuCraftyBoxes and CraftFromContainers: two such mods count every chest twice.
-- Fix: next to Adventure Backpacks, crafting could cost up to twice as much (the backpack and the chests both paid). Now the backpack pays its part and the chests only what is still missing. Fix: "any one of these" recipes (meads and the like) could be crafted for free from the chests, or failed when you carried none. Fix: a craft the chests can no longer pay for (someone took the materials since the window counted them) is now refused with a message, instead of being handed over for less. Graves, carts, ships, a companion's bag and chest and a backpack are no longer used as storage. With AzuCraftyBoxes, CraftFromContainers or ValheimPlus' craft-from-chest installed, this mod stands down (two would count every chest twice). In multiplayer the server's Radius applies (2 to 50 m).
 
 <!-- GITHUB-ONLY -->[Every change](CHANGELOG.txt)<!-- END GITHUB-ONLY --><!-- THUNDERSTORE-ONLY: Every change is on the Changelog tab. -->

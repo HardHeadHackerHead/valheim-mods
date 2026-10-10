@@ -7,7 +7,7 @@
 
 **A portal network: press E on a portal and pick where it goes from a list. No more matching portal names to teleport where you want.**
 
-![version: 1.2.2](https://img.shields.io/badge/version-1.2.2-3b6e8f?style=flat-square)  ![multiplayer: everyone + host](https://img.shields.io/badge/multiplayer-everyone%20%2B%20host-7a5c2e?style=flat-square)  ![made with: Claude Code](https://img.shields.io/badge/made%20with-Claude%20Code-c26a3d?style=flat-square)
+![version: 1.3.0](https://img.shields.io/badge/version-1.3.0-3b6e8f?style=flat-square)  ![multiplayer: everyone + host](https://img.shields.io/badge/multiplayer-everyone%20%2B%20host-7a5c2e?style=flat-square)  ![made with: Claude Code](https://img.shields.io/badge/made%20with-Claude%20Code-c26a3d?style=flat-square)
 
 <!-- GITHUB-ONLY -->[Thunderstore](https://thunderstore.io/c/valheim/p/Quads_Lab/Quads_Portal_Hub/)  ·  <!-- END GITHUB-ONLY -->[Source code](https://github.com/HardHeadHackerHead/valheim-mods/tree/main/mods/PortalHub)  ·  [Report a bug](https://github.com/HardHeadHackerHead/valheim-mods/issues/new?template=bug.yml&title=%5BQuad%27s%20Portal%20Hub%5D%20)  ·  [Discord](https://discord.gg/EwTjQxEZPy)
 
@@ -110,8 +110,8 @@ and tested in our own world, with **bobisme** as our tester.
 
 ## 📜 Recent changes
 
+- **1.3.0** The portal menu now looks like part of the game: the crafting screen's wood panel, the game's buttons, fonts and scrollbar, and the game's own text boxes for the name and search (E and Tab type in them). Long portal lists scroll smoothly. E or Tab closes the menu as they close a chest, and the E that closes it no longer opens it again. The link lines on the big map are part of the map now: they stay under the portal icons and move and hide with it.
 - **1.2.2** A clearer page: what it does, who needs it in multiplayer, how it gets on with other mods, and where to report a bug. The game itself is unchanged.
 - **1.2.1** A new id, com.quad.portalhub (it was com.dhack.portalhub): your settings move over by themselves the first time it starts, and the old settings file is kept as a backup. Restart the game after this update. If an old copy is still installed beside it, this one stands down and says which file to delete, so the two never both run. The DLL now says it was made with AI, as Thunderstore asks.
-- **1.2.0** Fix: anyone could relink a portal inside someone else's protected area, and "link it back" changed the other portal even in someone's base. The host now checks the wards itself and refuses to change a portal in a switched-on ward you are not on; linking to such a portal only goes one way. A new host setting, HideWardedPortals (off by default), keeps those portals out of other players' lists and maps. In multiplayer the server decides Enabled and HideWardedPortals. With XPortal installed PortalHub now stands down (the two undo each other's links). The menu uses the game's font.
 
 <!-- GITHUB-ONLY -->[Every change](CHANGELOG.txt)<!-- END GITHUB-ONLY --><!-- THUNDERSTORE-ONLY: Every change is on the Changelog tab. -->
