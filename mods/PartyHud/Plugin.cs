@@ -108,8 +108,8 @@ namespace PartyHud
             UnregisterRpc();
             _remote.Clear();
             Synced?.Dispose();
+            DestroyDrawResources(); // (before the pictures it shows are destroyed)
             SteamAvatars.Clear();
-            DestroyDrawResources();
         }
 
         private void Update()
@@ -128,8 +128,12 @@ namespace PartyHud
             {
                 _nextMembers = Time.time + 0.2f;
                 BuildMembers();
+                _membersChanged = true;
             }
         }
+
+        // The panel's bars and arrows move every frame; after Update, so they follow the camera of this frame.
+        private void LateUpdate() => UpdatePanel();
 
         private static long MyId => ZDOMan.GetSessionID();
 
