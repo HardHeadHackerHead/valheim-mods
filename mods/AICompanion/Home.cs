@@ -185,9 +185,59 @@ namespace AICompanion
             Plugin.Tell(mine ? $"{Companion.NameOf(c)} no longer uses this chest" : $"{Companion.NameOf(c)} keeps things in this chest now ({Chests(c).Count} chest{(Chests(c).Count == 1 ? "" : "s")})");
         }
 
-        /// <summary>A chest a player built (not a companion's bag, a tombstone or a cart's load).</summary>
-        public static bool IsChest(Container c) =>
-            c != null && !Companion.Is(c) && c.GetComponent<TombStone>() == null && c.GetComponentInParent<Piece>() != null && c.GetComponentInParent<Vagon>() == null && c.GetComponentInParent<Ship>() == null;
+        /// <summary>
+        /// A chest a player built to keep things in (not a companion's bag, a tombstone, a cart's or ship's load, or a piece that only looks
+        /// like a chest: NotStorage). The only containers a companion takes as its own, fills or takes from.
+        /// </summary>
+        public static bool IsChest(Container c)
+        {
+            if (c == null || c.GetComponent<TombStone>() != null || c.GetComponentInParent<Character>() != null) return false;
+            Piece piece = c.GetComponentInParent<Piece>();
+            if (piece == null || c.GetComponentInParent<Vagon>() != null || c.GetComponentInParent<Ship>() != null) return false;
+            return Companion.Zdo(c) != null && !NotStorage(c); // (its own save data: where its claim is kept)
+        }
+
+        /// <summary>
+        /// Other mods' pieces (by prefab name) that have a chest's Container but are not for keeping things: LedgerChest's Ledger Chest keeps
+        /// nothing (what goes in is sent on to the chests around it, or back to whoever opens it), the Recycler and its Press.
+        /// </summary>
+        private static readonly string[] NotStoragePrefabs = { "piece_ledgerchest", "piece_recycler" };
+
+        /// <summary>
+        /// Built, with a Container, but not a chest to keep things in: the Obliterator (what is in it burns when the lever is pulled), Arena's
+        /// chests in the ring (lent gear, prizes), and other mods' special pieces (NotStoragePrefabs).
+        /// </summary>
+        public static bool NotStorage(Container c)
+        {
+            if (c == null) return false;
+            Piece piece = c.GetComponentInParent<Piece>();
+            string name = (piece != null ? piece.gameObject : c.gameObject).name;
+            foreach (string prefab in NotStoragePrefabs)
+                if (name.StartsWith(prefab, System.StringComparison.Ordinal) || c.gameObject.name.StartsWith(prefab, System.StringComparison.Ordinal)) return true;
+            if ((piece != null ? piece.GetComponentInChildren<Incinerator>(true) : c.GetComponentInParent<Incinerator>()) != null) return true;
+            ZDO z = Companion.Zdo(c);
+            return z != null && z.GetInt(ArenaChestKey, 0) != 0;
+        }
+
+        private const string ArenaChestKey = "dh_arena_chest"; // (Arena: Show.ChestKey, the kind of chest standing in the ring)
+
+        /// <summary>
+        /// A companion that took one of those before they were left out (0.22.2 and older: an empty Ledger Chest or Obliterator beside its
+        /// bed) lets go of it: only its claim is cleared, what is in it stays where it is. Not while someone has it open.
+        /// </summary>
+        private static void LetGo(Container chest, Humanoid c)
+        {
+            if (!Containers.Take(chest)) return; // (open on some game: next time)
+            ZDO z = Companion.Zdo(chest);
+            if (z == null) return;
+            z.Set(HomeKey, 0L);
+            z.Set(HomeName, "");
+            string what = Localization.instance != null ? Localization.instance.Localize(chest.m_name) : chest.m_name;
+            int items = chest.GetInventory()?.NrOfItems() ?? 0;
+            Plugin.Instance?.Note($"{Companion.NameOf(c)} let go of the {what} at {chest.transform.position:F0}: it is not a chest to keep things in ({items} stacks left in it)");
+            if (Player.m_localPlayer != null && Companion.IsMine(c, Player.m_localPlayer))
+                Plugin.Tell($"{Companion.NameOf(c)} no longer keeps things in the {what}{(items > 0 ? ": what is in it is still there" : "")}");
+        }
 
         // ---- finding its things ------------------------------------------------------------------------------
 
@@ -198,7 +248,9 @@ namespace AICompanion
         {
             long id = Companion.IdOf(c);
             if (_chestCache.TryGetValue(id, out var hit) && Time.time - hit.Key < 4f) return hit.Value.Where(x => x != null).ToList();
-            List<Container> found = Object.FindObjectsOfType<Container>().Where(x => IsChest(x) && IdOn(x) == id).ToList();
+            List<Container> claimed = Object.FindObjectsOfType<Container>().Where(x => x != null && IdOn(x) == id).ToList();
+            if (id != 0L) foreach (Container bad in claimed.Where(NotStorage)) LetGo(bad, c);
+            List<Container> found = claimed.Where(IsChest).ToList();
             _chestCache[id] = new KeyValuePair<float, List<Container>>(Time.time, found);
             return found;
         }
@@ -373,7 +425,14 @@ namespace AICompanion
         [HarmonyPriority(Priority.First)]
         private static bool Prefix(Container __instance, bool hold, ref bool __result)
         {
-            if (hold || Home.AssignFor == null || !Home.IsChest(__instance)) return true;
+            if (hold || Home.AssignFor == null) return true;
+            if (Home.NotStorage(__instance) && __instance.GetComponentInParent<Piece>() != null)
+            {
+                Plugin.Tell($"{Companion.NameOf(Home.AssignFor)} can't keep things in that: it isn't a storage chest");
+                __result = true;
+                return false;
+            }
+            if (!Home.IsChest(__instance)) return true;
             Home.ToggleChest(__instance, Home.AssignFor);
             __result = true;
             return false;
