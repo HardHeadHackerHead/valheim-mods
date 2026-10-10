@@ -7,7 +7,7 @@
 
 **Ziplines: build two posts, run a rope between them and ride it, hanging from your axe.**
 
-![version: 0.2.2](https://img.shields.io/badge/version-0.2.2-3b6e8f?style=flat-square)  ![multiplayer: everyone + host](https://img.shields.io/badge/multiplayer-everyone%20%2B%20host-7a5c2e?style=flat-square)  ![made with: Claude Code](https://img.shields.io/badge/made%20with-Claude%20Code-c26a3d?style=flat-square)
+![version: 0.2.3](https://img.shields.io/badge/version-0.2.3-3b6e8f?style=flat-square)  ![multiplayer: everyone + host](https://img.shields.io/badge/multiplayer-everyone%20%2B%20host-7a5c2e?style=flat-square)  ![made with: Claude Code](https://img.shields.io/badge/made%20with-Claude%20Code-c26a3d?style=flat-square)
 
 <!-- GITHUB-ONLY -->[Thunderstore](https://thunderstore.io/c/valheim/p/Quads_Lab/Quads_Ziplines/)  ·  <!-- END GITHUB-ONLY -->[Source code](https://github.com/HardHeadHackerHead/valheim-mods/tree/main/mods/Ziplines)  ·  [Report a bug](https://github.com/HardHeadHackerHead/valheim-mods/issues/new?template=bug.yml&title=%5BQuad%27s%20Ziplines%5D%20)  ·  [Discord](https://discord.gg/EwTjQxEZPy)
 
@@ -108,8 +108,8 @@ and tested in our own world, with **bobisme** as our tester.
 
 ## 📜 Recent changes
 
+- **0.2.3** A clearer page: what it does, who needs it in multiplayer, how it gets on with other mods, and where to report a bug. The game itself is unchanged.
 - **0.2.2** Its test command for Claude Tools (zip ...) follows the game's cheat rule: spawning, removing and riding test lines and tp work only in single player, for the host or with devcommands; status, posts and hover still work for everyone.
 - **0.2.1** A new id, com.quad.ziplines (it was com.dhack.ziplines): your settings move over by themselves the first time it starts, and the old settings file is kept as a backup. Restart the game after this update. If an old copy is still installed beside it, this one stands down and says which file to delete, so the two never both run. The DLL now says it was made with AI, as Thunderstore asks. The log says so when Einherjer's Ziplines, a different mod with the same name, is installed too.
-- **0.2.0** Running or taking down a line now needs the ward's leave at both posts, as building does (riding is still for anyone). In multiplayer the server decides the line and riding rules (MaxLength, MinSlope, the speeds, LongLinesFaster and NeedAnAxe). Letting go uses the game's Jump (your own key, or a gamepad), the wind follows the game's sound volume, and a problem with the post's look can no longer stop it being registered. Updating the mod now asks for a restart (it adds a build piece).
 
 <!-- GITHUB-ONLY -->[Every change](CHANGELOG.txt)<!-- END GITHUB-ONLY --><!-- THUNDERSTORE-ONLY: Every change is on the Changelog tab. -->

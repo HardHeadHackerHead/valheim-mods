@@ -1,3 +1,5 @@
+0.2.3: A clearer page: what it does, who needs it in multiplayer, how it gets on with other mods, and where to report a bug. The game itself is unchanged.
+
 0.2.2: Its test command for Claude Tools (zip ...) follows the game's cheat rule: spawning, removing and riding test lines and tp work only in single player, for the host or with devcommands; status, posts and hover still work for everyone.
 
 0.2.1: A new id, com.quad.ziplines (it was com.dhack.ziplines): your settings move over by themselves the first time it starts, and the old settings file is kept as a backup. Restart the game after this update. If an old copy is still installed beside it, this one stands down and says which file to delete, so the two never both run. The DLL now says it was made with AI, as Thunderstore asks. The log says so when Einherjer's Ziplines, a different mod with the same name, is installed too.

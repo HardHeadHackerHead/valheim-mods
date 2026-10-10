@@ -7,7 +7,7 @@
 
 **Shared ghost build orders and blueprints: plan pieces (or import a blueprint) for everyone in your party, then build them by walking up and pressing E.**
 
-![version: 1.12.1](https://img.shields.io/badge/version-1.12.1-3b6e8f?style=flat-square)  ![multiplayer: only who wants it](https://img.shields.io/badge/multiplayer-only%20who%20wants%20it-7a5c2e?style=flat-square)  ![made with: Claude Code](https://img.shields.io/badge/made%20with-Claude%20Code-c26a3d?style=flat-square)
+![version: 1.12.2](https://img.shields.io/badge/version-1.12.2-3b6e8f?style=flat-square)  ![multiplayer: only who wants it](https://img.shields.io/badge/multiplayer-only%20who%20wants%20it-7a5c2e?style=flat-square)  ![made with: Claude Code](https://img.shields.io/badge/made%20with-Claude%20Code-c26a3d?style=flat-square)
 
 <!-- GITHUB-ONLY -->[Thunderstore](https://thunderstore.io/c/valheim/p/Quads_Lab/Quads_Build_Orders/)  ·  <!-- END GITHUB-ONLY -->[Source code](https://github.com/HardHeadHackerHead/valheim-mods/tree/main/mods/BuildOrders)  ·  [Report a bug](https://github.com/HardHeadHackerHead/valheim-mods/issues/new?template=bug.yml&title=%5BQuad%27s%20Build%20Orders%5D%20)  ·  [Discord](https://discord.gg/EwTjQxEZPy)
 
@@ -187,8 +187,8 @@ and tested in our own world, with **bobisme** as our tester.
 
 ## 📜 Recent changes
 
+- **1.12.2** A clearer page: what it does, who needs it in multiplayer, how it gets on with other mods, and where to report a bug. The game itself is unchanged.
 - **1.12.1** A new id, com.quad.buildorders (it was com.dhack.buildorders): your settings move over by themselves the first time it starts, and the old settings file is kept as a backup. Restart the game after this update. If an old copy is still installed beside it, this one stands down and says which file to delete, so the two never both run. The DLL now says it was made with AI, as Thunderstore asks.
 - **1.12.0** Fix: removing a levelled plan could bring other buildings down. Putting the ground back now waits until everything standing there has loaded, never touches the ground on or next to any piece (anyone's), and only puts back ground still exactly as the levelling left it (later digging stays); when in doubt the level ground stays. Levelling also leaves the ground under and around pieces already standing there alone. (Plans levelled by older versions keep their level ground.) Fix: with Adventure Backpacks, pressing E on a ghost could build it for free: building by hand now takes the materials first and places the piece only when the full cost was taken (otherwise you get them back). The select key's default is now U (G also opened the game's radial menu; if you keep G it no longer unbinds the radial menu, and if you change it the radial menu gets G back). In multiplayer the server decides UseReach (now 2 to 10 m) and BuildAllRadius. The list of deleted orders forgets ids after 60 days, is saved once per batch and sent compressed to players who join. The windows use the game's fonts, and a game update renaming its ground fields only switches levelling off instead of stopping the mod.
-- Fix: no more stutter every 5 seconds. Looking for Claude Tools searched everything the game had loaded; it now asks BepInEx's list of mods.
 
 <!-- GITHUB-ONLY -->[Every change](CHANGELOG.txt)<!-- END GITHUB-ONLY --><!-- THUNDERSTORE-ONLY: Every change is on the Changelog tab. -->

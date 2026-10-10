@@ -20,7 +20,7 @@ namespace LedgerChest
         public const string Guid = "com.quad.ledgerchest";
         public const string OldGuid = "com.dhack.ledgerchest"; // (its id until 2026-10: settings move over by themselves, see Shared/Migration.cs)
         public const string Name = "LedgerChest";
-        public const string Version = "1.0.3";
+        public const string Version = "1.0.4";
         public const string PiecePrefab = "piece_ledgerchest";
 
         internal static Plugin Instance;

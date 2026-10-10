@@ -7,7 +7,7 @@
 
 **Extra inventory slots for what you wear, eat and use, in a Gear panel next to your inventory.**
 
-![version: 1.2.1](https://img.shields.io/badge/version-1.2.1-3b6e8f?style=flat-square)  ![multiplayer: only who wants it](https://img.shields.io/badge/multiplayer-only%20who%20wants%20it-7a5c2e?style=flat-square)  ![made with: Claude Code](https://img.shields.io/badge/made%20with-Claude%20Code-c26a3d?style=flat-square)
+![version: 1.2.2](https://img.shields.io/badge/version-1.2.2-3b6e8f?style=flat-square)  ![multiplayer: only who wants it](https://img.shields.io/badge/multiplayer-only%20who%20wants%20it-7a5c2e?style=flat-square)  ![made with: Claude Code](https://img.shields.io/badge/made%20with-Claude%20Code-c26a3d?style=flat-square)
 
 <!-- GITHUB-ONLY -->[Thunderstore](https://thunderstore.io/c/valheim/p/Quads_Lab/Quads_Gear_Slots/)  ·  <!-- END GITHUB-ONLY -->[Source code](https://github.com/HardHeadHackerHead/valheim-mods/tree/main/mods/GearSlots)  ·  [Report a bug](https://github.com/HardHeadHackerHead/valheim-mods/issues/new?template=bug.yml&title=%5BQuad%27s%20Gear%20Slots%5D%20)  ·  [Discord](https://discord.gg/EwTjQxEZPy)
 
@@ -129,8 +129,8 @@ and tested in our own world, with **bobisme** as our tester.
 
 ## 📜 Recent changes
 
+- **1.2.2** A clearer page: what it does, who needs it in multiplayer, how it gets on with other mods, and where to report a bug. The game itself is unchanged.
 - **1.2.1** A new id, com.quad.gearslots (it was com.dhack.gearslots): your settings move over by themselves the first time it starts, and the old settings file is kept as a backup. Restart the game after this update. If an old copy is still installed beside it, this one stands down and says which file to delete, so the two never both run. The DLL now says it was made with AI, as Thunderstore asks.
 - Fix: next to other mods that change the inventory size, items were dropped on the ground at every spawn: with ValheimPlus at 7 to 9 rows everything in its extra rows, and with BetterArchery's quiver your armour row. The game now sizes the inventory as it does without this mod (with every other mod's changes), and the gear rows move to just under whatever height that gives, so with ValheimPlus you keep all its rows and the gear slots sit below them. Where the gear rows are is saved with your character. With a mod that keeps its own slots in the same cells (ExtraSlots, Equipment and Quick Slots, AzuExtendedPlayerInventory, Extended Player Inventory, ComfyQuickSlots, or BetterArchery with its quiver on) the gear slots now switch off: what was in them moves into your bag, and you are told in chat. The Gear panel's title is now in the game's own title lettering, with the braided line under it.
-- Auto-eat now waits until a food you are already under is below 20% of its time left (setting Food / EatBelowPercent, 1 to 50; the game allows eating again from 50%). A meal lasts 80% of its time instead of half, so your food goes about 1.6 times as far; its effect weakens a little towards the end.
 
 <!-- GITHUB-ONLY -->[Every change](CHANGELOG.txt)<!-- END GITHUB-ONLY --><!-- THUNDERSTORE-ONLY: Every change is on the Changelog tab. -->

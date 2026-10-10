@@ -1,3 +1,5 @@
+1.2.2: A clearer page: what it does, who needs it in multiplayer, how it gets on with other mods, and where to report a bug. The game itself is unchanged.
+
 1.2.1: A new id, com.quad.bountyboard (it was com.dhack.bountyboard): your settings move over by themselves the first time it starts, and the old settings file is kept as a backup. Restart the game after this update. If an old copy is still installed beside it, this one stands down and says which file to delete, so the two never both run. The DLL now says it was made with AI, as Thunderstore asks.
 
 1.2.0: Fix: a finished contract's reward could be collected again and again with new characters. The host now goes by who is actually playing on each connection (not what the message says) and pays only the characters that worked on a contract (took it, made a kill for it or handed loot in) or were playing when it was finished. (Contracts finished before this update can still be collected as before.) In multiplayer the host's notice and contract settings now apply on everyone's screen too. The menu and tracker use the game's fonts, and a problem drawing the board's look can no longer stop it being registered.

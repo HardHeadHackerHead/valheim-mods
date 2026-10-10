@@ -7,7 +7,7 @@
 
 **Rainbows: a rainbow after the rain, and a blessing for looking up at it.**
 
-![version: 0.2.2](https://img.shields.io/badge/version-0.2.2-3b6e8f?style=flat-square)  ![multiplayer: only who wants it](https://img.shields.io/badge/multiplayer-only%20who%20wants%20it-7a5c2e?style=flat-square)  ![made with: Claude Code](https://img.shields.io/badge/made%20with-Claude%20Code-c26a3d?style=flat-square)
+![version: 0.2.3](https://img.shields.io/badge/version-0.2.3-3b6e8f?style=flat-square)  ![multiplayer: only who wants it](https://img.shields.io/badge/multiplayer-only%20who%20wants%20it-7a5c2e?style=flat-square)  ![made with: Claude Code](https://img.shields.io/badge/made%20with-Claude%20Code-c26a3d?style=flat-square)
 
 <!-- GITHUB-ONLY -->[Thunderstore](https://thunderstore.io/c/valheim/p/Quads_Lab/Quads_Rainbows/)  ·  <!-- END GITHUB-ONLY -->[Source code](https://github.com/HardHeadHackerHead/valheim-mods/tree/main/mods/Rainbows)  ·  [Report a bug](https://github.com/HardHeadHackerHead/valheim-mods/issues/new?template=bug.yml&title=%5BQuad%27s%20Rainbows%5D%20)  ·  [Discord](https://discord.gg/EwTjQxEZPy)
 
@@ -99,8 +99,8 @@ and tested in our own world, with **bobisme** as our tester.
 
 ## 📜 Recent changes
 
+- **0.2.3** A clearer page: what it does, who needs it in multiplayer, how it gets on with other mods, and where to report a bug. The game itself is unchanged.
 - **0.2.2** Its test command for Claude Tools (rainbow ...) follows the game's cheat rule: a rainbow now, stopping it and giving the blessing work only in single player, for the host or with devcommands; status still works for everyone.
 - **0.2.1** A new id, com.quad.rainbows (it was com.dhack.rainbows): your settings move over by themselves the first time it starts, and the old settings file is kept as a backup. Restart the game after this update. If an old copy is still installed beside it, this one stands down and says which file to delete, so the two never both run. The DLL now says it was made with AI, as Thunderstore asks.
-- On a server, how often rainbows come (chance, how long it must rain, how long to wait for the sun, double rainbows) and how long the blessing lasts are the server's settings. It must rain at least 10 seconds, and the blessing lasts at most 30 minutes. The chime now follows the game's sound effects volume.
 
 <!-- GITHUB-ONLY -->[Every change](CHANGELOG.txt)<!-- END GITHUB-ONLY --><!-- THUNDERSTORE-ONLY: Every change is on the Changelog tab. -->

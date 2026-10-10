@@ -24,7 +24,7 @@ namespace FeedFromChests
         public const string Guid = "com.quad.feedfromchests";
         public const string OldGuid = "com.dhack.feedfromchests"; // (its id until 2026-10: settings move over by themselves, see Shared/Migration.cs)
         public const string Name = "FeedFromChests";
-        public const string Version = "1.6.1";
+        public const string Version = "1.6.2";
 
         internal static Plugin Instance;
         internal static DHack.Shared.ServerSettings Synced; // settings the server decides in multiplayer

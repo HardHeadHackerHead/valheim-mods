@@ -21,7 +21,7 @@ namespace SlotMachine
         public const string Guid = "com.quad.slotmachine";
         public const string OldGuid = "com.dhack.slotmachine"; // (its id until 2026-10: settings move over by themselves, see Shared/Migration.cs)
         public const string Name = "SlotMachine";
-        public const string Version = "1.1.1";
+        public const string Version = "1.1.2";
         public const string PiecePrefab = "piece_slotmachine";
 
         internal static ConfigEntry<int> Bet, PayoutPercent;

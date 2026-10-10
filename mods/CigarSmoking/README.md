@@ -7,7 +7,7 @@
 
 **Grow tobacco, cure it, roll your own cigars and smoke them: a real part of the game, from the wild plant to the cigar in your mouth.**
 
-![version: 0.3.1](https://img.shields.io/badge/version-0.3.1-3b6e8f?style=flat-square)  ![multiplayer: everyone + host](https://img.shields.io/badge/multiplayer-everyone%20%2B%20host-7a5c2e?style=flat-square)  ![made with: Claude Code](https://img.shields.io/badge/made%20with-Claude%20Code-c26a3d?style=flat-square)
+![version: 0.3.2](https://img.shields.io/badge/version-0.3.2-3b6e8f?style=flat-square)  ![multiplayer: everyone + host](https://img.shields.io/badge/multiplayer-everyone%20%2B%20host-7a5c2e?style=flat-square)  ![made with: Claude Code](https://img.shields.io/badge/made%20with-Claude%20Code-c26a3d?style=flat-square)
 
 <!-- GITHUB-ONLY -->[Thunderstore](https://thunderstore.io/c/valheim/p/Quads_Lab/Quads_Cigars/)  ·  <!-- END GITHUB-ONLY -->[Source code](https://github.com/HardHeadHackerHead/valheim-mods/tree/main/mods/CigarSmoking)  ·  [Report a bug](https://github.com/HardHeadHackerHead/valheim-mods/issues/new?template=bug.yml&title=%5BQuad%27s%20Cigars%5D%20)  ·  [Discord](https://discord.gg/EwTjQxEZPy)
 
@@ -121,8 +121,8 @@ and tested in our own world, with **bobisme** as our tester.
 
 ## 📜 Recent changes
 
+- **0.3.2** A clearer page: what it does, who needs it in multiplayer, how it gets on with other mods, and where to report a bug. The game itself is unchanged.
 - **0.3.1** A new id, com.quad.cigarsmoking (it was com.dhack.cigarsmoking): your settings move over by themselves the first time it starts, and the old settings file is kept as a backup. Restart the game after this update. If an old copy is still installed beside it, this one stands down and says which file to delete, so the two never both run. The DLL now says it was made with AI, as Thunderstore asks.
 - **0.3.0** The Drying Rack and Curing Barrel are safe with friends around: putting leaves in and taking them out now goes through the piece's owner, as the game's fermenter does, so two players taking a batch at once no longer both get it, and leaves put in at the same moment as someone else's come back to you instead of vanishing. They respect wards, can't be torn down while they hold leaves (the game says it can't be removed now), and drop what they held when broken. A tobacco plant you sowed and harvested is now removed like the game's own crops, instead of staying hidden in the world for ever (old ones are cleared as their area loads). On a server, the cigar length and strength and the growing, drying and curing times are the server's, and a batch's finish time is saved when it goes in. A model that fails to build no longer stops the pieces registering, and lighting cigars no longer makes a new material each time.
-- **0.2.2** Public smoking API v1 lets add-ons register status-effect names and share the one-active-smoke rule with cigars. Lighting a cigar stops registered pipe effects; add-ons can stop cigars before lighting. Registrations belong to the live plugin and are re-established after reloads.
 
 <!-- GITHUB-ONLY -->[Every change](CHANGELOG.txt)<!-- END GITHUB-ONLY --><!-- THUNDERSTORE-ONLY: Every change is on the Changelog tab. -->

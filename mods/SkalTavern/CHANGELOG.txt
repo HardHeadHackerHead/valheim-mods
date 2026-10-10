@@ -1,3 +1,5 @@
+0.3.3: A clearer page: what it does, who needs it in multiplayer, how it gets on with other mods, and where to report a bug. The game itself is unchanged.
+
 0.3.2: Its test command for Claude Tools (skal ...) follows the game's cheat rule: level, sober and puke work only in single player, for the host or with devcommands; status, find, drink and drop (what a player does anyway) still work for everyone.
 
 0.3.1: A new id, com.quad.skaltavern (it was com.dhack.skaltavern): your settings move over by themselves the first time it starts, and the old settings file is kept as a backup. Restart the game after this update. If an old copy is still installed beside it, this one stands down and says which file to delete, so the two never both run. The DLL now says it was made with AI, as Thunderstore asks.

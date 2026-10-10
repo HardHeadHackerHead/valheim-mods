@@ -7,7 +7,7 @@
 
 **Ale and mead that get you tipsy, and a toast.**
 
-![version: 0.3.2](https://img.shields.io/badge/version-0.3.2-3b6e8f?style=flat-square)  ![multiplayer: everyone + host](https://img.shields.io/badge/multiplayer-everyone%20%2B%20host-7a5c2e?style=flat-square)  ![made with: Claude Code](https://img.shields.io/badge/made%20with-Claude%20Code-c26a3d?style=flat-square)
+![version: 0.3.3](https://img.shields.io/badge/version-0.3.3-3b6e8f?style=flat-square)  ![multiplayer: everyone + host](https://img.shields.io/badge/multiplayer-everyone%20%2B%20host-7a5c2e?style=flat-square)  ![made with: Claude Code](https://img.shields.io/badge/made%20with-Claude%20Code-c26a3d?style=flat-square)
 
 <!-- GITHUB-ONLY -->[Thunderstore](https://thunderstore.io/c/valheim/p/Quads_Lab/Quads_Skal_Tavern/)  ·  <!-- END GITHUB-ONLY -->[Source code](https://github.com/HardHeadHackerHead/valheim-mods/tree/main/mods/SkalTavern)  ·  [Report a bug](https://github.com/HardHeadHackerHead/valheim-mods/issues/new?template=bug.yml&title=%5BQuad%27s%20Skal%20Tavern%5D%20)  ·  [Discord](https://discord.gg/EwTjQxEZPy)
 
@@ -121,8 +121,8 @@ and tested in our own world, with **bobisme** as our tester.
 
 ## 📜 Recent changes
 
+- **0.3.3** A clearer page: what it does, who needs it in multiplayer, how it gets on with other mods, and where to report a bug. The game itself is unchanged.
 - **0.3.2** Its test command for Claude Tools (skal ...) follows the game's cheat rule: level, sober and puke work only in single player, for the host or with devcommands; status, find, drink and drop (what a player does anyway) still work for everyone.
 - **0.3.1** A new id, com.quad.skaltavern (it was com.dhack.skaltavern): your settings move over by themselves the first time it starts, and the old settings file is kept as a backup. Restart the game after this update. If an old copy is still installed beside it, this one stands down and says which file to delete, so the two never both run. The DLL now says it was made with AI, as Thunderstore asks.
-- The drinks no longer sell at the trader (a beehive and a cauldron made endless coins), and the cold no longer bites only once you are properly tipsy (one ale used to keep off the cold and freezing entirely). In multiplayer the server decides how drinking treats you: how long it lasts, how strong it is, how far your feet wander, staggering, falling down, throwing up, the hangover and the toast's window; the picture, sound and other looks stay your own.
 
 <!-- GITHUB-ONLY -->[Every change](CHANGELOG.txt)<!-- END GITHUB-ONLY --><!-- THUNDERSTORE-ONLY: Every change is on the Changelog tab. -->
