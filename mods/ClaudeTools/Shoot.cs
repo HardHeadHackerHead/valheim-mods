@@ -150,7 +150,7 @@ namespace ClaudeTools
             string[] closers =
             {
                 "Arena.Window:Close", "PortalHub.Plugin:CloseFromEscape", "Recycler.Window:Close", "BountyBoard.Window:Close", "LedgerChest.Window:Close",
-                "SlotMachine.Window:Close", "AICompanion.Menu:Close", "QualityOfLife.Plugin:CloseFromEscape",
+                "SlotMachine.Window:Close", "AICompanion.Menu:Close", "QualityOfLife.Plugin:CloseFromEscape", "FeedFromChests.Plugin:CloseFromEscape",
             };
             foreach (string c in closers)
             {

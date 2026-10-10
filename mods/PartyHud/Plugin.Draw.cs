@@ -205,7 +205,12 @@ namespace PartyHud
 
         private TMP_Text NameLabel(Row row, float x, float y, float w, float h, float size, Color color, TextAlignmentOptions align)
         {
-            TMP_Text t = GameUi.Label(row.Rect, "", new Vector2(x, -y), new Vector2(w, h), size, color, null, align);
+            // tall enough for a line of this size: with Ellipsis, TMP hides a whole line that is even a little taller than its box
+            // (Averia's lines are about 1.3 times the font size), so a name in an 18-high box at 16 pt never showed
+            float tall = Mathf.Max(h, size * 1.4f);
+            TextAlignmentOptions top = align == TextAlignmentOptions.Right ? TextAlignmentOptions.TopRight
+                                     : align == TextAlignmentOptions.Center ? TextAlignmentOptions.Top : TextAlignmentOptions.TopLeft;
+            TMP_Text t = GameUi.Label(row.Rect, "", new Vector2(x, -y + (tall - h) * 0.5f - 1f), new Vector2(w, tall), size, color, null, top);
             t.textWrappingMode = TextWrappingModes.NoWrap;
             t.overflowMode = TextOverflowModes.Ellipsis;
             return t;
