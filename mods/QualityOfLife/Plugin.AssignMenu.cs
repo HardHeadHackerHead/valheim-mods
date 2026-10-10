@@ -2,41 +2,36 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using HarmonyLib;
+using TMPro;
 using UnityEngine;
+using UnityEngine.UI;
 
 namespace QualityOfLife
 {
     /// <summary>
     /// The menu for telling a chest what it should receive. Two tabs: whole categories (high level) and individual items
     /// (granular, searchable). Opens when you look at a chest and press the assign key, or from the button beside an open chest.
+    /// Built from the game's own interface (GameUi.cs). Opened from an open chest it takes the crafting panel's place beside the chest, which
+    /// stays open; opened from the world it is a window of its own in the middle of the screen.
     /// </summary>
     public partial class Plugin
     {
-        /// <summary>True while the menu is open (the input patches use this to keep the game from reacting to your clicks and typing).</summary>
+        /// <summary>True while the menu is open (the input patches in GameUi.cs use this to keep the game from reacting to your clicks and typing).</summary>
         internal static bool RulesWindowOpen;
 
         private Container _rulesChest;
         private ChestRules _rules;
         private int _rulesTab;
         private string _search = "";
-        private Vector2 _scrollCategories, _scrollItems;
-        private Rect _rulesRect;
-        private bool _rulesPlaced;
 
         private class ItemEntry { public string Name, Display, Category; public Sprite Icon; public int Rank; }
         private List<ItemEntry> _items = new List<ItemEntry>();
 
         private static readonly System.Reflection.FieldInfo CurrentContainerField = AccessTools.Field(typeof(InventoryGui), "m_currentContainer");
 
-        private readonly List<Texture2D> _menuTextures = new List<Texture2D>();
-        private GUIStyle _rTitle, _rText, _rDim, _rBtn, _rBtnOn, _rToggle, _rField;
-
-        private static readonly Color Gold = new Color(0.95f, 0.78f, 0.35f);
-        private static readonly Color Dim = new Color(0.68f, 0.66f, 0.62f);
-
         // ---- opening and closing ------------------------------------------------------------------
 
-        private static Container OpenChest() => InventoryGui.instance != null ? CurrentContainerField?.GetValue(InventoryGui.instance) as Container : null;
+        internal static Container OpenChest() => InventoryGui.instance != null ? CurrentContainerField?.GetValue(InventoryGui.instance) as Container : null;
 
         /// <summary>A chest that can be assigned things: not the LedgerChest mod's Ledger Chest, which keeps nothing (it sends all on).</summary>
         private static bool Assignable(Container c) => c != null && !c.gameObject.name.StartsWith("piece_ledgerchest", StringComparison.Ordinal);
@@ -52,33 +47,72 @@ namespace QualityOfLife
             OpenRules(chest, player);
         }
 
+        /// <summary>Opens the menu for a chest (Claude Tools' "shoot open qolrules" calls it by reflection: keep its name and parameters).</summary>
         private void OpenRules(Container chest, Player player)
         {
-            if (chest == null) return;
-            if (InventoryGui.IsVisible()) InventoryGui.instance.Hide(); // so clicks in the menu can't reach the inventory beneath it
+            if (chest == null || player == null || !GameUi.Ready()) return;
+            if (RulesWindowOpen) CloseRules();
+            InventoryGui gui = InventoryGui.instance;
+
+            // From the chest you have open (its button, or the key): the menu takes the crafting panel's place beside it and the chest stays
+            // open, so you see what is in it while you choose. From the world: a window of its own, and the inventory goes away so clicks
+            // in the menu can't reach it.
+            bool docked = InventoryGui.IsVisible() && chest == OpenChest() && gui.m_crafting != null;
+            if (!docked && InventoryGui.IsVisible()) gui.Hide();
 
             _rulesChest = chest;
             _rules = ChestRules.Read(chest);
             _rulesTab = 0;
             _search = "";
+            _rulesDocked = docked;
+            _rulesScroll[0] = _rulesScroll[1] = 0f;
             BuildItemList(player);
             RulesWindowOpen = true;
+            _rulesOpenedAt = Time.unscaledTime;
+            BuildRulesWindow();
         }
 
-        internal static void CloseFromEscape() => Instance?.CloseRules();
+        /// <summary>Closes the menu, as Escape does (Claude Tools' "shoot close" calls it by reflection: keep its name).</summary>
+        public static void CloseFromEscape() => Instance?.CloseRules();
 
         private void CloseRules()
         {
             RulesWindowOpen = false;
             _rulesChest = null;
+            if (_rulesWindow != null) Destroy(_rulesWindow.gameObject);
+            _rulesWindow = null; _rulesList = null; _rulesAway = null; _searchField = null; _noItems = null;
+            _rows.Clear();
+            UITooltip.HideTooltip();
         }
+
+        /// <summary>The search box has the keyboard (other keys are left alone meanwhile).</summary>
+        private bool Typing => RulesWindowOpen && _searchField != null && _searchField.isFocused;
 
         /// <summary>Called every frame while the menu is open. Returns true if it's open (so other keys should be ignored).</summary>
         private bool UpdateRulesWindow(Player player)
         {
             if (!RulesWindowOpen) return false;
-            if (_rulesChest == null || Menu.IsVisible() || (_rulesChest.transform.position - player.transform.position).sqrMagnitude > 15f * 15f)
-                CloseRules();
+            bool settled = Time.unscaledTime > _rulesOpenedAt + 0.3f;
+            bool close = _rulesChest == null || _rulesWindow == null      // the chest is gone, or the game rebuilt its interface (a world change)
+                         || !_stackEnabled.Value || Menu.IsVisible()
+                         || (_rulesChest.transform.position - player.transform.position).sqrMagnitude > 15f * 15f
+                         || (settled && !Typing && Input.GetKeyDown(_assignKey.Value));           // the key again
+            if (!close && _rulesDocked) close = !InventoryGui.IsVisible() || OpenChest() != _rulesChest;   // the chest was closed
+            else if (!close) close = settled && InventoryGui.IsVisible();   // the inventory was opened (Tab) over the window
+            if (close) { CloseRules(); return true; }
+
+            int away = Mathf.RoundToInt(Vector3.Distance(_rulesChest.transform.position, player.transform.position));
+            if (_rulesAway != null && away != _awayShown)
+            {
+                _awayShown = away;
+                _rulesAway.text = $"{Localization.instance.Localize(_rulesChest.m_name)}  ·  {away} m away";
+            }
+            if (_rulesDirty) BuildRulesWindow();
+            else
+            {
+                if (_rulesList != null) _rulesScroll[_rulesTab] = _rulesList.anchoredPosition.y;
+                if (_rulesTab == 1) UpdateItemRows();
+            }
             return true;
         }
 
@@ -124,43 +158,101 @@ namespace QualityOfLife
             if (Player.m_localPlayer != null) Tell(Player.m_localPlayer, "Someone else has this chest open. Try again when they close it.");
         }
 
+        // What the menu's clicks do: run from Update (through _pending), never while the menu is being drawn, as they save to the chest.
+
+        private void ToggleCategory(string category)
+        {
+            if (!RulesWindowOpen || _rules == null) return;
+            if (!_rules.Categories.Remove(category)) _rules.Categories.Add(category);
+            SaveRules();
+            _rulesDirty = true;
+        }
+
+        private void ToggleItem(string itemName)
+        {
+            if (!RulesWindowOpen || _rules == null) return;
+            if (!_rules.Items.Remove(itemName)) _rules.Items.Add(itemName);
+            SaveRules();
+            _rulesDirty = true;
+        }
+
+        private void ClearRules()
+        {
+            if (!RulesWindowOpen || _rules == null) return;
+            _rules.Categories.Clear();
+            _rules.Items.Clear();
+            SaveRules();
+            _rulesDirty = true;
+        }
+
         // ---- the button beside an open chest ------------------------------------------------------
 
-        private void DrawAssignButton()
+        private const string AssignName = "QoLAssignChest";
+        private RectTransform _assignRow;
+        private string _assignShown = "";
+
+        private Container _summaryChest;
+        private List<KeyValuePair<string, Color>> _summaryChips;
+        private string _summarySig = "";
+        private float _nextSummary;
+
+        /// <summary>
+        /// The "Assign items to this chest" button under the open chest's panel, with what the chest receives as little tags under it. Part of
+        /// the inventory's own interface, so it moves, scales and hides with it. Built again only when what it shows changes.
+        /// </summary>
+        private void UpdateAssignButton(InventoryGui gui)
         {
-            if (!ShowStackUi(out Player player, out InventoryGui gui) || gui.m_container == null) return;
-            Container chest = OpenChest();
-            if (!Assignable(chest)) return;
-            if (chest == null) return;
-            EnsureStackStyle();
+            Container chest = _stackEnabled.Value && gui.m_container != null ? OpenChest() : null;
+            if (chest == null || !Assignable(chest)) { DestroyAssignRow(); return; }
 
-            var corners = new Vector3[4];
-            gui.m_container.GetWorldCorners(corners);
-            Canvas canvas = gui.m_container.GetComponentInParent<Canvas>();
-            Camera cam = canvas != null ? canvas.worldCamera : null;
-            Vector2 bottomLeft = RectTransformUtility.WorldToScreenPoint(cam, corners[0]);
-            float scale = canvas != null ? Mathf.Max(0.6f, canvas.scaleFactor) : 1f;
-
-            var rect = new Rect(bottomLeft.x + 8f * scale, Screen.height - bottomLeft.y + 6f * scale, 200f * scale, 30f * scale);
-            if (StackButton(rect, "Assign items to this chest")) _pending = () => OpenRules(chest, player);
-
-            if (_showChestLabels.Value && Event.current.type == EventType.Repaint)
+            if (chest != _summaryChest || Time.unscaledTime >= _nextSummary)
             {
-                // What this chest receives, as little tags under the button, so you can see its job at a glance.
-                if (chest != _summaryChest || Time.unscaledTime >= _nextSummary)
-                {
-                    _summaryChest = chest;
-                    _summaryChips = BuildChips(ChestRules.Read(chest)); // built once here, not on every redraw
-                    _nextSummary = Time.unscaledTime + 0.5f;
-                }
-                float panelWidth = Mathf.Max(220f * scale, corners[3].x - corners[0].x);
-                DrawChips(_summaryChips, rect.x, rect.yMax + 6f * scale, panelWidth - 8f * scale, scale);
+                // what this chest receives, read twice a second (not every frame)
+                _summaryChest = chest;
+                _summaryChips = _showChestLabels.Value ? BuildChips(ChestRules.Read(chest)) : null;
+                _summarySig = _summaryChips == null ? "-" : string.Join("|", _summaryChips.Select(c => c.Key).ToArray());
+                _nextSummary = Time.unscaledTime + 0.5f;
+            }
+            float width = Mathf.Max(220f, gui.m_container.rect.width) - 16f;
+            string signature = chest.GetInstanceID() + "|" + Mathf.RoundToInt(width) + "|" + _summarySig;
+            if (_assignRow != null && signature == _assignShown) return;
+
+            DestroyAssignRow();
+            foreach (Transform old in gui.m_container.Cast<Transform>().Where(t => t.name == AssignName).ToList()) Destroy(old.gameObject);   // (a hot reload's)
+            _assignShown = signature;
+            _assignRow = GameUi.Rect(gui.m_container, AssignName, Vector2.zero, new Vector2(0f, 1f), new Vector2(8f, -6f), new Vector2(width, 30f));
+            Container target = chest;
+            GameUi.Button(_assignRow, "Assign items to this chest", Vector2.zero, new Vector2(220f, 30f), () =>
+            {
+                Player p = Player.m_localPlayer;
+                _pending = () => OpenRules(target, p);
+            }, true, 15f);
+
+            if (_summaryChips == null) return;
+            if (_summaryChips.Count == 0)
+            {
+                TMP_Text none = GameUi.Label(_assignRow, "Receives: nothing assigned (only items it already holds)", new Vector2(0f, -36f), new Vector2(width, 20f), 13f, GameUi.Dim);
+                none.enableWordWrapping = false;
+                return;
+            }
+            // What this chest receives, as little tags, so you can see its job at a glance: wraps to fit the width.
+            const float h = 20f, gap = 4f;
+            float x = 0f, y = 36f;
+            foreach (KeyValuePair<string, Color> chip in _summaryChips)
+            {
+                RectTransform tag = GameUi.Tag(_assignRow, chip.Key, new Vector2(x, -y), h, 13f, chip.Value, GameUi.Text);
+                float w = tag.sizeDelta.x;
+                if (x > 0f && x + w > width) { x = 0f; y += h + gap; tag.anchoredPosition = new Vector2(x, -y); }
+                x += w + gap;
             }
         }
 
-        private Container _summaryChest;
-        private List<KeyValuePair<string, Color>> _summaryChips = new List<KeyValuePair<string, Color>>();
-        private float _nextSummary;
+        private void DestroyAssignRow()
+        {
+            if (_assignRow != null) Destroy(_assignRow.gameObject);
+            _assignRow = null;
+            _assignShown = "";
+        }
 
         /// <summary>The tags for a chest: its categories first, then a few item names, then "+N more".</summary>
         private static List<KeyValuePair<string, Color>> BuildChips(ChestRules rules)
@@ -177,35 +269,6 @@ namespace QualityOfLife
 
         private static readonly Color CategoryChip = new Color(0.55f, 0.42f, 0.16f, 0.97f);
         private static readonly Color ItemChip = new Color(0.2f, 0.32f, 0.45f, 0.97f);
-
-        /// <summary>Little rounded tags: gold for categories, blue for individual items. Wraps to fit the width.</summary>
-        private void DrawChips(List<KeyValuePair<string, Color>> chips, float x, float y, float maxWidth, float scale)
-        {
-            EnsureStackStyle();
-            int size = _stackLabel.fontSize;
-            _stackLabel.fontSize = Mathf.RoundToInt(11f * scale);
-
-            if (chips.Count == 0)
-            {
-                GUI.color = new Color(1f, 1f, 1f, 0.6f);
-                GUI.Label(new Rect(x, y, maxWidth, 16f * scale), "Receives: nothing assigned (only items it already holds)", _stackLabel);
-                GUI.color = Color.white;
-                _stackLabel.fontSize = size;
-                return;
-            }
-
-            float cx = x, cy = y, h = 18f * scale, pad = 8f * scale, gap = 4f * scale;
-            foreach (var chip in chips)
-            {
-                float w = _stackLabel.CalcSize(new GUIContent(chip.Key)).x + pad * 2f;
-                if (cx + w > x + maxWidth && cx > x) { cx = x; cy += h + gap; } // wrap to the next line
-                var r = new Rect(cx, cy, w, h);
-                Rounded(r, chip.Value, 5f * scale);
-                GUI.Label(r, chip.Key, _stackLabel);
-                cx += w + gap;
-            }
-            _stackLabel.fontSize = size;
-        }
 
         /// <summary>The extra line shown when you look at a chest (added by a hook on the game's chest hover text).</summary>
         internal static string HoverSuffix(Container chest)
@@ -256,141 +319,207 @@ namespace QualityOfLife
 
         // ---- the window ---------------------------------------------------------------------------
 
-        private void DrawRulesWindow()
+        private const string RulesWindowName = "QoLAssignMenu";
+        private const float RulesPad = 26f, RowH = 32f;
+
+        private RectTransform _rulesWindow, _rulesList;
+        private TMP_Text _rulesAway, _noItems;
+        private TMP_InputField _searchField;
+        private bool _rulesDocked, _rulesDirty;
+        private float _rulesOpenedAt;
+        private int _awayShown = -1, _rowsFirst = -1;
+        private readonly float[] _rulesScroll = new float[2];   // each tab keeps its own scroll position
+
+        /// <summary>
+        /// Builds the whole menu (again): when it opens and after anything it shows changed (a tab, an assignment). Only the search and the
+        /// scrolling of the item list are handled without building it again (UpdateItemRows).
+        /// </summary>
+        private void BuildRulesWindow()
         {
-            if (!RulesWindowOpen || _rulesChest == null) return;
-            FreeTheMouse();
-            EnsureMenuStyles();
+            _rulesDirty = false;
+            if (_rulesWindow != null) Destroy(_rulesWindow.gameObject);
+            _rulesWindow = null; _rulesList = null; _rulesAway = null; _searchField = null; _noItems = null;
+            _rows.Clear();
+            _rowsFirst = -1; _awayShown = -1;
+            UITooltip.HideTooltip();
+            InventoryGui gui = InventoryGui.instance;
+            if (_rulesChest == null || _rules == null || gui == null || !GameUi.Ready()) { CloseRules(); return; }
 
-            Matrix4x4 previous = GUI.matrix;
-            float s = Mathf.Max(0.8f, Screen.height / 1080f);
-            GUI.matrix = Matrix4x4.Scale(new Vector3(s, s, 1f));
-            float sw = Screen.width / s, sh = Screen.height / s;
+            if (_rulesDocked) _rulesWindow = GameUi.Over(gui.m_crafting, RulesWindowName, new Vector2(520f, 600f));
+            else
+            {
+                var screen = (RectTransform)GameUi.Canvas;
+                Vector2 room = screen != null && screen.rect.height > 200f ? screen.rect.size - new Vector2(40f, 40f) : new Vector2(600f, 700f);
+                _rulesWindow = GameUi.Window(RulesWindowName, new Vector2(Mathf.Min(600f, room.x), Mathf.Min(700f, room.y)));
+            }
+            float W = _rulesWindow.sizeDelta.x, H = _rulesWindow.sizeDelta.y, inner = W - RulesPad * 2f;
+            Transform w = _rulesWindow;
 
-            float w = Mathf.Min(560f, sw - 40f), h = Mathf.Min(660f, sh - 60f);
-            if (!_rulesPlaced) { _rulesRect = new Rect((sw - w) / 2f, (sh - h) / 2f, w, h); _rulesPlaced = true; }
-            _rulesRect.width = w; _rulesRect.height = h;
-
-            _rulesRect = GUI.Window(8841, _rulesRect, DrawRulesContents, GUIContent.none, GUIStyle.none);
-            _rulesRect.x = Mathf.Clamp(_rulesRect.x, 0f, Mathf.Max(0f, sw - w));
-            _rulesRect.y = Mathf.Clamp(_rulesRect.y, 0f, Mathf.Max(0f, sh - h));
-            GUI.matrix = previous;
-        }
-
-        private void DrawRulesContents(int id)
-        {
-            float w = _rulesRect.width, h = _rulesRect.height;
-            Rounded(new Rect(0, 0, w, h), new Color(0.07f, 0.06f, 0.05f, 0.98f), 9f);
-            Outline(new Rect(0, 0, w, h), new Color(0.62f, 0.47f, 0.22f, 1f), 9f);
-
-            GUILayout.BeginArea(new Rect(16f, 12f, w - 32f, h - 24f));
-
-            // header
-            GUILayout.BeginHorizontal();
-            GUILayout.Label("Assign items to this chest", _rTitle);
-            GUILayout.FlexibleSpace();
-            if (GUILayout.Button("Close", _rBtn, GUILayout.Width(80), GUILayout.Height(28))) CloseRules();
-            GUILayout.EndHorizontal();
-
-            Player player = Player.m_localPlayer;
-            float away = player != null && _rulesChest != null ? (_rulesChest.transform.position - player.transform.position).magnitude : 0f;
-            GUILayout.Label($"{(_rulesChest != null ? _rulesChest.m_name : "")}  ·  {away:0} m away", _rDim);
-            GUILayout.Label("When you press \"Stack to chests\", matching items go here, even if the chest is empty.", _rDim);
-            GUILayout.Space(6);
+            // header: title, Close, the braid, which chest and how far
+            TMP_Text title = GameUi.Label(w, "Assign items to this chest", new Vector2(RulesPad, -18f), new Vector2(inner - 120f, 40f), 30f, GameUi.Warm, GameUi.Norse);
+            title.enableWordWrapping = false;
+            title.enableAutoSizing = true; title.fontSizeMin = 18f; title.fontSizeMax = 30f;
+            GameUi.Button(w, "Close", new Vector2(W - RulesPad - 110f, -20f), new Vector2(110f, 36f), CloseRules, true, 18f);
+            GameUi.Braid(w, new Vector2(0f, -64f), inner);
+            float y = 76f;
+            _rulesAway = GameUi.Label(w, "", new Vector2(RulesPad, -y), new Vector2(inner, 24f), 17f, GameUi.Dim);
+            _rulesAway.enableWordWrapping = false;
+            y += 26f;
+            const string note = "When you press \"Stack to chests\", matching items go here, even if the chest is empty.";
+            TMP_Text info = GameUi.Label(w, note, new Vector2(RulesPad, -y), new Vector2(inner, 24f), 16f, GameUi.Dim);
+            float noteH = info.GetPreferredValues(note, inner, 0f).y;
+            ((RectTransform)info.transform).sizeDelta = new Vector2(inner, noteH);
+            y += noteH + 12f;
 
             // tabs
-            GUILayout.BeginHorizontal();
-            if (GUILayout.Button($"Categories ({_rules.Categories.Count})", _rulesTab == 0 ? _rBtnOn : _rBtn, GUILayout.Height(30))) _rulesTab = 0;
-            if (GUILayout.Button($"Individual items ({_rules.Items.Count})", _rulesTab == 1 ? _rBtnOn : _rBtn, GUILayout.Height(30))) _rulesTab = 1;
-            GUILayout.EndHorizontal();
-            GUILayout.Space(6);
-
-            if (_rulesTab == 0) DrawCategoriesTab(); else DrawItemsTab();
-
-            // footer
-            GUILayout.Space(6);
-            GUILayout.BeginHorizontal();
-            GUILayout.Label(_rules.IsEmpty ? "Nothing assigned: this chest only gets items it already holds." : "Changes are saved straight away.", _rDim);
-            GUILayout.FlexibleSpace();
-            if (GUILayout.Button("Clear everything", _rBtn, GUILayout.Width(150), GUILayout.Height(26)))
+            float tabW = (inner - 8f) / 2f;
+            string[] tabs = { $"Categories ({_rules.Categories.Count})", $"Individual items ({_rules.Items.Count})" };
+            for (int i = 0; i < 2; i++)
             {
-                _rules.Categories.Clear();
-                _rules.Items.Clear();
-                SaveRules();
+                int tab = i;
+                GameUi.Tab(w, tabs[i], new Vector2(RulesPad + i * (tabW + 8f), -y), new Vector2(tabW, 38f), _rulesTab == i, () =>
+                {
+                    if (_rulesList != null) _rulesScroll[_rulesTab] = _rulesList.anchoredPosition.y;   // (the tab you leave keeps its place)
+                    _rulesTab = tab;
+                    _rulesDirty = true;
+                });
             }
-            GUILayout.EndHorizontal();
+            y += 48f;
 
-            GUILayout.EndArea();
-            GUI.DragWindow(new Rect(0, 0, w, 40));
+            // the Items tab's search
+            if (_rulesTab == 1)
+            {
+                GameUi.Label(w, "Search:", new Vector2(RulesPad, -y - 6f), new Vector2(80f, 26f), 18f, GameUi.Text);
+                _searchField = GameUi.Field(w, _search, "Item name", new Vector2(RulesPad + 84f, -y), new Vector2(inner - 84f - 100f, 34f));
+                _searchField.onValueChanged.AddListener(text => _search = text ?? "");   // (the list follows in UpdateItemRows)
+                GameUi.Button(w, "Clear", new Vector2(W - RulesPad - 92f, -y), new Vector2(92f, 34f), () => { if (_searchField != null) _searchField.text = ""; }, true, 16f);
+                y += 44f;
+            }
+
+            // the list, and the footer under it
+            float footer = H - RulesPad - 40f;
+            RectTransform box = GameUi.Box(w, new Vector2(RulesPad - 6f, -y), new Vector2(inner + 12f, footer - y - 10f));
+            _rulesList = GameUi.Scroll(box, 8f);
+            if (_rulesTab == 0) BuildCategoryRows(); else BuildItemRows();
+
+            string status = _rules.IsEmpty ? "Nothing assigned: this chest only gets items it already holds." : "Changes are saved straight away.";
+            GameUi.Label(w, status, new Vector2(RulesPad, -footer), new Vector2(inner - 196f, 40f), 16f, GameUi.Dim, GameUi.Sans, TextAlignmentOptions.MidlineLeft);
+            GameUi.Button(w, "Clear everything", new Vector2(W - RulesPad - 180f, -footer), new Vector2(180f, 40f), () => _pending = ClearRules, !_rules.IsEmpty, 17f);
         }
 
-        private void DrawCategoriesTab()
+        /// <summary>Puts the list back where it was scrolled to (each tab keeps its own), within what there is to scroll.</summary>
+        private void RestoreScroll(float height)
         {
-            _scrollCategories = GUILayout.BeginScrollView(_scrollCategories, GUILayout.ExpandHeight(true));
+            float view = ((RectTransform)_rulesList.parent).sizeDelta.y;
+            _rulesList.sizeDelta = new Vector2(_rulesList.sizeDelta.x, height);
+            _rulesList.anchoredPosition = new Vector2(0f, Mathf.Clamp(_rulesScroll[_rulesTab], 0f, Mathf.Max(0f, height - view)));
+        }
+
+        /// <summary>The Categories tab: each category with a switch that says whether the chest receives it, and what it holds.</summary>
+        private void BuildCategoryRows()
+        {
+            const float rowH = 60f;
+            float width = _rulesList.sizeDelta.x, y = 0f;
             foreach (string category in Categories.All)
             {
                 bool on = _rules.Categories.Contains(category);
-                bool now = GUILayout.Toggle(on, "  " + category, _rToggle);
-                GUILayout.Label("      " + Categories.Help[category], _rDim);
-                GUILayout.Space(4);
-                if (now != on)
-                {
-                    if (now) _rules.Categories.Add(category); else _rules.Categories.Remove(category);
-                    SaveRules();
-                }
+                string c = category;
+                Button toggle = GameUi.Button(_rulesList, on ? "On" : "Off", new Vector2(4f, -y - 12f), new Vector2(64f, 32f), () => _pending = () => ToggleCategory(c), true, 16f);
+                if (on) GameUi.Label(toggle).color = GameUi.Gold;
+                TMP_Text name = GameUi.Label(_rulesList, category, new Vector2(80f, -y - 4f), new Vector2(width - 84f, 28f), 20f, on ? GameUi.Gold : GameUi.Text);
+                name.enableWordWrapping = false;
+                string help = Categories.Help.TryGetValue(category, out string h) ? h : "";
+                TMP_Text helpText = GameUi.Label(_rulesList, help, new Vector2(80f, -y - 32f), new Vector2(width - 84f, 24f), 15f, GameUi.Dim);
+                helpText.enableWordWrapping = false;
+                helpText.overflowMode = TextOverflowModes.Ellipsis;
+                y += rowH;
             }
-            GUILayout.EndScrollView();
+            RestoreScroll(y - 4f);
         }
 
-        private void DrawItemsTab()
+        // ---- the Items tab: hundreds of items, so only the rows you can see exist (moved and refilled as you scroll) ----
+
+        private class ItemRow { public RectTransform Root; public TMP_Text Header, Name; public Button Toggle; public Image Icon; public int Index = -1; }
+        private readonly List<ItemRow> _rows = new List<ItemRow>();
+
+        private string NoItemsText => _search.Length > 0 ? "No match." : "No items yet. Items appear once you've found or picked them up.";
+
+        private void BuildItemRows()
         {
-            GUILayout.BeginHorizontal();
-            GUILayout.Label("Search:", _rText, GUILayout.Width(60));
-            _search = GUILayout.TextField(_search, _rField, GUILayout.Height(26));
-            if (_search.Length > 0 && GUILayout.Button("x", _rBtn, GUILayout.Width(28), GUILayout.Height(26))) _search = "";
-            GUILayout.EndHorizontal();
-            GUILayout.Space(4);
+            if (_displayFor != _search) RebuildDisplay();
+            float width = _rulesList.sizeDelta.x;
+            _noItems = GameUi.Label(_rulesList, NoItemsText, new Vector2(8f, -8f), new Vector2(width - 16f, 60f), 17f, GameUi.Dim);
+            _noItems.gameObject.SetActive(_display.Count == 0);
+            float view = ((RectTransform)_rulesList.parent).sizeDelta.y;
+            int pool = Mathf.CeilToInt(view / RowH) + 2;
+            for (int k = 0; k < pool; k++) _rows.Add(MakeRow(width));
+            RestoreScroll(_display.Count * RowH);
+            _rowsFirst = -1;
+            UpdateItemRows();
+        }
 
-            if (_displayFor != _search) RebuildDisplay(); // the list only changes when the search text does
-
-            if (_display.Count == 0)
+        /// <summary>Every frame on the Items tab: follows the search text and the scrolling (cheap when neither changed).</summary>
+        private void UpdateItemRows()
+        {
+            if (_rulesList == null) return;
+            if (_displayFor != _search)
             {
-                GUILayout.Label(_search.Length > 0 ? "No match." : "No items yet. Items appear once you've found or picked them up.", _rDim);
-                return;
-            }
-
-            // A long list is drawn by hand so that only the rows you can actually see cost anything (there can be hundreds of items).
-            const float rowHeight = 26f;
-            Rect area = GUILayoutUtility.GetRect(0f, 100000f, 0f, 100000f, GUILayout.ExpandWidth(true), GUILayout.ExpandHeight(true));
-            var content = new Rect(0f, 0f, area.width - 20f, _display.Count * rowHeight);
-            _scrollItems = GUI.BeginScrollView(area, _scrollItems, content);
-
-            int first = Mathf.Max(0, Mathf.FloorToInt(_scrollItems.y / rowHeight));
-            int last = Mathf.Min(_display.Count - 1, first + Mathf.CeilToInt(area.height / rowHeight) + 1);
-            for (int i = first; i <= last; i++)
-            {
-                DisplayRow row = _display[i];
-                float y = i * rowHeight;
-
-                if (row.Header != null)
+                RebuildDisplay();
+                _rulesScroll[1] = 0f;
+                RestoreScroll(_display.Count * RowH);
+                _rowsFirst = -1;
+                if (_noItems != null)
                 {
-                    GUI.Label(new Rect(0f, y, content.width, rowHeight), row.Header, _rDim);
-                    continue;
-                }
-
-                ItemEntry item = row.Item;
-                bool on = _rules.Items.Contains(item.Name);
-                bool now = GUI.Toggle(new Rect(0f, y + 1f, 22f, 24f), on, GUIContent.none, _rToggle);
-                DrawIcon(new Rect(28f, y + 1f, 24f, 24f), item.Icon);
-                GUI.Label(new Rect(58f, y + 1f, content.width - 58f, 24f), item.Display, _rText);
-
-                if (now != on)
-                {
-                    if (now) _rules.Items.Add(item.Name); else _rules.Items.Remove(item.Name);
-                    SaveRules();
+                    _noItems.text = NoItemsText;
+                    _noItems.gameObject.SetActive(_display.Count == 0);
                 }
             }
-            GUI.EndScrollView();
+            int first = Mathf.Max(0, Mathf.FloorToInt(_rulesList.anchoredPosition.y / RowH));
+            if (first == _rowsFirst) return;
+            _rowsFirst = first;
+            for (int k = 0; k < _rows.Count; k++) ShowRow(_rows[k], first + k);
+        }
+
+        private ItemRow MakeRow(float width)
+        {
+            var row = new ItemRow();
+            row.Root = GameUi.Rect(_rulesList, "Row", new Vector2(0f, 1f), new Vector2(0f, 1f), Vector2.zero, new Vector2(width, RowH));
+            row.Header = GameUi.Label(row.Root, "", new Vector2(8f, -9f), new Vector2(width - 16f, RowH - 9f), 15f, GameUi.Warm, GameUi.Serif);
+            row.Header.enableWordWrapping = false;
+            row.Toggle = GameUi.Button(row.Root, "Off", new Vector2(4f, -2f), new Vector2(60f, RowH - 4f), () =>
+            {
+                ItemEntry item = row.Index >= 0 && row.Index < _display.Count ? _display[row.Index].Item : null;
+                if (item != null) { string itemName = item.Name; _pending = () => ToggleItem(itemName); }
+            }, true, 15f);
+            row.Icon = GameUi.Icon(row.Root, new Vector2(72f, -2f), new Vector2(RowH - 4f, RowH - 4f), null);
+            row.Name = GameUi.Label(row.Root, "", new Vector2(72f + RowH + 2f, -5f), new Vector2(width - 110f, RowH - 6f), 18f, GameUi.Text);
+            row.Name.enableWordWrapping = false;
+            row.Name.overflowMode = TextOverflowModes.Ellipsis;
+            return row;
+        }
+
+        private void ShowRow(ItemRow row, int index)
+        {
+            row.Index = index;
+            bool there = index < _display.Count;
+            row.Root.gameObject.SetActive(there);
+            if (!there) return;
+            row.Root.anchoredPosition = new Vector2(0f, -index * RowH);
+            DisplayRow shown = _display[index];
+            bool header = shown.Header != null;
+            row.Header.gameObject.SetActive(header);
+            row.Toggle.gameObject.SetActive(!header);
+            row.Icon.gameObject.SetActive(!header);
+            row.Name.gameObject.SetActive(!header);
+            if (header) { row.Header.text = shown.Header; return; }
+
+            bool on = _rules.Items.Contains(shown.Item.Name);
+            TMP_Text label = GameUi.Label(row.Toggle);
+            if (label != null) { label.text = on ? "On" : "Off"; label.color = on ? GameUi.Gold : GameUi.Text; }
+            row.Icon.sprite = shown.Item.Icon;
+            row.Icon.enabled = shown.Item.Icon != null;
+            row.Name.text = shown.Item.Display;
+            row.Name.color = on ? GameUi.Gold : GameUi.Text;
         }
 
         // The rows actually shown on the Items tab: the filtered items, with a heading each time the category changes.
@@ -415,102 +544,6 @@ namespace QualityOfLife
             }
             _display = rows;
         }
-
-        /// <summary>
-        /// Make sure the mouse can move. The game only frees the cursor when it thinks the mouse is the active input device, which on
-        /// some setups (Linux, Steam Deck/Steam Input, a controller plugged in) it doesn't, leaving the cursor stuck in the middle of
-        /// the screen. So while our window is open we set Unity's cursor directly, every time we draw.
-        /// </summary>
-        private static void FreeTheMouse()
-        {
-            if (Cursor.lockState != CursorLockMode.None) Cursor.lockState = CursorLockMode.None;
-            if (!Cursor.visible) Cursor.visible = true;
-        }
-
-        private static void DrawIcon(Rect r, Sprite sprite)
-        {
-            if (sprite == null || sprite.texture == null || Event.current.type != EventType.Repaint) return;
-            Texture2D tex = sprite.texture;
-            Rect t = sprite.textureRect;
-            GUI.DrawTextureWithTexCoords(r, tex, new Rect(t.x / tex.width, t.y / tex.height, t.width / tex.width, t.height / tex.height));
-        }
-
-        // ---- styles ---------------------------------------------------------------------------------
-
-        private Texture2D MakeBox(Color fill, Color border)
-        {
-            const int size = 6;
-            var t = new Texture2D(size, size, TextureFormat.RGBA32, false) { hideFlags = HideFlags.HideAndDontSave, filterMode = FilterMode.Point };
-            for (int x = 0; x < size; x++)
-                for (int y = 0; y < size; y++)
-                    t.SetPixel(x, y, (x < 2 || y < 2 || x >= size - 2 || y >= size - 2) ? border : fill);
-            t.Apply();
-            _menuTextures.Add(t);
-            return t;
-        }
-
-        private GUIStyle ButtonLook(Color fill, Color hover, Color border)
-        {
-            var s = new GUIStyle(GUI.skin.button)
-            {
-                fontSize = 13, fontStyle = FontStyle.Bold, alignment = TextAnchor.MiddleCenter,
-                border = new RectOffset(2, 2, 2, 2), padding = new RectOffset(8, 8, 3, 3), margin = new RectOffset(3, 3, 3, 3),
-            };
-            s.normal.background = MakeBox(fill, border);
-            s.hover.background = s.active.background = s.focused.background = MakeBox(hover, border);
-            s.normal.textColor = s.hover.textColor = s.active.textColor = s.focused.textColor = new Color(0.95f, 0.9f, 0.8f);
-            return s;
-        }
-
-        private static Font _bodyFont, _titleFont;
-
-        /// <summary>The game's own fonts (Averia for text and numbers, Norse for titles), looked up once; null if a game update renamed them.</summary>
-        private static Font GameFont(params string[] names)
-        {
-            Font[] all = Resources.FindObjectsOfTypeAll<Font>();
-            foreach (string name in names)
-                foreach (Font f in all)
-                    if (f != null && f.name.StartsWith(name, System.StringComparison.OrdinalIgnoreCase)) return f;
-            return null;
-        }
-
-        /// <summary>Use the game's fonts in these styles (Unity's default font is the first thing that looks out of place).</summary>
-        internal static void UseGameFonts(GUIStyle title, params GUIStyle[] body)
-        {
-            if (_bodyFont == null) _bodyFont = GameFont("AveriaSerifLibre-Bold", "AveriaSerifLibre", "Averia");
-            if (_titleFont == null) _titleFont = GameFont("Norsebold", "Norse") ?? _bodyFont;
-            if (title != null && _titleFont != null) title.font = _titleFont;
-            if (_bodyFont != null) foreach (GUIStyle style in body) if (style != null) style.font = _bodyFont;
-        }
-
-        private void EnsureMenuStyles()
-        {
-            if (_rTitle != null) return;
-
-            _rTitle = new GUIStyle(GUI.skin.label) { fontSize = 18, fontStyle = FontStyle.Bold };
-            _rTitle.normal.textColor = Gold;
-            _rText = new GUIStyle(GUI.skin.label) { fontSize = 13, alignment = TextAnchor.MiddleLeft };
-            _rText.normal.textColor = new Color(0.93f, 0.9f, 0.85f);
-            _rDim = new GUIStyle(GUI.skin.label) { fontSize = 11, wordWrap = true };
-            _rDim.normal.textColor = Dim;
-
-            _rBtn = ButtonLook(new Color(0.22f, 0.19f, 0.15f), new Color(0.33f, 0.27f, 0.18f), new Color(0.45f, 0.36f, 0.2f));
-            _rBtnOn = ButtonLook(new Color(0.55f, 0.42f, 0.16f), new Color(0.62f, 0.48f, 0.2f), new Color(0.95f, 0.78f, 0.35f));
-
-            _rToggle = new GUIStyle(GUI.skin.toggle) { fontSize = 14, fontStyle = FontStyle.Bold };
-            _rToggle.normal.textColor = _rToggle.onNormal.textColor = _rToggle.hover.textColor = _rToggle.onHover.textColor =
-                _rToggle.active.textColor = _rToggle.onActive.textColor = new Color(0.95f, 0.9f, 0.8f);
-
-            _rField = new GUIStyle(GUI.skin.textField) { fontSize = 13 };
-            UseGameFonts(_rTitle, _rText, _rDim, _rBtn, _rBtnOn, _rToggle, _rField);
-        }
-
-        private void DestroyMenuResources()
-        {
-            foreach (Texture2D t in _menuTextures) if (t != null) Destroy(t);
-            _menuTextures.Clear();
-            _rTitle = _rText = _rDim = _rBtn = _rBtnOn = _rToggle = _rField = null;
-        }
     }
 
     // Looking at a chest: add a line saying what it has been assigned to receive.
@@ -520,59 +553,6 @@ namespace QualityOfLife
         private static void Postfix(Container __instance, ref string __result)
         {
             if (!string.IsNullOrEmpty(__result)) __result += Plugin.HoverSuffix(__instance);
-        }
-    }
-
-    // While the menu is open: keep the game from reacting to your clicks and typing, and show the mouse.
-    [HarmonyPatch(typeof(PlayerController), "TakeInput")]
-    internal static class PlayerController_TakeInput
-    {
-        private static void Postfix(ref bool __result) { if (Plugin.RulesWindowOpen) __result = false; }
-    }
-
-    [HarmonyPatch(typeof(Player), "TakeInput")]
-    internal static class Player_TakeInput
-    {
-        private static void Postfix(ref bool __result) { if (Plugin.RulesWindowOpen) __result = false; }
-    }
-
-    [HarmonyPatch(typeof(GameCamera), nameof(GameCamera.UpdateMouseCapture))]
-    internal static class GameCamera_UpdateMouseCapture
-    {
-        // While our window is open, skip the game's own cursor handling entirely. If we let it run and then undo it, the game locks the
-        // cursor every frame, and on Linux locking physically snaps the pointer to the middle of the screen, so it looks stuck there.
-        private static bool Prefix()
-        {
-            if (!Plugin.RulesWindowOpen) return true;
-            ZCursor.LockState = CursorLockMode.None;
-            ZCursor.Show();
-            return false;
-        }
-    }
-}
-
-namespace QualityOfLife
-{
-    // While one of our windows is open, the mouse wheel should scroll the window, not zoom the camera (or cycle the hotbar).
-    [HarmonyLib.HarmonyPatch(typeof(ZInput), nameof(ZInput.GetMouseScrollWheel))]
-    internal static class ZInput_GetMouseScrollWheel
-    {
-        private static void Postfix(ref float __result) { if (Plugin.RulesWindowOpen) __result = 0f; }
-    }
-}
-
-namespace QualityOfLife
-{
-    // Escape closes our window, and only that: the game's own menu does not open (so the game is not paused by it).
-    [HarmonyLib.HarmonyPatch(typeof(Menu), "Update")]
-    internal static class Menu_Update_EscapeCloses
-    {
-        private static bool Prefix()
-        {
-            if (!(Plugin.RulesWindowOpen)) return true;
-            if (!(ZInput.GetKeyDown(UnityEngine.KeyCode.Escape) || ZInput.GetButtonDown("JoyMenu"))) return true;
-            Plugin.CloseFromEscape();
-            return false; // skip the game's menu handling for this frame
         }
     }
 }

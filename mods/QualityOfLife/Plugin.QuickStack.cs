@@ -4,13 +4,15 @@ using System.Collections.Generic;
 using System.Linq;
 using BepInEx.Configuration;
 using HarmonyLib;
+using TMPro;
 using UnityEngine;
 
 namespace QualityOfLife
 {
     /// <summary>
     /// Quick stack: two buttons under your inventory that move your items into nearby chests, plus a lock (hover an item and press
-    /// the lock key) to keep things like food out of it. The buttons only appear when a usable chest is in range.
+    /// the lock key) to keep things like food out of it (a red KEEP tag shows on a locked item under the mouse, see Plugin.QuickSet.cs).
+    /// The buttons only appear when a usable chest is in range.
     /// </summary>
     public partial class Plugin
     {
@@ -22,7 +24,7 @@ namespace QualityOfLife
 
         private readonly List<Container> _stackChests = new List<Container>();
         private float _nextChestScan;
-        private Action _pending; // clicks run from Update, not mid-draw, so the layout never changes under IMGUI
+        private Action _pending; // a click's action, run from Update: never while the interface is being drawn (it moves items, saves chests)
 
         private static readonly System.Reflection.MethodInfo CheckAccess = AccessTools.Method(typeof(Container), "CheckAccess");
 
@@ -444,149 +446,62 @@ namespace QualityOfLife
                 : $"Put back {back} item(s); {couldNot} couldn't be returned (taken from the chest, chest in use, or no room)");
         }
 
-        // ---- buttons and badges -----------------------------------------------------------------
+        // ---- the buttons under your inventory ---------------------------------------------------------
 
-        private GUIStyle _stackLabel;
+        private const string UnderName = "QoLUnderInventory";
+        private RectTransform _underRow;
+        private string _underShown = "";
 
-        private void OnGUI()
+        /// <summary>
+        /// One row under your inventory panel: Sort, Stack to chests, Undo, Sort chests (the stacking ones only while a chest is in range),
+        /// in the game's own buttons. Part of the inventory's interface, so it moves, scales and hides with it; built again only when what it
+        /// shows changes. Clicks are done in Update (_pending), never while the inventory is being drawn.
+        /// </summary>
+        private void UpdateUnderInventory(InventoryGui gui)
         {
-            DrawQuickSetBadges();
-            DrawStackButtons(); // the Sort button works on its own; Stack to chests needs the feature on
-            if (!_stackEnabled.Value) return;
-            DrawLockBadges();
-            DrawAssignButton();
-            DrawRulesWindow();
-        }
-
-        private bool ShowStackUi(out Player player, out InventoryGui gui)
-        {
-            player = Player.m_localPlayer;
-            gui = InventoryGui.instance;
-            return player != null && gui != null && InventoryGui.IsVisible() && gui.m_player != null;
-        }
-
-        /// <summary>A small red "KEEP" tab, shown only on a locked item while the mouse is over it.</summary>
-        private void DrawLockBadges()
-        {
-            if (Event.current.type != EventType.Repaint || !ShowStackUi(out Player player, out InventoryGui gui) || gui.m_playerGrid == null) return;
-
-            ItemDrop.ItemData item = HoveredItem(player);
-            if (item == null || !IsKept(item)) return;
-
-            var elements = ElementsField?.GetValue(gui.m_playerGrid) as IList;
-            if (elements == null) return;
-            int index = item.m_gridPos.y * player.GetInventory().GetWidth() + item.m_gridPos.x;
-            if (index < 0 || index >= elements.Count) return;
-            var element = elements[index] as InventoryElement;
-            if (element == null) return;
-            EnsureStackStyle();
-
-            RectTransform rect = element.GetElementRectTransform();
-            var corners = new Vector3[4];
-            rect.GetWorldCorners(corners);
-            Camera cam = rect.GetComponentInParent<Canvas>()?.worldCamera;
-            Vector2 bottomLeft = RectTransformUtility.WorldToScreenPoint(cam, corners[0]);
-
-            var badge = new Rect(bottomLeft.x + 2f, Screen.height - bottomLeft.y - 15f, 34f, 13f); // bottom-left of the slot
-            Rounded(badge, new Color(0.65f, 0.15f, 0.15f, 0.95f), 3f);
-            GUI.Label(badge, "KEEP", _stackLabel);
-        }
-
-        /// <summary>The two buttons under your inventory panel. They exist only while a chest is in range.</summary>
-        private void DrawStackButtons()
-        {
-            if (!_showStackButtons.Value || !ShowStackUi(out Player player, out InventoryGui gui)) return;
             bool stack = _stackEnabled.Value && _stackChests.Count > 0 && OpenChest() == null; // with a chest open the game's own stack/take buttons do the job
             bool sort = _sortEnabled.Value && SlotMod() == null; // next to a slot mod Sort would pull items out of its slots
-            if (!stack && !sort) return;
-            // How far down the buttons (and the hint under Stack to chests) reach, for other mods' panels below the inventory.
+            if (!_showStackButtons.Value || (!stack && !sort)) { DestroyUnderRow(); return; }
+            // How far down the buttons (and the hint under Stack to chests) reach, for other mods' panels below the inventory (GearSlots).
             AppDomain.CurrentDomain.SetData("DHack.QoL.UnderInventoryHeight", stack ? 54f : 36f);
-            EnsureStackStyle();
 
-            var corners = new Vector3[4];
-            gui.m_player.GetWorldCorners(corners);
-            Canvas canvas = gui.m_player.GetComponentInParent<Canvas>();
-            Camera cam = canvas != null ? canvas.worldCamera : null;
-            Vector2 bottomLeft = RectTransformUtility.WorldToScreenPoint(cam, corners[0]);
-            float scale = canvas != null ? Mathf.Max(0.6f, canvas.scaleFactor) : 1f;
+            bool undo = stack && _undo != null; // Undo appears only right after a stack that really moved something, and goes when you close the inventory
+            bool sortChests = stack && AnyAssignedChest(); // only when some chest is assigned something
+            string signature = $"{sort}|{stack}|{_stackChests.Count}|{undo}|{sortChests}|{_lockKey.Value}";
+            if (_underRow != null && signature == _underShown) return;
 
-            float h = 30f * scale;
-            float x = bottomLeft.x + 8f * scale;
-            float y = Screen.height - bottomLeft.y + 6f * scale; // IMGUI's y runs top-down
+            DestroyUnderRow();
+            foreach (Transform old in gui.m_player.Cast<Transform>().Where(t => t.name == UnderName).ToList()) Destroy(old.gameObject);   // (a hot reload's)
+            _underShown = signature;
+            _underRow = GameUi.Rect(gui.m_player, UnderName, Vector2.zero, new Vector2(0f, 1f), new Vector2(8f, -6f), new Vector2(600f, 52f));
 
-            // One row: Sort, Stack to chests, Undo. Other mods (GearSlots) read how much room this takes.
-            if (sort)
+            const float h = 30f, gap = 6f, size = 15f;
+            float x = 0f;
+            void Add(string text, float width, Action<Player> act)
             {
-                var sortRect = new Rect(x, y, 70f * scale, h);
-                if (StackButton(sortRect, "Sort")) { Player p = player; _pending = () => SortInventory(p); }
-                x = sortRect.xMax + 6f * scale;
+                GameUi.Button(_underRow, text, new Vector2(x, 0f), new Vector2(width, h), () =>
+                {
+                    Player p = Player.m_localPlayer;
+                    if (p != null) _pending = () => act(p);
+                }, true, size);
+                x += width + gap;
             }
-
+            if (sort) Add("Sort", 70f, SortInventory);
+            if (!stack) return;
             float hintX = x;
-            if (stack)
-            {
-                var stackRect = new Rect(x, y, 170f * scale, h);
-                if (StackButton(stackRect, $"Stack to chests ({_stackChests.Count})")) { Player p = player; _pending = () => StackToChests(p); }
-                x = stackRect.xMax + 6f * scale;
-
-                // Undo appears only right after a stack that really moved something, and goes when you close the inventory.
-                if (_undo != null)
-                {
-                    var undo = new Rect(x, y, 80f * scale, h);
-                    if (StackButton(undo, "Undo")) { Player p = player; _pending = () => UndoStack(p); }
-                    x = undo.xMax + 6f * scale;
-                }
-
-                // Sort chests: everything in the chests around you goes to the chest assigned it (only when some chest is assigned something).
-                if (AnyAssignedChest())
-                {
-                    var sortChests = new Rect(x, y, 110f * scale, h);
-                    if (StackButton(sortChests, "Sort chests")) { Player p = player; _pending = () => SortChests(p); }
-                }
-
-                if (Event.current.type == EventType.Repaint)
-                {
-                    _stackLabel.fontSize = Mathf.RoundToInt(10f * scale);
-                    GUI.color = new Color(1f, 1f, 1f, 0.65f);
-                    GUI.Label(new Rect(hintX, y + h + 3f * scale, 190f * scale, 16f * scale), $"Hover an item + {_lockKey.Value} to lock it", _stackLabel);
-                    GUI.color = Color.white;
-                    _stackLabel.fontSize = 10;
-                }
-            }
+            Add($"Stack to chests ({_stackChests.Count})", 180f, StackToChests);
+            if (undo) Add("Undo", 80f, UndoStack);
+            // Sort chests: everything in the chests around you goes to the chest assigned it.
+            if (sortChests) Add("Sort chests", 120f, SortChests);
+            TMP_Text hint = GameUi.Label(_underRow, $"Hover an item + {_lockKey.Value} to lock it", new Vector2(hintX, -(h + 3f)), new Vector2(300f, 18f), 13f, GameUi.Dim);
+            hint.enableWordWrapping = false;
         }
 
-        private bool StackButton(Rect r, string text)
+        private void DestroyUnderRow()
         {
-            bool hover = r.Contains(Event.current.mousePosition);
-            if (Event.current.type == EventType.Repaint)
-            {
-                Rounded(new Rect(r.x + 1f, r.y + 2f, r.width, r.height), new Color(0f, 0f, 0f, 0.35f), 6f);
-                Rounded(r, hover ? new Color(0.36f, 0.29f, 0.18f, 0.97f) : new Color(0.2f, 0.17f, 0.13f, 0.95f), 6f);
-                Outline(r, new Color(0.62f, 0.47f, 0.22f, 0.95f), 6f);
-                int size = _stackLabel.fontSize;
-                _stackLabel.fontSize = Mathf.RoundToInt(r.height * 0.42f);
-                GUI.Label(r, text, _stackLabel);
-                _stackLabel.fontSize = size;
-            }
-            return GUI.Button(r, GUIContent.none, GUIStyle.none); // invisible: just catches the click
+            if (_underRow != null) Destroy(_underRow.gameObject);
+            _underRow = null;
+            _underShown = "";
         }
-
-        private void EnsureStackStyle()
-        {
-            if (_stackLabel != null) return;
-            _stackLabel = new GUIStyle(GUI.skin.label)
-            {
-                fontSize = 10, fontStyle = FontStyle.Bold, alignment = TextAnchor.MiddleCenter, wordWrap = false,
-                padding = new RectOffset(0, 0, 0, 0), margin = new RectOffset(0, 0, 0, 0),
-            };
-            _stackLabel.normal.textColor = new Color(0.95f, 0.9f, 0.8f);
-            UseGameFonts(null, _stackLabel);
-        }
-
-        private static void Rounded(Rect r, Color c, float radius) =>
-            GUI.DrawTexture(r, Texture2D.whiteTexture, ScaleMode.StretchToFill, true, 0f, c, Vector4.zero, new Vector4(radius, radius, radius, radius));
-
-        private static void Outline(Rect r, Color c, float radius) =>
-            GUI.DrawTexture(r, Texture2D.whiteTexture, ScaleMode.StretchToFill, true, 0f, c, Vector4.one, new Vector4(radius, radius, radius, radius));
     }
 }
