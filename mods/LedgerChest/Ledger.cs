@@ -5,6 +5,7 @@ using System.Reflection;
 using HarmonyLib;
 using TMPro;
 using UnityEngine;
+using UnityEngine.UI;
 
 namespace LedgerChest
 {
@@ -14,7 +15,8 @@ namespace LedgerChest
     ///   - click an item: all of it on your cursor; put it down on a slot of your inventory and as much as fits comes out of the chests;
     ///   - Shift-click: the game's split slider, how many; Ctrl-click: all that fits, straight in; right-click: a stack, straight in;
     ///   - drop something from your inventory onto it: it goes to the chest assigned it (else an unassigned chest), as anything put in it.
-    /// A search above it narrows it down; under it, which chests hold what is under your mouse, and what was moved.
+    /// A search in its title bar narrows it down; under it, on a board of the game's wood, the category buttons and which chests hold what
+    /// is under your mouse, or what was moved. All of it is the game's own interface (the chest window, and GameUi.cs's parts).
     /// The slots it shows are a picture of the chests: copies, in a list of its own that is never saved, never the items themselves.
     /// </summary>
     internal class Ledger
@@ -44,7 +46,7 @@ namespace LedgerChest
         private readonly Dictionary<string, int> _counts = new Dictionary<string, int>(); // how many things under each button (after the search)
         private string _search = "", _built = null, _note = "";
         private float _noteUntil, _nextScan, _nextSend, _nextError;
-        private bool _focused, _dirty = true;
+        private bool _dirty = true;
         private int _order;                                          // 0 by kind, 1 A to Z, 2 most first
         private string _kind = Kinds.All;                            // the category button that's down
         private static readonly string[] OrderNames = { "By kind", "A to Z", "Most first" };
@@ -53,11 +55,16 @@ namespace LedgerChest
         private InventoryGrid _grid;
         private TMP_Text _title, _weight;
         private Inventory _display;
-        private Rect _screen;                                        // the panel on screen (for the search above it and the notes under it)
-        private GUIStyle _field, _button, _text, _dim, _chip, _chipOn;
-        private Texture2D _fieldTex, _buttonTex, _buttonHover, _backTex, _chipOnTex;
+        // in the title bar: the search, Clear and the order; under the window, a board of its own: the category buttons and the notes
+        private TMP_InputField _searchField;
+        private Button _sortButton;
+        private RectTransform _below;
+        private TMP_Text _info;
+        private string _chipsShown, _infoShown;                     // what the board shows (built again when the buttons change)
+        private float _chipsBottom;
 
-        public bool Typing => _open != null && _focused;
+        public bool Typing => _open != null && _searchField != null && _searchField.isFocused;
+        public bool IsOpen => _open != null && _panel != null && _panel.activeSelf;
 
         private static Container OpenLedger(InventoryGui gui)
         {
@@ -71,7 +78,7 @@ namespace LedgerChest
         public void Tick()
         {
             Container now = OpenLedger(InventoryGui.instance);
-            if (now != _open) { _open = now; _search = ""; _built = null; _nextScan = 0f; _focused = false; }
+            if (now != _open) { _open = now; _search = ""; _built = null; _nextScan = 0f; }
             if (_open == null || Player.m_localPlayer == null) return;
             // Anything put in the Ledger Chest itself (Ctrl-click from your inventory, Stack to chests) goes on to its chest.
             if (Time.unscaledTime >= _nextSend && _open.GetInventory().NrOfItems() > 0 && DragGo(InventoryGui.instance) == null)
@@ -102,19 +109,14 @@ namespace LedgerChest
             catch (Exception ex) { if (Time.unscaledTime >= _nextError) { _nextError = Time.unscaledTime + 10f; Debug.LogWarning($"[{Plugin.Name}] the ledger window: {ex}"); Diagnose(); } }
             _title.text = "";                              // (the search sits in the title bar)
             if (_weight != null) _weight.text = $"{_chests.Count}";
-            var corners = new Vector3[4];
-            ((RectTransform)_panel.transform).GetWorldCorners(corners);
-            Canvas canvas = _panel.GetComponentInParent<Canvas>();
-            Camera cam = canvas != null && canvas.renderMode != RenderMode.ScreenSpaceOverlay ? canvas.worldCamera : null;
-            Vector2 lo = RectTransformUtility.WorldToScreenPoint(cam, corners[0]), hi = RectTransformUtility.WorldToScreenPoint(cam, corners[2]);
-            _screen = new Rect(lo.x, Screen.height - hi.y, hi.x - lo.x, hi.y - lo.y);
+            if (!_searchField.isFocused && _searchField.text != _search) _searchField.text = _search;   // (a new chest opened: an empty search)
+            Below();
         }
 
         public void Close()
         {
             if (_open != null && Player.m_localPlayer != null) Send(); // (put in just before closing)
             _open = null;
-            _focused = false;
             if (_panel != null) _panel.SetActive(false);
         }
 
@@ -122,6 +124,7 @@ namespace LedgerChest
         {
             if (_panel != null) UnityEngine.Object.Destroy(_panel);
             _panel = null;
+            _searchField = null; _sortButton = null; _below = null; _info = null;
         }
 
         // ---- the window: a copy of the game's chest window ------------------------------------------------------------------------------
@@ -129,7 +132,7 @@ namespace LedgerChest
         private bool Build(InventoryGui gui)
         {
             if (_panel != null) return true;
-            if (gui.m_container == null) return false;
+            if (gui.m_container == null || !GameUi.Ready()) return false;
             foreach (Transform old in gui.m_container.parent) if (old.name == "LedgerChestPanel") UnityEngine.Object.Destroy(old.gameObject);
             _panel = UnityEngine.Object.Instantiate(gui.m_container.gameObject, gui.m_container.parent);
             _panel.name = "LedgerChestPanel";
@@ -147,7 +150,130 @@ namespace LedgerChest
             foreach (Component b in new Component[] { Twin(gui.m_container, _panel.transform, gui.m_takeAllButton), Twin(gui.m_container, _panel.transform, gui.m_stackAllButton) })
                 if (b != null) b.gameObject.SetActive(false);   // (nothing to take all of, or stack, here)
             _display = new Inventory(DisplayName, null, Width, 4);
+            TitleBar();
+            _below = null; _chipsShown = _infoShown = null;   // (the board under it is built by Below)
             return true;
+        }
+
+        // ---- the search in the window's title bar, and the board under the window: the game's own parts (GameUi.cs) --------------------
+
+        private const float BarTop = 9f, BarH = 30f, Edge = 14f, Reserve = 64f, SortW = 100f, ClearW = 64f, Gap = 4f;   // (Reserve: clear of the chest count)
+        private const float Pad = 12f, ChipH = 28f, ChipFont = 15f, InfoFont = 15f;
+
+        private static void Pin(RectTransform r, Vector2 corner, Vector2 pos)
+        {
+            r.anchorMin = r.anchorMax = r.pivot = corner;
+            r.anchoredPosition = pos;
+            Loose(r);
+        }
+
+        /// <summary>Placed by hand: never moved by a layout the game's window may have.</summary>
+        private static void Loose(Component c)
+        {
+            LayoutElement e = c.GetComponent<LayoutElement>();
+            if (e == null) e = c.gameObject.AddComponent<LayoutElement>();
+            e.ignoreLayout = true;
+        }
+
+        private void TitleBar()
+        {
+            var panel = (RectTransform)_panel.transform;
+            float buttons = Reserve + SortW + Gap + ClearW + Gap;
+            _searchField = GameUi.TextField(panel, new Vector2(Edge, -BarTop), new Vector2(200f, BarH), "Search the chests around...", 60, 16f);
+            var field = (RectTransform)_searchField.transform;
+            field.anchorMax = new Vector2(1f, 1f);         // (as wide as the window, less the buttons)
+            field.offsetMin = new Vector2(Edge, -BarTop - BarH);
+            field.offsetMax = new Vector2(-(Edge + buttons), -BarTop);
+            Loose(field);
+            _searchField.onValueChanged.AddListener(text => _search = text ?? "");
+
+            Button clear = GameUi.Button(panel, "Clear", Vector2.zero, new Vector2(ClearW, BarH), () => { _search = ""; _searchField.text = ""; }, true, 15f);
+            Pin((RectTransform)clear.transform, new Vector2(1f, 1f), new Vector2(-(Edge + Reserve + SortW + Gap), -BarTop));
+            _sortButton = GameUi.Button(panel, OrderNames[_order], Vector2.zero, new Vector2(SortW, BarH), () =>
+            {
+                _order = (_order + 1) % OrderNames.Length;
+                _dirty = true;
+                GameUi.Label(_sortButton).text = OrderNames[_order];
+            }, true, 15f);
+            Pin((RectTransform)_sortButton.transform, new Vector2(1f, 1f), new Vector2(-(Edge + Reserve), -BarTop));
+        }
+
+        /// <summary>
+        /// Under the window: the category buttons (one down at a time, each with how many things it holds), then which chests hold what is
+        /// under your mouse, or what just moved, or how it works. Built again when the buttons change; only the note's text otherwise.
+        /// </summary>
+        private void Below()
+        {
+            float scale = Mathf.Clamp(Plugin.Scale.Value, 0.6f, 2f);
+            float width = ((RectTransform)_panel.transform).rect.width / scale;   // (scaled, as wide as the window)
+            if (width < 100f) return;
+            var kinds = new List<string> { Kinds.All };
+            kinds.AddRange(Kinds.Order.Where(k => k == _kind || (_counts.TryGetValue(k, out int n) && n > 0)));
+            var labels = kinds.Select(k => $"{k}  {(_counts.TryGetValue(k, out int n) ? n : 0)}").ToList();
+            string chips = $"{width:0}|{scale:0.00}|{_kind}|{string.Join("|", labels.ToArray())}";
+            if (_below == null || chips != _chipsShown)
+            {
+                _chipsShown = chips;
+                _infoShown = null;
+                Chips(kinds, labels, width, scale);
+            }
+
+            string info = Info();
+            if (info == _infoShown) return;
+            _infoShown = info;
+            float textW = width - Pad * 2f;
+            _info.text = info;
+            float h = Mathf.Max(_info.GetPreferredValues(info, textW, 0f).y, InfoFont * 2.6f);   // (room for two lines: it doesn't jump about)
+            ((RectTransform)_info.transform).sizeDelta = new Vector2(textW, h);
+            _below.sizeDelta = new Vector2(width, _chipsBottom + 6f + h + Pad);
+        }
+
+        private void Chips(List<string> kinds, List<string> labels, float width, float scale)
+        {
+            if (_below != null) UnityEngine.Object.Destroy(_below.gameObject);
+            _below = GameUi.Board(_panel.transform, "LedgerChestBelow", Vector2.zero, new Vector2(width, 100f));
+            Pin(_below, new Vector2(0f, 0f), new Vector2(0f, -4f));
+            _below.pivot = new Vector2(0f, 1f);            // (hangs under the window)
+            _below.localScale = Vector3.one * scale;
+            float x = Pad, y = Pad;
+            for (int i = 0; i < kinds.Count; i++)
+            {
+                string kind = kinds[i];
+                Button chip = GameUi.Tab(_below, labels[i], Vector2.zero, new Vector2(40f, ChipH), kind == _kind, () =>
+                {
+                    if (kind == _kind) return;
+                    _kind = kind;                          // (the slots and the buttons follow in the next update)
+                    _dirty = true;
+                    _grid.ResetView();
+                }, ChipFont);
+                TMP_Text label = GameUi.Label(chip);
+                label.fontStyle &= ~(FontStyles.UpperCase | FontStyles.LowerCase | FontStyles.SmallCaps);   // (compact)
+                float w = label.GetPreferredValues(labels[i], 1000f, 0f).x + 22f;
+                if (x + w > width - Pad && x > Pad) { x = Pad; y += ChipH + Gap; }
+                var r = (RectTransform)chip.transform;
+                r.anchoredPosition = new Vector2(x, -y);
+                r.sizeDelta = new Vector2(w, ChipH);
+                x += w + Gap;
+            }
+            _chipsBottom = y + ChipH;
+            _info = GameUi.Label(_below, "", new Vector2(Pad, -(_chipsBottom + 6f)), new Vector2(width - Pad * 2f, InfoFont * 2.6f), InfoFont, GameUi.Text);
+        }
+
+        /// <summary>Where the item under the mouse is, or what just moved, or how it works.</summary>
+        private string Info()
+        {
+            if (Hovered?.Invoke(_grid, null) is InventoryElement e && e != null)
+            {
+                Line line = LineAt(e.Position);
+                if (line != null)
+                {
+                    Vector3 from = _open.transform.position;
+                    return $"{line.Name}: {line.Total} in all. " + string.Join(", ", line.Where.Take(4).Select(kv => $"{kv.Value} in a chest {Vector3.Distance(kv.Key.transform.position, from):0} m away").ToArray())
+                           + (line.Where.Count > 4 ? $" and {line.Where.Count - 4} more chests" : "");
+                }
+            }
+            if (Time.unscaledTime < _noteUntil) return _note;
+            return $"{_chests.Count} chests within {Plugin.Radius.Value:0} m   <color=#bdb7a9>·   Click: pick it all up   ·   Shift-click: how many   ·   Ctrl-click: all into your bag   ·   Right-click: a stack   ·   Drop things here to put them away</color>";
         }
 
         /// <summary>The copy's counterpart of something inside the game's chest window (found by its path in the window).</summary>
@@ -345,86 +471,20 @@ namespace LedgerChest
             _noteUntil = Time.unscaledTime + 6f;
             Debug.Log($"[{Plugin.Name}] {text}");
         }
+    }
 
-        // ---- the search in the window's title bar, and the notes under it (OnGUI) -----------------------------------------------------------------
+    /// <summary>
+    /// The ledger as other mods and tools see it. Claude Tools' "shoot close" calls Close by reflection ("LedgerChest.Window:Close") before
+    /// a screenshot.
+    /// </summary>
+    public static class Window
+    {
+        public static bool IsOpen => Plugin.Instance != null && Plugin.Instance.Ledger.IsOpen;
 
-        public void Draw()
+        /// <summary>Closes it as Escape does: with the chest (the inventory screen), so what was put in it is sent on first.</summary>
+        public static void Close()
         {
-            if (_open == null || _panel == null || !_panel.activeSelf || _screen.width < 10f) return;
-            Styles();
-            float s = Mathf.Max(0.7f, Screen.height / 1080f) * Plugin.Scale.Value;
-            float h = 30f * s;
-            var bar = new Rect(_screen.x + 14f * s, _screen.y + 9f * s, _screen.width - 28f * s - 64f * s, h);   // in the window's title bar, clear of the chest count at the right
-            float sortW = 92f * s, clearW = 56f * s;
-            GUI.SetNextControlName("LedgerSearch");
-            _field.fontSize = Mathf.RoundToInt(15f * s);
-            _button.fontSize = Mathf.RoundToInt(13f * s);
-            _dim.fontSize = Mathf.RoundToInt(15f * s);
-            _search = GUI.TextField(new Rect(bar.x, bar.y, bar.width - sortW - clearW - 8f * s, h), _search ?? "", 60, _field);
-            if (string.IsNullOrEmpty(_search) && GUI.GetNameOfFocusedControl() != "LedgerSearch")
-                GUI.Label(new Rect(bar.x + 8f * s, bar.y, bar.width, h), "Search the chests around…", _dim);
-            if (GUI.Button(new Rect(bar.xMax - sortW - clearW - 4f * s, bar.y, clearW, h), "Clear", _button)) { _search = ""; GUI.FocusControl(null); }
-            if (GUI.Button(new Rect(bar.xMax - sortW, bar.y, sortW, h), OrderNames[_order], _button)) { _order = (_order + 1) % OrderNames.Length; _dirty = true; }
-            if (Event.current.type == EventType.Repaint) _focused = GUI.GetNameOfFocusedControl() == "LedgerSearch";
-
-            // under the window: where the item under the mouse is, or what just moved
-            string under = null;
-            if (Hovered?.Invoke(_grid, null) is InventoryElement e && e != null)
-            {
-                Line line = LineAt(e.Position);
-                if (line != null)
-                {
-                    Vector3 from = _open.transform.position;
-                    under = $"{line.Name}: {line.Total} in all. " + string.Join(", ", line.Where.Take(4).Select(kv => $"{kv.Value} in a chest {Vector3.Distance(kv.Key.transform.position, from):0} m away").ToArray())
-                            + (line.Where.Count > 4 ? $" and {line.Where.Count - 4} more chests" : "");
-                }
-            }
-            if (under == null && Time.unscaledTime < _noteUntil) under = _note;
-            if (under == null) under = $"{_chests.Count} chests within {Plugin.Radius.Value:0} m   ·   Click: pick it all up   ·   Shift-click: how many   ·   Ctrl-click: all into your bag   ·   Right-click: a stack   ·   Drop things here to put them away";
-            float below = Chips(s);
-            _text.fontSize = Mathf.RoundToInt(14f * s);
-            var info = new Rect(_screen.x, below + 4f * s, _screen.width, 40f * s);
-            GUI.DrawTexture(new Rect(info.x - 4f, info.y - 2f, info.width + 8f, info.height + 4f), _backTex);
-            GUI.Label(info, under, _text);
-        }
-
-        /// <summary>The category buttons under the window: one down at a time, each with how many things it holds. Where they end (y).</summary>
-        private float Chips(float s)
-        {
-            _chip.fontSize = _chipOn.fontSize = Mathf.RoundToInt(13f * s);
-            float h = 26f * s, gap = 4f * s, x = _screen.x, y = _screen.yMax + 6f * s, right = _screen.xMax;
-            var kinds = new List<string> { Kinds.All };
-            kinds.AddRange(Kinds.Order.Where(k => k == _kind || (_counts.TryGetValue(k, out int n) && n > 0)));
-            float top = y;
-            foreach (string k in kinds)
-            {
-                string label = $"{k}  {(_counts.TryGetValue(k, out int n) ? n : 0)}";
-                float w = _chip.CalcSize(new GUIContent(label)).x + 14f * s;
-                if (x + w > right && x > _screen.x) { x = _screen.x; y += h + gap; }
-                var r = new Rect(x, y, w, h);
-                if (Event.current.type == EventType.Repaint && x == _screen.x) GUI.DrawTexture(new Rect(_screen.x - 4f, y - 2f, _screen.width + 8f, h + 4f), _backTex);
-                if (GUI.Button(r, label, k == _kind ? _chipOn : _chip) && k != _kind) { _kind = k; _dirty = true; _grid.ResetView(); }
-                x += w + gap;
-            }
-            return y + h;
-        }
-
-        private void Styles()
-        {
-            if (_field != null) return;
-            Texture2D Tex(Color c) { var t = new Texture2D(1, 1); t.SetPixel(0, 0, c); t.Apply(); return t; }
-            _fieldTex = Tex(new Color(0f, 0f, 0f, 0.6f));
-            _buttonTex = Tex(new Color(0.24f, 0.19f, 0.13f, 1f));
-            _buttonHover = Tex(new Color(0.38f, 0.30f, 0.19f, 1f));
-            _backTex = Tex(new Color(0.08f, 0.07f, 0.05f, 0.82f));
-            Color text = new Color(0.95f, 0.91f, 0.82f), gold = new Color(0.95f, 0.78f, 0.38f);
-            _field = new GUIStyle(GUI.skin.textField) { padding = new RectOffset(8, 8, 5, 5), alignment = TextAnchor.MiddleLeft, normal = { background = _fieldTex, textColor = text }, focused = { background = _fieldTex, textColor = Color.white }, hover = { background = _fieldTex, textColor = text } };
-            _button = new GUIStyle(GUI.skin.button) { normal = { background = _buttonTex, textColor = text }, hover = { background = _buttonHover, textColor = Color.white }, active = { background = _buttonHover, textColor = gold } };
-            _text = new GUIStyle(GUI.skin.label) { wordWrap = true, normal = { textColor = text } };
-            _chipOnTex = Tex(new Color(0.62f, 0.45f, 0.18f, 1f));
-            _chip = new GUIStyle(_button) { padding = new RectOffset(6, 6, 2, 2) };
-            _chipOn = new GUIStyle(_chip) { fontStyle = FontStyle.Bold, normal = { background = _chipOnTex, textColor = Color.white }, hover = { background = _chipOnTex, textColor = Color.white } };
-            _dim = new GUIStyle(GUI.skin.label) { alignment = TextAnchor.MiddleLeft, normal = { textColor = new Color(text.r, text.g, text.b, 0.45f) } };
+            if (IsOpen && InventoryGui.instance != null) InventoryGui.instance.Hide();
         }
     }
 
@@ -432,14 +492,14 @@ namespace LedgerChest
     [HarmonyPatch(typeof(InventoryGui), "Update")]
     internal static class InventoryGui_Update_Ledger
     {
-        private static void Postfix(InventoryGui __instance) => Plugin.Instance?.Window.AfterGui(__instance);
+        private static void Postfix(InventoryGui __instance) => Plugin.Instance?.Ledger.AfterGui(__instance);
     }
 
     // The ledger closes with the chest.
     [HarmonyPatch(typeof(InventoryGui), nameof(InventoryGui.Hide))]
     internal static class InventoryGui_Hide
     {
-        private static void Postfix() => Plugin.Instance?.Window.Close();
+        private static void Postfix() => Plugin.Instance?.Ledger.Close();
     }
 
     // Something from the ledger on your cursor, put down on a slot of the game's windows (your inventory): ours to do (DropOnto).
@@ -450,7 +510,7 @@ namespace LedgerChest
         {
             InventoryGui gui = InventoryGui.instance;
             if (gui == null || !Ledger.IsDisplay(AccessTools.FieldRefAccess<InventoryGui, Inventory>(gui, "m_dragInventory"))) return true;
-            Plugin.Instance?.Window.DropOnto(grid, pos);
+            Plugin.Instance?.Ledger.DropOnto(grid, pos);
             return false;
         }
     }
@@ -463,7 +523,7 @@ namespace LedgerChest
         {
             if (!Ledger.IsDisplay(fromInventory) || Ledger.IsDisplay(__instance.GetInventory())) return true;
             __result = true;
-            Plugin.Instance?.Window.DropOnto(__instance, pos);
+            Plugin.Instance?.Ledger.DropOnto(__instance, pos);
             return false;
         }
     }
@@ -476,7 +536,7 @@ namespace LedgerChest
         {
             InventoryGui gui = InventoryGui.instance;
             if (gui == null || !Ledger.IsDisplay(AccessTools.FieldRefAccess<InventoryGui, Inventory>(gui, "m_dragInventory"))) return true;
-            Plugin.Instance?.Window.Drop();
+            Plugin.Instance?.Ledger.Drop();
             return false;
         }
     }
