@@ -96,7 +96,8 @@ namespace AICompanion
         {
             if (Patches.OpeningGear || !Companion.Is(__instance)) return true;
             __result = true;
-            if (!hold && character is Player p && p == Player.m_localPlayer && Plugin.Instance != null)
+            // (not the E that just closed the menu: E closes it as it does a chest, and this may run later in the same frame)
+            if (!hold && character is Player p && p == Player.m_localPlayer && Plugin.Instance != null && Time.unscaledTime > Plugin.MenuClosedAt + 0.25f)
                 Plugin.Instance.OpenMenuFor(p, __instance.GetComponent<Humanoid>());
             return false;
         }
@@ -300,63 +301,8 @@ namespace AICompanion
         }
     }
 
-    // ---- while the menu is open: the game ignores clicks, keys and the wheel, and Escape closes only the menu ----
-
-    [HarmonyPatch(typeof(PlayerController), "TakeInput")]
-    internal static class PlayerController_TakeInput
-    {
-        private static void Postfix(ref bool __result) { if (Plugin.MenuOpen) __result = false; }
-    }
-
-    [HarmonyPatch(typeof(Player), "TakeInput")]
-    internal static class Player_TakeInput
-    {
-        private static void Postfix(ref bool __result) { if (Plugin.MenuOpen) __result = false; }
-    }
-
-    [HarmonyPatch(typeof(GameCamera), nameof(GameCamera.UpdateMouseCapture))]
-    internal static class GameCamera_UpdateMouseCapture
-    {
-        private static bool Prefix()
-        {
-            if (!Plugin.MenuOpen) return true;
-            ZCursor.LockState = CursorLockMode.None;
-            ZCursor.Show();
-            return false;
-        }
-    }
-
-    // Typing a name: other mods and the map ignore their keys (the game's own check for "typing"), and Tab does not open the inventory
-    // (which closes the menu).
-    [HarmonyPatch(typeof(Minimap), nameof(Minimap.InTextInput))]
-    internal static class Minimap_InTextInput_Menu
-    {
-        private static void Postfix(ref bool __result) { if (Plugin.TypingInMenu) __result = true; }
-    }
-
-    [HarmonyPatch(typeof(InventoryGui), "Update")]
-    internal static class InventoryGui_Update_Typing
-    {
-        private static void Prefix() { if (Plugin.TypingInMenu) ZInput.ResetButtonStatus("Inventory"); }
-    }
-
-    [HarmonyPatch(typeof(ZInput), nameof(ZInput.GetMouseScrollWheel))]
-    internal static class ZInput_GetMouseScrollWheel
-    {
-        private static void Postfix(ref float __result) { if (Plugin.MenuOpen) __result = 0f; }
-    }
-
-    [HarmonyPatch(typeof(Menu), "Update")]
-    internal static class Menu_Update_EscapeCloses
-    {
-        private static bool Prefix()
-        {
-            if (!Plugin.MenuOpen) return true;
-            if (!(ZInput.GetKeyDown(KeyCode.Escape) || ZInput.GetButtonDown("JoyMenu"))) return true;
-            Plugin.CloseFromEscape();
-            return false;
-        }
-    }
+    // While the menu is open the game ignores clicks, keys and the wheel, Escape closes only the menu, and a name being typed keeps the
+    // game's keys (the map, the inventory) off it: the patches at the bottom of GameUi.cs, on while GameUi.IsOpen / GameUi.Typing.
 }
 
 namespace AICompanion

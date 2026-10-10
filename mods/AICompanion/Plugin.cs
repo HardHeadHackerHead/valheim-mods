@@ -147,10 +147,14 @@ namespace AICompanion
         private float _keyDownAt = -1f;
         private bool _keyHeld;
 
-        /// <summary>The menu key: a tap opens the menu (on release), holding it half a second calls your companions to you or sends them home.</summary>
+        /// <summary>
+        /// The menu key: a tap opens the menu (on release), holding it half a second calls your companions to you or sends them home. With
+        /// the menu open, it closes it (unless a name is being typed).
+        /// </summary>
         private void MenuKeyPressed(Player player)
         {
-            if (MenuOpen || Home.AssignFor != null || TypingOrBusy()) { _keyDownAt = -1f; return; }
+            if (MenuOpen) { if (MenuKey.Value.IsDown() && !GameUi.Typing) CloseMenu(); _keyDownAt = -1f; return; }
+            if (Home.AssignFor != null || TypingOrBusy()) { _keyDownAt = -1f; return; }
             if (MenuKey.Value.IsDown()) { _keyDownAt = Time.time; _keyHeld = false; return; }
             if (_keyDownAt < 0f) return;
             if (MenuKey.Value.IsPressed())
@@ -163,7 +167,7 @@ namespace AICompanion
         }
 
         internal static bool TypingOrBusy() =>
-            (Chat.instance != null && Chat.instance.HasFocus()) || Console.IsVisible() || TextInput.IsVisible() || Menu.IsVisible() ||
+            (Chat.instance != null && Chat.instance.HasFocus()) || Console.IsVisible() || TextInput.IsVisible() || global::Menu.IsVisible() ||
             InventoryGui.IsVisible() || Minimap.IsOpen() || StoreGui.IsVisible() || Hud.IsPieceSelectionVisible();
 
         internal void Note(string text) => Logger.LogInfo(text);
