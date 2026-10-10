@@ -54,6 +54,12 @@ namespace QualityOfLife
             AppDomain.CurrentDomain.SetData("DHack.QoL.UnderInventoryHeight", 36f);
             AppDomain.CurrentDomain.SetData("DHack.QoL.StackInventory", (Func<Inventory, Vector3, float, Func<ItemDrop.ItemData, bool>, int>)StackInventory); // for AICompanion
 
+            // The game-look interface (GameUi.cs): its input patches act while the assign menu is open, Escape closes it, and typing in its
+            // search box keeps other keys quiet.
+            GameUi.IsOpen = () => RulesWindowOpen;
+            GameUi_EscapeCloses.Close = CloseFromEscape;
+            GameUi.Typing = () => Instance != null && Instance.Typing;
+
             _harmony = new Harmony(Guid); // keeps the game from reacting to clicks while the assign menu is open, and tracks chests
             _harmony.PatchAll();
             ContainerRegistry.Seed(); // chests that already exist; new ones are added as they appear
@@ -76,14 +82,53 @@ namespace QualityOfLife
             if (_running != null) StopCoroutine(_running);
             AppDomain.CurrentDomain.SetData("DHack.QoL.UnderInventoryHeight", null);
             AppDomain.CurrentDomain.SetData("DHack.QoL.StackInventory", null);
-            RulesWindowOpen = false;
+            CloseRules();
+            DestroyInventoryUi(); // a hot reload must leave nothing of ours in the inventory's interface
+            GameUi.Destroy();
             ContainerRegistry.Clear();
             if (Instance == this) Instance = null;
             RestoreCamera();
             ClearShipPins();
             _harmony?.UnpatchSelf();
-            DestroyMenuResources();
             Synced?.Dispose();
+        }
+
+        // ---- on the inventory screen: the buttons under it, the assign button under an open chest, the tags on cells ----
+
+        private float _uiRetryAt;
+        private bool _uiFailed;
+
+        /// <summary>After the game's own Update has laid out the inventory this frame (its cells can be made again then).</summary>
+        private void LateUpdate()
+        {
+            Player player = Player.m_localPlayer;
+            InventoryGui gui = InventoryGui.instance;
+            if (player == null || gui == null || gui.m_player == null || !InventoryGui.IsVisible() || Time.unscaledTime < _uiRetryAt) return;
+            if (!GameUi.Ready()) { _uiRetryAt = Time.unscaledTime + 5f; return; } // (it says why in the log; not every frame)
+            try
+            {
+                UpdateUnderInventory(gui);
+                UpdateAssignButton(gui);
+                UpdateBadges(player, gui);
+            }
+            catch (Exception e)
+            {
+                if (!_uiFailed) Logger.LogWarning($"The buttons on the inventory screen failed (shown once): {e}");
+                _uiFailed = true;
+                _uiRetryAt = Time.unscaledTime + 5f;
+            }
+        }
+
+        private void DestroyInventoryUi()
+        {
+            DestroyUnderRow();
+            DestroyAssignRow();
+            InventoryGui gui = InventoryGui.instance;
+            if (gui == null) return;
+            RemoveBadges(gui);
+            // and anything of ours an older copy left behind, found by name (its types are not ours)
+            foreach (Transform t in gui.GetComponentsInChildren<Transform>(true))
+                if (t != null && (t.name == UnderName || t.name == AssignName || t.name == RulesWindowName)) Destroy(t.gameObject);
         }
 
         // ---- our keys win over the game's (see GameKeys) ----
@@ -130,7 +175,11 @@ namespace QualityOfLife
             TellKeyNotes();
             UpdateShipPins(); // (also while dead: the map stays useful)
             Player player = Player.m_localPlayer;
-            if (player == null || player.IsDead()) return;
+            if (player == null || player.IsDead())
+            {
+                if (RulesWindowOpen) CloseRules();
+                return;
+            }
 
             UpdateBoatPush(player); // hold the push key next to a boat
             UpdateQuickStack(player); // the buttons' clicks, the chest scan, the lock key and the assign key

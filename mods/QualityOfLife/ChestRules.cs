@@ -54,8 +54,10 @@ namespace QualityOfLife
             if (zdo == null) return false;
 
             // Only the owner of a chest can save changes to it, so take ownership first (matters in multiplayer). Not while another
-            // player has it open: taking it from them would lose what they move in it from then on.
-            if (ContainerRegistry.InUse(chest)) return false;
+            // player has it open: taking it from them would lose what they move in it from then on. The chest you have open yourself is
+            // fine (the assign menu beside it): you own it while it is open, and the game doesn't reload a chest's items while it is in use.
+            bool mine = chest == Plugin.OpenChest() && view.IsOwner();
+            if (ContainerRegistry.InUse(chest) && !mine) return false;
             ContainerRegistry.TakeOwnership(chest);
 
             string text = rules.IsEmpty ? ""

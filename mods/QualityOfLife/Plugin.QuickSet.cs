@@ -2,6 +2,7 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using HarmonyLib;
+using TMPro;
 using UnityEngine;
 
 namespace QualityOfLife
@@ -20,7 +21,6 @@ namespace QualityOfLife
         private bool _quickSwapped;
 
         private static readonly System.Reflection.FieldInfo ElementsField = AccessTools.Field(typeof(InventoryGrid), "m_elements");
-        private GUIStyle _badgeStyle;
 
         private static bool IsQuick(ItemDrop.ItemData item) => item.m_customData != null && item.m_customData.ContainsKey(Tag);
 
@@ -94,53 +94,81 @@ namespace QualityOfLife
             }
         }
 
-        // ---- badges on assigned items -----------------------------------------------------------
+        // ---- tags on your inventory's cells ----------------------------------------------------
 
-        private void DrawQuickSetBadges()
+        private const string QuickBadgeName = "QoLQuickBadge", KeepBadgeName = "QoLKeepBadge";
+        private static readonly Color QuickBadgeFill = new Color(0.95f, 0.78f, 0.3f, 0.95f), QuickBadgeText = new Color(0.1f, 0.07f, 0.02f);
+        private static readonly Color KeepBadgeFill = new Color(0.65f, 0.15f, 0.15f, 0.95f);
+        private readonly HashSet<int> _quickCells = new HashSet<int>();
+
+        /// <summary>
+        /// Small tags on the inventory's own cells: a gold one with the quick-set key in the top-left corner of each quick-set item, and a red
+        /// "KEEP" in the bottom-left corner of a locked item while the mouse is over it. They are children of the cells, so they move with
+        /// them; nothing in them catches the mouse.
+        /// </summary>
+        private void UpdateBadges(Player player, InventoryGui gui)
         {
-            if (!_quickSetEnabled.Value || !_showBadges.Value || Event.current.type != EventType.Repaint) return;
-            Player player = Player.m_localPlayer;
-            InventoryGui gui = InventoryGui.instance;
-            if (player == null || gui == null || !InventoryGui.IsVisible() || gui.m_playerGrid == null) return;
-
-            var elements = ElementsField?.GetValue(gui.m_playerGrid) as IList;
+            var elements = gui.m_playerGrid != null ? ElementsField?.GetValue(gui.m_playerGrid) as IList : null;
             if (elements == null) return;
-
-            if (_badgeStyle == null)
-            {
-                _badgeStyle = new GUIStyle(GUI.skin.label) { fontSize = 11, fontStyle = FontStyle.Bold, alignment = TextAnchor.MiddleCenter };
-                _badgeStyle.normal.textColor = new Color(0.1f, 0.07f, 0.02f);
-                UseGameFonts(null, _badgeStyle);
-            }
-
             Inventory inventory = player.GetInventory();
             int width = inventory.GetWidth();
-            string label = _quickSetKey.Value.MainKey.ToString();
-            if (label.Length > 5) label = "*";
 
-            foreach (ItemDrop.ItemData item in inventory.GetAllItems())
+            _quickCells.Clear();
+            if (_quickSetEnabled.Value && _showBadges.Value)
+                foreach (ItemDrop.ItemData item in inventory.GetAllItems())
+                    if (IsQuick(item)) _quickCells.Add(item.m_gridPos.y * width + item.m_gridPos.x);
+            int keepCell = -1;
+            if (_stackEnabled.Value)
             {
-                if (!IsQuick(item)) continue;
-                int index = item.m_gridPos.y * width + item.m_gridPos.x;
-                if (index < 0 || index >= elements.Count) continue;
-
-                var element = elements[index] as InventoryElement;
-                if (element == null) continue;
-
-                // The slot's on-screen rectangle (works for both overlay and camera canvases).
-                RectTransform rect = element.GetElementRectTransform();
-                var corners = new Vector3[4];
-                rect.GetWorldCorners(corners);
-                Camera cam = rect.GetComponentInParent<Canvas>()?.worldCamera;
-                Vector2 bottomLeft = RectTransformUtility.WorldToScreenPoint(cam, corners[0]);
-                Vector2 topRight = RectTransformUtility.WorldToScreenPoint(cam, corners[2]);
-
-                // Small gold tab in the slot's top-left corner (IMGUI's y runs top-down).
-                var badge = new Rect(bottomLeft.x + 2f, Screen.height - topRight.y + 2f, 15f + 6f * (label.Length - 1), 15f);
-                GUI.DrawTexture(badge, Texture2D.whiteTexture, ScaleMode.StretchToFill, true, 0f,
-                                new Color(0.95f, 0.78f, 0.3f, 0.95f), Vector4.zero, new Vector4(4f, 4f, 4f, 4f));
-                GUI.Label(badge, label, _badgeStyle);
+                ItemDrop.ItemData hovered = HoveredItem(player);
+                if (hovered != null && IsKept(hovered)) keepCell = hovered.m_gridPos.y * width + hovered.m_gridPos.x;
             }
+            string key = _quickSetKey.Value.MainKey.ToString();
+            if (key.Length > 5) key = "*";
+
+            for (int i = 0; i < elements.Count; i++)
+            {
+                var cell = elements[i] as InventoryElement;
+                if (cell == null) continue;
+                Badge(cell.transform, QuickBadgeName, _quickCells.Contains(i), key, true);
+                Badge(cell.transform, KeepBadgeName, i == keepCell, "KEEP", false);
+            }
+        }
+
+        /// <summary>Shows (making it the first time) or hides one tag on a cell. A tag left by a hot reload is reused: it's only Unity parts.</summary>
+        private static void Badge(Transform cell, string name, bool show, string text, bool top)
+        {
+            Transform badge = cell.Find(name);
+            if (!show)
+            {
+                if (badge != null && badge.gameObject.activeSelf) badge.gameObject.SetActive(false);
+                return;
+            }
+            if (badge != null)
+            {
+                TMP_Text label = badge.GetComponentInChildren<TMP_Text>(true);
+                if (label == null || label.text != text) { badge.name = "QoLOldBadge"; Destroy(badge.gameObject); badge = null; }   // (the key was changed)
+            }
+            if (badge == null)
+            {
+                RectTransform tag = top
+                    ? GameUi.Tag(cell, text, new Vector2(2f, -2f), 15f, 11f, QuickBadgeFill, QuickBadgeText)
+                    : GameUi.Tag(cell, text, new Vector2(2f, 2f), 13f, 10f, KeepBadgeFill, GameUi.Text, Vector2.zero);
+                tag.name = name;
+                return;
+            }
+            if (!badge.gameObject.activeSelf) badge.gameObject.SetActive(true);
+        }
+
+        /// <summary>Takes every tag off the inventory's cells (unloading).</summary>
+        private static void RemoveBadges(InventoryGui gui)
+        {
+            var elements = gui != null && gui.m_playerGrid != null ? ElementsField?.GetValue(gui.m_playerGrid) as IList : null;
+            if (elements == null) return;
+            foreach (object e in elements)
+                if (e is InventoryElement cell && cell != null)
+                    foreach (Transform child in cell.transform.Cast<Transform>().Where(t => t.name == QuickBadgeName || t.name == KeepBadgeName).ToList())
+                        Destroy(child.gameObject);
         }
     }
 }
