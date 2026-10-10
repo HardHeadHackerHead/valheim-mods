@@ -1,46 +1,19 @@
-<!-- This page is made by tools/modpages/make_pages.py from the mod's DESCRIPTION.txt, CHANGELOG.txt, settings and the
-     repo's README. Change those (or the HAND-WRITTEN part below), not the rest of this page. -->
+<!-- This page is made by tools/modpages/make_pages.py from the mod's thunderstore.toml, DESCRIPTION.txt, CHANGELOG.txt,
+     settings and the repo's README. Change those, or the HAND-WRITTEN parts, not the rest of this page. -->
 
-# 🏟️ Arena
+# 🏟️ Quad's Arena
 
-<img src="cover.png" alt="Arena" width="100%">
+<img src="cover.png" alt="Quad's Arena" width="100%">
 
-**Version 0.3.2**  ·  [all the mods](../../README.md)  ·  install it from [Thunderstore](https://thunderstore.io/c/valheim/p/Quads_Lab/Quads_Arena/) (r2modman, Thunderstore Mod Manager) or the in-game [mod manager](https://github.com/HardHeadHackerHead/valheim-mod-manager) (**F7**)
+**The Arena: a great stone colosseum that stands in your world, where you fight for the crowd, for gold and for glory, like the arena in the first Fable.**
 
-A stone colosseum, after the arena of the first Fable, builds itself on open ground in your world. Arena Waystones (hammer, Misc) take you
-to its forecourt, where the champions of each contest stand in stone and the **Arena Master** takes your fee. Walk **the Long Road** from the
-Meadows to the Ashlands, three rounds in each land with its champion in the third: the Arena Master holds your things, and the arena arms
-you from a chest that rises in the ring; the fighters drop coins, and you upgrade your gear as you go from reward chests, the Armourer and the crowd, who also throw the fresh food, so play to them. Or bring your own gear to a **Champion Bout** or the
-**Endless Horde**, try **Today's Trial**, or duel a friend for a wager. A crowd fills the stands, cheers, boos and throws you food. Death is
-real. Everyone in the world needs it, and restart after installing.
+![version: 0.3.2](https://img.shields.io/badge/version-0.3.2-3b6e8f?style=flat-square)  ![multiplayer: everyone + host](https://img.shields.io/badge/multiplayer-everyone%20%2B%20host-7a5c2e?style=flat-square)  ![made with: Claude Code](https://img.shields.io/badge/made%20with-Claude%20Code-c26a3d?style=flat-square)
 
-<!-- HAND-WRITTEN: kept when this page is made again -->
-## 📸 Screenshots
+<!-- GITHUB-ONLY -->[Thunderstore](https://thunderstore.io/c/valheim/p/Quads_Lab/Quads_Arena/)  ·  <!-- END GITHUB-ONLY -->[Source code](https://github.com/HardHeadHackerHead/valheim-mods/tree/main/mods/Arena)  ·  [Report a bug](https://github.com/HardHeadHackerHead/valheim-mods/issues/new?template=bug.yml&title=%5BQuad%27s%20Arena%5D%20)  ·  [Discord](https://discord.gg/EwTjQxEZPy)
 
-**The ring: banners, torches and a full house behind the bars**
+<!-- GITHUB-ONLY -->**Install:** with [r2modman](https://thunderstore.io/c/valheim/p/ebkr/r2modman/) or Thunderstore Mod Manager from [Thunderstore](https://thunderstore.io/c/valheim/p/Quads_Lab/Quads_Arena/), or press **F7** in the game with our [mod manager](https://github.com/HardHeadHackerHead/valheim-mod-manager).<!-- END GITHUB-ONLY -->
 
-<img src="images/1.jpg" alt="The ring: banners, torches and a full house behind the bars" width="100%">
-
-**The Hall of Fame: a champion in stone on their plinth**
-
-<img src="images/2.jpg" alt="The Hall of Fame: a champion in stone on their plinth" width="100%">
-
-**The forecourt and the Arena Master's desk**
-
-<img src="images/3.jpg" alt="The forecourt and the Arena Master's desk" width="100%">
-
-**Between lands: the platform, its braziers and the reward chest**
-
-<img src="images/4.jpg" alt="Between lands: the platform, its braziers and the reward chest" width="100%">
-
-**From above: the colosseum, its forecourt and gateway**
-
-<img src="images/5.jpg" alt="From above: the colosseum, its forecourt and gateway" width="100%">
-<!-- END HAND-WRITTEN -->
-
-## 🔍 How it works
-
-The Arena: a great stone colosseum that stands in your world, where you fight for the crowd, for gold and for glory, like the arena in the first Fable.
+## ✨ Features
 
 ### What is in it
 
@@ -61,22 +34,66 @@ The Arena: a great stone colosseum that stands in your world, where you fight fo
 - Duels: challenge another player at the Arena Master's desk, both put up a wager and walk into the ring, each taken to their own end of it; after a countdown PvP comes on for the fight (and goes back as it was after). The first to drop to a fifth of their health loses (nobody dies in a duel); the winner takes the pot less a tenth.
 - Your titles (Pit Rat to Legend of the Arena), wins and records are kept on your character.
 
-Settings: prizes, entry fees, real death, the map marker, the crowd (how full, gifts, announcer, volume), the yield key.
-
 Everyone in the world needs it installed (the waystone is a building piece, and everyone needs the arena to see it). Restart after installing.
 
 Crowd sounds from OpenGameArt: "Free Crowd Cheering Sounds" by Gregor Quendel (CC-BY 4.0) and "Crowd Shouting" by StarNinjas (CC0).
 
-## ⌨️ Keys
+## 📸 Screenshots
+
+<!-- HAND-WRITTEN: screenshots -->
+**The ring: banners, torches and a full house behind the bars**
+
+<img src="images/1.jpg" alt="The ring: banners, torches and a full house behind the bars" width="100%">
+
+**The Hall of Fame: a champion in stone on their plinth**
+
+<img src="images/2.jpg" alt="The Hall of Fame: a champion in stone on their plinth" width="100%">
+
+**The forecourt and the Arena Master's desk**
+
+<img src="images/3.jpg" alt="The forecourt and the Arena Master's desk" width="100%">
+
+**Between lands: the platform, its braziers and the reward chest**
+
+<img src="images/4.jpg" alt="Between lands: the platform, its braziers and the reward chest" width="100%">
+
+**From above: the colosseum, its forecourt and gateway**
+
+<img src="images/5.jpg" alt="From above: the colosseum, its forecourt and gateway" width="100%">
+<!-- END HAND-WRITTEN: screenshots -->
+
+## 🎮 How to use
 
 | Key | What it does |
 |---|---|
 | **E** at the Arena Master | Pick a contest (the Long Road, a Champion Bout, the Endless Horde, today's trial), duel a player, see the champions |
 | **Backspace** twice | In a contest: take your purse and leave between rounds (in a round you give up for half of it) |
 
+<!-- HAND-WRITTEN: how-to-use -->
+
+<!-- END HAND-WRITTEN: how-to-use -->
+
+## 🧩 Other mods
+
+<!-- HAND-WRITTEN: other-mods -->
+**Known clashes:** none known.
+<!-- END HAND-WRITTEN: other-mods -->
+
+Found a clash with another mod? [Tell us](https://github.com/HardHeadHackerHead/valheim-mods/issues/new?template=bug.yml&title=%5BQuad%27s%20Arena%5D%20) which one and what happened.
+
+## 👥 Multiplayer
+
+**Who needs it:** Everyone, and **the host above all**: a game without the mod deletes the pieces when their area loads. Restart after installing or updating them.
+
+<!-- HAND-WRITTEN: multiplayer -->
+The host's game picks where the Arena stands and saves it with the world: **on a dedicated server, the server needs the mod** or no Arena is ever placed. Each game draws the colosseum itself, so players without the mod see no Arena. A fight is shared with the players nearby (announcer, crowd, gates), so watchers see the same fight. Duels need the mod on both players' games.
+
+**The host decides:** rewards, entry fee, whether death is real, respawning at the Arena, tiers, gifts, leftover meals and hunger in the ring. While you play on their world their values replace yours (your file isn't changed); a host without the mod leaves everyone their own.
+<!-- END HAND-WRITTEN: multiplayer -->
+
 ## ⚙️ Settings
 
-In `BepInEx/config/com.quad.arena.cfg` (made the first time the game runs with the mod).
+In `BepInEx/config/com.quad.arena.cfg`, made the first time the game runs with the mod. r2modman and Thunderstore Mod Manager edit it under **Config editor**.<!-- GITHUB-ONLY --> With our mod manager: **F7**, then **Mod settings**.<!-- END GITHUB-ONLY -->
 
 **Arena**
 
@@ -102,21 +119,26 @@ In `BepInEx/config/com.quad.arena.cfg` (made the first time the game runs with t
 | `Announcer` | `true` | The announcer's calls across the top of the screen. |
 | `Volume` | `0.5` | How loud the crowd is. |
 
-## 👥 Playing together
-
-Everyone in the world needs it, **the host above all**. It adds a new build piece (the Arena Waystone). Restart the game after updating so it registers cleanly.
-
 ## 🤖 Made with AI
 
 Made with the help of Claude (Anthropic), with Claude Code: designed, written and checked together, and tried in the game.
 
-## 📜 Changes
+## 🧪 About Quads Lab
+
+Quads Lab is where **Quad H** ([HardHeadHackerHead](https://github.com/HardHeadHackerHead)) builds software with AI, of every kind:
+these Valheim mods are one of its projects. Each mod is designed by a player, written with [Claude Code](https://claude.com/claude-code)
+and tested in our own world, with **bobisme** as our tester.
+
+- 🌐 [quadslab.io](https://quadslab.io)
+- 🧰 [All Quads Lab mods on Thunderstore](https://thunderstore.io/c/valheim/p/Quads_Lab/)
+- 💻 [Source code on GitHub](https://github.com/HardHeadHackerHead/valheim-mods)
+- 💬 [Discord](https://discord.gg/EwTjQxEZPy)
+- 🐞 Found a bug? [Open an issue on GitHub](https://github.com/HardHeadHackerHead/valheim-mods/issues/new/choose)
+
+## 📜 Recent changes
 
 - **0.3.2** Its test command for Claude Tools (arena ...) follows the game's cheat rule: anything that changes a contest (favour, clear, start, tp, crowd, gifts...) works only in single player, for the host or with devcommands; status and the checks still work for everyone. New: arena crowd fills the stands and has them cheer (crowd off sends them home), for trying the crowd out.
 - **0.3.1** A new id, com.quad.arena (it was com.dhack.arena): your settings move over by themselves the first time it starts, and the old settings file is kept as a backup. Restart the game after this update. If an old copy is still installed beside it, this one stands down and says which file to delete, so the two never both run. The DLL now says it was made with AI, as Thunderstore asks.
 - **0.3.0** Fairer rewards, and safer together. Leaving the game (or the mod unloading) once a fight has begun now counts as giving up: half the purse, the stake lost; only before you walk into the ring is everything given back. Nothing from a land your world has not reached comes home with you: on the Long Road the crowd's gifts and the Armourer's food, meads and arrows from such a land are lent like the arena's gear (the Armourer's window says so), and the crowd's strong meads and bombs are lent until your world has reached their land. Fall on the arena's steel and the coins you picked up are lost as before, but the crowd's gifts and what you bought are no longer deleted: they wait in your tombstone in the forecourt. In multiplayer the server decides the prizes, the entry fee, whether death is real, AllTiers, the crowd's gifts, the leftover meals, ring hunger and rising at the arena. A duel now tells everyone at the arena it is on, so no contest or other duel can start in the ring at the same time; and if your opponent's game vanishes mid-duel you get your own wager back (the pot only when they forfeit or are beaten). Fighters left in the world by a game that closed mid-fight are taken away, the arena's chests can no longer be torn down with the hammer on another player's game, the arena only shows its own effects when another game asks, the Arena Waystone is always registered even if its look cannot be made, and the crowd's sounds are not loaded over and over where they cannot be.
-- **0.2.3** The arena is dressed for it: a paved border round the fighting floor, shields of old fights flanking every pen's gate, straw, bones and skulls in the pens, torches round the top of the stands and at the stairs for night fights, and a forecourt with a bear rug before the Arena Master's desk, benches, barrels and fires. A champion's entrance comes with a fanfare and a burst of fire at its gate. Duels: walking in, each duellist is taken to their own end of the ring, facing the other, and held there through a five-second countdown; PvP comes on at FIGHT!, stays on (it cannot be switched off mid-fight) and goes back as it was after. Between lands the floor is always the same: a platform in the middle with the reward chest on it, and each land's own cover goes up with its first round. Cover never traps you: put up where you stand, it lifts you onto it or moves you clear. Today's Trial never has the no-food rule (on the arena's gear it left you 25 health), and it and the metals and trophies the arena pays follow the bosses your world has really beaten. The stands over the main gate are whole again.
-- **0.2.2** The hollow under the Arena Master's box is filled (nobody falls through the stands there), and you can sit on his throne. Champions are as strong as their land's gear can take: their stars now depend on how much health they have and how hard they hit (a boar or a greydwarf gets both stars, a bear, a troll or an abomination none), with two fighters beside them instead of three. Playing together, another player's game no longer takes away the chest standing in the ring for a fighter, and an Armourer is never left standing after the mod reloads.
-- **0.2.1** The arena looks the part: a third storey with windows and masts of banners round the top, columns before every arch, fires hanging in the arches, banners all round, black marble towers at the gate, a canopy over the Arena Master's box and a lantern-lit forecourt with its own gateway. The main gate is a pair of doors that open only for a fighter (and anyone else found on the fighting floor is shown out). The stairs to the stands start clear of the gate's towers, and the hole at their top is closed.
-- **0.2.0** The Long Road is a run you build up: start with a random Meadows weapon and the plainest gear, keep it from land to land and build it up piece by piece, from a reward chest and the Armourer (the game's own trader window) between lands, or from the crowd. The fighters drop coins instead of loot; spend them on upgrades, fresh food and meads, or walk out with them. Play to the crowd: food burns faster in the ring and the kitchen's meals are leftovers, so their gifts keep you going, and the more they love you the better they throw; emotes in the ring please them, and they chant for a flex, a kill or a perfect parry. Winning a whole contest is a show (the crowd on its feet, fireworks, your name called, a prize chest). Fall in a contest and you rise again at the arena, with no tombstone in the ring and no death marker on the map. Each land's champion is picked at random from several.
-- **0.1.0** New: the Arena. A stone colosseum builds itself in your world: travel there by Arena Waystone, see the Hall of Fame, sign up with the Arena Master and walk the Long Road from the Meadows to the Ashlands on the arena's own steel, fight a Champion Bout, the Endless Horde or Today's Trial for a roaring crowd, a purse and the champion's trophy, or duel a friend for a wager. Death is real, but your tombstone waits in the forecourt.
+
+<!-- GITHUB-ONLY -->[Every change](CHANGELOG.txt)<!-- END GITHUB-ONLY --><!-- THUNDERSTORE-ONLY: Every change is on the Changelog tab. -->

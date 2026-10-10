@@ -45,6 +45,9 @@ Ask the player to do the account parts themselves (they're theirs, and the token
 - **The README says what the mod really does**, and its images are public `https://` links (not `images/x.png`: files in the package aren't
   shown). Push the images to GitHub and link `https://raw.githubusercontent.com/<you>/<repo>/main/<path>`.
 - **No self-updating** (mod managers do updates), no obfuscated code, no downloading and running code, no collecting data about players.
+  Moderators reject a package that *looks* like it could run outside code, even when it doesn't: one DLL that downloads other DLLs and
+  also loads assemblies from bytes (`Assembly.Load(byte[])`) reads as a malware loader. Our own Claude Tools was rejected for that
+  ("Invalid submission"). Keep such tools off Thunderstore, or leave those parts out of the Thunderstore build.
 - **Other people's work**: don't include game files or other authors' mods or assets unless their licence allows it; depend on their
   package instead.
 - One mod per job: not five near-identical packages.
@@ -74,6 +77,8 @@ It also makes, in `thunderstore-build/` (add it to `.gitignore`):
 - **the package's README** from the mod's `README.md`, with relative links made absolute so they work on Thunderstore: images point at
   `raw.githubusercontent.com`, other links at `github.com`, from the folder's git remote and branch. So the README can keep relative
   links for GitHub; **push** the images before publishing (it warns about any that aren't on the remote).
+  Lines for one site only: `<!-- GITHUB-ONLY -->...<!-- END GITHUB-ONLY -->` is left out of the package's README (a link to the
+  Thunderstore page itself, install steps for another manager), and `<!-- THUNDERSTORE-ONLY: ... -->` is hidden on GitHub and shown there.
 - **CHANGELOG.md**: the mod's own `CHANGELOG.md` (a `## 1.0.1` heading per version, newest first, one line per change: not "various
   fixes"), or one made from `CHANGELOG.txt`, where a paragraph starting `1.0.1: ` gets that version's heading.
 

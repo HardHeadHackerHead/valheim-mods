@@ -1,27 +1,19 @@
-<!-- This page is made by tools/modpages/make_pages.py from the mod's DESCRIPTION.txt, CHANGELOG.txt, settings and the
-     repo's README. Change those (or the HAND-WRITTEN part below), not the rest of this page. -->
+<!-- This page is made by tools/modpages/make_pages.py from the mod's thunderstore.toml, DESCRIPTION.txt, CHANGELOG.txt,
+     settings and the repo's README. Change those, or the HAND-WRITTEN parts, not the rest of this page. -->
 
-# 👻 BuildOrders
+# 👻 Quad's Build Orders
 
-<img src="cover.png" alt="BuildOrders" width="100%">
+<img src="cover.png" alt="Quad's Build Orders" width="100%">
 
-**Version 1.12.1**  ·  [all the mods](../../README.md)  ·  install it from [Thunderstore](https://thunderstore.io/c/valheim/p/Quads_Lab/Quads_Build_Orders/) (r2modman, Thunderstore Mod Manager) or the in-game [mod manager](https://github.com/HardHeadHackerHead/valheim-mod-manager) (**F7**)
+**Shared ghost build orders and blueprints: plan pieces (or import a blueprint) for everyone in your party, then build them by walking up and pressing E.**
 
-Plan pieces as shared ghost build orders. Your party sees them, you can build one by just walking up and pressing **E**, and a panel totals the materials you still need. Pick a blueprint in the Plans window (**F11**), turn its preview into place, and a whole structure appears as ghosts (share blueprints with your friends from the same window): ask an AI assistant to design a fort for you.
+![version: 1.12.1](https://img.shields.io/badge/version-1.12.1-3b6e8f?style=flat-square)  ![multiplayer: only who wants it](https://img.shields.io/badge/multiplayer-only%20who%20wants%20it-7a5c2e?style=flat-square)  ![made with: Claude Code](https://img.shields.io/badge/made%20with-Claude%20Code-c26a3d?style=flat-square)
 
-<!-- HAND-WRITTEN: kept when this page is made again -->
-## 📸 Screenshots
+<!-- GITHUB-ONLY -->[Thunderstore](https://thunderstore.io/c/valheim/p/Quads_Lab/Quads_Build_Orders/)  ·  <!-- END GITHUB-ONLY -->[Source code](https://github.com/HardHeadHackerHead/valheim-mods/tree/main/mods/BuildOrders)  ·  [Report a bug](https://github.com/HardHeadHackerHead/valheim-mods/issues/new?template=bug.yml&title=%5BQuad%27s%20Build%20Orders%5D%20)  ·  [Discord](https://discord.gg/EwTjQxEZPy)
 
-**The Plans window (F11): blueprints to place, with their size and cost**
+<!-- GITHUB-ONLY -->**Install:** with [r2modman](https://thunderstore.io/c/valheim/p/ebkr/r2modman/) or Thunderstore Mod Manager from [Thunderstore](https://thunderstore.io/c/valheim/p/Quads_Lab/Quads_Build_Orders/), or press **F7** in the game with our [mod manager](https://github.com/HardHeadHackerHead/valheim-mod-manager).<!-- END GITHUB-ONLY -->
 
-<img src="images/1.jpg" alt="The Plans window (F11): blueprints to place, with their size and cost" width="100%">
-
-**Building a plan: what it still needs, in the corner**
-
-<img src="images/2.jpg" alt="Building a plan: what it still needs, in the corner" width="100%">
-<!-- END HAND-WRITTEN -->
-
-## 🔍 How it works
+## ✨ Features
 
 Plan pieces as shared ghost build orders for everyone in your party, and build them by just walking up and pressing E.
 
@@ -36,8 +28,6 @@ Plan pieces as shared ghost build orders for everyone in your party, and build t
 - When you build for real, your placement snaps onto a ghost of the same piece, and the ghost disappears once the real piece is built.
 - U selects the piece you are looking at to build more like it, and Delete removes a ghost. F9 shows or hides all ghosts.
 - A panel totals the materials your orders still need.
-
-Settings: ghost opacity, view distance, snap distance, how close you must be to build with E, and the keys.
 
 Swimming: your hammer stays out in the water (setting BuildWhileSwimming), so you can plan and build from it. Equip the hammer before you jump in, because the game does not let you equip things while swimming.
 
@@ -60,7 +50,19 @@ Fetching materials: with the hammer out and a piece selected, a hint appears whe
 - Ask an AI assistant to design a build for you: BuildOrders writes a design guide (CLAUDE.md), every piece's size, snap points, cost and rules, and helper scripts (placing, a stability check, previews) into BepInEx/blueprints. Start Claude Code in that folder, ask for a fort or a house, then place it from the F11 window.
 - With the Claude Tools mod installed, an AI assistant can also see your game and place, check, photograph, build and take down blueprints for you through its request mailbox (BepInEx/claude). BuildOrders adds those commands to it by itself; without Claude Tools nothing changes.
 
-## ⌨️ Keys
+## 📸 Screenshots
+
+<!-- HAND-WRITTEN: screenshots -->
+**The Plans window (F11): blueprints to place, with their size and cost**
+
+<img src="images/1.jpg" alt="The Plans window (F11): blueprints to place, with their size and cost" width="100%">
+
+**Building a plan: what it still needs, in the corner**
+
+<img src="images/2.jpg" alt="Building a plan: what it still needs, in the corner" width="100%">
+<!-- END HAND-WRITTEN: screenshots -->
+
+## 🎮 How to use
 
 | Key | What it does |
 |---|---|
@@ -71,9 +73,40 @@ Fetching materials: with the hammer out and a piece selected, a hint appears whe
 | Hammer → **Bridge** | Click where a bridge starts, walk across, click where it ends: a wooden bridge to build, posts down to the riverbed |
 | Wheel / **R** / **PgUp** **PgDn** / click | While placing a blueprint: turn it / turn 90° / raise or lower it / place it (right-click or Esc cancels); the ground under it is levelled when placed |
 
+<!-- HAND-WRITTEN: how-to-use -->
+
+<!-- END HAND-WRITTEN: how-to-use -->
+
+## 🧩 Other mods
+
+<!-- HAND-WRITTEN: other-mods -->
+**Known clashes**
+
+- **Adventure Backpacks** and other backpack mods: building ghosts with E or *Build all* pays from your inventory and nearby chests (with [Quad's Build From Chests](https://thunderstore.io/c/valheim/p/Quads_Lab/Quads_Build_From_Chests/)), not from a backpack.
+
+**Works with our mods**
+
+- [Quad's Build From Chests](https://thunderstore.io/c/valheim/p/Quads_Lab/Quads_Build_From_Chests/): ghosts are paid from nearby chests, and the fetch key takes one piece's worth out of them.
+- [Quad's Companion](https://thunderstore.io/c/valheim/p/Quads_Lab/Quads_Companion/): a companion can build your plans near its home.
+- [Quad's AI Mod Toolkit](https://github.com/HardHeadHackerHead/valheim-mods/tree/main/mods/ClaudeTools): an AI assistant can design blueprints, place them, photograph and check them.
+- Other mods can add to it through its planning API ([docs/buildorders-api.md](../../docs/buildorders-api.md)).
+<!-- END HAND-WRITTEN: other-mods -->
+
+Found a clash with another mod? [Tell us](https://github.com/HardHeadHackerHead/valheim-mods/issues/new?template=bug.yml&title=%5BQuad%27s%20Build%20Orders%5D%20) which one and what happened.
+
+## 👥 Multiplayer
+
+**Who needs it:** Only the players who want it.
+
+<!-- HAND-WRITTEN: multiplayer -->
+Ghosts are drawn on each player's own game, not built into the world: players with the mod swap the plans, players without it see nothing. A shared blueprint lands in the receiver's *Shared with you* list. The Bridge entry in the hammer menu works without the host having the mod.
+
+**The host decides:** the Build all radius and reach. While you play on their world their values replace yours (your file isn't changed); a host without the mod leaves everyone their own.
+<!-- END HAND-WRITTEN: multiplayer -->
+
 ## ⚙️ Settings
 
-In `BepInEx/config/com.quad.buildorders.cfg` (made the first time the game runs with the mod).
+In `BepInEx/config/com.quad.buildorders.cfg`, made the first time the game runs with the mod. r2modman and Thunderstore Mod Manager edit it under **Config editor**.<!-- GITHUB-ONLY --> With our mod manager: **F7**, then **Mod settings**.<!-- END GITHUB-ONLY -->
 
 **Blueprints**
 
@@ -136,29 +169,26 @@ In `BepInEx/config/com.quad.buildorders.cfg` (made the first time the game runs 
 | `OffsetX` | `10` | Gap from the left edge of the screen (UI pixels). |
 | `OffsetY` | `260` | Gap from the top of the screen (UI pixels). |
 
-## 👥 Playing together
-
-See [who needs which mod](../../README.md#playing-together) on the front page.
-
 ## 🤖 Made with AI
 
 Made with the help of Claude (Anthropic), with Claude Code: designed, written and checked together, and tried in the game.
 
-## 📜 Changes
+## 🧪 About Quads Lab
+
+Quads Lab is where **Quad H** ([HardHeadHackerHead](https://github.com/HardHeadHackerHead)) builds software with AI, of every kind:
+these Valheim mods are one of its projects. Each mod is designed by a player, written with [Claude Code](https://claude.com/claude-code)
+and tested in our own world, with **bobisme** as our tester.
+
+- 🌐 [quadslab.io](https://quadslab.io)
+- 🧰 [All Quads Lab mods on Thunderstore](https://thunderstore.io/c/valheim/p/Quads_Lab/)
+- 💻 [Source code on GitHub](https://github.com/HardHeadHackerHead/valheim-mods)
+- 💬 [Discord](https://discord.gg/EwTjQxEZPy)
+- 🐞 Found a bug? [Open an issue on GitHub](https://github.com/HardHeadHackerHead/valheim-mods/issues/new/choose)
+
+## 📜 Recent changes
 
 - **1.12.1** A new id, com.quad.buildorders (it was com.dhack.buildorders): your settings move over by themselves the first time it starts, and the old settings file is kept as a backup. Restart the game after this update. If an old copy is still installed beside it, this one stands down and says which file to delete, so the two never both run. The DLL now says it was made with AI, as Thunderstore asks.
 - **1.12.0** Fix: removing a levelled plan could bring other buildings down. Putting the ground back now waits until everything standing there has loaded, never touches the ground on or next to any piece (anyone's), and only puts back ground still exactly as the levelling left it (later digging stays); when in doubt the level ground stays. Levelling also leaves the ground under and around pieces already standing there alone. (Plans levelled by older versions keep their level ground.) Fix: with Adventure Backpacks, pressing E on a ghost could build it for free: building by hand now takes the materials first and places the piece only when the full cost was taken (otherwise you get them back). The select key's default is now U (G also opened the game's radial menu; if you keep G it no longer unbinds the radial menu, and if you change it the radial menu gets G back). In multiplayer the server decides UseReach (now 2 to 10 m) and BuildAllRadius. The list of deleted orders forgets ids after 60 days, is saved once per batch and sent compressed to players who join. The windows use the game's fonts, and a game update renaming its ground fields only switches levelling off instead of stopping the mod.
 - Fix: no more stutter every 5 seconds. Looking for Claude Tools searched everything the game had loaded; it now asks BepInEx's list of mods.
-- New: a blueprint can be made for the land as it is: "level": false in its file places its ghosts straight onto the ground, never levelling it (for builds that follow a hillside or bridge a creek, with posts down to the ground). Placed by its world coordinates, it fits exactly.
-- Add-ons can plan a whole building at once: TryCreateBuildingShell takes up to 2,048 pieces, checks every pose, unlock, reach and protected area before adding any ghost (so a bad piece never leaves a partial plan), and undo takes down only what is still a ghost. Also a ghost-ray query and a planning-input check for shape tools (from Bob, for Hallwright and BuildShapes), and the helper hooks a companion uses to build your plans.
-- A helper that builds your plans can now ask why pieces cannot be built (DHack.BuildOrders.Blockers): pieces you have not unlocked, pieces whose station is not by them, and pieces on protected ground.
-- New: helpers can build your plans. A companion at home (AICompanion 0.21) now builds the ghosts you planned within its home: BuildOrders publishes three small functions (how many pieces are planned near a spot, which to build next, and build one) that never touch your materials; the helper pays for the pieces itself. The pieces it picks are only ones that will stand with what is built, in the order the support runs, exactly as Build all does (that check is now shared).
-- **1.9.9** Raise the atomic whole-building planning API and add-on undo bound to 2,048 pieces for larger Hallwright storeys and ornamentation. Validate the complete batch before mutation; the original 256-piece API remains unchanged.
-- **1.9.8** Add a bounded atomic whole-building planning API for Hallwright (1–1,024 pieces). Validate all poses, unlocks, reach and protected areas before adding any ghosts; keep the existing 256-piece API unchanged. Add-on undo supports the larger plan and preserves built pieces. Keep completed add-on piece records while matching built pieces remain, so takedown still works after the ghosts are finished or F6 reloads. Include reload-safe planning-input and ghost-ray helpers for BuildShapes. No terrain edits or material consumption.
-- Fix: Build all could put up a building that then fell down. Pieces whose station was not near you (stone needs a stonecutter) were counted as if they would be built, so the walls and floors that rest on them went up on nothing. Now a piece whose station is out of reach is left out (and the message says so: "65 need a Stonecutter near you"), and Build all builds in the order the support runs: each piece after the pieces that hold it up, and anything resting on a piece that could not be built waits for it.
-- Fix: Build all (hold E, or Build nearby) could build pieces that then fell, taking the rest down with them: a wall over a stone course not yet built (short of stone) counted as standing, because the check went by each ghost's whole outline. It now works out support exactly as the game does: each piece's own colliders, turned with it and grown by 0.15 m, the ground and the pieces inside those, the game's losses over the distance between centres of mass, and a full cascade (what rests on a piece that breaks is worked out again). So Build all only builds what will stand with what is already there; the rest waits until the pieces under it are built. The check also no longer stops at 400 pieces, so the stability colours and the check request cover a big plan whole.
-- Fetch from chests (Y) takes exactly what the selected piece needs instead of a whole stack: holding less than one piece's worth, it tops you up to one; holding enough, each press brings another piece's worth. The panel shows only while you are short.
-- Fix: the select key (G) also opened the game's radial menu. The game's key for it is now unbound (once, and you are told in chat); bind it again in Settings, Controls if you want it.
-- New: a planning API for add-ons (from Bob): other mods can submit shared ghost plans, such as the curves drawn by Bob's BuildShapes, and remove their unbuilt ghosts, without touching terrain or anything built; Move and Level are switched off for those plans. See docs/buildorders-api.md. Also: blueprints can now have up to 5000 pieces (was 1500) and levelling covers bigger sites; for AI-designed builds, the design guide explains the one-time setup that lets previews show pieces as they really look (pip install UnityPy, then python tools/extract_meshes.py), and the export finds your game wherever it is installed.
-- Fix: after a fresh game start the Bridge tool was missing from the hammer until the mods were reloaded. Fix: taking down a plan with a full inventory no longer loses the materials (they drop at your feet). Removing a plan from far away no longer loses its levelled ground: it is put back the next time you are near it. Plans still waiting for their ground now survive walking away, dying, logging out or restarting. Plans and their records are now kept per world, so two worlds with the same name no longer mix up their build orders, and reusing a plan name no longer mixes in the old plan's records. Any player can now take down what was built of a plan and get the materials back (the ground is put back by the game of the player who placed it). Placing mode and the Plans window no longer carry over into the next world after a disconnect.
-- New: bridge options. After you click where a bridge ends, a panel opens beside the ghost: width (2, 4 or 6 m), material (wood, core wood, darkwood, stone), sides (handrails, half walls or none), open or covered (a roof on tall posts), supports (auto, every 2 m, every 4 m), straight or arched, ends (a sloped deck, or a level deck with steps down at the lower end) and torches. The ghost changes as you choose; Confirm places the plan, Change end lets you aim again. Your choices are kept for the next bridge. The cheapest bridge is 2 m wide wood, no sides, supports every 4 m.
+
+<!-- GITHUB-ONLY -->[Every change](CHANGELOG.txt)<!-- END GITHUB-ONLY --><!-- THUNDERSTORE-ONLY: Every change is on the Changelog tab. -->

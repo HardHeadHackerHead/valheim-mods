@@ -1,33 +1,19 @@
-<!-- This page is made by tools/modpages/make_pages.py from the mod's DESCRIPTION.txt, CHANGELOG.txt, settings and the
-     repo's README. Change those (or the HAND-WRITTEN part below), not the rest of this page. -->
+<!-- This page is made by tools/modpages/make_pages.py from the mod's thunderstore.toml, DESCRIPTION.txt, CHANGELOG.txt,
+     settings and the repo's README. Change those, or the HAND-WRITTEN parts, not the rest of this page. -->
 
-# 🪤 BirdTrap
+# 🪤 Quad's Bird Trap
 
-<img src="cover.png" alt="BirdTrap" width="100%">
+<img src="cover.png" alt="Quad's Bird Trap" width="100%">
 
-**Version 1.1.1**  ·  [all the mods](../../README.md)  ·  install it from [Thunderstore](https://thunderstore.io/c/valheim/p/Quads_Lab/Quads_Bird_Trap/) (r2modman, Thunderstore Mod Manager) or the in-game [mod manager](https://github.com/HardHeadHackerHead/valheim-mod-manager) (**F7**)
+**A buildable bird trap: bait it with berries or seeds, leave it under the open sky, and come back to a gull to pluck for feathers.**
 
-A buildable bird trap with its own hand-made look. Bait it with berries or seeds and leave it under the open sky: a gull hops in, the prop
-falls and the door drops. Pluck it for feathers and let it go. Birds come while you are away and at first light, so after a night's sleep every
-baited trap has its bird. A few traps keep you in arrow feathers.
+![version: 1.1.1](https://img.shields.io/badge/version-1.1.1-3b6e8f?style=flat-square)  ![multiplayer: everyone + host](https://img.shields.io/badge/multiplayer-everyone%20%2B%20host-7a5c2e?style=flat-square)  ![made with: Claude Code](https://img.shields.io/badge/made%20with-Claude%20Code-c26a3d?style=flat-square)
 
-<!-- HAND-WRITTEN: kept when this page is made again -->
-## 📸 Screenshots
+<!-- GITHUB-ONLY -->[Thunderstore](https://thunderstore.io/c/valheim/p/Quads_Lab/Quads_Bird_Trap/)  ·  <!-- END GITHUB-ONLY -->[Source code](https://github.com/HardHeadHackerHead/valheim-mods/tree/main/mods/BirdTrap)  ·  [Report a bug](https://github.com/HardHeadHackerHead/valheim-mods/issues/new?template=bug.yml&title=%5BQuad%27s%20Bird%20Trap%5D%20)  ·  [Discord](https://discord.gg/EwTjQxEZPy)
 
-**The Bird Trap**
+<!-- GITHUB-ONLY -->**Install:** with [r2modman](https://thunderstore.io/c/valheim/p/ebkr/r2modman/) or Thunderstore Mod Manager from [Thunderstore](https://thunderstore.io/c/valheim/p/Quads_Lab/Quads_Bird_Trap/), or press **F7** in the game with our [mod manager](https://github.com/HardHeadHackerHead/valheim-mod-manager).<!-- END GITHUB-ONLY -->
 
-<img src="images/1.jpg" alt="The Bird Trap" width="100%">
-
-**A row of traps along the fence**
-
-<img src="images/2.jpg" alt="A row of traps along the fence" width="100%">
-<!-- END HAND-WRITTEN -->
-
-## 🔍 How it works
-
-A buildable bird trap: bait it with berries or seeds, leave it under the open sky, and come back to a gull to pluck for feathers.
-
-### How it works
+## ✨ Features
 
 - Build it with the hammer at a workbench (8 Wood, 2 Leather Scraps). It is a slatted box with a drop-door propped up by a stick tied to the bait pedal.
 - Use it to put bait in: raspberries, blueberries, cloudberries, barley, or beech, birch, carrot, turnip or onion seeds. Hold the alternate-place key (Shift) and use it to fill it at once. It holds five.
@@ -37,15 +23,49 @@ A buildable bird trap: bait it with berries or seeds, leave it under the open sk
 - Look at it to see how much bait is left and about how long until a bird. Build a few for a steady supply of feathers for arrows.
 - It has its own hand-made look: wicker slats, a drop-door on a forked prop stick, berries on a leaf, and a grey-and-white gull that hops about and pecks once it's caught.
 
-## ⌨️ Keys
+## 📸 Screenshots
+
+<!-- HAND-WRITTEN: screenshots -->
+**The Bird Trap**
+
+<img src="images/1.jpg" alt="The Bird Trap" width="100%">
+
+**A row of traps along the fence**
+
+<img src="images/2.jpg" alt="A row of traps along the fence" width="100%">
+<!-- END HAND-WRITTEN: screenshots -->
+
+## 🎮 How to use
 
 | Key | What it does |
 |---|---|
 | **E** / Shift + **E** at a bird trap | Add bait (or pluck the bird) / fill it with bait |
 
+<!-- HAND-WRITTEN: how-to-use -->
+
+<!-- END HAND-WRITTEN: how-to-use -->
+
+## 🧩 Other mods
+
+<!-- HAND-WRITTEN: other-mods -->
+**Known clashes:** none known.
+<!-- END HAND-WRITTEN: other-mods -->
+
+Found a clash with another mod? [Tell us](https://github.com/HardHeadHackerHead/valheim-mods/issues/new?template=bug.yml&title=%5BQuad%27s%20Bird%20Trap%5D%20) which one and what happened.
+
+## 👥 Multiplayer
+
+**Who needs it:** Everyone, and **the host above all**: a game without the mod deletes the pieces when their area loads. Restart after installing or updating them.
+
+<!-- HAND-WRITTEN: multiplayer -->
+A trap's bait, bird and timer are saved on the trap, so everyone sees the same trap, and two players can't both take one bird.
+
+**The host decides:** catch times, bait, open sky, roosting at night and feathers per bird. While you play on their world their values replace yours (your file isn't changed); a host without the mod leaves everyone their own.
+<!-- END HAND-WRITTEN: multiplayer -->
+
 ## ⚙️ Settings
 
-In `BepInEx/config/com.quad.birdtrap.cfg` (made the first time the game runs with the mod).
+In `BepInEx/config/com.quad.birdtrap.cfg`, made the first time the game runs with the mod. r2modman and Thunderstore Mod Manager edit it under **Config editor**.<!-- GITHUB-ONLY --> With our mod manager: **F7**, then **Mod settings**.<!-- END GITHUB-ONLY -->
 
 **Catching**
 
@@ -64,17 +84,26 @@ In `BepInEx/config/com.quad.birdtrap.cfg` (made the first time the game runs wit
 | `FeathersMin` | `2` | Fewest feathers a bird gives. In multiplayer the server's value applies. |
 | `FeathersMax` | `3` | Most feathers a bird gives. In multiplayer the server's value applies. |
 
-## 👥 Playing together
-
-Everyone in the world needs it, **the host above all**. It adds a new build piece. Restart the game after updating so it registers cleanly.
-
 ## 🤖 Made with AI
 
 Made with the help of Claude (Anthropic), with Claude Code: designed, written and checked together, and tried in the game.
 
-## 📜 Changes
+## 🧪 About Quads Lab
+
+Quads Lab is where **Quad H** ([HardHeadHackerHead](https://github.com/HardHeadHackerHead)) builds software with AI, of every kind:
+these Valheim mods are one of its projects. Each mod is designed by a player, written with [Claude Code](https://claude.com/claude-code)
+and tested in our own world, with **bobisme** as our tester.
+
+- 🌐 [quadslab.io](https://quadslab.io)
+- 🧰 [All Quads Lab mods on Thunderstore](https://thunderstore.io/c/valheim/p/Quads_Lab/)
+- 💻 [Source code on GitHub](https://github.com/HardHeadHackerHead/valheim-mods)
+- 💬 [Discord](https://discord.gg/EwTjQxEZPy)
+- 🐞 Found a bug? [Open an issue on GitHub](https://github.com/HardHeadHackerHead/valheim-mods/issues/new/choose)
+
+## 📜 Recent changes
 
 - **1.1.1** A new id, com.quad.birdtrap (it was com.dhack.birdtrap): your settings move over by themselves the first time it starts, and the old settings file is kept as a backup. Restart the game after this update. If an old copy is still installed beside it, this one stands down and says which file to delete, so the two never both run. The DLL now says it was made with AI, as Thunderstore asks.
 - **1.1.0** Fix: two players plucking the same bird could both get its feathers, and bait could be lost. Whoever presses E now asks the trap's owner, which plucks the bird or takes the bait and answers: the feathers come only on its yes ("The bird is already gone" otherwise), and bait that doesn't fit comes back to you. In multiplayer the server decides the catching and plucking settings. A problem with the trap's look can no longer stop it being registered.
 - Fix: no more stutter every 5 seconds. Looking for Claude Tools searched everything the game had loaded; it now asks BepInEx's list of mods.
-- First version: the Bird Trap. Bait it with berries or seeds under the open sky, and pluck the gull it catches for feathers.
+
+<!-- GITHUB-ONLY -->[Every change](CHANGELOG.txt)<!-- END GITHUB-ONLY --><!-- THUNDERSTORE-ONLY: Every change is on the Changelog tab. -->

@@ -138,6 +138,11 @@ namespace ClaudeTools
                 var versions = (online["versions"] as JArray ?? new JArray()).Select(v => (string)v["version_number"]).Where(v => v != null).ToList();
                 if (versions.Contains(version)) f.Add("problem", $"{full} is already published: a version can't be replaced.", "Raise the plugin's Version, add the change to the changelog, rebuild.");
                 else if (versions.Any(v => Newer(v, version))) f.Add("problem", $"{version} is lower than the published {versions.First(v => Newer(v, version))}.", "Raise the plugin's Version above every published one.");
+                // a package moderators rejected stays in the API, but nobody can see or install it
+                foreach (JObject listing in (online["community_listings"] as JArray ?? new JArray()).OfType<JObject>())
+                    if ((string)listing["review_status"] == "rejected")
+                        f.Add("problem", $"Thunderstore's moderators rejected {nsName}-{name} in {(string)listing["community"]}: it's hidden there, and a new version stays hidden too.",
+                              "Ask the moderators why in the Thunderstore Discord (https://discord.gg/RBq2mzeu4z) before uploading again.");
             }
             else if (offline != null && offline.StartsWith("404")) f.Add("note", $"{nsName}-{name} isn't on Thunderstore yet: this is its first upload.", "Check the name is the one you want to keep: renaming later makes a new package.");
             else if (offline != null) f.Add("note", "Couldn't ask Thunderstore what's published: " + offline, "Check the version by hand on the package's page.");
@@ -454,6 +459,10 @@ namespace ClaudeTools
             string src = Path.Combine(folder, "README.md");
             if (!File.Exists(src)) return;
             string text = File.ReadAllText(src, Encoding.UTF8).TrimStart('\uFEFF');
+            // lines for one site only: <!-- GITHUB-ONLY -->...<!-- END GITHUB-ONLY --> is left out here, <!-- THUNDERSTORE-ONLY: ... --> shown
+            text = Regex.Replace(text, @"<!--\s*GITHUB-ONLY\s*-->.*?<!--\s*END GITHUB-ONLY\s*-->", "", RegexOptions.Singleline);
+            text = Regex.Replace(text, @"<!--\s*THUNDERSTORE-ONLY:\s*(.*?)\s*-->", "$1", RegexOptions.Singleline);
+            text = Regex.Replace(text.Replace("\r\n", "\n"), @"\n{3,}", "\n\n");
             GitHub gh = GitHub.Of(folder);
             if (gh == null)
             {

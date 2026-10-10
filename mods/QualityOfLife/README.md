@@ -1,33 +1,19 @@
-<!-- This page is made by tools/modpages/make_pages.py from the mod's DESCRIPTION.txt, CHANGELOG.txt, settings and the
-     repo's README. Change those (or the HAND-WRITTEN part below), not the rest of this page. -->
+<!-- This page is made by tools/modpages/make_pages.py from the mod's thunderstore.toml, DESCRIPTION.txt, CHANGELOG.txt,
+     settings and the repo's README. Change those, or the HAND-WRITTEN parts, not the rest of this page. -->
 
-# 🎒 QualityOfLife
+# 🎒 Quad's Quality of Life
 
-<img src="cover.png" alt="QualityOfLife" width="100%">
+<img src="cover.png" alt="Quad's Quality of Life" width="100%">
 
-**Version 1.11.1**  ·  [all the mods](../../README.md)  ·  install it from [Thunderstore](https://thunderstore.io/c/valheim/p/Quads_Lab/Quads_Quality_Of_Life/) (r2modman, Thunderstore Mod Manager) or the in-game [mod manager](https://github.com/HardHeadHackerHead/valheim-mod-manager) (**F7**)
+**Small controls that make the game nicer to play, each with its own switch.**
 
-Quick gear sets on **Q**, hammer on **B**, a **Sort** button that joins stacks, **Stack to chests** with undo, chest assignment on **K** (look at a chest to see what it receives), **Sort chests** to send everything in the chests around you to the chest assigned it, item locks on **L**, your ships on the map with their own icon, and tap **P** next to a boat to push it. It will not let you plant a seed, sapling or crop where it has no room to grow up.
+![version: 1.11.1](https://img.shields.io/badge/version-1.11.1-3b6e8f?style=flat-square)  ![multiplayer: only who wants it](https://img.shields.io/badge/multiplayer-only%20who%20wants%20it-7a5c2e?style=flat-square)  ![made with: Claude Code](https://img.shields.io/badge/made%20with-Claude%20Code-c26a3d?style=flat-square)
 
-<!-- HAND-WRITTEN: kept when this page is made again -->
-## 📸 Screenshots
+<!-- GITHUB-ONLY -->[Thunderstore](https://thunderstore.io/c/valheim/p/Quads_Lab/Quads_Quality_Of_Life/)  ·  <!-- END GITHUB-ONLY -->[Source code](https://github.com/HardHeadHackerHead/valheim-mods/tree/main/mods/QualityOfLife)  ·  [Report a bug](https://github.com/HardHeadHackerHead/valheim-mods/issues/new?template=bug.yml&title=%5BQuad%27s%20Quality%20of%20Life%5D%20)  ·  [Discord](https://discord.gg/EwTjQxEZPy)
 
-**Choosing what a chest receives (K)**
+<!-- GITHUB-ONLY -->**Install:** with [r2modman](https://thunderstore.io/c/valheim/p/ebkr/r2modman/) or Thunderstore Mod Manager from [Thunderstore](https://thunderstore.io/c/valheim/p/Quads_Lab/Quads_Quality_Of_Life/), or press **F7** in the game with our [mod manager](https://github.com/HardHeadHackerHead/valheim-mod-manager).<!-- END GITHUB-ONLY -->
 
-<img src="images/1.jpg" alt="Choosing what a chest receives (K)" width="100%">
-
-## Known clashes
-
-- **ExtraSlots, Equipment and Quick Slots, AzuExtendedPlayerInventory, Extended Player Inventory, ComfyQuickSlots, BetterArchery** (with
-  its quiver on): they keep slots in rows of your inventory below the ordinary ones, which Sort can't tell from your bag, so the Sort button
-  is off while one is installed. Stack to chests never moves what you wear or hold; anything else you keep in their slots, lock (L).
-- **Removing this mod** doesn't give the game back a key it freed (Q, auto-run, by default): bind it again in the game's Settings, Controls.
-  Changing the mod's key does give it back.
-<!-- END HAND-WRITTEN -->
-
-## 🔍 How it works
-
-Small controls that make the game nicer to play, each with its own switch.
+## ✨ Features
 
 ### What is in it
 
@@ -42,7 +28,15 @@ Small controls that make the game nicer to play, each with its own switch.
 
 Keys are configurable. Q and B work while you are running.
 
-## ⌨️ Keys
+## 📸 Screenshots
+
+<!-- HAND-WRITTEN: screenshots -->
+**Choosing what a chest receives (K)**
+
+<img src="images/1.jpg" alt="Choosing what a chest receives (K)" width="100%">
+<!-- END HAND-WRITTEN: screenshots -->
+
+## 🎮 How to use
 
 | Key | What it does |
 |---|---|
@@ -51,9 +45,42 @@ Keys are configurable. Q and B work while you are running.
 | **K** / **L** | Assign what a chest receives / lock an item |
 | **P** | Tap or hold next to a boat (not in it) to push it where you look |
 
+<!-- HAND-WRITTEN: how-to-use -->
+
+<!-- END HAND-WRITTEN: how-to-use -->
+
+## 🧩 Other mods
+
+<!-- HAND-WRITTEN: other-mods -->
+**Known clashes**
+
+- **ExtraSlots, Equipment and Quick Slots, AzuExtendedPlayerInventory, Extended Player Inventory, ComfyQuickSlots, BetterArchery** (quiver on): the Sort button turns off while one is installed.
+- **ValheimPlus** extra rows count as ordinary bag rows.
+
+**Works with our mods**
+
+- Its chest assignments (K) are used by [Quad's Feed From Chests](https://thunderstore.io/c/valheim/p/Quads_Lab/Quads_Feed_From_Chests/), [Quad's Ledger Chest](https://thunderstore.io/c/valheim/p/Quads_Lab/Quads_Ledger_Chest/) and [Quad's Companion](https://thunderstore.io/c/valheim/p/Quads_Lab/Quads_Companion/).
+- [Quad's Gear Slots](https://thunderstore.io/c/valheim/p/Quads_Lab/Quads_Gear_Slots/): Sort and Stack to chests leave the gear slots alone.
+- [Quad's Recycler](https://thunderstore.io/c/valheim/p/Quads_Lab/Quads_Recycler/): items locked with L can't be recycled.
+
+**Removing it:** a game key it freed (Q, auto-run) stays unbound; set it again in the game's controls.
+<!-- END HAND-WRITTEN: other-mods -->
+
+Found a clash with another mod? [Tell us](https://github.com/HardHeadHackerHead/valheim-mods/issues/new?template=bug.yml&title=%5BQuad%27s%20Quality%20of%20Life%5D%20) which one and what happened.
+
+## 👥 Multiplayer
+
+**Who needs it:** Only the players who want it.
+
+<!-- HAND-WRITTEN: multiplayer -->
+Chest assignments are saved on the chest, so everyone sees them. It skips chests others have open.
+
+**The host decides:** how far build stations reach. While you play on their world their values replace yours (your file isn't changed); a host without the mod leaves everyone their own.
+<!-- END HAND-WRITTEN: multiplayer -->
+
 ## ⚙️ Settings
 
-In `BepInEx/config/com.quad.qualityoflife.cfg` (made the first time the game runs with the mod).
+In `BepInEx/config/com.quad.qualityoflife.cfg`, made the first time the game runs with the mod. r2modman and Thunderstore Mod Manager edit it under **Config editor**.<!-- GITHUB-ONLY --> With our mod manager: **F7**, then **Mod settings**.<!-- END GITHUB-ONLY -->
 
 **BoatPush**
 
@@ -134,29 +161,26 @@ In `BepInEx/config/com.quad.qualityoflife.cfg` (made the first time the game run
 |---|---|---|
 | `BuildRange` | `0` | How far (in metres) from a crafting station (workbench, stonecutter, forge, ...) you can build with it, when that is more than the station's own range (20 m, more with upgrades). 0 leaves the game's ranges. 60 reaches across a big base. Takes effect at once. In multiplayer the server's value applies. |
 
-## 👥 Playing together
-
-See [who needs which mod](../../README.md#playing-together) on the front page.
-
 ## 🤖 Made with AI
 
 Made with the help of Claude (Anthropic), with Claude Code: designed, written and checked together, and tried in the game.
 
-## 📜 Changes
+## 🧪 About Quads Lab
+
+Quads Lab is where **Quad H** ([HardHeadHackerHead](https://github.com/HardHeadHackerHead)) builds software with AI, of every kind:
+these Valheim mods are one of its projects. Each mod is designed by a player, written with [Claude Code](https://claude.com/claude-code)
+and tested in our own world, with **bobisme** as our tester.
+
+- 🌐 [quadslab.io](https://quadslab.io)
+- 🧰 [All Quads Lab mods on Thunderstore](https://thunderstore.io/c/valheim/p/Quads_Lab/)
+- 💻 [Source code on GitHub](https://github.com/HardHeadHackerHead/valheim-mods)
+- 💬 [Discord](https://discord.gg/EwTjQxEZPy)
+- 🐞 Found a bug? [Open an issue on GitHub](https://github.com/HardHeadHackerHead/valheim-mods/issues/new/choose)
+
+## 📜 Recent changes
 
 - **1.11.1** A new id, com.quad.qualityoflife (it was com.dhack.qualityoflife): your settings move over by themselves the first time it starts, and the old settings file is kept as a backup. Restart the game after this update. If an old copy is still installed beside it, this one stands down and says which file to delete, so the two never both run. The DLL now says it was made with AI, as Thunderstore asks.
 - Fix: Undo after Stack to chests could double an item or swap it for another: it took back the first item of that name in the chest (often an older one) and gave you a copy of the one you had put in, so an enchanted sword, a filled backpack or a worn tool could come back twice or come back as a different one. Undo now takes back the very item you put in; only plain stackable things (wood, stone, arrows) come back by name, and exactly as many as leave the chest. Stack to chests, Sort chests and Undo now also leave alone a chest another player is using or has just changed ("The chests in range are in use"), so your moves and theirs never undo each other. Sort is off (the button is hidden) next to a mod that keeps its own slots in your inventory's rows (ExtraSlots, Equipment and Quick Slots, AzuExtendedPlayerInventory, Extended Player Inventory, ComfyQuickSlots, BetterArchery with its quiver on): it pulled their items out of their slots. Stations/BuildRange is now decided by the server in multiplayer. If you change a key the mod freed from the game (Q: auto-run), the game gets its key back. The buttons under the inventory and the assign window now use the game's own lettering.
 - New: Planting/NeedRoomToGrow: you cannot plant a seed, sapling or crop where it has no room to grow up (another plant, a rock, a tree or a building too close). The game only finds this out after planting, and then the plant never grows; now the ghost turns red and says there is not enough space. On by default.
-- New: Stations/BuildRange: crafting stations (workbench, stonecutter, forge...) reach farther for building, up to 150 m, so a big build at the edge of the base needs no second workbench or stonecutter. 0 (the default) leaves the game's ranges. Only building changes: a station's base area and crafting at it stay as they were.
-- Stack to chests and Sort chests can reach farther: their Radius (QuickStack) is now a 2 to 150 m slider in the configuration manager, taking effect at once.
-- New: your ships on the map. Every raft, karve, longship and drakkar in the world shows on the minimap and the big map with a longship icon of its own and its kind as the name, following it as it sails, even far away (on the game hosting the world). Map: ShowShips switches it off.
-- The LedgerChest mod's Ledger Chest keeps nothing, so it has no Assign button, no "Receives" line and no K assigning: assign the chests around it.
-- Fix: Sort chests (and Stack to chests) treated a companion's bag as a chest: Sort chests took an AICompanion companion's armour, weapons, tools and food out of its gear slots and put them in your chests. Only built chests and carts take part now.
-- Looking at a chest now shows what it receives by name ("Receives: Wood, Finewood" and up to three more on the line below, then "+N more") instead of "2 items".
-- New: a Sort chests button next to Stack to chests (shown when a chest in range is assigned something). Everything in the chests around you goes to the chest assigned it: a chest assigned that item first, then one assigned its category; items already in a chest that wants them stay, and anything no chest is assigned stays where it is. It tells you what had no room left. Only chests take part (never your inventory, a companion's chest, a cart, a ship, or a chest someone has open), and every item is counted before and after.
-- Stack to chests (and companions sorting into your chests) no longer puts anything into a chest a companion has taken as its own: its chest held wood, so all the wood went there.
-- Companions (AICompanion) can sort what they bring home into your chests by the same rules as Stack to chests: a chest assigned that item, then its category, then one already holding it.
-- New: the camera zooms out much further: up to 20 m on foot (the game stops at 6) and 40 m while steering a boat. Each scroll step grows as you zoom out, so it only takes a few notches. Camera, MaxDistance and MaxDistanceBoat set the limits; FarZoom switches it off.
-- Fix: the quick-set key (Q) also triggered the game's auto-run and previous-tab keys. The game's keys are now unbound (once, and you are told in chat); bind them again in Settings, Controls if you want them.
-- Fix: in multiplayer, Stack to chests, Undo and chest assignments could lose or duplicate items in a chest another player had open. Chests in use are now left alone.
-- New: a Sort button next to Stack to chests (joins split stacks, puts items in order by kind and name; leaves the hotbar and GearSlots slots alone). Boat push (tap or hold P next to a boat) now defaults to P so it does not clash with BuildOrders' G. Stack to chests leaves GearSlots gear, food and quick slots alone.
+
+<!-- GITHUB-ONLY -->[Every change](CHANGELOG.txt)<!-- END GITHUB-ONLY --><!-- THUNDERSTORE-ONLY: Every change is on the Changelog tab. -->

@@ -1,37 +1,19 @@
-<!-- This page is made by tools/modpages/make_pages.py from the mod's DESCRIPTION.txt, CHANGELOG.txt, settings and the
-     repo's README. Change those (or the HAND-WRITTEN part below), not the rest of this page. -->
+<!-- This page is made by tools/modpages/make_pages.py from the mod's thunderstore.toml, DESCRIPTION.txt, CHANGELOG.txt,
+     settings and the repo's README. Change those, or the HAND-WRITTEN parts, not the rest of this page. -->
 
-# 🏹 Quiver
+# 🏹 Quad's Quiver
 
-<img src="cover.png" alt="Quiver" width="100%">
+<img src="cover.png" alt="Quad's Quiver" width="100%">
 
-**Version 0.2.1**  ·  [all the mods](../../README.md)  ·  install it from [Thunderstore](https://thunderstore.io/c/valheim/p/Quads_Lab/Quads_Quiver/) (r2modman, Thunderstore Mod Manager) or the in-game [mod manager](https://github.com/HardHeadHackerHead/valheim-mod-manager) (**F7**)
+**Pick your shot arrows back up, and carry them in a quiver on your back.**
 
-Pick your arrows back up. Those that hit the ground, a tree or a wall are all kept as arrows you pick up; of those that hit a creature, three
-in four drop with its loot when it dies. A quiver hangs on your back while you have arrows equipped, with the arrows you carry sticking out of it.
-Only you need the mod.
+![version: 0.2.1](https://img.shields.io/badge/version-0.2.1-3b6e8f?style=flat-square)  ![multiplayer: only who wants it](https://img.shields.io/badge/multiplayer-only%20who%20wants%20it-7a5c2e?style=flat-square)  ![made with: Claude Code](https://img.shields.io/badge/made%20with-Claude%20Code-c26a3d?style=flat-square)
 
-<!-- HAND-WRITTEN: kept when this page is made again -->
-## 📸 Screenshots
+<!-- GITHUB-ONLY -->[Thunderstore](https://thunderstore.io/c/valheim/p/Quads_Lab/Quads_Quiver/)  ·  <!-- END GITHUB-ONLY -->[Source code](https://github.com/HardHeadHackerHead/valheim-mods/tree/main/mods/Quiver)  ·  [Report a bug](https://github.com/HardHeadHackerHead/valheim-mods/issues/new?template=bug.yml&title=%5BQuad%27s%20Quiver%5D%20)  ·  [Discord](https://discord.gg/EwTjQxEZPy)
 
-**The bow and quiver carried on your back**
+<!-- GITHUB-ONLY -->**Install:** with [r2modman](https://thunderstore.io/c/valheim/p/ebkr/r2modman/) or Thunderstore Mod Manager from [Thunderstore](https://thunderstore.io/c/valheim/p/Quads_Lab/Quads_Quiver/), or press **F7** in the game with our [mod manager](https://github.com/HardHeadHackerHead/valheim-mod-manager).<!-- END GITHUB-ONLY -->
 
-<img src="images/1.jpg" alt="The bow and quiver carried on your back" width="100%">
-
-## Playing on a server
-
-The arrow settings are the server's when the server has this mod: its values apply to everyone while they play there. A server without it
-sends nothing, and each player's own settings apply.
-
-## Known clashes
-
-- **BetterArchery**: its retrievable arrows and its quiver (both on by default) do the same jobs, so this mod's arrow recovery switches off
-  while its retrievable arrows are on, and this mod's quiver isn't drawn while its quiver is on.
-<!-- END HAND-WRITTEN -->
-
-## 🔍 How it works
-
-Pick your shot arrows back up, and carry them in a quiver on your back.
+## ✨ Features
 
 ### What is in it
 
@@ -41,9 +23,41 @@ Pick your shot arrows back up, and carry them in a quiver on your back.
 
 It works on the game that shoots, so it does not need the other players to have it.
 
+## 📸 Screenshots
+
+<!-- HAND-WRITTEN: screenshots -->
+**The bow and quiver carried on your back**
+
+<img src="images/1.jpg" alt="The bow and quiver carried on your back" width="100%">
+<!-- END HAND-WRITTEN: screenshots -->
+
+<!-- HAND-WRITTEN: how-to-use -->
+
+<!-- END HAND-WRITTEN: how-to-use -->
+
+## 🧩 Other mods
+
+<!-- HAND-WRITTEN: other-mods -->
+**Known clashes**
+
+- **BetterArchery**: arrow pickup switches off while its retrievable arrows are on, and the quiver isn't drawn while its own quiver is on.
+<!-- END HAND-WRITTEN: other-mods -->
+
+Found a clash with another mod? [Tell us](https://github.com/HardHeadHackerHead/valheim-mods/issues/new?template=bug.yml&title=%5BQuad%27s%20Quiver%5D%20) which one and what happened.
+
+## 👥 Multiplayer
+
+**Who needs it:** Only the players who want it.
+
+<!-- HAND-WRITTEN: multiplayer -->
+Only the player who shoots needs it: their game keeps track of arrows stuck in a creature, whoever's game runs it. The quiver is drawn only on your own character.
+
+**The host decides:** arrow pickup and its chances, bolts, and whether fire arrows burn up. While you play on their world their values replace yours (your file isn't changed); a host without the mod leaves everyone their own.
+<!-- END HAND-WRITTEN: multiplayer -->
+
 ## ⚙️ Settings
 
-In `BepInEx/config/com.quad.quiver.cfg` (made the first time the game runs with the mod).
+In `BepInEx/config/com.quad.quiver.cfg`, made the first time the game runs with the mod. r2modman and Thunderstore Mod Manager edit it under **Config editor**.<!-- GITHUB-ONLY --> With our mod manager: **F7**, then **Mod settings**.<!-- END GITHUB-ONLY -->
 
 **Arrows**
 
@@ -67,16 +81,26 @@ In `BepInEx/config/com.quad.quiver.cfg` (made the first time the game runs with 
 | `TiltSide` | `22` | How far the top leans to your right (degrees). |
 | `TiltBack` | `8` | How far the top leans backwards (degrees). |
 
-## 👥 Playing together
-
-See [who needs which mod](../../README.md#playing-together) on the front page.
-
 ## 🤖 Made with AI
 
 Made with the help of Claude (Anthropic), with Claude Code: designed, written and checked together, and tried in the game.
 
-## 📜 Changes
+## 🧪 About Quads Lab
+
+Quads Lab is where **Quad H** ([HardHeadHackerHead](https://github.com/HardHeadHackerHead)) builds software with AI, of every kind:
+these Valheim mods are one of its projects. Each mod is designed by a player, written with [Claude Code](https://claude.com/claude-code)
+and tested in our own world, with **bobisme** as our tester.
+
+- 🌐 [quadslab.io](https://quadslab.io)
+- 🧰 [All Quads Lab mods on Thunderstore](https://thunderstore.io/c/valheim/p/Quads_Lab/)
+- 💻 [Source code on GitHub](https://github.com/HardHeadHackerHead/valheim-mods)
+- 💬 [Discord](https://discord.gg/EwTjQxEZPy)
+- 🐞 Found a bug? [Open an issue on GitHub](https://github.com/HardHeadHackerHead/valheim-mods/issues/new/choose)
+
+## 📜 Recent changes
 
 - **0.2.1** A new id, com.quad.quiver (it was com.dhack.quiver): your settings move over by themselves the first time it starts, and the old settings file is kept as a backup. Restart the game after this update. If an old copy is still installed beside it, this one stands down and says which file to delete, so the two never both run. The DLL now says it was made with AI, as Thunderstore asks.
 - The arrow settings (PickUpArrows, ChanceOnGround, ChanceOnCreature, IncludeBolts, FireArrowsBurnUp) are now decided by the server in multiplayer when it has the mod, so nobody gets every arrow back on a server that keeps fewer. With BetterArchery installed its own retrievable arrows and quiver (both on by default) take over: this mod's arrow recovery and quiver switch off, so you never get two arrows back for one or wear two quivers. Fix: an arrow picked up from the ground could count as equipped.
 - New: arrows you shoot come back. Those that hit the ground, a tree or a wall are all kept as arrows you pick up; of those that hit a creature, three in four drop with its loot when it dies (only you need the mod). A quiver hangs on your back while you have arrows equipped, with the arrows you carry sticking out of it.
+
+<!-- GITHUB-ONLY -->[Every change](CHANGELOG.txt)<!-- END GITHUB-ONLY --><!-- THUNDERSTORE-ONLY: Every change is on the Changelog tab. -->

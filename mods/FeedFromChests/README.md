@@ -1,36 +1,19 @@
-<!-- This page is made by tools/modpages/make_pages.py from the mod's DESCRIPTION.txt, CHANGELOG.txt, settings and the
-     repo's README. Change those (or the HAND-WRITTEN part below), not the rest of this page. -->
+<!-- This page is made by tools/modpages/make_pages.py from the mod's thunderstore.toml, DESCRIPTION.txt, CHANGELOG.txt,
+     settings and the repo's README. Change those, or the HAND-WRITTEN parts, not the rest of this page. -->
 
-# 🔥 FeedFromChests
+# 🔥 Quad's Feed From Chests
 
-<img src="cover.png" alt="FeedFromChests" width="100%">
+<img src="cover.png" alt="Quad's Feed From Chests" width="100%">
 
-**Version 1.6.1**  ·  [all the mods](../../README.md)  ·  install it from [Thunderstore](https://thunderstore.io/c/valheim/p/Quads_Lab/Quads_Feed_From_Chests/) (r2modman, Thunderstore Mod Manager) or the in-game [mod manager](https://github.com/HardHeadHackerHead/valheim-mod-manager) (**F7**)
+**Smelters, kilns, cooking racks, fires and fermenters can use items from nearby chests, and smelters and kilns can run themselves.**
 
-Feed smelters, kilns, cooking racks, fires and fermenters straight from your chests, and let smelters and kilns run themselves: choose what they use, keep a minimum in stock, and send what they make into your assigned chests.
+![version: 1.6.1](https://img.shields.io/badge/version-1.6.1-3b6e8f?style=flat-square)  ![multiplayer: only who wants it](https://img.shields.io/badge/multiplayer-only%20who%20wants%20it-7a5c2e?style=flat-square)  ![made with: Claude Code](https://img.shields.io/badge/made%20with-Claude%20Code-c26a3d?style=flat-square)
 
-<!-- HAND-WRITTEN: kept when this page is made again -->
-## 📸 Screenshots
+<!-- GITHUB-ONLY -->[Thunderstore](https://thunderstore.io/c/valheim/p/Quads_Lab/Quads_Feed_From_Chests/)  ·  <!-- END GITHUB-ONLY -->[Source code](https://github.com/HardHeadHackerHead/valheim-mods/tree/main/mods/FeedFromChests)  ·  [Report a bug](https://github.com/HardHeadHackerHead/valheim-mods/issues/new?template=bug.yml&title=%5BQuad%27s%20Feed%20From%20Chests%5D%20)  ·  [Discord](https://discord.gg/EwTjQxEZPy)
 
-**A row of smelters that feed themselves from the chests round them**
+<!-- GITHUB-ONLY -->**Install:** with [r2modman](https://thunderstore.io/c/valheim/p/ebkr/r2modman/) or Thunderstore Mod Manager from [Thunderstore](https://thunderstore.io/c/valheim/p/Quads_Lab/Quads_Feed_From_Chests/), or press **F7** in the game with our [mod manager](https://github.com/HardHeadHackerHead/valheim-mod-manager).<!-- END GITHUB-ONLY -->
 
-<img src="images/1.jpg" alt="A row of smelters that feed themselves from the chests round them" width="100%">
-## ⚠️ Known clashes
-
-- **ValheimPlus** with `autoDeposit` on for a smelter, kiln or the like: handled. ValheimPlus puts the output in a chest first and this mod
-  then leaves it alone (before 1.6.0 both did, and the output was doubled). The same for mead from a fermenter and food from a cooking station
-  when another mod delivers it.
-- **CraftFromChests**, **BuildFromChests** (ours), **Adventure Backpacks**: fine together; each pays only what the others left.
-- What a station makes goes only into chests a player assigned to it (by item or kind, with the chest assign menu, K, from QualityOfLife);
-  with no such chest it drops as in the game.
-- Only built chests are used: graves, carts, ships, a companion's bag and chest, and a backpack you carry are left alone.
-<!-- END HAND-WRITTEN -->
-
-## 🔍 How it works
-
-Smelters, kilns, cooking racks, fires and fermenters can use items from nearby chests, and smelters and kilns can run themselves.
-
-### How it works
+## ✨ Features
 
 - Press E at a smelter, kiln or furnace to open its menu, whatever you are carrying. Add 1 and Fill put items in by hand; the Auto-feed panel at the top sets the station up to feed itself.
 - The menu also shows what is loaded inside: the ore waiting in the queue, the fuel, and anything ready to collect. The same line appears when you look at the smelter.
@@ -44,18 +27,56 @@ Smelters, kilns, cooking racks, fires and fermenters can use items from nearby c
 - Other stations: press E when you carry nothing it takes and a chest has some, and one is added for you (a menu opens if there is a choice). Turn on AlwaysOpenMenu in the config to always get the menu.
 - Nothing is created from nothing: every item comes out of a chest or your inventory, and a station that is full is left alone.
 
-Settings: range (default 15 m), auto-feed on or off, how often it tops up, how near you must be for it to run, and the Fill limit.
 - Shield generators keep their fuel, ballistas reload themselves, and sap extractors empty into a chest, all from nearby chests.
 
-## ⌨️ Keys
+## 📸 Screenshots
+
+<!-- HAND-WRITTEN: screenshots -->
+**A row of smelters that feed themselves from the chests round them**
+
+<img src="images/1.jpg" alt="A row of smelters that feed themselves from the chests round them" width="100%">
+<!-- END HAND-WRITTEN: screenshots -->
+
+## 🎮 How to use
 
 | Key | What it does |
 |---|---|
 | **E** | Open a smelter or kiln menu (auto-feed settings, Add, Fill); add items to other stations |
 
+<!-- HAND-WRITTEN: how-to-use -->
+
+<!-- END HAND-WRITTEN: how-to-use -->
+
+## 🧩 Other mods
+
+<!-- HAND-WRITTEN: other-mods -->
+**Known clashes**
+
+- **ValheimPlus** (`autoDeposit`) and other mods that deliver a station's output: what they already delivered isn't delivered again.
+- **Any mod that already paid** for fuel or ore: it runs after them and does nothing if they did.
+
+**Works with our mods**
+
+- [Quad's Quality of Life](https://thunderstore.io/c/valheim/p/Quads_Lab/Quads_Quality_Of_Life/): output from smelters, kilns, fermenters, cooking stations, beehives and sap goes to the chests you assigned with K. Without it, only honey and sap go to a chest already holding them; the rest drops as in the game.
+- [Quad's Craft From Chests](https://thunderstore.io/c/valheim/p/Quads_Lab/Quads_Craft_From_Chests/) and [Quad's Build From Chests](https://thunderstore.io/c/valheim/p/Quads_Lab/Quads_Build_From_Chests/): fine together.
+- [Quad's Recycler](https://thunderstore.io/c/valheim/p/Quads_Lab/Quads_Recycler/) and companions' chests ([Quad's Companion](https://thunderstore.io/c/valheim/p/Quads_Lab/Quads_Companion/)) are never used.
+<!-- END HAND-WRITTEN: other-mods -->
+
+Found a clash with another mod? [Tell us](https://github.com/HardHeadHackerHead/valheim-mods/issues/new?template=bug.yml&title=%5BQuad%27s%20Feed%20From%20Chests%5D%20) which one and what happened.
+
+## 👥 Multiplayer
+
+**Who needs it:** Only the players who want it.
+
+<!-- HAND-WRITTEN: multiplayer -->
+A station's auto-feed settings are saved on the station, so everyone sees the same ones. Feeding and output run on the game of the player the station belongs to at the moment (usually the nearest): if that player doesn't have the mod, nothing happens there.
+
+**The host decides:** how far it reaches for feeding and output, and player range. While you play on their world their values replace yours (your file isn't changed); a host without the mod leaves everyone their own.
+<!-- END HAND-WRITTEN: multiplayer -->
+
 ## ⚙️ Settings
 
-In `BepInEx/config/com.quad.feedfromchests.cfg` (made the first time the game runs with the mod).
+In `BepInEx/config/com.quad.feedfromchests.cfg`, made the first time the game runs with the mod. r2modman and Thunderstore Mod Manager edit it under **Config editor**.<!-- GITHUB-ONLY --> With our mod manager: **F7**, then **Mod settings**.<!-- END GITHUB-ONLY -->
 
 **AutoFeed**
 
@@ -105,21 +126,26 @@ In `BepInEx/config/com.quad.feedfromchests.cfg` (made the first time the game ru
 | `AlwaysOpenMenu` | `false` | Pressing E at a station when you rely on chests: off = add one automatically if there's only one kind to add (menu only for a choice); on = always open the menu (so Fill is always at hand). |
 | `FillLimit` | `100` | Safety limit: the most of one item the menu's Fill button will put in at once. (Fill stops sooner when the station is full or you run out.) |
 
-## 👥 Playing together
-
-See [who needs which mod](../../README.md#playing-together) on the front page.
-
 ## 🤖 Made with AI
 
 Made with the help of Claude (Anthropic), with Claude Code: designed, written and checked together, and tried in the game.
 
-## 📜 Changes
+## 🧪 About Quads Lab
+
+Quads Lab is where **Quad H** ([HardHeadHackerHead](https://github.com/HardHeadHackerHead)) builds software with AI, of every kind:
+these Valheim mods are one of its projects. Each mod is designed by a player, written with [Claude Code](https://claude.com/claude-code)
+and tested in our own world, with **bobisme** as our tester.
+
+- 🌐 [quadslab.io](https://quadslab.io)
+- 🧰 [All Quads Lab mods on Thunderstore](https://thunderstore.io/c/valheim/p/Quads_Lab/)
+- 💻 [Source code on GitHub](https://github.com/HardHeadHackerHead/valheim-mods)
+- 💬 [Discord](https://discord.gg/EwTjQxEZPy)
+- 🐞 Found a bug? [Open an issue on GitHub](https://github.com/HardHeadHackerHead/valheim-mods/issues/new/choose)
+
+## 📜 Recent changes
 
 - **1.6.1** A new id, com.quad.feedfromchests (it was com.dhack.feedfromchests): your settings move over by themselves the first time it starts, and the old settings file is kept as a backup. Restart the game after this update. If an old copy is still installed beside it, this one stands down and says which file to delete, so the two never both run. The DLL now says it was made with AI, as Thunderstore asks.
 - Fix: fuel, ore and food could be added for free when a chest was opened or emptied while a station was being filled, or when the mod reloaded during a Fill. Each item now comes out of a chest before the station is asked to take it, and goes back if the station doesn't. Fix: with ValheimPlus' autoDeposit on, smelter output was put in the chests twice; now whichever mod delivers it first does, once. Graves, carts, ships, a companion's bag and chest and a backpack are no longer fed from or filled. The menu uses the game's fonts. In multiplayer the server's ranges apply (Radius, FeedRadius, OutputRadius, PlayerRange).
 - New: the things that look after a base keep themselves going from nearby chests, all at once: shield generators take their fuel so the shield never runs dry (Defenses, FuelShieldGenerators), ballistas are reloaded with the ammo they hold (ReloadBallistas), and sap extractors empty themselves into a chest assigned to sap or Materials (K), or one that already holds sap (CollectSap). Fuel and ammo leave KeepFuel of each in the chests.
-- Each kind of station now has the limits that make sense for it, in its own words, instead of one "keep at least" for everything. A kiln: "Make coal until the chests hold 100" (counting what is already in the kiln), and optionally some wood it never uses. A smelter or blast furnace smelts all the ore you tick and only asks how much coal to always leave in the chests. A windmill or spinning wheel always leaves 20 barley or flax for planting, and can stop at a target too. An eitr refinery: a target and a fuel reserve. An oven bakes each kind until the chests hold your target; a spit does the same and can keep some raw meat back for taming; a fermenter brews each mead until you have enough of it, so it skips the ones you have plenty of. The menu says for each ticked item why it is or is not being fed. Torches and fires now always leave 10 of their fuel in the chests, for crafting (Fires, KeepFuel).
-- New: fermenters look after themselves. Press E on an empty one for its menu: what is in the barrel and how long is left, Add 1, and auto-load (tick the mead bases it may use: when it is empty and has its roof, it takes one from a chest near it). When the mead is ready it taps itself, and the mead goes into a chest assigned to it or to Potions (K), or one that already holds it; otherwise it drops as usual. Also in this release: new: beehives near you put their honey into a chest (one assigned to honey or to Food with K, or one that already has honey), so they never sit full: a full hive (4 honey) stops making any. Looking at a hive now says when the next honey comes (one every 20 minutes), or why none is coming: the wrong biome (Meadows, Black Forest and Plains only) or too much cover over it (under 60% needed).
-- New for cooking stations (spit, iron spit, oven): food that is done comes off by itself the moment it is ready, so it never burns. It goes into a chest assigned to it or to Food (the chest assign menu, K), otherwise it slides gently off the side of the spit towards you. Pressing E takes everything that is done straight into your inventory; otherwise E opens the station's menu: what is on each slot and how far it has cooked, Add 1 / Fill from your inventory and chests, and auto-feed to keep it stocked with the raw food you tick. Your alternate-place key + E puts food on by hand as before. Also new: torches, sconces and braziers keep themselves lit with resin or coal from chests near them, all of them at once (Fires, RefuelTorches, on); campfires and hearths can do the same with wood (RefuelCampfires, off).
-- Fix: in multiplayer, feeding stations from a chest (or sending smelter output into one) while another player had it open could lose or duplicate items. Chests in use are now left alone.
-- The auto-feed panel now shows, for each ticked item, how many the chests hold against the minimum and whether it is feeding, and warns if the fuel is not ticked. A leftover "reserved" count can no longer make chest stock look lower than it is, and auto-feed pauses during a Fill.
+
+<!-- GITHUB-ONLY -->[Every change](CHANGELOG.txt)<!-- END GITHUB-ONLY --><!-- THUNDERSTORE-ONLY: Every change is on the Changelog tab. -->

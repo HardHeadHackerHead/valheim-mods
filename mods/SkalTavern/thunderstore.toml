@@ -6,7 +6,7 @@ schemaVersion = "0.0.1"
 [package]
 namespace = "Quads_Lab"
 name = "Quads_Skal_Tavern"
-versionNumber = "0.3.1"
+versionNumber = "0.3.2"
 description = "Ale and mead that get you tipsy, and a toast."
 websiteUrl = "https://github.com/HardHeadHackerHead/valheim-mods/tree/main/mods/SkalTavern"
 containsNsfwContent = false

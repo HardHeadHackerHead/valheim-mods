@@ -1,43 +1,19 @@
-<!-- This page is made by tools/modpages/make_pages.py from the mod's DESCRIPTION.txt, CHANGELOG.txt, settings and the
-     repo's README. Change those (or the HAND-WRITTEN part below), not the rest of this page. -->
+<!-- This page is made by tools/modpages/make_pages.py from the mod's thunderstore.toml, DESCRIPTION.txt, CHANGELOG.txt,
+     settings and the repo's README. Change those, or the HAND-WRITTEN parts, not the rest of this page. -->
 
-# 📒 LedgerChest
+# 📒 Quad's Ledger Chest
 
-<img src="cover.png" alt="LedgerChest" width="100%">
+<img src="cover.png" alt="Quad's Ledger Chest" width="100%">
 
-**Version 1.0.3**  ·  [all the mods](../../README.md)  ·  install it from [Thunderstore](https://thunderstore.io/c/valheim/p/Quads_Lab/Quads_Ledger_Chest/) (r2modman, Thunderstore Mod Manager) or the in-game [mod manager](https://github.com/HardHeadHackerHead/valheim-mod-manager) (**F7**)
+**A chest you build that shows everything in every chest around it, with a search: find anything in your storehouse and take it from wherever it is.**
 
-A chest you build that shows everything in every chest within 30 m, in the game's own chest window: search it, pick a category button
-(Wood, Ores & metals, Food, Weapons...), and click to take what you need from wherever it is. It keeps nothing itself: drop things on it and
-each goes on to the chest assigned it (QualityOfLife's **K**), else to a chest with nothing assigned.
+![version: 1.0.3](https://img.shields.io/badge/version-1.0.3-3b6e8f?style=flat-square)  ![multiplayer: everyone + host](https://img.shields.io/badge/multiplayer-everyone%20%2B%20host-7a5c2e?style=flat-square)  ![made with: Claude Code](https://img.shields.io/badge/made%20with-Claude%20Code-c26a3d?style=flat-square)
 
-<!-- HAND-WRITTEN: kept when this page is made again -->
-## 📸 Screenshots
+<!-- GITHUB-ONLY -->[Thunderstore](https://thunderstore.io/c/valheim/p/Quads_Lab/Quads_Ledger_Chest/)  ·  <!-- END GITHUB-ONLY -->[Source code](https://github.com/HardHeadHackerHead/valheim-mods/tree/main/mods/LedgerChest)  ·  [Report a bug](https://github.com/HardHeadHackerHead/valheim-mods/issues/new?template=bug.yml&title=%5BQuad%27s%20Ledger%20Chest%5D%20)  ·  [Discord](https://discord.gg/EwTjQxEZPy)
 
-**The Ledger Chest**
+<!-- GITHUB-ONLY -->**Install:** with [r2modman](https://thunderstore.io/c/valheim/p/ebkr/r2modman/) or Thunderstore Mod Manager from [Thunderstore](https://thunderstore.io/c/valheim/p/Quads_Lab/Quads_Ledger_Chest/), or press **F7** in the game with our [mod manager](https://github.com/HardHeadHackerHead/valheim-mod-manager).<!-- END GITHUB-ONLY -->
 
-<img src="images/1.jpg" alt="The Ledger Chest" width="100%">
-
-**Everything in the chests around it, in one searchable list**
-
-<img src="images/2.jpg" alt="Everything in the chests around it, in one searchable list" width="100%">
-## 👥 Who needs it
-
-**The server (or host) and every player.** The Ledger Chest is a real chest that holds things: a game without this mod doesn't know the piece,
-and when its area loads there (a dedicated server above all) it deletes every Ledger Chest **with what is in it**. Restart after installing or
-updating it. What fits in no chest around it and not in your inventory either stays in the Ledger Chest, and you are told so.
-
-## ⚠️ Known clashes
-
-- None known. It only reads the chests around it and moves items with the game's own moves; graves, carts, ships and a companion's bag and
-  chest are never listed.
-<!-- END HAND-WRITTEN -->
-
-## 🔍 How it works
-
-A chest you build that shows everything in every chest around it, with a search: find anything in your storehouse and take it from wherever it is.
-
-### How it works
+## ✨ Features
 
 - Build the Ledger Chest with the hammer at a workbench (10 Wood, 4 Fine Wood, 4 Leather Scraps, 2 Resin). It keeps nothing itself: it is the counter of your storehouse.
 - Open it (E): in place of a chest's slots, the ledger shows every kind of item in the chests within 30 m, one slot each with how many there are in all. It is the game's own chest window, with its tooltips.
@@ -49,15 +25,54 @@ A chest you build that shows everything in every chest around it, with a search:
 - Items come out exactly as they went in (upgrades, wear). Chests someone else has open are left alone, and so are carts, ships, tombstones and companions' own chests.
 - It has its own hand-made look: an iron-bound strongbox with the ledger open on a reading stand, a quill in its inkpot, scrolls and a candle.
 
-## ⌨️ Keys
+## 📸 Screenshots
+
+<!-- HAND-WRITTEN: screenshots -->
+**The Ledger Chest**
+
+<img src="images/1.jpg" alt="The Ledger Chest" width="100%">
+
+**Everything in the chests around it, in one searchable list**
+
+<img src="images/2.jpg" alt="Everything in the chests around it, in one searchable list" width="100%">
+<!-- END HAND-WRITTEN: screenshots -->
+
+## 🎮 How to use
 
 | Key | What it does |
 |---|---|
 | **E** at a Ledger Chest | See and search everything in the chests around it; click to take, Shift-click to choose how many |
 
+<!-- HAND-WRITTEN: how-to-use -->
+
+<!-- END HAND-WRITTEN: how-to-use -->
+
+## 🧩 Other mods
+
+<!-- HAND-WRITTEN: other-mods -->
+**Known clashes:** none known.
+
+It moves items with the game's own moves, and never lists graves, carts, ships or companions' chests.
+
+**Works with our mods**
+
+- [Quad's Quality of Life](https://thunderstore.io/c/valheim/p/Quads_Lab/Quads_Quality_Of_Life/): what you put in the Ledger Chest goes on to the chest assigned that item or kind (it works without Quality of Life too).
+- [Quad's Gear Slots](https://thunderstore.io/c/valheim/p/Quads_Lab/Quads_Gear_Slots/): items you take go into your ordinary rows.
+<!-- END HAND-WRITTEN: other-mods -->
+
+Found a clash with another mod? [Tell us](https://github.com/HardHeadHackerHead/valheim-mods/issues/new?template=bug.yml&title=%5BQuad%27s%20Ledger%20Chest%5D%20) which one and what happened.
+
+## 👥 Multiplayer
+
+**Who needs it:** Everyone, and **the host above all**: a game without the mod deletes the pieces when their area loads. Restart after installing or updating them.
+
+<!-- HAND-WRITTEN: multiplayer -->
+**The Ledger Chest is a real chest:** a game without the mod deletes it **with what is in it** when its area loads (on a dedicated server above all). It skips chests others have open and chests a ward keeps you out of.
+<!-- END HAND-WRITTEN: multiplayer -->
+
 ## ⚙️ Settings
 
-In `BepInEx/config/com.quad.ledgerchest.cfg` (made the first time the game runs with the mod).
+In `BepInEx/config/com.quad.ledgerchest.cfg`, made the first time the game runs with the mod. r2modman and Thunderstore Mod Manager edit it under **Config editor**.<!-- GITHUB-ONLY --> With our mod manager: **F7**, then **Mod settings**.<!-- END GITHUB-ONLY -->
 
 **Ledger**
 
@@ -66,17 +81,26 @@ In `BepInEx/config/com.quad.ledgerchest.cfg` (made the first time the game runs 
 | `Radius` | `30` | How far from the Ledger Chest (metres) the chests it lists can be. |
 | `Scale` | `1` | Size of the list beside the chest. |
 
-## 👥 Playing together
-
-Everyone in the world needs it, **the host above all**. It adds a new build piece. Restart the game after updating so it registers cleanly.
-
 ## 🤖 Made with AI
 
 Made with the help of Claude (Anthropic), with Claude Code: designed, written and checked together, and tried in the game.
 
-## 📜 Changes
+## 🧪 About Quads Lab
+
+Quads Lab is where **Quad H** ([HardHeadHackerHead](https://github.com/HardHeadHackerHead)) builds software with AI, of every kind:
+these Valheim mods are one of its projects. Each mod is designed by a player, written with [Claude Code](https://claude.com/claude-code)
+and tested in our own world, with **bobisme** as our tester.
+
+- 🌐 [quadslab.io](https://quadslab.io)
+- 🧰 [All Quads Lab mods on Thunderstore](https://thunderstore.io/c/valheim/p/Quads_Lab/)
+- 💻 [Source code on GitHub](https://github.com/HardHeadHackerHead/valheim-mods)
+- 💬 [Discord](https://discord.gg/EwTjQxEZPy)
+- 🐞 Found a bug? [Open an issue on GitHub](https://github.com/HardHeadHackerHead/valheim-mods/issues/new/choose)
+
+## 📜 Recent changes
 
 - **1.0.3** A new id, com.quad.ledgerchest (it was com.dhack.ledgerchest): your settings move over by themselves the first time it starts, and the old settings file is kept as a backup. Restart the game after this update. If an old copy is still installed beside it, this one stands down and says which file to delete, so the two never both run. The DLL now says it was made with AI, as Thunderstore asks.
 - Things that fit in no chest and not in your inventory either stay in the Ledger Chest, and now you're told so. The page now says plainly that the server and every player need the mod (a game without it deletes the Ledger Chests with what is in them), and a problem drawing its look can no longer stop it being registered.
 - Fix: no more stutter every 5 seconds. Looking for Claude Tools searched everything the game had loaded; it now asks BepInEx's list of mods.
-- First version: the Ledger Chest. Open it to see and search everything in the chests around it, by category (a button for each kind of thing), and take what you need. It keeps nothing itself: put things in it and they go on to the chest assigned them (QualityOfLife's chest assignments), else to a chest with nothing assigned, else back to you.
+
+<!-- GITHUB-ONLY -->[Every change](CHANGELOG.txt)<!-- END GITHUB-ONLY --><!-- THUNDERSTORE-ONLY: Every change is on the Changelog tab. -->

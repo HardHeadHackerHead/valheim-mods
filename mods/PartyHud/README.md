@@ -1,17 +1,30 @@
-<!-- This page is made by tools/modpages/make_pages.py from the mod's DESCRIPTION.txt, CHANGELOG.txt, settings and the
-     repo's README. Change those (or the HAND-WRITTEN part below), not the rest of this page. -->
+<!-- This page is made by tools/modpages/make_pages.py from the mod's thunderstore.toml, DESCRIPTION.txt, CHANGELOG.txt,
+     settings and the repo's README. Change those, or the HAND-WRITTEN parts, not the rest of this page. -->
 
-# 🧑‍🤝‍🧑 PartyHud
+# 🧑‍🤝‍🧑 Quad's Party HUD
 
-<img src="cover.png" alt="PartyHud" width="100%">
+<img src="cover.png" alt="Quad's Party HUD" width="100%">
 
-**Version 1.8.1**  ·  [all the mods](../../README.md)  ·  install it from [Thunderstore](https://thunderstore.io/c/valheim/p/Quads_Lab/Quads_Party_HUD/) (r2modman, Thunderstore Mod Manager) or the in-game [mod manager](https://github.com/HardHeadHackerHead/valheim-mod-manager) (**F7**)
+**A party panel on the right of the screen showing every player in your world.**
 
-A party panel with every player's Steam picture, health, stamina and distance, live and at any range.
+![version: 1.8.1](https://img.shields.io/badge/version-1.8.1-3b6e8f?style=flat-square)  ![multiplayer: only who wants it](https://img.shields.io/badge/multiplayer-only%20who%20wants%20it-7a5c2e?style=flat-square)  ![made with: Claude Code](https://img.shields.io/badge/made%20with-Claude%20Code-c26a3d?style=flat-square)
 
-<!-- HAND-WRITTEN: kept when this page is made again -->
+<!-- GITHUB-ONLY -->[Thunderstore](https://thunderstore.io/c/valheim/p/Quads_Lab/Quads_Party_HUD/)  ·  <!-- END GITHUB-ONLY -->[Source code](https://github.com/HardHeadHackerHead/valheim-mods/tree/main/mods/PartyHud)  ·  [Report a bug](https://github.com/HardHeadHackerHead/valheim-mods/issues/new?template=bug.yml&title=%5BQuad%27s%20Party%20HUD%5D%20)  ·  [Discord](https://discord.gg/EwTjQxEZPy)
+
+<!-- GITHUB-ONLY -->**Install:** with [r2modman](https://thunderstore.io/c/valheim/p/ebkr/r2modman/) or Thunderstore Mod Manager from [Thunderstore](https://thunderstore.io/c/valheim/p/Quads_Lab/Quads_Party_HUD/), or press **F7** in the game with our [mod manager](https://github.com/HardHeadHackerHead/valheim-mod-manager).<!-- END GITHUB-ONLY -->
+
+## ✨ Features
+
+### What it shows
+
+- Each player's Steam picture, name, health, stamina and distance, live, at any range.
+- Each picture has a ring that is green, amber or red by how healthy that player is, and an arrow next to their distance points the way they are, relative to where you are looking. F8 hides or shows the panel (handy for screenshots). It hides itself while menus are open.
+
+- With the AICompanion mod: each player's companion shows under them (health, distance, what it is doing).
+
 ## 📸 Screenshots
 
+<!-- HAND-WRITTEN: screenshots -->
 **The party panel on the right of the screen**
 
 <img src="images/1.jpg" alt="The party panel on the right of the screen" width="100%">
@@ -19,35 +32,41 @@ A party panel with every player's Steam picture, health, stamina and distance, l
 **Close up: health, stamina, distance and the arrow to each player**
 
 <img src="images/2.jpg" alt="Close up: health, stamina, distance and the arrow to each player" width="100%">
+<!-- END HAND-WRITTEN: screenshots -->
 
-## What is shared
-
-Each player with this mod sends their exact health, stamina, Eitr, food and buffs to the others a few times a second, at any distance.
-Sharing/ShareMyStats switches off your own; Sharing/AllowSharing is the server's (in multiplayer its value applies to everyone), for PvP
-servers that want each player to see only what the game shows of players near them.
-<!-- END HAND-WRITTEN -->
-
-## 🔍 How it works
-
-A party panel on the right of the screen showing every player in your world.
-
-### What it shows
-
-- Each player's Steam picture, name, health, stamina and distance, live, at any range.
-- Each picture has a ring that is green, amber or red by how healthy that player is, and an arrow next to their distance points the way they are, relative to where you are looking. F8 hides or shows the panel (handy for screenshots). It hides itself while menus are open.
-
-Settings: how many players, size, opacity, position, left or right edge, a Compact mode, and whether to show yourself, portraits, distance and the arrow. While you steer a ship the panel moves out of the way of the ship display.
-- With the AICompanion mod: each player's companion shows under them (health, distance, what it is doing).
-
-## ⌨️ Keys
+## 🎮 How to use
 
 | Key | What it does |
 |---|---|
 | **F8** | Show or hide the party panel |
 
+<!-- HAND-WRITTEN: how-to-use -->
+
+<!-- END HAND-WRITTEN: how-to-use -->
+
+## 🧩 Other mods
+
+<!-- HAND-WRITTEN: other-mods -->
+**Known clashes:** none known.
+
+**Works with our mods**
+
+- [Quad's Companion](https://thunderstore.io/c/valheim/p/Quads_Lab/Quads_Companion/): each player's companion shows under them (health, distance, what it's doing).
+<!-- END HAND-WRITTEN: other-mods -->
+
+Found a clash with another mod? [Tell us](https://github.com/HardHeadHackerHead/valheim-mods/issues/new?template=bug.yml&title=%5BQuad%27s%20Party%20HUD%5D%20) which one and what happened.
+
+## 👥 Multiplayer
+
+**Who needs it:** Only the players who want it.
+
+<!-- HAND-WRITTEN: multiplayer -->
+Players with the mod share their exact health, stamina, Eitr, food and buffs at any distance (ShareMyStats is each player's own choice); players without it show what the game shares nearby. **The host decides** whether stats are shared at all (AllowSharing, for PvP servers).
+<!-- END HAND-WRITTEN: multiplayer -->
+
 ## ⚙️ Settings
 
-In `BepInEx/config/com.quad.partyhud.cfg` (made the first time the game runs with the mod).
+In `BepInEx/config/com.quad.partyhud.cfg`, made the first time the game runs with the mod. r2modman and Thunderstore Mod Manager edit it under **Config editor**.<!-- GITHUB-ONLY --> With our mod manager: **F7**, then **Mod settings**.<!-- END GITHUB-ONLY -->
 
 **General**
 
@@ -84,20 +103,26 @@ In `BepInEx/config/com.quad.partyhud.cfg` (made the first time the game runs wit
 | `ShareMyStats` | `true` | Send your health, stamina, Eitr, food and buffs to the other players who have this mod (a few times a second, at any distance). Off: they only see what the game itself shows of you when you are near. |
 | `AllowSharing` | `true` | Players with this mod share their exact health, stamina, Eitr, food and buffs with each other at any distance. A PvP server may want this off (each player then sees only what the game shows of players near them). In multiplayer the server's value applies. |
 
-## 👥 Playing together
-
-See [who needs which mod](../../README.md#playing-together) on the front page.
-
 ## 🤖 Made with AI
 
 Made with the help of Claude (Anthropic), with Claude Code: designed, written and checked together, and tried in the game.
 
-## 📜 Changes
+## 🧪 About Quads Lab
+
+Quads Lab is where **Quad H** ([HardHeadHackerHead](https://github.com/HardHeadHackerHead)) builds software with AI, of every kind:
+these Valheim mods are one of its projects. Each mod is designed by a player, written with [Claude Code](https://claude.com/claude-code)
+and tested in our own world, with **bobisme** as our tester.
+
+- 🌐 [quadslab.io](https://quadslab.io)
+- 🧰 [All Quads Lab mods on Thunderstore](https://thunderstore.io/c/valheim/p/Quads_Lab/)
+- 💻 [Source code on GitHub](https://github.com/HardHeadHackerHead/valheim-mods)
+- 💬 [Discord](https://discord.gg/EwTjQxEZPy)
+- 🐞 Found a bug? [Open an issue on GitHub](https://github.com/HardHeadHackerHead/valheim-mods/issues/new/choose)
+
+## 📜 Recent changes
 
 - **1.8.1** A new id, com.quad.partyhud (it was com.dhack.partyhud): your settings move over by themselves the first time it starts, and the old settings file is kept as a backup. Restart the game after this update. If an old copy is still installed beside it, this one stands down and says which file to delete, so the two never both run. The DLL now says it was made with AI, as Thunderstore asks.
 - New: Sharing/ShareMyStats (on by default): turn it off and your game stops sending your health, stamina, Eitr, food and buffs to the other players; they then see only what the game itself shows of you nearby. Sharing/AllowSharing is decided by the server in multiplayer, so a PvP server can switch the sharing off for everyone. The panel's names and numbers are now in the game's own lettering.
 - A fallen companion's row says its things are in a tombstone (they keep the gear they wore since AICompanion 0.8), not "gear in a crate".
-- New: a companion's row shows its three food slots under its picture, as players' rows do (empty slots: it is hungry and does not heal).
-- New: a companion's row shows a little picture of its face (AICompanion 0.3.0 takes it) instead of its initial.
-- New: with the AICompanion mod installed, each player's companion shows under them in the panel: its name, health, how far away it is and which way, and what it is doing (or that it has fallen), its stamina, and its buffs (a boss power, meads). General, ShowCompanions turns it off.
-- Three food slots under each player's picture show what they are eating, with a line for how long each has left (red when nearly gone). The arrow and buff icons are as in 1.5.0.
+
+<!-- GITHUB-ONLY -->[Every change](CHANGELOG.txt)<!-- END GITHUB-ONLY --><!-- THUNDERSTORE-ONLY: Every change is on the Changelog tab. -->

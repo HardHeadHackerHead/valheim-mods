@@ -1,24 +1,39 @@
 """
-Writes each mod's own page, mods/<Mod>/README.md, from what the mod already has: its pitch and keys from the repo's README, its
-DESCRIPTION.txt (how it works), its settings (from the game's BepInEx/config file for it, which has every setting with its description
-and default; or, without the game, from the Config.Bind calls in its code), RESTART_REQUIRED.txt, CHANGELOG.txt and its cover.
+Writes each mod's own page, mods/<Mod>/README.md, in one layout for every mod (the same page goes to Thunderstore through modkit
+package, which makes its links absolute):
 
-Hand-written parts survive: whatever is between the HAND-WRITTEN markers in a page is kept as it is when the page is written again. The
-first time, that part holds the screenshot slots: images/<n>.png under the mod, made as placeholder cards here (with what each picture
-should show, from shots.json) for you to replace with real pictures of the same name. A real picture is never overwritten.
+    title, cover, one-line pitch, badges, links
+    Features (DESCRIPTION.txt)        Screenshots (hand-written)       How to use (keys from the repo's README, hand-written notes)
+    Other mods (hand-written: known clashes, "none known" until there are some)
+    Multiplayer (who needs it, from the repo's README; hand-written notes)            Settings (the mod's config file, or its code)
+    Made with AI      About Quads Lab (tools/modpages/about.md, the same on every page)      Recent changes (CHANGELOG.txt, the newest 3)
+
+Hand-written parts survive: each sits between <!-- HAND-WRITTEN: <part> --> and <!-- END HAND-WRITTEN: <part> --> and is kept as it is
+when the page is written again (screenshots, how-to-use, other-mods, multiplayer). The first time, the screenshots part holds
+placeholder cards (images/<n>.png, with what each picture should show, from shots.json) for you to replace with real pictures of the
+same name; a real picture is never overwritten.
+
+Some lines are for one site only: <!-- GITHUB-ONLY -->...<!-- END GITHUB-ONLY --> shows on GitHub and is left out on Thunderstore, and
+<!-- THUNDERSTORE-ONLY: ... --> is hidden on GitHub and shown on Thunderstore (modkit package does both).
 
     python tools/modpages/make_pages.py              # every mod
     python tools/modpages/make_pages.py Arena Rainbows
     python tools/modpages/make_pages.py --committed  # read each mod as committed (not the working copy)
 """
 import html, io, json, os, re, subprocess, sys
+from urllib.parse import quote
 
 ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
 MODS = os.path.join(ROOT, "mods")
 GAME_CONFIG = os.environ.get("VALHEIM_CONFIG", r"D:\SteamLibrary\steamapps\common\Valheim\BepInEx\config")
 SHOTS = json.load(io.open(os.path.join(os.path.dirname(__file__), "shots.json"), encoding="utf-8"))
-BEGIN, END = "<!-- HAND-WRITTEN: kept when this page is made again -->", "<!-- END HAND-WRITTEN -->"
+ABOUT = os.path.join(os.path.dirname(__file__), "about.md")
 THUNDERSTORE_TEAM = "Quads_Lab"  # our team on Thunderstore: each mod is its own package there
+REPO = "https://github.com/HardHeadHackerHead/valheim-mods"
+MANAGER = "https://github.com/HardHeadHackerHead/valheim-mod-manager"
+NOT_ON_THUNDERSTORE = {"ClaudeTools"}  # (rejected there: it downloads other mods' DLLs and loads mods from memory; GitHub and F7 only)
+PARTS = ["screenshots", "how-to-use", "other-mods", "multiplayer"]
+GH_ONLY, GH_END = "<!-- GITHUB-ONLY -->", "<!-- END GITHUB-ONLY -->"
 COMMITTED = "--committed" in sys.argv
 
 
@@ -39,17 +54,36 @@ def paragraphs(text):
     return [p.strip() for p in re.split(r"\n\s*\n", text.replace("\r\n", "\n")) if p.strip()]
 
 
-# ---- the repo's README: each mod's emoji, title and pitch (by its cover), the keys table, who needs it ----------------------------
+def github_only(text):
+    return GH_ONLY + text + GH_END
+
+
+def thunderstore_only(text):
+    return "<!-- THUNDERSTORE-ONLY: %s -->" % text
+
+
+# ---- the repo's README: each mod's emoji (by its cover), the keys table, who needs which mod ----------------------------------
 
 def readme_parts():
     text = io.open(os.path.join(ROOT, "README.md"), encoding="utf-8").read().replace("\r\n", "\n")
     cards = {}
-    for m in re.finditer(r"### (.+?)\n<img src=\"dist/([A-Za-z0-9]+)\.cover\.(?:png|jpg)\"[^>]*>\n\n(.*?)(?=\n</td>|\n### |\n<table>|\n## )", text, re.S):
-        title, folder, body = m.group(1).strip(), m.group(2), m.group(3).strip()
-        body = re.sub(r"\n*\*\*\[More: how it works.*?\)\*\*", "", body).strip()   # (the front page's link to this very page)
-        cards[folder] = (title, body)
+    for m in re.finditer(r"### ([^\n]+)\n<img src=\"dist/([A-Za-z0-9]+)\.cover\.(?:png|jpg)\"", text):
+        cards[m.group(2)] = m.group(1).strip()
     keys = [l for l in text.split("\n") if l.startswith("| ") and l.count("|") >= 4]
-    return cards, keys, text
+    # "Playing together": | **ModA, ModB** (why) | who needs it |
+    who, default = [], None
+    m = re.search(r"### Playing together\n(.*?)\n(?:##|$)", text, re.S)
+    for row in (m.group(1) if m else "").split("\n"):
+        cells = [c.strip() for c in row.strip().strip("|").split("|")] if row.startswith("| ") else []
+        if len(cells) < 2 or cells[0] in ("Mod", "---"):
+            continue
+        if cells[0].lower().startswith("everything else"):
+            default = cells[1]
+            continue
+        names = [n.strip() for b in re.findall(r"\*\*([^*]+)\*\*", cells[0]) for n in b.split(",")]
+        why = re.sub(r"\*\*[^*]+\*\*", "", cells[0]).strip(" ()")
+        who.append((names, why, cells[1]))
+    return cards, keys, who, default
 
 
 def name_of(src):
@@ -92,23 +126,20 @@ def settings_from_code(src):
 # ---- the page -------------------------------------------------------------------------------------------------------------------
 
 def description_md(text):
-    """DESCRIPTION.txt as Markdown: its first paragraph is the summary; short lines over a list become headings."""
+    """DESCRIPTION.txt as Markdown: short lines over a list become headings, other lines their own paragraphs."""
     lines = text.replace("\r\n", "\n").strip().split("\n")
     out = []
     for i, line in enumerate(lines):
         s = line.strip()
         nxt = lines[i + 1].strip() if i + 1 < len(lines) else ""
-        if i > 0 and s and not s.startswith("- ") and len(s) < 48 and not s.endswith(".") and nxt.startswith("- "):
-            out.append("")
-            out.append("### " + s)
-            out.append("")
-        elif s and not s.startswith("- ") and i > 0:
-            out.append("")      # (a line of its own: its own paragraph)
-            out.append(s)
+        if s and not s.startswith("- ") and len(s) < 48 and not s.endswith(".") and nxt.startswith("- "):
+            out += ["", "### " + s, ""]
+        elif s and not s.startswith("- "):
+            out += ["", s]      # (a line of its own: its own paragraph)
         else:
             out.append(s)
-    md = "\n".join(out)
-    return re.sub(r"\n{3,}", "\n\n", md).strip()
+    md = re.sub(r"\n{3,}", "\n\n", "\n".join(out)).strip()
+    return re.sub(r"^### How it works\n\n", "", md)     # (the section is the features: a heading saying so again is noise)
 
 
 def placeholder(path, caption, mod):
@@ -152,60 +183,127 @@ def placeholder(path, caption, mod):
     img.quantize(colors=48).save(path, optimize=True)
 
 
-def page(folder, cards, keys):
+def hand_parts(old):
+    """The hand-written parts of a page, by name. A page from before the parts had names has one block: split it by its headings."""
+    parts = {k: v.strip("\n") for k, v in re.findall(r"<!-- HAND-WRITTEN: ([a-z-]+) -->\n?(.*?)\n?<!-- END HAND-WRITTEN: \1 -->", old, re.S)}
+    if parts:
+        return parts
+    m = re.search(r"<!-- HAND-WRITTEN: kept when this page is made again -->(.*?)<!-- END HAND-WRITTEN -->", old, re.S)
+    if not m:
+        return {}
+    parts = {}
+    for sec in re.split(r"(?m)^(?=## )", m.group(1).strip("\n")):
+        head, _, body = sec.partition("\n")
+        head, body = head.lower(), body.strip("\n")
+        if not head.startswith("## ") or not body:
+            continue
+        part = ("screenshots" if "screenshot" in head else "other-mods" if "clash" in head else
+                "how-to-use" if "good to know" in head else "multiplayer")
+        if part == "multiplayer" and "who needs it" not in head:
+            body = "**%s**\n\n%s" % (re.sub(r"^##\s*\W*\s*", "", sec.partition("\n")[0]).strip(), body)
+        elif part == "multiplayer":
+            continue        # (who needs it is written from the repo's README now)
+        parts[part] = (parts[part] + "\n\n" + body) if part in parts else body
+    return parts
+
+
+def block(name, body):
+    return ["<!-- HAND-WRITTEN: %s -->" % name, body, "<!-- END HAND-WRITTEN: %s -->" % name, ""]
+
+
+def badge(label, value, colour):
+    esc = lambda s: quote(s.replace("-", "--").replace("_", "__"), safe="")
+    return "![%s: %s](https://img.shields.io/badge/%s-%s-%s?style=flat-square)" % (label, value, esc(label), esc(value), colour)
+
+
+def page(folder, cards, keys, who, default_who, about):
     d = os.path.join(MODS, folder)
     src = "\n".join(read(os.path.join(d, f)) or "" for f in sorted(os.listdir(d)) if f.endswith(".cs"))
     name = name_of(src) or folder
     guid = (re.search(r'const string Guid\s*=\s*"([^"]+)"', src) or [None, None])[1]
     version = (re.search(r'const string Version\s*=\s*"([^"]+)"', src) or [None, "?"])[1]
-    title, pitch = cards.get(folder, (name, ""))
+    card = cards.get(folder, name)
+    emoji = card.split()[0] if not card[0].isalnum() else ""
+    plain = re.sub(r"^\W+\s*", "", card).split(":")[0].strip()
     desc = read(os.path.join(d, "DESCRIPTION.txt")) or ""
     log = read(os.path.join(d, "CHANGELOG.txt")) or ""
     restart = (read(os.path.join(d, "RESTART_REQUIRED.txt")) or "").strip()
     cover = next((f for f in ("cover.png", "cover.jpg") if os.path.exists(os.path.join(d, f))), None)
-    short = re.sub(r"^\S+\s+", "", title) if not title[0].isalnum() else title
-    plain = short.split(":")[0].strip()
 
-    out = ["<!-- This page is made by tools/modpages/make_pages.py from the mod's DESCRIPTION.txt, CHANGELOG.txt, settings and the",
-           "     repo's README. Change those (or the HAND-WRITTEN part below), not the rest of this page. -->", "",
-           "# " + title, ""]
-    if cover:
-        out += ['<img src="%s" alt="%s" width="100%%">' % (cover, html.escape(plain)), ""]
-    # the Thunderstore package name: from the mod's thunderstore.toml (made by modkit package), else from its name
+    # its Thunderstore package (from thunderstore.toml, made by modkit package) and its name there, as Quad's <Name>
     toml = read(os.path.join(d, "thunderstore.toml")) or ""
     named = re.search(r'(?m)^name\s*=\s*"([^"]+)"', toml)
     package = named.group(1) if named else (re.sub(r"[^A-Za-z0-9_]", "", re.sub(r"[\s\-.]+", "_", name)) or folder)
-    out += ["**Version %s**  ·  [all the mods](../../README.md)  ·  install it from [Thunderstore](https://thunderstore.io/c/valheim/p/%s/%s/) "
-            "(r2modman, Thunderstore Mod Manager) or the in-game [mod manager](https://github.com/HardHeadHackerHead/valheim-mod-manager) (**F7**)"
-            % (version, THUNDERSTORE_TEAM, package), ""]
-    if pitch:
-        out += [pitch, ""]
-
-    # the hand-written part: kept as it is, or the screenshot slots the first time
+    title = "Quad's " + re.sub(r"^Quads_", "", package).replace("_", " ").replace(" Of ", " of ")
+    pitch = (re.search(r'(?m)^description\s*=\s*"((?:[^"\\]|\\.)*)"', toml) or [None, None])[1] or (paragraphs(desc) or [""])[0]
+    store = "https://thunderstore.io/c/valheim/p/%s/%s/" % (THUNDERSTORE_TEAM, package)
+    on_store = folder not in NOT_ON_THUNDERSTORE
+    bug = "%s/issues/new?template=bug.yml&title=%s" % (REPO, quote("[%s] " % title))
     old = read(os.path.join(d, "README.md")) or ""
-    m = re.search(re.escape(BEGIN) + r"(.*?)" + re.escape(END), old, re.S)
-    if m:
-        hand = m.group(1).strip("\n")
+    hand = hand_parts(old)
+
+    # who needs it in multiplayer: the repo README's "Playing together" table
+    rows = [(why, need) for names, why, need in who if folder in names or plain in names or title.replace("Quad's ", "") in names]
+    needs = " ".join(need for _, need in rows) if rows else (default_who or "Only the players who want it.")
+    everyone = any("everyone" in n.lower() for _, n in rows)
+    host = any("host" in n.lower() for _, n in rows)
+
+    out = ["<!-- This page is made by tools/modpages/make_pages.py from the mod's thunderstore.toml, DESCRIPTION.txt, CHANGELOG.txt,",
+           "     settings and the repo's README. Change those, or the HAND-WRITTEN parts, not the rest of this page. -->", "",
+           "# %s%s" % (emoji + " " if emoji else "", title), ""]
+    if cover:
+        out += ['<img src="%s" alt="%s" width="100%%">' % (cover, html.escape(title, quote=False)), ""]
+    out += ["**%s**" % pitch, ""]
+    out += ["  ".join([badge("version", version, "3b6e8f"),
+                       badge("multiplayer", "everyone + host" if everyone and host else "host" if host else "everyone" if everyone else "only who wants it", "7a5c2e"),
+                       badge("made with", "Claude Code", "c26a3d")]), ""]
+    links = "  ·  ".join(["[Source code](%s/tree/main/mods/%s)" % (REPO, folder), "[Report a bug](%s)" % bug, "[Discord](https://discord.gg/EwTjQxEZPy)"])
+    out += [(github_only("[Thunderstore](%s)  ·  " % store) if on_store else "") + links, ""]
+    if on_store:
+        out += [github_only("**Install:** with [r2modman](https://thunderstore.io/c/valheim/p/ebkr/r2modman/) or Thunderstore Mod Manager from "
+                            "[Thunderstore](%s), or press **F7** in the game with our [mod manager](%s)." % (store, MANAGER)), ""]
     else:
-        shots = SHOTS.get(folder, ["%s in the game" % plain])
-        rows = ["## 📸 Screenshots", ""]
-        for k, caption in enumerate(shots, 1):
-            file = "images/%d.png" % k
-            placeholder(os.path.join(d, file), caption, folder)
-            rows += ["**%s**" % caption, "", '<img src="%s" alt="%s" width="100%%">' % (file, html.escape(caption)), ""]
-        hand = "\n".join(rows).strip("\n")
-    out += [BEGIN, hand, END, ""]
+        out += ["**Install:** press **F7** in the game with our [mod manager](%s), or take `%s.dll` from [dist/](%s/tree/main/dist). "
+                "It isn't on Thunderstore." % (MANAGER, folder, REPO), ""]
 
     if desc:
-        out += ["## 🔍 How it works", "", description_md(desc), ""]
+        rest = desc.replace("\r\n", "\n").strip()
+        first = paragraphs(rest)[0]
+        if first.strip() == pitch.strip():
+            rest = rest[len(first):].strip()
+        rest = "\n".join(l for l in rest.split("\n") if not l.startswith("Settings:"))   # (the Settings section lists them all)
+        out += ["## ✨ Features", "", description_md(rest), ""]
+
+    # screenshots: hand-written (the first time, placeholder cards with what each picture should show)
+    shots = hand.get("screenshots")
+    if shots is None:
+        rows_ = []
+        for k, caption in enumerate(SHOTS.get(folder, ["%s in the game" % plain]), 1):
+            file = "images/%d.png" % k
+            placeholder(os.path.join(d, file), caption, folder)
+            rows_ += ["**%s**" % caption, "", '<img src="%s" alt="%s" width="100%%">' % (file, html.escape(caption)), ""]
+        shots = "\n".join(rows_).strip("\n")
+    out += ["## 📸 Screenshots", ""] + block("screenshots", shots)
 
     mine = [k for k in keys if re.match(r"\|\s*[^|]+\|\s*(%s|%s)\s*\|" % (re.escape(folder), re.escape(plain)), k)]
-    if mine:
-        out += ["## ⌨️ Keys", "", "| Key | What it does |", "|---|---|"]
-        for k in mine:
-            cells = [c.strip() for c in k.strip("|").split("|")]
-            out.append("| %s | %s |" % (cells[0], " | ".join(cells[2:])))
-        out += [""]
+    use = hand.get("how-to-use", "")
+    if mine or use:
+        out += ["## 🎮 How to use", ""]
+        if mine:
+            out += ["| Key | What it does |", "|---|---|"]
+            for k in mine:
+                cells = [c.strip() for c in k.strip("|").split("|")]
+                out.append("| %s | %s |" % (cells[0], " | ".join(cells[2:])))
+            out += [""]
+    out += block("how-to-use", use)
+
+    out += ["## 🧩 Other mods", ""] + block("other-mods", hand.get("other-mods") or "**Known clashes:** none known.")
+    out += ["Found a clash with another mod? [Tell us](%s) which one and what happened." % bug, ""]
+
+    out += ["## 👥 Multiplayer", "", "**Who needs it:** %s" % needs, ""]
+    if restart and "restart" not in needs.lower():
+        out += [restart, ""]
+    out += block("multiplayer", hand.get("multiplayer", ""))
 
     sets = None
     if guid and os.path.isdir(GAME_CONFIG):
@@ -214,31 +312,28 @@ def page(folder, cards, keys):
         sets = [x for f in files for x in (settings_from_config(f) or [])] or None
     sets = sets or settings_from_code(src)
     if sets:
-        out += ["## ⚙️ Settings", "", "In `BepInEx/config/%s.cfg` (made the first time the game runs with the mod)." % (guid or folder)]
+        out += ["## ⚙️ Settings", "", "In `BepInEx/config/%s.cfg`, made the first time the game runs with the mod. r2modman and Thunderstore Mod "
+                "Manager edit it under **Config editor**.%s" % (guid or folder, github_only(" With our mod manager: **F7**, then **Mod settings**."))]
         section = None
-        for sec, key, default, about in sets:
+        for sec, key, default, about_ in sets:
             if sec != section:
                 out += ["", "**%s**" % sec, "", "| Setting | Default | What it does |", "|---|---|---|"]
                 section = sec
-            out.append("| `%s` | `%s` | %s |" % (key, default.replace("|", "\\|"), about.replace("|", "\\|")))
+            out.append("| `%s` | `%s` | %s |" % (key, default.replace("|", "\\|"), about_.replace("|", "\\|")))
         out += [""]
-
-    out += ["## 👥 Playing together", ""]
-    if restart:
-        out += ["Everyone in the world needs it, **the host above all**. %s" % restart, ""]
-    else:
-        out += ["See [who needs which mod](../../README.md#playing-together) on the front page.", ""]
 
     # Thunderstore asks mods made with AI to say so (and so do we)
     out += ["## 🤖 Made with AI", "", "Made with the help of Claude (Anthropic), with Claude Code: designed, written and checked together, and tried in the game.", ""]
 
+    out += ["## 🧪 About Quads Lab", "", about.strip(), ""]
+
     if log.strip():
-        out += ["## 📜 Changes", ""]
-        for p in paragraphs(log):
+        out += ["## 📜 Recent changes", ""]
+        for p in paragraphs(log)[:3]:
             p = re.sub(r"\s*\n\s*", " ", p)
             mv = re.match(r"^(\d+\.\d+(?:\.\d+)?):\s*(.*)", p, re.S)
             out.append("- **%s** %s" % (mv.group(1), mv.group(2)) if mv else "- " + p)
-        out += [""]
+        out += ["", github_only("[Every change](CHANGELOG.txt)") + thunderstore_only("Every change is on the Changelog tab."), ""]
 
     text = "\n".join(out).rstrip() + "\n"
     io.open(os.path.join(d, "README.md"), "w", encoding="utf-8", newline="\n").write(text)
@@ -246,7 +341,8 @@ def page(folder, cards, keys):
 
 
 def main():
-    cards, keys, _ = readme_parts()
+    cards, keys, who, default_who = readme_parts()
+    about = read(ABOUT) or ""
     want = [a for a in sys.argv[1:] if not a.startswith("--")]
     done = []
     for folder in sorted(os.listdir(MODS)):
@@ -254,7 +350,7 @@ def main():
             continue
         if not os.path.exists(os.path.join(MODS, folder, folder + ".csproj")):
             continue
-        done.append(page(folder, cards, keys))
+        done.append(page(folder, cards, keys, who, default_who, about))
     print("pages written:", ", ".join(done))
 
 

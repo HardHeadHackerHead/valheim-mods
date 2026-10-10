@@ -63,7 +63,7 @@ Every player installs the mods they want for themselves. A few need more than th
 |---|---|
 | **AICompanion** | Everyone in the world, **the host too**: without it the game deletes saved companions. |
 | **Recycler, BountyBoard, SlotMachine, BirdTrap, LedgerChest, Quad's Cigars, SkalTavern, Ziplines, Arena** (new build pieces and items; the Arena's host also picks where it stands) | Everyone, and **the host above all**: a game without the mod deletes the pieces when their area loads. Restart after installing or updating them. |
-| **PortalHub, BountyBoard** | The host (it keeps the portal links and the contracts), and everyone who wants their menus. |
+| **PortalHub** | The host (it keeps the portal links), and everyone who wants the portal menu. |
 | Everything else | Only the players who want it. |
 
 On a dedicated server, put the host's mods in the server's `BepInEx\scripts` (with BepInEx and ScriptEngine installed there too).

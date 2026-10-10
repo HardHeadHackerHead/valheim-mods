@@ -1,33 +1,19 @@
-<!-- This page is made by tools/modpages/make_pages.py from the mod's DESCRIPTION.txt, CHANGELOG.txt, settings and the
-     repo's README. Change those (or the HAND-WRITTEN part below), not the rest of this page. -->
+<!-- This page is made by tools/modpages/make_pages.py from the mod's thunderstore.toml, DESCRIPTION.txt, CHANGELOG.txt,
+     settings and the repo's README. Change those, or the HAND-WRITTEN parts, not the rest of this page. -->
 
-# 🍺 SkalTavern
+# 🍺 Quad's Skal Tavern
 
-<img src="cover.png" alt="SkalTavern" width="100%">
+<img src="cover.png" alt="Quad's Skal Tavern" width="100%">
 
-**Version 0.3.2**  ·  [all the mods](../../README.md)  ·  install it from [Thunderstore](https://thunderstore.io/c/valheim/p/Quads_Lab/Quads_Skal_Tavern/) (r2modman, Thunderstore Mod Manager) or the in-game [mod manager](https://github.com/HardHeadHackerHead/valheim-mod-manager) (**F7**)
+**Ale and mead that get you tipsy, and a toast.**
 
-Ale and mead that actually get you drunk. Four drinks from the cauldron (ale, honey mead, blueberry wine, skaldic mead), each the real tankard
-in your hand. A little warms you and gives some stamina. More and the screen darkens, blurs and doubles, colours drift, your body leans and weaves,
-stars circle your head, you hiccup, you slide when you walk, your aim floats and your chat slurs. Drink too much too fast and you throw up (the
-game's own effect), too much and you fall, and a big night ends in a hangover. Press **B** to raise a cup: friends who toast with you, and your
-companions, get a **Skål!** buff.
+![version: 0.3.2](https://img.shields.io/badge/version-0.3.2-3b6e8f?style=flat-square)  ![multiplayer: everyone + host](https://img.shields.io/badge/multiplayer-everyone%20%2B%20host-7a5c2e?style=flat-square)  ![made with: Claude Code](https://img.shields.io/badge/made%20with-Claude%20Code-c26a3d?style=flat-square)
 
-<!-- HAND-WRITTEN: kept when this page is made again -->
-## 📸 Screenshots
+<!-- GITHUB-ONLY -->[Thunderstore](https://thunderstore.io/c/valheim/p/Quads_Lab/Quads_Skal_Tavern/)  ·  <!-- END GITHUB-ONLY -->[Source code](https://github.com/HardHeadHackerHead/valheim-mods/tree/main/mods/SkalTavern)  ·  [Report a bug](https://github.com/HardHeadHackerHead/valheim-mods/issues/new?template=bug.yml&title=%5BQuad%27s%20Skal%20Tavern%5D%20)  ·  [Discord](https://discord.gg/EwTjQxEZPy)
 
-**Drunk: the world blurs, glows and sways**
+<!-- GITHUB-ONLY -->**Install:** with [r2modman](https://thunderstore.io/c/valheim/p/ebkr/r2modman/) or Thunderstore Mod Manager from [Thunderstore](https://thunderstore.io/c/valheim/p/Quads_Lab/Quads_Skal_Tavern/), or press **F7** in the game with our [mod manager](https://github.com/HardHeadHackerHead/valheim-mod-manager).<!-- END GITHUB-ONLY -->
 
-<img src="images/1.jpg" alt="Drunk: the world blurs, glows and sways" width="100%">
-
-**A Tankard of Ale**
-
-<img src="images/2.jpg" alt="A Tankard of Ale" width="100%">
-<!-- END HAND-WRITTEN -->
-
-## 🔍 How it works
-
-Ale and mead that get you tipsy, and a toast.
+## ✨ Features
 
 ### What is in it
 
@@ -37,15 +23,53 @@ Ale and mead that get you tipsy, and a toast.
 
 Every number and key is in the settings: how long to sober up, how strong the sway and wander are, whether you stumble, fall or get a hangover (on a server, the server's settings decide those). Only the player who drinks needs the mod for the drinks; a toast needs it on both sides.
 
-## ⌨️ Keys
+## 📸 Screenshots
+
+<!-- HAND-WRITTEN: screenshots -->
+**Drunk: the world blurs, glows and sways**
+
+<img src="images/1.jpg" alt="Drunk: the world blurs, glows and sways" width="100%">
+
+**A Tankard of Ale**
+
+<img src="images/2.jpg" alt="A Tankard of Ale" width="100%">
+<!-- END HAND-WRITTEN: screenshots -->
+
+## 🎮 How to use
 
 | Key | What it does |
 |---|---|
 | **B** | Raise a cup: toast with friends and companions beside you for a Skål! buff |
 
+<!-- HAND-WRITTEN: how-to-use -->
+
+<!-- END HAND-WRITTEN: how-to-use -->
+
+## 🧩 Other mods
+
+<!-- HAND-WRITTEN: other-mods -->
+**Known clashes:** none known.
+
+**Works with our mods**
+
+- [Quad's Companion](https://thunderstore.io/c/valheim/p/Quads_Lab/Quads_Companion/): companions within 12 m count as drinking partners for a Skål!
+<!-- END HAND-WRITTEN: other-mods -->
+
+Found a clash with another mod? [Tell us](https://github.com/HardHeadHackerHead/valheim-mods/issues/new?template=bug.yml&title=%5BQuad%27s%20Skal%20Tavern%5D%20) which one and what happened.
+
+## 👥 Multiplayer
+
+**Who needs it:** Everyone, and **the host above all**: a game without the mod deletes the pieces when their area loads. Restart after installing or updating them.
+
+<!-- HAND-WRITTEN: multiplayer -->
+A toast is shared: friends with the mod who raise a cup together all get the buff.
+
+**The host decides:** how long drinks last, their strength and their effects (reversed controls, puking, drifting, stumbling, passing out, hangovers) and the toast window. While you play on their world their values replace yours (your file isn't changed); a host without the mod leaves everyone their own.
+<!-- END HAND-WRITTEN: multiplayer -->
+
 ## ⚙️ Settings
 
-In `BepInEx/config/com.quad.skaltavern.cfg` (made the first time the game runs with the mod).
+In `BepInEx/config/com.quad.skaltavern.cfg`, made the first time the game runs with the mod. r2modman and Thunderstore Mod Manager edit it under **Config editor**.<!-- GITHUB-ONLY --> With our mod manager: **F7**, then **Mod settings**.<!-- END GITHUB-ONLY -->
 
 **Drinking**
 
@@ -79,20 +103,26 @@ In `BepInEx/config/com.quad.skaltavern.cfg` (made the first time the game runs w
 | `Key` | `B` | Raise a cup: a toast with whoever is near. Friends who toast at the same time (and your companions) give each other a Skal! buff. |
 | `Window` | `6` | How many seconds apart two toasts can be and still count as together. In multiplayer the server's value applies. |
 
-## 👥 Playing together
-
-Everyone in the world needs it, **the host above all**. It adds new items (the four drinks). Restart the game after updating so they register cleanly.
-
 ## 🤖 Made with AI
 
 Made with the help of Claude (Anthropic), with Claude Code: designed, written and checked together, and tried in the game.
 
-## 📜 Changes
+## 🧪 About Quads Lab
+
+Quads Lab is where **Quad H** ([HardHeadHackerHead](https://github.com/HardHeadHackerHead)) builds software with AI, of every kind:
+these Valheim mods are one of its projects. Each mod is designed by a player, written with [Claude Code](https://claude.com/claude-code)
+and tested in our own world, with **bobisme** as our tester.
+
+- 🌐 [quadslab.io](https://quadslab.io)
+- 🧰 [All Quads Lab mods on Thunderstore](https://thunderstore.io/c/valheim/p/Quads_Lab/)
+- 💻 [Source code on GitHub](https://github.com/HardHeadHackerHead/valheim-mods)
+- 💬 [Discord](https://discord.gg/EwTjQxEZPy)
+- 🐞 Found a bug? [Open an issue on GitHub](https://github.com/HardHeadHackerHead/valheim-mods/issues/new/choose)
+
+## 📜 Recent changes
 
 - **0.3.2** Its test command for Claude Tools (skal ...) follows the game's cheat rule: level, sober and puke work only in single player, for the host or with devcommands; status, find, drink and drop (what a player does anyway) still work for everyone.
 - **0.3.1** A new id, com.quad.skaltavern (it was com.dhack.skaltavern): your settings move over by themselves the first time it starts, and the old settings file is kept as a backup. Restart the game after this update. If an old copy is still installed beside it, this one stands down and says which file to delete, so the two never both run. The DLL now says it was made with AI, as Thunderstore asks.
 - The drinks no longer sell at the trader (a beehive and a cauldron made endless coins), and the cold no longer bites only once you are properly tipsy (one ale used to keep off the cold and freezing entirely). In multiplayer the server decides how drinking treats you: how long it lasts, how strong it is, how far your feet wander, staggering, falling down, throwing up, the hangover and the toast's window; the picture, sound and other looks stay your own.
-- Fix: no more stutter every 5 seconds. Looking for Claude Tools searched everything the game had loaded; it now asks BepInEx's list of mods.
-- Being drunk is now unmissable. The picture darkens at the edges, colours fringe, what is far goes blurry, double vision trails behind you, the colours drift and the view sways and pulses; your body leans and weaves, stars circle your head, you hiccup, and very drunk you give a drunken cheer; sounds go muffled and wobbly; you slide when you walk, your aim floats, your walk wanders and sloshed your controls reverse for a moment; and your chat slurs. You throw up (the game's own vomit effect) when you drink too much too fast, now and then when sloshed and as you fall, and that sobers you a little. One setting, Drinking: EffectStrength (0 to 300%), scales it all, and each effect has its own switch.
-- Fix: drinks already in your bag, a chest or on the ground could no longer be dropped or drunk after the mod reloaded (a hot reload, or the manager updating it mid-game); they are now attached to the new copy. New: a skal command for Claude Tools (status, level, drink, drop, puke).
-- New: four drinks from the cauldron that get you tipsy (sway, wandering feet, stagger, a hangover), and a toast with friends and companions for a Skal! buff.
+
+<!-- GITHUB-ONLY -->[Every change](CHANGELOG.txt)<!-- END GITHUB-ONLY --><!-- THUNDERSTORE-ONLY: Every change is on the Changelog tab. -->

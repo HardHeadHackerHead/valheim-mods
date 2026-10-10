@@ -1,27 +1,19 @@
-<!-- This page is made by tools/modpages/make_pages.py from the mod's DESCRIPTION.txt, CHANGELOG.txt, settings and the
-     repo's README. Change those (or the HAND-WRITTEN part below), not the rest of this page. -->
+<!-- This page is made by tools/modpages/make_pages.py from the mod's thunderstore.toml, DESCRIPTION.txt, CHANGELOG.txt,
+     settings and the repo's README. Change those, or the HAND-WRITTEN parts, not the rest of this page. -->
 
-# 🤖 ClaudeTools
+# 🤖 Quad's AI Mod Toolkit
 
-<img src="cover.png" alt="ClaudeTools" width="100%">
+<img src="cover.png" alt="Quad's AI Mod Toolkit" width="100%">
 
-**Version 1.2.3**  ·  [all the mods](../../README.md)  ·  install it from [Thunderstore](https://thunderstore.io/c/valheim/p/Quads_Lab/Quads_AI_Mod_Toolkit/) (r2modman, Thunderstore Mod Manager) or the in-game [mod manager](https://github.com/HardHeadHackerHead/valheim-mod-manager) (**F7**)
+**For Claude Code and other AI assistants: see your game and make mods that work with other mods: pictures, the game's real code, a pre-release check, clash reports and safe reloading. Works through files on your PC; no network port.**
 
-Lets an AI assistant like [Claude Code](https://claude.com/claude-code) see your game and help, through a **request mailbox** of files on your computer: pictures from any angle, ground surveys, your status, inventory, what is nearby and what you look at, the chests around you and what each is assigned, the mods running and their settings, the log, a message on screen or a pin on your map. Other mods add their own commands (BuildOrders: place, check and photograph blueprints). No network port; it never moves your character. Off until you switch requests on.
+![version: 1.2.3](https://img.shields.io/badge/version-1.2.3-3b6e8f?style=flat-square)  ![multiplayer: only who wants it](https://img.shields.io/badge/multiplayer-only%20who%20wants%20it-7a5c2e?style=flat-square)  ![made with: Claude Code](https://img.shields.io/badge/made%20with-Claude%20Code-c26a3d?style=flat-square)
 
-<!-- HAND-WRITTEN: kept when this page is made again -->
-## 📸 Screenshots
+[Source code](https://github.com/HardHeadHackerHead/valheim-mods/tree/main/mods/ClaudeTools)  ·  [Report a bug](https://github.com/HardHeadHackerHead/valheim-mods/issues/new?template=bug.yml&title=%5BQuad%27s%20AI%20Mod%20Toolkit%5D%20)  ·  [Discord](https://discord.gg/EwTjQxEZPy)
 
-**A picture the assistant took with its own camera, over your base**
+**Install:** press **F7** in the game with our [mod manager](https://github.com/HardHeadHackerHead/valheim-mod-manager), or take `ClaudeTools.dll` from [dist/](https://github.com/HardHeadHackerHead/valheim-mods/tree/main/dist). It isn't on Thunderstore.
 
-<img src="images/1.jpg" alt="A picture the assistant took with its own camera, over your base" width="100%">
-
-**Straight down over a place (the top command)**
-
-<img src="images/2.jpg" alt="Straight down over a place (the top command)" width="100%">
-<!-- END HAND-WRITTEN -->
-
-## 🔍 How it works
+## ✨ Features
 
 Lets an AI assistant like Claude Code see your game and help you, through files on your computer: no network port, and it only moves your character or presses keys for you (the shoot command, for screenshots) where the game allows cheats.
 
@@ -36,15 +28,55 @@ Lets an AI assistant like Claude Code see your game and help you, through files 
 
 Requests are off until you switch AllowRequests on (BepInEx/config/com.quad.claudetools.cfg). Changing mods' settings by request needs AllowConfigChanges as well. Only switch requests on while you work with an assistant.
 
-## ⌨️ Keys
+## 📸 Screenshots
+
+<!-- HAND-WRITTEN: screenshots -->
+**A picture the assistant took with its own camera, over your base**
+
+<img src="images/1.jpg" alt="A picture the assistant took with its own camera, over your base" width="100%">
+
+**Straight down over a place (the top command)**
+
+<img src="images/2.jpg" alt="Straight down over a place (the top command)" width="100%">
+<!-- END HAND-WRITTEN: screenshots -->
+
+## 🎮 How to use
 
 | Key | What it does |
 |---|---|
 | **F12** / **Ctrl+F12** | Save a screenshot / survey the ground around where you look, for the AI assistant |
 
+<!-- HAND-WRITTEN: how-to-use -->
+
+<!-- END HAND-WRITTEN: how-to-use -->
+
+## 🧩 Other mods
+
+<!-- HAND-WRITTEN: other-mods -->
+**Known clashes**
+
+- **ScriptEngine**: if it's installed, it loads the mods in `BepInEx/scripts`, and `reload` still reloads one at a time.
+- Mods made with Jotunn or blaxxun's managers are never reloaded while the game runs (they need a restart).
+
+**Works with our mods**
+
+- Commands from [Quad's Companion](https://thunderstore.io/c/valheim/p/Quads_Lab/Quads_Companion/), [Quad's Build Orders](https://thunderstore.io/c/valheim/p/Quads_Lab/Quads_Build_Orders/), [Quad's Ledger Chest](https://thunderstore.io/c/valheim/p/Quads_Lab/Quads_Ledger_Chest/), Bird Trap, Arena, Rainbows, Skal Tavern and Ziplines.
+- [Quad's Quality of Life](https://thunderstore.io/c/valheim/p/Quads_Lab/Quads_Quality_Of_Life/): `chests` and `chestrule` read and set chest assignments.
+<!-- END HAND-WRITTEN: other-mods -->
+
+Found a clash with another mod? [Tell us](https://github.com/HardHeadHackerHead/valheim-mods/issues/new?template=bug.yml&title=%5BQuad%27s%20AI%20Mod%20Toolkit%5D%20) which one and what happened.
+
+## 👥 Multiplayer
+
+**Who needs it:** Only the players who want it.
+
+<!-- HAND-WRITTEN: multiplayer -->
+Nothing is shared. Commands that change the world (give, grow, remove, teleport) work only in single player, for the host, or with devcommands on.
+<!-- END HAND-WRITTEN: multiplayer -->
+
 ## ⚙️ Settings
 
-In `BepInEx/config/com.quad.claudetools.cfg` (made the first time the game runs with the mod).
+In `BepInEx/config/com.quad.claudetools.cfg`, made the first time the game runs with the mod. r2modman and Thunderstore Mod Manager edit it under **Config editor**.<!-- GITHUB-ONLY --> With our mod manager: **F7**, then **Mod settings**.<!-- END GITHUB-ONLY -->
 
 **Dev**
 
@@ -78,24 +110,26 @@ In `BepInEx/config/com.quad.claudetools.cfg` (made the first time the game runs 
 | `AllowRequests` | `false` | Carry out request files an AI assistant drops into BepInEx/claude/requests (pictures, surveys, what you carry and see, and commands other mods add, such as placing blueprint ghosts). Only files on this computer can do this; nothing moves your character or presses keys. Turn it on while you work with an assistant. |
 | `AllowConfigChanges` | `false` | Also let requests change mods' settings (config set). Reading settings is always allowed. |
 
-## 👥 Playing together
-
-See [who needs which mod](../../README.md#playing-together) on the front page.
-
 ## 🤖 Made with AI
 
 Made with the help of Claude (Anthropic), with Claude Code: designed, written and checked together, and tried in the game.
 
-## 📜 Changes
+## 🧪 About Quads Lab
+
+Quads Lab is where **Quad H** ([HardHeadHackerHead](https://github.com/HardHeadHackerHead)) builds software with AI, of every kind:
+these Valheim mods are one of its projects. Each mod is designed by a player, written with [Claude Code](https://claude.com/claude-code)
+and tested in our own world, with **bobisme** as our tester.
+
+- 🌐 [quadslab.io](https://quadslab.io)
+- 🧰 [All Quads Lab mods on Thunderstore](https://thunderstore.io/c/valheim/p/Quads_Lab/)
+- 💻 [Source code on GitHub](https://github.com/HardHeadHackerHead/valheim-mods)
+- 💬 [Discord](https://discord.gg/EwTjQxEZPy)
+- 🐞 Found a bug? [Open an issue on GitHub](https://github.com/HardHeadHackerHead/valheim-mods/issues/new/choose)
+
+## 📜 Recent changes
 
 - **1.2.3** modcheck warns when a mod's commands (Claude Tools' or the game console's) can give items, teleport, hurt, remove things or raise skills with no check of the game's cheat rule (it found four of our own mods). The skills say so too.
 - **1.2.2** A new id, com.quad.claudetools (it was com.dhack.claudetools): your settings move over by themselves the first time it starts, and the old settings file is kept as a backup. Restart the game after this update. If an old copy is still installed beside it, this one stands down and says which file to delete, so the two never both run. The DLL now says it was made with AI, as Thunderstore asks. modcheck warns when a DLL's assembly name is a popular mod's too. New, for releasing on Thunderstore: modkit package <mod folder> writes the mod's thunderstore.toml for the Thunderstore CLI (tcli) and checks everything an upload needs (manifest rules, icon, README and its images, dependencies from the DLL, the version against what's published, Thunderstore's AI disclosure, modcheck); modkit package check <zip> checks the built zip; the valheim-thunderstore skill walks through the team, the token, getting tcli, testing and publishing. New: a dev loader for mod makers, our own in place of ScriptEngine: mods in BepInEx/scripts load when the game starts, and reload <mod> reloads one of them without a restart, only when that's safe (modcheck now gives each mod a reload level: world, main menu only, or restart). devmods lists them; AutoReload (off by default) reloads a rebuilt mod by itself. With ScriptEngine installed, it loads them and reload still reloads one at a time. New: prefabs <text>: the exact names of prefabs containing some text (what objects, give and render need). New: templates/ in BepInEx/claude, code mod makers copy into their mods: server-decided settings, and taking from chests safely in multiplayer. The skills for mod makers are updated with what the review of every mod taught: naming everything after your mod, testing with commands and measuring before and after, F6 and restarts, debug commands that cheat, shipping only what you mean to, the game's order of crafting, building and spawning, and how to switch the console on. Fixed: the skills said to read a chest's in-use flag as a bool (it is an int). The guide lists chests, drop, pickup, fixlevels and chestrule.
 - New: shoot, for setting up screenshots of a mod: find pieces, stand the player somewhere looking somewhere, open the inventory, map, build menu or a mod's window, close them all, hide the HUD (moved here from Arena's own tools). shoot tp and shoot use only work where the game allows cheats. New: objects <prefab>: every object of a kind in the world, loaded or not, and objects <prefab> remove to delete them (where cheats are allowed). The pre-release check is now modcheck (BuildOrders already has a check).
-- New, for mod makers: tools that keep a mod from breaking players' games or other mods. modcheck <mod> (a pre-release check of a mod's DLL: mistakes that have lost players' items and buildings or broken other mods, with why and how to fix), who <method> and clashes (which installed and popular mods change the same things, most likely clashes first), game <Type.Method> (the game's real code: signatures, callers, fields) and gameupdate (after a game update: which methods changed and which mods patch them). What the top 100 Thunderstore mods patch is built in (facts only, no code); DownloadMods keeps it fresh, and library get <mod> fetches any other mod's code to read. Six skills for Claude Code (starting a mod, the game's code, other mods, pitfalls, releasing, fixing errors) and modkit, the same commands as a program for when the game is closed, are written to BepInEx/claude. A clashes report is made after each launch, and claude <command> in the game's console (F5) runs any command.
-- Faster: mods and waitfor read BepInEx's list of mods instead of searching everything the game has loaded. The guide for mod makers shows the fast way to find Claude Tools.
-- New: comfort: the comfort level a set of pieces would give together (with each piece's comfort and comfort group, as the game counts them), or the player's comfort now and the pieces giving it.
-- New: give <item> (put an item in your bag), use <item> (use one from your bag, as a double-click does) and grow <seconds> (age nearby plants) for trying out a mod's new items and plants. Fix: chests failed for everyone when a chest near you was not set up yet (no inventory): it is skipped now.
-- New: colliders (each piece's solid colliders as the game's support check sees them, its centre of mass and material) and support (built pieces near a place with the support the game gives them now, weakest first): for checking that a build will stand, and why a piece fell. inspect now lists each part's colliders and their sizes too (how a player measures: a capsule 0.98 m across, 1.85 m tall).
-- chests (the chests around you: contents, QualityOfLife assignment, whose) and chestrule (set a chest's assignment, nothing in it touched).
-- New: render (a picture of any piece, item or creature on its own, with its real materials, from any angle or close up, without placing it), inspect (what an object is made of), errors (new errors since the last check) and waitfor (wait until a rebuilt mod has reloaded).
-- First version: the request mailbox (BepInEx/claude/requests), pictures, surveys, status, inventory, nearby, looking, mods, settings, log, messages and map pins, and commands added by other mods (BuildOrders adds its blueprint commands).
+
+<!-- GITHUB-ONLY -->[Every change](CHANGELOG.txt)<!-- END GITHUB-ONLY --><!-- THUNDERSTORE-ONLY: Every change is on the Changelog tab. -->

@@ -1,17 +1,27 @@
-<!-- This page is made by tools/modpages/make_pages.py from the mod's DESCRIPTION.txt, CHANGELOG.txt, settings and the
-     repo's README. Change those (or the HAND-WRITTEN part below), not the rest of this page. -->
+<!-- This page is made by tools/modpages/make_pages.py from the mod's thunderstore.toml, DESCRIPTION.txt, CHANGELOG.txt,
+     settings and the repo's README. Change those, or the HAND-WRITTEN parts, not the rest of this page. -->
 
-# 📦 CraftFromChests
+# 📦 Quad's Craft From Chests
 
-<img src="cover.png" alt="CraftFromChests" width="100%">
+<img src="cover.png" alt="Quad's Craft From Chests" width="100%">
 
-**Version 1.4.1**  ·  [all the mods](../../README.md)  ·  install it from [Thunderstore](https://thunderstore.io/c/valheim/p/Quads_Lab/Quads_Craft_From_Chests/) (r2modman, Thunderstore Mod Manager) or the in-game [mod manager](https://github.com/HardHeadHackerHead/valheim-mod-manager) (**F7**)
+**Crafting stations, and hand-crafting from your inventory, use materials from nearby chests.**
 
-Crafting stations (and hand-crafting) use materials from nearby chests. See lines to every chest in use and change the range from 5 to 30 m.
+![version: 1.4.1](https://img.shields.io/badge/version-1.4.1-3b6e8f?style=flat-square)  ![multiplayer: only who wants it](https://img.shields.io/badge/multiplayer-only%20who%20wants%20it-7a5c2e?style=flat-square)  ![made with: Claude Code](https://img.shields.io/badge/made%20with-Claude%20Code-c26a3d?style=flat-square)
 
-<!-- HAND-WRITTEN: kept when this page is made again -->
+<!-- GITHUB-ONLY -->[Thunderstore](https://thunderstore.io/c/valheim/p/Quads_Lab/Quads_Craft_From_Chests/)  ·  <!-- END GITHUB-ONLY -->[Source code](https://github.com/HardHeadHackerHead/valheim-mods/tree/main/mods/CraftFromChests)  ·  [Report a bug](https://github.com/HardHeadHackerHead/valheim-mods/issues/new?template=bug.yml&title=%5BQuad%27s%20Craft%20From%20Chests%5D%20)  ·  [Discord](https://discord.gg/EwTjQxEZPy)
+
+<!-- GITHUB-ONLY -->**Install:** with [r2modman](https://thunderstore.io/c/valheim/p/ebkr/r2modman/) or Thunderstore Mod Manager from [Thunderstore](https://thunderstore.io/c/valheim/p/Quads_Lab/Quads_Craft_From_Chests/), or press **F7** in the game with our [mod manager](https://github.com/HardHeadHackerHead/valheim-mod-manager).<!-- END GITHUB-ONLY -->
+
+## ✨ Features
+
+- Anything you can reach within the range counts toward a recipe. The game takes the materials from your inventory first, then from the chests.
+- The crafting menu shows how many of each material you have in total.
+- A Chest lines button beside the crafting tabs draws lines from the station to every chest in use; a Range button cycles the distance (5 to 30 m).
+
 ## 📸 Screenshots
 
+<!-- HAND-WRITTEN: screenshots -->
 **The workbench: Chest lines and Range beside the tabs, and the materials counted from the chests**
 
 <img src="images/1.jpg" alt="The workbench: Chest lines and Range beside the tabs, and the materials counted from the chests" width="100%">
@@ -19,33 +29,42 @@ Crafting stations (and hand-crafting) use materials from nearby chests. See line
 **Close up: the buttons and the counts**
 
 <img src="images/2.jpg" alt="Close up: the buttons and the counts" width="100%">
-## ⚠️ Known clashes
+<!-- END HAND-WRITTEN: screenshots -->
 
-- **Adventure Backpacks** ("Craft From Backpack", on by default): handled. The backpack pays its part first and this mod only takes what is
-  still missing from the chests (before 1.4.0, crafting next to it could cost up to twice as much).
-- **AzuCraftyBoxes**, **CraftFromContainers** (aedenthorn), and **ValheimPlus** with its `CraftFromChest` section on: they also craft from
-  chests, and two such mods count every chest twice (crafts pay half). When one of them is installed (ValheimPlus: while that section is on)
-  this mod stands down and leaves crafting from chests to it; the log says so once.
-- **BuildFromChests** and **FeedFromChests** (ours): fine together. Each one only works in its own moment (crafting, building, feeding a
-  station), and each pays only what the others left.
-- Only built chests are used: graves, carts, ships, a companion's bag and chest, and a backpack you carry are left alone.
-<!-- END HAND-WRITTEN -->
+<!-- HAND-WRITTEN: how-to-use -->
 
-## 🔍 How it works
+<!-- END HAND-WRITTEN: how-to-use -->
 
-Crafting stations, and hand-crafting from your inventory, use materials from nearby chests.
+## 🧩 Other mods
 
-### How it works
+<!-- HAND-WRITTEN: other-mods -->
+**Known clashes**
 
-- Anything you can reach within the range counts toward a recipe. The game takes the materials from your inventory first, then from the chests.
-- The crafting menu shows how many of each material you have in total.
-- A Chest lines button beside the crafting tabs draws lines from the station to every chest in use; a Range button cycles the distance (5 to 30 m).
+- **Adventure Backpacks** ("Craft From Backpack"): handled. The backpack pays its part first and the chests pay only what is still missing. The backpack is never used as a chest.
+- **Other craft-from-chests mods** (AzuCraftyBoxes, CraftFromContainers (aedenthorn, and its forks), Craft From Chests (Toxo), CraftFromChestsPlus, Teflon Ted's Craft From Chests, StoreAndCraft, SmartCraft-Storage, and ValheimPlus while its `CraftFromChest` section is on): they also take from chests, and two such mods count every chest twice. When one is installed this mod stands down and leaves it to them; the log says so once.
+- **Any mod that refuses a payment or already paid**: respected. It runs after other mods and does nothing if they cancelled.
 
-Settings: range (default 20 m), whether counts and lines show, and the position and size of the buttons.
+**Works with our mods**
+
+- [Quad's Build From Chests](https://thunderstore.io/c/valheim/p/Quads_Lab/Quads_Build_From_Chests/) and [Quad's Feed From Chests](https://thunderstore.io/c/valheim/p/Quads_Lab/Quads_Feed_From_Chests/): fine together. Each works only in its own moment and pays only what the others left.
+- [Quad's Recycler](https://thunderstore.io/c/valheim/p/Quads_Lab/Quads_Recycler/) and companions' chests ([Quad's Companion](https://thunderstore.io/c/valheim/p/Quads_Lab/Quads_Companion/)) are never used.
+<!-- END HAND-WRITTEN: other-mods -->
+
+Found a clash with another mod? [Tell us](https://github.com/HardHeadHackerHead/valheim-mods/issues/new?template=bug.yml&title=%5BQuad%27s%20Craft%20From%20Chests%5D%20) which one and what happened.
+
+## 👥 Multiplayer
+
+**Who needs it:** Only the players who want it.
+
+<!-- HAND-WRITTEN: multiplayer -->
+It only takes from chests you could open yourself: never one someone else has open, one behind a ward that keeps you out, or a private chest.
+
+**The host decides:** how far it reaches (Radius). While you play on their world their values replace yours (your file isn't changed); a host without the mod leaves everyone their own.
+<!-- END HAND-WRITTEN: multiplayer -->
 
 ## ⚙️ Settings
 
-In `BepInEx/config/com.quad.craftfromchests.cfg` (made the first time the game runs with the mod).
+In `BepInEx/config/com.quad.craftfromchests.cfg`, made the first time the game runs with the mod. r2modman and Thunderstore Mod Manager edit it under **Config editor**.<!-- GITHUB-ONLY --> With our mod manager: **F7**, then **Mod settings**.<!-- END GITHUB-ONLY -->
 
 **Display**
 
@@ -66,17 +85,26 @@ In `BepInEx/config/com.quad.craftfromchests.cfg` (made the first time the game r
 | `Enabled` | `true` | Turn the mod on or off. |
 | `Radius` | `20` | How far (in meters) from the crafting station a chest can be and still be used. In multiplayer the server's value applies. |
 
-## 👥 Playing together
-
-See [who needs which mod](../../README.md#playing-together) on the front page.
-
 ## 🤖 Made with AI
 
 Made with the help of Claude (Anthropic), with Claude Code: designed, written and checked together, and tried in the game.
 
-## 📜 Changes
+## 🧪 About Quads Lab
+
+Quads Lab is where **Quad H** ([HardHeadHackerHead](https://github.com/HardHeadHackerHead)) builds software with AI, of every kind:
+these Valheim mods are one of its projects. Each mod is designed by a player, written with [Claude Code](https://claude.com/claude-code)
+and tested in our own world, with **bobisme** as our tester.
+
+- 🌐 [quadslab.io](https://quadslab.io)
+- 🧰 [All Quads Lab mods on Thunderstore](https://thunderstore.io/c/valheim/p/Quads_Lab/)
+- 💻 [Source code on GitHub](https://github.com/HardHeadHackerHead/valheim-mods)
+- 💬 [Discord](https://discord.gg/EwTjQxEZPy)
+- 🐞 Found a bug? [Open an issue on GitHub](https://github.com/HardHeadHackerHead/valheim-mods/issues/new/choose)
+
+## 📜 Recent changes
 
 - **1.4.1** A new id, com.quad.craftfromchests (it was com.dhack.craftfromchests): your settings move over by themselves the first time it starts, and the old settings file is kept as a backup. Restart the game after this update. If an old copy is still installed beside it, this one stands down and says which file to delete, so the two never both run. The DLL now says it was made with AI, as Thunderstore asks. It also stands down next to Toxo's Craft From Chests, CraftFromChestsPlus, Teflon Ted's Craft From Chests, StoreAndCraft and SmartCraft-Storage, as it already did next to AzuCraftyBoxes and CraftFromContainers: two such mods count every chest twice.
 - Fix: next to Adventure Backpacks, crafting could cost up to twice as much (the backpack and the chests both paid). Now the backpack pays its part and the chests only what is still missing. Fix: "any one of these" recipes (meads and the like) could be crafted for free from the chests, or failed when you carried none. Fix: a craft the chests can no longer pay for (someone took the materials since the window counted them) is now refused with a message, instead of being handed over for less. Graves, carts, ships, a companion's bag and chest and a backpack are no longer used as storage. With AzuCraftyBoxes, CraftFromContainers or ValheimPlus' craft-from-chest installed, this mod stands down (two would count every chest twice). In multiplayer the server's Radius applies (2 to 50 m).
 - Fix: in multiplayer, crafting with materials from a chest another player had open could lose or duplicate items. Chests in use are now left alone.
-- Smoother: the crafting-screen buttons are only looked after while the inventory is open and aren't repositioned every frame, and the chest checks are worked out once and reused (no more stutter when opening the inventory). Hand-crafting from the inventory uses nearby chests, and the crafting window shows how many of each material you have.
+
+<!-- GITHUB-ONLY -->[Every change](CHANGELOG.txt)<!-- END GITHUB-ONLY --><!-- THUNDERSTORE-ONLY: Every change is on the Changelog tab. -->

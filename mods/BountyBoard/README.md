@@ -1,31 +1,19 @@
-<!-- This page is made by tools/modpages/make_pages.py from the mod's DESCRIPTION.txt, CHANGELOG.txt, settings and the
-     repo's README. Change those (or the HAND-WRITTEN part below), not the rest of this page. -->
+<!-- This page is made by tools/modpages/make_pages.py from the mod's thunderstore.toml, DESCRIPTION.txt, CHANGELOG.txt,
+     settings and the repo's README. Change those, or the HAND-WRITTEN parts, not the rest of this page. -->
 
-# 📜 BountyBoard
+# 📜 Quad's Bounty Board
 
-<img src="cover.png" alt="BountyBoard" width="100%">
+<img src="cover.png" alt="Quad's Bounty Board" width="100%">
 
-**Version 1.2.1**  ·  [all the mods](../../README.md)  ·  install it from [Thunderstore](https://thunderstore.io/c/valheim/p/Quads_Lab/Quads_Bounty_Board/) (r2modman, Thunderstore Mod Manager) or the in-game [mod manager](https://github.com/HardHeadHackerHead/valheim-mod-manager) (**F7**)
+**A buildable notice board with contracts for the whole group, paid in coins and the materials of the stage you have reached.**
 
-A buildable notice board with contracts the whole server works on together: hunt, clear out regions, slay starred creatures or bring in loot, and get paid in coins and materials that match how far you have got (bronze, iron, silver...). Harder contracts as you beat bosses, and a tracker you can keep on screen.
+![version: 1.2.1](https://img.shields.io/badge/version-1.2.1-3b6e8f?style=flat-square)  ![multiplayer: everyone + host](https://img.shields.io/badge/multiplayer-everyone%20%2B%20host-7a5c2e?style=flat-square)  ![made with: Claude Code](https://img.shields.io/badge/made%20with-Claude%20Code-c26a3d?style=flat-square)
 
-<!-- HAND-WRITTEN: kept when this page is made again -->
-## 📸 Screenshots
+<!-- GITHUB-ONLY -->[Thunderstore](https://thunderstore.io/c/valheim/p/Quads_Lab/Quads_Bounty_Board/)  ·  <!-- END GITHUB-ONLY -->[Source code](https://github.com/HardHeadHackerHead/valheim-mods/tree/main/mods/BountyBoard)  ·  [Report a bug](https://github.com/HardHeadHackerHead/valheim-mods/issues/new?template=bug.yml&title=%5BQuad%27s%20Bounty%20Board%5D%20)  ·  [Discord](https://discord.gg/EwTjQxEZPy)
 
-**The Bounty Board**
+<!-- GITHUB-ONLY -->**Install:** with [r2modman](https://thunderstore.io/c/valheim/p/ebkr/r2modman/) or Thunderstore Mod Manager from [Thunderstore](https://thunderstore.io/c/valheim/p/Quads_Lab/Quads_Bounty_Board/), or press **F7** in the game with our [mod manager](https://github.com/HardHeadHackerHead/valheim-mod-manager).<!-- END GITHUB-ONLY -->
 
-<img src="images/1.jpg" alt="The Bounty Board" width="100%">
-
-**The day's notices: hunts, clear-outs and fetch jobs**
-
-<img src="images/2.jpg" alt="The day's notices: hunts, clear-outs and fetch jobs" width="100%">
-<!-- END HAND-WRITTEN -->
-
-## 🔍 How it works
-
-A buildable notice board with contracts for the whole group, paid in coins and the materials of the stage you have reached.
-
-### How it works
+## ✨ Features
 
 - Build it with the hammer at a workbench (Wood, Leather Scraps and Flint) and press E on it. Every board shows the same notices.
 - Five notices are posted each in-game day: hunt a number of one creature, clear out a region's creatures, slay starred ones, or bring in loot.
@@ -39,15 +27,49 @@ A buildable notice board with contracts for the whole group, paid in coins and t
 
 The contracts are kept by the host's game, so BountyBoard has to be installed on the host too.
 
-## ⌨️ Keys
+## 📸 Screenshots
+
+<!-- HAND-WRITTEN: screenshots -->
+**The Bounty Board**
+
+<img src="images/1.jpg" alt="The Bounty Board" width="100%">
+
+**The day's notices: hunts, clear-outs and fetch jobs**
+
+<img src="images/2.jpg" alt="The day's notices: hunts, clear-outs and fetch jobs" width="100%">
+<!-- END HAND-WRITTEN: screenshots -->
+
+## 🎮 How to use
 
 | Key | What it does |
 |---|---|
 | **E** at a Bounty Board | Read the day's notices, take a contract, hand one in |
 
+<!-- HAND-WRITTEN: how-to-use -->
+
+<!-- END HAND-WRITTEN: how-to-use -->
+
+## 🧩 Other mods
+
+<!-- HAND-WRITTEN: other-mods -->
+**Known clashes:** none known.
+<!-- END HAND-WRITTEN: other-mods -->
+
+Found a clash with another mod? [Tell us](https://github.com/HardHeadHackerHead/valheim-mods/issues/new?template=bug.yml&title=%5BQuad%27s%20Bounty%20Board%5D%20) which one and what happened.
+
+## 👥 Multiplayer
+
+**Who needs it:** Everyone, and **the host above all**: a game without the mod deletes the pieces when their area loads. Restart after installing or updating them.
+
+<!-- HAND-WRITTEN: multiplayer -->
+The host runs the group's contracts and keeps them in a file next to its settings; each player's progress is credited to whoever really played it. A kill counts when the game running that creature has the mod (in a group, usually the nearest player's).
+
+**The host decides:** days between new notices, notices per board, most contracts at once and rewards. While you play on their world their values replace yours (your file isn't changed); a host without the mod leaves everyone their own.
+<!-- END HAND-WRITTEN: multiplayer -->
+
 ## ⚙️ Settings
 
-In `BepInEx/config/com.quad.bountyboard.cfg` (made the first time the game runs with the mod).
+In `BepInEx/config/com.quad.bountyboard.cfg`, made the first time the game runs with the mod. r2modman and Thunderstore Mod Manager edit it under **Config editor**.<!-- GITHUB-ONLY --> With our mod manager: **F7**, then **Mod settings**.<!-- END GITHUB-ONLY -->
 
 **Contracts**
 
@@ -72,18 +94,26 @@ In `BepInEx/config/com.quad.bountyboard.cfg` (made the first time the game runs 
 | `Y` | `330` | Distance from the top of the screen (UI pixels). |
 | `Scale` | `1` | Size of the tracker. |
 
-## 👥 Playing together
-
-Everyone in the world needs it, **the host above all**. It adds a new build piece. Restart the game after updating so it registers cleanly.
-
 ## 🤖 Made with AI
 
 Made with the help of Claude (Anthropic), with Claude Code: designed, written and checked together, and tried in the game.
 
-## 📜 Changes
+## 🧪 About Quads Lab
+
+Quads Lab is where **Quad H** ([HardHeadHackerHead](https://github.com/HardHeadHackerHead)) builds software with AI, of every kind:
+these Valheim mods are one of its projects. Each mod is designed by a player, written with [Claude Code](https://claude.com/claude-code)
+and tested in our own world, with **bobisme** as our tester.
+
+- 🌐 [quadslab.io](https://quadslab.io)
+- 🧰 [All Quads Lab mods on Thunderstore](https://thunderstore.io/c/valheim/p/Quads_Lab/)
+- 💻 [Source code on GitHub](https://github.com/HardHeadHackerHead/valheim-mods)
+- 💬 [Discord](https://discord.gg/EwTjQxEZPy)
+- 🐞 Found a bug? [Open an issue on GitHub](https://github.com/HardHeadHackerHead/valheim-mods/issues/new/choose)
+
+## 📜 Recent changes
 
 - **1.2.1** A new id, com.quad.bountyboard (it was com.dhack.bountyboard): your settings move over by themselves the first time it starts, and the old settings file is kept as a backup. Restart the game after this update. If an old copy is still installed beside it, this one stands down and says which file to delete, so the two never both run. The DLL now says it was made with AI, as Thunderstore asks.
 - **1.2.0** Fix: a finished contract's reward could be collected again and again with new characters. The host now goes by who is actually playing on each connection (not what the message says) and pays only the characters that worked on a contract (took it, made a kill for it or handed loot in) or were playing when it was finished. (Contracts finished before this update can still be collected as before.) In multiplayer the host's notice and contract settings now apply on everyone's screen too. The menu and tracker use the game's fonts, and a problem drawing the board's look can no longer stop it being registered.
 - Fix: after a fresh game start the board was not registered until the mods were reloaded, so the game deleted any it found standing in the world. It is now registered as the world loads. Ones already lost can't be brought back; build them again. Fix: kills by any player now count in multiplayer (before, a kill only counted when the killer's own game was handling that creature). Fix: hosting a different world without restarting the game no longer carries the last world's contracts over and overwrites the new one's. Contracts are now kept by the world's id, so two worlds with the same name no longer share them (your existing contracts carry over).
-- The sign on the board now reads BOUNTIES in gold carved letters (the old marks sat too close to the board and partly disappeared). Restart the game to see it on boards already built.
-- The on-screen tracker is easier to read: taller progress bars with a larger, outlined 3/6, bigger text and more room between contracts.
+
+<!-- GITHUB-ONLY -->[Every change](CHANGELOG.txt)<!-- END GITHUB-ONLY --><!-- THUNDERSTORE-ONLY: Every change is on the Changelog tab. -->

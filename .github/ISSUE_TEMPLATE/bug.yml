@@ -1,0 +1,46 @@
+name: Bug report
+description: Something in one of the mods doesn't work as it should
+labels: [bug]
+body:
+  - type: input
+    id: mod
+    attributes:
+      label: Which mod, and its version
+      description: The version is on its Thunderstore page, in r2modman, or in the F7 mod manager.
+      placeholder: Quad's Recycler 1.1.1
+    validations:
+      required: true
+  - type: textarea
+    id: what
+    attributes:
+      label: What happened, and what you expected
+      placeholder: I recycled a Flint Axe next to a workbench and got nothing back.
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: How to make it happen again
+      placeholder: |
+        1. Build a Recycler next to a workbench
+        2. ...
+  - type: dropdown
+    id: where
+    attributes:
+      label: Where you played
+      options:
+        - Single player
+        - Hosting for friends
+        - Joined someone's game
+        - Dedicated server
+  - type: textarea
+    id: mods
+    attributes:
+      label: Your other mods
+      description: r2modman can copy the list (Settings → Copy mod list), or name the big ones.
+  - type: textarea
+    id: log
+    attributes:
+      label: The log
+      description: Attach BepInEx/LogOutput.log (r2modman → Settings → Browse profile folder), or paste the red lines.
+      render: text
