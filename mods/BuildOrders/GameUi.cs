@@ -564,4 +564,29 @@ namespace BuildOrders
             return false;
         }
     }
+
+    [HarmonyPatch(typeof(InventoryGui), "Update")]
+    internal static class GameUi_InventoryKey
+    {
+        // Tab would open the inventory under the window: instead it closes the window, as it closes a chest (what Escape closes), and
+        // while typing in a text box it does nothing. Here, before the inventory looks, whichever runs first in the frame.
+        private static void Prefix()
+        {
+            if (!GameUi.IsOpen() || !(ZInput.GetButtonDown("Inventory") || ZInput.GetButtonDown("JoyButtonY"))) return;
+            UnityEngine.GameObject selected = UnityEngine.EventSystems.EventSystem.current != null ? UnityEngine.EventSystems.EventSystem.current.currentSelectedGameObject : null;
+            TMPro.TMP_InputField field = selected != null ? selected.GetComponent<TMPro.TMP_InputField>() : null;
+            bool typing = field != null && field.isFocused;
+            ZInput.ResetButtonStatus("Inventory");
+            ZInput.ResetButtonStatus("JoyButtonY");
+            if (!typing) GameUi_EscapeCloses.Close();
+        }
+    }
+
+    [HarmonyPatch(typeof(Minimap), nameof(Minimap.InTextInput))]
+    internal static class GameUi_InTextInput
+    {
+        // the game's chat (Enter) and map (M) keys, and other mods' hotkeys, stay quiet while the game says "typing in a box": so while a
+        // window is open, it says so
+        private static void Postfix(ref bool __result) { if (GameUi.IsOpen()) __result = true; }
+    }
 }

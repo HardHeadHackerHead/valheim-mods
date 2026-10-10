@@ -35,6 +35,10 @@
 **A row of smelters that feed themselves from the chests round them**
 
 <img src="images/1.jpg" alt="A row of smelters that feed themselves from the chests round them" width="100%">
+
+**The menu at a smelter: add by hand on the left, its auto-feed settings on the right**
+
+<img src="images/2.jpg" alt="The menu at a smelter" width="100%">
 <!-- END HAND-WRITTEN: screenshots -->
 
 ## 🎮 How to use

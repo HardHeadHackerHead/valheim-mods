@@ -260,7 +260,7 @@ namespace ClaudeTools
             // a mod whose pieces are made reloadable (they stay registered, and placed ones get the new copy's components: the template's
             // PieceReload) says so with AssemblyMetadata("ClaudeTools.Reload", "world"); that covers pieces only, never items in bags
             bool piecesReload = declaredReload == "world" && !addsToObjectDB && heightWhere == null && !(patches.Count > 0 && !unpatches) && !usesJotunn && managers == null;
-            if (addsPrefabs && piecesReload) why.Add("it registers pieces, and its author says they reload in a world (kept registered, placed ones given the new copy)");
+            if (addsPrefabs && piecesReload) why.Add("it registers pieces or creatures, and its author says they reload in a world (kept registered, the ones in the world given the new copy)");
             else if (addsPrefabs) Need(1, "it registers prefabs (pieces, items or creatures): for a moment they're missing, and placed ones and items in bags " +
                                      "point at the old copy");
             if (addsToObjectDB) Need(1, "it adds items, recipes or status effects to ObjectDB");

@@ -34,6 +34,10 @@ Keys are configurable. Q and B work while you are running.
 **Choosing what a chest receives (K)**
 
 <img src="images/1.jpg" alt="Choosing what a chest receives (K)" width="100%">
+
+**Sort, Stack to chests and Sort chests, under your inventory**
+
+<img src="images/2.jpg" alt="The buttons under your inventory" width="100%">
 <!-- END HAND-WRITTEN: screenshots -->
 
 ## 🎮 How to use

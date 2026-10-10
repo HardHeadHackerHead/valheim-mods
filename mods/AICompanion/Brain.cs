@@ -418,7 +418,15 @@ namespace AICompanion
             {
                 foreach (Humanoid gone in States.Keys.Where(k => k == null).ToList()) States.Remove(gone);
                 States[h] = st = new BrainState { Body = h, Ai = h.GetComponent<MonsterAI>() };
-                if (h.GetComponent<ZNetView>() is ZNetView v && v.IsValid() && v.IsOwner()) Work.RestoreArea(st); // (its job, kept through a reload)
+                if (h.GetComponent<ZNetView>() is ZNetView v && v.IsValid() && v.IsOwner())
+                {
+                    Work.RestoreArea(st); // (its job, kept through a reload)
+                    // a fresh brain for a body that was held still (in bed when an older copy unloaded) and isn't riding: free it
+                    if (h.GetComponent<Rigidbody>() is Rigidbody body && body.isKinematic && h.GetComponentInParent<Ship>() == null && !h.IsAttached())
+                    { body.isKinematic = false; body.detectCollisions = true; }
+                    // a cart it is still hitched to (the older copy knew it was pulling it)
+                    st.Cart = UnityEngine.Object.FindObjectsOfType<Vagon>().FirstOrDefault(cart => cart != null && cart.IsAttached(h));
+                }
             }
             return st;
         }

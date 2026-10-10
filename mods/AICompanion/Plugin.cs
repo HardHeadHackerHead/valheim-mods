@@ -4,6 +4,10 @@ using BepInEx.Configuration;
 using HarmonyLib;
 using UnityEngine;
 
+// It reloads while you play: its prefab stays registered across a reload and nothing of it sits on world objects (it works through
+// patches); companions in bed or a chair are let go first (ReleaseForReload). For mod makers: players start the game with it.
+[assembly: System.Reflection.AssemblyMetadata("ClaudeTools.Reload", "world")]
+
 namespace AICompanion
 {
     /// <summary>
@@ -92,6 +96,29 @@ namespace AICompanion
                 Chat.instance.AddString("[Mod]", $"{Name} v{Version} reloaded", Talker.Type.Normal);
         }
 
+        /// <summary>
+        /// Before this copy unloads (a reload while playing, or quitting): every companion this game runs saves its bag (wear and repairs since
+        /// the last save would be undone) and lets go of a bed or chair (its body held still there would stay frozen under the next copy,
+        /// which doesn't know it was lying down). One riding a ship is left as it is: the next copy boards it again.
+        /// </summary>
+        private static void ReleaseForReload()
+        {
+            foreach (Humanoid c in System.Linq.Enumerable.ToList(Companion.All()))
+            {
+                ZNetView view = c != null ? c.GetComponent<ZNetView>() : null;
+                if (view == null || !view.IsValid() || !view.IsOwner()) continue;
+                try
+                {
+                    Companion.SaveBag(c);
+                    if (c.GetComponentInParent<Ship>() != null) continue;
+                    if (c.GetComponent<Rigidbody>() is Rigidbody body) { body.isKinematic = false; body.detectCollisions = true; }
+                    if (c.GetComponent<ZSyncAnimation>() is ZSyncAnimation anim)
+                    { anim.SetBool("attach_bed", false); anim.SetBool("attach_chair", false); anim.SetBool("emote_sit", false); }
+                }
+                catch (System.Exception e) { UnityEngine.Debug.LogWarning("AICompanion: letting a companion go before unloading: " + e.Message); }
+            }
+        }
+
         private void OnDestroy()
         {
             CloseMenu();
@@ -99,6 +126,7 @@ namespace AICompanion
             Net.Stop();
             Home.Stop();
             Portraits.Stop();
+            ReleaseForReload();
             Idle.Forget();  // (up from its chair, before its brain is forgotten)
             Brain.Forget();
             Stamina.Forget();

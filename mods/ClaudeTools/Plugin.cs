@@ -49,6 +49,9 @@ namespace ClaudeTools
             DHack.Shared.Migration.FromOldGuid(this, OldGuid); // first: before any setting is read
             Instance = this;
             Log = Logger;
+            // its only patches: "ui key" (FakeKeys, in UiCommand.cs) presses keys through the game's input; undone in OnDestroy
+            _harmony = new HarmonyLib.Harmony(Guid);
+            _harmony.PatchAll(typeof(Plugin).Assembly);
             _allowRequests = Config.Bind("Requests", "AllowRequests", false,
                 "Carry out request files an AI assistant drops into BepInEx/claude/requests (pictures, surveys, what you carry and see, and commands other mods add, " +
                 "such as placing blueprint ghosts). Only files on this computer can do this; nothing moves your character or presses keys. Turn it on while you work with an assistant.");
@@ -67,8 +70,11 @@ namespace ClaudeTools
 
         private void Start() => StartCoroutine(LoadScriptsAtStart());
 
+        private HarmonyLib.Harmony _harmony;
+
         private void OnDestroy()
         {
+            _harmony?.UnpatchSelf();
             _stopping = true;
             UnregisterConsole();
             ForgetCaches();

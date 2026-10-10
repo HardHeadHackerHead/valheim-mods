@@ -552,7 +552,7 @@ namespace BuildOrders
                 else
                 {
                     bool levelable = plan.IsBlueprint && !bridge && !addon;
-                    GameUi.Label(card, near ? $"Builds every ghost within {_buildAllRadius.Value:0} m of you that you have materials for, lowest first." : $"Walk within {_buildAllRadius.Value:0} m to build it.",
+                    GameUi.Label(card, near ? $"Builds the ghosts within {_buildAllRadius.Value:0} m you have materials for." : $"Walk within {_buildAllRadius.Value:0} m to build it.",
                         new Vector2(bx, -52f), new Vector2(levelable ? 220f : 346f, 40f), 14f, GameUi.Dim);
                     if (levelable)
                         GameUi.Button(card, "Level ground", new Vector2(bx + 228f, -52f), new Vector2(118f, 34f), () => _plansPending = () =>

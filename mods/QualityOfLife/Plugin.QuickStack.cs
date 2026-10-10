@@ -462,18 +462,23 @@ namespace QualityOfLife
             bool stack = _stackEnabled.Value && _stackChests.Count > 0 && OpenChest() == null; // with a chest open the game's own stack/take buttons do the job
             bool sort = _sortEnabled.Value && SlotMod() == null; // next to a slot mod Sort would pull items out of its slots
             if (!_showStackButtons.Value || (!stack && !sort)) { DestroyUnderRow(); return; }
+            // With a chest open its panel sits right under the inventory: no room for a row there (Sort covered the chest's Take all), so
+            // Sort goes beside the inventory's bottom-right corner, under the weight
+            bool beside = OpenChest() != null;
             // How far down the buttons (and the hint under Stack to chests) reach, for other mods' panels below the inventory (GearSlots).
-            AppDomain.CurrentDomain.SetData("DHack.QoL.UnderInventoryHeight", stack ? 54f : 36f);
+            AppDomain.CurrentDomain.SetData("DHack.QoL.UnderInventoryHeight", stack ? 54f : 36f);   // (as before even while Sort sits beside: GearSlots' panel stays where it was)
 
             bool undo = stack && _undo != null; // Undo appears only right after a stack that really moved something, and goes when you close the inventory
             bool sortChests = stack && AnyAssignedChest(); // only when some chest is assigned something
-            string signature = $"{sort}|{stack}|{_stackChests.Count}|{undo}|{sortChests}|{_lockKey.Value}";
+            string signature = $"{sort}|{stack}|{_stackChests.Count}|{undo}|{sortChests}|{_lockKey.Value}|{beside}";
             if (_underRow != null && signature == _underShown) return;
 
             DestroyUnderRow();
             foreach (Transform old in gui.m_player.Cast<Transform>().Where(t => t.name == UnderName).ToList()) Destroy(old.gameObject);   // (a hot reload's)
             _underShown = signature;
-            _underRow = GameUi.Rect(gui.m_player, UnderName, Vector2.zero, new Vector2(0f, 1f), new Vector2(8f, -6f), new Vector2(600f, 52f));
+            _underRow = beside
+                ? GameUi.Rect(gui.m_player, UnderName, new Vector2(1f, 0f), new Vector2(0f, 1f), new Vector2(8f, 36f), new Vector2(90f, 36f))
+                : GameUi.Rect(gui.m_player, UnderName, Vector2.zero, new Vector2(0f, 1f), new Vector2(8f, -6f), new Vector2(600f, 52f));
 
             const float h = 30f, gap = 6f, size = 15f;
             float x = 0f;

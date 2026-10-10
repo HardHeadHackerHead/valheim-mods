@@ -710,8 +710,19 @@ namespace AICompanion
     }
 
     [HarmonyPatch(typeof(InventoryGui), "Update")]
-    internal static class GameUi_TypingKeepsInventoryShut
+    internal static class GameUi_InventoryKey
     {
-        private static void Prefix() { if (GameUi.Typing) ZInput.ResetButtonStatus("Inventory"); }   // Tab types, and doesn't open the inventory
+        // Tab would open the inventory under the window: instead it closes the window, as it closes a chest (what Escape closes), and
+        // while typing in a text box it does nothing. Here, before the inventory looks, whichever runs first in the frame.
+        private static void Prefix()
+        {
+            if (!GameUi.IsOpen() || !(ZInput.GetButtonDown("Inventory") || ZInput.GetButtonDown("JoyButtonY"))) return;
+            UnityEngine.GameObject selected = UnityEngine.EventSystems.EventSystem.current != null ? UnityEngine.EventSystems.EventSystem.current.currentSelectedGameObject : null;
+            TMPro.TMP_InputField field = selected != null ? selected.GetComponent<TMPro.TMP_InputField>() : null;
+            bool typing = field != null && field.isFocused;
+            ZInput.ResetButtonStatus("Inventory");
+            ZInput.ResetButtonStatus("JoyButtonY");
+            if (!typing) GameUi_EscapeCloses.Close();
+        }
     }
 }

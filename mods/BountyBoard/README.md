@@ -34,9 +34,9 @@ The contracts are kept by the host's game, so BountyBoard has to be installed on
 
 <img src="images/1.jpg" alt="The Bounty Board" width="100%">
 
-**The day's notices: hunts, clear-outs and fetch jobs**
+**The group's running contracts: what each asks, its reward and how far along you are**
 
-<img src="images/2.jpg" alt="The day's notices: hunts, clear-outs and fetch jobs" width="100%">
+<img src="images/2.jpg" alt="The group's running contracts on the board" width="100%">
 <!-- END HAND-WRITTEN: screenshots -->
 
 ## 🎮 How to use

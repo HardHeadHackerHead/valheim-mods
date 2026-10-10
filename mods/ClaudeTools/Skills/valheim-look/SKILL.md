@@ -225,6 +225,8 @@ re-runs layout); if UI code fails every frame, log once and hide the panel inste
 `claude shoot ...` in the console), then `shot`:
 
 ```
+shoot pose mything            a page picture of a placed piece: player beside it facing the camera, camera in front looking down
+shoot near mything            stand beside it, on real floor (to press E on it: shoot use mything)
 shoot find mything            where your pieces stand and which way they face
 shoot tp x y z yaw pitch      stand the player there, looking that way (cheat: single player or the host)
 shoot inv / shoot build       open the inventory / the build menu with the hammer
@@ -233,6 +235,16 @@ shot 1920
 shoot close                   close every window again (yours too, through its Close())
 shoot hud on
 ```
+
+**A piece in the world, for the mod's page:** `shoot pose <piece> [zoom] [pitch]` stands the player beside it on real floor, **turned to
+face the camera**, with the camera in front of the piece, a little above and **looking down about 18°**, at a zoom fitted to its size.
+Then `shoot hud off`, `shot`, `shoot hud on`. Look at the picture: in a cramped room give a smaller zoom (`shoot pose piece_x 4`) or pick
+a roomier piece of the same kind; the piece should fill most of the picture, the player beside it as scale. Never move the player to a
+guessed spot (`shoot tp` refuses thin air now; `shoot near <name>` stands beside something safely): a guess beside an upstairs piece
+dropped the player a floor.
+
+**A window, for the mod's page:** open it in a state worth showing (an item chosen, a list with a few rows), take the full-size shot and
+crop it to the window with a little margin.
 
 For the mod's page, take `shot` with **no width** (the full screen, sharpest), crop to what matters, and save it as PNG (or JPG at
 quality 92 or more); a width shrinks it, which is fine for checking but loses detail. Look at every picture yourself before calling the look done: text cut off, Arial anywhere, a panel that lets the world show through, a
