@@ -34,7 +34,7 @@ namespace JetSkis
             try
             {
                 MethodInfo register = found.GetType().GetMethod("RegisterCommand", BindingFlags.Public | BindingFlags.Static);
-                register?.Invoke(null, new object[] { Plugin.Name, "jetski", "jetski status | anims [text] | spawn [metres ahead | at <x> <z>] | clear | remove | ride [far] | sit | off | float | paint | base <attach animation> | pose on|off | tune [<key> <value>]... | bones: the rider's pose on a jet ski, for working on it",
+                register?.Invoke(null, new object[] { Plugin.Name, "jetski", "jetski status | anims [text] | spawn [metres ahead | at <x> <z>] | clear | remove | ride [far] | sit | off | float | paint | all | bags | base <attach animation> | pose on|off | tune [<key> <value>]... | bones: the rider's pose on a jet ski, for working on it",
                     (Func<string[], Action<JObject>, Action<string>, IEnumerator>)Command });
             }
             catch (Exception e) { Plugin.Log.LogWarning("Could not add the jetski command to Claude Tools: " + e.Message); }
@@ -212,6 +212,24 @@ namespace JetSkis
                     if (near == null) { error("no jet ski loaded near you"); return null; }
                     near.NextPaint(me);
                     output(new JObject { ["was"] = near.PaintIndex, ["note"] = "the owner's game changes it; read it again in a moment" });
+                    return null;
+                }
+
+                case "all":
+                {
+                    // every jet ski loaded: where, who is on it, how full its saddlebags are
+                    var list = new JArray();
+                    foreach (JetSki j in JetSki.Loaded.Where(j => j != null))
+                    {
+                        Container c = j.GetComponentInChildren<Container>(true);
+                        list.Add(new JObject
+                        {
+                            ["at"] = new JArray(Math.Round(j.transform.position.x, 1), Math.Round(j.transform.position.y, 1), Math.Round(j.transform.position.z, 1)),
+                            ["rider"] = j.RiderNow()?.GetPlayerName(), ["passenger"] = j.PassengerNow()?.GetPlayerName(),
+                            ["bagItems"] = c != null && c.GetInventory() != null ? c.GetInventory().NrOfItems() : -1,
+                        });
+                    }
+                    output(new JObject { ["jetskis"] = list });
                     return null;
                 }
 
