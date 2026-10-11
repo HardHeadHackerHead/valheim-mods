@@ -5,7 +5,7 @@
 
 <img src="cover.png" alt="Quad's Jet Skis" width="100%">
 
-**A jet ski for Valheim: a fast little boat for one (and a friend), pushed along by a surtling core's fire instead of the wind.**
+**Jet ski (jetski) for a rider and a passenger: a fast motorboat pushed by a surtling core, not the wind. Steer it like a speedboat with WASD; saddlebag storage, paint colours, engine sound and spray. Built with the hammer, like the raft.**
 
 ![version: 0.3.0](https://img.shields.io/badge/version-0.3.0-3b6e8f?style=flat-square)  ![multiplayer: everyone + host](https://img.shields.io/badge/multiplayer-everyone%20%2B%20host-7a5c2e?style=flat-square)  ![made with: Claude Code](https://img.shields.io/badge/made%20with-Claude%20Code-c26a3d?style=flat-square)
 
@@ -16,6 +16,8 @@
 <!-- GITHUB-ONLY -->**Install:** with [r2modman](https://thunderstore.io/c/valheim/p/ebkr/r2modman/) or Thunderstore Mod Manager from [Thunderstore](https://thunderstore.io/c/valheim/p/Quads_Lab/Quads_Jet_Skis/), or press **F7** in the game with our [mod manager](https://github.com/HardHeadHackerHead/valheim-mod-manager).<!-- END GITHUB-ONLY -->
 
 ## ✨ Features
+
+A jet ski for Valheim: a fast little boat for one (and a friend), pushed along by a surtling core's fire instead of the wind.
 
 ### Riding it
 

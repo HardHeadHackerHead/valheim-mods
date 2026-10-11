@@ -7,7 +7,7 @@ schemaVersion = "0.0.1"
 namespace = "Quads_Lab"
 name = "Quads_Jet_Skis"
 versionNumber = "0.3.0"
-description = "A jet ski for Valheim: a fast little boat for one (and a friend), pushed along by a surtling core's fire instead of the wind."
+description = "Jet ski (jetski) for a rider and a passenger: a fast motorboat pushed by a surtling core, not the wind. Steer it like a speedboat with WASD; saddlebag storage, paint colours, engine sound and spray. Built with the hammer, like the raft."
 websiteUrl = "https://github.com/HardHeadHackerHead/valheim-mods/tree/main/mods/JetSkis"
 containsNsfwContent = false
 
@@ -32,4 +32,4 @@ repository = "https://thunderstore.io"
 communities = [ "valheim" ]
 
 [publish.categories]
-valheim = [ "mods", "ai-generated" ]
+valheim = [ "mods", "vehicles", "transportation", "server-side", "client-side", "deep-north-update", "ai-generated" ]
