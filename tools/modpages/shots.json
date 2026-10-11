@@ -95,5 +95,10 @@
   "Ziplines": [
     "Riding a zipline down a mountain",
     "Two Zipline Posts linked by a long rope"
+  ],
+  "Parkour": [
+    "Running along a wall, the blue parkour bar above the stamina bar",
+    "Hanging from a ledge, about to pull up",
+    "A slide, the leading leg out in front"
   ]
 }

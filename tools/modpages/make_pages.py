@@ -96,7 +96,8 @@ def readme_parts():
 
 
 def name_of(src):
-    m = re.search(r'const string Name\s*=\s*"([^"]+)"', src)
+    # the plugin's own (public) Name: a mod may have other private "Name" constants (Parkour's bar)
+    m = re.search(r'public const string Name\s*=\s*"([^"]+)"', src) or re.search(r'const string Name\s*=\s*"([^"]+)"', src)
     return m.group(1) if m else None
 
 

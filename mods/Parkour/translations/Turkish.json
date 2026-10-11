@@ -1,0 +1,14 @@
+{
+  "parkour_skill_description": "Duvarlarda koşmak, onlardan sekmek, duvarlara koşarak tırmanmak, kenarlara tutunup çıkmak ve yere inerken yuvarlanmak. Daha uzun ve hızlı duvar koşuları, art arda daha çok duvar sekmesi, daha yüksek tırmanışlar, daha yumuşak inişler ve her hareket için daha az enerji.",
+  "parkour_hint_wallrun": "Duvarda koşu! Duvardan sekmek için Zıpla.",
+  "parkour_hint_climb": "Duvara koşarak tırmanıyorsun: tepeye tutunmak için İleri'yi basılı tut.",
+  "parkour_hint_hang": "Çıkıntıda: ileriyi bırakıp tekrar basın ya da zıplayın, yukarı çekilin; başka yöne bakıp zıplayarak kendinizi itin; A/D ile kenar boyunca ilerleyin; bırakmak için çömelin ya da geri gidin.",
+  "parkour_hint_hang_vault": "Kenarda: Just Vault tuşuyla yukarı çık, sekmek için Zıpla, bırakmak için Çömel veya Geri.",
+  "parkour_hint_hang_kick": "Kenarda: sekmek için Zıpla, bırakmak için Çömel veya Geri.",
+  "parkour_hint_roll": "Yuvarlanıp daha az düşme hasarı almak için yere inmeden hemen önce Çömel'e bas.",
+  "parkour_autoroll_unlocked": "Parkur: artık ileri giderken sert indiğinde kendiliğinden yuvarlanıyorsun.",
+  "parkour_hint_shimmy": "Sol veya sağ seni kenar boyunca ilerletir.",
+  "parkour_hint_slide": "Kayma! Kaymaya devam etmek için Çömel'i basılı tut, hızınla fırlamak için Zıpla.",
+  "parkour_hint_landing_slide": "Alçak bir atlayıştan inerken kayarak inmek için yere değmeden hemen önce Çömel'e bas.",
+  "skill_195522812": "Parkur"
+}

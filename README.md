@@ -362,6 +362,21 @@ real. Everyone in the world needs it, and restart after installing.
 
 </td>
 </tr>
+<tr>
+<td valign="top">
+
+### 🤸 Parkour
+<img src="dist/Parkour.cover.png" alt="Parkour" width="100%">
+
+Run along walls, kick off them, run up them, grab ledges and pull yourself up, shimmy along edges, vault fences, slide, and roll out of
+a fall. Moves run on a blue parkour bar instead of stamina, and a new Parkour skill makes them last longer and go further. The game's own
+sounds, a camera lean and a pose for hanging and sliding; other players see your lean, rolls and sounds, and the hanging pose too when
+they have the mod. Only the players who want it need it.
+
+**[More: how it works, settings and screenshots →](mods/Parkour/README.md)**
+
+</td>
+</tr>
 </table>
 
 ## ⌨️ Keys at a glance
@@ -392,6 +407,11 @@ real. Everyone in the world needs it, and restart after installing.
 | Hammer → **Bridge** | BuildOrders | Click where a bridge starts, walk across, click where it ends: a wooden bridge to build, posts down to the riverbed |
 | Wheel / **R** / **PgUp** **PgDn** / click | BuildOrders | While placing a blueprint: turn it / turn 90° / raise or lower it / place it (right-click or Esc cancels); the ground under it is levelled when placed |
 | **F12** / **Ctrl+F12** | [Claude Tools](https://github.com/HardHeadHackerHead/valheim-claude-tools) | Save a screenshot / survey the ground around where you look, for the AI assistant |
+| Sprint + **Jump** at a wall | Parkour | At an angle: run along it / straight on: run up it (and grab the top) |
+| **Jump** on a wall or a ledge | Parkour | Kick off it toward where you look (looking at a ledge: pull up) |
+| **A** / **D** on a ledge | Parkour | Shimmy along the edge; let go of **W** and press it again (or **Jump**) to pull up; **Crouch** to drop |
+| **Crouch** just before landing | Parkour | From high up: roll (less fall damage) / from low, running: land in a slide |
+| Sprint + hold **Crouch** | Parkour | Slide; **Jump** out of it for a boosted leap |
 | **F8** | PartyHud | Show or hide the party panel |
 
 Every key and setting is configurable in `BepInEx/config`.

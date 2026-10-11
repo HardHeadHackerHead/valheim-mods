@@ -1,0 +1,14 @@
+{
+  "parkour_skill_description": "An Wänden entlanglaufen, sich von ihnen abstoßen, Wände hochlaufen, sich auf Kanten hochziehen und bei der Landung abrollen. Längere und schnellere Wandläufe, mehr Wandsprünge hintereinander, höhere Kletterläufe, weichere Landungen und weniger Ausdauer für jede Bewegung.",
+  "parkour_hint_wallrun": "Wandlauf! Springen, um dich von der Wand abzustoßen.",
+  "parkour_hint_climb": "Die Wand hinauf: Vorwärts halten, um die Kante zu greifen.",
+  "parkour_hint_hang": "Am Vorsprung: Vorwärts loslassen und erneut drücken oder springen, um dich hochzuziehen; wegschauen und springen, um dich abzustoßen; A/D, um dich entlangzuhangeln; Ducken oder Rückwärts zum Loslassen.",
+  "parkour_hint_hang_vault": "An der Kante: mit der Taste von Just Vault hinauf, Springen zum Abstoßen, Schleichen oder Rückwärts zum Loslassen.",
+  "parkour_hint_hang_kick": "An der Kante: Springen zum Abstoßen, Schleichen oder Rückwärts zum Loslassen.",
+  "parkour_hint_roll": "Drücke kurz vor der Landung Schleichen, um abzurollen und weniger Fallschaden zu nehmen.",
+  "parkour_autoroll_unlocked": "Parkour: Ab jetzt rollst du von selbst ab, wenn du vorwärts laufend hart landest.",
+  "parkour_hint_shimmy": "Links oder rechts bewegt dich an der Kante entlang.",
+  "parkour_hint_slide": "Rutschen! Halte Schleichen, um weiterzurutschen, und spring, um mit dem Schwung herauszuspringen.",
+  "parkour_hint_landing_slide": "Drücke kurz vor der Landung aus einem niedrigen Sprung Schleichen, um in einen Rutsch zu landen.",
+  "skill_195522812": "Parkour"
+}

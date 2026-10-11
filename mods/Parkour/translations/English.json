@@ -1,0 +1,14 @@
+{
+  "parkour_skill_description": "Running along walls, kicking off them, running up them, pulling yourself up onto ledges and rolling as you land. Longer and faster wall runs, more wall jumps in a row, higher climbs, softer landings and less stamina for every move.",
+  "parkour_hint_wallrun": "Wall run! Jump to kick off the wall.",
+  "parkour_hint_climb": "Running up the wall: hold forward to catch the top.",
+  "parkour_hint_hang": "On the ledge: let go of forward and press it again, or jump, to pull yourself up; look away and jump to kick off; A/D to move along it; crouch or backward to let go.",
+  "parkour_hint_hang_vault": "On the ledge: vault up with Just Vault's key, jump to kick off, crouch or backward to let go.",
+  "parkour_hint_hang_kick": "On the ledge: jump to kick off, crouch or backward to let go.",
+  "parkour_hint_roll": "Press crouch just before you land to roll and take less fall damage.",
+  "parkour_autoroll_unlocked": "Parkour: from now on you roll by yourself when you land hard moving forward.",
+  "parkour_hint_shimmy": "Left or right moves you along the edge.",
+  "parkour_hint_slide": "Slide! Hold crouch to keep sliding, jump to leap out with its speed.",
+  "parkour_hint_landing_slide": "Crouch just before landing from a low jump to land in a slide.",
+  "skill_195522812": "Parkour"
+}

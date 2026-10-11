@@ -1,0 +1,14 @@
+{
+  "parkour_skill_description": "Correr pelas paredes, tomar impulso nelas, subir correndo por elas, se içar em beiradas e rolar ao aterrissar. Corridas na parede mais longas e rápidas, mais saltos de parede seguidos, subidas mais altas, aterrissagens mais suaves e menos vigor em cada movimento.",
+  "parkour_hint_wallrun": "Corrida na parede! Pule para tomar impulso na parede.",
+  "parkour_hint_climb": "Subindo a parede correndo: segure Para a frente para agarrar o topo.",
+  "parkour_hint_hang": "Na borda: solte o avançar e aperte de novo, ou pule, para subir; olhe para longe e pule para se impulsionar; A/D para se mover pela borda; agache ou ande para trás para soltar.",
+  "parkour_hint_hang_vault": "Na beirada: suba com a tecla do Just Vault, Pular para tomar impulso, Agachar ou Para trás para soltar.",
+  "parkour_hint_hang_kick": "Na beirada: Pular para tomar impulso, Agachar ou Para trás para soltar.",
+  "parkour_hint_roll": "Aperte Agachar logo antes de aterrissar para rolar e sofrer menos dano de queda.",
+  "parkour_autoroll_unlocked": "Parkour: de agora em diante você rola sozinho quando aterrissa com força andando para a frente.",
+  "parkour_hint_shimmy": "Esquerda ou direita move você pela beirada.",
+  "parkour_hint_slide": "Deslize! Segure Agachar para continuar deslizando, Pular para saltar com o impulso.",
+  "parkour_hint_landing_slide": "Aperte Agachar logo antes de aterrissar de um salto baixo para cair deslizando.",
+  "skill_195522812": "Parkour"
+}

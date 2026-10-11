@@ -1,0 +1,14 @@
+{
+  "parkour_skill_description": "Courir le long des murs, s'en propulser, les gravir en courant, se hisser sur les rebords et rouler à la réception. Courses murales plus longues et plus rapides, plus de sauts muraux d'affilée, montées plus hautes, réceptions plus douces et moins d'endurance pour chaque mouvement.",
+  "parkour_hint_wallrun": "Course murale ! Sautez pour vous propulser du mur.",
+  "parkour_hint_climb": "Vous gravissez le mur : maintenez Avancer pour saisir le haut.",
+  "parkour_hint_hang": "Au rebord : relâchez avancer puis appuyez à nouveau, ou sautez, pour vous hisser ; regardez ailleurs et sautez pour vous propulser ; A/D pour longer le rebord ; accroupissez-vous ou reculez pour lâcher.",
+  "parkour_hint_hang_vault": "Au rebord : montez avec la touche de Just Vault, Sauter pour vous propulser, S'accroupir ou Reculer pour lâcher.",
+  "parkour_hint_hang_kick": "Au rebord : Sauter pour vous propulser, S'accroupir ou Reculer pour lâcher.",
+  "parkour_hint_roll": "Appuyez sur S'accroupir juste avant de toucher le sol pour rouler et subir moins de dégâts de chute.",
+  "parkour_autoroll_unlocked": "Parkour : désormais, vous roulez de vous-même quand vous atterrissez durement en avançant.",
+  "parkour_hint_shimmy": "Gauche ou droite vous déplace le long du rebord.",
+  "parkour_hint_slide": "Glissade ! Maintenez S'accroupir pour continuer à glisser, Sauter pour bondir avec l'élan.",
+  "parkour_hint_landing_slide": "Appuyez sur S'accroupir juste avant de toucher le sol après un petit saut pour atterrir en glissade.",
+  "skill_195522812": "Parkour"
+}

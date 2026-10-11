@@ -1,0 +1,14 @@
+{
+  "parkour_skill_description": "Bieganie po ścianach, odbijanie się od nich, wbieganie na nie, podciąganie się na krawędzie i przewrót przy lądowaniu. Dłuższy i szybszy bieg po ścianie, więcej odbić od ścian z rzędu, wyższe wbieganie, miększe lądowanie i mniej kondycji na każdy ruch.",
+  "parkour_hint_wallrun": "Bieg po ścianie! Skok, by odbić się od ściany.",
+  "parkour_hint_climb": "Wbiegasz na ścianę: trzymaj Do przodu, by chwycić krawędź.",
+  "parkour_hint_hang": "Na krawędzi: puść „do przodu” i naciśnij ponownie albo skocz, aby się podciągnąć; odwróć wzrok i skocz, aby się odbić; A/D, aby przesuwać się wzdłuż krawędzi; kucnij lub cofnij się, aby puścić.",
+  "parkour_hint_hang_vault": "Na krawędzi: wejdź wyżej klawiszem Just Vault, Skok, by się odbić, Kucanie lub Do tyłu, by puścić.",
+  "parkour_hint_hang_kick": "Na krawędzi: Skok, by się odbić, Kucanie lub Do tyłu, by puścić.",
+  "parkour_hint_roll": "Naciśnij Kucanie tuż przed lądowaniem, by zrobić przewrót i otrzymać mniej obrażeń od upadku.",
+  "parkour_autoroll_unlocked": "Parkour: od teraz robisz przewrót sam, gdy twardo lądujesz, biegnąc do przodu.",
+  "parkour_hint_shimmy": "W lewo lub w prawo przesuwa cię wzdłuż krawędzi.",
+  "parkour_hint_slide": "Wślizg! Trzymaj Kucanie, by dalej się ślizgać, Skok, by wyskoczyć z rozpędem.",
+  "parkour_hint_landing_slide": "Naciśnij Kucanie tuż przed lądowaniem z niskiego skoku, by wylądować we wślizgu.",
+  "skill_195522812": "Parkour"
+}

@@ -1,0 +1,18 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <AssemblyName>Parkour</AssemblyName>
+    <RootNamespace>Parkour</RootNamespace>
+  </PropertyGroup>
+  <ItemGroup>
+    <Reference Include="netstandard"><HintPath>$(ManagedDir)/netstandard.dll</HintPath><Private>false</Private></Reference>
+    <Reference Include="UnityEngine.AnimationModule"><HintPath>$(ManagedDir)/UnityEngine.AnimationModule.dll</HintPath><Private>false</Private></Reference>
+  </ItemGroup>
+  <ItemGroup>
+    <!-- The strengths the server decides in multiplayer, and the cheat rule for the test commands (shared with our other mods). -->
+    <Compile Include="../Shared/ServerSettings.cs" Link="Shared/ServerSettings.cs" /> <Compile Include="../Shared/TestCommands.cs" Link="Shared/TestCommands.cs" />
+  </ItemGroup>
+  <ItemGroup>
+    <!-- The Parkour skill's icon, when the artist's one is in the folder (else one is drawn in code: Skill.cs). -->
+    <EmbeddedResource Include="skill-icon.png" LogicalName="skill-icon.png" Condition="Exists('skill-icon.png')" />
+  </ItemGroup>
+</Project>
