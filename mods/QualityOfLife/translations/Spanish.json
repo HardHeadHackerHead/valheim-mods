@@ -1,6 +1,7 @@
 {
   "qualityoflife_assign_look": "Mira un cofre (o ábrelo) y pulsa {0} para elegir qué recibe.",
   "qualityoflife_assign_ledger": "El Cofre de registro no guarda nada: asigna los cofres que lo rodean.",
+  "qualityoflife_assign_moving": "A los carros y barcos no se les puede asignar nada: asigna un cofre.",
   "qualityoflife_assign_cant_use": "No puedes usar ese cofre.",
   "qualityoflife_assign_in_use": "Otra persona tiene ese cofre abierto.",
   "qualityoflife_save_in_use": "Otra persona tiene este cofre abierto. Inténtalo de nuevo cuando lo cierre.",

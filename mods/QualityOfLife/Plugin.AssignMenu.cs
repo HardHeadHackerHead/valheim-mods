@@ -34,15 +34,26 @@ namespace QualityOfLife
 
         internal static Container OpenChest() => InventoryGui.instance != null ? CurrentContainerField?.GetValue(InventoryGui.instance) as Container : null;
 
-        /// <summary>A chest that can be assigned things: not the LedgerChest mod's Ledger Chest, which keeps nothing (it sends all on).</summary>
-        private static bool Assignable(Container c) => c != null && !c.gameObject.name.StartsWith("piece_ledgerchest", StringComparison.Ordinal);
+        /// <summary>
+        /// A chest that can be assigned things: a built one (a piece, not a companion's bag or a tombstone), not a cart's or a ship's (its
+        /// rules would be resent with every move it makes), and not one that keeps nothing (the Obliterator, the LedgerChest mod's Ledger
+        /// Chest, the Arena's chests: SpecialContainers).
+        /// </summary>
+        private static bool Assignable(Container c) => c != null && c.GetComponentInParent<Piece>() != null && c.GetComponentInParent<Character>() == null
+                                                       && c.GetComponent<TombStone>() == null && !ChestRules.OnTheMove(c) && !DHack.Shared.SpecialContainers.NotStorage(c);
         private static Container LookedAtChest(Player p) => p.GetHoverObject()?.GetComponentInParent<Container>();
 
         private void HandleAssignKey(Player player)
         {
             Container chest = InventoryGui.IsVisible() ? OpenChest() : LookedAtChest(player);
             if (chest == null) { Tell(player, T("qualityoflife_assign_look", _assignKey.Value)); return; }
-            if (!Assignable(chest)) { Tell(player, T("qualityoflife_assign_ledger")); return; }
+            if (!Assignable(chest))
+            {
+                Tell(player, ChestRules.OnTheMove(chest) ? T("qualityoflife_assign_moving")
+                           : chest.gameObject.name.StartsWith("piece_ledgerchest", StringComparison.Ordinal) ? T("qualityoflife_assign_ledger")
+                           : T("qualityoflife_assign_cant_use"));
+                return;
+            }
             if (!Usable(chest)) { Tell(player, T("qualityoflife_assign_cant_use")); return; }
             if (chest != OpenChest() && ContainerRegistry.InUse(chest)) { Tell(player, T("qualityoflife_assign_in_use")); return; }
             OpenRules(chest, player);

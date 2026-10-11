@@ -32,6 +32,11 @@ namespace DHack.Shared
         private readonly Dictionary<ConfigEntryBase, object> _server = new Dictionary<ConfigEntryBase, object>();  // the server's values
         private ZRoutedRpc _registeredOn;
         private bool _applying;
+        private bool _changePending;   // the host changed a setting that everyone hasn't been sent yet
+        private float _nextChangeSend; // when the next "everyone gets it" may go out
+
+        /// <summary>The least time between two sends of a changed value to everyone (a slider dragged in a config manager changes it every frame).</summary>
+        private const float ChangeSendGap = 0.5f;
 
         /// <summary>True while the server's values apply (on a client connected to a server that has the mod).</summary>
         public bool FromServer => _server.Count > 0;
@@ -53,14 +58,18 @@ namespace DHack.Shared
             return entry;
         }
 
-        /// <summary>Call every frame (the plugin's Update): it notices joining and leaving a world.</summary>
+        /// <summary>Call every frame (the plugin's Update): it notices joining and leaving a world, and sends the host's last change.</summary>
         public void Update()
         {
             ZRoutedRpc rpc = ZRoutedRpc.instance;
-            if (rpc == _registeredOn) return;
-            Unregister();
-            Restore();
-            if (rpc != null) Register(rpc);
+            if (rpc != _registeredOn)
+            {
+                Unregister();
+                Restore();
+                _changePending = false;
+                if (rpc != null) Register(rpc);
+            }
+            if (_changePending && UnityEngine.Time.unscaledTime >= _nextChangeSend) SendChange();
         }
 
         public void Dispose()
@@ -186,7 +195,21 @@ namespace DHack.Shared
                 _own[e] = e.BoxedValue; // the player changed their own value while the server's applies: keep it for later
                 Apply(e, value);
             }
-            else if (IsServer && ZNet.instance.GetPeers().Count > 0) Send(ZRoutedRpc.Everybody); // the host changed one: everyone gets it
+            else if (IsServer)
+            {
+                // The host changed one: everyone gets it. At once the first time, then at most every half second while it keeps changing,
+                // and always once more after the last change (Update sends it), so everyone ends up with the final value.
+                _changePending = true;
+                if (UnityEngine.Time.unscaledTime >= _nextChangeSend) SendChange();
+            }
+        }
+
+        /// <summary>Send every synced value to everyone (the same message a joining player gets), and hold the next send back a moment.</summary>
+        private void SendChange()
+        {
+            _changePending = false;
+            _nextChangeSend = UnityEngine.Time.unscaledTime + ChangeSendGap;
+            if (IsServer && ZNet.instance.GetPeers().Count > 0) Send(ZRoutedRpc.Everybody);
         }
 
         private void Unsubscribe(ConfigEntryBase e)

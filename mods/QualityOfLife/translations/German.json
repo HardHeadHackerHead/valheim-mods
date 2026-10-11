@@ -1,6 +1,7 @@
 {
   "qualityoflife_assign_look": "Sieh eine Truhe an (oder öffne sie) und drück {0}, um zu wählen, was sie bekommt.",
   "qualityoflife_assign_ledger": "Die Hauptbuchtruhe behält nichts: weise die Truhen um sie herum zu.",
+  "qualityoflife_assign_moving": "Karren und Schiffen kann man nichts zuweisen: weise eine Truhe zu.",
   "qualityoflife_assign_cant_use": "Diese Truhe kannst du nicht benutzen.",
   "qualityoflife_assign_in_use": "Jemand anderes hat diese Truhe offen.",
   "qualityoflife_save_in_use": "Jemand anderes hat diese Truhe offen. Versuch es nochmal, wenn sie geschlossen ist.",

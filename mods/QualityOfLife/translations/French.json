@@ -1,6 +1,7 @@
 {
   "qualityoflife_assign_look": "Regardez un coffre (ou ouvrez-le) et appuyez sur {0} pour choisir ce qu'il reçoit.",
   "qualityoflife_assign_ledger": "Le Coffre du registre ne garde rien : attribuez les coffres autour de lui.",
+  "qualityoflife_assign_moving": "On ne peut rien attribuer aux chariots et aux navires : attribuez un coffre.",
   "qualityoflife_assign_cant_use": "Vous ne pouvez pas utiliser ce coffre.",
   "qualityoflife_assign_in_use": "Quelqu'un d'autre a ce coffre ouvert.",
   "qualityoflife_save_in_use": "Quelqu'un d'autre a ce coffre ouvert. Réessayez quand il l'aura fermé.",

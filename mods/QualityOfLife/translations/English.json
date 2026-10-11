@@ -1,6 +1,7 @@
 {
   "qualityoflife_assign_look": "Look at a chest (or open one) and press {0} to choose what it receives.",
   "qualityoflife_assign_ledger": "The Ledger Chest keeps nothing: assign the chests around it.",
+  "qualityoflife_assign_moving": "Carts and ships can't be assigned things: assign a chest.",
   "qualityoflife_assign_cant_use": "You can't use that chest.",
   "qualityoflife_assign_in_use": "Someone else has that chest open.",
   "qualityoflife_save_in_use": "Someone else has this chest open. Try again when they close it.",

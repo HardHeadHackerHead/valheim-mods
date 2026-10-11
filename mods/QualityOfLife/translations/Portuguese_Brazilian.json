@@ -1,6 +1,7 @@
 {
   "qualityoflife_assign_look": "Olhe para um baú (ou abra um) e aperte {0} para escolher o que ele recebe.",
   "qualityoflife_assign_ledger": "O Baú de Registros não guarda nada: designe os baús ao redor dele.",
+  "qualityoflife_assign_moving": "Carroças e navios não podem receber designações: designe um baú.",
   "qualityoflife_assign_cant_use": "Você não pode usar esse baú.",
   "qualityoflife_assign_in_use": "Outra pessoa está com esse baú aberto.",
   "qualityoflife_save_in_use": "Outra pessoa está com este baú aberto. Tente de novo quando ela fechar.",

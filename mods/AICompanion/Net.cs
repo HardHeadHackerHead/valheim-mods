@@ -275,11 +275,11 @@ namespace AICompanion
                     if (c.IsDead() || !online.Contains(Companion.Zdo(c).GetString(Keys.MasterName, ""))) continue;
                     long cid = Companion.IdOf(c);
                     bool runHere = c.GetComponent<ZNetView>().IsOwner();
-                    if (!runHere && Remote.TryGetValue(cid, out Seen s) && Time.time - s.At < 4f) continue; // the game that runs it knows its effects: use its line
+                    if (!runHere && Remote.TryGetValue(cid, out Seen s) && Time.time - s.At < 6f) continue; // the game that runs it knows its effects: use its line (it sends every 1-3 s)
                     lines.Add(StatsLine(c));
                     have.Add(cid);
                 }
-                foreach (var kv in Remote.Where(kv => Time.time - kv.Value.At < 6f && !have.Contains(kv.Key) && online.Contains(kv.Value.Master)))
+                foreach (var kv in Remote.Where(kv => Time.time - kv.Value.At < 8f && !have.Contains(kv.Key) && online.Contains(kv.Value.Master)))
                     lines.Add(Aged(kv.Value.Line, Time.time - kv.Value.At));
                 // (not in the first seconds: the fallen companion itself is still listed for a moment as it dies)
                 RecentlyFallen.RemoveAll(f => Time.time - f.At > 600f || (Time.time - f.At > 10f && lines.Any(l => l.Split('|')[2] == f.Master)));
@@ -407,7 +407,7 @@ namespace AICompanion
             foreach (Minimap.PinData pin in Markers().ToList())
             {
                 if (Vector3.Distance(pin.m_pos, me.transform.position) > 30f) continue; // close enough that the crate would be loaded
-                bool crate = UnityEngine.Object.FindObjectsOfType<Container>().Any(c => Vector3.Distance(c.transform.position, pin.m_pos) < 6f
+                bool crate = UnityEngine.Object.FindObjectsByType<Container>(FindObjectsSortMode.None).Any(c => Vector3.Distance(c.transform.position, pin.m_pos) < 6f
                     && c.GetComponent<ZNetView>() is ZNetView v && v.IsValid() && v.GetZDO().GetString(CrateKey, "") != "");
                 if (crate || RecentlyFallen.Any(f => Time.time - f.At < 120f && Vector3.Distance(f.Pos, pin.m_pos) < 4f)) continue; // (a fall without gear has no crate)
                 Plugin.Instance?.Note($"The fallen companion's crate at {pin.m_pos:F0} is gone: marker removed");

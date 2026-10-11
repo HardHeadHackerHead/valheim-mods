@@ -7,7 +7,7 @@
 
 **Shared ghost build orders and blueprints, a build planner for your party: plan pieces (or import a blueprint) for everyone, then build them by walking up and pressing E.**
 
-![version: 1.14.0](https://img.shields.io/badge/version-1.14.0-3b6e8f?style=flat-square)  ![multiplayer: only who wants it](https://img.shields.io/badge/multiplayer-only%20who%20wants%20it-7a5c2e?style=flat-square)  ![made with: Claude Code](https://img.shields.io/badge/made%20with-Claude%20Code-c26a3d?style=flat-square)
+![version: 1.14.1](https://img.shields.io/badge/version-1.14.1-3b6e8f?style=flat-square)  ![multiplayer: only who wants it](https://img.shields.io/badge/multiplayer-only%20who%20wants%20it-7a5c2e?style=flat-square)  ![made with: Claude Code](https://img.shields.io/badge/made%20with-Claude%20Code-c26a3d?style=flat-square)
 
 <!-- GITHUB-ONLY -->[Thunderstore](https://thunderstore.io/c/valheim/p/Quads_Lab/Quads_Build_Orders/)  ·  <!-- END GITHUB-ONLY -->[Source code](https://github.com/HardHeadHackerHead/valheim-mods/tree/main/mods/BuildOrders)  ·  [Report a bug](https://github.com/HardHeadHackerHead/valheim-mods/issues/new?template=bug.yml&title=%5BQuad%27s%20Build%20Orders%5D%20)  ·  [Discord](https://discord.gg/EwTjQxEZPy)
 
@@ -205,8 +205,8 @@ and tested in our own world, with **bobisme** as our tester.
 
 ## 📜 Recent changes
 
+- **1.14.1** Smoother multiplayer. Placing or removing a big plan sent the other players one message per piece, all at the same moment (a 1000-piece blueprint: 1000 messages at once, a lag spike for everyone). The pieces now go many to a message, a few at a time over the next frames, in the order they happened. Older versions on the same server read the new messages as before.
 - **1.14.0** Now in your language: English, Russian, German, Chinese (Simplified), Portuguese (Brazil), Spanish, French, Polish and Turkish, following the game's own Language setting. The game's own names are used for its things (items, creatures, lands, stations). The translations were made with AI: to correct a line, or add a language, put a file in BepInEx/config/translations/com.quad.buildorders/ named after the game's name for the language (German.json...) with only the lines you change, copied from translations/English.json on GitHub. Blueprint and plan names are kept as they are; only what is shown is translated, so old plans load as before. The Bridge piece's name is translated too, so the game may tell you about it once as a new piece. Fixed: the hold-E text on the build prompt spilled past its bar.
 - **1.13.0** The Plans window (F11), the bridge options and all the help on screen are now built from the game's own interface: the crafting panel's wood, tabs and buttons, the game's slider for settings, the inventory's item cells and tooltips for materials, and the game's fonts. The help (materials, banners, the build prompt with its hold-E bar, the fetch hint) is part of the HUD now, so it hides with it and follows your interface scale; the bridge options sit at the side so the bridge stays in view.
-- **1.12.2** A clearer page: what it does, who needs it in multiplayer, how it gets on with other mods, and where to report a bug. The game itself is unchanged.
 
 <!-- GITHUB-ONLY -->[Every change](CHANGELOG.txt)<!-- END GITHUB-ONLY --><!-- THUNDERSTORE-ONLY: Every change is on the Changelog tab. -->

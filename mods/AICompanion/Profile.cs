@@ -82,7 +82,13 @@ namespace AICompanion
             if (all.RemoveAll(x => x.Id == id) > 0) Write(p, all);
         }
 
-        private static void Write(Player p, List<Profile> all) => p.m_customData[Key] = new JArray(all.Select(x => (JToken)x.ToJson())).ToString(Newtonsoft.Json.Formatting.None);
+        private static void Write(Player p, List<Profile> all)
+        {
+            string json = new JArray(all.Select(x => (JToken)x.ToJson())).ToString(Newtonsoft.Json.Formatting.None);
+            p.m_customData[Key] = json;
+            _readJson = json;   // (what was just written is what All reads next: no need to read it back)
+            _read = all.Select(x => (Profile)x.MemberwiseClone()).ToList();
+        }
 
         // ---- to and from the companion's ZDO ------------------------------------------------------------------
 

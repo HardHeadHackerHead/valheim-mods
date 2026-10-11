@@ -1,6 +1,7 @@
 {
   "qualityoflife_assign_look": "Bir sandığa bak (ya da aç) ve neyi alacağını seçmek için {0} tuşuna bas.",
   "qualityoflife_assign_ledger": "Defter Sandığı hiçbir şey tutmaz: çevresindeki sandıkları ata.",
+  "qualityoflife_assign_moving": "Arabalara ve gemilere bir şey atanamaz: bir sandık ata.",
   "qualityoflife_assign_cant_use": "O sandığı kullanamazsın.",
   "qualityoflife_assign_in_use": "O sandığı başka biri açmış.",
   "qualityoflife_save_in_use": "Bu sandığı başka biri açmış. Kapattığında yeniden dene.",

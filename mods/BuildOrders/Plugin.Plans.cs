@@ -192,7 +192,7 @@ namespace BuildOrders
                 if (_orders.Values.Any(o => o.Prefab == e.Prefab && (o.Pos - pos).sqrMagnitude < 0.01f && Quaternion.Angle(o.Rot, rot) < 5f)) { skipped++; continue; }
                 var order = new Order { Id = Guid_(), Prefab = e.Prefab, Pos = pos, Rot = rot, By = by };
                 _orders[order.Id] = order;
-                Send("A|" + Encode(order));
+                ShareAdded(order);
                 added++;
             }
             _stabilityDirty = true;

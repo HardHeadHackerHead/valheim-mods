@@ -27,7 +27,7 @@ namespace PartyHud
         public const string Guid = "com.quad.partyhud";
         public const string OldGuid = "com.dhack.partyhud"; // (its id until 2026-10: settings move over by themselves, see Shared/Migration.cs)
         public const string Name = "PartyHud";
-        public const string Version = "1.10.0";
+        public const string Version = "1.10.1";
 
         internal static DHack.Shared.ServerSettings Synced; // settings the server decides in multiplayer
         private ConfigEntry<bool> _shareMine, _allowSharing;
@@ -182,7 +182,7 @@ namespace PartyHud
                 var m = new Member { Id = id, Name = info.m_name, SteamId = SteamIdOf(info) };
                 if (info.m_publicPosition) { m.Distance = Vector3.Distance(me.transform.position, info.m_position); m.Pos = info.m_position; m.HasPos = true; }
 
-                if (_allowSharing.Value && _remote.TryGetValue(id, out Remote r) && Time.time - r.Seen < 5f)
+                if (_allowSharing.Value && _remote.TryGetValue(id, out Remote r) && Time.time - r.Seen < RemoteFresh)
                 {
                     // Best case: that player's own game told us, so the numbers are exact and work at any distance.
                     m.HasData = true;

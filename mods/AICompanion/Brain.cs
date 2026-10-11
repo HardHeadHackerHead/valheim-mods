@@ -162,7 +162,6 @@ namespace AICompanion
         public int StuckFor;
         public int EnemyCountAtAsk;
         public string Status = "";
-        public string SavedStatus = "";                             // what its ZDO says it is doing (written at most once a second)
         public float NextStatusSave;
 
         /// <summary>"$enemy_greyling 2": its name as the game's token (each player's game translates it) and a number.</summary>
@@ -432,7 +431,7 @@ namespace AICompanion
                     if (h.GetComponent<Rigidbody>() is Rigidbody body && body.isKinematic && h.GetComponentInParent<Ship>() == null && !h.IsAttached())
                     { body.isKinematic = false; body.detectCollisions = true; }
                     // a cart it is still hitched to (the older copy knew it was pulling it)
-                    st.Cart = UnityEngine.Object.FindObjectsOfType<Vagon>().FirstOrDefault(cart => cart != null && cart.IsAttached(h));
+                    st.Cart = UnityEngine.Object.FindObjectsByType<Vagon>(FindObjectsSortMode.None).FirstOrDefault(cart => cart != null && cart.IsAttached(h));
                 }
             }
             return st;
@@ -1168,11 +1167,11 @@ namespace AICompanion
         /// </summary>
         internal static void SaveStatus(BrainState st)
         {
-            if (st.SavedStatus == st.Status || Time.time < st.NextStatusSave) return;
+            if (Time.time < st.NextStatusSave) return;
             ZDO z = Companion.Zdo(st.Body);
-            if (z == null || !st.Body.GetComponent<ZNetView>().IsOwner()) return;
+            // (against what its ZDO says, not what this game wrote last: another game may have run it in between)
+            if (z == null || !st.Body.GetComponent<ZNetView>().IsOwner() || z.GetString(Keys.Status, "") == st.Status) return;
             st.NextStatusSave = Time.time + 1f;
-            st.SavedStatus = st.Status;
             z.Set(Keys.Status, st.Status);
         }
 

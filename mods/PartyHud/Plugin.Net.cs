@@ -2,6 +2,7 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Globalization;
+using System.Linq;
 using HarmonyLib;
 using UnityEngine;
 
@@ -29,6 +30,12 @@ namespace PartyHud
         private readonly Dictionary<long, Remote> _remote = new Dictionary<long, Remote>();
         private ZRoutedRpc _registeredOn;
         private float _nextSend;
+        private string _lastGist; // what our last message showed (see Gist)
+        private float _lastSentAt;
+
+        // How often we look for a change to send, and how long we go at most without sending (so the others don't drop us).
+        // The others keep our numbers for RemoteFresh seconds: well over the longest gap (keepalive + one check + the trip there).
+        private const float SendCheck = 1f, SendKeepalive = 2f, RemoteFresh = 6f;
 
         private void UpdateNetwork()
         {
@@ -45,12 +52,13 @@ namespace PartyHud
                 _remote.Clear();
                 UnregisterRpc(); // Valheim throws if a handler name is registered twice
                 rpc.Register<string>(RpcStats, OnStats);
+                _lastGist = null; // a new world or server: tell them at once
             }
 
             Player me = Player.m_localPlayer;
             if (me != null && _shareMine.Value && _allowSharing.Value && Time.time >= _nextSend)
             {
-                _nextSend = Time.time + 0.33f;
+                _nextSend = Time.time + SendCheck;
                 SendStats(me);
             }
         }
@@ -78,11 +86,30 @@ namespace PartyHud
                 FoodsText(me),
             });
 
+            // It goes to every player through the server, so only when something they'd see has changed (or now and then, so we
+            // aren't dropped). The time left on effects and food counts down by itself on their side.
+            string gist = Gist(payload);
+            if (gist == _lastGist && Time.time - _lastSentAt < SendKeepalive) return;
+            _lastGist = gist;
+            _lastSentAt = Time.time;
+
             try { ZRoutedRpc.instance.InvokeRoutedRPC(ZRoutedRpc.Everybody, RpcStats, payload); }
             catch (Exception e) { Logger.LogWarning("Could not share stats: " + e.Message); }
         }
 
         private static string F(float v) => v.ToString("0.#", CultureInfo.InvariantCulture);
+
+        /// <summary>What a stats message shows, less what changes all the time anyway: health, stamina and Eitr to the point,
+        /// effects and food without their time left.</summary>
+        private static string Gist(string payload)
+        {
+            string[] f = payload.Split('|');
+            if (f.Length < 9) return payload;
+            for (int i = 1; i <= 6; i++) f[i] = Mathf.Round(ParseFloat(f[i])).ToString(CultureInfo.InvariantCulture);
+            f[7] = string.Join(",", f[7].Split(',').Select(e => e.Split(':')[0]).ToArray());
+            f[8] = string.Join(",", f[8].Split(',').Select(e => e.Split(':')[0]).ToArray());
+            return string.Join("|", f);
+        }
 
         // ---- status effects (buffs and debuffs) ---------------------------------------------------
 

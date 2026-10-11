@@ -75,7 +75,7 @@ namespace BuildOrders
             _orders[order.Id] = order;
             _stabilityDirty = true;
             Save();
-            Send("A|" + Encode(order));
+            ShareAdded(order);
             player.Message(MessageHud.MessageType.TopLeft, DHack.Shared.Translations.T("buildorders_planned", PieceName(prefab), _orders.Count));
             return true;
         }
@@ -87,7 +87,7 @@ namespace BuildOrders
             NoteRemoved(id);
             DestroyGhost(id);
             if (save) Save();
-            if (broadcast) Send("R|" + id);
+            if (broadcast) ShareRemoved(id);
         }
 
         /// <summary>Save to disk now (for callers that removed several orders without saving each time).</summary>
@@ -240,7 +240,7 @@ namespace BuildOrders
         private void UpdateNetwork()
         {
             ZRoutedRpc rpc = ZRoutedRpc.instance;
-            if (rpc == null) { _registeredOn = null; return; }
+            if (rpc == null) { _registeredOn = null; _outbox.Clear(); return; }
 
             // After a hot reload the previous copy removes its handler at the end of the frame; wait a moment so we never
             // register first and then get our own handler removed.
@@ -253,7 +253,10 @@ namespace BuildOrders
                 rpc.Register<string>(Rpc, OnMessage);
                 rpc.Register<ZPackage>(PackedRpc, OnPacked);
                 _announcePending = true;
+                _outbox.Clear(); // a new session: what waited belonged to the last one (the others send us everything when we ask)
             }
+
+            FlushOutbox();
 
             // Once we're really in the world, ask everyone for their orders (they answer with their full list).
             if (_announcePending && Player.m_localPlayer != null && WorldKnown)
@@ -276,6 +279,36 @@ namespace BuildOrders
             if (ZRoutedRpc.instance == null || Player.m_localPlayer == null) return;
             try { ZRoutedRpc.instance.InvokeRoutedRPC(target, Rpc, message); }
             catch (Exception e) { Logger.LogWarning("Could not share build orders: " + e.Message); }
+        }
+
+        // Planned and removed pieces wait here and go out a few KB a frame. Placing or clearing a blueprint sent one message per piece, all
+        // in the same frame (a 1000-piece plan: 1000 messages at once). Now many go in one "S" message, the list a player who joins gets,
+        // which every version reads the same way (an order line plans a piece, "T|id" removes one). One queue sent in order, so a piece
+        // removed right after it was planned never arrives before its plan.
+        private readonly Queue<string> _outbox = new Queue<string>();
+        private const int OutboxCharsPerFrame = 8 * 1024;
+
+        private void ShareAdded(Order o) => _outbox.Enqueue(Encode(o));
+        private void ShareRemoved(string id) => _outbox.Enqueue("T|" + id);
+
+        /// <summary>Send what is waiting: one message a frame of up to OutboxCharsPerFrame (with all, everything now: the mod is unloading).</summary>
+        private void FlushOutbox(bool all = false)
+        {
+            // (waits while there is no local player, after dying: Send would drop it)
+            while (_outbox.Count > 0 && ZRoutedRpc.instance != null && Player.m_localPlayer != null)
+            {
+                string first = _outbox.Dequeue();
+                if (_outbox.Count == 0)   // just one (a piece planned or built by hand): the message it always was
+                    Send(first.StartsWith("T|") ? "R|" + first.Substring(2) : "A|" + first);
+                else
+                {
+                    // (no day after a "T|id": versions before 1.12 would read "id|day" as the id)
+                    var sb = new StringBuilder("S\n").Append(first);
+                    while (_outbox.Count > 0 && sb.Length + 1 + _outbox.Peek().Length <= OutboxCharsPerFrame) sb.Append('\n').Append(_outbox.Dequeue());
+                    Send(sb.ToString());
+                }
+                if (!all) return;
+            }
         }
 
         private void OnMessage(long sender, string message)

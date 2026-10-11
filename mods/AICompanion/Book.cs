@@ -16,7 +16,8 @@ namespace AICompanion
         public string Missions = "";
         /// <summary>The whole book is known here (its player's game, or one told by it). Else only what happened here since.</summary>
         public bool Fresh;
-        public float AskedAt = -99f, UsedAt, OfferedAt = -99f;
+        public float AskedAt = -99f, UsedAt, OfferedAt, ParkSentAt;
+        public int OfferTries, ParkTries, LastParked;   // (hand-overs sent and not answered; the parked news its player's game took last)
         public bool Dirty;   // (its player's game: into the profile at the next tick)
 
         // what changed here and is not told yet (sent once a second; kept while its player is offline)
@@ -46,8 +47,8 @@ namespace AICompanion
     internal static class Book
     {
         private const string RpcAsk = "DHack_CompanionBookAsk", RpcWhole = "DHack_CompanionBook", RpcNews = "DHack_CompanionBookNews";
-        private const string RpcOffer = "DHack_CompanionBookOffer", RpcTaken = "DHack_CompanionBookTaken";
-        public static readonly string[] RpcNames = { RpcAsk, RpcWhole, RpcNews, RpcOffer, RpcTaken };
+        private const string RpcOffer = "DHack_CompanionBookOffer", RpcTaken = "DHack_CompanionBookTaken", RpcParked = "DHack_CompanionBookParked";
+        public static readonly string[] RpcNames = { RpcAsk, RpcWhole, RpcNews, RpcOffer, RpcTaken, RpcParked };
         private const char Field = '\u001e', Item = '\u001f';   // (Words uses \u0001 to \u0004 inside the texts)
 
         // where 0.24.0 and older kept it, on the companion's ZDO
@@ -76,6 +77,7 @@ namespace AICompanion
             rpc.Register<string>(RpcNews, OnNews);
             rpc.Register<string>(RpcOffer, OnOffer);
             rpc.Register<string>(RpcTaken, OnTaken);
+            rpc.Register<string>(RpcParked, OnParked);
         }
 
         // ---- reading ----------------------------------------------------------------------------------------
@@ -93,7 +95,12 @@ namespace AICompanion
         /// </summary>
         public static BookData Of(long id, ZDO z, long master = 0L)
         {
+            // Not before this game's player is in the world (loading in): it could not tell whether the book is its own, and one kept
+            // then as "not known" could later be saved over the profile.
+            if (Player.m_localPlayer == null) return new BookData { Id = id };
             if (!Books.TryGetValue(id, out BookData b)) Books[id] = b = Make(id, z, master);
+            else if (!b.Fresh && master != 0L && b.MasterId == 0L) b.MasterId = master;
+            if (!b.Fresh && Ours(b)) Books[id] = b = Make(id, z, b.MasterId);   // (its player turned out to be ours: from the profile)
             if (z != null && b.MasterId == 0L) { b.MasterId = z.GetLong(Keys.Master, 0L); b.MasterName = z.GetString(Keys.MasterName, ""); }
             b.UsedAt = Time.time;
             if (!b.Fresh) Ask(b);
@@ -108,12 +115,14 @@ namespace AICompanion
             Profile prof = me != null ? Profile.Find(me, id) : null;
             if (prof != null && b.MasterId == 0L) b.MasterId = me.GetPlayerID();
             if (Ours(b) && string.IsNullOrEmpty(b.MasterName)) b.MasterName = me.GetPlayerName();
-            if (z != null && HasOld(z)) { Fill(b, z.GetString(OldEntriesKey, ""), z.GetString(OldTallyKey, ""), z.GetString(OldMissionsKey, "")); b.Fresh = true; }
-            else if (Ours(b))
+            if (Ours(b))
             {
+                // Its player's game: the profile, with an old book still on the ZDO joined in (not instead: the profile may have more).
                 if (prof != null) Fill(b, prof.JournalText, prof.TallyText, prof.MissionText);
+                if (z != null && HasOld(z)) Join(b, z.GetString(OldEntriesKey, ""), z.GetString(OldTallyKey, ""), z.GetString(OldMissionsKey, ""));
                 b.Fresh = true;
             }
+            else if (z != null && HasOld(z)) { Fill(b, z.GetString(OldEntriesKey, ""), z.GetString(OldTallyKey, ""), z.GetString(OldMissionsKey, "")); b.Fresh = true; }
             return b;
         }
 
@@ -187,6 +196,7 @@ namespace AICompanion
             if (Time.time < _nextTick || ZNet.instance == null || ZRoutedRpc.instance == null) return;
             _nextTick = Time.time + 1f;
             Player me = Player.m_localPlayer;
+            if (me == null) return; // (loading in, or a dedicated server: which books are ours is not known yet)
             HashSet<string> online = Online();
 
             var running = new Dictionary<long, ZDO>();   // the companions this game runs, by id
@@ -211,7 +221,8 @@ namespace AICompanion
                 if (parked != "")
                 {
                     if (Ours(b)) { Apply(b, parked.Split(Item)); z.Set(ParkedKey, ""); }          // its player is back: into the book
-                    else if (masterHere) { Send(b, parked.Split(Item)); z.Set(ParkedKey, ""); }  // told to its player's game
+                    else if (masterHere && Due(ref b.ParkSentAt, ref b.ParkTries))                 // offered to its player's game, off once it has it
+                        Invoke(MasterPeer(b), RpcParked, Head(b) + Field + parked);
                 }
                 if (!b.Fresh && Time.time - b.UsedAt < 10f) Ask(b);   // (its player came back, say)
             }
@@ -232,14 +243,31 @@ namespace AICompanion
                     ClearOld(z);
                     Plugin.Instance?.Note($"{Companion.NameOf(c)}'s journal moved off its network data (it was sent to every player with each step)");
                 }
-                else if (online.Contains(b.MasterName) && Time.time - b.OfferedAt > 10f)
-                {
-                    b.OfferedAt = Time.time;
-                    Invoke(ZRoutedRpc.Everybody, RpcOffer, string.Join(Field.ToString(), Head(b), journal, tally, missions));
-                }
+                else if (online.Contains(b.MasterName) && Due(ref b.OfferedAt, ref b.OfferTries))
+                    Invoke(MasterPeer(b), RpcOffer, string.Join(Field.ToString(), Head(b), journal, tally, missions));
             }
 
-            if (me != null && Time.time >= _nextSave) { _nextSave = Time.time + 5f; SaveProfiles(me); }
+            if (Time.time >= _nextSave) { _nextSave = Time.time + 5f; SaveProfiles(me); }
+        }
+
+        /// <summary>
+        /// Time to send a hand-over again (none answered yet): at once, then after 10 s, 20 s, 40 s... up to 5 minutes, and at most 8 times
+        /// (its player's game may be an older version, or not keep this companion: it stays on the ZDO then).
+        /// </summary>
+        private static bool Due(ref float at, ref int tries)
+        {
+            if (tries >= 8 || Time.time < at) return false;
+            at = Time.time + Mathf.Min(300f, 10f * Mathf.Pow(2f, tries));
+            tries++;
+            return true;
+        }
+
+        /// <summary>Its player's game (their peer), to send to it alone; Everybody when it is not found.</summary>
+        private static long MasterPeer(BookData b)
+        {
+            foreach (ZNet.PlayerInfo p in ZNet.instance.GetPlayerList())
+                if (p.m_name == b.MasterName && !p.m_characterID.IsNone()) return p.m_characterID.UserID;
+            return ZRoutedRpc.Everybody;
         }
 
         /// <summary>An old book joined with this one, not replacing it (a player still on an older version may have written it): entries
@@ -274,11 +302,36 @@ namespace AICompanion
             Join(b, f[1], f[2], f[3]);
             SaveProfiles(Player.m_localPlayer);   // (in the profile before the ZDO lets go of it)
             string stamp = string.Join(Field.ToString(), f[1], f[2], f[3]).GetStableHashCode().ToString(CultureInfo.InvariantCulture);
-            Invoke(sender, RpcTaken, id.ToString(CultureInfo.InvariantCulture) + "|" + stamp);
+            Invoke(sender, RpcTaken, id.ToString(CultureInfo.InvariantCulture) + "|" + stamp + "|old");
             Plugin.Instance?.Note($"A companion's journal ({id}) was handed over by the game running it");
         }
 
-        /// <summary>The game running it: its player's game has the old book, so it comes off the ZDO (unless it changed since).</summary>
+        /// <summary>
+        /// Its player's game: what it did while they were offline, from the game running it. Taken once (the same note sent again, its
+        /// answer lost, is only answered again), into the profile, then that game is told it may take it off.
+        /// </summary>
+        private static void OnParked(long sender, string payload)
+        {
+            int at = (payload ?? "").IndexOf(Field);
+            if (at < 0 || !ParseHead(payload.Substring(0, at), out long id, out long master)) return;
+            if (Player.m_localPlayer == null || master == 0L || Player.m_localPlayer.GetPlayerID() != master) return;
+            if (Profile.Find(Player.m_localPlayer, id) == null) return; // (nowhere to keep it: it stays on the ZDO)
+            string parked = payload.Substring(at + 1);
+            int stamp = parked.GetStableHashCode();
+            BookData b = Of(id, null, master);
+            if (b.LastParked != stamp)
+            {
+                Apply(b, parked.Split(Item));
+                b.LastParked = stamp;
+                SaveProfiles(Player.m_localPlayer);
+            }
+            Invoke(sender, RpcTaken, id.ToString(CultureInfo.InvariantCulture) + "|" + stamp.ToString(CultureInfo.InvariantCulture) + "|parked");
+        }
+
+        /// <summary>
+        /// The game running it: its player's game has the old book ("old") or the news parked for it ("parked"), so that comes off the ZDO,
+        /// unless it changed since it was sent (then it goes again).
+        /// </summary>
         private static void OnTaken(long sender, string payload)
         {
             string[] f = (payload ?? "").Split('|');
@@ -286,7 +339,17 @@ namespace AICompanion
                 || !int.TryParse(f[1], NumberStyles.Integer, CultureInfo.InvariantCulture, out int stamp)) return;
             Humanoid c = Companion.All().FirstOrDefault(x => Companion.IdOf(x) == id);
             ZDO z = Companion.Zdo(c);
-            if (z == null || !c.GetComponent<ZNetView>().IsOwner() || !HasOld(z) || OldStamp(z) != stamp) return;
+            if (z == null || !c.GetComponent<ZNetView>().IsOwner()) return;
+            Books.TryGetValue(id, out BookData b);
+            if (f.Length >= 3 && f[2] == "parked")
+            {
+                if (z.GetString(ParkedKey, "").GetStableHashCode() != stamp) { if (b != null) b.ParkTries = 0; return; }
+                z.Set(ParkedKey, "");
+                if (b != null) b.ParkTries = 0;
+                Plugin.Instance?.Note($"{Companion.NameOf(c)}'s news from while its player was away was handed over");
+                return;
+            }
+            if (!HasOld(z) || OldStamp(z) != stamp) { if (b != null) b.OfferTries = 0; return; }
             ClearOld(z);
             Plugin.Instance?.Note($"{Companion.NameOf(c)}'s journal moved off its network data (its player's game has it)");
         }
@@ -294,7 +357,7 @@ namespace AICompanion
         /// <summary>Its player's game: the book into the profile (saved with the character), for one far away too.</summary>
         public static void SaveProfiles(Player me)
         {
-            foreach (BookData b in Books.Values.Where(x => x.Dirty && Ours(x)))
+            foreach (BookData b in Books.Values.Where(x => x.Dirty && x.Fresh && Ours(x)))   // (never a book only partly known over the profile)
             {
                 b.Dirty = false;
                 Profile prof = Profile.Find(me, b.Id);
@@ -304,7 +367,9 @@ namespace AICompanion
             }
         }
 
-        private static HashSet<string> Online() => new HashSet<string>(ZNet.instance.GetPlayerList().Select(p => p.m_name));
+        /// <summary>The players in the world: their character is there (not only connected and still loading, when their game drops news).</summary>
+        private static HashSet<string> Online() =>
+            new HashSet<string>(ZNet.instance.GetPlayerList().Where(p => !p.m_characterID.IsNone()).Select(p => p.m_name));
 
         /// <summary>Leaving the world (the character is saved first): news for an offline player onto the ZDOs this game runs, now.</summary>
         public static void Leaving()

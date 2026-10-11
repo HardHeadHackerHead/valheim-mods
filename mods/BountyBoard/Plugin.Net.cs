@@ -133,6 +133,8 @@ namespace BountyBoard
         private string _statePath; // the file _state belongs to: hosting another world without restarting must not carry it over
         private float _nextDayCheck;
         private bool _dirty;
+        private float _sentAt = -999f; // when the contracts last went out to everyone
+        private bool _sendSoon;        // a kill's progress is waiting to go out (ServerTick sends it)
 
         // Kept per world by the world's unique id (two worlds can share a name); older versions used the name.
         private static string WorldFile(string world)
@@ -180,11 +182,12 @@ namespace BountyBoard
             s.Day = day;
             s.Posted = Rules.MakeNotices(day, NoticesPerBoard.Value);
             SaveState();
-            Broadcast(RpcState, s.Serialize());
+            SendState();
         }
 
         private void ServerTick()
         {
+            if (_sendSoon && Time.time >= _sentAt + 1f) SendState();
             if (Time.time < _nextDayCheck) return;
             _nextDayCheck = Time.time + 5f;
             EnsureToday();
@@ -193,6 +196,24 @@ namespace BountyBoard
         private void Changed()
         {
             SaveState();
+            SendState();
+        }
+
+        /// <summary>
+        /// A kill moved a contract along: saved at once, but sent to everyone at most once a second. The whole board goes out each time
+        /// (a few KB), and a sweep in a big fight counts several kills a second. The killer is told their progress at once (RpcNote).
+        /// </summary>
+        private void ChangedSoon()
+        {
+            SaveState();
+            if (Time.time >= _sentAt + 1f) SendState();
+            else _sendSoon = true;
+        }
+
+        private void SendState()
+        {
+            _sentAt = Time.time;
+            _sendSoon = false;
             Broadcast(RpcState, Server().Serialize());
         }
 
@@ -245,7 +266,7 @@ namespace BountyBoard
                 (killer == MyId || ZNet.instance.GetPeer(killer) != null)) sender = killer;
             long who = CharacterOf(sender);
             State s = Server();
-            bool any = false;
+            bool any = false, finished = false;
             foreach (Bounty b in s.Active.ToList())
             {
                 if (b.Progress >= b.Count || b.Kind == Kind.Gather) continue;
@@ -254,10 +275,11 @@ namespace BountyBoard
                 b.Progress++;
                 Earn(b, who);
                 any = true;
-                if (b.Progress >= b.Count) Finish(s, b);
+                if (b.Progress >= b.Count) { Finish(s, b); finished = true; }
                 else Reply(sender, RpcNote, Note("progress", b));
             }
-            if (any) Changed();
+            if (finished) Changed(); // a finished contract goes out at once
+            else if (any) ChangedSoon();
         }
 
         private void ServerHand(long sender, string payload)

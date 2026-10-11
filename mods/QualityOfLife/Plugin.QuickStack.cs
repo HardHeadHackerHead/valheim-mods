@@ -121,6 +121,7 @@ namespace QualityOfLife
                 ContainerRegistry.Watch(c);
                 if (ContainerRegistry.InUse(c)) continue; // (a chest you have open is handled by the game's own button)
                 if (c.GetInventory() == null || (c.transform.position - here).sqrMagnitude > max) continue;
+                ChestRules.ForgetOnMover(c); // (a cart or ship near you loses the rules older versions let you give it)
                 // Only built containers (chests, carts): a companion carries a Container for its bag and gear, and Sort chests emptied it
                 if (c.GetComponentInParent<Piece>() == null || c.GetComponent<TombStone>() != null) continue;
                 if (!Usable(c) || CompanionsOwn(c)) continue;

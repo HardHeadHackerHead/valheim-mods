@@ -103,7 +103,7 @@ namespace AICompanion
         {
             long id = Companion.IdOf(me), master = Companion.MasterId(me);
             string name = Companion.NameOf(me);
-            return UnityEngine.Object.FindObjectsOfType<TombStone>().Where(t => IsMine(t, me, id, master, name));
+            return UnityEngine.Object.FindObjectsByType<TombStone>(FindObjectsSortMode.None).Where(t => IsMine(t, me, id, master, name));
         }
 
         /// <summary>The tombstone from its last fall (where it remembers falling), if it is about.</summary>
@@ -483,7 +483,7 @@ namespace AICompanion
         {
             var raw = me.GetInventory().GetAllItems();
             if (raw.Count == 0) return null;
-            return UnityEngine.Object.FindObjectsOfType<CookingStation>()
+            return UnityEngine.Object.FindObjectsByType<CookingStation>(FindObjectsSortMode.None)
                 .Where(s => Vector3.Distance(s.transform.position, center) < radius + 10f && Usable(s) && raw.Any(i => Raw(s, i)) && (int)FreeSlot.Invoke(s, null) >= 0)
                 .OrderBy(s => Vector3.Distance(s.transform.position, center)).FirstOrDefault(); // its own, by its bed, before the far ones
         }

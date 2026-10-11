@@ -15,7 +15,8 @@ namespace MapShare
     /// Shares the part of the map you have explored with everyone else in the world, live, as you run through the fog.
     /// (The cartography table only does it by hand: you write your map to the table and others read it, one visit at a time.)
     ///   * New cells you uncover are sent to the other players a couple of seconds later and appear on their map.
-    ///   * Someone who joins gets the whole map from one of the players already there, and sends theirs back.
+    ///   * Someone who joins gets the whole map from one of the players already there, and sends theirs back. The others then send
+    ///     only what the newcomer still lacks (usually nothing), so a join costs about one whole map, not one per player.
     /// Only the explored area is shared, not pins. Players without this mod simply do not take part.
     /// </summary>
     [BepInPlugin(Guid, Name, Version)]
@@ -24,7 +25,7 @@ namespace MapShare
         public const string Guid = "com.quad.mapshare";
         public const string OldGuid = "com.dhack.mapshare"; // (its id until 2026-10: settings move over by themselves, see Shared/Migration.cs)
         public const string Name = "MapShare";
-        public const string Version = "1.1.3";
+        public const string Version = "1.1.4";
 
         private const string RpcCells = "DHack_MapCells";   // newly explored cells
         private const string RpcHello = "DHack_MapHello";   // "I just joined: send me the map"
@@ -73,6 +74,7 @@ namespace MapShare
             UnregisterRpc();
             Pending.Clear();
             _incoming.Clear();
+            _answers.Clear();
             Synced?.Dispose();
             if (Instance == this) Instance = null;
         }
@@ -82,7 +84,7 @@ namespace MapShare
         private int _awakeFrame;
         private ZRoutedRpc _registeredOn;
         private bool _helloPending;
-        private float _nextSend, _helloAt;
+        private float _nextSend, _helloAt, _helloSentAt = -1000f;
 
         private bool Sending => _send.Value && _allowed.Value;
         private bool Receiving => _receive.Value && _allowed.Value;
@@ -104,6 +106,7 @@ namespace MapShare
                 _helloPending = true;
                 _helloAt = Time.unscaledTime + 4f; // let the world and the map finish loading
                 Pending.Clear();
+                _answers.Clear();
             }
 
             if (Minimap.instance == null || Player.m_localPlayer == null) return;
@@ -111,9 +114,10 @@ namespace MapShare
             if (_helloPending && Time.unscaledTime >= _helloAt)
             {
                 _helloPending = false;
-                if (Receiving) Send(RpcHello, null);                            // ask for the map
-                StartCoroutine(SendOwnMapLater());                              // and give ours
+                if (Receiving) { Send(RpcHello, null); _helloSentAt = Time.unscaledTime; } // ask for the map
+                StartCoroutine(SendOwnMapLater());                                         // and give ours
             }
+            if (_answers.Count > 0) AnswerDue();
 
             if (Sending && Pending.Count > 0 && Time.unscaledTime >= _nextSend)
             {
@@ -194,17 +198,78 @@ namespace MapShare
         private readonly Dictionary<long, Assembly_> _incoming = new Dictionary<long, Assembly_>();
         private class Assembly_ { public int Total; public byte[][] Parts; public int Have; public float Started; }
 
+        // Newcomers we still owe an answer, by their id. Seen: what we know they have (their own map, plus maps sent to everyone
+        // since), null until their own map arrives.
+        private readonly Dictionary<long, Answer> _answers = new Dictionary<long, Answer>();
+        private class Answer { public int Rank; public float Due; public byte[] Seen; }
+
         // A whole map is a few hundred KB at most (one bit per cell of a 2048 x 2048 map, before compressing): anything far bigger is
         // not a map. A set of pieces that never completes (its sender left) is forgotten after a minute.
         private const int MaxParts = 64, MaxPiece = 64 * 1024, MaxSets = 16;
         private const float SetTimeout = 60f;
 
+        // A map goes in pieces of 30 KB, at most one every quarter second from each player (about 120 KB a second), so the server's
+        // queue to a newcomer isn't flooded while their world loads.
+        private const float PieceGap = 0.25f;
+        private float _nextPiece;
+
         // Every player who shares their map answers a newcomer. (Picking just one could pick a player without MapShare, or with
-        // sharing off, and then nobody answered.) The maps merge, so getting several does no harm; a map is a few KB.
+        // sharing off, and then nobody answered.) But only the first, by player id, sends its whole map, to the newcomer alone. The
+        // rest wait for the newcomer's own map (sent to everyone 12 seconds after they ask, so it holds what the first one sent),
+        // then send everyone just the cells it lacks: usually none. They take turns a few seconds apart, and each leaves out what
+        // the ones before it sent. Anyone who never sees the newcomer's map (the newcomer shares nothing) sends its whole map, later.
         private void OnHello(long sender)
         {
             if (!Sending || sender == ZDOMan.GetSessionID() || Minimap.instance == null) return;
-            StartCoroutine(SendFullMap(sender));
+            if (_answers.ContainsKey(sender) || _answers.Count >= MaxSets) return;
+            int rank = Rank(sender);
+            if (rank == 0) StartCoroutine(SendFullMap(sender));
+            else _answers[sender] = new Answer { Rank = rank, Due = Time.unscaledTime + 20f + rank * 4f };
+        }
+
+        /// <summary>How many players other than us and the newcomer have a lower id: 0 means we answer first.</summary>
+        private static int Rank(long joiner)
+        {
+            long me = ZDOMan.GetSessionID();
+            int rank = 0;
+            if (ZNet.instance == null) return rank;
+            foreach (ZNet.PlayerInfo p in ZNet.instance.GetPlayerList())
+            {
+                long id = p.m_characterID.UserID;
+                if (id != 0L && id != me && id != joiner && id < me) rank++;
+            }
+            return rank;
+        }
+
+        private void AnswerDue()
+        {
+            foreach (var kv in _answers.Where(kv => Time.unscaledTime >= kv.Value.Due).ToList())
+            {
+                _answers.Remove(kv.Key);
+                if (!Sending || Minimap.instance == null) continue;
+                if (kv.Value.Seen == null) StartCoroutine(SendFullMap(kv.Key));   // their map never came: ours whole, to them alone
+                else StartCoroutine(SendFullMap(0L, kv.Value.Seen));              // only what they lack, to everyone (the others may lack it too)
+            }
+        }
+
+        /// <summary>
+        /// A whole map arrived: note it for the newcomers we still owe an answer. Their own map is what they have, and a map sent to
+        /// everyone reached them too. (Just after we joined ourselves, a map may be an answer sent to us alone: those are left out.)
+        /// </summary>
+        private void Heard(long sender, byte[] bits)
+        {
+            bool mayBeOursAlone = Time.unscaledTime - _helloSentAt < 120f;
+            foreach (var kv in _answers)
+            {
+                Answer a = kv.Value;
+                if (kv.Key == sender && a.Seen == null)
+                {
+                    a.Seen = (byte[])bits.Clone();
+                    a.Due = Time.unscaledTime + (a.Rank - 1) * 4f; // take turns, so each can leave out what the ones before sent
+                }
+                else if (a.Seen != null && (kv.Key == sender || !mayBeOursAlone))
+                    for (int i = 0; i < a.Seen.Length && i < bits.Length; i++) a.Seen[i] |= bits[i];
+            }
         }
 
         private IEnumerator SendOwnMapLater()
@@ -213,26 +278,39 @@ namespace MapShare
             if (Sending && Minimap.instance != null) yield return SendFullMap(0L);
         }
 
-        /// <summary>Everything explored (by us or by others), as a compressed bit array, sent in small pieces.</summary>
-        private IEnumerator SendFullMap(long target)
+        /// <summary>
+        /// Everything explored (by us or by others), as a compressed bit array, sent in small pieces. With <paramref name="minus"/>,
+        /// only the cells not in it, and nothing at all when that's none: still a valid map, since a received map is only ever added.
+        /// </summary>
+        private IEnumerator SendFullMap(long target, byte[] minus = null)
         {
             Minimap map = Minimap.instance;
             var mine = (BitArray)Explored.GetValue(map);
             var others = (BitArray)ExploredOthers.GetValue(map);
             int n = mine.Length;
             var bits = new byte[(n + 7) / 8];
+            if (minus != null && minus.Length < bits.Length) yield break;
+            bool any = false;
             const int slice = 250000;
             for (int start = 0; start < n; start += slice) // a slice per frame, so the game does not hitch
             {
                 int end = Mathf.Min(n, start + slice);
-                for (int i = start; i < end; i++) if (mine[i] || others[i]) bits[i >> 3] |= (byte)(1 << (i & 7));
+                for (int i = start; i < end; i++)
+                {
+                    if (!mine[i] && !others[i]) continue;
+                    if (minus != null && (minus[i >> 3] & (1 << (i & 7))) != 0) continue;
+                    bits[i >> 3] |= (byte)(1 << (i & 7));
+                    any = true;
+                }
                 yield return null;
             }
+            if (minus != null && !any) yield break; // the newcomer has it all already
 
             byte[] packed = Utils.Compress(bits);
             const int chunk = 30000;
             int parts = (packed.Length + chunk - 1) / chunk;
-            Logger.LogInfo($"Sending the whole map to {(target == 0L ? "everyone" : "one player")}: {packed.Length / 1024} KB in {parts} piece(s)");
+            Logger.LogInfo($"Sending {(minus != null ? "what a newcomer lacked" : "the whole map")} to {(target == 0L ? "everyone" : "one player")}: " +
+                           $"{packed.Length / 1024} KB in {parts} piece(s)");
             int id = UnityEngine.Random.Range(1, int.MaxValue);
             for (int i = 0; i < parts; i++)
             {
@@ -245,14 +323,15 @@ namespace MapShare
                 package.Write(parts);
                 package.Write(map.m_textureSize);
                 package.Write(piece);
+                while (Time.unscaledTime < _nextPiece) yield return null; // paced, see PieceGap
+                _nextPiece = Time.unscaledTime + PieceGap;
                 Send(RpcFull, package, target);
-                yield return null; // one piece per frame
             }
         }
 
         private void OnFull(long sender, ZPackage package)
         {
-            if (!Receiving || Minimap.instance == null || sender == ZDOMan.GetSessionID()) return;
+            if ((!Receiving && _answers.Count == 0) || Minimap.instance == null || sender == ZDOMan.GetSessionID()) return;
             try
             {
                 int id = package.ReadInt(), index = package.ReadInt(), total = package.ReadInt(), size = package.ReadInt();
@@ -276,7 +355,8 @@ namespace MapShare
                 byte[] packed = a.Parts.SelectMany(p => p).ToArray();
                 byte[] bits = Unpack(packed, (size * size + 7) / 8);
                 if (bits == null) { Logger.LogWarning("A shared map was not the size of this world's map: ignored"); return; }
-                StartCoroutine(Merge(bits));
+                Heard(sender, bits);
+                if (Receiving) StartCoroutine(Merge(bits));
             }
             catch (Exception e) { Logger.LogWarning("Bad map piece: " + e.Message); }
         }

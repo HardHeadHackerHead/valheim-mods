@@ -173,14 +173,21 @@ namespace AICompanion
 
         private static Dictionary<Skills.SkillType, Level> Of(Humanoid c)
         {
-            // Another game runs it: its save is the live copy (and what this game had is old by the time it runs it here again).
+            // Another game runs it: its save is the live copy.
             ZNetView v = c.GetComponent<ZNetView>();
-            if (v != null && v.IsValid() && !v.IsOwner()) { Levels.Remove(c); return Parse(v.GetZDO().GetString(Key, "")); }
-            if (Levels.TryGetValue(c, out var map)) return map;
-            foreach (Humanoid gone in Levels.Keys.Where(k => k == null).ToList()) Levels.Remove(gone);
-            Levels[c] = map = Parse(Companion.Zdo(c)?.GetString(Key, "") ?? "");
+            if (v != null && v.IsValid() && !v.IsOwner()) return Parse(v.GetZDO().GetString(Key, ""));
+            // Ours: what this game has, unless its save changed since this game read or wrote it (another game ran it in between and
+            // raised its skills: this game's copy is old, and writing it would undo that).
+            string saved = Companion.Zdo(c)?.GetString(Key, "") ?? "";
+            if (Levels.TryGetValue(c, out var map) && Seen.TryGetValue(c, out string seen) && seen == saved) return map;
+            foreach (Humanoid gone in Levels.Keys.Where(k => k == null).ToList()) { Levels.Remove(gone); Seen.Remove(gone); NextSave.Remove(gone); }
+            Levels[c] = map = Parse(saved);
+            Seen[c] = saved;
             return map;
         }
+
+        /// <summary>Each companion's skills as this game last read or wrote them in its save.</summary>
+        private static readonly Dictionary<Humanoid, string> Seen = new Dictionary<Humanoid, string>();
 
         private static Dictionary<Skills.SkillType, Level> Parse(string text)
         {
@@ -247,7 +254,9 @@ namespace AICompanion
             // Into its save at a new level, else every 10 s: each write sends its whole ZDO to every player near (it was every hit).
             if (!level && NextSave.TryGetValue(c, out float next) && Time.time < next) return;
             NextSave[c] = Time.time + 10f;
-            Companion.Zdo(c).Set(Key, Write(map));
+            string text = Write(map);
+            Companion.Zdo(c).Set(Key, text);
+            Seen[c] = text;
         }
 
         /// <summary>A player's death penalty: every skill 5% lower (applied to the profile it wakes from).</summary>
@@ -273,8 +282,8 @@ namespace AICompanion
             t[type] = time;
         }
 
-        public static void Forget() { Levels.Clear(); _defs = null; Timers.Clear(); NextSave.Clear(); }
-        public static void Forget(Humanoid c) => Levels.Remove(c);
+        public static void Forget() { Levels.Clear(); _defs = null; Timers.Clear(); NextSave.Clear(); Seen.Clear(); }
+        public static void Forget(Humanoid c) { Levels.Remove(c); Seen.Remove(c); NextSave.Remove(c); }
     }
 
     /// <summary>

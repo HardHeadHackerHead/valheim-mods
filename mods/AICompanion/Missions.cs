@@ -97,6 +97,9 @@ namespace AICompanion
         {
             Humanoid me = st.Body;
             if (Companion.Zdo(me) == null || !me.GetComponent<ZNetView>().IsOwner()) return;
+            // Not while this game does not have its whole book (its player's game has not sent it yet, or they are offline): its missions
+            // would look empty, and a new list would replace theirs. It still works toward its goal meanwhile.
+            if (!Journal.Known(me)) return;
             List<Mission> list = All(me);
             Mission cur = list.LastOrDefault(m => m.Status == "active");
             string key = KeyOf(g);

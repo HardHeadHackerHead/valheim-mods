@@ -75,7 +75,7 @@ namespace BuildOrders
             foreach (Order order in orders) _orders.Add(order.Id, order);
             _stabilityDirty = true;
             Save();
-            foreach (Order order in orders) Send("A|" + Encode(order));
+            foreach (Order order in orders) ShareAdded(order);
             RecordPlan(key);
             planKey = key; error = null;
             return true;

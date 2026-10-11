@@ -1,3 +1,5 @@
+1.1.4: Less network traffic when someone joins. Only one player sends the newcomer the whole map now; the others send just what the newcomer still lacks (usually nothing), instead of every player sending their whole map at once. Maps also go out at a gentler pace, so the newcomer's world loads without a flood of map pieces. Works with older versions on the same server, and everyone still ends up with the same explored area.
+
 1.1.3: Its reload message in chat follows the game's language.
 
 1.1.2: A clearer page: what it does, who needs it in multiplayer, how it gets on with other mods, and where to report a bug. The game itself is unchanged.

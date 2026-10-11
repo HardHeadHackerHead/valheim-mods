@@ -1,6 +1,7 @@
 {
   "qualityoflife_assign_look": "看着一个箱子（或打开它）并按 {0}，选择它接收什么。",
   "qualityoflife_assign_ledger": "账簿宝箱不存放东西：请分配它周围的箱子。",
+  "qualityoflife_assign_moving": "推车和船只不能分配物品：请分配一个箱子。",
   "qualityoflife_assign_cant_use": "你不能使用那个箱子。",
   "qualityoflife_assign_in_use": "别人正打开着那个箱子。",
   "qualityoflife_save_in_use": "别人正打开着这个箱子。等他们关上后再试。",

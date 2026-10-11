@@ -75,7 +75,7 @@ namespace AICompanion
         private static void GiveBed(Bed bed, Humanoid c)
         {
             long id = Companion.IdOf(c);
-            foreach (Bed old in Object.FindObjectsOfType<Bed>()) if (old != bed && IdOn(old) == id) { Claim(old); Companion.Zdo(old).Set(HomeKey, 0L); Companion.Zdo(old).Set(HomeName, ""); }
+            foreach (Bed old in Object.FindObjectsByType<Bed>(FindObjectsSortMode.None)) if (old != bed && IdOn(old) == id) { Claim(old); Companion.Zdo(old).Set(HomeKey, 0L); Companion.Zdo(old).Set(HomeName, ""); }
             ZDO z = Companion.Zdo(bed);
             Claim(bed); z.Set(HomeKey, id); z.Set(HomeName, Companion.NameOf(c));
             Vector3 spot = bed.GetSpawnPoint();
@@ -106,7 +106,7 @@ namespace AICompanion
             Bed bed = null;
             if (!z.GetBool(Keys.HasBed, false))
             {
-                bed = Object.FindObjectsOfType<Bed>().Where(b => FreeBed(b) && Vector3.Distance(b.transform.position, from) < 40f)
+                bed = Object.FindObjectsByType<Bed>(FindObjectsSortMode.None).Where(b => FreeBed(b) && Vector3.Distance(b.transform.position, from) < 40f)
                             .OrderBy(b => Vector3.Distance(b.transform.position, from)).FirstOrDefault();
                 if (bed != null) { GiveBed(bed, c); bedFar = Vector3.Distance(bed.transform.position, from).ToString("0"); }
             }
@@ -114,7 +114,7 @@ namespace AICompanion
             if (bed != null && Chests(c).Count == 0)
             {
                 Vector3 at = bed.transform.position;
-                List<Container> empty = Object.FindObjectsOfType<Container>()
+                List<Container> empty = Object.FindObjectsByType<Container>(FindObjectsSortMode.None)
                     .Where(x => IsChest(x) && IdOn(x) == 0L && !Containers.InUse(x) && x.GetInventory().NrOfItems() == 0 && Vector3.Distance(x.transform.position, at) < 8f)
                     .OrderBy(x => Vector3.Distance(x.transform.position, at)).Take(2).ToList();
                 foreach (Container ch in empty) GiveChest(ch, c);
@@ -237,7 +237,7 @@ namespace AICompanion
         {
             long id = Companion.IdOf(c);
             if (_chestCache.TryGetValue(id, out var hit) && Time.time - hit.Key < 4f) return hit.Value.Where(x => x != null).ToList();
-            List<Container> claimed = Object.FindObjectsOfType<Container>().Where(x => x != null && IdOn(x) == id).ToList();
+            List<Container> claimed = Object.FindObjectsByType<Container>(FindObjectsSortMode.None).Where(x => x != null && IdOn(x) == id).OrderBy(x => x.GetInstanceID()).ToList(); // (always in the same order: it fills them in turn)
             if (id != 0L) foreach (Container bad in claimed.Where(NotStorage)) LetGo(bad, c);
             List<Container> found = claimed.Where(IsChest).ToList();
             _chestCache[id] = new KeyValuePair<float, List<Container>>(Time.time, found);
@@ -247,7 +247,7 @@ namespace AICompanion
         public static Bed BedOf(Humanoid c)
         {
             long id = Companion.IdOf(c);
-            return Object.FindObjectsOfType<Bed>().FirstOrDefault(b => IdOn(b) == id);
+            return Object.FindObjectsByType<Bed>(FindObjectsSortMode.None).FirstOrDefault(b => IdOn(b) == id);
         }
 
         // ---- every second on each player's game ----------------------------------------------------------------

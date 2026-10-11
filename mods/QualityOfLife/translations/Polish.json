@@ -1,6 +1,7 @@
 {
   "qualityoflife_assign_look": "Spójrz na skrzynię (lub ją otwórz) i naciśnij {0}, aby wybrać, co ma przyjmować.",
   "qualityoflife_assign_ledger": "Skrzynia rejestru niczego nie przechowuje: przypisz skrzynie wokół niej.",
+  "qualityoflife_assign_moving": "Wozom i statkom nie można niczego przypisać: przypisz skrzynię.",
   "qualityoflife_assign_cant_use": "Nie możesz używać tej skrzyni.",
   "qualityoflife_assign_in_use": "Ktoś inny ma otwartą tę skrzynię.",
   "qualityoflife_save_in_use": "Ktoś inny ma otwartą tę skrzynię. Spróbuj ponownie, gdy ją zamknie.",
