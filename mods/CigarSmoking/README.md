@@ -5,7 +5,7 @@
 
 <img src="cover.png" alt="Quad's Cigars" width="100%">
 
-**Grow tobacco, cure it, roll your own cigars and smoke them: smoking as a real part of the game, from the wild plant to the cigar in your mouth.**
+**Grow tobacco, cure it, roll your own cigars and smoke them for buffs: farm wild tobacco plants, dry and age the leaves, build a rolling table and a humidor, and light up. Smoking as a real part of the game, with smoke others see.**
 
 ![version: 0.4.2](https://img.shields.io/badge/version-0.4.2-3b6e8f?style=flat-square)  ![multiplayer: everyone + host](https://img.shields.io/badge/multiplayer-everyone%20%2B%20host-7a5c2e?style=flat-square)  ![made with: Claude Code](https://img.shields.io/badge/made%20with-Claude%20Code-c26a3d?style=flat-square)
 
@@ -16,6 +16,10 @@
 <!-- GITHUB-ONLY -->**Install:** with [r2modman](https://thunderstore.io/c/valheim/p/ebkr/r2modman/) or Thunderstore Mod Manager from [Thunderstore](https://thunderstore.io/c/valheim/p/Quads_Lab/Quads_Cigars/), or press **F7** in the game with our [mod manager](https://github.com/HardHeadHackerHead/valheim-mod-manager).<!-- END GITHUB-ONLY -->
 
 ## ✨ Features
+
+Grow tobacco, cure it, roll your own cigars and smoke them: smoking as a real part of the game, from the wild plant to the cigar in your mouth.
+
+### How it works
 
 - Find wild tobacco growing in the Meadows, the Black Forest and the Plains. Each biome has its own strain, a little different in leaf and flower. Picking a plant gives leaves and seeds.
 - Sow seeds with the cultivator in cultivated soil. A plant grows tall in about 25 minutes and gives leaves and more seeds. Every strain can be farmed in the Meadows, the Black Forest and the Plains.

@@ -5,7 +5,7 @@
 
 <img src="cover.png" alt="Quad's Quiver" width="100%">
 
-**Pick your shot arrows back up (arrow recovery), and carry them in a quiver on your back: archery that doesn't eat your arrows.**
+**Arrow recovery: pick your shot arrows and bolts back up from the ground, trees, walls and creatures, and carry them in a quiver on your back. Archery that doesn't eat your arrows: retrieve them, save your ammo.**
 
 ![version: 0.2.3](https://img.shields.io/badge/version-0.2.3-3b6e8f?style=flat-square)  ![multiplayer: only who wants it](https://img.shields.io/badge/multiplayer-only%20who%20wants%20it-7a5c2e?style=flat-square)  ![made with: Claude Code](https://img.shields.io/badge/made%20with-Claude%20Code-c26a3d?style=flat-square)
 
@@ -16,6 +16,8 @@
 <!-- GITHUB-ONLY -->**Install:** with [r2modman](https://thunderstore.io/c/valheim/p/ebkr/r2modman/) or Thunderstore Mod Manager from [Thunderstore](https://thunderstore.io/c/valheim/p/Quads_Lab/Quads_Quiver/), or press **F7** in the game with our [mod manager](https://github.com/HardHeadHackerHead/valheim-mod-manager).<!-- END GITHUB-ONLY -->
 
 ## ✨ Features
+
+Pick your shot arrows back up (arrow recovery), and carry them in a quiver on your back: archery that doesn't eat your arrows.
 
 ### What is in it
 

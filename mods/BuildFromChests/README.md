@@ -5,7 +5,7 @@
 
 <img src="cover.png" alt="Quad's Build From Chests" width="100%">
 
-**Build from chests: building with the hammer uses materials from nearby chests and containers, not just your inventory.**
+**Build from chests and containers: placing pieces with the hammer takes materials from your inventory, then from nearby chests (20 m, or your own range), and the build menu counts everything in storage. Pairs with Craft From Chests.**
 
 ![version: 1.5.2](https://img.shields.io/badge/version-1.5.2-3b6e8f?style=flat-square)  ![multiplayer: only who wants it](https://img.shields.io/badge/multiplayer-only%20who%20wants%20it-7a5c2e?style=flat-square)  ![made with: Claude Code](https://img.shields.io/badge/made%20with-Claude%20Code-c26a3d?style=flat-square)
 
@@ -16,6 +16,10 @@
 <!-- GITHUB-ONLY -->**Install:** with [r2modman](https://thunderstore.io/c/valheim/p/ebkr/r2modman/) or Thunderstore Mod Manager from [Thunderstore](https://thunderstore.io/c/valheim/p/Quads_Lab/Quads_Build_From_Chests/), or press **F7** in the game with our [mod manager](https://github.com/HardHeadHackerHead/valheim-mod-manager).<!-- END GITHUB-ONLY -->
 
 ## ✨ Features
+
+Build from chests: building with the hammer uses materials from nearby chests and containers, not just your inventory.
+
+### How it works
 
 - Pieces you place take materials from your inventory first, then from chests within range (default 20 m).
 - The build menu shows how many of each material you have in total, so you can see what is possible before you place anything.

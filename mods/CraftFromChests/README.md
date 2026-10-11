@@ -5,7 +5,7 @@
 
 <img src="cover.png" alt="Quad's Craft From Chests" width="100%">
 
-**Craft from chests: crafting stations, and hand-crafting from your inventory, use materials from nearby chests and containers.**
+**Craft from chests and containers: crafting stations and hand-crafting use materials from nearby chests (20 m, or your own range), with totals in the crafting menu and lines to the chests in use. Pairs with Build From Chests.**
 
 ![version: 1.5.2](https://img.shields.io/badge/version-1.5.2-3b6e8f?style=flat-square)  ![multiplayer: only who wants it](https://img.shields.io/badge/multiplayer-only%20who%20wants%20it-7a5c2e?style=flat-square)  ![made with: Claude Code](https://img.shields.io/badge/made%20with-Claude%20Code-c26a3d?style=flat-square)
 
@@ -16,6 +16,10 @@
 <!-- GITHUB-ONLY -->**Install:** with [r2modman](https://thunderstore.io/c/valheim/p/ebkr/r2modman/) or Thunderstore Mod Manager from [Thunderstore](https://thunderstore.io/c/valheim/p/Quads_Lab/Quads_Craft_From_Chests/), or press **F7** in the game with our [mod manager](https://github.com/HardHeadHackerHead/valheim-mod-manager).<!-- END GITHUB-ONLY -->
 
 ## ✨ Features
+
+Craft from chests: crafting stations, and hand-crafting from your inventory, use materials from nearby chests and containers.
+
+### How it works
 
 - Anything you can reach within the range counts toward a recipe. The game takes the materials from your inventory first, then from the chests.
 - The crafting menu shows how many of each material you have in total.

@@ -7,7 +7,7 @@ schemaVersion = "0.0.1"
 namespace = "Quads_Lab"
 name = "Quads_Bird_Trap"
 versionNumber = "1.2.2"
-description = "A buildable bird trap: bait it with berries or seeds, leave it under the open sky, and come back to a gull to pluck for feathers."
+description = "A buildable bird trap for feathers: bait it with berries or seeds, leave it under the open sky, and come back to a caught gull to pluck. An early feather farm for your arrows, without hunting birds."
 websiteUrl = "https://github.com/HardHeadHackerHead/valheim-mods/tree/main/mods/BirdTrap"
 containsNsfwContent = false
 

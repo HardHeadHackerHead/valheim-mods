@@ -5,7 +5,7 @@
 
 <img src="cover.png" alt="Quad's Ziplines" width="100%">
 
-**Ziplines: build two posts, run a rope between them and ride it, hanging from your axe.**
+**Ziplines (zip line): build two posts, even kilometres apart, run a rope between them and ride it downhill hanging from your axe. Fast travel across valleys and down mountains, saved with the world.**
 
 ![version: 0.3.2](https://img.shields.io/badge/version-0.3.2-3b6e8f?style=flat-square)  ![multiplayer: everyone + host](https://img.shields.io/badge/multiplayer-everyone%20%2B%20host-7a5c2e?style=flat-square)  ![made with: Claude Code](https://img.shields.io/badge/made%20with-Claude%20Code-c26a3d?style=flat-square)
 
@@ -16,6 +16,8 @@
 <!-- GITHUB-ONLY -->**Install:** with [r2modman](https://thunderstore.io/c/valheim/p/ebkr/r2modman/) or Thunderstore Mod Manager from [Thunderstore](https://thunderstore.io/c/valheim/p/Quads_Lab/Quads_Ziplines/), or press **F7** in the game with our [mod manager](https://github.com/HardHeadHackerHead/valheim-mod-manager).<!-- END GITHUB-ONLY -->
 
 ## ✨ Features
+
+Ziplines: build two posts, run a rope between them and ride it, hanging from your axe.
 
 ### What is in it
 

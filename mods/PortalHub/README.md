@@ -5,7 +5,7 @@
 
 <img src="cover.png" alt="Quad's Portal Hub" width="100%">
 
-**A portal network: press E on a portal and pick where it goes from a list. No more matching portal names to teleport where you want.**
+**A portal network: press E on a portal and pick where it goes from a list, a teleport menu with search, favourites and map lines. No more matching portal names; portals you already built keep working.**
 
 ![version: 1.4.2](https://img.shields.io/badge/version-1.4.2-3b6e8f?style=flat-square)  ![multiplayer: everyone + host](https://img.shields.io/badge/multiplayer-everyone%20%2B%20host-7a5c2e?style=flat-square)  ![made with: Claude Code](https://img.shields.io/badge/made%20with-Claude%20Code-c26a3d?style=flat-square)
 
@@ -16,6 +16,8 @@
 <!-- GITHUB-ONLY -->**Install:** with [r2modman](https://thunderstore.io/c/valheim/p/ebkr/r2modman/) or Thunderstore Mod Manager from [Thunderstore](https://thunderstore.io/c/valheim/p/Quads_Lab/Quads_Portal_Hub/), or press **F7** in the game with our [mod manager](https://github.com/HardHeadHackerHead/valheim-mod-manager).<!-- END GITHUB-ONLY -->
 
 ## ✨ Features
+
+A portal network: press E on a portal and pick where it goes from a list. No more matching portal names to teleport where you want.
 
 ### What is in it
 

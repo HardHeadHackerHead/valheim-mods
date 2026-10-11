@@ -7,7 +7,7 @@ schemaVersion = "0.0.1"
 namespace = "Quads_Lab"
 name = "Quads_Crafting_Filters"
 versionNumber = "0.2.1"
-description = "Recipe filter chips above the crafting list: pick a type, a tier or what you can make now, at every crafting station."
+description = "Recipe filters for every crafting station: chips above the crafting list narrow it by type (weapons, armor, tools, ammo, food, potions), by tier (bronze, iron, silver, black metal) or to what you can craft now. Workbench, forge, cauldron and more."
 websiteUrl = "https://github.com/HardHeadHackerHead/valheim-mods/tree/main/mods/BetterCraftingStations"
 containsNsfwContent = false
 

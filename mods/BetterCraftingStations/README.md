@@ -5,7 +5,7 @@
 
 <img src="cover.png" alt="Quad's Crafting Filters" width="100%">
 
-**Recipe filter chips above the crafting list: pick a type, a tier or what you can make now, at every crafting station.**
+**Recipe filters for every crafting station: chips above the crafting list narrow it by type (weapons, armor, tools, ammo, food, potions), by tier (bronze, iron, silver, black metal) or to what you can craft now. Workbench, forge, cauldron and more.**
 
 ![version: 0.2.1](https://img.shields.io/badge/version-0.2.1-3b6e8f?style=flat-square)  ![multiplayer: only who wants it](https://img.shields.io/badge/multiplayer-only%20who%20wants%20it-7a5c2e?style=flat-square)  ![made with: Claude Code](https://img.shields.io/badge/made%20with-Claude%20Code-c26a3d?style=flat-square)
 
@@ -16,6 +16,8 @@
 <!-- GITHUB-ONLY -->**Install:** with [r2modman](https://thunderstore.io/c/valheim/p/ebkr/r2modman/) or Thunderstore Mod Manager from [Thunderstore](https://thunderstore.io/c/valheim/p/Quads_Lab/Quads_Crafting_Filters/), or press **F7** in the game with our [mod manager](https://github.com/HardHeadHackerHead/valheim-mod-manager).<!-- END GITHUB-ONLY -->
 
 ## ✨ Features
+
+Recipe filter chips above the crafting list: pick a type, a tier or what you can make now, at every crafting station.
 
 ### What is in it
 

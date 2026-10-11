@@ -5,7 +5,7 @@
 
 <img src="cover.png" alt="Quad's Recycler" width="100%">
 
-**Build a Recycler and turn old weapons, armor and tools back into a share of their materials: recycle, salvage and reclaim the gear you've outgrown.**
+**Build a Recycler and turn old weapons, armor and tools back into a share of their materials: recycle, salvage, scrap and dismantle the gear you've outgrown. Presses built nearby raise the refund from 50% to 70%.**
 
 ![version: 1.3.2](https://img.shields.io/badge/version-1.3.2-3b6e8f?style=flat-square)  ![multiplayer: everyone + host](https://img.shields.io/badge/multiplayer-everyone%20%2B%20host-7a5c2e?style=flat-square)  ![made with: Claude Code](https://img.shields.io/badge/made%20with-Claude%20Code-c26a3d?style=flat-square)
 
@@ -16,6 +16,10 @@
 <!-- GITHUB-ONLY -->**Install:** with [r2modman](https://thunderstore.io/c/valheim/p/ebkr/r2modman/) or Thunderstore Mod Manager from [Thunderstore](https://thunderstore.io/c/valheim/p/Quads_Lab/Quads_Recycler/), or press **F7** in the game with our [mod manager](https://github.com/HardHeadHackerHead/valheim-mod-manager).<!-- END GITHUB-ONLY -->
 
 ## ✨ Features
+
+Build a Recycler and turn old weapons, armor and tools back into a share of their materials: recycle, salvage and reclaim the gear you've outgrown.
+
+### How it works
 
 - Look at the Recycler and press E: pick a weapon, armor piece or tool from your inventory, see what it would return, and recycle it.
 - You get about half of the materials back (50% by default; leftovers are a chance of one more). Recycler Presses built within 8 m raise this to 60% and then 70%.

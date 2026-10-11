@@ -5,7 +5,7 @@
 
 <img src="cover.png" alt="Quad's Rainbows" width="100%">
 
-**A rainbow in the sky after the rain, and a blessing for looking up at it: the weather gives something back.**
+**A rainbow in the sky after the rain (now and then a double rainbow), and a blessing for looking up at it: faster stamina and health regen. Weather and sky that give something back. Only you need it.**
 
 ![version: 0.3.1](https://img.shields.io/badge/version-0.3.1-3b6e8f?style=flat-square)  ![multiplayer: only who wants it](https://img.shields.io/badge/multiplayer-only%20who%20wants%20it-7a5c2e?style=flat-square)  ![made with: Claude Code](https://img.shields.io/badge/made%20with-Claude%20Code-c26a3d?style=flat-square)
 
@@ -16,6 +16,8 @@
 <!-- GITHUB-ONLY -->**Install:** with [r2modman](https://thunderstore.io/c/valheim/p/ebkr/r2modman/) or Thunderstore Mod Manager from [Thunderstore](https://thunderstore.io/c/valheim/p/Quads_Lab/Quads_Rainbows/), or press **F7** in the game with our [mod manager](https://github.com/HardHeadHackerHead/valheim-mod-manager).<!-- END GITHUB-ONLY -->
 
 ## ✨ Features
+
+A rainbow in the sky after the rain, and a blessing for looking up at it: the weather gives something back.
 
 ### What is in it
 

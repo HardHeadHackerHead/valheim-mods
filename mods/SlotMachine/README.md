@@ -5,7 +5,7 @@
 
 <img src="cover.png" alt="Quad's Slot Machine" width="100%">
 
-**Odin's Fortune: a buildable slot machine for your viking casino. Put coins in, pull the lever, and the winnings come out of the tray.**
+**Odin's Fortune: a buildable slot machine for your viking casino. Put coins in, pull the lever, and the winnings come out of the tray. Gambling with your coins (about 93% comes back), every spin seen by everyone nearby.**
 
 ![version: 1.2.2](https://img.shields.io/badge/version-1.2.2-3b6e8f?style=flat-square)  ![multiplayer: everyone + host](https://img.shields.io/badge/multiplayer-everyone%20%2B%20host-7a5c2e?style=flat-square)  ![made with: Claude Code](https://img.shields.io/badge/made%20with-Claude%20Code-c26a3d?style=flat-square)
 
@@ -16,6 +16,10 @@
 <!-- GITHUB-ONLY -->**Install:** with [r2modman](https://thunderstore.io/c/valheim/p/ebkr/r2modman/) or Thunderstore Mod Manager from [Thunderstore](https://thunderstore.io/c/valheim/p/Quads_Lab/Quads_Slot_Machine/), or press **F7** in the game with our [mod manager](https://github.com/HardHeadHackerHead/valheim-mod-manager).<!-- END GITHUB-ONLY -->
 
 ## ✨ Features
+
+Odin's Fortune: a buildable slot machine for your viking casino. Put coins in, pull the lever, and the winnings come out of the tray.
+
+### How it works
 
 - Build it with the hammer at a workbench: Fine Wood, Bronze and Stone.
 - Press E to pull the lever. Your bet goes in, three reels spin and stop one after another, and a win is spat out of the tray as coins.

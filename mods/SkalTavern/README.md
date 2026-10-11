@@ -5,7 +5,7 @@
 
 <img src="cover.png" alt="Quad's Skal Tavern" width="100%">
 
-**Ale and mead that get you drunk (tipsy, stumbling, a hangover), and a Skål! toast with your friends for a buff.**
+**Ale and mead that get you drunk: beer, mead and wine brewed in the cauldron, drunk effects (tipsy, stumbling, a hangover), and a Skål! toast with your friends for a buff. Alcohol and a tavern night for your vikings.**
 
 ![version: 0.5.0](https://img.shields.io/badge/version-0.5.0-3b6e8f?style=flat-square)  ![multiplayer: everyone + host](https://img.shields.io/badge/multiplayer-everyone%20%2B%20host-7a5c2e?style=flat-square)  ![made with: Claude Code](https://img.shields.io/badge/made%20with-Claude%20Code-c26a3d?style=flat-square)
 
@@ -16,6 +16,8 @@
 <!-- GITHUB-ONLY -->**Install:** with [r2modman](https://thunderstore.io/c/valheim/p/ebkr/r2modman/) or Thunderstore Mod Manager from [Thunderstore](https://thunderstore.io/c/valheim/p/Quads_Lab/Quads_Skal_Tavern/), or press **F7** in the game with our [mod manager](https://github.com/HardHeadHackerHead/valheim-mod-manager).<!-- END GITHUB-ONLY -->
 
 ## ✨ Features
+
+Ale and mead that get you drunk (tipsy, stumbling, a hangover), and a Skål! toast with your friends for a buff.
 
 ### What is in it
 
@@ -104,7 +106,7 @@ In `BepInEx/config/com.quad.skaltavern.cfg`, made the first time the game runs w
 
 | Setting | Default | What it does |
 |---|---|---|
-| `Window` | `6` | How many seconds apart two toasts can be and still count as together. In multiplayer the server's value applies. |
+| `Window` | `6` | Every swig of a drink is a toast with whoever is near. How many seconds apart two toasts can be and still count as together: friends who drink together (and your companions) get a Skal! buff. In multiplayer the server's value applies. |
 
 ## 🤖 Made with AI
 

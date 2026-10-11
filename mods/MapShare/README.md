@@ -5,7 +5,7 @@
 
 <img src="cover.png" alt="Quad's Map Share" width="100%">
 
-**Shared map: share the map you uncover with everyone in the world, live, as you explore through the fog of war.**
+**Shared map: the map you uncover is shared with everyone in the world, live, as you explore the fog of war. Map sync for multiplayer: someone joining gets the whole explored map, with no trips to the cartography table.**
 
 ![version: 1.1.4](https://img.shields.io/badge/version-1.1.4-3b6e8f?style=flat-square)  ![multiplayer: only who wants it](https://img.shields.io/badge/multiplayer-only%20who%20wants%20it-7a5c2e?style=flat-square)  ![made with: Claude Code](https://img.shields.io/badge/made%20with-Claude%20Code-c26a3d?style=flat-square)
 
@@ -16,6 +16,10 @@
 <!-- GITHUB-ONLY -->**Install:** with [r2modman](https://thunderstore.io/c/valheim/p/ebkr/r2modman/) or Thunderstore Mod Manager from [Thunderstore](https://thunderstore.io/c/valheim/p/Quads_Lab/Quads_Map_Share/), or press **F7** in the game with our [mod manager](https://github.com/HardHeadHackerHead/valheim-mod-manager).<!-- END GITHUB-ONLY -->
 
 ## ✨ Features
+
+Shared map: share the map you uncover with everyone in the world, live, as you explore through the fog of war.
+
+### How it works
 
 - The cartography table only shares a map by hand: you write your map to the table, then others read it one visit at a time. This mod does it automatically instead.
 - Every few seconds, the new parts of the map you uncovered are sent to the other players and appear on their maps.

@@ -7,7 +7,7 @@ schemaVersion = "0.0.1"
 namespace = "Quads_Lab"
 name = "Quads_Cigars"
 versionNumber = "0.4.2"
-description = "Grow tobacco, cure it, roll your own cigars and smoke them: smoking as a real part of the game, from the wild plant to the cigar in your mouth."
+description = "Grow tobacco, cure it, roll your own cigars and smoke them for buffs: farm wild tobacco plants, dry and age the leaves, build a rolling table and a humidor, and light up. Smoking as a real part of the game, with smoke others see."
 websiteUrl = "https://github.com/HardHeadHackerHead/valheim-mods/tree/main/mods/CigarSmoking"
 containsNsfwContent = false
 

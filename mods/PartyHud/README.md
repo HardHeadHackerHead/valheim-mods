@@ -5,7 +5,7 @@
 
 <img src="cover.png" alt="Quad's Party HUD" width="100%">
 
-**A party HUD: health bars, stamina and distance for every player in your group, live and at any range, on the right of the screen.**
+**A party HUD with party frames: health bars, stamina and distance for every player in your group, with Steam portraits and an arrow pointing to each teammate, live and at any range. A group UI for multiplayer.**
 
 ![version: 1.10.2](https://img.shields.io/badge/version-1.10.2-3b6e8f?style=flat-square)  ![multiplayer: only who wants it](https://img.shields.io/badge/multiplayer-only%20who%20wants%20it-7a5c2e?style=flat-square)  ![made with: Claude Code](https://img.shields.io/badge/made%20with-Claude%20Code-c26a3d?style=flat-square)
 
@@ -16,6 +16,8 @@
 <!-- GITHUB-ONLY -->**Install:** with [r2modman](https://thunderstore.io/c/valheim/p/ebkr/r2modman/) or Thunderstore Mod Manager from [Thunderstore](https://thunderstore.io/c/valheim/p/Quads_Lab/Quads_Party_HUD/), or press **F7** in the game with our [mod manager](https://github.com/HardHeadHackerHead/valheim-mod-manager).<!-- END GITHUB-ONLY -->
 
 ## ✨ Features
+
+A party HUD: health bars, stamina and distance for every player in your group, live and at any range, on the right of the screen.
 
 ### What it shows
 

@@ -7,7 +7,7 @@ schemaVersion = "0.0.1"
 namespace = "Quads_Lab"
 name = "Quads_Craft_From_Chests"
 versionNumber = "1.5.2"
-description = "Craft from chests: crafting stations, and hand-crafting from your inventory, use materials from nearby chests and containers."
+description = "Craft from chests and containers: crafting stations and hand-crafting use materials from nearby chests (20 m, or your own range), with totals in the crafting menu and lines to the chests in use. Pairs with Build From Chests."
 websiteUrl = "https://github.com/HardHeadHackerHead/valheim-mods/tree/main/mods/CraftFromChests"
 containsNsfwContent = false
 
