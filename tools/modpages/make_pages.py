@@ -36,7 +36,7 @@ BANNER_FILE = os.path.join(os.path.dirname(__file__), "discord-banner.jpg")
 THUNDERSTORE_TEAM = "Quads_Lab"  # our team on Thunderstore: each mod is its own package there
 REPO = "https://github.com/HardHeadHackerHead/valheim-mods"
 MANAGER = "https://github.com/HardHeadHackerHead/valheim-mod-manager"
-NOT_ON_THUNDERSTORE = set()  # mods that are GitHub and F7 only (Claude Tools was, before it moved to its own repo, valheim-claude-tools)
+NOT_ON_THUNDERSTORE = {"JetSkis"}  # mods that are GitHub and F7 only (Jet Skis until it is uploaded there; Claude Tools was, before it moved to its own repo, valheim-claude-tools)
 PARTS = ["screenshots", "how-to-use", "other-mods", "multiplayer"]
 # the languages our mods ship (the game's names: every language with 2%+ of Valheim's players), as a player reads their own
 LANGUAGES = {"English": "English", "Russian": "Русский (Russian)", "German": "Deutsch (German)", "Chinese": "简体中文 (Chinese)",

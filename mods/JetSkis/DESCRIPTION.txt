@@ -1,0 +1,16 @@
+A jet ski for Valheim: a fast little boat for one, pushed along by a surtling core's fire instead of the wind.
+
+Riding it
+- Build it with the hammer on the water, near a workbench, like the raft: 12 Fine Wood, 30 Bronze Nails, 2 Surtling Cores and 4 Deer Hide.
+- Press E on it from the water or the shore and you climb onto the saddle and take the handlebars.
+- Hold W to go, Shift+W for full speed, S to back up; let go and it coasts to a stop. The wind doesn't matter.
+- A and D steer: the handlebars turn and come back to the middle by themselves, and the jet ski leans into the turn and lifts its nose at speed. It turns slower when barely moving.
+- Jump to get off.
+- Running into a friend at speed doesn't hurt them, and hopping waves barely scratches the hull.
+
+The look
+- A dark wooden hull with a band of red-stained wood and bronze rivets, a rub rail, a round shield on each side, a curled prow like a longship's, a leather saddle, a red cowl up to iron handlebars, and a glowing surtling core in an iron cage feeding the jet nozzle at the back. It lights up the water around it at night.
+- It is the game's raft underneath, so it floats, wears, breaks, saves and changes hands in multiplayer as the game's boats do.
+
+Settings: cruise, full and reverse speed, acceleration, coasting, turn rate and grip are the server's in multiplayer; the lean and the controls hint are each player's own.
+Everyone in the world needs it installed.

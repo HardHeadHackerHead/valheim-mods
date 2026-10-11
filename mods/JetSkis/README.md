@@ -1,0 +1,132 @@
+<!-- This page is made by tools/modpages/make_pages.py from the mod's thunderstore.toml, DESCRIPTION.txt, CHANGELOG.txt,
+     settings and the repo's README. Change those, or the HAND-WRITTEN parts, not the rest of this page. -->
+
+# 🌊 Quad's JetSkis
+
+<img src="cover.png" alt="Quad's JetSkis" width="100%">
+
+**A jet ski for Valheim: a fast little boat for one, pushed along by a surtling core's fire instead of the wind.**
+
+![version: 0.1.0](https://img.shields.io/badge/version-0.1.0-3b6e8f?style=flat-square)  ![multiplayer: everyone + host](https://img.shields.io/badge/multiplayer-everyone%20%2B%20host-7a5c2e?style=flat-square)  ![made with: Claude Code](https://img.shields.io/badge/made%20with-Claude%20Code-c26a3d?style=flat-square)
+
+[Source code](https://github.com/HardHeadHackerHead/valheim-mods/tree/main/mods/JetSkis)  ·  [Report a bug](https://github.com/HardHeadHackerHead/valheim-mods/issues/new?template=bug.yml&title=%5BQuad%27s%20JetSkis%5D%20)  ·  [Discord](https://discord.gg/EwTjQxEZPy)
+
+[![Join us on Discord](https://img.shields.io/badge/Join_us_on-Discord-5865F2?style=for-the-badge&logo=discord&logoColor=white)](https://discord.gg/EwTjQxEZPy)
+
+**Install:** press **F7** in the game with our [mod manager](https://github.com/HardHeadHackerHead/valheim-mod-manager), or take `JetSkis.dll` from [dist/](https://github.com/HardHeadHackerHead/valheim-mods/tree/main/dist). It isn't on Thunderstore.
+
+## ✨ Features
+
+### Riding it
+
+- Build it with the hammer on the water, near a workbench, like the raft: 12 Fine Wood, 30 Bronze Nails, 2 Surtling Cores and 4 Deer Hide.
+- Press E on it from the water or the shore and you climb onto the saddle and take the handlebars.
+- Hold W to go, Shift+W for full speed, S to back up; let go and it coasts to a stop. The wind doesn't matter.
+- A and D steer: the handlebars turn and come back to the middle by themselves, and the jet ski leans into the turn and lifts its nose at speed. It turns slower when barely moving.
+- Jump to get off.
+- Running into a friend at speed doesn't hurt them, and hopping waves barely scratches the hull.
+
+### The look
+
+- A dark wooden hull with a band of red-stained wood and bronze rivets, a rub rail, a round shield on each side, a curled prow like a longship's, a leather saddle, a red cowl up to iron handlebars, and a glowing surtling core in an iron cage feeding the jet nozzle at the back. It lights up the water around it at night.
+- It is the game's raft underneath, so it floats, wears, breaks, saves and changes hands in multiplayer as the game's boats do.
+
+Everyone in the world needs it installed.
+
+## 📸 Screenshots
+
+<!-- HAND-WRITTEN: screenshots -->
+**The jet ski: a curled prow, the red cowl and iron handlebars, the leather saddle and the caged surtling core**
+
+<img src="images/1.png" alt="The jet ski" width="100%">
+
+**Its side up close: the red band with bronze rivets, a round shield, the saddle and the core's cage**
+
+<img src="images/2.png" alt="The jet ski's side up close" width="100%">
+<!-- END HAND-WRITTEN: screenshots -->
+
+## 🎮 How to use
+
+| Key | What it does |
+|---|---|
+| **E** on a jet ski | Climb on (from the water or the shore) and take the handlebars |
+| **W** / **Shift**+**W** / **S** | Go / full speed / back up (let go to coast); **A** / **D** steer, **Jump** gets off |
+
+<!-- HAND-WRITTEN: how-to-use -->
+
+<!-- END HAND-WRITTEN: how-to-use -->
+
+## 🧩 Other mods
+
+<!-- HAND-WRITTEN: other-mods -->
+**Known clashes:** none known.
+<!-- END HAND-WRITTEN: other-mods -->
+
+Found a clash with another mod? [Tell us](https://github.com/HardHeadHackerHead/valheim-mods/issues/new?template=bug.yml&title=%5BQuad%27s%20JetSkis%5D%20) which one and what happened.
+
+## 👥 Multiplayer
+
+**Who needs it:** Everyone, and **the host above all**: a game without the mod deletes the pieces when their area loads. Restart after installing or updating them.
+
+<!-- HAND-WRITTEN: multiplayer -->
+
+<!-- END HAND-WRITTEN: multiplayer -->
+
+## ⚙️ Settings
+
+In `BepInEx/config/com.quad.jetskis.cfg`, made the first time the game runs with the mod. r2modman and Thunderstore Mod Manager edit it under **Config editor**.<!-- GITHUB-ONLY --> With our mod manager: **F7**, then **Mod settings**.<!-- END GITHUB-ONLY -->
+
+**1 - Driving**
+
+| Setting | Default | What it does |
+|---|---|---|
+| `CruiseSpeed` | `11` | How fast it goes holding W (metres per second; a longship under full sail does about 10). [Synced with Server] |
+| `FullSpeed` | `17` | How fast it goes holding Shift+W (metres per second). [Synced with Server] |
+| `ReverseSpeed` | `4` | How fast it backs up holding S (metres per second). [Synced with Server] |
+| `Acceleration` | `5` | How quickly it picks up speed (metres per second, each second). Braking is a little stronger. [Synced with Server] |
+| `Coasting` | `2.5` | How quickly it slows down with nothing held (metres per second, each second). [Synced with Server] |
+| `TurnRate` | `95` | How fast it turns at full lock (degrees per second). It turns slower when barely moving. [Synced with Server] |
+| `Grip` | `3` | How much it holds its line in a turn instead of sliding sideways (higher grips more). [Synced with Server] |
+
+**2 - Look**
+
+| Setting | Default | What it does |
+|---|---|---|
+| `LeanIntoTurns` | `true` | The jet ski (and you on it) leans into turns and lifts its nose at speed. |
+| `ShowControls` | `true` | Show the controls the first time you get on in a session. |
+
+## 🤖 Made with AI
+
+Made with the help of Claude (Anthropic), with Claude Code: designed, written and checked together, and tried in the game.
+
+## 💬 Join us on Discord
+
+<a href="https://discord.gg/EwTjQxEZPy"><img src="https://raw.githubusercontent.com/HardHeadHackerHead/valheim-mods/main/tools/modpages/discord-banner.jpg" alt="Join the Quads Lab Discord" width="100%"></a>
+
+Come hang out with the people who make and play these mods. In the **Quads Lab Discord** you can:
+
+- 🛠️ **Get help** and report bugs straight to us
+- 👀 **See new mods first**, and help test them before they're released
+- 🗳️ **Suggest ideas** and vote on what we make next
+- 🏰 **Share your builds**, bases and arena runs
+- 🤖 **Talk AI coding and vibe coding** with people building things with AI, the way these mods are made
+
+**[Join the Quads Lab Discord →](https://discord.gg/EwTjQxEZPy)**
+
+## 🧪 About Quads Lab
+
+Quads Lab is where **Quad H** ([HardHeadHackerHead](https://github.com/HardHeadHackerHead)) builds software with AI, of every kind:
+these Valheim mods are one of its projects. Each mod is designed by a player, written with [Claude Code](https://claude.com/claude-code)
+and tested in our own world, with **bobisme** as our tester.
+
+- 🌐 [quadslab.io](https://quadslab.io)
+- 🧰 [All Quads Lab mods on Thunderstore](https://thunderstore.io/c/valheim/p/Quads_Lab/)
+- 💻 [Source code on GitHub](https://github.com/HardHeadHackerHead/valheim-mods)
+- 💬 [Discord](https://discord.gg/EwTjQxEZPy)
+- 🐞 Found a bug? [Open an issue on GitHub](https://github.com/HardHeadHackerHead/valheim-mods/issues/new/choose)
+
+## 📜 Recent changes
+
+- **0.1.0** First release: a jet ski built with the hammer on the water. Hold W to go (Shift for full speed, S to back up), A and D steer and it leans into turns, E climbs on from the water, Jump gets off. A surtling core pushes it, not the wind. Its look is built in the game: a red-banded wooden hull with bronze rivets, shields and a curled prow, a leather saddle, iron handlebars and a caged, glowing core.
+
+<!-- GITHUB-ONLY -->[Every change](CHANGELOG.txt)<!-- END GITHUB-ONLY --><!-- THUNDERSTORE-ONLY: Every change is on the Changelog tab. -->

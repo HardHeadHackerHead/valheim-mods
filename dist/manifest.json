@@ -177,6 +177,22 @@
                              ]
                  },
                  {
+                     "guid":  "com.quad.jetskis",
+                     "name":  "JetSkis",
+                     "version":  "0.1.0",
+                     "description":  "A jet ski for Valheim: a fast little boat for one, pushed along by a surtling core\u0027s fire instead of the wind.\r\n\r\nRiding it\r\n- Build it with the hammer on the water, near a workbench, like the raft: 12 Fine Wood, 30 Bronze Nails, 2 Surtling Cores and 4 Deer Hide.\r\n- Press E on it from the water or the shore and you climb onto the saddle and take the handlebars.\r\n- Hold W to go, Shift+W for full speed, S to back up; let go and it coasts to a stop. The wind doesn\u0027t matter.\r\n- A and D steer: the handlebars turn and come back to the middle by themselves, and the jet ski leans into the turn and lifts its nose at speed. It turns slower when barely moving.\r\n- Jump to get off.\r\n- Running into a friend at speed doesn\u0027t hurt them, and hopping waves barely scratches the hull.\r\n\r\nThe look\r\n- A dark wooden hull with a band of red-stained wood and bronze rivets, a rub rail, a round shield on each side, a curled prow like a longship\u0027s, a leather saddle, a red cowl up to iron handlebars, and a glowing surtling core in an iron cage feeding the jet nozzle at the back. It lights up the water around it at night.\r\n- It is the game\u0027s raft underneath, so it floats, wears, breaks, saves and changes hands in multiplayer as the game\u0027s boats do.\r\n\r\nSettings: cruise, full and reverse speed, acceleration, coasting, turn rate and grip are the server\u0027s in multiplayer; the lean and the controls hint are each player\u0027s own.\r\nEveryone in the world needs it installed.",
+                     "notes":  "0.1.0: First release: a jet ski built with the hammer on the water. Hold W to go (Shift for full speed, S to back up), A and D steer and it leans into turns, E climbs on from the water, Jump gets off. A surtling core pushes it, not the wind. Its look is built in the game: a red-banded wooden hull with bronze rivets, shields and a curled prow, a leather saddle, iron handlebars and a caged, glowing core.",
+                     "restart":  "",
+                     "cover":  "JetSkis.cover.png",
+                     "files":  [
+                                   "JetSkis.dll",
+                                   "JetSkis.pdb"
+                               ],
+                     "was":  [
+
+                             ]
+                 },
+                 {
                      "guid":  "com.quad.ledgerchest",
                      "name":  "LedgerChest",
                      "version":  "1.2.0",

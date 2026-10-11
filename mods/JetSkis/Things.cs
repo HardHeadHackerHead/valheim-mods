@@ -1,0 +1,188 @@
+using System.IO;
+using System.Linq;
+using UnityEngine;
+
+namespace JetSkis
+{
+    /// <summary>
+    /// The Jet Ski piece: a copy of the game's raft (so it floats, saves, wears, breaks and changes owner in multiplayer as the game's boats
+    /// do) with the raft's logs, mast, sail, ladder and seat taken off, its hit boxes and water triggers shrunk to a jet ski, and the new body
+    /// (Model.cs) put on. Registered from the scene, again whenever the game swaps its lists, and replaced in place on a hot reload
+    /// (Shared/PieceReload.cs) so no jet ski in a loading area is ever lost.
+    /// </summary>
+    internal static class Things
+    {
+        internal const string Prefab = "dh_jetski";
+
+        private static GameObject _holder, _prefab;
+
+        private static PieceTable Hammer(ZNetScene scene) => scene.GetPrefab("Hammer")?.GetComponent<ItemDrop>()?.m_itemData.m_shared.m_buildPieces;
+
+        internal static void Register()
+        {
+            ZNetScene scene = ZNetScene.instance;
+            if (scene == null) return;   // (nothing to copy yet: asked again when it wakes)
+            if (_prefab == null)
+            {
+                GameObject raft = scene.GetPrefab("Raft");
+                if (raft == null) { Plugin.Log.LogWarning("The game's Raft was not found, so there is no Jet Ski"); return; }
+                _holder = new GameObject("JetSkiPrefabs");
+                _holder.SetActive(false); // keeps the copy from waking up as a real object
+                Object.DontDestroyOnLoad(_holder);
+                try { Look.Harvest(scene, raft.GetComponentInChildren<Renderer>(true).sharedMaterial); }
+                catch (System.Exception e) { Plugin.Log.LogWarning("Could not take the game's materials, the jet ski looks plain: " + e.Message); }
+                _prefab = Build(scene, raft);
+            }
+            DHack.Shared.PieceReload.ReplacePrefab(scene, _prefab, Hammer(scene));
+            int swapped = DHack.Shared.PieceReload.Reattach(scene, _prefab);
+            if (swapped > 0) Plugin.Log.LogInfo($"{swapped} jet ski(s) in the world now run this copy");
+        }
+
+        /// <summary>
+        /// When this copy unloads: out of the build menu, but still registered, so no area loading before the next copy is up loses its jet
+        /// skis (Shared/PieceReload.cs). The prefab stays until the next copy replaces it, or the game ends.
+        /// </summary>
+        internal static void Unregister()
+        {
+            if (_prefab == null) return;
+            ZNetScene scene = ZNetScene.instance;
+            DHack.Shared.PieceReload.UnloadPiece(_prefab, scene != null ? Hammer(scene) : null);
+            _prefab = null;
+            _holder = null;
+            Look.Clear();
+        }
+
+        private static GameObject Build(ZNetScene scene, GameObject raft)
+        {
+            GameObject go = Object.Instantiate(raft, _holder.transform);
+            go.name = Prefab;
+            Transform root = go.transform;
+            Ship ship = go.GetComponent<Ship>();
+            int layer = root.Find("ship/colliders/Cube")?.gameObject.layer ?? go.layer;
+
+            // the raft's own look goes: its logs and planks, the mast and sail, the ropes (an empty mast stays: the game turns it with the wind)
+            var mast = new GameObject("mast");
+            mast.transform.SetParent(root, false);
+            ship.m_mastObject = mast;
+            ship.m_sailObject = null;
+            ship.m_hasSail = false;
+            ship.m_rudderObject = null;   // the handlebars turn instead (JetSki.cs)
+            Kill(root, "ship/visual");
+            foreach (LODGroup lod in go.GetComponentsInChildren<LODGroup>(true)) Object.DestroyImmediate(lod);
+            WearNTear wear = go.GetComponent<WearNTear>();
+            if (wear != null) { wear.m_new = null; wear.m_worn = null; wear.m_broken = null; }
+
+            // its hit boxes: one box for the hull instead of a deck of logs
+            Transform cols = root.Find("ship/colliders");
+            if (cols != null)
+                foreach (Transform c in cols.Cast<Transform>().ToList())
+                    if (c.name != "Cube") Object.DestroyImmediate(c.gameObject);
+            Transform hull = root.Find("ship/colliders/Cube");
+            if (hull != null) { hull.localPosition = new Vector3(0f, 0.05f, 0.1f); hull.localRotation = Quaternion.identity; hull.localScale = new Vector3(1.05f, 0.5f, 2.9f); }
+
+            // where the game feels the water, and who is aboard
+            Transform floatBox = root.Find("FloatCollider");
+            if (floatBox != null) { floatBox.GetComponent<BoxCollider>().size = new Vector3(1.1f, 1f, 2.9f); floatBox.localPosition = new Vector3(0f, 0f, 0.1f); }
+            Transform onboard = root.Find("OnboardTrigger");
+            if (onboard != null) { onboard.localPosition = new Vector3(0f, 1.0f, 0.1f); onboard.localScale = new Vector3(1.8f, 2.4f, 3.6f); }
+
+            // the raft's sitting spot and ladder go; its controls move to the saddle
+            Kill(root, "interactive/mast");
+            Kill(root, "interactive/ladder");
+            Kill(root, "interactive/ladder_TargetPoint");
+            Kill(root, "interactive/controls/rudder");
+            Kill(root, "interactive/controls/attachpoint");
+            ShipControlls controls = go.GetComponentInChildren<ShipControlls>(true);
+            controls.transform.localPosition = Vector3.zero;
+            controls.transform.localRotation = Quaternion.identity;
+            BoxCollider grab = controls.GetComponent<BoxCollider>();
+            grab.center = new Vector3(0f, 0.75f, 0.0f);   // the saddle and the handlebars: look at them and press E
+            grab.size = new Vector3(0.8f, 0.8f, 1.7f);
+            controls.m_hoverText = "$jetskis_ride";
+            controls.m_maxUseRange = 4f;
+            controls.m_attachAnimation = "attach_chair";
+            controls.m_detachOffset = new Vector3(0f, 0.6f, 0f);
+            Transform gui = root.Find("ControlGui");
+            if (gui != null) gui.localPosition = new Vector3(0f, 1.3f, -0.4f);
+
+            // the wake and the water sounds, moved to a jet ski's bow and stern; the sail's flapping goes
+            Move(root, "WaterEffects/SpeedWake/aft_particles", new Vector3(0f, 0.55f, -1.6f));
+            Move(root, "WaterEffects/SpeedWake/vfx_water_surface", new Vector3(0f, 0.55f, 1.4f));
+            Transform shadow = root.Find("WaterEffects/WaterSurface/shadow");
+            if (shadow != null) shadow.localScale = new Vector3(2.6f, 4.6f, shadow.localScale.z);
+            ShipEffects effects = go.GetComponentInChildren<ShipEffects>(true);
+            if (effects != null) effects.m_sailSound = null;
+            Kill(root, "WaterEffects/SailSound");
+
+            // the boat's handling: no sail and no paddling (the motor and the steering are JetSki.cs's), less hurt from hopping waves
+            ship.m_sailForceFactor = 0f;
+            ship.m_backwardForce = 0f;
+            ship.m_stearForce = 0f;
+            ship.m_stearVelForceFactor = 0f;
+            ship.m_dampingForward = 0f;
+            ship.m_dampingSideway = 0f;
+            ship.m_waterImpactDamage = 2f;
+            ImpactEffect impact = go.GetComponent<ImpactEffect>();
+            if (impact != null) impact.m_damagePlayers = false;   // running into a friend at speed doesn't hurt them
+
+            // the new body (the look never stops the piece being registered: without it, the host would delete the jet skis in the world)
+            Transform model = null;
+            try { model = Model.Build(root, layer); }
+            catch (System.Exception e) { Plugin.Log.LogWarning("Could not build the jet ski's model: " + e); }
+            var seat = new GameObject("attachpoint").transform;   // the rider sits here, and leans with the body
+            seat.SetParent(model != null ? model : root, false);
+            seat.localPosition = Model.SeatPoint;
+            controls.m_attachPoint = seat;
+
+            Piece piece = go.GetComponent<Piece>();
+            piece.m_name = "$jetskis_jetski";
+            piece.m_description = "$jetskis_jetski_desc";
+            Sprite icon = Icon();
+            if (icon != null) piece.m_icon = icon;
+            piece.m_craftingStation = scene.GetPrefab("piece_workbench")?.GetComponent<CraftingStation>();
+            piece.m_resources = new[] { Req(scene, "FineWood", 12), Req(scene, "BronzeNails", 30), Req(scene, "SurtlingCore", 2), Req(scene, "DeerHide", 4) }
+                .Where(r => r.m_resItem != null).ToArray();
+            if (piece.m_resources.Length == 0) piece.m_resources = raft.GetComponent<Piece>().m_resources;   // never free to build
+
+            go.AddComponent<JetSki>();
+            return go;
+        }
+
+        private static void Kill(Transform root, string path)
+        {
+            Transform t = root.Find(path);
+            if (t != null) Object.DestroyImmediate(t.gameObject);
+        }
+
+        private static void Move(Transform root, string path, Vector3 at)
+        {
+            Transform t = root.Find(path);
+            if (t != null) t.localPosition = at;
+        }
+
+        private static Piece.Requirement Req(ZNetScene scene, string item, int amount) =>
+            new Piece.Requirement { m_resItem = scene.GetPrefab(item)?.GetComponent<ItemDrop>(), m_amount = amount, m_recover = true };
+
+        // Texture2D.LoadImage lives in a module the build cannot reference directly, so it is called by name (as BirdTrap does).
+        private static readonly System.Reflection.MethodInfo LoadImage =
+            System.Type.GetType("UnityEngine.ImageConversion, UnityEngine.ImageConversionModule")?.GetMethod("LoadImage", new[] { typeof(Texture2D), typeof(byte[]) });
+
+        /// <summary>The build menu's picture, built into the DLL (null without one: the raft's stays).</summary>
+        private static Sprite Icon()
+        {
+            try
+            {
+                using (Stream s = typeof(Things).Assembly.GetManifestResourceStream("icon-piece.png"))
+                {
+                    if (s == null) return null;
+                    var bytes = new byte[s.Length];
+                    s.Read(bytes, 0, bytes.Length);
+                    var tex = new Texture2D(2, 2, TextureFormat.RGBA32, false);
+                    if (LoadImage == null || !(bool)LoadImage.Invoke(null, new object[] { tex, bytes })) return null;
+                    return Sprite.Create(tex, new Rect(0, 0, tex.width, tex.height), new Vector2(0.5f, 0.5f));
+                }
+            }
+            catch (System.Exception e) { Plugin.Log.LogWarning("Could not load the jet ski's build-menu picture: " + e.Message); return null; }
+        }
+    }
+}

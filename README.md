@@ -65,7 +65,7 @@ Every player installs the mods they want for themselves. A few need more than th
 | Mod | Who needs it |
 |---|---|
 | **AICompanion** | Everyone in the world, **the host too**: without it the game deletes saved companions. |
-| **Recycler, BountyBoard, SlotMachine, BirdTrap, LedgerChest, Quad's Cigars, SkalTavern, Ziplines, Arena** (new build pieces and items; the Arena's host also picks where it stands) | Everyone, and **the host above all**: a game without the mod deletes the pieces when their area loads. Restart after installing or updating them. |
+| **Recycler, BountyBoard, SlotMachine, BirdTrap, LedgerChest, Quad's Cigars, SkalTavern, Ziplines, Arena, Jet Skis** (new build pieces and items; the Arena's host also picks where it stands) | Everyone, and **the host above all**: a game without the mod deletes the pieces when their area loads. Restart after installing or updating them. |
 | **PortalHub** | The host (it keeps the portal links), and everyone who wants the portal menu. |
 | Everything else | Only the players who want it. |
 
@@ -376,6 +376,18 @@ they have the mod. Only the players who want it need it.
 **[More: how it works, settings and screenshots →](mods/Parkour/README.md)**
 
 </td>
+<td valign="top">
+
+### 🌊 Jet Skis
+<img src="dist/JetSkis.cover.png" alt="Jet Skis" width="100%">
+
+A fast little boat for one, built with the hammer on the water and pushed along by a surtling core's fire instead of the wind. Press **E** from
+the water or the shore to climb on, hold **W** to go (**Shift** for full speed), and lean into the turns. A red-banded wooden hull with bronze
+rivets, shields and a curled prow, a leather saddle and a glowing, caged core that lights the water at night. Everyone in the world needs it.
+
+**[More: how it works, settings and screenshots →](mods/JetSkis/README.md)**
+
+</td>
 </tr>
 </table>
 
@@ -412,6 +424,8 @@ they have the mod. Only the players who want it need it.
 | **A** / **D** on a ledge | Parkour | Shimmy along the edge; let go of **W** and press it again (or **Jump**) to pull up; **Crouch** to drop |
 | **Crouch** just before landing | Parkour | From high up: roll (less fall damage) / from low, running: land in a slide |
 | Sprint + hold **Crouch** | Parkour | Slide; **Jump** out of it for a boosted leap |
+| **E** on a jet ski | Jet Skis | Climb on (from the water or the shore) and take the handlebars |
+| **W** / **Shift**+**W** / **S** | Jet Skis | Go / full speed / back up (let go to coast); **A** / **D** steer, **Jump** gets off |
 | **F8** | PartyHud | Show or hide the party panel |
 
 Every key and setting is configurable in `BepInEx/config`.

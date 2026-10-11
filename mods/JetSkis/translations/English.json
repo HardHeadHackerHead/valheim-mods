@@ -1,0 +1,8 @@
+{
+  "jetskis_jetski": "Jet Ski",
+  "jetskis_jetski_desc": "A fast little boat for one, pushed along by a surtling core's fire instead of the wind. Build it on the water.",
+  "jetskis_ride": "Ride",
+  "jetskis_help": "W go, Shift+W full speed, S reverse, A and D steer, Jump to get off.",
+  "jetskis_too_far": "Get closer to the jet ski to climb on.",
+  "jetskis_too_heavy": "You are carrying too much to ride."
+}
