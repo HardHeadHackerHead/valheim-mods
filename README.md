@@ -381,9 +381,10 @@ they have the mod. Only the players who want it need it.
 ### 🌊 Jet Skis
 <img src="dist/JetSkis.cover.png" alt="Jet Skis" width="100%">
 
-A fast little boat for one, built with the hammer on the water and pushed along by a surtling core's fire instead of the wind. Press **E** from
-the water or the shore to climb on, hold **W** to go (**Shift** for full speed), and lean into the turns. A red-banded wooden hull with bronze
-rivets, shields and a curled prow, a leather saddle and a glowing, caged core that lights the water at night. Everyone in the world needs it.
+A fast little boat for one and a passenger, built with the hammer on the water and pushed along by a surtling core's fire instead of the wind.
+Press **E** from the water or the shore to climb on, hold **W** to go (**Shift** for full speed), and lean into the turns, hands on the grips,
+the engine screaming and spray flying. A wooden hull with bronze rivets, shields and a curled prow, saddlebags, seven paints and a glowing,
+caged core that lights the water at night. Everyone in the world needs it.
 
 **[More: how it works, settings and screenshots →](mods/JetSkis/README.md)**
 
@@ -426,6 +427,7 @@ rivets, shields and a curled prow, a leather saddle and a glowing, caged core th
 | Sprint + hold **Crouch** | Parkour | Slide; **Jump** out of it for a boosted leap |
 | **E** on a jet ski | Jet Skis | Climb on (from the water or the shore) and take the handlebars |
 | **W** / **Shift**+**W** / **S** | Jet Skis | Go / full speed / back up (let go to coast); **A** / **D** steer, **Jump** gets off |
+| **E** on a jet ski's cowl / saddlebags | Jet Skis | Paint it the next colour / open the saddlebags (**Tab** while riding opens them too) |
 | **F8** | PartyHud | Show or hide the party panel |
 
 Every key and setting is configurable in `BepInEx/config`.

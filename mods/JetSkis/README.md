@@ -5,9 +5,9 @@
 
 <img src="cover.png" alt="Quad's JetSkis" width="100%">
 
-**A jet ski for Valheim: a fast little boat for one, pushed along by a surtling core's fire instead of the wind.**
+**A jet ski for Valheim: a fast little boat for one (and a friend), pushed along by a surtling core's fire instead of the wind.**
 
-![version: 0.1.0](https://img.shields.io/badge/version-0.1.0-3b6e8f?style=flat-square)  ![multiplayer: everyone + host](https://img.shields.io/badge/multiplayer-everyone%20%2B%20host-7a5c2e?style=flat-square)  ![made with: Claude Code](https://img.shields.io/badge/made%20with-Claude%20Code-c26a3d?style=flat-square)
+![version: 0.2.0](https://img.shields.io/badge/version-0.2.0-3b6e8f?style=flat-square)  ![multiplayer: everyone + host](https://img.shields.io/badge/multiplayer-everyone%20%2B%20host-7a5c2e?style=flat-square)  ![made with: Claude Code](https://img.shields.io/badge/made%20with-Claude%20Code-c26a3d?style=flat-square)
 
 [Source code](https://github.com/HardHeadHackerHead/valheim-mods/tree/main/mods/JetSkis)  ·  [Report a bug](https://github.com/HardHeadHackerHead/valheim-mods/issues/new?template=bug.yml&title=%5BQuad%27s%20JetSkis%5D%20)  ·  [Discord](https://discord.gg/EwTjQxEZPy)
 
@@ -20,15 +20,24 @@
 ### Riding it
 
 - Build it with the hammer on the water, near a workbench, like the raft: 12 Fine Wood, 30 Bronze Nails, 2 Surtling Cores and 4 Deer Hide.
-- Press E on it from the water or the shore and you climb onto the saddle and take the handlebars.
+- Press E on its handlebars from the water or the shore and you climb onto the saddle and take them.
 - Hold W to go, Shift+W for full speed, S to back up; let go and it coasts to a stop. The wind doesn't matter.
-- A and D steer: the handlebars turn and come back to the middle by themselves, and the jet ski leans into the turn and lifts its nose at speed. It turns slower when barely moving.
+- A and D steer: the handlebars turn and come back to the middle by themselves. It turns slower when barely moving, and stays level in a hard turn.
 - Jump to get off.
+- You ride it like a jet ski: leaning over the bars, hands on the grips, feet on the pads, your head turning where you steer, bobbing over the waves. Everyone sees it.
+- A gauge at the bottom right shows your speed and throttle, in place of the boat's wheel in the middle of the screen.
 - Running into a friend at speed doesn't hurt them, and hopping waves barely scratches the hull.
 
-### The look
+### Room for two, and their things
 
-- A dark wooden hull with a band of red-stained wood and bronze rivets, a rub rail, a round shield on each side, a curled prow like a longship's, a leather saddle, a red cowl up to iron handlebars, and a glowing surtling core in an iron cage feeding the jet nozzle at the back. It lights up the water around it at night.
+- A passenger seat behind the rider (E on the back of the saddle): the passenger holds on round the rider's waist.
+- Saddlebags on the back corners hold 8 stacks: E on them, or Tab while riding. If the jet ski breaks, what's in them floats away in a cargo crate, as from a Karve.
+
+### The look and the sound
+
+- A dark wooden hull with a band of red-stained wood and bronze rivets, a rub rail, a round shield on each side, a curled prow like a longship's, a leather saddle, a cowl up to iron handlebars, and a surtling core in an iron cage feeding the jet nozzle.
+- Paint it: E on the cowl in front of the handlebars gives the next colour (red, blue, green, teal, purple, black, bare wood). Everyone sees it.
+- An engine that burbles at idle and screams at full speed, spray thrown up behind it and off the side in hard turns, and a core that glows brighter (and lights the water further) as you open the throttle.
 - It is the game's raft underneath, so it floats, wears, breaks, saves and changes hands in multiplayer as the game's boats do.
 
 Everyone in the world needs it installed.
@@ -51,6 +60,7 @@ Everyone in the world needs it installed.
 |---|---|
 | **E** on a jet ski | Climb on (from the water or the shore) and take the handlebars |
 | **W** / **Shift**+**W** / **S** | Go / full speed / back up (let go to coast); **A** / **D** steer, **Jump** gets off |
+| **E** on a jet ski's cowl / saddlebags | Paint it the next colour / open the saddlebags (**Tab** while riding opens them too) |
 
 <!-- HAND-WRITTEN: how-to-use -->
 
@@ -92,8 +102,9 @@ In `BepInEx/config/com.quad.jetskis.cfg`, made the first time the game runs with
 
 | Setting | Default | What it does |
 |---|---|---|
-| `LeanIntoTurns` | `true` | The jet ski (and you on it) leans into turns and lifts its nose at speed. |
+| `LeanIntoTurns` | `true` | The jet ski (and you on it) leans into turns and lifts its nose at speed, your head turns where you steer and you bob over the waves. |
 | `ShowControls` | `true` | Show the controls the first time you get on in a session. |
+| `EngineVolume` | `1` | How loud the engine is (0 is silent, 1 as made; the game's own volume settings apply on top). |
 
 ## 🤖 Made with AI
 
@@ -127,6 +138,7 @@ and tested in our own world, with **bobisme** as our tester.
 
 ## 📜 Recent changes
 
+- **0.2.0** You ride it like a jet ski now: leaning over the bars with your hands on the grips and feet on the pads, your head turning where you steer and bobbing over the waves (everyone sees it). A passenger seat behind, the passenger hugging the rider. Saddlebags (8 slots, a cargo crate if it breaks): E on them, or Tab while riding. Paint it with E on the cowl (red, blue, green, teal, purple, black, bare wood). An engine sound, spray off the nozzle and in hard turns, and a core that glows brighter with the throttle. A gauge at the bottom right (speed, throttle) in place of the boat's wheel. It sits right in the water (it rode too low), and stays level in hard turns. Shift+E is left to other mods (Wayfinder names boats with it). Restart the game to see the new parts on jet skis already built.
 - **0.1.0** First release: a jet ski built with the hammer on the water. Hold W to go (Shift for full speed, S to back up), A and D steer and it leans into turns, E climbs on from the water, Jump gets off. A surtling core pushes it, not the wind. Its look is built in the game: a red-banded wooden hull with bronze rivets, shields and a curled prow, a leather saddle, iron handlebars and a caged, glowing core.
 
 <!-- GITHUB-ONLY -->[Every change](CHANGELOG.txt)<!-- END GITHUB-ONLY --><!-- THUNDERSTORE-ONLY: Every change is on the Changelog tab. -->

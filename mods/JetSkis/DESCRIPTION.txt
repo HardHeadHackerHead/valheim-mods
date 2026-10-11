@@ -1,16 +1,24 @@
-A jet ski for Valheim: a fast little boat for one, pushed along by a surtling core's fire instead of the wind.
+A jet ski for Valheim: a fast little boat for one (and a friend), pushed along by a surtling core's fire instead of the wind.
 
 Riding it
 - Build it with the hammer on the water, near a workbench, like the raft: 12 Fine Wood, 30 Bronze Nails, 2 Surtling Cores and 4 Deer Hide.
-- Press E on it from the water or the shore and you climb onto the saddle and take the handlebars.
+- Press E on its handlebars from the water or the shore and you climb onto the saddle and take them.
 - Hold W to go, Shift+W for full speed, S to back up; let go and it coasts to a stop. The wind doesn't matter.
-- A and D steer: the handlebars turn and come back to the middle by themselves, and the jet ski leans into the turn and lifts its nose at speed. It turns slower when barely moving.
+- A and D steer: the handlebars turn and come back to the middle by themselves. It turns slower when barely moving, and stays level in a hard turn.
 - Jump to get off.
+- You ride it like a jet ski: leaning over the bars, hands on the grips, feet on the pads, your head turning where you steer, bobbing over the waves. Everyone sees it.
+- A gauge at the bottom right shows your speed and throttle, in place of the boat's wheel in the middle of the screen.
 - Running into a friend at speed doesn't hurt them, and hopping waves barely scratches the hull.
 
-The look
-- A dark wooden hull with a band of red-stained wood and bronze rivets, a rub rail, a round shield on each side, a curled prow like a longship's, a leather saddle, a red cowl up to iron handlebars, and a glowing surtling core in an iron cage feeding the jet nozzle at the back. It lights up the water around it at night.
+Room for two, and their things
+- A passenger seat behind the rider (E on the back of the saddle): the passenger holds on round the rider's waist.
+- Saddlebags on the back corners hold 8 stacks: E on them, or Tab while riding. If the jet ski breaks, what's in them floats away in a cargo crate, as from a Karve.
+
+The look and the sound
+- A dark wooden hull with a band of red-stained wood and bronze rivets, a rub rail, a round shield on each side, a curled prow like a longship's, a leather saddle, a cowl up to iron handlebars, and a surtling core in an iron cage feeding the jet nozzle.
+- Paint it: E on the cowl in front of the handlebars gives the next colour (red, blue, green, teal, purple, black, bare wood). Everyone sees it.
+- An engine that burbles at idle and screams at full speed, spray thrown up behind it and off the side in hard turns, and a core that glows brighter (and lights the water further) as you open the throttle.
 - It is the game's raft underneath, so it floats, wears, breaks, saves and changes hands in multiplayer as the game's boats do.
 
-Settings: cruise, full and reverse speed, acceleration, coasting, turn rate and grip are the server's in multiplayer; the lean and the controls hint are each player's own.
+Settings: cruise, full and reverse speed, acceleration, coasting, turn rate and grip are the server's in multiplayer; the lean, the controls hint and the engine's volume are each player's own.
 Everyone in the world needs it installed.
