@@ -345,8 +345,8 @@ namespace JetSkis
             float rudder = _ship.GetRudderValue();
             if (_effects != null)
             {
-                bool inWater = transform.position.y - Floating.GetWaterLevel(transform.position, ref _effectsWater) < 0.4f;
-                _effects.Tick(along, _ship.GetSpeedSetting(), rudder, _controls != null && _controls.HaveValidUser(), inWater);
+                float water = Floating.GetWaterLevel(transform.position, ref _effectsWater);
+                _effects.Tick(along, _ship.GetSpeedSetting(), rudder, _controls != null && _controls.HaveValidUser(), transform.position.y - water < 0.4f, water);
                 if (Time.time > _paintReadAt) { _paintReadAt = Time.time + 0.5f; _effects.Paint(PaintIndex); }
             }
 

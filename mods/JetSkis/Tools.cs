@@ -112,9 +112,11 @@ namespace JetSkis
                         && float.TryParse(args[2], System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture, out float wx)
                         && float.TryParse(args[3], System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture, out float wz))
                     {
-                        at = new Vector3(wx, me.transform.position.y, wz);
-                        if (Vector3.Distance(at, me.transform.position) > 40f) { error("spawn at: within 40 m of you"); return null; }
+                        Vector3 flat = new Vector3(wx - me.transform.position.x, 0f, wz - me.transform.position.z);
+                        if (flat.magnitude > 40f) { error("spawn at: within 40 m of you"); return null; }
+                        at = new Vector3(wx, ZoneSystem.instance.GetGroundHeight(new Vector3(wx, 0f, wz)), wz);   // (the world's surface there, wherever the player is)
                     }
+                    else if (me.InInterior() || me.transform.position.y > 3000f) { error("you're inside (a dungeon or a cave): go outside, or use spawn at x z for a spot outside"); return null; }
                     WaterVolume wv = null;
                     at.y = Mathf.Max(at.y, Floating.GetWaterLevel(at, ref wv)) + 0.6f;   // (on the water if there is water there)
                     GameObject go = UnityEngine.Object.Instantiate(prefab, at, Quaternion.LookRotation(fwd, Vector3.up));
@@ -259,6 +261,35 @@ namespace JetSkis
                         ["slots"] = c != null ? c.m_width * c.m_height : 0, ["hover"] = c != null ? c.GetHoverText() : null, ["boxes"] = boxes,
                         ["distance"] = Math.Round(Vector3.Distance(near.transform.position, me.transform.position), 1),
                     });
+                    return null;
+                }
+
+                case "fx":
+                {
+                    // the nearest jet ski's spray as it is now; "fx test 20" runs it as at full speed in a turn for 20 seconds, parked
+                    JetSki near = riding ?? JetSki.Loaded.Where(j => j != null).OrderBy(j => Vector3.Distance(j.transform.position, me.transform.position)).FirstOrDefault();
+                    GameObject from = args.Length > 1 && args[1] != "test" ? ZNetScene.instance.GetPrefab(args[1]) : near?.gameObject;   // ("fx Raft": a prefab's own)
+                    if (from == null) { error("no jet ski loaded near you"); return null; }
+                    if (args.Length > 2 && args[1] == "test" && float.TryParse(args[2], out float secs)) Effects.TestUntil = Time.time + secs;
+                    var systems = new JArray();
+                    foreach (ParticleSystem ps in from.GetComponentsInChildren<ParticleSystem>(true))
+                    {
+                        ParticleSystemRenderer r = ps.GetComponent<ParticleSystemRenderer>();
+                        systems.Add(new JObject
+                        {
+                            ["path"] = ps.transform.name + " < " + (ps.transform.parent != null ? ps.transform.parent.name : ""), ["active"] = ps.gameObject.activeInHierarchy, ["playing"] = ps.isPlaying,
+                            ["count"] = ps.particleCount, ["rate"] = ps.emission.rateOverTime.constant, ["emission"] = ps.emission.enabled,
+                            ["mode"] = r != null ? r.renderMode.ToString() : null, ["rendererOn"] = r != null && r.enabled, ["material"] = r != null && r.sharedMaterial != null ? r.sharedMaterial.name + " / " + r.sharedMaterial.shader.name : null,
+                            ["colour"] = ps.main.startColor.color.ToString(), ["colourOverLife"] = ps.colorOverLifetime.enabled, ["sizeOverLife"] = ps.sizeOverLifetime.enabled,
+                            ["scaling"] = ps.main.scalingMode.ToString(), ["maxSize"] = r != null ? r.maxParticleSize : 0f, ["space"] = ps.main.simulationSpace.ToString(),
+                            ["size"] = ps.main.startSize.constantMin + "-" + ps.main.startSize.constantMax, ["speed"] = ps.main.startSpeed.constantMin + "-" + ps.main.startSpeed.constantMax,
+                            ["life"] = ps.main.startLifetime.constantMin + "-" + ps.main.startLifetime.constantMax, ["perMetre"] = ps.emission.rateOverDistance.constant,
+                            ["shape"] = ps.shape.enabled ? ps.shape.shapeType.ToString() : "off", ["noise"] = ps.noise.enabled, ["velOverLife"] = ps.velocityOverLifetime.enabled, ["limitVel"] = ps.limitVelocityOverLifetime.enabled,
+                            ["sheet"] = ps.textureSheetAnimation.enabled, ["colourBy"] = ps.colorOverLifetime.enabled ? ps.colorOverLifetime.color.mode.ToString() : null, ["gravity"] = ps.main.gravityModifier.constant,
+                            ["sort"] = r != null ? r.sortingFudge : 0f, ["alignment"] = r != null ? r.alignment.ToString() : null,
+                        });
+                    }
+                    output(new JObject { ["test"] = Math.Round(Mathf.Max(0f, Effects.TestUntil - Time.time), 1), ["systems"] = systems });
                     return null;
                 }
 
