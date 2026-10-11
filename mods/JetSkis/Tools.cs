@@ -108,12 +108,11 @@ namespace JetSkis
                     Vector3 fwd = Vector3.ProjectOnPlane(me.transform.forward, Vector3.up).normalized;
                     float ahead = args.Length > 1 && float.TryParse(args[1], System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture, out float m) ? Mathf.Clamp(m, 2f, 20f) : 3f;
                     Vector3 at = me.transform.position + fwd * ahead;
-                    if (args.Length > 3 && args[1].ToLowerInvariant() == "at"   // "spawn at <x> <z>": a spot in the world (within 40 m)
+                    if (args.Length > 3 && args[1].ToLowerInvariant() == "at"   // "spawn at <x> <z>": a spot in the world (loaded round you)
                         && float.TryParse(args[2], System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture, out float wx)
                         && float.TryParse(args[3], System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture, out float wz))
                     {
-                        Vector3 flat = new Vector3(wx - me.transform.position.x, 0f, wz - me.transform.position.z);
-                        if (flat.magnitude > 40f) { error("spawn at: within 40 m of you"); return null; }
+                        if (!ZoneSystem.instance.IsZoneLoaded(new Vector3(wx, 0f, wz))) { error("spawn at: that spot isn't loaded (too far from you)"); return null; }
                         at = new Vector3(wx, ZoneSystem.instance.GetGroundHeight(new Vector3(wx, 0f, wz)), wz);   // (the world's surface there, wherever the player is)
                     }
                     else if (me.InInterior() || me.transform.position.y > 3000f) { error("you're inside (a dungeon or a cave): go outside, or use spawn at x z for a spot outside"); return null; }
