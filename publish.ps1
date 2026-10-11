@@ -94,7 +94,11 @@ $json = ConvertTo-Json -InputObject ([ordered]@{ mods = @($manifest) }) -Depth 5
 
 # Each built mod's own page (mods/<Mod>/README.md): made again from its DESCRIPTION.txt, CHANGELOG.txt and settings (tools/modpages)
 $py = Get-Command python -ErrorAction SilentlyContinue
-if ($py) { & $py.Source (Join-Path $root "tools/modpages/make_pages.py") @Mods }
+if ($py) {
+    & $py.Source (Join-Path $root "tools/modpages/make_pages.py") @Mods
+    # pages still showing a "Screenshot to come" card (thunderstore.ps1 won't package those)
+    & $py.Source (Join-Path $root "tools/check_pages.py") @Mods | Where-Object { $_ -notmatch ': ok$' }
+}
 else { Write-Warning "Python not found: the mods' own pages were not made again (run tools/modpages/make_pages.py)" }
 $built = if ($Mods.Count -gt 0) { " (built: $($Mods -join ', '); every other mod as it was)" } else { "" }
 Write-Host "`nReady in $dist$built"

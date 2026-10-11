@@ -27,13 +27,13 @@ The only setting is Enabled.
 ## 📸 Screenshots
 
 <!-- HAND-WRITTEN: screenshots -->
-**A crafting station with its upgrades round it**
+**Chips above the workbench's list: each kind and tier, with how many recipes are in it**
 
-<img src="images/1.png" alt="A crafting station with its upgrades round it" width="100%">
+<img src="images/1.png" alt="Filter chips above the workbench's crafting list" width="100%">
 
-**The station's menu**
+**One click narrows the list: here, only weapons (the tiers count what is left)**
 
-<img src="images/2.png" alt="The station&#x27;s menu" width="100%">
+<img src="images/2.png" alt="The crafting list narrowed to weapons" width="100%">
 <!-- END HAND-WRITTEN: screenshots -->
 
 <!-- HAND-WRITTEN: how-to-use -->

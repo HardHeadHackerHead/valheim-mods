@@ -45,6 +45,12 @@ $results = @()
 foreach ($mod in $chosen) {
     $name = $mod.Name
     Write-Host "`n== $name" -ForegroundColor Cyan
+    # its page goes up as it is now and stays until the next version: no "Screenshot to come" cards, no missing pictures
+    $py = Get-Command python -ErrorAction SilentlyContinue
+    if ($py) {
+        & $py.Source (Join-Path $root "tools/check_pages.py") $name
+        if ($LASTEXITCODE -ne 0) { $results += [pscustomobject]@{ Mod = $name; Package = ""; Result = "page pictures to take (tools/check_pages.py)" }; continue }
+    }
     dotnet build (Join-Path $mod.FullName "$name.csproj") -c Release --nologo -v q -p:DeployToGame=false
     if ($LASTEXITCODE -ne 0) { $results += [pscustomobject]@{ Mod = $name; Package = ""; Result = "build failed" }; continue }
 
