@@ -25,5 +25,8 @@
     {"prefab": "Ashlands_floor_large", "at": [0, -0.95, 4.2], "scale": [0.8, 1, 0.6]},
     {"prefab": "Morkhalla_giant_railing_torch", "at": [-4.2, 0.65, 2.2], "scale": [1.3, 1.3, 1.3]},
     {"prefab": "Morkhalla_giant_railing_torch", "at": [4.2, 0.65, 2.2], "scale": [1.3, 1.3, 1.3]}
+  ],
+  "inside": [
+    {"prefab": "Ashlands_Fortress_Gate_Door", "at": [0, 0, -0.67], "euler": [0, 180, 0], "scale": [1.238, 1.422, 0.479]}
   ]
 }

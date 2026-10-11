@@ -194,6 +194,39 @@ def shape(name):
     return v, d["f"], d["c"], lo, hi
 
 
+def znetscene_names():
+    """Every prefab name the game's ZNetScene knows (its m_prefabs, read from the main scene): what a pack's parts may name. Cached in
+    the cache folder; read again after a game update by deleting znetscene.json there."""
+    import json
+    path = os.path.join(CACHE, "znetscene.json")
+    if not os.path.exists(path):
+        import UnityPy
+        deps, assets = _read_manifest()
+        lines = open(os.path.join(SOFTREF, "manifest"), encoding="utf-8-sig").read().splitlines()
+        bundle = None
+        for n, line in enumerate(lines):
+            if line.strip() == "path in bundle: Assets/Scenes/main.unity":
+                bundle = re.match(r"  bundle: (\w+)", lines[n - 1]).group(1)
+        env = UnityPy.load(*[os.path.join(SOFTREF, "Bundles", b) for b in [bundle] + deps.get(bundle, [])])
+        names = None
+        for obj in env.objects:
+            if obj.type.name != "MonoBehaviour":
+                continue
+            try:
+                tt = obj.read_typetree()
+            except Exception:
+                continue
+            if "m_prefabs" in tt and "m_nonNetViewPrefabs" in tt:
+                mb = obj.read()
+                names = sorted({p.read().m_Name for key in ("m_prefabs", "m_nonNetViewPrefabs") for p in getattr(mb, key)})
+                break
+        if names is None:
+            raise RuntimeError("ZNetScene not found in the main scene")
+        os.makedirs(CACHE, exist_ok=True)
+        json.dump(names, open(path, "w"), indent=0)
+    return set(json.load(open(path)))
+
+
 if __name__ == "__main__":
     args = sys.argv[1:]
     if args and args[0] == "--list":

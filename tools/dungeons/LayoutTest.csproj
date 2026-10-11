@@ -24,5 +24,8 @@
     <Compile Include="$(ModDir)/PackReader.cs" Link="Mod/PackReader.cs" />
     <Compile Include="$(ModDir)/LayoutSolver.cs" Link="Mod/LayoutSolver.cs" />
     <Compile Include="$(ModDir)/LookCheck.cs" Link="Mod/LookCheck.cs" />
+    <Compile Include="$(ModDir)/TriggerModel.cs" Link="Mod/TriggerModel.cs" />
+    <Compile Include="$(ModDir)/PackReaderTriggers.cs" Link="Mod/PackReaderTriggers.cs" />
+    <Compile Include="$(ModDir)/TriggerSolve.cs" Link="Mod/TriggerSolve.cs" />
   </ItemGroup>
 </Project>

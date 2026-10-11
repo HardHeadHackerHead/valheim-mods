@@ -11,9 +11,11 @@ Going in and out
 
 The dungeons
 - Shifting Halls: a Giants' clockwork vault. Ancient Jotunn machinery in grausten and black marble, bronze and iron gears, chains, and cold blue light. A hall four storeys high with turning staircases driven by gears, levers, a round drum room that turns every 12 seconds, and a vault at the top behind a gate. Every room in it is new, made for this mod.
+- On the way: fight rooms that lock until their waves are beaten, secret rooms behind walls a pickaxe or a club can break, a shortcut back to the entrance once you've come far enough, and the Clockwork Warden, a boss with its own health bar.
 - Its entrance is a giant iron door in a hill. Beside it lie the bones of a fallen giant: a skull, a sword and a huge cogwheel.
 - Test Crypt: the game's own Black Forest crypt rooms, joined in new ways. Made to test the dungeon system.
 - Test Mechanisms: a small dungeon with one of each moving part: a lever, a pressure plate, a turning stair, a lift and a gate.
+- Test Blocks: a small dungeon with the other building blocks: a pedestal for a key, braziers to light, a block to push, a trap, teleporters, a locked gate and a checkpoint.
 - The same seed always gives the same dungeon. A dungeon's puzzle is checked when it's laid out, so it can always be solved.
 
 Moving parts and puzzles
@@ -23,11 +25,11 @@ Moving parts and puzzles
 - Some machinery just turns: gears that spin while their mechanism moves, and backwards when it goes back.
 - Anything that moves carries whoever stands on it, up, down and round.
 - Every player sees every moving part in the same place at the same time.
-- In the Shifting Halls, set the stairs in the right order to reach the vault. It takes about 9 to 14 pulls of the levers.
+- In the Shifting Halls, set the stairs in the right order to reach the vault. It takes about 12 to 17 uses of the levers and plates.
 
 Enemies and loot that fit the land
 - Enemies fit the land the entrance stands in. A dungeon in the Mountains has Mountain enemies (and some from the Swamp), and nothing from a land further on. A creature that doesn't fit is swapped for one of the same kind (a fighter, an archer or a flyer) that does.
-- No bosses. Enemies have up to 1 star in the Meadows and the Black Forest, and up to 2 stars from the Swamp on.
+- None of the game's bosses (the Clockwork Warden is the land's toughest enemy, made stronger). Enemies have up to 1 star in the Meadows and the Black Forest, and up to 2 stars from the Swamp on.
 - Loot fits the land too. Chests are filled with things from that land (or an earlier one), and the vault's chests hold more. Nothing inside gives anything from a land further on: plants to pick, pots, rocks and the pieces you can break keep only what fits.
 - A room's enemies appear once, the first time someone comes in.
 
@@ -46,9 +48,13 @@ Commands for admins and testers
 - dungeon list shows the dungeons in the world, dungeon map a dungeon's layout floor by floor, dungeon solve its puzzle's solution, dungeon reset makes it new again now, and dungeon remove takes it away for good.
 - Commands that change the world follow the game's cheat rule: they work in single player, for the host, or with devcommands on.
 
+Your own dungeons
+- A kind of dungeon is a pack: one file of data with its rooms, moving parts, enemies, loot and entrance. New kinds need no code.
+- Put packs in BepInEx/config/Dungeons/packs (and entrance looks in packs/looks in it). They are read when a world starts.
+- On a server, only the server's packs count. It sends them to each player as they join, so players install nothing.
+
 Coming
 - Dungeons placed in the world for you to find as you explore, with entrances that fit the land.
-- Your own dungeons from a folder: a pack is only data (its rooms, moving parts, enemies, loot and entrance), so new kinds of dungeon need no code. For now the packs are built into the mod, because every player must have the same ones; packs from a folder need the server to share them first.
 
 Settings: how many in-game days before a dungeon comes back new (0 for never). It's the server's in multiplayer.
-Everyone needs it, and the host above all: each dungeon's entrance is saved in the world, with the dungeon's state, and a game without the mod deletes the entrances when their area loads. Players without it can't see or enter dungeons.
+Everyone needs it, and the host above all: each dungeon's entrance is saved in the world, with the dungeon's state, and a game without the mod deletes the entrances when their area loads. The server and every player need the same version of the mod: a player with another version, or without it, can't join.

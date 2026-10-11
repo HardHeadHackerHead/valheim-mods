@@ -69,5 +69,8 @@
     {"prefab": "blackmarble_pile", "at": [-5, 0, -4.6], "euler": [0, 140, 0]},
     {"prefab": "blackmarble_pile", "at": [5.2, 0, -4.4], "euler": [0, 200, 0]},
     {"prefab": "grausten_pile", "at": [0, 0, -5], "euler": [0, 10, 0]}
+  ],
+  "inside": [
+    {"prefab": "dvergrtown_secretdoor", "at": [0, 0, 0.2]}
   ]
 }

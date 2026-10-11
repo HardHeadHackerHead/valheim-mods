@@ -20,6 +20,10 @@ namespace Dungeons
         public string GetHoverText()
         {
             if (_set == null) return "";
+            if (_set.ByKey.TryGetValue(_key, out Mech locked) && _set.LockedLever(locked))
+                return Localization.instance.Localize($"{T("dungeons_lever")}\n<color=#e8a060>{T("dungeons_lever_locked")}</color>");
+            if (_set.ByKey.TryGetValue(_key, out Mech m) && _set.IsDone(m))
+                return Localization.instance.Localize($"{T("dungeons_lever")}\n<color=#a0a0a0>{T("dungeons_lever_done")}</color>");
             return Localization.instance.Localize($"{T("dungeons_lever")}\n[<color=yellow><b>$KEY_Use</b></color>] $piece_pulllever");
         }
 
@@ -30,6 +34,12 @@ namespace Dungeons
         public bool Interact(Humanoid user, bool hold, bool alt)
         {
             if (hold || _set == null || user != Player.m_localPlayer || Time.time < _next) return false;
+            if (_set.ByKey.TryGetValue(_key, out Mech done) && _set.IsDone(done)) return false;   // (a one-shot lever, pulled: it stays down)
+            if (done != null && _set.LockedLever(done))
+            {
+                user.Message(MessageHud.MessageType.Center, T("dungeons_lever_locked"));
+                return false;
+            }
             Site site = _set.Site;
             if (site?.Zdo == null) return false;
             _next = Time.time + 0.5f;

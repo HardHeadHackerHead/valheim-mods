@@ -20,10 +20,20 @@ namespace Dungeons
         public static readonly int Entered = "quaddungeon_entered".GetStableHashCode();   // int: the day it was first entered since new (-1: not yet)
         public static readonly int Resets = "quaddungeon_resets".GetStableHashCode();     // int: how many times it came back new
         public static readonly int ResetDay = "quaddungeon_resetday".GetStableHashCode(); // int: the day it last did
-        public static readonly int Mechs = "quaddungeon_mechs".GetStableHashCode();       // string: the mechanisms that ever moved (MechRecords)
+        public static readonly int Mechs = "quaddungeon_mechs".GetStableHashCode();
+        public static readonly int Look = "quaddungeon_look".GetStableHashCode();
+        public static readonly int Remake = "quaddungeon_remake".GetStableHashCode();     // int: bumped by a remake (Rebuild): every game lays it out again
+        public static readonly int RemakeWanted = "quaddungeon_remakewanted".GetStableHashCode();   // int 1: remade when it next loads (its pack changed while it wasn't loaded)         // string: the entrance's look when it isn't its prefab's (a look from the config folder or the server)
+        public static readonly int Encounters = "quaddungeon_encs".GetStableHashCode();
+        public static readonly int LayoutSig = "quaddungeon_lsig".GetStableHashCode();   // int: the layout the saved parts were made for (Dungeons.Signature) // string: the encounters' states (EncounterRecord)       // string: the mechanisms that ever moved (MechRecords)
         /// <summary>On every saved object the builder makes for a dungeon (its doors, chests, spawners): that dungeon's Id, so a reset can
         /// find and remove them before it makes them again.</summary>
         public const string PartOf = "quaddungeon_partof";
+        /// <summary>On each saved part too: the layout's signature it was made for (a part of another layout is removed when it loads).</summary>
+        public const string PartSig = "quaddungeon_partsig";
+        /// <summary>On each saved part: the dungeon's parts generation it was made in (Keys.Gen; a reset or a remake starts a new one).</summary>
+        public const string PartGen = "quaddungeon_partgen";
+        public static readonly int Gen = "quaddungeon_gen".GetStableHashCode();   // int: the saved parts' generation (Sweep keeps only the current)
     }
 
     /// <summary>
@@ -43,15 +53,38 @@ namespace Dungeons
         private static GameObject _holder, _prefab, _look;
         private static readonly Dictionary<string, GameObject> Prefabs = new Dictionary<string, GameObject>();   // look -> its prefab
         private static HashSet<int> _hashes;
-        private static HashSet<int> Hashes => _hashes ?? (_hashes = new HashSet<int>(EntranceLooks.All.Select(l => l.Prefab.GetStableHashCode())));
+        private static HashSet<int> Hashes => _hashes ?? (_hashes = new HashSet<int>(EntranceLooks.Builtin.Select(l => l.Prefab.GetStableHashCode())));
         public static GameObject Prefab => _prefab;
         public static string LookFrom = "";
 
         /// <summary>The entrance prefab for a look (a pack's entranceLook; unknown or none: the crypt).</summary>
-        public static GameObject PrefabFor(string look) => Prefabs.TryGetValue(EntranceLooks.Get(look).Name, out GameObject p) ? p : _prefab;
+        public static GameObject PrefabFor(string look) => EntranceLooks.IsBuiltin(look) && Prefabs.TryGetValue(EntranceLooks.Get(look).Name, out GameObject p) ? p : _prefab;
+
+        /// <summary>A new entrance of a look: its own prefab when the look is built in; else the default prefab, with the look's name in
+        /// its ZDO (Keys.Look: a look from the config folder or the server never gets a prefab, so an entrance never loses one).</summary>
+        public static GameObject Place(string look, Vector3 at, Quaternion rot)
+        {
+            GameObject go = Object.Instantiate(PrefabFor(look), at, rot);
+            string name = (look ?? "").Trim().ToLowerInvariant();
+            if (name.Length > 0 && !EntranceLooks.IsBuiltin(name))
+            {
+                go.GetComponent<ZNetView>()?.GetZDO()?.Set(Keys.Look, name);
+                DungeonEntrance e = go.GetComponent<DungeonEntrance>();
+                if (e != null) { e.Look = name; if (e.Site != null) e.Site.Look = name; }
+            }
+            return go;
+        }
+
+        /// <summary>An entrance ZDO's look: its Keys.Look, else its prefab's.</summary>
+        public static string LookOf(ZDO z)
+        {
+            string named = z.GetString(Keys.Look);
+            if (!string.IsNullOrEmpty(named)) return named;
+            return EntranceLooks.Builtin.FirstOrDefault(l => l.Prefab.GetStableHashCode() == z.GetPrefab())?.Name ?? EntranceLooks.Default;
+        }
 
         /// <summary>Every entrance prefab's name (one per look).</summary>
-        public static IEnumerable<string> PrefabNames => EntranceLooks.All.Select(l => l.Prefab);
+        public static IEnumerable<string> PrefabNames => EntranceLooks.Builtin.Select(l => l.Prefab);
 
         /// <summary>A saved object of one of the entrance prefabs.</summary>
         public static bool IsEntrance(int prefabHash) => Hashes.Contains(prefabHash);
@@ -65,7 +98,7 @@ namespace Dungeons
                 _holder.SetActive(false);   // keeps the copies from waking up as real objects
                 Object.DontDestroyOnLoad(_holder);
                 _look = MakeLookTemplate(scene);
-                foreach (EntranceLooks.Look look in EntranceLooks.All)
+                foreach (EntranceLooks.Look look in EntranceLooks.Builtin)
                 {
                     var prefab = new GameObject(look.Prefab);
                     prefab.transform.SetParent(_holder.transform, false);
@@ -198,6 +231,9 @@ namespace Dungeons
         private void Start()
         {
             if (View == null || View.GetZDO() == null) return;
+            // a look from outside the DLL: named in the ZDO (the prefab is the default one)
+            string named = View.GetZDO().GetString(Keys.Look);
+            if (!string.IsNullOrEmpty(named)) { Look = named; if (Site != null) Site.Look = named; }
             // (on the plugin, so a location loaded for it is always let go, even if the entrance goes while it loads)
             if (Plugin.Instance != null) Plugin.Instance.StartCoroutine(EntranceLooks.Dress(this, transform.Find("look")?.gameObject));
         }
@@ -214,6 +250,7 @@ namespace Dungeons
             string title = Site.Title;
             string text = $"{title}\n[<color=yellow><b>$KEY_Use</b></color>] {T("dungeons_enter", title)}";
             if (Site.Problem != null) text += $"\n<color=#e8a060>{T("dungeons_broken", Site.Problem)}</color>";
+            else if (PackSync.OffReason != null) text += $"\n<color=#e8a060>{T("dungeons_off")}</color>";   // (no dungeons on this server: never "forming")
             else if (!Site.Ready) text += $"\n<color=#a0a0a0>{T("dungeons_forming")}</color>";
             else if (Site.RenewsOnDay(out int day)) text += $"\n<color=#a0a0a0>{T("dungeons_renews_on", day)}</color>";
             return Localization.instance.Localize(text);
@@ -236,9 +273,7 @@ namespace Dungeons
         private void RPC_Act(long sender, string act)
         {
             if (Site == null || !View.IsOwner()) return;
-            if (act == "entered") Dungeons.RecordEntry(Site);
-            else if (act != null && act.StartsWith("use:")) Site.Mechs?.UseFrom(sender, act.Substring(4));
-            else Plugin.Log.LogInfo($"Dungeons_Act from {sender}: \"{act}\" isn't known (a newer version?)");
+            Dungeons.HandleAct(Site, sender, act);   // (older versions sent acts here; now through Dungeons_Site, to every game)
         }
     }
 
@@ -246,6 +281,7 @@ namespace Dungeons
     internal class DungeonExit : MonoBehaviour, Hoverable, Interactable
     {
         public Site Site;
+        public float Reach;             // > 0: only from this near (an "exit" mechanism, which may stand behind a gate)
 
         public string GetHoverText()
         {
@@ -260,6 +296,7 @@ namespace Dungeons
         public bool Interact(Humanoid user, bool hold, bool alt)
         {
             if (hold || Site == null || user != Player.m_localPlayer) return false;
+            if (Reach > 0f && Vector3.Distance(user.transform.position, transform.position) > Reach) return false;
             Dungeons.Leave(Site);
             return true;
         }

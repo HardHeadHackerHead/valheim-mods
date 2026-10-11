@@ -107,6 +107,7 @@ class Mech(Parts):
         self.id, self.kind, self.at, self.euler = id, kind, np.array(at, float), np.array(euler, float)
         self.poses, self.wires, self.joins = [], [], []
         self.start, self.seconds, self.cycle, self.doorway, self.reached_from = 0, 1.5, 0.0, None, None
+        self.extra = {}                 # more fields as they are (an encounter's area, waves, spawns...)
 
     def pose(self, at=(0, 0, 0), euler=(0, 0, 0)):
         self.poses.append((np.array(at, float), np.array(euler, float)))
@@ -138,6 +139,7 @@ class Mech(Parts):
             o["joins"] = self.joins
         if self.reached_from:
             o["reachedFrom"] = self.reached_from
+        o.update(self.extra)
         return o
 
 
@@ -197,6 +199,8 @@ class Room(Parts):
             scene.add(p.prefab, p.at, p.euler, p.scale, parent=room, tint=(1.0, 0.85, 0.3) if p.saved and tint else None)
         for m in self.mechs:
             state = (states or {}).get(m.id, m.start)
+            if m.kind == "breakable" and state >= 1:
+                continue                                        # (broken: its parts are gone)
             mf = room @ frame(m.at, m.euler)
             if m.poses:
                 a, e = m.poses[min(state, len(m.poses) - 1)]
@@ -213,54 +217,66 @@ class Room(Parts):
 
 # What a dungeon's spawners spawn, by the biome its entrance is in (pack "creatures"). The Builder swaps each spawner's creature for a seeded
 # pick of the same role (melee, ranged, flying); a role or biome left out falls back to its own table. Every name is one of the game's prefabs.
-_MEADOWS = {"melee": ["Greyling", "Skeleton_Meadows_noarcher"], "ranged": ["Skeleton_Meadows"]}
-_FOREST = {"melee": ["Skeleton_NoArcher", "Greydwarf", "Greydwarf_Elite"], "ranged": ["Skeleton", "Greydwarf_Shaman"], "flying": ["Ghost"]}
+# "elite": the land's hard one, for an encounter's last wave and a guardian (Runtime; the Builder keeps it within the land, never a boss).
+_MEADOWS = {"melee": ["Greyling", "Skeleton_Meadows_noarcher"], "ranged": ["Skeleton_Meadows"], "elite": ["Skeleton_Meadows_noarcher"]}
+_FOREST = {"melee": ["Skeleton_NoArcher", "Greydwarf", "Greydwarf_Elite"], "ranged": ["Skeleton", "Greydwarf_Shaman"], "flying": ["Ghost"],
+           "elite": ["Troll"]}
 CREATURES = {
     "Meadows": _MEADOWS,
     "BlackForest": _FOREST,
     "Swamp": {"melee": ["Draugr", "Draugr_Elite", "Skeleton_Swamps_noarcher", "Blob"], "ranged": ["Draugr_Ranged", "Skeleton_Swamps"],
-              "flying": ["Wraith", "Bat_Swamp"]},
+              "flying": ["Wraith", "Bat_Swamp"], "elite": ["Draugr_Elite"]},
     "Mountain": {"melee": ["Ulv", "Fenring", "Skeleton_Mountains_noarcher"], "ranged": ["Fenring_Cultist", "Skeleton_Mountains"],
-                 "flying": ["Bat", "Hatchling"]},
-    "Plains": {"melee": ["Goblin", "GoblinBrute"], "ranged": ["GoblinArcher", "GoblinShaman"], "flying": ["Deathsquito"]},
-    "Mistlands": {"melee": ["Seeker", "Tick", "SeekerBrute"], "flying": ["Seeker"]},
-    "AshLands": {"melee": ["Charred_Melee", "Charred_Twitcher"], "ranged": ["Charred_Archer", "Charred_Mage"], "flying": ["Volture"]},
-    "DeepNorth": {"melee": ["Skeleton_DeepNorth", "GoblinDeepNorth", "Greydwarf_Frozen"], "ranged": ["Greydwarf_Shaman_Frozen"], "flying": ["Bat"]},
+                 "flying": ["Bat", "Hatchling"], "elite": ["Fenring"]},
+    "Plains": {"melee": ["Goblin", "GoblinBrute"], "ranged": ["GoblinArcher", "GoblinShaman"], "flying": ["Deathsquito"], "elite": ["GoblinBrute"]},
+    "Mistlands": {"melee": ["Seeker", "Tick", "SeekerBrute"], "flying": ["Seeker"], "elite": ["SeekerBrute"]},
+    "AshLands": {"melee": ["Charred_Melee", "Charred_Twitcher"], "ranged": ["Charred_Archer", "Charred_Mage"], "flying": ["Volture"], "elite": ["Charred_Melee"]},
+    "DeepNorth": {"melee": ["Skeleton_DeepNorth", "GoblinDeepNorth", "Greydwarf_Frozen"], "ranged": ["Greydwarf_Shaman_Frozen"], "flying": ["Bat"],
+                  "elite": ["GoblinDeepNorth"]},
     "Ocean": _MEADOWS,
     "default": _FOREST,
 }
 
 
 # What a dungeon's chests hold, by the biome its entrance is in (pack "loot"): "common" for ordinary chests, "rare" for our rooms' other
-# saved chests, "vault" for the chest in the end room (the prize: worth the puzzle, fair for the land). Entries "Item", "Item:n" or
+# saved chests, "vault" for the chest in the end room and each player's own roll when the vault opens (the prize: worth the puzzle,
+# fair for the land; the Builder adds 1-3 giant cogs to every vault chest), "boss" for a boss room's chest. Entries "Item", "Item:n" or
 # "Item:min-max", all the game's own items of that land's tier or below (the Builder also drops anything above the tier).
 _MEADOWS_LOOT = {"common": ["Coins:5-15", "Flint:2-5", "LeatherScraps:2-6", "Feathers:2-6", "Amber"],
                  "rare": ["Coins:15-30", "Amber:1-2", "DeerHide:2-4", "Flint:4-8"],
-                 "vault": ["Coins:40-70", "Amber:2-3", "AmberPearl:1", "Ruby:1"]}
+                 "vault": ["Coins:60-100", "Amber:2-4", "AmberPearl:1-2", "Ruby:1-2", "ArrowFlint:20-40", "DeerHide:4-6"],
+                 "boss": ["Coins:100-150", "AmberPearl:2-3", "Ruby:2-3", "ArrowFlint:40-60"]}
 _FOREST_LOOT = {"common": ["Coins:10-20", "Amber", "Resin:3-6", "BoneFragments:3-6", "GreydwarfEye:2-4"],
                 "rare": ["Coins:20-40", "AmberPearl", "Ruby", "SurtlingCore", "Copper:2-3", "Tin:2-3"],
-                "vault": ["Coins:60-110", "Ruby:2-3", "AmberPearl:2-3", "SurtlingCore:2-3", "Bronze:3-5"]}
+                "vault": ["Coins:80-140", "Ruby:2-4", "AmberPearl:2-3", "SurtlingCore:3-5", "Bronze:4-8", "TrollHide:2-3", "ArrowBronze:20-30"],
+                "boss": ["Coins:150-220", "Ruby:3-5", "SurtlingCore:4-6", "Bronze:8-12"]}
 LOOT = {
     "Meadows": _MEADOWS_LOOT,
     "BlackForest": _FOREST_LOOT,
     "Swamp": {"common": ["Coins:15-30", "Amber", "AmberPearl", "WitheredBone", "Guck:2-4", "Entrails:2-4"],
               "rare": ["Coins:30-60", "IronScrap:3-6", "Chain", "Ruby", "AmberPearl:1-2"],
-              "vault": ["Coins:90-150", "Iron:3-5", "IronScrap:6-10", "Chain:1-2", "Ruby:2-4", "AmberPearl:2-3"]},
+              "vault": ["Coins:120-200", "Iron:5-8", "IronScrap:8-12", "Chain:2-3", "Ruby:3-5", "AmberPearl:3-4", "ElderBark:6-10"],
+              "boss": ["Coins:200-300", "Iron:8-12", "Chain:3-4", "Ruby:4-6"]},
     "Mountain": {"common": ["Coins:20-40", "Obsidian:3-6", "WolfFang:2-4", "Crystal:1-2", "Ruby"],
                  "rare": ["Coins:40-80", "SilverOre:3-6", "Crystal:2-4", "FreezeGland:2-4", "AmberPearl:1-2"],
-                 "vault": ["Coins:120-200", "Silver:4-6", "Crystal:3-6", "Ruby:3-4", "AmberPearl:2-4", "SilverNecklace"]},
+                 "vault": ["Coins:160-260", "Silver:6-10", "Crystal:4-8", "Ruby:4-6", "AmberPearl:3-5", "SilverNecklace:1-2", "WolfPelt:3-5"],
+                 "boss": ["Coins:260-380", "Silver:10-14", "Crystal:6-10", "SilverNecklace:2-3"]},
     "Plains": {"common": ["Coins:30-50", "BlackMetalScrap:2-4", "Barley:4-8", "Flax:4-8", "Needle:3-6"],
                "rare": ["Coins:60-100", "BlackMetalScrap:5-8", "LoxPelt:2-3", "SilverNecklace", "Ruby:1-2"],
-               "vault": ["Coins:150-250", "BlackMetal:4-6", "BlackMetalScrap:6-10", "SilverNecklace:1-2", "Ruby:3-5", "AmberPearl:3-4"]},
+               "vault": ["Coins:200-320", "BlackMetal:6-10", "BlackMetalScrap:8-12", "SilverNecklace:2-3", "Ruby:4-6", "AmberPearl:4-6", "LoxPelt:3-4"],
+               "boss": ["Coins:320-450", "BlackMetal:10-15", "SilverNecklace:3-4", "Ruby:6-8"]},
     "Mistlands": {"common": ["Coins:40-70", "Softtissue:2-4", "Sap:3-6", "BlackMarble:4-8"],
                   "rare": ["Coins:80-120", "DvergrNeedle:2-4", "Softtissue:4-6", "SilverNecklace", "Ruby:2-3"],
-                  "vault": ["Coins:200-300", "BlackCore:1-2", "DvergrNeedle:3-5", "Softtissue:6-10", "SilverNecklace:2", "Ruby:3-5"]},
+                  "vault": ["Coins:260-400", "BlackCore:2-3", "DvergrNeedle:4-6", "Softtissue:8-12", "SilverNecklace:2-3", "Ruby:4-6", "Eitr:4-8"],
+                  "boss": ["Coins:400-550", "BlackCore:3-4", "Eitr:8-12", "SilverNecklace:3-4"]},
     "AshLands": {"common": ["Coins:50-80", "Grausten:4-8", "CharredBone:3-6", "CharcoalResin:2-4"],
                  "rare": ["Coins:100-150", "FlametalOreNew:3-5", "AskHide:2-3", "ProustitePowder:2-3", "Ruby:2-3"],
-                 "vault": ["Coins:250-400", "FlametalNew:3-5", "MoltenCore:1-2", "CelestialFeather:2-3", "Ruby:4-6", "SilverNecklace:2"]},
+                 "vault": ["Coins:320-500", "FlametalNew:5-8", "MoltenCore:2-3", "CelestialFeather:3-4", "Ruby:5-8", "SilverNecklace:2-3"],
+                 "boss": ["Coins:500-700", "FlametalNew:8-12", "MoltenCore:3-4", "CelestialFeather:4-6"]},
     "DeepNorth": {"common": ["Coins:50-80", "Grausten:4-8", "Obsidian:4-8", "Crystal:2-4"],
                   "rare": ["Coins:100-150", "Crystal:4-6", "Ruby:2-3", "SilverNecklace"],
-                  "vault": ["Coins:250-400", "Ruby:4-6", "SilverNecklace:2", "AmberPearl:4-6", "Crystal:6-10"]},
+                  "vault": ["Coins:320-500", "Ruby:5-8", "SilverNecklace:2-3", "AmberPearl:5-8", "Crystal:8-12"],
+                  "boss": ["Coins:500-700", "Ruby:8-10", "SilverNecklace:3-4", "Crystal:12-16"]},
     "Ocean": _MEADOWS_LOOT,
     "default": _FOREST_LOOT,
 }
@@ -360,12 +376,14 @@ class Pack:
         self.rooms.append(room)
         return room
 
-    def step(self, tag, id=None, opens_with=None):
+    def step(self, tag, id=None, opens_with=None, from_=None):
         s = {"tag": tag}
         if id:
             s["id"] = id
         if opens_with:
             s["opensWith"] = opens_with
+        if from_:
+            s["from"] = from_                   # grown off that earlier step's room, not the one before it
         self.plan.append(s)
 
     def json(self):
@@ -378,11 +396,41 @@ class Pack:
         return o
 
     def write(self, path):
-        """The pack's JSON: one room or part per line where it fits, so diffs stay readable."""
-        text = json.dumps(self.json(), indent=1)
+        """The pack's JSON: one room or part per line where it fits, so diffs stay readable. Refuses a prefab the game's ZNetScene
+        doesn't have (the mod could only leave it out)."""
+        data = self.json()
+        missing = sorted(prefabs(data) - known_prefabs())
+        if missing:
+            raise SystemExit(f"{self.name}: these prefabs aren't in the game's ZNetScene: {', '.join(missing)}")
+        text = json.dumps(data, indent=1)
         with open(path, "w", encoding="utf-8", newline="\n") as f:
             f.write(_compact(text) + "\n")
         return path
+
+
+def prefabs(data):
+    """Every prefab name a pack's JSON (or an entrance look's) names: parts, mechanisms' parts, doors."""
+    names = set()
+
+    def walk(o):
+        if isinstance(o, dict):
+            for k, v in o.items():
+                if k == "prefab" and isinstance(v, str):
+                    names.add(v)
+                else:
+                    walk(v)
+        elif isinstance(o, list):
+            for v in o:
+                walk(v)
+    walk(data)
+    if isinstance(data, dict):
+        names |= set((data.get("doors") or {}).values())
+    return names
+
+
+def known_prefabs():
+    from game_meshes import znetscene_names
+    return znetscene_names()
 
 
 def _compact(text):

@@ -87,14 +87,23 @@ namespace Dungeons
 
         private static readonly int LootKey = "Dungeons_loot".GetStableHashCode();
 
-        private static int ItemTier(GameObject item) =>
-            item == null ? 0 : Items.TryGetValue(PrefabName(item), out Item i) ? i.Tier : UnknownTier;
+        /// <summary>An item's land tier: the table's; our own items (rewards, the packs' keys: "quaddungeon_...") fit every land; any other
+        /// item the table doesn't know, above every land.</summary>
+        private static int ItemTier(GameObject item)
+        {
+            if (item == null) return 0;
+            string name = PrefabName(item);
+            if (name.StartsWith("quaddungeon_", StringComparison.Ordinal)) return 0;
+            return Items.TryGetValue(name, out Item i) ? i.Tier : UnknownTier;
+        }
 
-        /// <summary>Which chest list a room's chests are filled from: "vault" in a room tagged vault or end, "rare" for our rooms' own chests,
+        /// <summary>Which chest list a room's chests are filled from: "boss" in a room tagged boss (the warden's trophy too), "vault" in a
+        /// room tagged vault or end, "rare" for our rooms' own chests,
         /// "common" for the game rooms'.</summary>
         internal static string LootTierOf(PlacedRoom room)
         {
             List<string> tags = room?.Def?.Tags;
+            if (tags != null && tags.Any(t => string.Equals(t, "boss", StringComparison.OrdinalIgnoreCase))) return "boss";
             if (tags != null && tags.Any(t => string.Equals(t, "vault", StringComparison.OrdinalIgnoreCase) || string.Equals(t, "end", StringComparison.OrdinalIgnoreCase)))
                 return "vault";
             return string.IsNullOrEmpty(room?.Def?.GamePrefab) ? "rare" : "common";
@@ -221,7 +230,7 @@ namespace Dungeons
         {
             Inventory inv = chest.GetInventory();
             if (inv == null || ZNetScene.instance == null) return;
-            bool vault = lootTier == "vault";
+            bool boss = lootTier == "boss", vault = boss || lootTier == "vault";
             DropTable own = chest.m_defaultItems;
             int count = Mathf.Clamp(own != null ? rng.Next(own.m_dropMin, own.m_dropMax + 1) : 3, 2, 6) + (vault ? 2 : 0);
             count = Mathf.Min(count, inv.GetWidth() * inv.GetHeight());
@@ -243,7 +252,30 @@ namespace Dungeons
                 if (amount <= 0 || !inv.AddItem(pick.item, amount)) continue;
                 put.Add($"{PrefabName(pick.item)} x{amount}");
             }
+            // ours, only dungeons give them (BuildRewards.cs): a giant's cogs in every vault, the warden's trophy from a boss
+            if (vault) Reward(inv, CogItem, rng.Next(1, 4), put);
+            if (boss) Reward(inv, TrophyItem, 1, put);
             fit.LootNotes.Add($"{label}: chest ({lootTier}, {(fromPack ? "the pack's" : "the table's")}): {string.Join(", ", put)}");
+        }
+
+        private static void Reward(Inventory inv, string item, int amount, List<string> put)
+        {
+            GameObject prefab = RewardItem(item);
+            if (prefab == null) { WarnOnce($"Dungeon loot: the reward {item} isn't made (its game item is missing)"); return; }
+            if (inv.AddItem(prefab, amount)) put.Add($"{item} x{amount}");
+        }
+
+        /// <summary>
+        /// For Runtime's boss (an encounter's chest): fills a chest the owner has just made as a "boss" chest of this dungeon's land: the
+        /// pack's "boss" loot for the biome (then "vault", then "common"), else the table's vault loot, plus 1-3 giant's cogs and the warden's
+        /// trophy. Logged like the builder's own chests.
+        /// </summary>
+        internal static void FillRewardChest(Container chest, Built built, System.Random rng)
+        {
+            if (chest == null || built?.Layout == null || rng == null) return;
+            CreatureFit fit = FitFor(built);
+            Refill(chest, fit, "boss", rng, "boss chest");
+            Plugin.Log.LogInfo($"Dungeon {built.Layout.Pack?.Name} {built.Layout.Seed}: {string.Join("; ", fit.LootNotes)}");
         }
 
         /// <summary>The pack's loot for the biome and list (then "common"): its entries "Prefab", "Prefab:n" or "Prefab:min-max", without
@@ -251,7 +283,7 @@ namespace Dungeons
         private static List<(GameObject, int, int, float)> PackLoot(CreatureFit fit, string lootTier)
         {
             var pool = new List<(GameObject, int, int, float)>();
-            foreach (string key in new[] { lootTier, "common" }.Distinct())
+            foreach (string key in new[] { lootTier, lootTier == "boss" ? "vault" : "common", "common" }.Distinct())
             {
                 foreach (string entry in PackReader.Loot(fit.Pack, fit.Biome.ToString(), key) ?? new List<string>())
                 {

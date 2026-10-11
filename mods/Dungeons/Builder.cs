@@ -188,6 +188,7 @@ namespace Dungeons
         {
             foreach (Built built in All.ToList()) Remove(built);
             All.Clear();
+            ForgetSolid();
         }
 
         /// <summary>The owner only, once per room: creates the room's saved objects: a game room's networked parts (spawners, chests, pots),

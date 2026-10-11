@@ -92,7 +92,9 @@ namespace Dungeons
             int start = Mathf.Clamp(def.Start, 0, Math.Max(0, states - 1));
             var m = has ? new MechMotion { From = rec.From, To = rec.To, Start = rec.Time, Seconds = def.Seconds }
                         : new MechMotion { From = start, To = start, Start = def.Cycle > 0f ? 0.0 : double.NegativeInfinity, Seconds = def.Seconds };
-            if (def.Cycle > 0f && states > 1 && now >= m.Start + def.Cycle)
+            int set = has ? rec.To : start;   // (the state wires set it to; with CycleIn, the cycle runs only in those)
+            bool cycling = def.CycleIn == null || def.CycleIn.Count == 0 || def.CycleIn.Contains(set);
+            if (def.Cycle > 0f && states > 1 && cycling && now >= m.Start + def.Cycle)
             {
                 long k = (long)Math.Floor((now - m.Start) / def.Cycle);
                 m.From = (int)((m.To + k - 1) % states);

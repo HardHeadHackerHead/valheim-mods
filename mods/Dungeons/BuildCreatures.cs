@@ -272,6 +272,34 @@ namespace Dungeons
             return null;
         }
 
+        // ---- for Runtime's encounters (fight rooms that spawn waves)
+
+        /// <summary>
+        /// A creature for an encounter in this dungeon, fitted to its land as the spawners' are (Pick): role "melee", "ranged" or "flying"
+        /// from the pack's list for the biome and role, then its "common" list, then the table. "elite": the pack's "elite" list for the
+        /// biome (elitePicked true); with none, a melee pick (elitePicked false: the caller gives it an elite's level). Never a boss, never
+        /// stronger than the land. Null when there's none.
+        /// </summary>
+        internal static GameObject EncounterCreature(Built built, string role, System.Random rng, out bool elitePicked)
+        {
+            elitePicked = false;
+            if (built?.Layout == null || rng == null) return null;
+            CreatureFit fit = FitFor(built);
+            if (string.Equals(role, "elite", StringComparison.OrdinalIgnoreCase))
+            {
+                List<GameObject> elites = PackReader.Creatures(fit.Pack, fit.Biome.ToString(), "elite")
+                    .Select(Prefab).Where(p => p != null && IsCreature(p) && !TooStrong(p, fit)).ToList();
+                if (elites.Count > 0) { elitePicked = true; return elites[rng.Next(elites.Count)]; }
+                return Pick(Role.Melee, fit, rng);
+            }
+            Role r = string.Equals(role, "ranged", StringComparison.OrdinalIgnoreCase) ? Role.Ranged
+                   : string.Equals(role, "flying", StringComparison.OrdinalIgnoreCase) ? Role.Flying : Role.Melee;
+            return Pick(r, fit, rng);
+        }
+
+        /// <summary>The highest level (the game's: 1 = no star) a creature in this dungeon may have, from its land.</summary>
+        internal static int LevelCapOf(Built built) => built?.Layout == null ? LevelCap(1) : LevelCap(FitFor(built).Tier);
+
         private static GameObject Prefab(string name)
         {
             if (string.IsNullOrEmpty(name) || ZNetScene.instance == null) return null;

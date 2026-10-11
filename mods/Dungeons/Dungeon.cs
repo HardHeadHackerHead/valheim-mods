@@ -10,8 +10,10 @@ using static DHack.Shared.Translations;
 
 namespace Dungeons
 {
-    /// <summary>One dungeon this game knows about: its entrance (loaded, or Detached: its zone unloaded while this game's player is still
-    /// inside), its layout, where it stands, and what of it is built here.</summary>
+    /// <summary>One dungeon this game knows about: its entrance (loaded, or Detached: not loaded here, its zone being out of this game's
+    /// range while its player is inside, which in a dungeon of 320 m happens well inside it), its layout, where it stands, and what of it
+    /// is built here. What the entrance's ZDO says is kept as it's read (pack, seed, id, origin), so the dungeon is still known while the
+    /// ZDO itself isn't at hand.</summary>
     internal class Site
     {
         public DungeonEntrance Entrance;
@@ -19,7 +21,13 @@ namespace Dungeons
         public Vector3 EntrancePos;     // where the entrance stands (entrances never move)
         public Quaternion EntranceRot;
         public string Look = EntranceLooks.Default;
-        public bool Detached;           // its entrance unloaded here while the local player was inside: kept built until they leave
+        public bool Detached;           // its entrance object isn't loaded here: kept (built) while the local player is in its space
+        public int RemakeSeen = -1;     // the remake count (Keys.Remake) this game built it with
+        public float NextFresh;         // a client, Detached: when to ask the server for the entrance's ZDO again (its state, fresh)
+        private string _pack = "", _id = "";
+        private int _seed;
+        private Vector3 _origin;
+        private bool _hasOrigin;
         public Layout Layout;           // null until laid out
         public string Problem;          // why it can't be built (an unknown pack, a layout that failed), or null
         public Built Built;             // the shells (from the moment Builder.Build starts: Ready once it's done)
@@ -32,27 +40,46 @@ namespace Dungeons
         public float NextOwnerCheck;
 
         public ZNetView View => Entrance != null ? Entrance.View : null;
+        /// <summary>The entrance's ZDO: its object's, or the one kept from it while this game's ZDOMan still has it (its object unloaded, or
+        /// between the game taking the ZDO off the object and destroying it).</summary>
         public ZDO Zdo => View != null && View.IsValid() ? View.GetZDO()
-                        : Detached && SavedZdo != null && ZDOMan.instance != null && ZDOMan.instance.GetZDO(SavedZdo.m_uid) == SavedZdo ? SavedZdo : null;
-        /// <summary>This game owns the entrance, and it's loaded here (the owner's jobs need its object).</summary>
-        public bool IsOwner => View != null && View.IsValid() && View.IsOwner();
+                        : SavedZdo != null && ZDOMan.instance != null && ZDOMan.instance.GetZDO(SavedZdo.m_uid) == SavedZdo ? SavedZdo : null;
+        /// <summary>This game owns the entrance's ZDO (its object loaded here or not: the owner's jobs need only the ZDO and the built
+        /// dungeon).</summary>
+        public bool IsOwner => Zdo != null && Zdo.IsOwner();
 
-        /// <summary>Tells the entrance's owner something (Dungeons_Act): through the entrance object, or straight to its ZDO while it isn't
-        /// loaded here.</summary>
+        /// <summary>Tells the entrance's owner something: to every game (the one that owns the entrance acts on it, wherever it is; the
+        /// entrance object's own RPC would only reach a game that has it loaded).</summary>
         public void Act(string act)
         {
-            if (View != null && View.IsValid()) { View.InvokeRPC("Dungeons_Act", act); return; }
-            ZDO z = Zdo;
-            if (z != null && ZRoutedRpc.instance != null) ZRoutedRpc.instance.InvokeRoutedRPC(z.GetOwner(), z.m_uid, "Dungeons_Act", act);
+            if (ZRoutedRpc.instance == null || Id.Length == 0) return;
+            ZRoutedRpc.instance.InvokeRoutedRPC(ZRoutedRpc.Everybody, Dungeons.SiteRpc, Id, act);
         }
-        public string PackName => Zdo?.GetString(Keys.Pack) ?? "";
-        public int Seed => Zdo?.GetInt(Keys.Seed) ?? 0;
-        public string Id => Zdo?.GetString(Keys.Id) ?? "";
+
+        /// <summary>This game takes the entrance's ZDO (a command, or nobody owning it while this game's player is far inside).</summary>
+        public void Claim()
+        {
+            if (View != null && View.IsValid()) View.ClaimOwnership();
+            else Zdo?.SetOwner(ZDOMan.GetSessionID());
+        }
+
+        public string PackName { get { ZDO z = Zdo; if (z != null) _pack = z.GetString(Keys.Pack) ?? ""; return _pack; } }
+        public int Seed { get { ZDO z = Zdo; if (z != null) _seed = z.GetInt(Keys.Seed); return _seed; } }
+        public string Id { get { ZDO z = Zdo; if (z != null) { string id = z.GetString(Keys.Id); if (!string.IsNullOrEmpty(id)) _id = id; } return _id; } }
         public bool Ready => Built != null && Built.Done;
         public bool MechsReady => Ready && MechsMade && (Mechs == null || Mechs.Complete);   // built, its moving parts too
 
-        public bool HasOrigin => Zdo != null && Zdo.GetVec3(Keys.Origin, out _);
-        public Vector3 Origin => Zdo != null && Zdo.GetVec3(Keys.Origin, out Vector3 v) ? v : Vector3.zero;
+        public bool HasOrigin { get { ReadOrigin(); return _hasOrigin; } }
+        public Vector3 Origin { get { ReadOrigin(); return _origin; } }
+
+        /// <summary>Forgets the origin it read (a remake with a new seed may place the dungeon elsewhere).</summary>
+        public void ForgetOrigin() { _hasOrigin = false; _origin = Vector3.zero; }
+
+        private void ReadOrigin()
+        {
+            ZDO z = Zdo;
+            if (z != null && z.GetVec3(Keys.Origin, out Vector3 v)) { _origin = v; _hasOrigin = true; }
+        }
 
         /// <summary>The whole dungeon in the world (its layout's box moved to its origin), when both are known.</summary>
         public bool Box(out Bounds box)
@@ -90,7 +117,6 @@ namespace Dungeons
             if (p.y < 3000f) return false;
             if (Box(out Bounds box))
                 return p.x > box.min.x - 16f && p.x < box.max.x + 16f && p.z > box.min.z - 16f && p.z < box.max.z + 16f && p.y < box.max.y + 100f;
-            if (Entrance == null) return false;
             Vector3 e = EntrancePos;
             return p.y > e.y + 3000f && Dungeons.FlatDistance(p, e) < Dungeons.UnknownReach && Location.GetZoneLocation(p) == null;
         }
@@ -131,7 +157,10 @@ namespace Dungeons
         public const float Step = 50f;           // a dungeon that would overlap another goes up by steps of this
         public const int MaxSlots = 40;
         public const float Margin = 8f;          // kept free between two dungeons' boxes
-        public const float UnknownReach = 128f;  // how far around an entrance a dungeon not yet laid out may reach
+        public const float UnknownReach = 480f;  // how far around an entrance a dungeon not yet laid out may reach (layouts are up to 320 x
+                                                 // 320 m, the entrance room anywhere in them: the far corner is ~450 m away)
+        public const string SiteRpc = "Dungeons_Site";   // (dungeon id, act): to every game; the entrance's owner acts
+        public const string NearRpc = "Dungeons_Near";   // (a point): a client asks the server for the entrances near it
 
         public static readonly List<Site> Sites = new List<Site>();
         private static readonly Dictionary<string, Layout> LayoutCache = new Dictionary<string, Layout>();
@@ -151,7 +180,7 @@ namespace Dungeons
         {
             ZDO zdo = entrance.View?.GetZDO();
             // its entrance back while this game kept the dungeon (Detached): the same one again
-            Site site = Sites.FirstOrDefault(s => s.Detached && zdo != null && s.SavedZdo == zdo);
+            Site site = Sites.FirstOrDefault(s => s.Detached && zdo != null && s.SavedZdo == zdo && !s.Gone);
             if (site != null)
             {
                 site.Entrance = entrance;
@@ -164,21 +193,164 @@ namespace Dungeons
             return site;
         }
 
-        /// <summary>The entrance object is going (its zone unloads here, or it's removed). A dungeon this game's player is inside stays built
-        /// (Detached) until they leave it: a big dungeon reaches farther than the zones loaded around them, and its floor must not go from
-        /// under them, their gravestone or anything they dropped. Otherwise it's taken down.</summary>
+        /// <summary>The entrance object is going (its zone unloads here, or it's removed). A dungeon this game's player is in (or over: its
+        /// space) stays (Detached) until they leave it: a big dungeon reaches far past the zones loaded around them (up to 320 m, the
+        /// game loads a zone or two each way), and its floor must not go from under them, their gravestone or anything they dropped.
+        /// Otherwise it's taken down. (The game takes the ZDO off the object before destroying it: the site's cached origin and the
+        /// saved ZDO answer meanwhile.)</summary>
         public static void Lost(Site site)
         {
             Player p = Player.m_localPlayer;
-            if (!site.Gone && site.Ready && site.SavedZdo != null && p != null && site.Contains(p.transform.position)
-                && ZDOMan.instance != null && ZDOMan.instance.GetZDO(site.SavedZdo.m_uid) == site.SavedZdo)
+            bool removed = site.SavedZdo == null || ZDOMan.instance == null || ZDOMan.instance.GetZDO(site.SavedZdo.m_uid) != site.SavedZdo;
+            if (!site.Gone && !removed && p != null && site.Covers(p.transform.position))
             {
                 site.Entrance = null;
                 site.Detached = true;
-                Plugin.Log.LogInfo($"Dungeon {site.Id}: its entrance unloaded here while the player is inside: kept built until they leave");
+                Plugin.Log.LogInfo($"Dungeon {site.Id}: its entrance unloaded here while the player is in it ({FlatDistance(p.transform.position, site.EntrancePos):0} m from the entrance): kept until they leave");
                 return;
             }
             Untrack(site);
+        }
+
+        // ---- dungeons known from their ZDO alone (a relog or a teleport far inside, the entrance out of range) ----
+
+        private static float _nextAsk;
+        public static float AskedAt = -100f;
+
+        /// <summary>The dungeons whose space a point (above 3000 m) may be in, from the entrances this game's ZDOMan knows (the host knows
+        /// every one; a client those the server sent it), tracked as Detached sites to lay out and build here. A client that knows of none
+        /// asks the server (Dungeons_Near) for the entrances near the point, at most every 3 s. True while it's waiting for that answer.</summary>
+        public static bool Discover(Vector3 p)
+        {
+            if (p.y < 3000f || ZDOMan.instance == null) return false;
+            int added = 0;
+            foreach (ZDO z in EntranceZdos())
+            {
+                if (FlatDistance(z.GetPosition(), p) > UnknownReach || !z.GetVec3(Keys.Origin, out Vector3 origin)) continue;
+                if (Sites.Any(s => s.SavedZdo == z && !s.Gone)) continue;
+                // laid out before (this world): only if its space has the point, so one that doesn't isn't built and taken down over and over
+                if (LayoutCache.TryGetValue((z.GetString(Keys.Pack) ?? "").ToLowerInvariant() + "|" + z.GetInt(Keys.Seed), out Layout known) && known.Ok)
+                {
+                    Bounds b = new Bounds(origin + known.Box.center, known.Box.size);
+                    if (p.x < b.min.x - 16f || p.x > b.max.x + 16f || p.z < b.min.z - 16f || p.z > b.max.z + 16f || p.y > b.max.y + 100f) continue;
+                }
+                var site = new Site { SavedZdo = z, EntrancePos = z.GetPosition(), EntranceRot = z.GetRotation(), Detached = true,
+                                      Look = Entrance.LookOf(z) };
+                Sites.Add(site);
+                added++;
+                Plugin.Log.LogInfo($"Dungeon {site.Id} ({site.PackName} seed {site.Seed}): known from its entrance's ZDO ({FlatDistance(site.EntrancePos, p):0} m away, not loaded here): laying it out");
+            }
+            if (added > 0 || Covering(p) != null) return false;
+            if (ZNet.instance == null || ZNet.instance.IsServer() || ZRoutedRpc.instance == null) return false;
+            if (Time.time >= _nextAsk)
+            {
+                _nextAsk = Time.time + 3f;
+                AskedAt = Time.time;
+                ZRoutedRpc.instance.InvokeRoutedRPC(NearRpc, p);
+            }
+            return Time.time - AskedAt < 6f;
+        }
+
+        private static readonly List<ZDO> FoundZdos = new List<ZDO>();
+
+        private static List<ZDO> EntranceZdos()
+        {
+            FoundZdos.Clear();
+            foreach (string name in Entrance.PrefabNames)
+            {
+                int index = 0;
+                while (!ZDOMan.instance.GetAllZDOsWithPrefabIterative(name, FoundZdos, ref index)) { }
+            }
+            return FoundZdos;
+        }
+
+        /// <summary>A client with a dungeon not loaded here: the entrance's ZDO asked from the server every 2 s (it sends it, out of this
+        /// game's range or not), so the dungeon's state (its mechanisms, rooms done) stays the owner's. Nobody owning it (everyone far from
+        /// its entrance, inside): this game takes it, so its plates and levers still work.</summary>
+        private static void KeepFresh(Site site)
+        {
+            ZDO z = site.Zdo;
+            if (z == null || Time.time < site.NextFresh) return;
+            site.NextFresh = Time.time + 2f;
+            if (ZNet.instance != null && !ZNet.instance.IsServer()) ZDOMan.instance.RequestZDO(z.m_uid);
+            if (!z.HasOwner())
+            {
+                z.SetOwner(ZDOMan.GetSessionID());
+                Plugin.Log.LogInfo($"Dungeon {site.Id}: nobody near its entrance owned it: this game took it (its player is inside)");
+            }
+        }
+
+        // ---- the dungeons' RPCs, through ZRoutedRpc (they reach every game, whatever is loaded where) ----
+
+        private static ZRoutedRpc _rpcFor;
+
+        /// <summary>Registers our RPCs once per ZRoutedRpc (every world has its own).</summary>
+        private static void RegisterRpcs()
+        {
+            if (ZRoutedRpc.instance == null || ZRoutedRpc.instance == _rpcFor) return;
+            _rpcFor = ZRoutedRpc.instance;
+            try
+            {
+                ZRoutedRpc.instance.Register<string, string>(SiteRpc, RPC_Site);
+                ZRoutedRpc.instance.Register<Vector3>(NearRpc, RPC_Near);
+            }
+            catch (Exception e) { Plugin.Log.LogWarning("Registering the dungeons' RPCs: " + e.Message); }
+        }
+
+        /// <summary>Something for a dungeon's owner: the game that owns its entrance acts on it (the sender is the RPC's).</summary>
+        private static void RPC_Site(long sender, string id, string act)
+        {
+            Site site = Sites.FirstOrDefault(s => !s.Gone && s.Id == id && s.IsOwner);
+            if (site != null) HandleAct(site, sender, act);
+        }
+
+        public static void HandleAct(Site site, long sender, string act)
+        {
+            if (act == "entered") RecordEntry(site);
+            else if (act != null && act.StartsWith("use:")) site.Mechs?.UseFrom(sender, act.Substring(4));
+            else if (act != null && act.StartsWith("plate:")) site.Mechs?.PressFrom(sender, act.Substring(6));
+            else if (act != null && act.StartsWith("area:")) site.Mechs?.InAreaFrom(sender, act.Substring(5));
+            else if (act != null && act.StartsWith("hit:")) site.Mechs?.HitFrom(sender, act.Substring(4));
+            else if (act != null && act.StartsWith("blk:")) site.Mechs?.BlockAct(sender, act.Substring(4));   // (triggers: blocks used, players' places, kills)
+            else Plugin.Log.LogInfo($"Dungeons act from {sender}: \"{act}\" isn't known (a newer version?)");
+        }
+
+        /// <summary>The server: a client is somewhere high up with no dungeon it knows of there; it gets the entrances near that point.</summary>
+        private static void RPC_Near(long sender, Vector3 p)
+        {
+            if (ZNet.instance == null || !ZNet.instance.IsServer() || ZDOMan.instance == null) return;
+            int sent = 0;
+            foreach (ZDO z in EntranceZdos())
+            {
+                if (FlatDistance(z.GetPosition(), p) > UnknownReach) continue;
+                ZDOMan.instance.ForceSendZDO(sender, z.m_uid);
+                sent++;
+            }
+            if (sent > 0) Plugin.Log.LogInfo($"A player at {p} asked for the dungeons there: {sent} entrance(s) sent");
+        }
+
+        /// <summary>Sync's names for the remake seam (Rebuild.cs has the work): who's inside, by name and position.</summary>
+        public static List<KeyValuePair<string, Vector3>> WhoInside(Site site) => Rebuild.WhoInside(site);
+
+        /// <summary>Sync's name for Rebuild.Remake: the owner remakes the dungeon from the packs in use, with this seed; false when it can't
+        /// (someone inside, not the owner).</summary>
+        public static bool Remake(Site site, int seed, string why) => Rebuild.Remake(site, seed, why, out _);
+
+        /// <summary>This game forgets a dungeon's layout and built copy (Rebuild): it's laid out again from the packs in use and built, as
+        /// when its entrance first came. Its objects in the air wait meanwhile (Safety.HoldBack).</summary>
+        public static void Forget(Site site)
+        {
+            Unbuild(site);
+            site.RemakeSeen = site.Zdo != null ? site.Zdo.GetInt(Keys.Remake) : site.RemakeSeen;
+            site.ForgetOrigin();
+            string key = site.PackName.ToLowerInvariant() + "|" + site.Seed;
+            LayoutCache.Remove(key);
+            Laying.Remove(key);
+            site.Layout = null;
+            site.Problem = null;
+            site.PartsMadeFor = null;
+            site.PartsPending = false;
+            site.Building = false;
         }
 
         public static void Untrack(Site site)
@@ -269,6 +441,8 @@ namespace Dungeons
         /// <summary>Forget everything (leaving a world, the mod unloading): every built dungeon removed.</summary>
         public static void Clear()
         {
+            DungeonMap.Clear();   // (added by the map, MapWindow.cs: its window, pictures and what it remembered)
+            DungeonMusic.Clear();
             foreach (Site site in Sites.ToList()) { site.Gone = true; Unbuild(site); }
             Sites.Clear();
             Frozen.Clear();
@@ -279,8 +453,31 @@ namespace Dungeons
 
         // ---- every frame ----
 
+        private static int _packGen = -1;
+
         public static void Update()
         {
+            // the packs in use changed (the server's set arrived): layouts made from the old set go, and a dungeon that couldn't be laid
+            // out (its pack unknown then) tries again
+            if (_packGen != PackSync.Generation)
+            {
+                bool first = _packGen < 0;
+                _packGen = PackSync.Generation;
+                if (!first)
+                {
+                    LayoutCache.Clear();
+                    Laying.Clear();
+                    foreach (Site s in Sites) if (s.Layout == null) s.Problem = null;
+                }
+            }
+            RegisterRpcs();
+            Sweep.Register();
+            Rebuild.Register();
+            Sweep.Tick();
+            try { DungeonMusic.Update(); }
+            catch (Exception e) { if (Warned.Add("music")) Plugin.Log.LogWarning("The dungeon's music: " + e); }
+            try { UseReach.Update(); }
+            catch (Exception e) { if (Warned.Add("reach")) Plugin.Log.LogWarning("E on a lever or way out: " + e); }
             try { Safety.Net(); }
             catch (Exception e) { if (Warned.Add("net")) Plugin.Log.LogWarning("The dungeons' safety net: " + e); }
             for (int i = Sites.Count - 1; i >= 0; i--)
@@ -288,21 +485,28 @@ namespace Dungeons
                 Site site = Sites[i];
                 if (site.Detached)
                 {
+                    // kept while the local player is in its space (inside, or over it: up to its box's top and down to 3000 m), however far
+                    // from the entrance; and its ZDO kept fresh on a client (the server sends it on request, out of the client's range)
                     Player p = Player.m_localPlayer;
-                    if (site.Zdo == null || p == null || !site.Contains(p.transform.position)) { Untrack(site); continue; }   // (left, or it went)
+                    if (p == null || !site.Covers(p.transform.position)) { Untrack(site); continue; }
+                    KeepFresh(site);
                 }
                 else if (site.Entrance == null) { Untrack(site); continue; }   // (destroyed without OnDestroy: a reload)
-                if (site.Zdo == null) continue;
+                if (site.Zdo == null && site.Layout == null) continue;   // (a dungeon already laid out goes on from what it knows)
                 try { Tend(site); }
                 catch (Exception e)
                 {
                     if (Warned.Add("tend|" + site.Id)) Plugin.Log.LogWarning($"Dungeon {site.Id} ({site.PackName}): {e}");
                 }
             }
+            // (added by the map, MapWindow.cs: the rooms the player has been in, and the map window while it's open)
+            try { DungeonMap.Tick(); }
+            catch (Exception e) { if (Warned.Add("map")) Plugin.Log.LogWarning("The dungeon map: " + e); }
         }
 
         private static void Tend(Site site)
         {
+            Rebuild.Watch(site);
             if (site.IsOwner && site.Id.Length == 0) site.Zdo.Set(Keys.Id, NewId());   // (one made before it had an owner here)
             if (site.Layout == null && site.Problem == null && DungeonDB.instance != null && !string.IsNullOrEmpty(site.PackName))
             {
@@ -477,12 +681,90 @@ namespace Dungeons
             foreach (Rigidbody body in frozen) if (body != null) body.isKinematic = false;
         }
 
-        /// <summary>The way out: the entrance's look at the entrance room's doorway, a little inside, facing in.</summary>
+        /// <summary>
+        /// The way out, in the entrance room's way-in doorway, as seen from inside: the look's "inside" parts (EntranceLooks: the same door
+        /// as outside, sized to the doorway), in the doorway's frame with its origin on the floor under the doorway (found with a ray: the
+        /// game's doorways and ours don't sit at the same height over it) and +z into the room. A look without them gets the stand-in door
+        /// scaled to the doorway (its end caps' size). E anywhere on it: an aim box over the whole door.
+        /// </summary>
         private static void PlaceExit(Site site)
         {
-            if (!Doorway(site, 0.3f, out Vector3 at, out Quaternion facing)) return;
-            site.Exit = Entrance.MakeLook("quaddungeon_exit", at, facing);
-            if (site.Exit != null) site.Exit.AddComponent<DungeonExit>().Site = site;
+            if (!Doorway(site, 0f, out Vector3 at, out Quaternion facing)) return;
+            Vector3 floor = FloorAt(at + facing * Vector3.forward * 0.6f, at.y);
+            var root = new GameObject("quaddungeon_exit");
+            root.transform.SetPositionAndRotation(new Vector3(at.x, floor.y, at.z), facing);
+            if (site.Built?.Root != null) root.transform.SetParent(site.Built.Root.transform, true);
+            int made = 0;
+            foreach (PartDef part in EntranceLooks.Get(site.Look).Inside)
+            {
+                try { if (Builder.MakePart(part, root.transform) != null) made++; }
+                catch (Exception e) { Plugin.Log.LogWarning($"The way out of dungeon {site.Id}, part {part.Prefab}: {e.Message}"); }
+            }
+            if (made == 0)
+            {
+                // no inside parts (or none this game has): the stand-in, scaled to the doorway, standing on the floor
+                GameObject door = Entrance.MakeLook("quaddungeon_exit_door", root.transform.position, facing);
+                if (door != null)
+                {
+                    door.transform.SetParent(root.transform, true);
+                    door.transform.localPosition = new Vector3(0f, 0f, 0.3f);
+                    FitToDoorway(site, door);
+                }
+            }
+            AimBox(root);
+            root.AddComponent<DungeonExit>().Site = site;
+            site.Exit = root;
+        }
+
+        private static int _floorMask = -1;
+
+        /// <summary>The floor under a point (a ray down from a little above it), or the point's own height when nothing's found.</summary>
+        private static Vector3 FloorAt(Vector3 p, float fallback)
+        {
+            if (_floorMask == -1) _floorMask = LayerMask.GetMask("Default", "static_solid", "Default_small", "piece", "terrain");
+            return Physics.Raycast(p + Vector3.up * 1.5f, Vector3.down, out RaycastHit hit, 5f, _floorMask) ? hit.point : new Vector3(p.x, fallback, p.z);
+        }
+
+        /// <summary>The stand-in made the size of the way-in doorway: its type's end caps' box (width and height), a little smaller.</summary>
+        private static void FitToDoorway(Site site, GameObject door)
+        {
+            PlacedRoom room = site.Layout?.Rooms.FirstOrDefault(r => r.Depth == 0);
+            Doorway way = room?.Def.Doorways.FirstOrDefault(d => d.Entrance) ?? room?.Def.Doorways.FirstOrDefault();
+            RoomDef cap = way == null ? null : site.Layout.Pack.Rooms.Where(r => r.EndCap && r.Doorways.Any(d => (d.Type ?? "") == (way.Type ?? "")))
+                                                                     .OrderBy(r => r.Size.x).FirstOrDefault();
+            Bounds? b = null;
+            foreach (Renderer r in door.GetComponentsInChildren<Renderer>())
+            {
+                if (b == null) b = r.bounds; else { Bounds x = b.Value; x.Encapsulate(r.bounds); b = x; }
+            }
+            if (cap == null || b == null || cap.Size.x <= 0f || cap.Size.y <= 0f) return;
+            float width = Mathf.Max(b.Value.size.x, b.Value.size.z), height = b.Value.size.y;
+            float k = Mathf.Min(cap.Size.x * 0.6f / Mathf.Max(width, 0.1f), cap.Size.y * 0.6f / Mathf.Max(height, 0.1f));
+            if (k > 1f) door.transform.localScale *= k;
+        }
+
+        /// <summary>One box to aim at over everything under root (piece_nonsolid: walked through, found by the hover ray), a little bigger.</summary>
+        private static void AimBox(GameObject root)
+        {
+            Bounds? local = null;
+            foreach (Renderer r in root.GetComponentsInChildren<Renderer>(true))
+            {
+                if (!(r is MeshRenderer || r is SkinnedMeshRenderer)) continue;
+                Bounds wb = r.bounds;
+                for (int i = 0; i < 8; i++)
+                {
+                    Vector3 c = root.transform.InverseTransformPoint(new Vector3((i & 1) == 0 ? wb.min.x : wb.max.x, (i & 2) == 0 ? wb.min.y : wb.max.y, (i & 4) == 0 ? wb.min.z : wb.max.z));
+                    if (local == null) local = new Bounds(c, Vector3.zero); else { Bounds l = local.Value; l.Encapsulate(c); local = l; }
+                }
+            }
+            if (local == null) return;
+            var go = new GameObject("quaddungeon_aim");
+            go.transform.SetParent(root.transform, false);
+            int layer = LayerMask.NameToLayer("piece_nonsolid");
+            if (layer >= 0) go.layer = layer;
+            BoxCollider box = go.AddComponent<BoxCollider>();
+            box.center = local.Value.center;
+            box.size = local.Value.size + Vector3.one * 0.4f;
         }
 
         /// <summary>The entrance room's way in, in the world: inward from its doorway by this much, and facing into the room.</summary>
@@ -514,6 +796,12 @@ namespace Dungeons
             int days = Plugin.ResetDays.Value, entered = zdo.GetInt(Keys.Entered, -1);
             if (days > 0 && entered >= 0 && !inside && site.Ready && EnvMan.instance != null && EnvMan.instance.GetDay() - entered >= days)
                 Reset(site, $"{days} days since it was first entered");
+            // the saved parts were made for another layout (the pack changed in an update, and the same seed lays out otherwise): they
+            // stand where no room is now (spawners in the air, their creatures falling). Removed and made again, once nobody is inside.
+            Rebuild.Tick(site);
+            if (site.Ready && zdo.GetInt(Keys.RemakeWanted) > 0) { Rebuild.Start(site, true, out _); return; }   // (marked by a reload while it wasn't loaded)
+            if (site.Ready && !LayoutMatches(site, zdo, inside)) return;
+            if (site.Ready) RemoveStale(site);
             // the networked parts of rooms not done: asked once per state (rooms the builder has nothing for stay not done)
             string state = zdo.GetString(Keys.Done) ?? "";
             if (site.Ready && site.PartsMadeFor != state && site.RoomsDone < site.Layout.Rooms.Count)
@@ -521,6 +809,40 @@ namespace Dungeons
                 site.PartsPending = MakeParts(site);
                 site.PartsMadeFor = zdo.GetString(Keys.Done) ?? "";
             }
+        }
+
+        /// <summary>A layout's signature: its pack, and each room's name, place and turn. The same pack and seed give the same one; a
+        /// pack changed by an update may not.</summary>
+        public static int Signature(Layout layout)
+        {
+            var sb = new System.Text.StringBuilder(layout.Pack?.Name ?? "");
+            foreach (PlacedRoom r in layout.Rooms)
+                sb.Append(';').Append(r.Def?.Name).Append('@').Append(Mathf.RoundToInt(r.Pos.x)).Append(',').Append(Mathf.RoundToInt(r.Pos.y))
+                  .Append(',').Append(Mathf.RoundToInt(r.Pos.z)).Append('/').Append(Mathf.RoundToInt(r.Yaw));
+            return sb.ToString().GetStableHashCode();
+        }
+
+        /// <summary>The owner, every tend: this dungeon's saved parts loaded here that were made for another layout (out of reach when the
+        /// parts were made again: a big dungeon reaches past what's loaded) are removed as they come into range.</summary>
+        private static void RemoveStale(Site site)
+        {
+            int sig = Signature(site.Layout), gen = site.Zdo.GetInt(Keys.Gen);
+            int removed = RemoveParts(site, z => z.GetInt(Keys.PartSig, 0) != sig || z.GetInt(Keys.PartGen, 0) != gen);
+            if (removed > 0) Plugin.Log.LogWarning($"Dungeon {site.Id}: {removed} saved parts of an older layout or an earlier reset removed");
+        }
+
+        /// <summary>The owner: the saved parts belong to this layout (true), or they're being made again (false: nothing more this tend).
+        /// A dungeon with no signature yet but with parts made counts as another layout's (it was made before signatures were kept).</summary>
+        private static bool LayoutMatches(Site site, ZDO zdo, bool inside)
+        {
+            int sig = Signature(site.Layout), saved = zdo.GetInt(Keys.LayoutSig, 0);
+            if (saved == sig) return true;
+            if (site.RoomsDone == 0) { zdo.Set(Keys.LayoutSig, sig); return true; }
+            // made for another layout (its pack changed in an update): the same remake as a pack reload (Rebuild): players inside taken
+            // out first, gravestones, items and tames to the ground outside, creatures and keys removed, parts and state made again
+            Plugin.Log.LogWarning($"Dungeon {site.Id} ({site.PackName} seed {site.Seed}): its saved parts were made for another layout (its pack changed): remade");
+            Rebuild.Start(site, true, out _);
+            return false;
         }
 
         /// <summary>The builder makes the rooms' saved parts, a frame's worth per call (true: more to do, called again next frame); every
@@ -539,6 +861,8 @@ namespace Dungeons
             {
                 if (before.Contains(kv.Key) || kv.Value == null || !kv.Key.IsOwner() || !box.Contains(kv.Value.transform.position)) continue;
                 kv.Key.Set(Keys.PartOf, site.Id);
+                kv.Key.Set(Keys.PartSig, Signature(site.Layout));
+                kv.Key.Set(Keys.PartGen, site.Zdo.GetInt(Keys.Gen));
                 marked++;
             }
             if (marked > 0) Plugin.Log.LogInfo($"Dungeon {site.Id}: {marked} saved parts made");
@@ -573,8 +897,13 @@ namespace Dungeons
             if (!site.IsOwner || AnyoneInside(site)) return false;
             int removed = RemoveParts(site);
             ZDO zdo = site.Zdo;
+            // a new generation of parts: the old ones out of this game's range go too (the server goes through every saved object)
+            int gen = zdo.GetInt(Keys.Gen) + 1;
+            zdo.Set(Keys.Gen, gen);
+            Sweep.Everywhere(site.Id, gen, false);
             zdo.Set(Keys.Done, "");
             zdo.Set(Keys.Mechs, "");
+            zdo.Set(Keys.Encounters, "");
             site.Mechs?.Forget();
             zdo.Set(Keys.Entered, -1);
             zdo.Set(Keys.Resets, zdo.GetInt(Keys.Resets) + 1);
@@ -588,18 +917,22 @@ namespace Dungeons
         public static bool Remove(Site site)
         {
             if (!site.IsOwner || AnyoneInside(site) || ZNetScene.instance == null) return false;
+            site.Mechs?.GiveBack();   // (triggers: what's on its pedestals dropped outside, never lost)
             int removed = RemoveParts(site);
-            Plugin.Log.LogInfo($"Dungeon {site.Id} ({site.PackName} seed {site.Seed}) removed: its entrance and {removed} of its parts");
-            ZNetScene.instance.Destroy(site.View.gameObject);
+            Sweep.Everywhere(site.Id, -1, true);   // (everything else of it, loaded or not: its parts and its encounters' creatures)
+            Plugin.Log.LogInfo($"Dungeon {site.Id} ({site.PackName} seed {site.Seed}) removed: its entrance and {removed} of its parts here (the rest wherever they are)");
+            if (site.View != null) ZNetScene.instance.Destroy(site.View.gameObject);
+            else if (site.Zdo != null) ZDOMan.instance.DestroyZDO(site.Zdo);
             return true;
         }
 
         /// <summary>The saved objects the builder made for this dungeon (marked with its Id), loaded here: removed. A chest's contents are
         /// dropped first (nobody loses what they put in one); one in use is left alone.</summary>
-        private static int RemoveParts(Site site)
+        private static int RemoveParts(Site site, Func<ZDO, bool> which = null)
         {
             if (ZNetScene.instance == null || string.IsNullOrEmpty(site.Id)) return 0;
-            var mine = Instances(ZNetScene.instance).Where(kv => kv.Value != null && kv.Key.GetString(Keys.PartOf) == site.Id).Select(kv => kv.Value).ToList();
+            var mine = Instances(ZNetScene.instance).Where(kv => kv.Value != null && kv.Key.GetString(Keys.PartOf) == site.Id && (which == null || which(kv.Key)))
+                                                    .Select(kv => kv.Value).ToList();
             int removed = 0;
             foreach (ZNetView view in mine)
             {
@@ -631,6 +964,7 @@ namespace Dungeons
         {
             Player p = Player.m_localPlayer;
             if (p == null) return;
+            if (PackSync.OffReason != null) { p.Message(MessageHud.MessageType.Center, T("dungeons_off")); return; }
             if (site.Problem != null) { p.Message(MessageHud.MessageType.Center, T("dungeons_broken", site.Problem)); return; }
             if (!site.MechsReady)
             {
@@ -656,6 +990,7 @@ namespace Dungeons
         {
             Player p = Player.m_localPlayer;
             if (p == null) return;
+            Checkpoints.Left(site);   // (triggers: leaving by the way out clears the checkpoint in it)
             Safety.OurTeleport();
             p.TeleportTo(OutsidePoint(site), site.EntranceRot, false);
         }

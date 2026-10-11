@@ -5,7 +5,8 @@ The game's forest crypt rooms, and two rooms of ours in crypt stone:
   mechroom (tag "lever")  16 x 10 x 14, its way in low (south), its way out on a ledge 4 m up (north). In it:
       lever   by the way in: opens the gate in the next room (wire "step:gate1", set:1);
       plate   a pressure plate on the floor: each time someone steps on it, the stair turns (next);
-      stair   a turning stair, 2 states: 0 lies along the west wall (joins nothing), 1 climbs to the ledge (joins in and out);
+      stair   a turning stair, 2 states: 0 turned away to the south and sunk 1.6 m (joins nothing), 1 climbs to the ledge (joins
+              in and out);
       lift    a moving platform in the east corner that rises to the ledge and back by itself every 8 s (cycle): joins in and out
               when it's up.
   gateroom (tag "gate")   a crypt corridor with an iron gate across its way in that swings open (gate, doorway "in").
@@ -37,6 +38,7 @@ def mech_room():
     r = Room("mechroom", (16, 10, 14), tags=["lever"], max=1)
     r.doorway("in", (0, -3.5, -7), (0, 0, 1), type="")
     r.doorway("out", (0, 0.5, 7), (0, 0, -1), type="")
+    r.extra["drops"] = [{"a": "out", "b": "in"}]          # off the ledge to the floor: 4 m, no harm
     hx, hz = 8.0, 7.0
     # walls (the room isn't square: north and south walls are 16 wide at depth 7, east and west 14 wide at depth 8)
     for k, half, across, doors in ((0, hz, hx, [(0.0, 0.5)]), (2, hz, hx, [(0.0, -3.5)]), (1, hx, hz, []), (3, hx, hz, [])):
@@ -50,7 +52,7 @@ def mech_room():
     for x in (-6.5, -2.5, 1.5, 5.5):
         r.fill("wood_beam", (x + 1.0, 1.15, 3.1), (2.0, 0.2, 0.2))
     # the lever by the way in, the plate by the stair's foot
-    lever(r, "lever", (3.0, -3.5, -5.6), 0, [("step:gate1", "set:1")], reached_from="in")
+    lever(r, "lever", (3.0, -3.5, -5.6), 180, [("step:gate1", "set:1")], reached_from="in")
     plate = r.mech("plate", "plate", (-4.0, -3.5, -5.2))
     plate.fill(STONE, (0, 0.06, 0), (1.6, 0.12, 1.6))
     plate.pose(at=(0, 0, 0)).pose(at=(0, -0.08, 0))
@@ -64,7 +66,7 @@ def mech_room():
     st.fill("wood_beam", (-1.15, -0.45, 0), (0.2, 0.25, 6.6))
     st.fill("wood_beam", (1.15, -0.45, 0), (0.2, 0.25, 6.6))
     st.fill("stone_pillar", (0, -1.6, 0), (0.9, 0.8, 0.9))
-    st.pose(euler=(0, 270, 0)).pose(euler=(0, 0, 0))
+    st.pose(at=(0, -1.6, 0), euler=(0, 180, 0)).pose(euler=(0, 0, 0))     # 0: turned away and sunk, its top far from the ledge
     st.seconds = 2.5
     st.join("in", "out", state=1)
     # the lift: a 2 x 2 stone platform by the ledge's east end, up and down by itself
@@ -128,7 +130,7 @@ GAME_ROOMS = [
 
 
 def build():
-    pack = Pack("testmechs", "$dungeons_pack_testmechs", environment="Crypt", entranceLook="crypt", minRooms=5, maxRooms=9, maxSize=[80, 40, 80],
+    pack = Pack("testmechs", "$dungeons_pack_testmechs", environment="Crypt", entranceLook="crypt", parkour=False, minRooms=5, maxRooms=9, maxSize=[80, 40, 80],
                 doors={"": "dungeon_forestcrypt_door"}, doorChance=0.3, creatures=CREATURES, loot=LOOT)
     for g in GAME_ROOMS:
         pack.room(dict(g))

@@ -83,6 +83,7 @@ namespace Dungeons
             go.transform.localRotation = Quaternion.Euler(part.Euler);
             go.transform.localScale = Vector3.Scale(prefab.transform.localScale, part.Scale);
             Strip(go);
+            Solidify(go, prefab.GetComponent<ItemDrop>() != null);   // (nothing players walk through: BuildSolid.cs)
             if (part.Scale != Vector3.one) ScaleLook(go, part.Scale);   // (lights and fire grown with it: BuildScale.cs)
             return go;
         }

@@ -26,6 +26,11 @@ namespace Dungeons
     ///       { "location": "Crypt4", "keep": ["exterior", "Gateway/Cube"], "doorway": [0, 0, 6.96], "at": [0, 0, 0], "euler": [0, 0, 0] }
     ///                                      children of one of the game's locations (its prefab name, as ZoneSystem knows it), copied as
     ///                                      they stand in it, so that its point "doorway" (in the location's frame) is at "at"
+    ///     ],
+    ///     "inside": [                      the way out, as seen from inside the dungeon: in the way-in doorway's frame, its origin on the
+    ///       { "prefab": "...", "at": [0, 0, -0.67], "euler": [0, 180, 0], "scale": [1.238, 1.422, 0.479] }
+    ///                                      floor under the doorway and +z into the room (prefabs only). None: the stand-in door, scaled to
+    ///                                      the doorway
     ///     ]
     ///   }
     /// Players press E on any of its parts to go in. The entrance carries a stand-in (the forest crypt's door, stripped) until its look is
@@ -42,6 +47,7 @@ namespace Dungeons
             public float Front = 2.2f;       // how far in front of the entrance a player comes out
             public readonly List<PartDef> Parts = new List<PartDef>();
             public readonly List<LocationPart> Locations = new List<LocationPart>();
+            public readonly List<PartDef> Inside = new List<PartDef>();   // the way out, seen from inside (the doorway's frame)
         }
 
         /// <summary>Children of one of the game's locations, copied into a look.</summary>
@@ -57,10 +63,47 @@ namespace Dungeons
         private const string Prefix = "looks/";
         private static readonly string[] Always = { "crypt", "dvergr", "giant" };   // looks with entrances in worlds already
 
-        private static List<Look> _all;
+        private static List<Look> _builtin, _all;
+        private static readonly List<Look> Extra = new List<Look>();
 
-        /// <summary>Every look (read once from the DLL).</summary>
-        public static List<Look> All => _all ?? (_all = Load());
+        /// <summary>The looks built into the DLL: the only ones with a saved prefab of their own (always registered, so no saved entrance
+        /// ever loses its prefab).</summary>
+        public static List<Look> Builtin => _builtin ?? (_builtin = Load());
+
+        /// <summary>Every look in use: the built-in ones, then those from outside (the config folder, or the server's: SetLooks).</summary>
+        public static List<Look> All
+        {
+            get
+            {
+                // the set in use changed (the config folder read, the server's arrived): its outside looks taken again
+                if (_syncGen != PackSync.Generation) { _syncGen = PackSync.Generation; SetLooks(PackSync.Looks()); }
+                return _all ?? (_all = Builtin.Concat(Extra.Where(x => !Builtin.Any(b => b.Name == x.Name))).ToList());
+            }
+        }
+
+        private static int _syncGen = -1;
+
+        public static bool IsBuiltin(string name) => Builtin.Any(l => l.Name == (name ?? "").Trim().ToLowerInvariant());
+
+        /// <summary>The looks from outside the DLL (Sync: the config folder's, or the server's), lower-case name -> its JSON, replacing the
+        /// last ones. Built-in names among them are left out (the DLL's stay). They have no prefab of their own: an entrance with one is the
+        /// default prefab with the look's name in its ZDO (Keys.Look).</summary>
+        public static void SetLooks(IDictionary<string, JObject> looks)
+        {
+            Extra.Clear();
+            foreach (KeyValuePair<string, JObject> kv in looks ?? new Dictionary<string, JObject>())
+            {
+                if (kv.Value == null || IsBuiltin(kv.Key)) continue;
+                try
+                {
+                    foreach (string problem in LookCheck.Check(kv.Value, kv.Key)) Plugin.Log.LogWarning("Entrance look " + problem);
+                    Look look = Read(kv.Value, kv.Key);
+                    if (look != null && !Extra.Any(x => x.Name == look.Name)) Extra.Add(look);
+                }
+                catch (Exception e) { Plugin.Log.LogWarning($"Entrance look {kv.Key} can't be read: {e.Message}"); }
+            }
+            _all = null;
+        }
 
         /// <summary>A look by name (case ignored), or the default one.</summary>
         public static Look Get(string name)
@@ -71,8 +114,8 @@ namespace Dungeons
 
         public static bool Known(string name) => All.Any(l => l.Name == (name ?? "").Trim().ToLowerInvariant());
 
-        /// <summary>A look's saved prefab: quaddungeon_entrance for the default look (it had that name before looks were data), else
-        /// quaddungeon_entrance_&lt;look&gt;.</summary>
+        /// <summary>A built-in look's saved prefab: quaddungeon_entrance for the default look (it had that name before looks were data),
+        /// else quaddungeon_entrance_&lt;look&gt;.</summary>
         public static string PrefabOf(string look) => look == Default ? Entrance.PrefabName : Entrance.PrefabName + "_" + look;
 
         // ---- reading them
@@ -89,7 +132,7 @@ namespace Dungeons
                     using (Stream s = asm.GetManifestResourceStream(res))
                     using (var reader = new StreamReader(s)) json = JObject.Parse(reader.ReadToEnd());
                     foreach (string problem in LookCheck.Check(json, res)) Plugin.Log.LogWarning("Entrance look " + problem);   // (Layout's checks: warnings only)
-                    Look look = Read(json, res);
+                    Look look = Read(json, res, true);
                     if (look == null) continue;
                     if (looks.Any(l => l.Name == look.Name)) { Plugin.Log.LogWarning($"{res}: a look called {look.Name} is already built in: left out"); continue; }
                     looks.Add(look);
@@ -104,7 +147,7 @@ namespace Dungeons
             return looks;
         }
 
-        private static Look Read(JObject json, string where)
+        private static Look Read(JObject json, string where, bool builtin = false)
         {
             string name = ((string)json["name"] ?? "").Trim().ToLowerInvariant();
             if (name.Length == 0 || name.Any(c => !(c >= 'a' && c <= 'z' || c >= '0' && c <= '9' || c == '_')))
@@ -112,7 +155,7 @@ namespace Dungeons
                 Plugin.Log.LogWarning($"{where}: the look's \"name\" must be lower case letters, digits and _ (it names a saved prefab): left out");
                 return null;
             }
-            var look = new Look { Name = name, Prefab = PrefabOf(name), Front = (float?)json["front"] ?? 2.2f };
+            var look = new Look { Name = name, Prefab = builtin ? PrefabOf(name) : Entrance.PrefabName, Front = (float?)json["front"] ?? 2.2f };
             foreach (JObject p in (json["parts"] as JArray ?? new JArray()).OfType<JObject>())
             {
                 string location = (string)p["location"];
@@ -132,6 +175,12 @@ namespace Dungeons
                 if (string.IsNullOrEmpty(prefab)) { Plugin.Log.LogWarning($"{where}: a part has neither \"prefab\" nor \"location\": left out"); continue; }
                 look.Parts.Add(new PartDef { Prefab = prefab, At = Vec(p["at"], Vector3.zero), Euler = Vec(p["euler"], Vector3.zero), Scale = Vec(p["scale"], Vector3.one) });
             }
+            foreach (JObject p in (json["inside"] as JArray ?? new JArray()).OfType<JObject>())
+            {
+                string prefab = (string)p["prefab"];
+                if (string.IsNullOrEmpty(prefab)) { Plugin.Log.LogWarning($"{where}: an inside part has no \"prefab\": left out"); continue; }
+                look.Inside.Add(new PartDef { Prefab = prefab, At = Vec(p["at"], Vector3.zero), Euler = Vec(p["euler"], Vector3.zero), Scale = Vec(p["scale"], Vector3.one) });
+            }
             return look;
         }
 
@@ -147,6 +196,15 @@ namespace Dungeons
         public static IEnumerator Dress(DungeonEntrance entrance, GameObject standIn)
         {
             if (SystemInfo.graphicsDeviceType == UnityEngine.Rendering.GraphicsDeviceType.Null) yield break;   // (a dedicated server)
+            // a look from outside the DLL may come a little later (the server's, after connecting): wait for it; still unknown: the stand-in
+            float until = Time.time + 20f;
+            while (entrance != null && !Known(entrance.Look) && Time.time < until) yield return null;
+            if (entrance == null) yield break;
+            if (!Known(entrance.Look))
+            {
+                Plugin.Log.LogWarning($"Entrance look \"{entrance.Look}\" isn't known here (removed, or another server's): the stand-in shows");
+                yield break;
+            }
             Look look = Get(entrance.Look);
             if (look.Parts.Count == 0 && look.Locations.Count == 0) yield break;   // (the stand-in is all it has)
             // (active from the start: a part made under an inactive parent would wake later, after MakePart's no-ZDO switch is off)

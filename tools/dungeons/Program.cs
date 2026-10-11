@@ -18,6 +18,8 @@ namespace Dungeons
     ///   dotnet build tools/dungeons -c Release
     ///   tools/dungeons/bin/Release/net48/LayoutTest.exe [pack.json ...] [--seeds 1000] [--from 1] [--map seed [--try n]] [--describe seed] [--look file]
     ///       [--catalogue path]
+    /// Rooms whose mechanisms join doorways are also checked for gaps a player could walk, jump or fall across (GapCheck.cs); set the
+    /// environment variable GAPDEBUG=room:doorwayA:doorwayB to print how A gets to B, hop by hop, with the part under each spot.
     /// With no pack named: every pack in mods/Dungeons/packs. Exit code 1 when any seed fails, comes out differently twice, or has a fault.
     /// </summary>
     internal static class Program
@@ -28,7 +30,8 @@ namespace Dungeons
             var packFiles = new List<string>();
             string catalogue = @"D:\SteamLibrary\steamapps\common\Valheim\BepInEx\claude\dungeon-rooms.json";
             int seeds = 1000, from = 1;
-            int? map = null, describe = null, attempt = null;
+            int? map = null, describe = null, attempt = null, profile = null;
+            bool noShapes = false;
             for (int i = 0; i < args.Length; i++)
             {
                 switch (args[i])
@@ -38,6 +41,8 @@ namespace Dungeons
                     case "--map": map = int.Parse(args[++i]); break;
                     case "--describe": describe = int.Parse(args[++i]); break;
                     case "--try": attempt = int.Parse(args[++i]); break;
+                    case "--profile": profile = int.Parse(args[++i]); break;
+                    case "--no-shapes": noShapes = true; break;   // (every prefab one box, as before prefab_shapes.json)
                     case "--look":   // one look file checked, nothing else
                         string lf = args[++i];
                         List<string> found = LookCheck.Check(JObject.Parse(File.ReadAllText(lf)), Path.GetFileName(lf));
@@ -72,12 +77,24 @@ namespace Dungeons
                     if (wrong.Count > 0) exit = 1;
                 }
 
+            Dictionary<string, List<UnityEngine.Vector3[]>> bounds = GapCheck.Bounds(Path.Combine(repo, "tools", "dungeons", "prefab_bounds.json"),
+                noShapes ? null : Path.Combine(repo, "tools", "dungeons", "prefab_shapes.json"));
+
             var rooms = new Dictionary<string, JObject>();
             foreach (JObject r in JArray.Parse(File.ReadAllText(catalogue)).OfType<JObject>()) rooms[(string)r["name"]] = r;
             foreach (string file in packFiles)
             {
                 var problems = new List<string>();
-                Pack pack = PackReader.Read(JObject.Parse(File.ReadAllText(file)), name => rooms.TryGetValue(name, out JObject r) ? PackReader.FromCatalogue(r) : null, problems);
+                Pack pack;
+                try { pack = PackReader.Read(JObject.Parse(File.ReadAllText(file)), name => rooms.TryGetValue(name, out JObject r) ? PackReader.FromCatalogue(r) : null, problems); }
+                catch (Exception e)   // (the game would leave the pack out: Packs.Get catches it too)
+                {
+                    Console.WriteLine($"==== Pack {Path.GetFileName(file)}: can't be read: {e.GetType().Name}: {e.Message}");
+                    foreach (string line in (e.StackTrace ?? "").Split(new[] { '\r', '\n' }, StringSplitOptions.RemoveEmptyEntries).Take(3))
+                        Console.WriteLine("  " + line.Trim());
+                    exit = 1;
+                    continue;
+                }
                 Console.WriteLine($"==== Pack {pack.Name} ({pack.Title}): {pack.Rooms.Count} rooms, plan {string.Join(" > ", pack.Plan.Select(Plan))}, " +
                                   $"{pack.MinRooms}-{pack.MaxRooms} rooms, max size {Fmt(PackReader.MaxSize(pack))}, min uses {PackReader.MinUses(pack)}, " +
                                   $"environment {pack.Environment}, theme {pack.Theme ?? "-"}, entrance look {pack.EntranceLook ?? "-"}, " +
@@ -90,6 +107,37 @@ namespace Dungeons
                     problems.Add($"{pack.Name}: entranceLook {pack.EntranceLook} has no file in packs/looks (the default look is used)");
                 foreach (string p in problems) Console.WriteLine("  pack problem: " + p);
 
+                // Can the puzzle rooms be walked, jumped or fallen round? (GapCheck: their parts' boxes against what the solver keeps apart.)
+                bool oneSeed = describe != null || map != null || profile != null;   // (one seed asked for: no room checks, quick)
+                var puzzleRooms = oneSeed ? new List<RoomDef>() : pack.Rooms.Where(r => r.GamePrefab == null && r.Parts.Count > 0 && (r.Doorways.Count > 1 || r.Mechs.Any(m => m.Encounter != null))).ToList();
+                if (puzzleRooms.Count > 0)
+                {
+                    int findings = 0, notChecked = 0, falls = 0, blocked = 0;
+                    foreach (RoomDef r in puzzleRooms)
+                        foreach (string f in GapCheck.Check(pack, r, bounds))
+                        {
+                            Console.WriteLine($"  gaps {r.Name}: {f}");
+                            if (f.StartsWith("unchecked")) notChecked++; else if (f.Contains(": blocked:")) blocked++; else if (f.Contains("only with a fall")) falls++; else findings++;
+                        }
+                    Console.WriteLine($"  gap check ({GapCheck.JumpAcross:0} m across, {GapCheck.JumpUp} m up, any height down): {puzzleRooms.Count} rooms of ours: " +
+                                      $"{blocked} joins blocked, {findings} walkable or jumpable ways round the puzzle, {falls} falls to declare in \"drops\" or close off" +
+                                      $"{(notChecked > 0 ? $", {notChecked} unchecked" : "")}");
+                    if (findings + falls + blocked > 0) exit = 1;
+                }
+
+                if (profile != null)
+                {
+                    // How long a layout takes, and its solver alone (the search's size: what makes a puzzle slow).
+                    var clock = Stopwatch.StartNew();
+                    Layout l = Layouts.Make(pack, profile.Value, out int t);
+                    long make = clock.ElapsedMilliseconds;
+                    clock.Restart();
+                    var sol = new List<string>();
+                    string why = null;
+                    for (int k = 0; k < 10; k++) why = Layouts.Solve(l, sol);
+                    Console.WriteLine($"  seed {profile}: {t} tries, {make} ms; solving it: {clock.ElapsedMilliseconds / 10.0:0.0} ms ({why ?? sol.Count + " uses"})");
+                    continue;
+                }
                 if (describe != null) { Console.WriteLine(Layouts.Describe(Layouts.Make(pack, describe.Value)).ToString()); continue; }
                 if (map != null && attempt != null)
                 {
@@ -125,9 +173,10 @@ namespace Dungeons
             var doors = new List<int>();
             var locks = new List<int>();
             var ms = new List<double>();
-            int firstOk = -1, bad = 0, replayed = 0, best = -1, bestUses = -1;
+            int firstOk = -1, bad = 0, replayed = 0, best = -1, bestUses = -1, together = 0, triggered = 0;
             var retried = new Dictionary<string, int>();
             var faults = new Dictionary<string, KeyValuePair<int, string>>();   // kind -> how many, the first
+            var wayCaps = new SortedDictionary<string, int>();                  // what closes the way in
             var watch = new Stopwatch();
             for (int seed = from; seed < from + seeds; seed++)
             {
@@ -154,13 +203,22 @@ namespace Dungeons
                 }
                 ok++;
                 if (firstOk < 0) firstOk = seed;
+                int wayIn = Layouts.EntranceDoorway(l);
+                foreach (Link k in l.Links.Where(k => (k.Room == 0 && k.Doorway == wayIn) || (k.OtherRoom == 0 && k.OtherDoorway == wayIn)))
+                {
+                    string cap = l.Rooms[k.Room == 0 && k.Doorway == wayIn ? k.OtherRoom : k.Room].Def.Name;
+                    wayCaps[cap] = wayCaps.TryGetValue(cap, out int wc) ? wc + 1 : 1;
+                }
                 foreach (string p in Validate(l))
                 {
                     bad++;
                     string k = Regex.Replace(p, @"\d+", "#");
                     faults[k] = faults.TryGetValue(k, out var f) ? new KeyValuePair<int, string>(f.Key + 1, f.Value) : new KeyValuePair<int, string>(1, $"seed {seed}: {p}");
                 }
-                if (l.Rooms.All(r => r.Def.Mechs.All(m => m.Cycle <= 0f))) replayed++;
+                replayed++;
+                if (Triggered(l)) triggered++;
+                var two = new List<string>();   // (shorter with a plate held down by a second player or a creature?)
+                if (Layouts.Solve(l, two, true) == null && two.Count < l.Solution.Count) together++;
                 int count = Layouts.RoomCount(l);
                 counts[count] = counts.TryGetValue(count, out n) ? n + 1 : 1;
                 uses[l.Solution.Count] = uses.TryGetValue(l.Solution.Count, out n) ? n + 1 : 1;
@@ -192,7 +250,7 @@ namespace Dungeons
             Console.WriteLine($"Time per layout: {ms.Average():0.00} ms on average, {ms.Max():0.0} ms at most");
             Console.WriteLine("Tries needed: " + string.Join(", ", tries.Select(p => $"{p.Key}: {p.Value}")));
             Console.WriteLine($"Checked again here (doorways meet, boxes clear, max, min depth, every doorway closed, gates on locks, wires, doors, " +
-                              $"solution replayed in {replayed} with no cycling mechanisms): {bad} faults");
+                              $"solution replayed in {replayed}{(triggered > 0 ? $", {triggered} of them with triggers" : "")}): {bad} faults");
             foreach (var p in faults.OrderByDescending(p => p.Value.Key)) Console.WriteLine($"  {p.Value.Key,5}  {p.Key}   (first: {p.Value.Value})");
             if (retried.Count > 0)
             {
@@ -209,8 +267,10 @@ namespace Dungeons
                               $"  (average {counts.Sum(p => p.Key * p.Value) / (double)ok:0.0})");
             Console.WriteLine("Solution length (uses): " + string.Join(", ", uses.Select(p => $"{p.Key}: {p.Value}")) +
                               $"  (average {uses.Sum(p => p.Key * p.Value) / (double)ok:0.0})");
+            if (together > 0) Console.WriteLine($"Shorter for two (a plate held down): {together} of {ok} layouts");
             Console.WriteLine($"Mechanisms per layout: {mechs.Average():0.0} ({mechs.Min()}-{mechs.Max()}); locks {locks.Average():0.0}; " +
                               $"doors {doors.Average():0.0} ({doors.Min()}-{doors.Max()})");
+            Console.WriteLine("The way in closed by: " + string.Join(", ", wayCaps.Select(p => $"{p.Key} {p.Value}")));
             Console.WriteLine($"End caps: {caps.Average():0.0} on average, {caps.Min()}-{caps.Max()}");
             Console.WriteLine($"Sealed doorways (no cap fitted): {sealedDoors} in {sealedSeeds} layouts");
             Console.WriteLine("Floors (doorway heights): " + string.Join(", ", floors.Select(p => $"{p.Key}: {p.Value}")));
@@ -261,6 +321,18 @@ namespace Dungeons
             foreach (var s in Layouts.Sealed(l)) yield return $"doorway {s.Key}.{s.Value} sealed";
             int way = Layouts.EntranceDoorway(l);
             if (way < 0 || !l.Links.Any(k => (k.Room == 0 && k.Doorway == way) || (k.OtherRoom == 0 && k.OtherDoorway == way))) yield return "the way in isn't capped";
+            // The way in, and every doorway a gate closes, joined to an end cap: a plain one (or the pack's "entranceCap" at the way in).
+            bool Plain(RoomDef d) => d.EndCap && d.Mechs.Count == 0 && !d.Parts.Any(p => p.Saved) && Layouts.CapDepth(d) < 1f;
+            foreach (Link k in l.Links)
+                foreach (var side in new[] { new { R = k.Room, D = k.Doorway, O = k.OtherRoom }, new { R = k.OtherRoom, D = k.OtherDoorway, O = k.Room } })
+                {
+                    RoomDef here = l.Rooms[side.R].Def, there = l.Rooms[side.O].Def;
+                    bool wayIn = side.R == 0 && side.D == way;
+                    bool gated = here.Mechs.Any(m => Layouts.IsGate(m) && m.Doorway == here.Doorways[side.D].Id);
+                    if (wayIn && !there.EndCap) yield return $"the way in joins room {side.O} ({there.Name}), not an end cap";
+                    else if ((wayIn || gated) && there.EndCap && !(wayIn && PackReader.EntranceCap(l.Pack) == there.Name) && !Plain(there))
+                        yield return $"{(wayIn ? "the way in" : $"room {side.R}'s gated doorway {here.Doorways[side.D].Id}")} has {there.Name}, not a plain cap";
+                }
             string end = l.Pack.Plan.Count > 0 ? Layouts.StepName(l.Pack.Plan[l.Pack.Plan.Count - 1]) : null;
             if (end != null && l.Links.Any(k => (l.Rooms[k.Room].Step == end && !l.Rooms[k.OtherRoom].Def.EndCap && l.Rooms[k.OtherRoom].Depth > l.Rooms[k.Room].Depth)))
                 yield return "a room past the end";
@@ -290,6 +362,33 @@ namespace Dungeons
                 foreach (MechDef m in r.Def.Mechs)
                     foreach (Wire w in m.Wires)
                         if (Layouts.Target(l, r.Index, w) == null) yield return $"{r.Index}.{m.Id}'s wire to {w.Target} acts on nothing";
+            // Secret rooms: joined by their wall's doorway, never a step, nothing beyond them but end caps.
+            foreach (PlacedRoom r in l.Rooms.Where(x => PackReader.Secret(x.Def)))
+            {
+                int k = l.Links.FindIndex(x => x.OtherRoom == r.Index);
+                string by = k >= 0 ? r.Def.Doorways[l.Links[k].OtherDoorway].Id : null;
+                if (!r.Def.Mechs.Any(m => m.Kind == "breakable" && m.Doorway == by)) yield return $"secret room {r.Index} {r.Def.Name} joined by {by}, not by its wall";
+                if (r.Step != null) yield return $"secret room {r.Index} {r.Def.Name} is plan step {r.Step}";
+                foreach (Link x in l.Links.Where(x => x.Room == r.Index))
+                    if (!l.Rooms[x.OtherRoom].Def.EndCap) yield return $"secret room {r.Index} {r.Def.Name} leads on to room {x.OtherRoom}";
+            }
+            // The shortcut: near end on the entrance room, far end on the far step's room or one room from it.
+            PackReader.ShortcutSpec spec = PackReader.Shortcut(l.Pack);
+            var ends = l.Rooms.Where(x => PackReader.HasShortcut(x.Def)).ToList();
+            if (spec != null && ends.Count > 0)
+            {
+                PlacedRoom nearRoom = ends.FirstOrDefault(x => x.Def.Name == spec.Near), farRoom = ends.FirstOrDefault(x => x.Def.Name == spec.Far);
+                int Parent(PlacedRoom x) { int k = l.Links.FindIndex(y => y.OtherRoom == x.Index); return k >= 0 ? l.Links[k].Room : -1; }
+                int step = l.Rooms.FindIndex(x => x.Step == spec.FarStep);
+                if (nearRoom == null || farRoom == null) yield return "only one end of the shortcut is placed";
+                else
+                {
+                    if (Parent(nearRoom) != 0) yield return $"the shortcut's near end hangs off room {Parent(nearRoom)}, not the entrance room";
+                    int fp = Parent(farRoom);
+                    if (fp != step && !l.Links.Any(y => (y.Room == fp && y.OtherRoom == step) || (y.Room == step && y.OtherRoom == fp)))
+                        yield return $"the shortcut's far end hangs off room {fp}, not by the far step's room {step}";
+                }
+            }
             foreach (Link k in l.Doors)
             {
                 PlacedRoom a = l.Rooms[k.Room], b = l.Rooms[k.OtherRoom];
@@ -299,43 +398,179 @@ namespace Dungeons
                 if (a.Def.Mechs.Any(m => Layouts.IsGate(m) && m.Doorway == da.Id) || b.Def.Mechs.Any(m => Layouts.IsGate(m) && m.Doorway == db.Id))
                     yield return $"a door at {k.Room}.{k.Doorway} where a gate stands";
             }
-            if (l.Rooms.All(r => r.Def.Mechs.All(m => m.Cycle <= 0f)))
-                foreach (string p in Replay(l)) yield return p;
+            foreach (string p in Replay(l)) yield return p;
         }
 
         /// <summary>The solution played through, step by step, with a walk of its own: each use within reach of where the player is,
-        /// and the end reached after the last. (Layouts with cycling mechanisms aren't replayed: their waits aren't in the solution.)</summary>
+        /// and the end reached after the last. A mechanism that turns by itself counts as in every state at once (the player waits).</summary>
         private static IEnumerable<string> Replay(Layout l)
         {
             var state = new Dictionary<string, int>();
             foreach (PlacedRoom r in l.Rooms) foreach (MechDef m in r.Def.Mechs) state[r.Index + "." + m.Id] = m.Start;
             var at = new KeyValuePair<int, int>(0, Math.Max(0, Layouts.EntranceDoorway(l)));
-            foreach (string key in l.Solution)
+            // The triggers and blocks, as the solver is given them (TriggerSolve), followed here with this walk's own code.
+            TriggerSolve.Model tm;
+            try { tm = TriggerSolve.For(l); } catch (Exception e) { tm = new TriggerSolve.Model(); tm.Problems.Add(e.Message); }
+            var items = new Dictionary<string, int>();
+            var done = new HashSet<TriggerSolve.Rule>();   // Once rules that have fired
+            var into = tm.Rules.Where(r => r.Into != null).GroupBy(r => r.Into).ToDictionary(g => g.Key, g => g.ToList());
+            MechDef Def(string key) => Layouts.Mech(l, key, out _);
+            bool Cycling(string key) { MechDef m = Def(key); return m != null && m.Cycle > 0f && (m.CycleIn == null || m.CycleIn.Count == 0); }
+            bool Holds(IEnumerable<TriggerSolve.Guard> guard, Dictionary<string, int> s0)
             {
-                MechDef lever = Layouts.Mech(l, key, out int room);
-                if (lever == null) { yield return $"solution: {key} isn't a mechanism"; yield break; }
-                HashSet<KeyValuePair<int, int>> reach = Walk(l, state, at);
-                List<Doorway> doorways = l.Rooms[room].Def.Doorways;
-                var from = Enumerable.Range(0, doorways.Count).Where(d => lever.ReachedFrom == null || doorways[d].Id == lever.ReachedFrom)
-                    .Select(d => new KeyValuePair<int, int>(room, d)).Where(reach.Contains).ToList();
-                if (from.Count == 0) { yield return $"solution: {key} can't be reached when it's used"; yield break; }
-                at = from[0];
-                foreach (Wire w in lever.Wires)
+                foreach (TriggerSolve.Guard g in guard)
                 {
-                    string target = Layouts.Target(l, room, w);
-                    if (target == null || w.Do == "hold") continue;
-                    MechDef t = Layouts.Mech(l, target, out _);
-                    state[target] = Layouts.After(t, state[target], w.Do);
+                    if (g.Key == null || !s0.ContainsKey(g.Key)) return false;
+                    IEnumerable<int> can = tm.Free.TryGetValue(g.Key, out var fs) ? fs
+                        : Cycling(g.Key) ? Enumerable.Range(0, Layouts.States(Def(g.Key))) : new[] { s0[g.Key] };
+                    if (!can.Any(st => g.Not ? st != g.State : st == g.State)) return false;
+                }
+                return true;
+            }
+            var won = new HashSet<string>();
+            void Act(string key, string act)
+            {
+                MechDef t = Def(key);
+                if (t == null || !state.ContainsKey(key)) return;
+                if (act == "start") { if (t.Kind == "encounter" && won.Add(key)) WinEncounter(key); return; }
+                if (tm.Free.ContainsKey(key) || Cycling(key)) return;   // (the player sets it at will anyway)
+                state[key] = Layouts.After(t, state[key], act);
+            }
+            bool Fire(TriggerSolve.Rule r, Dictionary<string, int> s0)
+            {
+                if (done.Contains(r) || !Holds(r.Guard, s0)) return false;
+                if (r.Needs.Any(n => (items.TryGetValue(n.Key, out int c) ? c : 0) < n.Value)) return false;
+                foreach (var n in r.Needs) items[n.Key] -= n.Value;
+                foreach (var g in r.Gives) items[g.Key] = (items.TryGetValue(g.Key, out int c) ? c : 0) + g.Value;
+                foreach (TriggerSolve.Act a in r.Acts) Act(a.Key, a.Do);
+                if (r.Once) done.Add(r);
+                return true;
+            }
+            void Into(string key, Dictionary<string, int> s0)
+            {
+                if (into.TryGetValue(key, out var rules)) foreach (TriggerSolve.Rule r in rules) Fire(r, s0);
+            }
+            void WinEncounter(string key)
+            {
+                MechDef e = Layouts.Mech(l, key, out int room);
+                var s0 = new Dictionary<string, int>(state);
+                var wires = (e.Encounter?.Boss?.Phases.SelectMany(p => p.Wires) ?? Enumerable.Empty<Wire>()).Concat(e.Wires);
+                foreach (Wire w in wires) if (w.Do != "hold") Act(Layouts.Target(l, room, w), w.Do);
+                Into(key, s0);
+            }
+            void Use(int room, MechDef m)
+            {
+                var s0 = new Dictionary<string, int>(state);
+                foreach (Wire w in m.Wires) if (w.Do != "hold") Act(Layouts.Target(l, room, w), w.Do);
+                Into(room + "." + m.Id, s0);
+            }
+            bool At(HashSet<KeyValuePair<int, int>> reach, int room, IEnumerable<string> ids) =>
+                Enumerable.Range(0, l.Rooms[room].Def.Doorways.Count).Any(d => (ids == null || ids.Contains(l.Rooms[room].Def.Doorways[d].Id)) && reach.Contains(new KeyValuePair<int, int>(room, d)));
+            // What happens by itself where the player gets: encounters won, free triggers, until nothing more changes.
+            void Win()
+            {
+                for (bool more = true; more;)
+                {
+                    more = false;
+                    HashSet<KeyValuePair<int, int>> here = Walk(l, state, at, tm);
+                    foreach (PlacedRoom r in l.Rooms)
+                        foreach (MechDef e in r.Def.Mechs)
+                        {
+                            string on = PackReader.StartOn(l.Pack, r.Def, e);
+                            if (on == null || on == "wire" || won.Contains(r.Index + "." + e.Id)) continue;
+                            if (!At(here, r.Index, e.ReachedFrom == null ? null : new[] { e.ReachedFrom })) continue;
+                            won.Add(r.Index + "." + e.Id);
+                            WinEncounter(r.Index + "." + e.Id);
+                            more = true;
+                        }
+                    foreach (TriggerSolve.Rule r in tm.Rules.Where(x => !x.Cost && x.Into == null))
+                    {
+                        if (r.Room < 0 || (!r.Anywhere && !At(here, r.Room, r.Nodes))) continue;
+                        string before = string.Join(",", state.Values) + "|" + string.Join(",", items.Values) + "|" + done.Count;
+                        var s0 = new Dictionary<string, int>(state);
+                        if (!Fire(r, s0)) continue;
+                        Into(r.Key, s0);
+                        if (string.Join(",", state.Values) + "|" + string.Join(",", items.Values) + "|" + done.Count != before) more = true;
+                    }
                 }
             }
+            foreach (string key in l.Solution)
+            {
+                Win();
+                HashSet<KeyValuePair<int, int>> reach = Walk(l, state, at, tm);
+                MechDef lever = Layouts.Mech(l, key, out int room);
+                bool ownRule = tm.Rules.Any(r => r.Key == key && r.Cost && r.Into == null);   // (a lock's or pedestal's own use: its rule, not a pull)
+                if (lever != null && !ownRule)
+                {
+                    List<Doorway> doorways = l.Rooms[room].Def.Doorways;
+                    var from = Enumerable.Range(0, doorways.Count).Where(d => lever.ReachedFrom == null || doorways[d].Id == lever.ReachedFrom)
+                        .Select(d => new KeyValuePair<int, int>(room, d)).Where(reach.Contains).ToList();
+                    if (from.Count == 0) { yield return $"solution: {key} can't be reached when it's used"; yield break; }
+                    at = from[0];
+                    Use(room, lever);
+                    continue;
+                }
+                // A trigger's or block's own use (a lock opened, a pedestal given its item, a sequence done).
+                TriggerSolve.Rule rule = tm.Rules.FirstOrDefault(r => r.Key == key && r.Cost && r.Into == null
+                    && (r.Anywhere || At(reach, r.Room, r.Nodes)) && Holds(r.Guard, state) && !done.Contains(r)
+                    && r.Needs.All(n => (items.TryGetValue(n.Key, out int c) ? c : 0) >= n.Value));
+                if (rule == null) { yield return $"solution: {key} isn't a mechanism or a use of a trigger that can be made then"; yield break; }
+                if (!rule.Anywhere)
+                    at = Enumerable.Range(0, l.Rooms[rule.Room].Def.Doorways.Count).Select(d => new KeyValuePair<int, int>(rule.Room, d))
+                        .First(p => reach.Contains(p) && (rule.Nodes == null || rule.Nodes.Contains(l.Rooms[rule.Room].Def.Doorways[p.Value].Id)));
+                var s1 = new Dictionary<string, int>(state);
+                Fire(rule, s1);
+                Into(rule.Key, s1);
+            }
+            Win();
             int endRoom = l.Rooms.FindIndex(r => r.Step == Layouts.StepName(l.Pack.Plan.Last()));
-            if (endRoom >= 0 && !Walk(l, state, at).Any(p => p.Key == endRoom)) yield return "solution: the end isn't reached after it";
+            if (Environment.GetEnvironmentVariable("REPLAYDEBUG") != null)   // (what the replay ended with)
+                Console.WriteLine($"REPLAY seed {l.Seed}: at {at}, states {string.Join(" ", state.Select(x => x.Key + "=" + x.Value))}, items {string.Join(" ", items.Select(x => x.Key + "=" + x.Value))}, " +
+                                  $"rooms reached {string.Join(" ", Walk(l, state, at, tm).Select(x => x.Key).Distinct().OrderBy(x => x))}, end {endRoom}");
+            if (endRoom >= 0 && !Walk(l, state, at, tm).Any(p => p.Key == endRoom)) yield return "solution: the end isn't reached after it";
+        }
+
+        /// <summary>Whether a layout has triggers or blocks the solver models by rules (TriggerSolve).</summary>
+        private static bool Triggered(Layout l)
+        {
+            try { TriggerSolve.Model m = TriggerSolve.For(l); return m.Rules.Count > 0 || m.Teleports.Count > 0 || m.Free.Count > 0; }
+            catch (Exception) { return true; }
         }
 
         /// <summary>Every (room, doorway) the player can walk to from one, with the mechanisms in these states.</summary>
-        private static HashSet<KeyValuePair<int, int>> Walk(Layout l, Dictionary<string, int> state, KeyValuePair<int, int> start)
+        private static HashSet<KeyValuePair<int, int>> Walk(Layout l, Dictionary<string, int> state, KeyValuePair<int, int> start, TriggerSolve.Model tm = null)
         {
-            bool Closed(int room, int d) => l.Rooms[room].Def.Mechs.Any(m => Layouts.IsGate(m) && m.Doorway == l.Rooms[room].Def.Doorways[d].Id && state[room + "." + m.Id] == 0);
+            // (secret walls stand; a shortcut's ends join once its far end is in what's reached: walked again until nothing more opens)
+            var open = new HashSet<string>();
+            HashSet<KeyValuePair<int, int>> seen;
+            while (true)
+            {
+                seen = WalkOnce(l, state, start, open, tm);
+                int before = open.Count;
+                foreach (PlacedRoom r in l.Rooms)
+                    foreach (MechDef m in r.Def.Mechs)
+                        if (PackReader.ShortcutEnd(l.Pack, r.Def, m, out string pair) == "far" && seen.Any(p => p.Key == r.Index)) open.Add(pair);
+                if (open.Count == before) return seen;
+            }
+        }
+
+        private static HashSet<KeyValuePair<int, int>> WalkOnce(Layout l, Dictionary<string, int> state, KeyValuePair<int, int> start, HashSet<string> openPairs,
+            TriggerSolve.Model tm = null)
+        {
+            // (a mechanism the player sets at will (a pushblock's cells) is in all those states at once; a teleporter sends while its
+            // guard holds)
+            bool FreeIn(string key, int st) => tm != null && tm.Free.TryGetValue(key, out var fs) && fs.Contains(st);
+            // (a mechanism that turns by itself can be waited for in any state: its joins are all open, a gate of it passable)
+            // (and a fight room's gates open once the fight is won)
+            bool Fight(int room) => l.Rooms[room].Def.Tags.Any(t => string.Equals(t, "fight", StringComparison.OrdinalIgnoreCase));
+            bool Closed(int room, int d) => l.Rooms[room].Def.Mechs.Any(m => m.Kind == "breakable" && m.Doorway == l.Rooms[room].Def.Doorways[d].Id)
+                || (!Fight(room) && l.Rooms[room].Def.Mechs.Any(m => Layouts.IsGate(m) && !Cycles(m, state[room + "." + m.Id]) && m.Doorway == l.Rooms[room].Def.Doorways[d].Id
+                    && state[room + "." + m.Id] == 0 && !(tm != null && tm.Free.TryGetValue(room + "." + m.Id, out var fs) && fs.Any(x => x != 0))));
+            var ends = new List<KeyValuePair<string, KeyValuePair<int, int>>>();   // (pair, end's room doorway 0) for open pairs
+            foreach (PlacedRoom r in l.Rooms)
+                foreach (MechDef m in r.Def.Mechs)
+                    if (PackReader.ShortcutEnd(l.Pack, r.Def, m, out string pair) != null && openPairs.Contains(pair))
+                        ends.Add(new KeyValuePair<string, KeyValuePair<int, int>>(pair, new KeyValuePair<int, int>(r.Index, 0)));
             var seen = new HashSet<KeyValuePair<int, int>> { start };
             var todo = new Stack<KeyValuePair<int, int>>();
             todo.Push(start);
@@ -348,7 +583,8 @@ namespace Dungeons
                 int Index(string doorway) => def.Doorways.FindIndex(d => d.Id == doorway);
                 // Through the room.
                 var joins = new List<Join>(def.Inside);
-                foreach (MechDef m in def.Mechs) joins.AddRange(m.Joins.Where(j => j.State < 0 || j.State == state[p.Key + "." + m.Id]));
+                foreach (MechDef m in def.Mechs) joins.AddRange(m.Joins.Where(j => j.State < 0 || Cycles(m, state[p.Key + "." + m.Id]) || j.State == state[p.Key + "." + m.Id]
+                    || FreeIn(p.Key + "." + m.Id, j.State)));
                 if (def.Inside.Count == 0 && def.Mechs.All(m => m.Joins.Count == 0))
                     for (int d = 0; d < def.Doorways.Count; d++) next.Add(new KeyValuePair<int, int>(p.Key, d));
                 foreach (Join j in joins)
@@ -358,6 +594,17 @@ namespace Dungeons
                 }
                 foreach (Join j in PackReader.Drops(l.Pack, def))   // one way
                     if (j.A == id && Index(j.B) >= 0) next.Add(new KeyValuePair<int, int>(p.Key, Index(j.B)));
+                if (tm != null)
+                    foreach (TriggerSolve.Teleport t in tm.Teleports)
+                    {
+                        MechDef fromM = Layouts.Mech(l, t.From, out int fr), toM = Layouts.Mech(l, t.To, out int tr);
+                        if (fromM == null || toM == null || fr != p.Key || (fromM.ReachedFrom != null && fromM.ReachedFrom != id)) continue;
+                        if (!t.Guard.All(g => g.Key != null && state.ContainsKey(g.Key) && (g.Not ? state[g.Key] != g.State : state[g.Key] == g.State))) continue;
+                        int td = toM.ReachedFrom != null ? l.Rooms[tr].Def.Doorways.FindIndex(d => d.Id == toM.ReachedFrom) : 0;
+                        if (td >= 0) next.Add(new KeyValuePair<int, int>(tr, td));
+                    }
+                foreach (var e in ends.Where(e => e.Value.Key == p.Key && e.Value.Value == p.Value))   // (through a shortcut)
+                    foreach (var o in ends.Where(o => o.Key == e.Key && !o.Value.Equals(e.Value))) next.Add(o.Value);
                 // Out of it.
                 foreach (Link k in l.Links)
                 {
@@ -371,6 +618,9 @@ namespace Dungeons
             }
             return seen;
         }
+
+        /// <summary>Turning by itself in this state (a "cycleIn" one only in those states): every state of it as good as reached.</summary>
+        private static bool Cycles(MechDef m, int state) => m.Cycle > 0f && (m.CycleIn == null || m.CycleIn.Count == 0 || m.CycleIn.Contains(state));
 
         private static string Fmt(UnityEngine.Vector3 v) => v == UnityEngine.Vector3.zero ? "none" : $"{v.x:0}x{v.y:0}x{v.z:0}";
 

@@ -11,7 +11,7 @@ Style sheet (every name checked in the game's files; sizes are each prefab's sha
               HEAD     blackmarble_head_big01    2 m carved head (keystones)
               STEP     piece_grausten_stonestair 2 x 1 x 2 stair block (climbs -z)
   Metal       GEAR     CharredCogwheel           a bronze cogwheel (1.1 m, lying flat): scaled 5 to 17 times into the machine's gears
-              AXLE     Morkhalla_MetalPillar     iron post 0.7 x 5 (origin at its foot): axles, struts
+              BAR      Morkhalla_MetalBar        studded iron bar 20 x 1 x 1 (centred, along x): axles, lever handles, grilles
               IBEAM    Piece_flametal_beam       dark metal beam 2 x 0.56: girders, rails, gear spokes
               GRATE    iron_grate                iron grate 2 x 3: portcullis
               CHAIN    Morkhalla_WallChain1      iron chain hanging 4.4 m from a wall anchor
@@ -38,7 +38,8 @@ COLUMN = "blackmarble_column_3"
 HEAD = "blackmarble_head_big01"
 STEP = "piece_grausten_stonestair"
 GEAR = "CharredCogwheel"
-AXLE = "Morkhalla_MetalPillar"
+BAR = "Morkhalla_MetalBar"
+BLOCK = "Morkhalla_Block"
 IBEAM = "Piece_flametal_beam"
 GRATE = "iron_grate"
 CHAIN = "Morkhalla_WallChain1"
@@ -107,7 +108,23 @@ def torch(room, at):
     room.stand(TORCH, at, scale=(1.3, 1.3, 1.3))
 
 
+def part_box(p):
+    """A part's box in its holder's frame (its prefab's box, scaled, turned and moved, made axis-aligned again)."""
+    lo, hi = bounds(p.prefab)
+    corners = np.array([[x, y, z] for x in (lo[0], hi[0]) for y in (lo[1], hi[1]) for z in (lo[2], hi[2])]) * p.scale
+    w = (euler_matrix(*p.euler) @ corners.T).T + p.at
+    return w.min(0), w.max(0)
+
+
 def wisp(room, at):
+    """A blue lantern (the dvergr demister) hung on an iron chain from whatever is above it (the ceiling, a balcony), so it never
+    floats. Build the room's ceiling before its lanterns."""
+    lo, hi = bounds(WISP)
+    at = np.array(at, float)
+    above = [b0[1] for b0, b1 in map(part_box, room.parts)
+             if b0[1] > at[1] + hi[1] + 0.05 and b0[0] <= at[0] <= b1[0] and b0[2] <= at[2] <= b1[2]]
+    if above:
+        hang_chain(room, (at[0], min(above), at[2]), min(above) - (at[1] + hi[1]), thin=True)
     room.add(WISP, at)
 
 
@@ -122,11 +139,13 @@ def crystal(room, at, yaw=0.0):
     room.stand(CRYSTAL, at, yaw=yaw)
 
 
-def hang_chain(holder, top, length, yaw=0.0):
-    """An iron chain hanging `length` metres down from `top` (its anchor block at the top)."""
+def hang_chain(holder, top, length, yaw=0.0, thin=False):
+    """An iron chain hanging `length` metres down from `top` (its anchor block at the top). thin: no thicker than the chain's own
+    (a long chain for a lantern)."""
     lo, hi = bounds(CHAIN)
     s = length / (hi[1] - lo[1])
-    holder.add(CHAIN, np.array(top, float) - yaw_turn((0, hi[1] * s, 0), yaw), (0, yaw, 0), (s, s, s))
+    t = min(s, 0.7) if thin else s
+    holder.add(CHAIN, np.array(top, float) - yaw_turn((0, hi[1] * s, 0), yaw), (0, yaw, 0), (t, s, t))
 
 
 def gear(holder, centre, diameter, axis="y", yaw=0.0, thickness=None, spin=0.0, turn=None):
@@ -157,25 +176,35 @@ def machine(room, id, at=(0, 0, 0)):
 
 
 def axle(holder, foot, height, width=0.8):
-    holder.fill(AXLE, (foot[0], foot[1] + height / 2, foot[2]), (width, height, width))
+    """An upright iron axle from `foot`, `height` metres tall."""
+    bar(holder, foot, (foot[0], foot[1] + height, foot[2]), width)
 
 
-def girder(holder, a, b, size=0.5):
-    """A dark metal beam from point a to point b."""
+def bar(holder, a, b, width=0.6):
+    """A studded iron bar from point a to point b."""
+    return girder(holder, a, b, width, prefab=BAR)
+
+
+def girder(holder, a, b, size=0.5, prefab=None):
+    """A dark metal beam (or another prefab lying along its own x) from point a to point b."""
+    prefab = prefab or IBEAM
     a, b = np.array(a, float), np.array(b, float)
     d = b - a
     length = float(np.linalg.norm(d))
     yaw = math.degrees(math.atan2(d[0], d[2])) - 90.0     # the beam lies along its own x
     pitch = math.degrees(math.atan2(d[1], math.hypot(d[0], d[2])))
-    lo, hi = bounds(IBEAM)
+    if abs(d[0]) < 1e-9 and abs(d[2]) < 1e-9:
+        yaw = 0.0                                       # (straight up or down: any yaw)
+    lo, hi = bounds(prefab)
     scale = np.array([length / (hi[0] - lo[0]), size / (hi[1] - lo[1]), size / (hi[2] - lo[2])])
     euler = np.array([0.0, yaw, pitch])
     R = euler_matrix(*euler)
     at = (a + b) / 2 - R @ (scale * (lo + hi) / 2)
-    holder.add(IBEAM, at, euler, scale)
+    return holder.add(prefab, at, euler, scale)
 
 
 def spawner(room, role, at):
+    bounds(SPAWNERS[role])                              # (an empty shape: so the gap check knows it's nothing to stand on)
     room.add(SPAWNERS[role], (at[0], at[1] + 0.5, at[2]), saved=True)
 
 
@@ -194,7 +223,38 @@ def stairs(holder, foot, rise, run, width, yaw=0.0, fill_below=None, lateral=0.0
 
 
 def giant_lever(room, id, at, yaw, wires, reached_from=None):
-    """A giant's lever: a grausten plinth with a bronze gear on it and an iron handle twice a man's height."""
-    m = lever(room, id, at, yaw, wires, reached_from, handle=AXLE, knob=HEAD, post=PILLAR, cap=DARK, size=1.7)
-    gear(room, (at[0], at[1] + 1.7 * 1.1 + 0.3, at[2]), 1.8, thickness=0.25)
+    """A giant's lever: a squat stone block on the floor with two iron cheeks, and between them, on a bronze hub, a thick iron handle
+    2.6 m long with a carved knob that tips forward and back (the mechanism). Pulled from -z turned by yaw."""
+    at = np.array(at, float)
+    box(room, BLOCK, at + (0, 0.5, 0), (1.8, 1.0, 1.8), yaw=yaw)                     # the base, fixed to the floor
+    pivot = at + (0, 1.6, 0)
+    for side in (-0.42, 0.42):                                                         # the cheeks the handle hangs between
+        box(room, "iron_wall_2x2", pivot + yaw_turn((side, -0.35, 0), yaw), (0.12, 1.5, 1.1), yaw=yaw)
+    m = room.mech(id, "lever", pivot, (0, yaw, 0))
+    gear(m, (0, 0, 0), 1.2, axis="z", yaw=90, thickness=0.5)                           # the hub turns with the handle
+    bar(m, (0, -0.2, 0), (0, 2.6, 0), 0.32)
+    box(m, HEAD, (0, 2.75, 0), (0.6, 0.6, 0.6))
+    m.pose(euler=(-32, 0, 0)).pose(euler=(32, 0, 0))
+    m.seconds = 0.8
+    for target, do in wires:
+        m.wire(target, do)
+    m.reached_from = reached_from
     return m
+
+
+def grate_wall(holder, a, b, bottom, top, thickness=0.25):
+    """Iron bars from floor to ceiling between points a and b (on the floor plan): a stone sill and iron grates above it, so nobody
+    passes or climbs (the grates' colliders are solid)."""
+    a, b = np.array(a, float), np.array(b, float)
+    d = b - a
+    length = float(math.hypot(d[0], d[2]))
+    yaw = math.degrees(math.atan2(d[0], d[2])) - 90.0
+    mid = (a + b) / 2
+    box(holder, STONE, (mid[0], bottom + 0.4, mid[2]), (length, 0.8, thickness + 0.3), yaw=yaw)
+    n = max(1, int(math.ceil(length / 6.0)))
+    for i in range(n):
+        c = a + d * ((i + 0.5) / n)
+        box(holder, GRATE, (c[0], (bottom + 0.8 + top) / 2, c[2]), (length / n + 0.02, top - bottom - 0.8, thickness), yaw=yaw)
+    for i in (0, n):
+        c = a + d * (i / n)
+        bar(holder, (c[0], bottom, c[2]), (c[0], top, c[2]), 0.45)

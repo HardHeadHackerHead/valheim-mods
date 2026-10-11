@@ -18,6 +18,9 @@ namespace Dungeons
         {
             public Vector3 MaxSize;
             public int MinUses;
+            public bool Parkour = true;
+            public string EntranceCap;
+            public ShortcutSpec Shortcut;
             public readonly Dictionary<string, MechDef> Gates = new Dictionary<string, MechDef>();
             public readonly Dictionary<PlanStep, string> From = new Dictionary<PlanStep, string>();
             public readonly Dictionary<string, List<Join>> Drops = new Dictionary<string, List<Join>>();   // room name -> its drops
@@ -29,7 +32,8 @@ namespace Dungeons
         private static readonly ConditionalWeakTable<Pack, Extra> Extras = new ConditionalWeakTable<Pack, Extra>();
 
         /// <summary>The kinds of mechanism the mod knows (MechDef.Kind).</summary>
-        public static readonly string[] Kinds = { "lever", "plate", "gate", "door", "platform", "stair", "rotator", "floor", "machine" };
+        public static readonly string[] Kinds = { "lever", "plate", "gate", "door", "platform", "stair", "rotator", "floor", "machine", "exit", "encounter", "breakable", "shortcut",
+            "pedestal", "brazier", "pushblock", "trap", "teleporter", "lock", "checkpoint" };   // (the last seven: dungeon-triggers' blocks)
 
         /// <summary>The pack's size limit for a whole dungeon (x, y, z in metres), or zero for none ("maxSize" in its JSON).</summary>
         public static Vector3 MaxSize(Pack pack) => pack != null && Extras.TryGetValue(pack, out Extra e) ? e.MaxSize : Vector3.zero;
@@ -89,6 +93,37 @@ namespace Dungeons
             return pack.Creatures.Count > 0 ? new[] { "common" } : Enumerable.Empty<string>();
         }
 
+        /// <summary>Whether parkour (wall runs, climbing, ledge hangs: Quad's Parkour) is allowed inside ("parkour": false turns it off, so
+        /// a puzzle can't be climbed round). True when the pack doesn't say.</summary>
+        public static bool Parkour(Pack pack) => pack == null || !Extras.TryGetValue(pack, out Extra e) || e.Parkour;
+
+        /// <summary>The end cap the entrance room's way in takes ("entranceCap": a room's name), or null: any plain one (flat, nothing in it).</summary>
+        public static string EntranceCap(Pack pack) => pack != null && Extras.TryGetValue(pack, out Extra e) ? e.EntranceCap : null;
+
+        /// <summary>How an encounter (a fight room's waves: MechEncounter.cs) starts: "enter" (a player walks into its area), "wire" (a
+        /// lever's or plate's "start" wire; the default) or "open" (its chest opened). Null if the mechanism isn't an encounter.</summary>
+        public static string StartOn(Pack pack, RoomDef room, MechDef m) =>
+            m == null || m.Kind != "encounter" ? null : m.Encounter?.StartOn ?? "wire";
+
+        /// <summary>A pack's shortcut ("shortcut"): its two end-cap rooms and the plan step the far end goes by.</summary>
+        internal sealed class ShortcutSpec { public string Near, Far, FarStep; }
+
+        /// <summary>The pack's shortcut, or null.</summary>
+        public static ShortcutSpec Shortcut(Pack pack) => pack != null && Extras.TryGetValue(pack, out Extra e) ? e.Shortcut : null;
+
+        /// <summary>A shortcut mechanism's end ("near", or "far": MechDef.Deep) and its pair (MechDef.Pair), or null if it isn't one.</summary>
+        public static string ShortcutEnd(Pack pack, RoomDef room, MechDef m, out string pair)
+        {
+            pair = m != null && m.Kind == "shortcut" ? m.Pair : null;
+            return pair == null ? null : m.Deep ? "far" : "near";
+        }
+
+        /// <summary>A room only reached by breaking a wall (tag "secret"): a side branch, never on the way, never needed.</summary>
+        public static bool Secret(RoomDef room) => room != null && room.Tags.Any(t => string.Equals(t, "secret", StringComparison.OrdinalIgnoreCase));
+
+        /// <summary>Whether a room holds an end of a shortcut (it's placed only as the shortcut, never as an ordinary cap or room).</summary>
+        public static bool HasShortcut(RoomDef room) => room != null && room.Mechs.Any(m => m.Kind == "shortcut");
+
         /// <summary>Whether the pack has a lock gate for any doorway type.</summary>
         public static bool HasGates(Pack pack) => pack != null && Extras.TryGetValue(pack, out Extra e) && e.Gates.Count > 0;
 
@@ -109,7 +144,16 @@ namespace Dungeons
             };
             if (string.IsNullOrEmpty(pack.Name)) { problems.Add("a pack has no name"); pack.Name = "unnamed"; }
             if (pack.MaxRooms < pack.MinRooms) { problems.Add($"{pack.Name}: maxRooms is less than minRooms"); pack.MaxRooms = pack.MinRooms; }
-            var extra = new Extra { MaxSize = json["maxSize"] is JArray max ? Vec(max) : Vector3.zero, MinUses = (int?)json["minUses"] ?? 0 };
+            var extra = new Extra
+            {
+                MaxSize = json["maxSize"] is JArray max ? Vec(max) : Vector3.zero,
+                MinUses = (int?)json["minUses"] ?? 0,
+                Parkour = (bool?)json["parkour"] ?? true,
+                EntranceCap = (string)json["entranceCap"],
+            };
+            pack.Music = (string)json["music"];
+            if (json["shortcut"] is JObject sc)
+                extra.Shortcut = new ShortcutSpec { Near = (string)sc["near"], Far = (string)sc["far"], FarStep = (string)sc["farStep"] };
             Extras.Add(pack, extra);
             if (json["doors"] is JObject doors)
                 foreach (JProperty d in doors.Properties())
@@ -152,6 +196,7 @@ namespace Dungeons
             ReadByBiome(json["creatures"], "creatures", pack, pack.Creatures, extra.Creatures, problems);
             ReadByBiome(json["loot"], "loot", pack, pack.Loot, extra.Loot, problems);
             Check(pack, problems);
+            TriggerReader.Pack(json, pack, problems);   // (dungeon-triggers: key items, and what the solver can't model)
             return pack;
         }
 
@@ -188,6 +233,7 @@ namespace Dungeons
             foreach (JObject m in (r["mechs"] as JArray ?? new JArray()).OfType<JObject>())
                 def.Mechs.Add(ReadMech(m, problems, $"{packName}: {def.Name}"));
             def.Inside.AddRange(Joins(r["inside"]));
+            def.Music = (string)r["music"];
             // The pack's own say over the game's (or the defaults).
             if (r["weight"] != null) def.Weight = (float)r["weight"];
             if (r["max"] != null) def.Max = (int)r["max"];
@@ -200,6 +246,7 @@ namespace Dungeons
                 if (Layouts.Quadrant(def.Doorways[i].Facing) < 0)
                     problems.Add($"{packName}: {def.Name} doorway {i} faces {def.Doorways[i].Facing} (not along an axis): it never joins");
             if (def.Doorways.Count == 0) problems.Add($"{packName}: {def.Name} has no doorways: it never joins");
+            TriggerReader.Room(r, def, problems, packName);   // (dungeon-triggers: the room's "triggers", parts' "show")
             CheckMechs(def, problems, packName);
             return def;
         }
@@ -235,14 +282,57 @@ namespace Dungeons
                 Cycle = (float?)m["cycle"] ?? 0f,
                 Doorway = (string)m["doorway"],
                 ReachedFrom = (string)m["reachedFrom"],
+                Once = (bool?)m["once"] ?? false,
+                Health = (float?)m["health"] ?? 0f,
+                Pair = (string)m["pair"],
+                Deep = (bool?)m["deep"] ?? (string)m["end"] == "far",   // ("end": "far" is the same)
             };
+            if (m["cycleIn"] is JArray cycleIn) mech.CycleIn = cycleIn.Where(t => t.Type == JTokenType.Integer).Select(t => (int)t).ToList();
+            if (m["spinScale"] is JArray spinScale) mech.SpinScale = spinScale.Where(t => t.Type == JTokenType.Integer || t.Type == JTokenType.Float).Select(t => (float)t).ToList();
             mech.Parts.AddRange(Parts(m["parts"]));
             foreach (JObject p in (m["poses"] as JArray ?? new JArray()).OfType<JObject>())
                 mech.Poses.Add(new Pose { At = p["at"] is JArray pa ? Vec(pa) : Vector3.zero, Euler = p["euler"] is JArray pe ? Vec(pe) : Vector3.zero });
             foreach (JObject w in (m["wires"] as JArray ?? new JArray()).OfType<JObject>())
                 mech.Wires.Add(new Wire { Target = (string)w["target"], Do = (string)w["do"] ?? "next" });
             mech.Joins.AddRange(Joins(m["joins"]));
+            if (mech.Kind == "encounter")
+            {
+                var enc = new EncounterDef
+                {
+                    StartOn = (string)m["startOn"] ?? "wire",
+                    Chest = m["chest"] is JArray chest ? Vec(chest) : Vector3.zero,
+                    Level = (int?)m["level"] ?? 1,
+                    EliteLevel = (int?)m["eliteLevel"] ?? 3,
+                    Pause = (float?)m["pause"] ?? 4f,
+                    Timeout = (float?)m["timeout"] ?? 40f,
+                    Siege = (int?)m["siege"] ?? 0,
+                    HoldBy = (string)m["holdBy"],
+                    LockLever = (string)m["lockLever"],
+                    Music = (string)m["music"],
+                };
+                if (m["boss"] is JObject b)
+                {
+                    enc.Boss = new BossDef { Name = (string)b["name"], Role = (string)b["role"] ?? "elite", Health = (float?)b["health"] ?? 4f };
+                    // (its phases in the boss, or, as one draft wrote them, on the encounter)
+                    foreach (JObject ph in ((b["phases"] ?? m["phases"]) as JArray ?? new JArray()).OfType<JObject>())
+                    {
+                        var phase = new BossPhase { At = (float?)ph["at"] ?? 0.5f };
+                        foreach (JObject w in (ph["wires"] as JArray ?? new JArray()).OfType<JObject>())
+                            phase.Wires.Add(new Wire { Target = (string)w["target"], Do = (string)w["do"] ?? "next" });
+                        if (ph["adds"] is JObject adds)
+                            foreach (JProperty a in adds.Properties().Where(p => p.Value.Type == JTokenType.Integer)) phase.Adds[a.Name] = (int)a.Value;
+                        enc.Boss.Phases.Add(phase);
+                    }
+                }
+                if (m["area"] is JArray area) enc.Area = Vec(area);
+                enc.Lock.AddRange(Strings(m["lock"]));
+                foreach (JObject w in (m["waves"] as JArray ?? new JArray()).OfType<JObject>())
+                    enc.Waves.Add(w.Properties().Where(p => p.Value.Type == JTokenType.Integer).ToDictionary(p => p.Name, p => (int)p.Value));
+                foreach (JArray p in (m["points"] as JArray ?? new JArray()).OfType<JArray>()) enc.Points.Add(Vec(p));
+                mech.Encounter = enc;
+            }
             if (mech.Cycle < 0f) { problems.Add($"{where} mechanism {mech.Id}: a cycle below 0 (taken as none)"); mech.Cycle = 0f; }
+            TriggerReader.Block(m, mech, problems, where);   // (dungeon-triggers' blocks: before the states are counted)
             return mech;
         }
 
@@ -266,18 +356,75 @@ namespace Dungeons
                 int states = Layouts.States(m);
                 if (Layouts.IsGate(m))
                 {
-                    if (string.IsNullOrEmpty(m.Doorway)) problems.Add($"{me}: a {m.Kind} needs the \"doorway\" it closes");
-                    else if (!Door(m.Doorway)) problems.Add($"{me}: closes doorway {m.Doorway}, which the room doesn't have");
+                    if (!string.IsNullOrEmpty(m.Doorway) && !Door(m.Doorway)) problems.Add($"{me}: closes doorway {m.Doorway}, which the room doesn't have");
                 }
                 else if (!string.IsNullOrEmpty(m.Doorway) && !Door(m.Doorway)) problems.Add($"{me}: names doorway {m.Doorway}, which the room doesn't have");
                 if (!string.IsNullOrEmpty(m.ReachedFrom) && !Door(m.ReachedFrom)) problems.Add($"{me}: is reached from doorway {m.ReachedFrom}, which the room doesn't have");
                 foreach (Join j in m.Joins)
                     if (!Door(j.A) || !Door(j.B)) problems.Add($"{me}: joins {j.A} and {j.B} in state {j.State}, but the room has no doorway {(!Door(j.A) ? j.A : j.B)}");
                 if (m.Start < 0 || m.Start >= states) problems.Add($"{me}: starts in state {m.Start}, but it has {states} (0 to {states - 1})");
-                if (m.Poses.Count > 0 && m.Poses.Count < states) problems.Add($"{me}: has {m.Poses.Count} poses for {states} states");
-                if (m.Wires.Count > 0 && !Layouts.IsUsable(m)) problems.Add($"{me}: has wires, but only levers and plates are used");
-                if (m.Kind == "machine" && (m.Joins.Count > 0 || !string.IsNullOrEmpty(m.Doorway) || states > 1))
-                    problems.Add($"{me}: a machine only turns (one state, no joins, no doorway): make it a rotator or stair to move between states");
+                if (m.Poses.Count > 0 && m.Poses.Count < states && !(m.SpinScale != null && m.Poses.Count == 1))   // (one pose: it only spins, by state)
+                    problems.Add($"{me}: has {m.Poses.Count} poses for {states} states");
+                if (m.Wires.Count > 0 && !Layouts.IsUsable(m) && m.Kind != "encounter") problems.Add($"{me}: has wires, but only levers, plates and encounters act");
+                if (m.Once && !Layouts.IsUsable(m)) problems.Add($"{me}: \"once\" is for levers and plates");
+                if (m.Kind == "shortcut" && string.IsNullOrEmpty(m.Pair)) problems.Add($"{me}: a shortcut needs its \"pair\"");
+                if (m.Kind == "breakable")
+                {
+                    if (string.IsNullOrEmpty(m.Doorway)) problems.Add($"{me}: a breakable needs the \"doorway\" it closes");
+                    if (m.Health <= 0f) problems.Add($"{me}: a breakable needs its \"health\" (the damage it takes to break)");
+                    if (m.Poses.Count > 0 && m.Poses.Count != 2) problems.Add($"{me}: a breakable has two poses (standing, broken), not {m.Poses.Count}");
+                }
+                if (m.Encounter != null)
+                {
+                    EncounterDef e = m.Encounter;
+                    if (e.StartOn != "enter" && e.StartOn != "wire" && e.StartOn != "open") problems.Add($"{me}: startOn {e.StartOn} (\"enter\", \"wire\" or \"open\")");
+                    if (e.StartOn == "open" && e.Chest == Vector3.zero) problems.Add($"{me}: starts when its chest is opened, but has no \"chest\"");
+                    if (e.StartOn == "wire" && !def.Mechs.Any(o => o.Wires.Any(w => w.Do == "start" && w.Target == m.Id)))
+                        problems.Add($"{me}: starts on a wire, but nothing in its room is wired to \"start\" it");
+                    foreach (string id in e.Lock.Where(id => !def.Mechs.Any(o => o.Id == id))) problems.Add($"{me}: locks {id}, which isn't a mechanism in its room");
+                    if (e.HoldBy != null && !def.Mechs.Any(o => o.Id == e.HoldBy && o.Kind == "plate")) problems.Add($"{me}: is held by {e.HoldBy}, which isn't a plate in its room");
+                    if (e.LockLever != null && !def.Mechs.Any(o => o.Id == e.LockLever && o.Kind == "lever")) problems.Add($"{me}: lockLever {e.LockLever} isn't a lever in its room");
+                    foreach (string role in e.Waves.SelectMany(w => w.Keys).Distinct().Where(r => r != "melee" && r != "ranged" && r != "flying" && r != "elite"))
+                        problems.Add($"{me}: a wave has role {role} (melee, ranged, flying or elite)");
+                    if (e.Waves.Count > 0 && e.Points.Count == 0) problems.Add($"{me}: has waves but no \"points\" for them to come at");
+                    if (e.Boss != null)
+                    {
+                        string[] roles = { "melee", "ranged", "flying", "elite" };
+                        if (!roles.Contains(e.Boss.Role)) problems.Add($"{me}: the boss's role {e.Boss.Role} (melee, ranged, flying or elite)");
+                        if (e.Boss.Health <= 0f) problems.Add($"{me}: the boss's health {e.Boss.Health} (more than 0)");
+                        if (e.Waves.Count > 0) problems.Add($"{me}: has a boss and waves (a boss fight is one creature instead of waves)");
+                        if (e.Points.Count == 0) problems.Add($"{me}: has a boss but no \"points\" for it to come at");
+                        foreach (BossPhase ph in e.Boss.Phases)
+                        {
+                            if (ph.At <= 0f || ph.At >= 1f) problems.Add($"{me}: a boss phase at {ph.At} (a health fraction between 0 and 1)");
+                            foreach (Wire w in ph.Wires.Where(w => !def.Mechs.Any(o => o.Id == w.Target)))
+                                problems.Add($"{me}: a boss phase is wired to {w.Target}, which isn't a mechanism in its room");
+                            foreach (string role in ph.Adds.Keys.Where(r => !roles.Contains(r))) problems.Add($"{me}: a boss phase adds role {role}");
+                        }
+                    }
+                    foreach (string id in e.Lock)
+                    {
+                        MechDef l = def.Mechs.FirstOrDefault(o => o.Id == id);
+                        if (l != null && !Layouts.IsGate(l) && l.Kind != "platform") problems.Add($"{me}: locks {id}, a {l.Kind} (a lock is a gate, door or platform)");
+                    }
+                    // Its points: inside its area (a box round its At, turned with it) and inside the room's box (GapCheck: on a floor).
+                    Vector3 half = e.Area * 0.5f, room = def.Size * 0.5f;
+                    foreach (Vector3 p in e.Points)
+                    {
+                        Vector3 local = PlacedRoom.Turn(p - m.At, -m.Euler.y);
+                        if (Math.Abs(local.x) > half.x + 0.5f || Math.Abs(local.y) > half.y + 0.5f || Math.Abs(local.z) > half.z + 0.5f)
+                            problems.Add($"{me}: point {p} is outside its area");
+                        if (def.Size != Vector3.zero && (Math.Abs(p.x) > room.x || Math.Abs(p.y) > room.y || Math.Abs(p.z) > room.z))
+                            problems.Add($"{me}: point {p} is outside the room");
+                    }
+                }
+                if (m.Once && m.Wires.Any(w => w.Do == "next" || w.Do == "hold"))
+                    problems.Add($"{me}: is used \"once\", but a wire does \"{m.Wires.First(w => w.Do == "next" || w.Do == "hold").Do}\" (a one-shot lever sets: \"set:n\")");
+                if (m.CycleIn != null && m.Cycle <= 0f) problems.Add($"{me}: has \"cycleIn\" but no \"cycle\"");
+                if (m.CycleIn != null && m.CycleIn.Any(c => c < 0 || c >= states)) problems.Add($"{me}: cycleIn names a state it hasn't (0 to {states - 1})");
+                if (m.SpinScale != null && m.SpinScale.Count == 0) problems.Add($"{me}: an empty \"spinScale\"");
+                if (m.Kind == "machine" && (m.Joins.Count > 0 || !string.IsNullOrEmpty(m.Doorway) || (states > 1 && (m.SpinScale == null || m.SpinScale.Count < states))))
+                    problems.Add($"{me}: a machine only turns (no joins, no doorway; more than one state only with a \"spinScale\" for each): make it a rotator or stair to move between states");
                 foreach (Wire w in m.Wires)
                 {
                     if (string.IsNullOrEmpty(w.Target)) { problems.Add($"{me}: a wire has no \"target\""); continue; }
@@ -287,7 +434,8 @@ namespace Dungeons
                     int to = -1;
                     bool set = w.Do != null && w.Do.StartsWith("set:") && int.TryParse(w.Do.Substring(4), out to) && to >= 0;
                     if (w.Do == "hold") { if (m.Kind != "plate") problems.Add($"{me}: \"hold\" is for plates"); }
-                    else if (w.Do != "next" && !set) problems.Add($"{me}: unknown wire \"do\": {w.Do} (\"next\", \"set:<n>\" or \"hold\")");
+                    else if (w.Do == "start") { if (target != null && target.Kind != "encounter") problems.Add($"{me}: \"start\" is for encounters, and {w.Target} is a {target.Kind}"); }
+                    else if (w.Do != "next" && !set) problems.Add($"{me}: unknown wire \"do\": {w.Do} (\"next\", \"set:<n>\", \"hold\" or \"start\")");
                     if (target != null && set && to >= Layouts.States(target))
                         problems.Add($"{me}: sets {w.Target} to state {to}, but it has {Layouts.States(target)}");
                 }
@@ -336,7 +484,7 @@ namespace Dungeons
                 if (ids.Contains(name)) problems.Add($"{pack.Name}: two plan steps are called {name} (give one an \"id\")");
                 ids.Add(name);
                 // A lock needs a gate (in the step's room, or the pack's for its doorway type), and its key step a lever or plate.
-                if (!string.IsNullOrEmpty(step.OpensWith) && !HasGates(pack) && !pack.Rooms.Any(r => HasTag(r, step.Tag) && r.Mechs.Any(Layouts.IsGate)))
+                if (!string.IsNullOrEmpty(step.OpensWith) && !HasGates(pack) && !pack.Rooms.Any(r => HasTag(r, step.Tag) && r.Mechs.Any(m => Layouts.IsGate(m) && !string.IsNullOrEmpty(m.Doorway))))
                     problems.Add($"{pack.Name}: plan step {name} is locked, but no {step.Tag} room has a gate and the pack has no \"gates\"");
                 PlanStep key = pack.Plan.FirstOrDefault(p => Layouts.StepName(p) == step.OpensWith);
                 if (key != null && !pack.Rooms.Any(r => HasTag(r, key.Tag) && r.Mechs.Any(Layouts.IsUsable)))
@@ -353,6 +501,32 @@ namespace Dungeons
             foreach (string type in pack.Doors.Keys)
                 if (!pack.Rooms.Any(r => r.Doorways.Any(d => (d.Type ?? "") == type)))
                     problems.Add($"{pack.Name}: \"doors\" has a door for doorway type \"{type}\", which no room has");
+            // The shortcut: two rooms of the pack, each with one end of the same pair, and a plan step for the far end.
+            ShortcutSpec spec = Shortcut(pack);
+            if (spec != null)
+            {
+                string pairOf(string room, string end)
+                {
+                    RoomDef r = pack.Rooms.FirstOrDefault(x => x.Name == room);
+                    if (r == null) { problems.Add($"{pack.Name}: the shortcut's {end} room {room ?? "(none)"} isn't one of its rooms"); return null; }
+                    foreach (MechDef m in r.Mechs)
+                        if (ShortcutEnd(pack, r, m, out string pair) == end) return pair;
+                    problems.Add($"{pack.Name}: the shortcut's {end} room {room} has no shortcut mechanism with \"end\": \"{end}\"");
+                    return null;
+                }
+                string a = pairOf(spec.Near, "near"), b = pairOf(spec.Far, "far");
+                if (a != null && b != null && a != b) problems.Add($"{pack.Name}: the shortcut's ends are of different pairs ({a}, {b})");
+                if (!pack.Plan.Any(p => Layouts.StepName(p) == spec.FarStep)) problems.Add($"{pack.Name}: the shortcut's farStep {spec.FarStep ?? "(none)"} isn't a plan step");
+            }
+            // Secret rooms: entered through a breakable wall, never a plan step.
+            foreach (RoomDef r in pack.Rooms.Where(Secret))
+                if (!r.Mechs.Any(m => m.Kind == "breakable" && !string.IsNullOrEmpty(m.Doorway)))
+                    problems.Add($"{pack.Name}: {r.Name} is secret, but has no breakable with the \"doorway\" it's entered by");
+            foreach (PlanStep step in pack.Plan.Where(s => string.Equals(s.Tag, "secret", StringComparison.OrdinalIgnoreCase)))
+                problems.Add($"{pack.Name}: plan step {Layouts.StepName(step)} asks for a secret room (nothing may need one)");
+            string cap = EntranceCap(pack);
+            if (cap != null && !pack.Rooms.Any(r => r.Name == cap && r.EndCap))
+                problems.Add($"{pack.Name}: entranceCap {cap} isn't one of its end caps");
             if (pack.DoorChance < 0f || pack.DoorChance > 1f) problems.Add($"{pack.Name}: doorChance {pack.DoorChance} isn't between 0 and 1");
             // A cap joins face to face: a level doorway takes any level cap, one in a floor (facing up) a cap facing down, and so on.
             foreach (var kind in pack.Rooms.Where(r => !r.EndCap).SelectMany(r => r.Doorways).Select(d => new { Type = d.Type ?? "", Way = Way(d) }).Distinct())

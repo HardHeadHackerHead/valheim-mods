@@ -17,13 +17,25 @@ namespace Dungeons
 {
     /// <summary>
     /// A "dungeon" command for the Claude Tools mod (its request mailbox), so an AI assistant can build and test dungeons:
-    ///   dungeon packs                  the packs: title, rooms, plan, environment
+    ///   dungeon packs                  the packs: title, rooms, plan, environment, where each came from (built in, the config folder, the
+    ///                                  server) and its hash; and the entrance looks the same way
+    ///   dungeon reload [force]         (single player, the host) the packs folder read again now: what changed, each changed pack's problems
+    ///                                  and 50 seeds laid out; players get the new set; the changed packs' dungeons remade, except where
+    ///                                  someone is inside (force: they go out to its entrance first). A cheat. (SyncReload.cs)
+    ///   dungeon respawn [same|new] [force] [id]   that dungeon (left out: the nearest) remade from scratch: back to new, the same seed or a
+    ///                                  new one; the same rule about players inside. A cheat. (SyncReload.cs)
+    ///   dungeon sync                   who decides the packs here (SyncNet.cs): this game's own or the server's, the set's hash, the
+    ///                                  server's version; on the server, each player's version and what they were sent
     ///   dungeon spawn &lt;pack&gt; [seed]    an entrance 4 m in front of the player, on the ground, facing them (no seed: a random one that lays out)
     ///   dungeon list                   the dungeons in the world (all of them on the host, the ones this game knows on a client): pack, seed,
     ///                                  where, state
     ///   dungeon enter [id]             in, as the entrance does (from farther than 10 m away, a cheat)
     ///   dungeon leave                  out, as the way out does
     ///   dungeon map [id | &lt;pack&gt; &lt;seed&gt;]   the layout, floor by floor from above (also written to BepInEx/claude/dungeon-map.txt), and its rooms
+    ///   dungeon mapshot [floor] [all] [open]   the map M opens inside a dungeon, as this character sees it, drawn to
+    ///                                  BepInEx/claude/shots/dungeon-map-&lt;floor&gt;.png (floor 1 the lowest; left out, the player's); "all": every
+    ///                                  room, fog of war ignored (a cheat); "open": the window opened there too, for a screenshot (MapWindow.cs)
+    ///   dungeon mapshot mini           what the corner minimap shows inside a dungeon, to BepInEx/claude/shots/dungeon-map-mini.png (MapMini.cs)
     ///   dungeon seeds &lt;pack&gt; &lt;count&gt;   lays out seeds 1..count without building them: failures and why, room counts, sizes, time
     ///   dungeon state [id]             everything about one dungeon: its saved state, where it stands, what's built here, who's inside
     ///   dungeon reset [id]             back to new now, as the timed reset does (nobody may be inside): mechanisms back at their start too
@@ -32,6 +44,13 @@ namespace Dungeons
     ///                                  on), from anywhere: a cheat
     ///   dungeon set &lt;key&gt; &lt;state&gt; [id] puts one in a state: a cheat
     ///   dungeon solve [id]             the layout's solution (the uses that reach the end, in order), with each one's state now
+    ///   dungeon orphans [remove]       (the host) saved objects of dungeons whose entrance is gone, by dungeon and prefab; remove: removed
+    ///                                  (an unloaded chest that still holds something is left), a cheat
+    ///   dungeon music                  the game's music tracks (names for "music" in packs), and what the dungeon plays now
+    ///   dungeon aim                    what the player's hover ray hits now (collider, layer, path, ours or not, distance), the game's hover,
+    ///                                  and our nearest lever or way out in reach (what E falls back to)
+    ///   dungeon check [pack]           every prefab, game room and location the packs (or one) and their entrance looks name that this game
+    ///                                  doesn't have, and where each is used
     ///   dungeon remove [id]            gone for good: its saved parts, then its entrance (nobody may be inside)
     ///   dungeon bring &lt;player&gt;        that player, wherever they are, to 2 m beside this one (the game's own teleport RPC): a rescue, a cheat
     ///   dungeon rooms [theme]          every room the game has (DungeonDB), written to BepInEx/claude/dungeon-rooms.json; the answer counts
@@ -42,7 +61,7 @@ namespace Dungeons
     /// </summary>
     internal static class Tools
     {
-        private const string Usage = "dungeon packs | spawn <pack> [seed] | list | enter [id] | leave | map [id | <pack> <seed>] | seeds <pack> <count> | state [id] | reset [id] | remove [id] | mechs [id] | use <key> [id] | set <key> <state> [id] | solve [id] | bring <player> | rooms [theme]";
+        private const string Usage = "dungeon packs | sync | reload [force] | respawn [same|new] [force] [id] | spawn <pack> [seed] | list | enter [id] | leave | map [id | <pack> <seed>] | mapshot [floor] [all] [open] | mapshot mini | seeds <pack> <count> | state [id] | reset [id] | remove [id] | mechs [id] | use <key> [id] | set <key> <state> [id] | solve [id] | check [pack] | aim | music | orphans [remove] | bring <player> | rooms [theme] | " + TriggerTools.Usage + "";
         private const string NoWorld = "the packs need the game's dungeon rooms: load a world first";
         private static BaseUnityPlugin _claudeTools;
         private static float _next;
@@ -80,13 +99,31 @@ namespace Dungeons
             switch (sub)
             {
                 case "rooms": Rooms(args, output, error); yield break;
-                case "packs": case "spawn": case "seeds": case "map":
+                case "packs": case "spawn": case "seeds": case "map": case "check":
                     if (DungeonDB.instance == null) { error(NoWorld); yield break; }
                     break;
             }
             switch (sub)
             {
                 case "packs": PackList(output, error); yield break;
+                case "sync": output(SyncNet.Report()); yield break;   // (added by the sync: SyncNet.cs)
+                case "reload":   // (SyncReload.cs)
+                {
+                    IEnumerator run = PackReload.Reload(args.Skip(1).Any(a => a.ToLowerInvariant() == "force"), output, error);
+                    while (run.MoveNext()) yield return run.Current;
+                    yield break;
+                }
+                case "respawn":   // (SyncReload.cs) dungeon respawn [same|new] [force] [id]
+                {
+                    var words = args.Skip(1).Select(a => a.ToLowerInvariant()).ToList();
+                    bool fresh = words.Remove("new"), force = words.Remove("force");
+                    words.Remove("same");
+                    Site site = Find(words.Prepend("respawn").ToArray(), 1, error);
+                    if (site == null) yield break;
+                    IEnumerator run = PackReload.Respawn(site, fresh, force, output, error);
+                    while (run.MoveNext()) yield return run.Current;
+                    yield break;
+                }
                 case "list": List(output, error); yield break;
                 case "map": Map(args, output, error); yield break;
                 case "state": State(args, output, error); yield break;
@@ -96,7 +133,20 @@ namespace Dungeons
                 case "mechs": Mechs(args, output, error); yield break;
                 case "use": case "set": UseOrSet(sub, args, output, error); yield break;
                 case "solve": Solve(args, output, error); yield break;
-                case "spawn": { IEnumerator run = Spawn(args, output, error); while (run.MoveNext()) yield return run.Current; yield break; }
+                case "check": Check(args, output, error); yield break;
+                case "aim": output(UseReach.Report()); yield break;
+                case "triggers": case "fire": case "blocks": case "checkpoint": TriggerTools.Command(sub, args, output, error, Find); yield break;   // (triggers: TriggerTools.cs)
+                case "music": output(DungeonMusic.Report()); yield break;
+                case "orphans":
+                    if (ZNet.instance == null || !ZNet.instance.IsServer()) { error("only the host (or the server) knows every saved object: run it there"); yield break; }
+                    bool remove = args.Length > 1 && args[1].ToLowerInvariant() == "remove";
+                    if (remove && !DHack.Shared.TestCommands.CheatsAllowed()) { error(DHack.Shared.TestCommands.Refusal("dungeon orphans remove")); yield break; }
+                    output(Sweep.Orphans(remove));
+                    yield break;
+                case "mapshot": DungeonMap.Shot(args, output, error); yield break;   // (added by the map: MapWindow.cs)
+                case "spawn":
+                    if (PackSync.OffReason != null) { error("dungeons are off on this server: " + PackSync.OffReason); yield break; }   // (SyncNet.cs)
+                    { IEnumerator run = Spawn(args, output, error); while (run.MoveNext()) yield return run.Current; yield break; }
                 case "seeds": { IEnumerator run = Seeds(args, output, error); while (run.MoveNext()) yield return run.Current; yield break; }
                 case "enter":
                 case "leave": { IEnumerator run = Move(sub, args, output, error); while (run.MoveNext()) yield return run.Current; yield break; }
@@ -142,11 +192,23 @@ namespace Dungeons
                         ["roomKinds"] = pack.Rooms.Count,
                         ["plan"] = string.Join(", ", pack.Plan.Select(s => s.Tag + (s.OpensWith != null ? $" (opened by {s.OpensWith})" : ""))),
                         ["problems"] = problems != null && problems.Count > 0 ? new JArray(problems) : null,
+                        ["source"] = PackSync.SourceOf(name),
+                        ["hash"] = PackSync.Find(PackSync.Current.Packs, name)?.Hash,
                     });
                 }
             }
             catch (Exception e) { error("the packs could not be read: " + e.Message); return; }
-            output(new JObject { ["packs"] = list });
+            output(new JObject
+            {
+                ["packs"] = list,
+                ["looks"] = new JArray(PackSync.Current.Looks.Values.OrderBy(l => l.Name).Select(l => new JObject
+                {
+                    ["name"] = l.Name, ["source"] = PackSync.Describe(l), ["hash"] = l.Hash,
+                    ["problems"] = l.Problems.Count > 0 ? new JArray(l.Problems) : null,
+                })),
+                ["set"] = PackSync.Waiting ? "(waiting for the server's)" : PackSync.Current.Hash,
+                ["leftOut"] = PackSync.Current.LeftOut.Count > 0 ? new JArray(PackSync.Current.LeftOut) : null,
+            });
         }
 
         private static void List(Action<JObject> output, Action<string> error)
@@ -169,7 +231,7 @@ namespace Dungeons
                     ["ownId"] = z.GetString(Keys.Id),
                     ["pack"] = z.GetString(Keys.Pack),
                     ["seed"] = z.GetInt(Keys.Seed),
-                    ["look"] = EntranceLooks.All.FirstOrDefault(l => l.Prefab.GetStableHashCode() == z.GetPrefab())?.Name,
+                    ["look"] = Entrance.LookOf(z),
                     ["at"] = V(z.GetPosition()),
                     ["distance"] = Mathf.Round(Dungeons.FlatDistance(z.GetPosition(), me)),
                     ["enteredDay"] = z.GetInt(Keys.Entered, -1),
@@ -245,6 +307,8 @@ namespace Dungeons
                 ["inside"] = new JArray(Player.GetAllPlayers().Where(p => p != null && site.Contains(p.transform.position)).Select(p => p.GetPlayerName())),
                 ["exit"] = site.Exit != null,
                 ["heldBack"] = Safety.HeldBack,
+                ["parkour"] = site.Layout?.Pack == null ? null : PackReader.Parkour(site.Layout.Pack) ? "allowed" : "off inside (the pack says so)",
+                ["missing"] = site.Layout?.Pack == null ? null : new JArray(Checks.Pack(site.Layout.Pack, true).Select(u => $"{u.Kind} {u.Name}")),
                 ["biome"] = BiomeOf(site),
                 ["mechanisms"] = site.Mechs == null ? (site.MechsMade ? "none" : "not made yet") : $"{site.Mechs.All.Count}{(site.Mechs.Complete ? "" : " (still being made)")}, {site.Mechs.All.Count(m => site.Mechs.Motion(m, MechClock.Now).Moving(MechClock.Now))} moving",
                 ["mechState"] = z.GetString(Keys.Mechs),
@@ -268,8 +332,8 @@ namespace Dungeons
             if (Dungeons.AnyoneInside(site)) { error("someone is inside: a dungeon never comes back new while anyone is in it"); return; }
             if (!site.IsOwner)
             {
-                if (site.View == null) { error("its entrance isn't loaded here (the player is far inside it): go nearer the entrance"); return; }
-                site.View.ClaimOwnership();
+                if (site.Zdo == null) { error("its entrance's ZDO isn't known here: go nearer the entrance"); return; }
+                site.Claim();
             }
             if (!Dungeons.Reset(site, "the reset command")) { error("could not reset it"); return; }
             output(new JObject { ["id"] = site.Zdo.m_uid.ToString(), ["reset"] = true, ["resets"] = site.Zdo.GetInt(Keys.Resets) });
@@ -348,7 +412,7 @@ namespace Dungeons
             forward = forward.sqrMagnitude < 0.01f ? Vector3.forward : forward.normalized;
             Vector3 at = player.transform.position + forward * 4f;
             at.y = ZoneSystem.instance.GetGroundHeight(at);
-            GameObject go = Object.Instantiate(Entrance.PrefabFor(pack.EntranceLook), at, Quaternion.LookRotation(-forward));
+            GameObject go = Entrance.Place(pack.EntranceLook, at, Quaternion.LookRotation(-forward));
             DungeonEntrance entrance = go.GetComponent<DungeonEntrance>();
             ZDO zdo = entrance?.View?.GetZDO();
             if (zdo == null) { Object.Destroy(go); error("the entrance was made without a ZDO"); yield break; }
@@ -494,6 +558,18 @@ namespace Dungeons
                 if (!string.IsNullOrEmpty(m.Def.Doorway)) o["doorway"] = m.Def.Doorway + (mo.To == 0 ? " (shut)" : " (open)");
                 if (m.Def.Wires.Count > 0) o["wires"] = new JArray(m.Def.Wires.Select(w => (Layouts.Target(site.Layout, m.Room, w) ?? "nothing (" + w.Target + ")") + " " + (w.Do ?? "next")));
                 if (m.IsPlate) o["pressed"] = m.Pressed;
+                if (m.OneShot) { o["once"] = true; o["done"] = site.Mechs.IsDone(m); }
+                if (m.IsLever && site.Mechs.LockedLever(m)) o["locked"] = "until its room is cleared";
+                if (m.Def.Kind == "breakable") o["broken"] = site.Mechs.IsBroken(m);
+                if (m.Def.Kind == "shortcut") o["shortcut"] = $"{m.Def.Pair} ({(m.Def.Deep ? "deep" : "near")} door): {(site.Mechs.ShortcutOpen(m) ? "open" : "sealed")}";
+                if (m.Def.Encounter != null)
+                {
+                    EncounterRecord r = site.Mechs.EncounterOf(m);
+                    EncounterDef e = m.Def.Encounter;
+                    o["state"] = r.State;
+                    o["encounter"] = (r.State == EncounterRecord.Idle ? "idle" : r.State == EncounterRecord.Cleared ? "cleared" : e.Siege > 0 ? $"siege, {r.Kills} of {e.Siege} killed" : e.Waves.Count == 0 ? "guarding" : $"wave {r.Wave + 1} of {e.Waves.Count}")
+                                     + $" (starts on {e.StartOn}; set 0 idle, 1 start, 2 cleared)";
+                }
                 if (Player.m_localPlayer != null) o["distance"] = Math.Round(Vector3.Distance(Player.m_localPlayer.transform.position, m.WorldPos), 1);
                 list.Add(o);
             }
@@ -567,6 +643,48 @@ namespace Dungeons
                 ["uses"] = layout.Solution.Count,
                 ["solution"] = steps,
                 ["note"] = layout.Solution.Count == 0 ? "no uses needed (or the pack has no puzzle)" : "from a new dungeon, every mechanism at its start: use these in order",
+            });
+        }
+
+        // ---- checking the packs against this game ----
+
+        private static void Check(string[] args, Action<JObject> output, Action<string> error)
+        {
+            List<string> names = args.Length > 1 ? new List<string> { args[1] } : Packs.Names.ToList();
+            var packs = new JArray();
+            var missing = new Dictionary<string, JObject>();
+            int used = 0;
+            foreach (string name in names)
+            {
+                Pack pack;
+                try { pack = Packs.Get(name); }
+                catch (Exception e) { error($"pack {name} can't be read: {e.Message}"); return; }
+                if (pack == null) { error($"no pack \"{name}\" (dungeon packs lists them)"); return; }
+                List<Checks.Use> all = Checks.Pack(pack, false);
+                List<Checks.Use> gone = all.Where(u => !Checks.Has(u)).ToList();
+                used += all.Count;
+                packs.Add(new JObject { ["pack"] = pack.Name, ["names"] = all.Count, ["missing"] = gone.Count, ["look"] = EntranceLooks.Get(pack.EntranceLook).Name });
+                foreach (Checks.Use u in gone)
+                {
+                    string key = u.Kind + " " + u.Name;
+                    if (!missing.TryGetValue(key, out JObject o)) missing[key] = o = new JObject { ["name"] = u.Name, ["kind"] = u.Kind, ["usedBy"] = new JArray() };
+                    foreach (string w in u.Where) if (!((JArray)o["usedBy"]).Any(t => (string)t == w)) ((JArray)o["usedBy"]).Add(w);
+                }
+            }
+            // and every entrance look, whether a pack uses it or not
+            foreach (EntranceLooks.Look look in EntranceLooks.All)
+                foreach (Checks.Use u in Checks.Look(look, true))
+                {
+                    string key = u.Kind + " " + u.Name;
+                    if (!missing.TryGetValue(key, out JObject o)) missing[key] = o = new JObject { ["name"] = u.Name, ["kind"] = u.Kind, ["usedBy"] = new JArray() };
+                    foreach (string w in u.Where) if (!((JArray)o["usedBy"]).Any(t => (string)t == w)) ((JArray)o["usedBy"]).Add(w);
+                }
+            output(new JObject
+            {
+                ["packs"] = packs,
+                ["looks"] = new JArray(EntranceLooks.All.Select(l => l.Name)),
+                ["missing"] = new JArray(missing.Values),
+                ["note"] = missing.Count == 0 ? $"this game has every one of the {used} names the packs use" : "these names aren't in this game: the parts are left out where they're used (a mechanism or look without them shows what's left)",
             });
         }
 

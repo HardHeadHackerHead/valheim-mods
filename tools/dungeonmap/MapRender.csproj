@@ -1,0 +1,35 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <!-- The dungeon map (M inside a dungeon) drawn outside the game: compiles the mod's layout code and its map code (MapLayout.cs,
+       MapDraw.cs) against the game's own UnityEngine.CoreModule (its Vector3 and Color32 are plain C#) and writes every floor of a
+       layout as a picture. Beside tools/dungeons, not in it: that project compiles every .cs under its folder. See Program.cs. -->
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net48</TargetFramework>
+    <LangVersion>latest</LangVersion>
+    <Nullable>disable</Nullable>
+    <ImplicitUsings>disable</ImplicitUsings>
+    <AssemblyName>MapRender</AssemblyName>
+    <RootNamespace>Dungeons</RootNamespace>
+    <ValheimDir Condition="'$(ValheimDir)' == ''">$(VALHEIM_DIR)</ValheimDir>
+    <ValheimDir Condition="'$(ValheimDir)' == ''">D:/SteamLibrary/steamapps/common/Valheim</ValheimDir>
+    <ManagedDir>$(ValheimDir)/valheim_Data/Managed</ManagedDir>
+    <ModDir>$(MSBuildThisFileDirectory)../../mods/Dungeons</ModDir>
+  </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="Microsoft.NETFramework.ReferenceAssemblies" Version="1.0.3" PrivateAssets="all" />
+    <Reference Include="System.Drawing" />
+    <Reference Include="UnityEngine.CoreModule"><HintPath>$(ManagedDir)/UnityEngine.CoreModule.dll</HintPath></Reference>
+    <Reference Include="Newtonsoft.Json"><HintPath>$(ManagedDir)/Newtonsoft.Json.dll</HintPath></Reference>
+    <Reference Include="netstandard"><HintPath>$(ManagedDir)/netstandard.dll</HintPath></Reference>
+    <Compile Include="$(ModDir)/Model.cs" Link="Mod/Model.cs" />
+    <Compile Include="$(ModDir)/Layouts.cs" Link="Mod/Layouts.cs" />
+    <Compile Include="$(ModDir)/PackReader.cs" Link="Mod/PackReader.cs" />
+    <Compile Include="$(ModDir)/LayoutSolver.cs" Link="Mod/LayoutSolver.cs" />
+    <Compile Include="$(ModDir)/LookCheck.cs" Link="Mod/LookCheck.cs" />
+    <Compile Include="$(ModDir)/TriggerModel.cs" Link="Mod/TriggerModel.cs" />
+    <Compile Include="$(ModDir)/PackReaderTriggers.cs" Link="Mod/PackReaderTriggers.cs" />
+    <Compile Include="$(ModDir)/TriggerSolve.cs" Link="Mod/TriggerSolve.cs" />
+    <Compile Include="$(ModDir)/MapLayout.cs" Link="Mod/MapLayout.cs" />
+    <Compile Include="$(ModDir)/MapDraw.cs" Link="Mod/MapDraw.cs" />
+  </ItemGroup>
+</Project>

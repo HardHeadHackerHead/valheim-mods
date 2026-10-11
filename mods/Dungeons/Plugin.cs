@@ -25,7 +25,7 @@ namespace Dungeons
     {
         public const string Guid = "com.quad.dungeons";
         public const string Name = "Dungeons";
-        public const string Version = "0.1.0";
+        public const string Version = "0.2.0";
 
         internal static Plugin Instance;
         internal static ManualLogSource Log;
@@ -43,8 +43,11 @@ namespace Dungeons
             Synced = new DHack.Shared.ServerSettings(Guid, Config, Logger);
             ResetDays = Synced.Add(Config.Bind("1 - Dungeons", "ResetDays", 3, new ConfigDescription("In-game days after a dungeon is first entered before it comes back new: its enemies, loot and puzzle (only once nobody is inside). 0: never. [Synced with Server]", new AcceptableValueRange<int>(0, 100))));
 
+            PackWatch.Setup(Config);   // (SyncReload.cs) pack makers: reload the config folder's packs on save, off by default
             _harmony = Harmony.CreateAndPatchAll(typeof(Plugin).Assembly, Guid);
             if (ZNetScene.instance != null) Entrance.Register(ZNetScene.instance);   // a reload while in a world
+            BlockKeys.Define();        // the packs' key items (BlockKeys.cs), made with the reward items
+            Builder.RegisterItems();   // the reward items (BuildRewards.cs): nothing until ZNetScene or ObjectDB exists
             Logger.LogInfo($"{Name} {Version} loaded");
         }
 
@@ -66,6 +69,8 @@ namespace Dungeons
             Tools.Unregister();
             _harmony?.UnpatchSelf();
             Entrance.Unregister();
+            Builder.UnregisterItems();
+            PackWatch.Dispose();
             Synced?.Dispose();
             DHack.Shared.Translations.Unload();
             if (Instance == this) Instance = null;

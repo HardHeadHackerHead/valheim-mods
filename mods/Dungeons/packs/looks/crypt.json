@@ -4,5 +4,8 @@
   "front": 3.2,
   "parts": [
     {"location": "Crypt4", "keep": ["exterior", "Gateway/Cube"], "doorway": [0, 0, 6.96], "at": [0, 0, 0]}
+  ],
+  "inside": [
+    {"prefab": "dungeon_forestcrypt_door", "at": [0, 0, 0.3]}
   ]
 }

@@ -46,6 +46,7 @@ namespace Dungeons
             _holding = _sentOut = _ourTeleport = false;
             _heldFor = _grace = _falling = 0f;
             Waiting.Clear();
+            TransientPrefabs.Clear();
         }
 
         /// <summary>Called just before we teleport the player in or out: the fall grace covers this teleport.</summary>
@@ -68,7 +69,14 @@ namespace Dungeons
             if (pos.y < 3000f || p.IsDead() || p.IsDebugFlying() || ZNetScene.instance == null) { Release(); _falling = 0f; return; }
 
             Site site = Dungeons.Covering(pos);
-            bool hold = site != null ? !site.Ready : !ZNetScene.instance.IsAreaReady(pos) && Location.GetZoneLocation(pos) == null;
+            bool asking = false;
+            if (site == null && Location.GetZoneLocation(pos) == null)
+            {
+                // nothing known here: look the dungeon up (the entrances this game knows, or the server's) before letting go
+                asking = Dungeons.Discover(pos);
+                site = Dungeons.Covering(pos);
+            }
+            bool hold = site != null ? !site.Ready : asking || !ZNetScene.instance.IsAreaReady(pos) && Location.GetZoneLocation(pos) == null;
             if (!hold)
             {
                 Release();
@@ -148,7 +156,7 @@ namespace Dungeons
             {
                 if (z.Created) continue;
                 Vector3 p = z.GetPosition();
-                if (p.y < 3000f || !MustWait(p)) continue;
+                if (p.y < 3000f || Transient(z.GetPrefab()) || !MustWait(p)) continue;
                 z.Created = true;
                 Waiting.Add(z);
             }
@@ -174,10 +182,36 @@ namespace Dungeons
             return Location.GetZoneLocation(p) == null;
         }
 
+        // ---- what's only passing ----
+
+        private static readonly Dictionary<int, bool> TransientPrefabs = new Dictionary<int, bool>();
+
+        /// <summary>A prefab that's only passing: a sound or an effect (sfx_, vfx_, fx_, or a ZSFX or TimedDestruction with nothing to keep:
+        /// no item, character or gravestone), or a projectile in flight (an arrow becomes an item when it lands). Neither held back nor put
+        /// back by the net: it goes by itself.</summary>
+        private static bool Transient(int prefabHash)
+        {
+            if (TransientPrefabs.TryGetValue(prefabHash, out bool known)) return known;
+            if (ZNetScene.instance == null) return false;
+            GameObject prefab = ZNetScene.instance.GetPrefab(prefabHash);
+            bool passing = false;
+            if (prefab != null)
+            {
+                string name = prefab.name.ToLowerInvariant();
+                bool keep = prefab.GetComponent<ItemDrop>() != null || prefab.GetComponent<Character>() != null || prefab.GetComponent<TombStone>() != null;
+                passing = prefab.GetComponent<Projectile>() != null
+                          || (!keep && (name.StartsWith("sfx_") || name.StartsWith("vfx_") || name.StartsWith("fx_")
+                                        || prefab.GetComponentInChildren<ZSFX>(true) != null || prefab.GetComponent<TimedDestruction>() != null));
+            }
+            TransientPrefabs[prefabHash] = passing;
+            return passing;
+        }
+
         // ---- the safety net ----
 
         private static readonly AccessTools.FieldRef<ZNetScene, Dictionary<ZDO, ZNetView>> Instances = AccessTools.FieldRefAccess<ZNetScene, Dictionary<ZDO, ZNetView>>("m_instances");
         private static readonly List<KeyValuePair<ZNetView, Vector3>> ToMove = new List<KeyValuePair<ZNetView, Vector3>>();
+        private static readonly List<ZNetView> ToRemove = new List<ZNetView>();
         private static int _floorMask = -1;
         private static float _nextNet;
 
@@ -192,7 +226,8 @@ namespace Dungeons
             foreach (KeyValuePair<ZDO, ZNetView> kv in Instances(ZNetScene.instance))
             {
                 ZNetView view = kv.Value;
-                if (view == null || !kv.Key.IsOwner() || view.GetComponent<Player>() != null) continue;
+                if (view == null || !kv.Key.IsOwner() || view.GetComponent<Player>() != null || Transient(kv.Key.GetPrefab())) continue;
+                string belongs = Sweep.DungeonOf(kv.Key);   // (one of another dungeon's is never moved into this one: the orphan sweep takes it)
                 Vector3 pos = view.transform.position;
                 // a gravestone: from wherever it is (even the ground), if it was made in a dungeon built here and has left it (far below)
                 if (view.GetComponent<TombStone>() != null && kv.Key.GetVec3(ZDOVars.s_spawnPoint, out Vector3 spawn) && spawn.y > 3000f && pos.y < spawn.y - 30f)
@@ -203,12 +238,26 @@ namespace Dungeons
                 if (pos.y < 3000f) continue;
                 foreach (Site site in built)
                 {
+                    if (belongs.Length > 0 && belongs != site.Id) continue;
                     site.Box(out Bounds box);
                     if (pos.y >= box.min.y - 1f || pos.x < box.min.x || pos.x > box.max.x || pos.z < box.min.z || pos.z > box.max.z) continue;
-                    ToMove.Add(new KeyValuePair<ZNetView, Vector3>(view, FloorUnder(site, pos, false)));
+                    // a creature goes back into the room it fell from (the room over it), or, with none over it (it never was in the
+                    // dungeon: a spawner left outside its rooms), is taken away: never stacked at the way in
+                    if (view.GetComponent<Character>() != null)
+                    {
+                        if (RoomFloor(site, pos, out Vector3 floor)) ToMove.Add(new KeyValuePair<ZNetView, Vector3>(view, floor));
+                        else ToRemove.Add(view);
+                    }
+                    else ToMove.Add(new KeyValuePair<ZNetView, Vector3>(view, FloorUnder(site, pos, false)));
                     break;
                 }
             }
+            foreach (ZNetView view in ToRemove)
+            {
+                Plugin.Log.LogWarning($"{view.name.Replace("(Clone)", "")} fell out of a dungeon at {view.transform.position} with no room over it: taken away");
+                ZNetScene.instance.Destroy(view.gameObject);
+            }
+            ToRemove.Clear();
             foreach (KeyValuePair<ZNetView, Vector3> move in ToMove)
             {
                 ZNetView view = move.Key;
@@ -226,20 +275,26 @@ namespace Dungeons
         {
             if (_floorMask == -1) _floorMask = LayerMask.GetMask("Default", "static_solid", "Default_small", "piece", "terrain");
             if (spot && Physics.Raycast(p, Vector3.down, out RaycastHit hit, 60f, _floorMask)) return hit.point + Vector3.up * 0.3f;
-            if (!spot)
-            {
-                foreach (PlacedRoom room in site.Layout.Rooms.Where(r => r.Def != null).OrderBy(r => r.Pos.y))
-                {
-                    Vector3 c = site.Origin + room.Pos;
-                    Vector3 size = room.Def.Size;
-                    bool sideways = Mathf.Abs(Mathf.DeltaAngle(room.Yaw, 90f)) < 1f || Mathf.Abs(Mathf.DeltaAngle(room.Yaw, -90f)) < 1f;
-                    float hx = (sideways ? size.z : size.x) / 2f, hz = (sideways ? size.x : size.z) / 2f;
-                    if (Mathf.Abs(p.x - c.x) > hx || Mathf.Abs(p.z - c.z) > hz) continue;
-                    var from = new Vector3(p.x, c.y + size.y / 2f - 0.3f, p.z);
-                    if (Physics.Raycast(from, Vector3.down, out RaycastHit floor, size.y + 1f, _floorMask)) return floor.point + Vector3.up * 0.3f;
-                }
-            }
+            if (!spot && RoomFloor(site, p, out Vector3 found)) return found;
             return Dungeons.Doorway(site, 2f, out Vector3 wayIn, out _) ? wayIn + Vector3.up * 0.3f : p;
+        }
+
+        /// <summary>The floor of the lowest room over a point (a ray down from just under its ceiling), if a room is over it and has one.</summary>
+        private static bool RoomFloor(Site site, Vector3 p, out Vector3 floorAt)
+        {
+            if (_floorMask == -1) _floorMask = LayerMask.GetMask("Default", "static_solid", "Default_small", "piece", "terrain");
+            foreach (PlacedRoom room in site.Layout.Rooms.Where(r => r.Def != null).OrderBy(r => r.Pos.y))
+            {
+                Vector3 c = site.Origin + room.Pos;
+                Vector3 size = room.Def.Size;
+                bool sideways = Mathf.Abs(Mathf.DeltaAngle(room.Yaw, 90f)) < 1f || Mathf.Abs(Mathf.DeltaAngle(room.Yaw, -90f)) < 1f;
+                float hx = (sideways ? size.z : size.x) / 2f, hz = (sideways ? size.x : size.z) / 2f;
+                if (Mathf.Abs(p.x - c.x) > hx || Mathf.Abs(p.z - c.z) > hz) continue;
+                var from = new Vector3(p.x, c.y + size.y / 2f - 0.3f, p.z);
+                if (Physics.Raycast(from, Vector3.down, out RaycastHit floor, size.y + 1f, _floorMask)) { floorAt = floor.point + Vector3.up * 0.3f; return true; }
+            }
+            floorAt = p;
+            return false;
         }
 
         // ---- the logout point ----

@@ -26,7 +26,7 @@ namespace Dungeons
     /// Locks: a plan step with OpensWith is entered through a gate. Its room's own gate (a gate or door mechanism with a "doorway") if it
     /// has one, else the pack's "gates" pattern for that doorway's type, added to that placed room (PlacedRoom.Def is then a copy of its
     /// RoomDef, with the gate in its Mechs: everyone reads a placed room's mechanisms from r.Def.Mechs). The opening step's room must
-    /// hold a lever or plate; if none of its wires reaches the gate, its first lever gets one ("step:<locked step>", "next").
+    /// hold a lever or plate; if none of its wires reaches the gate, its first lever gets one ("step:<locked step>", "set:1").
     ///
     /// Rooms join where doorways of the same type meet, at the same place, facing opposite ways (Doorway.Facing points into its room),
     /// and their boxes (Room.m_size, centred on the room) may not overlap, less a small margin (the game shrinks the new box by 0.1 m).
@@ -400,11 +400,15 @@ namespace Dungeons
                         segment = new List<int> { hub };
                     }
                     bool last = s == _pack.Plan.Count - 1;
+                    // A step the way goes on from (the next step without "from", or one "from" it) needs a second doorway; a branch's
+                    // end (a key in a side wing) may be a dead end.
+                    bool goesOn = (!last && PackReader.From(_pack, _pack.Plan[s + 1]) == null) || _pack.Plan.Any(p => PackReader.From(_pack, p) == StepName(step));
                     int stepsLeft = _pack.Plan.Count - s;
                     int budget = target - RoomCount() - stepsLeft;            // rooms left for in-between and branches
                     int gap = 1 + _rng.Range(Math.Max(1, budget * 2 / 3 / stepsLeft));
-                    List<RoomDef> stepRooms = _pack.Rooms.Where(r => HasTag(r, step.Tag) && !r.Entrance && !r.EndCap && (last || Ways(r) >= 2)).ToList();
-                    if (stepRooms.Count == 0) { Problem($"no room for step {StepName(step)} (tag {step.Tag}{(last ? "" : ", with two doorways or more")})"); return false; }
+                    if (_pack.MaxRooms - RoomCount() < 2 * stepsLeft) gap = 0;   // (not room for a filler before every step left: this one goes on directly)
+                    List<RoomDef> stepRooms = _pack.Rooms.Where(r => HasTag(r, step.Tag) && !r.Entrance && !r.EndCap && (!goesOn || Ways(r) >= 2)).ToList();
+                    if (stepRooms.Count == 0) { Problem($"no room for step {StepName(step)} (tag {step.Tag}{(goesOn ? ", with two doorways or more" : "")})"); return false; }
                     // A key (a later step opens with it) wants a room with a lever or plate; a locked step one with a doorway a gate closes.
                     if (_pack.Plan.Any(p => p.OpensWith == StepName(step)) && stepRooms.Any(r => r.Mechs.Any(IsUsable)))
                         stepRooms = stepRooms.Where(r => r.Mechs.Any(IsUsable)).ToList();
@@ -424,6 +428,8 @@ namespace Dungeons
                         if (placed >= 0) break;
                         if (RoomCount() + stepsLeft >= _pack.MaxRooms) { Problem($"step {StepName(step)}: no place for it within {_pack.MaxRooms} rooms"); return false; }
                         int filler = GrowAny(segment, Fillers(), true);
+                        if (filler < 0 && between < gap) placed = GrowAny(segment, stepRooms, false, entry);   // (nothing fits in between: the step itself)
+                        if (placed >= 0) break;
                         if (filler < 0) { Problem($"step {StepName(step)}: the way there ran into dead ends after room {segment[0]} ({_layout.Rooms[segment[0]].Def.Name})"); return false; }
                         segment.Add(filler);
                     }
@@ -451,8 +457,8 @@ namespace Dungeons
                     if (open.Count == 0) return;
                     KeyValuePair<int, int> at = open[_rng.Range(open.Count)];
                     int depth = _layout.Rooms[at.Key].Depth + 1;
-                    List<RoomDef> fit = Fillers().Where(r => r.MinDepth <= depth).ToList();
-                    if (TryAll(at.Key, at.Value, WeightedOrder(fit, false), depth) < 0) _dead.Add(Key(at.Key, at.Value));
+                    List<RoomDef> fit = Fillers(true).Where(r => r.MinDepth <= depth).ToList();
+                    if (TryAll(at.Key, at.Value, WeightedOrder(fit, false), depth, BehindWall) < 0) _dead.Add(Key(at.Key, at.Value));
                 }
             }
 
@@ -461,6 +467,7 @@ namespace Dungeons
             /// turning stair would make it pointless.</summary>
             private void Close()
             {
+                if (_layout.Ok) Shortcut();
                 List<KeyValuePair<int, int>> open = Open(false);
                 bool guard = _layout.Ok && (_puzzle || _layout.Locks.Count > 0 || _pack.Plan.Count > 2);
                 KeyValuePair<int, int> before = guard ? Measure() : default(KeyValuePair<int, int>);
@@ -469,10 +476,12 @@ namespace Dungeons
                     int room = open[i].Key, door = open[i].Value;
                     if (_linkOf[room][door] >= 0) continue;   // (joined to an earlier one in this loop)
                     Vector3 at = At(room, door);
+                    bool wayIn = room == 0 && door == _way;
                     bool looped = false;
-                    for (int j = i + 1; j < open.Count && !looped; j++)
+                    for (int j = i + 1; j < open.Count && !looped && !wayIn; j++)   // (the way in never loops: it's behind the way out)
                     {
                         int r2 = open[j].Key, d2 = open[j].Value;
+                        if (r2 == 0 && d2 == _way) continue;
                         if (r2 == room || _linkOf[r2][d2] >= 0 || !SameType(Door(room, door), Door(r2, d2))) continue;
                         if (Dist(at, At(r2, d2)) > Near || Quadrant(Facing(room, door)) != Opposite(Quadrant(Facing(r2, d2)))) continue;
                         Join(room, door, r2, d2);
@@ -485,8 +494,18 @@ namespace Dungeons
                     }
                     if (looped) continue;
                     string type = Door(room, door).Type ?? "";
-                    List<RoomDef> caps = _pack.Rooms.Where(r => r.EndCap && r.Doorways.Any(d => (d.Type ?? "") == type)).ToList();
-                    TryAll(room, door, WeightedOrder(caps, true), _layout.Rooms[room].Depth + 1);   // none fits: sealed
+                    List<RoomDef> caps = _pack.Rooms.Where(r => r.EndCap && !PackReader.HasShortcut(r) && r.Doorways.Any(d => (d.Type ?? "") == type)).ToList();
+                    // The way in (behind the way out) and a doorway a gate closes take a plain cap: a flat seal, not a nook or a treasury
+                    // (a door opening and shutting behind the Leave door, or a room behind a gate). The way in: the pack's "entranceCap" if
+                    // it names one.
+                    bool gated = _layout.Rooms[room].Def.Mechs.Any(m => IsGate(m) && m.Doorway == Door(room, door).Id);
+                    if (wayIn || gated)
+                    {
+                        string named = wayIn ? PackReader.EntranceCap(_pack) : null;
+                        caps = named != null ? caps.Where(r => r.Name == named).ToList() : caps.Where(PlainCap).ToList();
+                    }
+                    if (TryAll(room, door, WeightedOrder(caps, true), _layout.Rooms[room].Depth + 1) < 0 && (wayIn || gated))   // (others: sealed)
+                        Problem(wayIn ? "no plain end cap fits the way in" : $"no plain end cap fits room {room}'s gated doorway {Door(room, door).Id}");
                 }
             }
 
@@ -503,8 +522,23 @@ namespace Dungeons
                 foreach (string p in Order()) Problem(p);
                 if (!_layout.Ok) return;
                 // And the puzzle: every step reached and the end too, from the entrance, with the levers and plates.
-                string why = Solve(_layout, _layout.Solution);
-                if (why != null) { Problem(why); return; }
+                string why = Solve(_layout, _layout.Solution, false, true);   // (every breakable wall standing: nothing may need a secret room)
+                if (why != null && Solve(_layout, new List<string>()) == null) { Problem("the end needs a breakable wall broken (" + why + ")"); return; }
+                if (why != null)
+                {
+                    // Not alone: would a second player (or a creature) holding a plate down do it? Say so: the pack needs a solo way.
+                    var together = new List<string>();
+                    Problem(Solve(_layout, together, true) == null
+                        ? $"no solo way: only with a plate held down by a second player or a creature ({string.Join(", ", together)})"
+                        : why);
+                    return;
+                }
+                if (_layout.Rooms.Any(r => PackReader.HasShortcut(r.Def)))
+                {
+                    var without = new List<string>();
+                    if (Solve(_layout, without, false, true, true) == null && without.Count > _layout.Solution.Count)
+                        Problem($"the shortcut makes the puzzle shorter ({_layout.Solution.Count} uses, {without.Count} without it)");
+                }
                 int min = PackReader.MinUses(_pack);
                 if (_layout.Solution.Count < min) Problem($"too easy: solved in {_layout.Solution.Count} uses (the pack wants {min} or more)");
             }
@@ -572,7 +606,7 @@ namespace Dungeons
             /// doorway the pack has a gate pattern for.</summary>
             private bool LockEntry(RoomDef def, int j)
             {
-                List<MechDef> gates = def.Mechs.Where(IsGate).ToList();
+                List<MechDef> gates = def.Mechs.Where(m => IsGate(m) && !string.IsNullOrEmpty(m.Doorway)).ToList();
                 if (gates.Count > 0) return gates.Any(m => m.Doorway == def.Doorways[j].Id);
                 return PackReader.Gate(_pack, def.Doorways[j].Type) != null;
             }
@@ -602,7 +636,7 @@ namespace Dungeons
             {
                 int keyRoom = _layout.Rooms.FindIndex(r => r.Step == step.OpensWith);
                 if (keyRoom < 0) { Problem($"step {StepName(step)} opens with {step.OpensWith}, which isn't placed before it"); return false; }
-                var toGate = new Wire { Target = "step:" + StepName(step), Do = "next" };
+                var toGate = new Wire { Target = "step:" + StepName(step), Do = "set:1" };   // (opens it for good: fine for a one-shot lever)
                 string gate = Target(_layout, keyRoom, toGate);
                 List<MechDef> mechs = _layout.Rooms[keyRoom].Def.Mechs;
                 if (mechs.Any(m => IsUsable(m) && m.Wires.Any(w => w.Do != "hold" && Target(_layout, keyRoom, w) == gate))) return true;
@@ -677,11 +711,15 @@ namespace Dungeons
                 return -1;
             }
 
-            private int TryAll(int room, int door, List<RoomDef> defs, int depth)
+            /// <summary>A secret room is only ever joined by the doorway its breakable wall closes.</summary>
+            private static bool BehindWall(RoomDef def, int j) =>
+                !PackReader.Secret(def) || def.Mechs.Any(m => m.Kind == "breakable" && m.Doorway == def.Doorways[j].Id);
+
+            private int TryAll(int room, int door, List<RoomDef> defs, int depth, Func<RoomDef, int, bool> entry = null)
             {
                 foreach (RoomDef def in defs)
                 {
-                    int i = TryPlace(def, room, door, depth);
+                    int i = TryPlace(def, room, door, depth, entry);
                     if (i >= 0) return i;
                 }
                 return -1;
@@ -689,7 +727,7 @@ namespace Dungeons
 
             /// <summary>def joined to (room, door) by one of its doorways (one entry allows, if given), if its box fits. The new room's
             /// index, or -1.</summary>
-            private int TryPlace(RoomDef def, int room, int door, int depth, Func<RoomDef, int, bool> entry = null)
+            private int TryPlace(RoomDef def, int room, int door, int depth, Func<RoomDef, int, bool> entry = null, bool dry = false)
             {
                 Doorway there = Door(room, door);
                 Vector3 at = At(room, door);
@@ -711,6 +749,7 @@ namespace Dungeons
                         Vector3 pos = Snap(at - Turn(def.Doorways[j].At, turn));
                         Box box = BoxOf(def, pos, turn);
                         if (!Fits(box)) continue;
+                        if (dry) return 0;   // (it would fit)
                         int i = Add(def, pos, turn, depth, -1);
                         _parentLink[i] = Join(room, door, i, j);
                         return i;
@@ -734,6 +773,43 @@ namespace Dungeons
                 _parentLink.Add(parentLink);
                 _used[def] = Used(def) + 1;
                 return i;
+            }
+
+            /// <summary>A plain cap: an end cap under 1 m deep along its doorway, with no mechanisms and no saved parts (no chest).</summary>
+            private static bool PlainCap(RoomDef def) => def.EndCap && def.Mechs.Count == 0 && !def.Parts.Any(p => p.Saved) && CapDepth(def) < 1f;
+
+            /// <summary>The pack's shortcut, if it has one: its far end on an open doorway of the far step's room (or of a room one link from
+            /// it), its near end on a spare doorway of the entrance room (not the way in). Both or neither: it's left out if one doesn't fit.</summary>
+            private void Shortcut()
+            {
+                PackReader.ShortcutSpec spec = PackReader.Shortcut(_pack);
+                if (spec == null) return;
+                RoomDef near = _pack.Rooms.FirstOrDefault(r => r.Name == spec.Near), far = _pack.Rooms.FirstOrDefault(r => r.Name == spec.Far);
+                int step = _layout.Rooms.FindIndex(r => r.Step == spec.FarStep);
+                if (near == null || far == null || step < 0) return;
+                var rooms = new List<int> { step };
+                foreach (int li in _linkOf[step])
+                    if (li >= 0)
+                    {
+                        Link l = _layout.Links[li];
+                        int other = l.Room == step ? l.OtherRoom : l.Room;
+                        if (!_layout.Rooms[other].Def.EndCap && !PackReader.Secret(_layout.Rooms[other].Def)) rooms.Add(other);
+                    }
+                bool Spare(int r, int d) => _linkOf[r][d] < 0 && !(r == 0 && d == _way)
+                    && !_layout.Rooms[r].Def.Mechs.Any(m => IsGate(m) && m.Doorway == Door(r, d).Id);
+                KeyValuePair<int, int> farAt = default, nearAt = default;
+                bool farOk = false, nearOk = false;
+                foreach (int r in rooms)
+                {
+                    for (int d = 0; d < _linkOf[r].Length && !farOk; d++)
+                        if (Spare(r, d) && TryPlace(far, r, d, _layout.Rooms[r].Depth + 1, null, true) >= 0) { farAt = new KeyValuePair<int, int>(r, d); farOk = true; }
+                    if (farOk) break;
+                }
+                for (int d = 0; d < _linkOf[0].Length && !nearOk; d++)
+                    if (Spare(0, d) && TryPlace(near, 0, d, 1, null, true) >= 0) { nearAt = new KeyValuePair<int, int>(0, d); nearOk = true; }
+                if (!farOk || !nearOk) return;
+                if (TryPlace(far, farAt.Key, farAt.Value, _layout.Rooms[farAt.Key].Depth + 1) < 0) return;
+                if (TryPlace(near, 0, nearAt.Value, 1) < 0) Problem("the shortcut's far end is in, but its near end no longer fits");
             }
 
             /// <summary>Undoes the newest Join.</summary>
@@ -781,7 +857,7 @@ namespace Dungeons
                 var list = new List<KeyValuePair<int, int>>();
                 for (int r = 0; r < _layout.Rooms.Count; r++)
                 {
-                    if (growing && (r == _end || _layout.Rooms[r].Def.EndCap)) continue;
+                    if (growing && (r == _end || _layout.Rooms[r].Def.EndCap || PackReader.Secret(_layout.Rooms[r].Def))) continue;
                     for (int d = 0; d < _linkOf[r].Length; d++)
                     {
                         if (_linkOf[r][d] >= 0) continue;
@@ -793,8 +869,8 @@ namespace Dungeons
             }
 
             /// <summary>The rooms that may go anywhere: not entrances, not end caps, not kept for a step, and not used up.</summary>
-            private List<RoomDef> Fillers() => _pack.Rooms.Where(r => !r.Entrance && !r.EndCap && !r.Tags.Any(_planTags.Contains)
-                && (r.Max <= 0 || Used(r) < r.Max)).ToList();
+            private List<RoomDef> Fillers(bool secrets = false) => _pack.Rooms.Where(r => !r.Entrance && !r.EndCap && !r.Tags.Any(_planTags.Contains)
+                && (secrets || !PackReader.Secret(r)) && !PackReader.HasShortcut(r) && (r.Max <= 0 || Used(r) < r.Max)).ToList();
 
             private int Used(RoomDef def) => _used.TryGetValue(def, out int n) ? n : 0;
             private int RoomCount() => _layout.Rooms.Count(r => !r.Def.EndCap);
@@ -880,6 +956,14 @@ namespace Dungeons
                 Math.Min(Max.x, b.Max.x) - Math.Max(Min.x, b.Min.x) > Margin &&
                 Math.Min(Max.y, b.Max.y) - Math.Max(Min.y, b.Min.y) > Margin &&
                 Math.Min(Max.z, b.Max.z) - Math.Max(Min.z, b.Min.z) > Margin;
+        }
+
+        /// <summary>How deep an end cap is: its size along its (first) doorway's facing.</summary>
+        internal static float CapDepth(RoomDef def)
+        {
+            if (def.Doorways.Count == 0) return 0f;
+            int q = Quadrant(def.Doorways[0].Facing);
+            return q == 0 || q == 2 ? def.Size.z : q == 1 || q == 3 ? def.Size.x : def.Size.y;
         }
 
         private static Box BoxOf(RoomDef def, Vector3 pos, int turn)

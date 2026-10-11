@@ -4,6 +4,7 @@ using System.Linq;
 using HarmonyLib;
 using UnityEngine;
 using Object = UnityEngine.Object;
+using static DHack.Shared.Translations;
 
 namespace Dungeons
 {
@@ -31,14 +32,27 @@ namespace Dungeons
         // a plate (the owner): where something stands on it (in Base's frame), and whether something did at the last look
         public Bounds PlateBox;
         public bool Pressed, PressKnown;
+        public readonly Dictionary<long, float> RemotePress = new Dictionary<long, float>();
+        // an encounter (MechEncounter.cs): the owner's view of its fight, and the state last shown here
+        public float EncDeadAt = -1f, EncEmptySince = -1f, EncNextSpawn;
+        public int EncAlive, EncSeen = -1;   // the owner: players' games that say they stand on it, until
         public float NextUse;           // a lever: not again before this (Time.time), so one press is one pull
         public float PulledHere = -10f; // a lever: when this game's player pulled it (its sound already played here)
+        public float Damage;            // a breakable (the owner): the damage taken so far
+        public Vector3 BossLast;        // an encounter with a boss (the owner): where its boss was last seen alive
+        public bool BrokenShown, BreakSeen;   // a breakable: shown broken here; looked at once (the first look plays nothing)
 
         // parts that turn while it moves (PartDef.Spin): seen only, each game turns them by itself
         public readonly List<Spinner> Spinners = new List<Spinner>();
         public float SpinTime;          // seconds it has moved here, forwards less backwards
 
         public bool IsLever => Def.Kind == "lever";
+        public bool IsExit => Def.Kind == "exit";
+
+        /// <summary>A lever pulled once stays down until a reset: the pack says "once", or all its wires set a state (pulling it again
+        /// would change nothing, and a handle flipping back and forth for nothing only confuses). A plate with "once" stays pressed.</summary>
+        public bool OneShot => (IsLever && (Def.Once || (Def.Wires.Count > 0 && Def.Wires.All(w => w.Do != null && (w.Do.StartsWith("set:") || w.Do == "start")))))
+                               || (IsPlate && Def.Once);
         public bool IsPlate => Def.Kind == "plate";
         public bool IsGate => Layouts.IsGate(Def);
 
@@ -72,9 +86,10 @@ namespace Dungeons
     /// ApplyGroundForce: the ground body's velocity, sideways only) needs a Rigidbody with a velocity and doesn't lift; our parts have no
     /// Rigidbody, so the game adds nothing and this does all of it, up and down and round included.
     /// </summary>
-    internal class MechSet
+    internal partial class MechSet
     {
         public const float UseReach = 6f;        // how near a player must be to the lever they pull (the owner checks)
+        public const float ExitReach = 3f;       // how near a player must be to an "exit" mechanism to leave by it
         private const float PlateEvery = 0.1f;
 
         public readonly Site Site;
@@ -99,7 +114,7 @@ namespace Dungeons
         {
             Built built = site.Built;
             Layout layout = site.Layout;
-            if (built?.Root == null || layout == null || !layout.Rooms.Any(r => r.Def?.Mechs != null && r.Def.Mechs.Count > 0)) return null;
+            if (built?.Root == null || layout == null || !layout.Rooms.Any(r => (r.Def?.Mechs != null && r.Def.Mechs.Count > 0) || (r.Def?.Triggers != null && r.Def.Triggers.Count > 0))) return null;   // (triggers: a room with only triggers needs the set too)
             var set = new MechSet(site);
             set._root = new GameObject("quaddungeon_mechs");
             set._root.transform.SetParent(built.Root.transform, false);
@@ -149,6 +164,7 @@ namespace Dungeons
             {
                 GameObject made = Builder.MakePart(part, m.Pivot);
                 if (made == null) continue;
+                BlockParts(m, part, made);   // (triggers: a part shown only in some states, BlockSet.cs)
                 if (part.Spin != Vector3.zero) m.Spinners.Add(new Spinner { Part = made.transform, Rest = made.transform.localRotation, Spin = part.Spin });
                 if (part.Saved) WarnOnce($"Mechanism {def.Id}: its part {part.Prefab} is marked saved, but moving parts are scenery (made as scenery)");
             }
@@ -157,9 +173,26 @@ namespace Dungeons
             // a gate must block its doorway when shut, whatever its parts are: one box over what shows of them, if nothing in them is solid
             if (m.IsGate && m.Colliders.Count == 0) AddBox(m, false);
             // a lever must be something to aim at
-            if (m.IsLever && m.Pivot.GetComponentsInChildren<Collider>(true).Length == 0) AddBox(m, true);
+            // a lever must be easy to aim at: always a box over all of it, 0.3 m bigger each way, so the hover ray finds it before its own thin
+            // parts (a bar, a knob) or the room's pieces round it
+            if (m.IsLever) AddBox(m, true, AimMargin);
             if (m.IsLever) p.AddComponent<DungeonLever>().Init(this, m.Key);
+            if (def.Kind == "breakable") p.AddComponent<DungeonBreakable>().Init(this, m.Key);
+            if (def.Kind == "shortcut")
+            {
+                AddBox(m, true, AimMargin);
+                p.AddComponent<DungeonShortcut>().Init(this, m.Key);
+            }
+            // a way out (kind "exit", the vault's): the entrance room's Leave, from up close only (a gate in front of it keeps it shut)
+            if (m.IsExit)
+            {
+                AddBox(m, true, AimMargin);
+                DungeonExit exit = p.AddComponent<DungeonExit>();
+                exit.Site = Site;
+                exit.Reach = ExitReach;
+            }
             if (m.IsPlate) m.PlateBox = PlateArea(m);
+            MakeBlock(m, p);   // (triggers: a building block's E and its own clock, BlockSet.cs)
 
             foreach (Collider c in m.Colliders) _byCollider[c] = m;
             FindSounds(m);
@@ -169,7 +202,9 @@ namespace Dungeons
 
         /// <summary>A box over a mechanism's parts as they show (in its pivot's frame): solid, or one to aim at only (piece_nonsolid: players
         /// walk through it, the hover ray still finds it).</summary>
-        private static void AddBox(Mech m, bool aimOnly)
+        private const float AimMargin = 0.3f;   // a lever's or exit's aim box reaches this far past its parts
+
+        private static void AddBox(Mech m, bool aimOnly, float margin = 0f)
         {
             Bounds? local = null;
             foreach (Renderer r in m.Pivot.GetComponentsInChildren<Renderer>(true))
@@ -184,11 +219,12 @@ namespace Dungeons
                 }
             }
             Bounds box = local ?? new Bounds(new Vector3(0f, 0.6f, 0f), new Vector3(0.4f, 1.2f, 0.4f));
-            box.size = Vector3.Max(box.size, Vector3.one * 0.2f);
+            box.size = Vector3.Max(box.size + Vector3.one * (2f * margin), Vector3.one * 0.2f);
             var go = new GameObject(aimOnly ? "quaddungeon_aim" : "quaddungeon_block");
             go.transform.SetParent(m.Pivot, false);
-            int nonsolid = LayerMask.NameToLayer("piece_nonsolid");
-            if (aimOnly && nonsolid >= 0) go.layer = nonsolid;
+            // aim only: piece_nonsolid (walked through, still hit by the hover ray); solid: static_solid, as Builder.MakePart's parts
+            int layer = LayerMask.NameToLayer(aimOnly ? "piece_nonsolid" : "static_solid");
+            if (layer >= 0) go.layer = layer;
             BoxCollider bc = go.AddComponent<BoxCollider>();
             bc.center = box.center;
             bc.size = box.size;
@@ -227,7 +263,9 @@ namespace Dungeons
         /// <summary>Reads the records again when the ZDO's string changed.</summary>
         private void ReadRecords()
         {
-            string text = Site.Zdo?.GetString(Keys.Mechs) ?? "";
+            ZDO z = Site.Zdo;
+            if (z == null) return;   // (the entrance's ZDO not at hand for a moment: the state as last read stands)
+            string text = z.GetString(Keys.Mechs) ?? "";
             if (text == _text) return;
             _text = text;
             _records = MechRecords.Parse(text);
@@ -244,7 +282,7 @@ namespace Dungeons
 
         /// <summary>The owner: mechanisms to new states, written at once. A mechanism still moving finishes first (its new motion is queued
         /// after it), so nothing ever jumps.</summary>
-        public void Change(IEnumerable<KeyValuePair<Mech, int>> changes, string why)
+        public void Change(IEnumerable<KeyValuePair<Mech, int>> changes, string why, Mech used = null)
         {
             if (!Site.IsOwner) return;
             ReadRecords();
@@ -257,7 +295,21 @@ namespace Dungeons
                 int to = Mathf.Clamp(kv.Value, 0, m.States - 1);
                 bool has = all.TryGetValue(m.Key, out MechRecord rec);
                 MechMotion now0 = MechMotion.At(m.Def, m.States, has, rec, now);
-                if (now0.To == to) continue;
+                bool armed = m.Def.CycleIn != null && m.Def.CycleIn.Count > 0;
+                if (armed)
+                {
+                    int setTo = has ? rec.To : Mathf.Clamp(m.Def.Start, 0, m.States - 1);
+                    if (setTo == to) continue;
+                    all[m.Key] = new MechRecord { To = to, From = now0.To, Time = now };
+                    said.Add($"{m.Key} set {setTo}->{to}");
+                    continue;
+                }
+                if (now0.To == to)
+                {
+                    // a one-shot lever with nothing to turn (one pose): its record alone says it was pulled
+                    if (m == used && !has) { all[m.Key] = new MechRecord { To = to, From = to, Time = now }; said.Add($"{m.Key} pulled"); }
+                    continue;
+                }
                 double end = now0.Start + Math.Max(0f, now0.Seconds);   // (a motion still going, or queued: the new one follows it)
                 double begin = !double.IsInfinity(end) && end > now ? end : now;
                 all[m.Key] = new MechRecord { To = to, From = now0.To, Time = begin };
@@ -281,14 +333,110 @@ namespace Dungeons
             ReadRecords();
             var pending = new Dictionary<Mech, int>();
             int Cur(Mech x) => pending.TryGetValue(x, out int s) ? s : Motion(x, MechClock.Now).To;
+            if (IsDone(m)) { why = $"{key} was already pulled (a one-shot lever: a reset puts it back)"; return false; }
+            if (m.Def.Kind == "shortcut")
+            {
+                // the deep door, used: the pair is open (both doors' records, as one-shot levers keep theirs)
+                if (ShortcutOpen(m)) return true;
+                if (!m.Def.Deep) { why = $"{key} is sealed from the other side"; return false; }
+                Mech other = OtherEnd(m);
+                Change(new[] { new KeyValuePair<Mech, int>(m, Math.Min(1, m.States - 1)) }, $"{who} opened the shortcut {m.Def.Pair}", m);
+                if (other != null) Change(new[] { new KeyValuePair<Mech, int>(other, Math.Min(1, other.States - 1)) }, $"the shortcut {m.Def.Pair}'s other door", other);
+                return true;
+            }
+            if (m.Def.Encounter != null)
+            {
+                if (!StartEncounter(m, who)) { why = $"{key} isn't idle (dungeon set {key} 0 resets it)"; return false; }
+                return true;
+            }
+            if (m.IsLever && LockedLever(m)) { why = $"{key} is locked until its room is cleared"; return false; }
             if (Layouts.IsUsable(m.Def))
             {
                 if (m.IsLever) pending[m] = Layouts.After(m.Def, Cur(m), "next");
                 ApplyWires(m, pending, Cur, false, true);
             }
             else pending[m] = Layouts.After(m.Def, Cur(m), "next");
-            Change(pending.ToList(), $"{who} used {key}");
+            Change(pending.ToList(), $"{who} used {key}", m.OneShot ? m : null);
+            if (m.IsLever) TriggerEvent(TriggerEvents.Lever, m);   // (triggers: a lever pulled, wires or not, TriggerSet.cs)
             return true;
+        }
+
+        // ---- shortcuts, breakables, music
+
+        /// <summary>The other door of a shortcut's pair (same Pair name, anywhere in the dungeon).</summary>
+        public Mech OtherEnd(Mech m) => All.FirstOrDefault(x => x != m && x.Def.Kind == "shortcut" && x.Def.Pair == m.Def.Pair);
+
+        /// <summary>A shortcut's pair is open: either door has its record (a reset clears them).</summary>
+        public bool ShortcutOpen(Mech m)
+        {
+            ReadRecords();
+            Mech other = OtherEnd(m);
+            return _records.ContainsKey(m.Key) || (other != null && _records.ContainsKey(other.Key));
+        }
+
+        /// <summary>The owner: damage to a breakable wall (from the attacker's game); broken at its health (its record, kept as a one-shot
+        /// lever's, so it stays broken until a reset).</summary>
+        public void HitFrom(long sender, string what)
+        {
+            int cut = (what ?? "").LastIndexOf(':');
+            if (!Site.IsOwner || cut <= 0) return;
+            string key = what.Substring(0, cut);
+            if (!ByKey.TryGetValue(key, out Mech m) || m.Def.Kind != "breakable" || IsBroken(m)) return;
+            if (!float.TryParse(what.Substring(cut + 1), System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture, out float damage)) return;
+            m.Damage += Mathf.Clamp(damage, 0f, 10000f);
+            float health = m.Def.Health > 0f ? m.Def.Health : 200f;
+            if (m.Damage < health) return;
+            Change(new[] { new KeyValuePair<Mech, int>(m, Math.Min(1, m.States - 1)) }, $"{key} broken ({m.Damage:0} damage)", m);
+        }
+
+        /// <summary>Every game: a breakable that broke since the last look loses its parts (the crumble and the dust when it's fresh); one
+        /// whole again (a reset) gets them back.</summary>
+        private void Breaks()
+        {
+            foreach (Mech m in All)
+            {
+                if (m.Def.Kind != "breakable" || m.Pivot == null) continue;
+                bool broken = _records.TryGetValue(m.Key, out MechRecord rec);
+                if (broken == m.BrokenShown) continue;
+                bool first = !m.BreakSeen;
+                m.BreakSeen = true;
+                m.BrokenShown = broken;
+                foreach (Transform child in m.Pivot) child.gameObject.SetActive(!broken);
+                if (!broken) { m.Damage = 0f; continue; }
+                if (!first && MechClock.Now - rec.Time < 3.0)
+                {
+                    PlayAt(DungeonBreakable.BreakSound, m.WorldPos);
+                    PlayAt(DungeonBreakable.BreakDust, m.WorldPos);
+                }
+            }
+        }
+
+        /// <summary>The fight track for a point: a fighting encounter whose area has it (its music, else the defaults), or null.</summary>
+        public string FightMusicAt(Vector3 p)
+        {
+            foreach (Mech m in All)
+            {
+                if (m.Def.Encounter == null || !InArea(m, p) || EncounterOf(m).State != EncounterRecord.Fighting) continue;
+                if (!string.IsNullOrEmpty(m.Def.Encounter.Music)) return m.Def.Encounter.Music;
+                return m.Def.Encounter.Boss != null ? DungeonMusic.BossDefault : DungeonMusic.FightDefault;
+            }
+            return null;
+        }
+
+        /// <summary>A breakable that broke (since the last reset).</summary>
+        public bool IsBroken(Mech m)
+        {
+            if (m == null || m.Def.Kind != "breakable") return false;
+            ReadRecords();
+            return _records.ContainsKey(m.Key);
+        }
+
+        /// <summary>A one-shot lever that was pulled (since the last reset).</summary>
+        public bool IsDone(Mech m)
+        {
+            if (m == null || !m.OneShot) return false;
+            ReadRecords();
+            return _records.ContainsKey(m.Key);
         }
 
         /// <summary>The owner: one mechanism to a state (the set command).</summary>
@@ -296,15 +444,16 @@ namespace Dungeons
         {
             why = null;
             if (!ByKey.TryGetValue(key ?? "", out Mech m)) { why = $"no mechanism {key}"; return false; }
+            if (m.Def.Encounter != null) return SetEncounter(m, state, out why);
             if (state < 0 || state >= m.States) { why = $"{key} has states 0 to {m.States - 1}"; return false; }
             Change(new[] { new KeyValuePair<Mech, int>(m, state) }, "set");
             return true;
         }
 
         /// <summary>A lever's or plate's wires into pending. pressed: a plate going down (true) or up (false); "hold" wires follow it.</summary>
-        private void ApplyWires(Mech m, Dictionary<Mech, int> pending, Func<Mech, int> cur, bool plate, bool pressed)
+        private void ApplyWires(Mech m, Dictionary<Mech, int> pending, Func<Mech, int> cur, bool plate, bool pressed, IEnumerable<Wire> wires = null)
         {
-            foreach (Wire w in m.Def.Wires)
+            foreach (Wire w in wires ?? m.Def.Wires)
             {
                 string key = Layouts.Target(Layout, m.Room, w);
                 if (key == null || !ByKey.TryGetValue(key, out Mech target))
@@ -313,6 +462,12 @@ namespace Dungeons
                     continue;
                 }
                 string act = w.Do ?? "next";
+                if (act == "start")
+                {
+                    // an encounter starts (on a plate: on the way down)
+                    if ((!plate || pressed) && target.Def.Encounter != null) StartEncounter(target, $"{m.Key} used");
+                    continue;
+                }
                 if (act == "hold")
                 {
                     if (!plate) act = "next";
@@ -369,6 +524,32 @@ namespace Dungeons
                 Hear(m, mo, now);
                 if (m.Spinners.Count > 0) Turn(m, mo, now);
             }
+            TellPlates();
+            EncounterNotices();
+            Breaks();
+            BlocksUpdate();   // (triggers: blocks shown, pushed, firing, stepped on, BlockSet.cs)
+        }
+
+        private float _nextTell;
+
+        /// <summary>Not the owner: the plates this game's player stands on, told to the owner every second (its game may not have this
+        /// player loaded: a big dungeon reaches past what's loaded round its entrance's owner). The owner counts a plate pressed for 2.5 s
+        /// after each word.</summary>
+        private void TellPlates()
+        {
+            Player p = Player.m_localPlayer;
+            if (p == null || p.IsDead() || Site.IsOwner || Time.time < _nextTell) return;
+            _nextTell = Time.time + 1f;
+            foreach (Mech m in All)
+                if (m.IsPlate && m.Base != null && m.PlateBox.Contains(m.Base.InverseTransformPoint(p.transform.position))) Site.Act("plate:" + m.Key);
+            TellEncounters(p);
+        }
+
+        /// <summary>The owner: a player's game says they stand on a plate.</summary>
+        public void PressFrom(long sender, string key)
+        {
+            if (!Site.IsOwner || !ByKey.TryGetValue(key ?? "", out Mech m) || !m.IsPlate) return;
+            m.RemotePress[sender] = Time.time + 2.5f;
         }
 
         /// <summary>Every physics step: each mechanism to its pose at this step, and whatever stands on one that moved carried with it.</summary>
@@ -409,10 +590,12 @@ namespace Dungeons
         private static void Turn(Mech m, MechMotion mo, double now)
         {
             float way = 0f;
-            if (m.States <= 1) way = 1f;
+            if (m.States <= 1 || m.Def.Kind == "machine") way = 1f;
             else if (mo.Moving(now) && mo.From != mo.To)
                 way = mo.To == (mo.From + 1) % m.States ? 1f : mo.From == (mo.To + 1) % m.States ? -1f : Mathf.Sign(mo.To - mo.From);
             if (way == 0f) return;
+            List<float> scale = m.Def.SpinScale;
+            if (scale != null && scale.Count > 0) way *= scale[Mathf.Clamp(mo.To, 0, scale.Count - 1)];
             m.SpinTime += way * Time.deltaTime;
             float t = m.SpinTime % 36000f;   // (whole turns for any spin of whole degrees a second, so no jump; and floats stay exact)
             foreach (Spinner s in m.Spinners)
@@ -437,8 +620,10 @@ namespace Dungeons
         }
 
         /// <summary>A motion that started in the last second, not heard yet: its sound, where it is (a gate its own door's, the rest the
-        /// game's gate sound; a lever or plate the game's lever).</summary>
-        private static void Hear(Mech m, MechMotion mo, double now)
+        /// game's gate sound; a lever or plate the game's lever). A gate opening is an unlock (Unlocked). Every game hears it from the state
+        /// change, not from the one who pulled; a dungeon built again with its gates already open plays nothing (the first look is silent,
+        /// and nothing older than a second is heard).</summary>
+        private void Hear(Mech m, MechMotion mo, double now)
         {
             if (m.HeardTo == mo.To && m.HeardStart == mo.Start) return;
             bool first = m.HeardTo < 0;
@@ -446,8 +631,100 @@ namespace Dungeons
             m.HeardTo = mo.To;
             m.HeardStart = mo.Start;
             if (first || mo.From == mo.To || now - mo.Start > 1.0) return;
+            if (m.IsGate && mo.From == 0 && mo.To != 0 && Unlocked(m)) return;
             if (m.IsLever && Time.time - m.PulledHere < 2f) return;
             Play(m, mo.To != 0 ? m.OpenFx : m.CloseFx ?? m.OpenFx);
+        }
+
+        // ---- unlocking
+
+        // The game's own sounds, picked by name and clip from its files among those in ZNetScene (networked prefabs: some sound prefabs are
+        // only reachable from the objects that use them, and aren't in ZNetScene at all): a heavy chest lid dropping shut (the clunk)
+        // with the bells the game rings for a secret found (the chime) when a gate opens to a one-shot lever or a plate; for the vault,
+        // the Deep North gate waking (deep, long) for everyone inside, and the Mörk halla gate grinding open. All 3D sounds.
+        public const string UnlockClunk = "sfx_gui_craftitem_workbench_end"; // heavy_chest_door_close, 2 s, heard to 20 m
+        public const string UnlockChime = "sfx_secretfound";                 // Pickup_MagicBells03, 1.2 s, to 40 m
+        public const string VaultSolved = "sfx_deepnorth_gate_activate";     // Env_DeepNorth_Gate_Activate, 11 s, to 120 m
+        public const string VaultGrind = "sfx_morkhalla_gate_open_start";    // Env_MorkhallaGate_Open, 3.5 s, to 120 m
+
+        /// <summary>Every game prefab the mechanisms play or take sounds from (for dungeon check).</summary>
+        public static readonly string[] SoundPrefabs = { UnlockClunk, UnlockChime, VaultSolved, VaultGrind, "incinerator", "iron_grate",
+                                                         DungeonBreakable.HitSound, DungeonBreakable.BreakSound, DungeonBreakable.BreakDust, "vfx_spawn" };
+
+        private Dictionary<Mech, List<Mech>> _openers;   // a gate -> the levers and plates wired to it
+
+        private List<Mech> OpenersOf(Mech gate)
+        {
+            if (_openers == null || _openers.Count == 0 && Complete)
+            {
+                _openers = new Dictionary<Mech, List<Mech>>();
+                foreach (Mech src in All.Where(x => Layouts.IsUsable(x.Def)))
+                    foreach (Wire w in src.Def.Wires)
+                    {
+                        string key = Layouts.Target(Layout, src.Room, w);
+                        if (key == null || !ByKey.TryGetValue(key, out Mech target)) continue;
+                        if (!_openers.TryGetValue(target, out List<Mech> list)) _openers[target] = list = new List<Mech>();
+                        if (!list.Contains(src)) list.Add(src);
+                    }
+            }
+            return _openers.TryGetValue(gate, out List<Mech> found) ? found : new List<Mech>();
+        }
+
+        /// <summary>A gate or door in the end's room (the last plan step's, or a room tagged vault): the vault's.</summary>
+        private bool IsVault(Mech gate)
+        {
+            PlacedRoom room = gate.Room >= 0 && gate.Room < Layout.Rooms.Count ? Layout.Rooms[gate.Room] : null;
+            if (room?.Def == null) return false;
+            PlanStep last = Layout.Pack?.Plan?.LastOrDefault();
+            return (last != null && room.Step != null && room.Step == Layouts.StepName(last)) || room.Def.Tags.Contains("vault");
+        }
+
+        /// <summary>A gate just started opening: when a one-shot lever or a plate opened it, the unlock sound at the gate and at them; the
+        /// vault's gate, the bigger moment (its grinding, the deep "solved" for everyone inside, and the message). True when its own open
+        /// sound is replaced.</summary>
+        private bool Unlocked(Mech gate)
+        {
+            List<Mech> openers = OpenersOf(gate).Where(o => o.OneShot || o.IsPlate).ToList();
+            bool vault = IsVault(gate);
+            if (openers.Count == 0 && !vault) return false;
+            PlayAt(UnlockClunk, gate.WorldPos);
+            PlayAt(UnlockChime, gate.WorldPos);
+            foreach (Mech o in openers) { PlayAt(UnlockClunk, o.WorldPos); PlayAt(UnlockChime, o.WorldPos); }
+            if (!vault) return false;   // (its own grinding too)
+            PlayAt(VaultGrind, gate.WorldPos);
+            Player p = Player.m_localPlayer;
+            if (p != null && Site.Contains(p.transform.position))
+            {
+                PlayAt(VaultSolved, p.transform.position + Vector3.up);
+                p.Message(MessageHud.MessageType.Center, T("dungeons_vault_open"));
+                VaultReward.Give(Site);
+            }
+            return true;
+        }
+
+        private static readonly Dictionary<string, GameObject> Sounds = new Dictionary<string, GameObject>();
+
+        /// <summary>One of the game's sound prefabs, here only (every game plays its own from the state change): made without a ZDO (some
+        /// of them are networked, which would make each player hear every other player's copy too), and cleared away after half a
+        /// minute.</summary>
+        public static void PlayAt(string prefab, Vector3 at)
+        {
+            if (ZNetScene.instance == null) return;
+            if (!Sounds.TryGetValue(prefab, out GameObject source))
+            {
+                Sounds[prefab] = source = ZNetScene.instance.GetPrefab(prefab);
+                if (source == null) WarnOnce($"The game's sound {prefab} isn't in this version: not played");
+            }
+            if (source == null) return;
+            bool was = ZNetView.m_forceDisableInit;
+            try
+            {
+                ZNetView.m_forceDisableInit = true;
+                GameObject go = Object.Instantiate(source, at, Quaternion.identity);
+                Object.Destroy(go, 30f);
+            }
+            catch (Exception e) { WarnOnce($"Playing {prefab}: {e.Message}"); }
+            finally { ZNetView.m_forceDisableInit = was; }
         }
 
         public static void Play(Mech m, EffectList fx)
@@ -462,7 +739,10 @@ namespace Dungeons
         /// <summary>The owner, every frame: plates (a tenth of a second apart).</summary>
         public void OwnerTick()
         {
-            if (!Alive || !Site.IsOwner || Time.time < _nextPlates) return;
+            if (!Alive || !Site.IsOwner) return;
+            EncounterTick();
+            TriggersTick();   // (triggers: state changes, areas, timers, TriggerSet.cs)
+            if (Time.time < _nextPlates) return;
             _nextPlates = Time.time + PlateEvery;
             List<Character> characters = Character.GetAllCharacters();
             var pending = new Dictionary<Mech, int>();
@@ -470,7 +750,9 @@ namespace Dungeons
             foreach (Mech m in All)
             {
                 if (!m.IsPlate || m.Base == null) continue;
-                bool pressed = characters.Any(c => c != null && !c.IsDead() && m.PlateBox.Contains(m.Base.InverseTransformPoint(c.transform.position)));
+                if (IsDone(m)) continue;   // (a "once" plate, pressed: it stays down, and what it holds stays held)
+                bool pressed = characters.Any(c => c != null && !c.IsDead() && m.PlateBox.Contains(m.Base.InverseTransformPoint(c.transform.position)))
+                               || (m.RemotePress.Count > 0 && m.RemotePress.Values.Any(until => until > Time.time));
                 if (!m.PressKnown)
                 {
                     m.PressKnown = true;
@@ -482,6 +764,7 @@ namespace Dungeons
                 if (m.States > 1) pending[m] = pressed ? 1 : 0;
                 ApplyWires(m, pending, Cur, true, pressed);
                 why.Add($"{m.Key} {(pressed ? "pressed" : "let go")}");
+                TriggerEvent(pressed ? TriggerEvents.Press : TriggerEvents.Release, m);   // (triggers, TriggerSet.cs)
             }
             if (pending.Count > 0) Change(pending.ToList(), string.Join(", ", why));
         }
@@ -530,7 +813,7 @@ namespace Dungeons
             return _leverFx;
         }
 
-        public static void ForgetSounds() => _leverFx = null;
+        public static void ForgetSounds() { _leverFx = null; Sounds.Clear(); }
 
         private static void WarnOnce(string message)
         {
@@ -552,8 +835,11 @@ namespace Dungeons
         /// <summary>A reset: plates and levers forget what they knew (every mechanism is back at its start).</summary>
         public void Forget()
         {
-            foreach (Mech m in All) { m.PressKnown = m.Pressed = false; m.NextUse = 0f; }
+            foreach (Mech m in All) { m.PressKnown = m.Pressed = false; m.NextUse = 0f; m.EncDeadAt = m.EncEmptySince = -1f; m.EncAlive = 0; m.EncNextSpawn = 0f; }
+            _encText = null;
             _text = null;
+            ForgetTriggers();   // (triggers: pedestals give their items back, what triggers remember cleared, TriggerSet.cs)
+            ForgetBlocks();
         }
 
         public void Remove()

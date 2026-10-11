@@ -50,7 +50,9 @@ namespace Dungeons
     ///       { "prefab": "Ashlands_Boss_Pillar", "at": [x, y, z], "euler": [...], "scale": [...] },   one of the game's prefabs, as scenery
     ///       { "location": "Crypt4", "keep": ["exterior", "Gateway/Cube"], "doorway": [0, 0, 6.96], "at": [0, 0, 0], "euler": [0, 0, 0] }
     ///                                      children of a game location, copied so the location's point "doorway" lands at "at"
-    ///     ]
+    ///     ],
+    ///     "inside": [ { "prefab": "...", "at": [...], "euler": [...], "scale": [...] } ]   the way out seen from inside: in the way-in
+    ///                                      doorway's frame (origin on its floor, +z into the room), prefabs only; none: the stand-in door
     ///   }
     /// LookCheck.cs says what's wrong in one (logged when read); tools/dungeons checks them all, and that every pack's look exists.
     /// Rooms join where doorways of the same type meet face to face. Every doorway type needs an end cap room (a room marked endCap with
@@ -62,11 +64,37 @@ namespace Dungeons
     ///          "doors": { "": "dungeon_forestcrypt_door" }, "doorChance": 0.5   a door prefab per doorway type, and how often a joint
     ///                                            whose two doorways allow one gets it (never where a gate stands, never on an end cap)
     ///          "minUses": 4                      the puzzle must take at least this many uses of levers and plates
+    ///          "parkour": false                  no parkour inside (wall runs, climbing: PackReader.Parkour; default true)
+    ///          "entranceCap": "cap_gate"         the end cap the entrance room's way in takes (else any plain one: under 1 m deep, no
+    ///                                            mechanisms, no chest). A doorway a gate closes takes only plain caps too.
     ///          "gates": { "": { "kind": "gate", "parts": [...], "poses": [closed, open], "seconds": 2 } }   the gate put in a locked
     ///                                            doorway of that type when the step's room has none; its frame is the doorway's
     ///                                            (origin at the doorway, +z into the room behind the gate, +y up)
     ///   plan:  { "tag": "lever", "id": "lever2", "from": "hall" }   grows from an earlier step's room (a hub) instead of the one before
     ///          { "tag": "vault", "id": "vault", "opensWith": "lever2" }   entered through a gate a lever in lever2's room opens
+    ///          The step after a "from" step (with no "from" of its own) grows from that step's room. A step nothing grows on from (the
+    ///          next step has "from", and no step is "from" it) may be a dead end (one doorway: a key in a side wing). Any number of
+    ///          keys and locks; each lock's key is any earlier step.
+    ///   tags:  a room tagged "fight" opens its gates when its fight is won: the solver takes them as open (the fight is the player's).
+    ///   encounters: kind "encounter" (EncounterDef in Model.cs; Runtime's MechEncounter.cs): "startOn" "wire" (default) | "enter" |
+    ///          "open", "area", "chest", "lock", "waves" [{"melee": 2, ...}], "points", "level", "eliteLevel", "pause", "timeout", "siege",
+    ///          "holdBy", "lockLever", "music" (while it fights), "boss": {"name": "$...", "role": "elite", "health": 4,
+    ///          "phases": [{"at": 0.5, "wires": [...], "adds": {"melee": 2}}]} (one creature instead of waves). Its wires apply when it's won:
+    ///          the solver takes it as won where it's reached ("enter", "open"), or with the lever or plate whose wire does "start" on it
+    ///          ("wire"); a boss's phase wires fire on the way.
+    ///   breakable: {"kind": "breakable", "doorway": "in", "health": 300, "poses": [standing, broken]}: closes its doorway until broken.
+    ///          A room tagged "secret" is entered through one: the layout puts it only on a side branch, joined by that doorway; the
+    ///          solution is found with every breakable standing, so nothing may need a secret room.
+    ///   shortcut: {"kind": "shortcut", "pair": "sc1", "deep": true} (the far door; "end": "far" too) in two end-cap rooms, and the pack's
+    ///          "shortcut": {"near": "<room>", "far": "<room>", "farStep": "<step id>"}: the far room on (or one room from) that step's room,
+    ///          the near room on a spare doorway of the entrance room. Usable once the far end is reached; never shortens the solution.
+    ///   music: "music": "<the game's music name>" on the pack (inside), a room, an encounter.
+    ///   "cycleIn": [1]: a cycle that runs only while the mechanism is set to one of those states (a crusher slams after "set:1").
+    ///   "spinScale": [1, 2.5]: its parts' spin in each state; a machine with one may have that many states.
+    ///   plates: "hold" (open only while pressed) counts for nothing alone. A layout must be solvable alone; one that only two players
+    ///          (or a creature on the plate) could finish is refused, saying so.
+    ///   gates: a gate with a "doorway" closes that doorway in state 0; one without blocks something inside its room that the solver
+    ///          doesn't see (in front of an exit: keep the way to the end through doorways).
     ///   rooms: "parts": [ { ..., "saved": true } ]   made once by the owner as a saved object (a chest, a spawner)
     ///          a mechanism's part may have "spin": [x, y, z]   degrees a second it turns while its mechanism moves (always, with one state)
     ///          "mechs": [ { "id": "stair1", "kind": "stair", "at": [0, -8, 0], "euler": [0, 0, 0],
@@ -76,13 +104,16 @@ namespace Dungeons
     ///                       "wires": [ { "target": "stair1", "do": "next" } ] },   "next", "set:2", "hold" (plates); a target in the same
     ///                                                                            room, "step:<id>" or "step:<id>.<mech id>"
     ///                     { "id": "gate1", "kind": "gate", "doorway": "north", ... } ]   closes that doorway in state 0
+    ///                     a lever or plate with "once": true is used once only (its wires must all be "set:n"; so is any lever whose
+    ///                     wires all are, at runtime)
     ///          "joinBy": ["s0n", "s0e"]          the only doorways the room is attached by when it's placed (its other doorways still
     ///                                            take rooms after it)
     ///          "drops": [ { "a": "s1n", "b": "s0n" } ]   one way only, from a to b (a jump off a balcony): the solver uses them
     ///          "inside": [ { "a": "landing0", "b": "south" } ]   doorways always joined through the room. With neither "inside" nor
     ///                                            mechanisms with "joins" a room joins all its doorways; with mechanism joins and no
     ///                                            "inside", only those.
-    /// Kinds: lever, plate, gate, door, platform, stair, rotator, floor, machine (one state: its spinning parts just turn). LayoutSolver.cs
+    /// Kinds: lever, plate, gate, door, platform, stair, rotator, floor, machine (one state: its spinning parts just turn), exit (a way
+    /// out, as the entrance room's Leave: Runtime's). LayoutSolver.cs
     /// says how the puzzle is checked; it leaves out mechanisms that can't open or close a way (no joins, not a gate), such as turning gears.
     /// </summary>
     internal static class Packs
@@ -102,6 +133,7 @@ namespace Dungeons
         {
             if (string.IsNullOrEmpty(name)) return null;
             if (DungeonDB.instance == null) return null;   // (no world: the game's rooms can't be read)
+            if (Waiting) return null;                      // (a client waiting for its server's packs)
             SameWorld();
             string key = name.ToLowerInvariant();
             if (Loaded.TryGetValue(key, out Pack pack)) return pack;
@@ -133,6 +165,7 @@ namespace Dungeons
         public static bool Ready(string name)
         {
             if (string.IsNullOrEmpty(name) || DungeonDB.instance == null) return true;
+            if (Waiting) return false;
             SameWorld();
             string key = name.ToLowerInvariant();
             if (Loaded.ContainsKey(key) || !Json().TryGetValue(key, out JObject json)) return true;
@@ -194,10 +227,90 @@ namespace Dungeons
         }
 
         /// <summary>The packs built into the DLL (embedded resources "packs/&lt;name&gt;.json").</summary>
+        // ---- where packs come from (dungeon-sync's seam) ----
+        // "builtin": packs/*.json in the DLL; "config": a folder of the player's or server's; "server": the set a server sent its players.
+        // A pack in a later source replaces one of the same name in an earlier: builtin < config. A "server" set, when there is one (a
+        // client of a server with Dungeons), is the whole set: the client lays out exactly what the server does.
+        public static readonly string[] Sources = { "builtin", "config", "server" };
+        private static readonly Dictionary<string, Dictionary<string, KeyValuePair<JObject, string>>> Extra =
+            new Dictionary<string, Dictionary<string, KeyValuePair<JObject, string>>>();   // source -> name (lower) -> (json, its text)
+        private static readonly Dictionary<string, string> SourceByName = new Dictionary<string, string>();
+        private static Dictionary<string, string> _builtinText;
+
+        /// <summary>True on a client whose server has Dungeons but whose pack set hasn't come yet (dungeon-sync sets it): Get gives nothing
+        /// and Ready says no, so no dungeon is laid out from the client's own packs meanwhile.</summary>
+        public static bool Waiting { get; set; }
+
+        /// <summary>Goes up by one every time the set of packs changes (SetSource): a layout made from an older set is out of date.</summary>
+        public static int Version { get; private set; }
+
+        /// <summary>Fired after the set of packs changed (SetSource), on the caller's thread.</summary>
+        public static event Action Changed;
+
+        /// <summary>Sets the packs from a source ("config" or "server"; null or empty clears it), each a pack's JSON text. A text that can't
+        /// be read, or has no "name", is left out with a warning. Read packs are forgotten, so the next Get reads the new set.</summary>
+        public static void SetSource(string source, IEnumerable<string> texts)
+        {
+            if (source == null || source == "builtin" || !Sources.Contains(source)) throw new ArgumentException("source: \"config\" or \"server\"");
+            var set = new Dictionary<string, KeyValuePair<JObject, string>>();
+            foreach (string text in texts ?? Enumerable.Empty<string>())
+            {
+                try
+                {
+                    JObject json = JObject.Parse(text);
+                    string name = (string)json["name"];
+                    if (string.IsNullOrEmpty(name)) { Plugin.Log.LogWarning($"A {source} pack has no \"name\": left out"); continue; }
+                    set[name.ToLowerInvariant()] = new KeyValuePair<JObject, string>(json, text);
+                }
+                catch (Exception e) { Plugin.Log.LogWarning($"A {source} pack can't be read: {e.Message}"); }
+            }
+            if (set.Count == 0) Extra.Remove(source); else Extra[source] = set;
+            _json = null;
+            Loaded.Clear();
+            LoadProblems.Clear();
+            Version++;
+            try { Changed?.Invoke(); } catch (Exception e) { Plugin.Log.LogWarning("Packs.Changed: " + e.Message); }
+        }
+
+        /// <summary>Where a pack (by name) comes from now: "builtin", "config" or "server"; null if there's none.</summary>
+        public static string SourceOf(string name)
+        {
+            Json();
+            return name != null && SourceByName.TryGetValue(name.ToLowerInvariant(), out string source) ? source : null;
+        }
+
+        /// <summary>Every pack in use, name -> its JSON text (what a server sends its players).</summary>
+        public static Dictionary<string, string> Texts()
+        {
+            var texts = new Dictionary<string, string>();
+            foreach (KeyValuePair<string, JObject> p in Json())
+                texts[(string)p.Value["name"]] = SourceByName[p.Key] == "builtin" ? _builtinText[p.Key]
+                    : Extra[SourceByName[p.Key]][p.Key].Value;
+            return texts;
+        }
+
+        /// <summary>Every pack in use, by name (lower case): the built-in ones, each later source's over them.</summary>
         private static Dictionary<string, JObject> Json()
         {
             if (_json != null) return _json;
             _json = new Dictionary<string, JObject>();
+            SourceByName.Clear();
+            if (Extra.TryGetValue("server", out var server))
+            {
+                foreach (var p in server) { _json[p.Key] = p.Value.Key; SourceByName[p.Key] = "server"; }
+                return _json;
+            }
+            Builtin();
+            if (Extra.TryGetValue("config", out var config))
+                foreach (var p in config) { _json[p.Key] = p.Value.Key; SourceByName[p.Key] = "config"; }
+            return _json;
+        }
+
+        /// <summary>The packs built into the DLL (embedded resources "packs/&lt;name&gt;.json").</summary>
+        private static void Builtin()
+        {
+            bool first = _builtinText == null;
+            if (first) _builtinText = new Dictionary<string, string>();
             var asm = typeof(Packs).Assembly;
             foreach (string res in asm.GetManifestResourceNames().Where(r => r.StartsWith(Prefix) && r.EndsWith(".json")).OrderBy(r => r))
             {
@@ -206,16 +319,18 @@ namespace Dungeons
                     using (Stream s = asm.GetManifestResourceStream(res))
                     using (var reader = new StreamReader(s))
                     {
-                        JObject json = JObject.Parse(reader.ReadToEnd());
+                        string text = reader.ReadToEnd();
+                        JObject json = JObject.Parse(text);
                         string name = (string)json["name"];
-                        if (string.IsNullOrEmpty(name)) { Plugin.Log.LogWarning($"{res} has no \"name\": left out"); continue; }
-                        if (_json.ContainsKey(name.ToLowerInvariant())) { Plugin.Log.LogWarning($"{res}: a pack called {name} is already built in: left out"); continue; }
+                        if (string.IsNullOrEmpty(name)) { if (first) Plugin.Log.LogWarning($"{res} has no \"name\": left out"); continue; }
+                        if (_json.ContainsKey(name.ToLowerInvariant())) { if (first) Plugin.Log.LogWarning($"{res}: a pack called {name} is already built in: left out"); continue; }
                         _json[name.ToLowerInvariant()] = json;
+                        SourceByName[name.ToLowerInvariant()] = "builtin";
+                        _builtinText[name.ToLowerInvariant()] = text;
                     }
                 }
-                catch (Exception e) { Plugin.Log.LogWarning($"{res} can't be read: {e.Message}"); }
+                catch (Exception e) { if (first) Plugin.Log.LogWarning($"{res} can't be read: {e.Message}"); }
             }
-            return _json;
         }
 
         /// <summary>The game's room by prefab name, from DungeonDB: its box, doorways (in its own frame, rounded to the centimetre, as the

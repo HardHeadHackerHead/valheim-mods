@@ -13,7 +13,7 @@ namespace Dungeons
     /// </summary>
     internal static class LookCheck
     {
-        private static readonly string[] LookFields = { "name", "about", "front", "parts" };
+        private static readonly string[] LookFields = { "name", "about", "front", "parts", "inside" };
         private static readonly string[] PrefabFields = { "prefab", "at", "euler", "scale" };
         private static readonly string[] LocationFields = { "location", "keep", "doorway", "at", "euler" };
 
@@ -47,6 +47,19 @@ namespace Dungeons
                 if (location && !(p["keep"] is JArray keep && keep.Any(k => !string.IsNullOrEmpty((string)k))))
                     problems.Add($"{at}: a location part with nothing in \"keep\" (nothing would be copied)");
             }
+            // The way out seen from inside: prefabs only.
+            if (json["inside"] != null && !(json["inside"] is JArray)) problems.Add($"{where}: \"inside\" isn't a list");
+            if (json["inside"] is JArray inside)
+                for (int i = 0; i < inside.Count; i++)
+                {
+                    string at = $"{where} inside part {i}";
+                    if (!(inside[i] is JObject p)) { problems.Add($"{at}: not an object"); continue; }
+                    if (string.IsNullOrEmpty((string)p["prefab"])) { problems.Add($"{at}: has no \"prefab\" (inside parts are prefabs only)"); continue; }
+                    Unknown(p, PrefabFields, $"{at} ({p["prefab"]})", problems);
+                    foreach (string v in new[] { "at", "euler", "scale" })
+                        if (p[v] != null && !(p[v] is JArray a && a.Count == 3 && a.All(n => n.Type == JTokenType.Float || n.Type == JTokenType.Integer)))
+                            problems.Add($"{at}: \"{v}\" isn't three numbers");
+                }
             return problems;
         }
 
