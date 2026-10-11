@@ -1,3 +1,5 @@
+0.3.1: A rainbow costs far less to draw: its colours are worked out again only when it fades or the sun moves, not for every point of it every frame, and the second band is left alone when there is no second rainbow. The blessings' inner names now start with the mod's name (as every name a mod adds should), so they can't clash with another mod's.
+
 0.3.0: Now in your language: English, Russian, German, Chinese (Simplified), Portuguese (Brazil), Spanish, French, Polish and Turkish, following the game's own Language setting. The game's own names are used for its things (items, creatures, lands, stations). The translations were made with AI: to correct a line, or add a language, put a file in BepInEx/config/translations/com.quad.rainbows/ named after the game's name for the language (German.json...) with only the lines you change, copied from translations/English.json on GitHub.
 
 0.2.3: A clearer page: what it does, who needs it in multiplayer, how it gets on with other mods, and where to report a bug. The game itself is unchanged.

@@ -6,7 +6,7 @@ namespace Rainbows
     /// <summary>The buff for looking up at a rainbow, and its registration with the game's status effects.</summary>
     internal static class Blessing
     {
-        public const string EffectName = "SE_RainbowBlessing", DoubleName = "SE_DoubleRainbowBlessing";
+        public const string EffectName = "Rainbows_SE_Blessing", DoubleName = "Rainbows_SE_DoubleBlessing";   // (named after the mod: one space with every other mod's)
         public static readonly int Hash = EffectName.GetStableHashCode(), DoubleHash = DoubleName.GetStableHashCode();
         private static SE_Rainbow _effect, _double;
         private static Sprite _icon, _doubleIcon;

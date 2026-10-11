@@ -28,6 +28,8 @@ namespace Rainbows
         private static UnityEngine.Audio.AudioMixerGroup _mixer;   // the game's sound effects, so the chime follows its volume slider
 
         private static float _wetFor, _waited, _shownFor, _fade;
+        private static float _drawnStrength = -1f;   // what the colours were last worked out for (-1: not yet, this time it shows)
+        private static Vector3 _drawnAnti;
         private static bool _waiting, _showing, _forced, _blessed;
         private static Vector3 _forcedSun;
 
@@ -93,7 +95,7 @@ namespace Rainbows
 
         private static void Begin(Player player, bool? forceDouble = null)
         {
-            _waiting = false; _showing = true; _shownFor = 0f; _fade = 0f; _blessed = false;
+            _waiting = false; _showing = true; _shownFor = 0f; _fade = 0f; _blessed = false; _drawnStrength = -1f;
             _double = forceDouble ?? Random.value <= Plugin.DoubleChance.Value;
             Anti = -Sun();
             Build();
@@ -207,23 +209,36 @@ namespace Rainbows
             renderer.receiveShadows = false;
         }
 
-        /// <summary>Turns the ring round the point opposite the sun and fades each vertex into the horizon.</summary>
+        /// <summary>
+        /// Turns the ring round the point opposite the sun and fades each vertex into the horizon. The colours are worked out again only when
+        /// the fade or the sun has moved (the sun creeps a fraction of a degree a second; once faded in, nothing changes for minutes), and only
+        /// for the second rainbow when there is one: they were redone for every vertex every frame.
+        /// </summary>
         private static void Draw()
         {
             if (_root == null || _mesh == null) return;
             Quaternion turn = Quaternion.FromToRotation(Vector3.forward, Anti);
-            Vector3 down = Quaternion.Inverse(turn) * Vector3.up;   // "up" as the ring sees it
+            _root.transform.rotation = turn;
             float strength = _fade * Plugin.Brightness.Value * 0.9f;
+            bool first = _drawnStrength < 0f;   // (the colours left from the last rainbow may have a second one in them)
+            if (!first && Mathf.Abs(strength - _drawnStrength) < 0.003f && Vector3.Angle(Anti, _drawnAnti) < 0.05f) return;
+            _drawnStrength = strength;
+            _drawnAnti = Anti;
+            Vector3 down = Quaternion.Inverse(turn) * Vector3.up;   // "up" as the ring sees it
             for (int i = 0; i < _local.Length; i++)
             {
+                if (_outer[i] && !_double)
+                {
+                    if (first) _colors[i].a = 0f;   // (no second rainbow: it stays clear, set once)
+                    continue;
+                }
                 float y = Vector3.Dot(down, _local[i]);   // how high that part of the arc is in the sky
                 float horizon = Mathf.SmoothStep(0f, 1f, Mathf.InverseLerp(0.0f, 0.16f, y));
                 Color c = _hue[i];
-                c.a = _outer[i] && !_double ? 0f : Mathf.Clamp01(_weight[i] * horizon * strength);
+                c.a = Mathf.Clamp01(_weight[i] * horizon * strength);
                 _colors[i] = c;
             }
             _mesh.colors = _colors;
-            _root.transform.rotation = turn;
         }
 
         /// <summary>Every frame: the dome stays round the camera, as far out as the camera sees (but inside it).</summary>
