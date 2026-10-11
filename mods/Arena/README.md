@@ -11,6 +11,8 @@
 
 <!-- GITHUB-ONLY -->[Thunderstore](https://thunderstore.io/c/valheim/p/Quads_Lab/Quads_Arena/)  ·  <!-- END GITHUB-ONLY -->[Source code](https://github.com/HardHeadHackerHead/valheim-mods/tree/main/mods/Arena)  ·  [Report a bug](https://github.com/HardHeadHackerHead/valheim-mods/issues/new?template=bug.yml&title=%5BQuad%27s%20Arena%5D%20)  ·  [Discord](https://discord.gg/EwTjQxEZPy)
 
+[![Join us on Discord](https://img.shields.io/badge/Join_us_on-Discord-5865F2?style=for-the-badge&logo=discord&logoColor=white)](https://discord.gg/EwTjQxEZPy)
+
 <!-- GITHUB-ONLY -->**Install:** with [r2modman](https://thunderstore.io/c/valheim/p/ebkr/r2modman/) or Thunderstore Mod Manager from [Thunderstore](https://thunderstore.io/c/valheim/p/Quads_Lab/Quads_Arena/), or press **F7** in the game with our [mod manager](https://github.com/HardHeadHackerHead/valheim-mod-manager).<!-- END GITHUB-ONLY -->
 
 ## ✨ Features
@@ -128,6 +130,20 @@ In `BepInEx/config/com.quad.arena.cfg`, made the first time the game runs with t
 ## 🤖 Made with AI
 
 Made with the help of Claude (Anthropic), with Claude Code: designed, written and checked together, and tried in the game.
+
+## 💬 Join us on Discord
+
+<a href="https://discord.gg/EwTjQxEZPy"><img src="https://raw.githubusercontent.com/HardHeadHackerHead/valheim-mods/main/tools/modpages/discord-banner.jpg" alt="Join the Quads Lab Discord" width="100%"></a>
+
+Come hang out with the people who make and play these mods. In the **Quads Lab Discord** you can:
+
+- 🛠️ **Get help** and report bugs straight to us
+- 👀 **See new mods first**, and help test them before they're released
+- 🗳️ **Suggest ideas** and vote on what we make next
+- 🏰 **Share your builds**, bases and arena runs
+- 🤖 **Talk AI coding and vibe coding** with people building things with AI, the way these mods are made
+
+**[Join the Quads Lab Discord →](https://discord.gg/EwTjQxEZPy)**
 
 ## 🧪 About Quads Lab
 

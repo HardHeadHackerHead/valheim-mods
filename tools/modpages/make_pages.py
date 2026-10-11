@@ -28,6 +28,11 @@ MODS = os.path.join(ROOT, "mods")
 GAME_CONFIG = os.environ.get("VALHEIM_CONFIG", r"D:\SteamLibrary\steamapps\common\Valheim\BepInEx\config")
 SHOTS = json.load(io.open(os.path.join(os.path.dirname(__file__), "shots.json"), encoding="utf-8"))
 ABOUT = os.path.join(os.path.dirname(__file__), "about.md")
+COMMUNITY = os.path.join(os.path.dirname(__file__), "community.md")   # the Discord section's words
+DISCORD = "https://discord.gg/EwTjQxEZPy"
+# the banner over the Discord section: loaded from GitHub on every page (Thunderstore too), so a new picture here shows everywhere
+BANNER = "https://raw.githubusercontent.com/HardHeadHackerHead/valheim-mods/main/tools/modpages/discord-banner.jpg"
+BANNER_FILE = os.path.join(os.path.dirname(__file__), "discord-banner.jpg")
 THUNDERSTORE_TEAM = "Quads_Lab"  # our team on Thunderstore: each mod is its own package there
 REPO = "https://github.com/HardHeadHackerHead/valheim-mods"
 MANAGER = "https://github.com/HardHeadHackerHead/valheim-mod-manager"
@@ -261,8 +266,9 @@ def page(folder, cards, keys, who, default_who, about):
     out += ["  ".join([badge("version", version, "3b6e8f"),
                        badge("multiplayer", "everyone + host" if everyone and host else "host" if host else "everyone" if everyone else "only who wants it", "7a5c2e"),
                        badge("made with", "Claude Code", "c26a3d")]), ""]
-    links = "  ·  ".join(["[Source code](%s/tree/main/mods/%s)" % (REPO, folder), "[Report a bug](%s)" % bug, "[Discord](https://discord.gg/EwTjQxEZPy)"])
+    links = "  ·  ".join(["[Source code](%s/tree/main/mods/%s)" % (REPO, folder), "[Report a bug](%s)" % bug, "[Discord](%s)" % DISCORD])
     out += [(github_only("[Thunderstore](%s)  ·  " % store) if on_store else "") + links, ""]
+    out += ["[![Join us on Discord](https://img.shields.io/badge/Join_us_on-Discord-5865F2?style=for-the-badge&logo=discord&logoColor=white)](%s)" % DISCORD, ""]
     if on_store:
         out += [github_only("**Install:** with [r2modman](https://thunderstore.io/c/valheim/p/ebkr/r2modman/) or Thunderstore Mod Manager from "
                             "[Thunderstore](%s), or press **F7** in the game with our [mod manager](%s)." % (store, MANAGER)), ""]
@@ -342,6 +348,10 @@ def page(folder, cards, keys, who, default_who, about):
     # Thunderstore asks mods made with AI to say so (and so do we)
     out += ["## 🤖 Made with AI", "", "Made with the help of Claude (Anthropic), with Claude Code: designed, written and checked together, and tried in the game.", ""]
 
+    out += ["## 💬 Join us on Discord", ""]
+    if os.path.exists(BANNER_FILE):
+        out += ['<a href="%s"><img src="%s" alt="Join the Quads Lab Discord" width="100%%"></a>' % (DISCORD, BANNER), ""]
+    out += [(read(COMMUNITY) or "").strip(), "", "**[Join the Quads Lab Discord →](%s)**" % DISCORD, ""]
     out += ["## 🧪 About Quads Lab", "", about.strip(), ""]
 
     if log.strip():
