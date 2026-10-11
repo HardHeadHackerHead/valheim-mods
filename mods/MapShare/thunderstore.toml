@@ -6,7 +6,7 @@ schemaVersion = "0.0.1"
 [package]
 namespace = "Quads_Lab"
 name = "Quads_Map_Share"
-versionNumber = "1.1.3"
+versionNumber = "1.1.4"
 description = "Shared map: share the map you uncover with everyone in the world, live, as you explore through the fog of war."
 websiteUrl = "https://github.com/HardHeadHackerHead/valheim-mods/tree/main/mods/MapShare"
 containsNsfwContent = false

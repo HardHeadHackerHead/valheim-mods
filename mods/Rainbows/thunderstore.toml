@@ -6,7 +6,7 @@ schemaVersion = "0.0.1"
 [package]
 namespace = "Quads_Lab"
 name = "Quads_Rainbows"
-versionNumber = "0.3.0"
+versionNumber = "0.3.1"
 description = "A rainbow in the sky after the rain, and a blessing for looking up at it: the weather gives something back."
 websiteUrl = "https://github.com/HardHeadHackerHead/valheim-mods/tree/main/mods/Rainbows"
 containsNsfwContent = false
