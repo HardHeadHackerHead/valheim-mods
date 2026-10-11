@@ -108,5 +108,9 @@
   "dungeons_map_checkpoint": "Punkt kontrolny (złoty: twój)",
   "dungeons_rebuilding": "Ten loch jest budowany od nowa: wracasz do jego wejścia",
   "dungeons_reloaded": "Paczki lochów wczytane ponownie: zmienione {0}, przebudowane lochy {1}.",
-  "dungeons_reload_kept": "Nie przebudowano ({0}): ktoś jest w środku: {1}."
+  "dungeons_reload_kept": "Nie przebudowano ({0}): ktoś jest w środku: {1}.",
+  "dungeons_act_takeover": "Nikt nie odpowiedział za ten loch: teraz prowadzi go twoja gra.",
+  "dungeons_act_lost": "To nie dotarło do lochu. Spróbuj ponownie.",
+  "dungeons_sync_peer_old": "{0} musi zaktualizować Quad's Dungeons i dołączyć ponownie (ma {1}, ty masz {2}).",
+  "dungeons_sync_peer_new": "{0} ma nowszą wersję Quad's Dungeons ({1}): zaktualizuj swoją i wczytaj świat ponownie."
 }

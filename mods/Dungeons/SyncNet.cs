@@ -31,7 +31,10 @@ namespace Dungeons
     /// </summary>
     internal static partial class SyncNet   // (HotReload.cs: its state and handlers carried over a reload)
     {
-        public const int Protocol = 1;
+        // What the two sides must agree on to play together: 1 (0.2.0-0.2.2) the version check and the packs; 2 (0.2.3) and the acts with
+        // ids and answers (Acts.Protocol). A connection with another one is refused; one already connected when a reload in a world changes
+        // it (HotReload.cs) is kept, and the host is told who needs to update (AfterReload).
+        public const int Protocol = 2;
         private const string VersionRpc = "Dungeons_Version";   // ZPackage: protocol, the mod's version, the sender's own set's hash
         private const string SetRpc = "Dungeons_Packs";         // ZPackage: protocol, the set's hash, part, parts, bytes (0 parts: "the same as yours")
         private const int PartSize = 64 * 1024;
@@ -44,6 +47,7 @@ namespace Dungeons
 
         public static string ServerVersion;     // the server's Dungeons version (null: none heard: no mod there, or 0.1.0)
         public static string ServerHash;        // the hash of the server's set
+        public static int ServerProtocol;       // the server's protocol (0: none heard)
         public static string MismatchText;      // why this game left the last server (shown under the game's connection error)
         private static bool _serverAnswered;    // the server's PeerInfo came (so ServerVersion null means it has no mod)
         private static float _expectedSince;
@@ -95,6 +99,7 @@ namespace Dungeons
                     // a new server: forget the last one's
                     _connection++;
                     ServerVersion = ServerHash = MismatchText = Failed = null;
+                    ServerProtocol = 0;
                     _serverAnswered = false;
                     _parts = null;
                     _partsHash = null;
@@ -123,15 +128,33 @@ namespace Dungeons
             {
                 Peer p = Peers.FirstOrDefault(x => x.Rpc == rpc);
                 if (p == null) Peers.Add(p = new Peer { Rpc = rpc });
+                ZNetPeer from = PeerOf(znet, rpc);
+                bool update = p.Version != null && from != null && from.IsReady();   // (a player already in, whose game reloaded the mod)
                 p.Protocol = protocol;
                 p.Version = version;
                 p.Hash = hash;
+                if (update)
+                {
+                    Plugin.Log.LogInfo($"{from.m_playerName} now has Quad's Dungeons {version} (protocol {protocol})");
+                    Compare(from, p);
+                }
                 return;
             }
             ZNetPeer server = PeerOf(znet, rpc);
             if (server == null || !server.m_server) return;   // (only the server's)
+            if (_serverAnswered && ServerVersion != null)
+            {
+                // the server reloaded the mod while this game is connected: noted, never a refusal or a new wait (the set comes if it changed)
+                ServerVersion = version;
+                ServerHash = hash;
+                ServerProtocol = protocol;
+                if (protocol != Protocol || version != Plugin.Version)
+                    Plugin.Log.LogWarning($"The server reloaded Quad's Dungeons {version} (protocol {protocol}), this game has {Plugin.Version} (protocol {Protocol}): the same version is needed to play together; update and rejoin");
+                return;
+            }
             ServerVersion = version;
             ServerHash = hash;
+            ServerProtocol = protocol;
             if (version != Plugin.Version || protocol != Protocol)
             {
                 MismatchText = T("dungeons_sync_version", version, Plugin.Version);
@@ -304,6 +327,57 @@ namespace Dungeons
         }
 
         /// <summary>
+        /// After a reload of the mod in a world (HotReload.cs): this copy's version goes to every connected game that understands it being
+        /// sent again (protocol 2 or more: an older copy would take it as a new connection's and wait for a set), and the host compares
+        /// every player's protocol with its own: whoever has an older one needs to update and rejoin (told on the host's screen and in the
+        /// log; they stay connected, and Acts.cs keeps their levers working), whoever has a newer one means the host should update.
+        /// </summary>
+        public static void AfterReload()
+        {
+            ZNet znet = ZNet.instance;
+            if (znet == null) return;
+            try
+            {
+                foreach (ZNetPeer peer in znet.GetPeers())
+                {
+                    if (!peer.IsReady()) continue;
+                    int theirs = znet.IsServer() ? (Peers.FirstOrDefault(x => x.Rpc == peer.m_rpc)?.Protocol ?? 0) : (peer.m_server ? ServerProtocol : 0);
+                    if (theirs >= 2) peer.m_rpc.Invoke(VersionRpc, Mine());
+                }
+                if (!znet.IsServer()) return;
+                foreach (ZNetPeer peer in znet.GetPeers())
+                {
+                    Peer p = Peers.FirstOrDefault(x => x.Rpc == peer.m_rpc);
+                    if (peer.IsReady() && p?.Version != null) Compare(peer, p);
+                }
+            }
+            catch (Exception e) { Plugin.Log.LogWarning("Dungeons version check after a reload: " + e.Message); }
+        }
+
+        /// <summary>The host: a connected player whose Dungeons differs from this game's (after a reload in a world on either side).</summary>
+        private static void Compare(ZNetPeer peer, Peer p)
+        {
+            if (p.Protocol < Protocol)
+            {
+                Plugin.Log.LogWarning($"{peer.m_playerName} has Quad's Dungeons {p.Version} (protocol {p.Protocol}), this game {Plugin.Version} (protocol {Protocol}): they need to update and rejoin (kept connected meanwhile)");
+                HostNotice(T("dungeons_sync_peer_old", peer.m_playerName, p.Version, Plugin.Version));
+            }
+            else if (p.Protocol > Protocol)
+            {
+                Plugin.Log.LogWarning($"{peer.m_playerName} has Quad's Dungeons {p.Version} (protocol {p.Protocol}), newer than this game's {Plugin.Version} (protocol {Protocol}): update this game's and load the world again");
+                HostNotice(T("dungeons_sync_peer_new", peer.m_playerName, p.Version));
+            }
+            else if (p.Version != Plugin.Version)
+                Plugin.Log.LogInfo($"{peer.m_playerName} has Quad's Dungeons {p.Version}, this game {Plugin.Version} (the same protocol {Protocol}: they play together; the next join needs the same version)");
+        }
+
+        /// <summary>A line at the top left of the host's own screen (a dedicated server has none: the log has it).</summary>
+        private static void HostNotice(string text)
+        {
+            if (Player.m_localPlayer != null && MessageHud.instance != null) MessageHud.instance.ShowMessage(MessageHud.MessageType.TopLeft, text);
+        }
+
+        /// <summary>
         /// A client waiting for its server's set never waits for good: if it hasn't come 30 s after the server's version did (the server
         /// failed to send it), and the server's set has the same hash as this game's own, that's used (it's the same); otherwise there are
         /// no dungeons until reconnecting, and the player is told. A new connection or leaving the world ends the watch (and Waiting).
@@ -344,6 +418,7 @@ namespace Dungeons
         {
             _connection++;
             ServerVersion = ServerHash = Failed = null;
+            ServerProtocol = 0;
             _serverAnswered = false;
             _parts = null;
             Peers.Clear();
@@ -382,6 +457,7 @@ namespace Dungeons
             if (znet != null && !znet.IsServer())
             {
                 report["serverVersion"] = ServerVersion ?? "(none)";
+                if (ServerProtocol > 0) report["serverProtocol"] = ServerProtocol;
                 if (ServerHash != null) report["serverSet"] = ServerHash;
             }
             if (znet != null && znet.IsServer())
@@ -394,6 +470,8 @@ namespace Dungeons
                     {
                         ["player"] = peer.m_playerName,
                         ["version"] = p?.Version ?? "(none)",
+                        ["protocol"] = p?.Protocol,
+                        ["needsUpdate"] = p != null && p.Version != null && p.Protocol < Protocol ? true : (bool?)null,
                         ["set"] = p?.Hash,
                         ["sent"] = p?.Sent ?? "(nothing)",
                     });

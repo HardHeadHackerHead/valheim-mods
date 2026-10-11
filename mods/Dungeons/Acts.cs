@@ -22,6 +22,11 @@ namespace Dungeons
     /// - the owner answers each one-off act (Dungeons_Ack); a game with no answer in 1.5 s sends it again, with the same id, twice at
     ///   most. Every step is logged.
     /// Words said once a second anyway (plates, areas, positions) have no id and are never answered or sent again.
+    /// An owner running an older copy (0.2.2: a host reloaded in the world while a friend still had the old one) knows neither ids nor
+    /// answers: it ignored "#id|act" and every press of the host's was given up. Each owner of ours writes what it speaks into the
+    /// entrance's ZDO (Keys.ActsProto, "protocol@its session"); an owner that hasn't (an older copy) gets the plain act it knows, or,
+    /// with the dungeon built here, this game takes the entrance and acts itself, telling the player. An act given up after its tries
+    /// is done the same way, never in silence.
     /// The one window left: a game that has just claimed an unowned entrance acts on an act while the server, not having seen the claim
     /// yet (well under a second), takes it too. The claim (Tend) comes before players act on a dungeon nobody owned for a second or more.
     /// </summary>
@@ -66,8 +71,68 @@ namespace Dungeons
         {
             if (Repeated(act)) return act;
             string wire = "#" + ZDOMan.GetSessionID().ToString(CultureInfo.InvariantCulture) + "." + Copy + "." + (++_count).ToString(CultureInfo.InvariantCulture) + "|" + act;
+            ZDO z = site.Zdo;
+            if (z != null && OlderOwner(site, z))
+            {
+                // its owner is an older copy (it knows no ids and never answers): this game takes the entrance and acts, if it can
+                if (TakeOver(site, wire, $"its owner ({z.GetOwner()}) runs an older Quad's Dungeons")) return null;
+                Plugin.Log.LogWarning($"Dungeon {site.Id}: its owner ({z.GetOwner()}) runs an older Quad's Dungeons and it isn't built here: \"{act}\" sent the old way, unanswered");
+                return act;
+            }
             Waiting.Add(new Pending { Id = site.Id, Wire = wire, At = Time.time });
             return wire;
+        }
+
+        /// <summary>This game takes the entrance and acts on a wire act itself (the dungeon built here), telling the player. False: it
+        /// can't (not built here).</summary>
+        private static bool TakeOver(Site site, string wire, string why)
+        {
+            if (site?.Zdo == null || !site.Ready || site.Mechs == null) return false;
+            Plugin.Log.LogWarning($"Dungeon {site.Id}: {why}: this game takes its entrance and acts on \"{wire}\" itself");
+            site.Claim();
+            Mark(site);
+            Player.m_localPlayer?.Message(MessageHud.MessageType.TopLeft, DHack.Shared.Translations.T("dungeons_act_takeover"));
+            Handle(site, ZDOMan.GetSessionID(), wire);
+            return true;
+        }
+
+        // ---- what the owner speaks: "protocol@session" in the entrance's ZDO, written by each owner of ours (older copies don't)
+
+        public const int Protocol = 2;   // 2: act ids, answers, ActsProto (0.2.3); older owners write nothing
+
+        private static string MyMark => Protocol.ToString(CultureInfo.InvariantCulture) + "@" + ZDOMan.GetSessionID().ToString(CultureInfo.InvariantCulture);
+
+        /// <summary>The owner, every tend (and on taking it over): says what it speaks.</summary>
+        public static void Mark(Site site)
+        {
+            ZDO z = site?.Zdo;
+            if (z == null || !z.IsOwner()) return;
+            string mark = MyMark;
+            if (z.GetString(Keys.ActsProto) != mark) z.Set(Keys.ActsProto, mark);
+        }
+
+        private static readonly Dictionary<string, KeyValuePair<long, float>> OwnerSince = new Dictionary<string, KeyValuePair<long, float>>();
+
+        /// <summary>The entrance is owned by a game that doesn't speak act ids (an older copy): owned, unmarked, for 3 s at least (a new
+        /// owner of ours marks it within a frame; its mark reaches this game with its ownership, or just after).</summary>
+        public static bool OlderOwner(Site site, ZDO z)
+        {
+            if (Unowned(z) || Speaks(z)) { OwnerSince.Remove(site.Id); return false; }
+            long owner = z.GetOwner();
+            if (!OwnerSince.TryGetValue(site.Id, out KeyValuePair<long, float> seen) || seen.Key != owner)
+                OwnerSince[site.Id] = seen = new KeyValuePair<long, float>(owner, Time.time);
+            return Time.time - seen.Value >= 3f;
+        }
+
+        /// <summary>The entrance's owner speaks act ids: it's this game, or it said so (its mark names it).</summary>
+        public static bool Speaks(ZDO z)
+        {
+            long owner = z.GetOwner();
+            if (owner == ZDOMan.GetSessionID()) return true;
+            string mark = z.GetString(Keys.ActsProto) ?? "";
+            int at = mark.IndexOf('@');
+            return at > 0 && int.TryParse(mark.Substring(0, at), out int p) && p >= Protocol
+                   && long.TryParse(mark.Substring(at + 1), NumberStyles.Integer, CultureInfo.InvariantCulture, out long by) && by == owner;
         }
 
         /// <summary>A wire act: its id (null: none) and the act.</summary>
@@ -179,10 +244,15 @@ namespace Dungeons
                 Site site = Dungeons.Sites.FirstOrDefault(s => !s.Gone && s.Id == w.Id);
                 ZDO z = site?.Zdo;
                 if (z == null) { Waiting.RemoveAt(i); Plugin.Log.LogWarning($"Dungeon {w.Id}: \"{w.Wire}\" got no answer, and the dungeon isn't known here any more"); continue; }
-                if (w.Tries >= Retries)
+                if (w.Tries >= Retries || OlderOwner(site, z))
                 {
+                    // never given up in silence: this game takes the entrance and acts (the id keeps it once, with an owner of ours), or
+                    // the player is told it didn't go through
                     Waiting.RemoveAt(i);
-                    Plugin.Log.LogWarning($"Dungeon {w.Id}: \"{w.Wire}\" got no answer from its owner ({z.GetOwner()}) after {Retries + 1} tries: given up");
+                    string why = $"\"{w.Wire}\" got no answer from its owner ({z.GetOwner()}{(Speaks(z) ? "" : ", an older Quad's Dungeons or none")}) after {w.Tries + 1} tries";
+                    if (TakeOver(site, w.Wire, why)) continue;
+                    Plugin.Log.LogWarning($"Dungeon {w.Id}: {why}, and it isn't built here: given up");
+                    Player.m_localPlayer?.Message(MessageHud.MessageType.Center, DHack.Shared.Translations.T("dungeons_act_lost"));
                     continue;
                 }
                 w.Tries++;

@@ -108,5 +108,9 @@
   "dungeons_map_checkpoint": "Checkpoint (gold: yours)",
   "dungeons_rebuilding": "This dungeon is being built again: you're back at its entrance",
   "dungeons_reloaded": "Dungeon packs reloaded: {0} changed, {1} dungeons remade.",
-  "dungeons_reload_kept": "Not remade ({0}): someone is inside: {1}."
+  "dungeons_reload_kept": "Not remade ({0}): someone is inside: {1}.",
+  "dungeons_act_takeover": "Nobody answered for this dungeon: your game runs it now.",
+  "dungeons_act_lost": "That didn't reach the dungeon. Try again.",
+  "dungeons_sync_peer_old": "{0} needs to update Quad's Dungeons and rejoin (they have {1}, you have {2}).",
+  "dungeons_sync_peer_new": "{0} has a newer Quad's Dungeons ({1}): update yours and load the world again."
 }

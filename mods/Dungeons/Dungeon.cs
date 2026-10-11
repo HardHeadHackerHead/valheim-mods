@@ -55,6 +55,7 @@ namespace Dungeons
         {
             if (ZRoutedRpc.instance == null || Id.Length == 0) return;
             string wire = Acts.Sent(this, act);   // (a one-off act gets an id: answered by the owner, sent again if not, never done twice: Acts.cs)
+            if (wire == null) return;            // (its owner runs an older copy: this game took it over and acted)
             ZRoutedRpc.instance.InvokeRoutedRPC(ZRoutedRpc.Everybody, Dungeons.SiteRpc, Id, wire);
         }
 
@@ -540,6 +541,8 @@ namespace Dungeons
                     site.Claim();
                 }
             }
+            if (site.IsOwner) Acts.Mark(site);   // (the owner says it speaks act ids: Acts.cs)
+            else if (site.Zdo != null) Acts.OlderOwner(site, site.Zdo);   // (how long its owner has gone unmarked: an older copy after 3 s)
             if (site.IsOwner && site.Id.Length == 0) site.Zdo.Set(Keys.Id, NewId());   // (one made before it had an owner here)
             if (site.Layout == null && site.Problem == null && DungeonDB.instance != null && !string.IsNullOrEmpty(site.PackName))
             {

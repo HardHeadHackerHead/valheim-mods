@@ -108,5 +108,9 @@
   "dungeons_map_checkpoint": "Kontrol noktası (altın: seninki)",
   "dungeons_rebuilding": "Bu zindan yeniden kuruluyor: girişine geri döndün",
   "dungeons_reloaded": "Zindan paketleri yeniden yüklendi: {0} değişti, {1} zindan yeniden kuruldu.",
-  "dungeons_reload_kept": "Yeniden kurulmadı ({0}): içeride biri var: {1}."
+  "dungeons_reload_kept": "Yeniden kurulmadı ({0}): içeride biri var: {1}.",
+  "dungeons_act_takeover": "Bu zindan için kimse yanıt vermedi: artık onu senin oyunun yürütüyor.",
+  "dungeons_act_lost": "Bu zindana ulaşmadı. Tekrar dene.",
+  "dungeons_sync_peer_old": "{0} Quad's Dungeons'ı güncelleyip yeniden katılmalı (onda {1}, sende {2} var).",
+  "dungeons_sync_peer_new": "{0} daha yeni bir Quad's Dungeons sürümüne sahip ({1}): kendininkini güncelle ve dünyayı yeniden yükle."
 }

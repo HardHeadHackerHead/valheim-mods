@@ -108,5 +108,9 @@
   "dungeons_map_checkpoint": "Ponto de controle (dourado: o seu)",
   "dungeons_rebuilding": "Esta masmorra está sendo reconstruída: você voltou à entrada",
   "dungeons_reloaded": "Pacotes de masmorras recarregados: {0} alterados, {1} masmorras refeitas.",
-  "dungeons_reload_kept": "Não refeita ({0}): há alguém dentro: {1}."
+  "dungeons_reload_kept": "Não refeita ({0}): há alguém dentro: {1}.",
+  "dungeons_act_takeover": "Ninguém respondeu por esta masmorra: agora é o seu jogo que a controla.",
+  "dungeons_act_lost": "Isso não chegou à masmorra. Tente de novo.",
+  "dungeons_sync_peer_old": "{0} precisa atualizar o Quad's Dungeons e entrar de novo (tem a {1}, você tem a {2}).",
+  "dungeons_sync_peer_new": "{0} tem uma versão mais nova do Quad's Dungeons ({1}): atualize a sua e carregue o mundo de novo."
 }

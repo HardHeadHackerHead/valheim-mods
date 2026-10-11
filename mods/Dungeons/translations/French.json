@@ -108,5 +108,9 @@
   "dungeons_map_checkpoint": "Point de passage (or : le vôtre)",
   "dungeons_rebuilding": "Ce donjon est reconstruit : vous voici à son entrée",
   "dungeons_reloaded": "Packs de donjons rechargés : {0} modifiés, {1} donjons reconstruits.",
-  "dungeons_reload_kept": "Pas reconstruit ({0}) : quelqu'un est à l'intérieur : {1}."
+  "dungeons_reload_kept": "Pas reconstruit ({0}) : quelqu'un est à l'intérieur : {1}.",
+  "dungeons_act_takeover": "Personne n'a répondu pour ce donjon : c'est votre jeu qui le gère maintenant.",
+  "dungeons_act_lost": "Cela n'a pas atteint le donjon. Réessayez.",
+  "dungeons_sync_peer_old": "{0} doit mettre à jour Quad's Dungeons et revenir (il a la {1}, vous la {2}).",
+  "dungeons_sync_peer_new": "{0} a une version plus récente de Quad's Dungeons ({1}) : mettez la vôtre à jour et rechargez le monde."
 }

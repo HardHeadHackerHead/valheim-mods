@@ -108,5 +108,9 @@
   "dungeons_map_checkpoint": "Kontrollpunkt (Gold: deiner)",
   "dungeons_rebuilding": "Dieser Dungeon wird neu gebaut: du bist wieder an seinem Eingang",
   "dungeons_reloaded": "Dungeon-Pakete neu geladen: {0} geändert, {1} Dungeons neu gebaut.",
-  "dungeons_reload_kept": "Nicht neu gebaut ({0}): Jemand ist drinnen: {1}."
+  "dungeons_reload_kept": "Nicht neu gebaut ({0}): Jemand ist drinnen: {1}.",
+  "dungeons_act_takeover": "Niemand hat für diesen Dungeon geantwortet: dein Spiel führt ihn jetzt.",
+  "dungeons_act_lost": "Das hat den Dungeon nicht erreicht. Versuch es noch einmal.",
+  "dungeons_sync_peer_old": "{0} muss Quad's Dungeons aktualisieren und neu beitreten (hat {1}, du hast {2}).",
+  "dungeons_sync_peer_new": "{0} hat ein neueres Quad's Dungeons ({1}): Aktualisiere deins und lade die Welt neu."
 }

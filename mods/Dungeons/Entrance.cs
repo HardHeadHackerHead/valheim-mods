@@ -25,6 +25,7 @@ namespace Dungeons
         public static readonly int Remake = "quaddungeon_remake".GetStableHashCode();     // int: bumped by a remake (Rebuild): every game lays it out again
         public static readonly int LootSig = "quaddungeon_lootsig".GetStableHashCode();   // int on a chest the builder filled: its saved items' (s_items) hash then; still equal: untouched loot, not given out when the chest goes (Rebuild.EmptyOut)
         public static readonly int RemakeWanted = "quaddungeon_remakewanted".GetStableHashCode();
+        public static readonly int ActsProto = "quaddungeon_actsproto".GetStableHashCode();   // string "protocol@session": what the entrance's owner speaks (Acts.cs); an older copy writes nothing
         public static readonly int ActsDone = "quaddungeon_actsdone".GetStableHashCode();   // string "id@time;...": the one-off acts the owner acted on in the last 30 s (Acts.cs: never twice)   // int 1: remade when it next loads (its pack changed while it wasn't loaded)         // string: the entrance's look when it isn't its prefab's (a look from the config folder or the server)
         public static readonly int Encounters = "quaddungeon_encs".GetStableHashCode();
         public static readonly int LayoutSig = "quaddungeon_lsig".GetStableHashCode();   // int: the layout the saved parts were made for (Dungeons.Signature) // string: the encounters' states (EncounterRecord)       // string: the mechanisms that ever moved (MechRecords)

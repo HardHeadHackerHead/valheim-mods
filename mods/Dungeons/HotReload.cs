@@ -493,7 +493,7 @@ namespace Dungeons
     {
         public static Dictionary<string, object> Carry() => new Dictionary<string, object>
         {
-            ["packs"] = PackSync.Carry(), ["serverVersion"] = ServerVersion, ["serverHash"] = ServerHash, ["mismatch"] = MismatchText,
+            ["packs"] = PackSync.Carry(), ["serverVersion"] = ServerVersion, ["serverHash"] = ServerHash, ["serverProtocol"] = ServerProtocol, ["mismatch"] = MismatchText,
             ["answered"] = _serverAnswered, ["failed"] = Failed, ["expectedSince"] = _expectedSince,
             ["parts"] = _parts, ["partsHash"] = _partsHash, ["partsIn"] = _partsIn,
             ["peers"] = Peers.Select(p => new object[] { p.Rpc, p.Version, p.Hash, p.Protocol, p.Sent }).ToList(), ["refused"] = Refused.ToList(),
@@ -509,6 +509,8 @@ namespace Dungeons
             PackSync.Take(packs);
             ServerVersion = (string)d["serverVersion"];
             ServerHash = (string)d["serverHash"];
+            // (a copy from before 0.2.3 doesn't carry it: a server with a version heard had protocol 1 then)
+            ServerProtocol = d.TryGetValue("serverProtocol", out object sp) && sp is int spi ? spi : ServerVersion != null ? 1 : 0;
             MismatchText = (string)d["mismatch"];
             _serverAnswered = (bool)d["answered"];
             Failed = (string)d["failed"];
@@ -529,6 +531,7 @@ namespace Dungeons
                 Plugin.Instance.StartCoroutine(WatchSet(_connection));
             if (znet.IsServer() && packs?["local"] is string was && was != PackSync.Local.Hash)
                 Plugin.Log.LogInfo($"This build's own packs differ from the last copy's ({was} to {PackSync.Local.Hash}): sent to {Resend()} player(s) again");
+            AfterReload();   // (this copy's version to whoever understands it again; the host told who needs to update)
         }
     }
 }

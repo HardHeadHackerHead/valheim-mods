@@ -108,5 +108,9 @@
   "dungeons_map_checkpoint": "检查点（金色：你的）",
   "dungeons_rebuilding": "此地下城正在重建：你已回到入口",
   "dungeons_reloaded": "地下城包已重新加载：{0} 个已更改，{1} 个地下城已重建。",
-  "dungeons_reload_kept": "未重建（{0}）：里面有人：{1}。"
+  "dungeons_reload_kept": "未重建（{0}）：里面有人：{1}。",
+  "dungeons_act_takeover": "没有人为这个地下城应答：现在由你的游戏接管。",
+  "dungeons_act_lost": "这没有传到地下城。请再试一次。",
+  "dungeons_sync_peer_old": "{0} 需要更新 Quad's Dungeons 并重新加入（对方是 {1}，你是 {2}）。",
+  "dungeons_sync_peer_new": "{0} 的 Quad's Dungeons 版本更新（{1}）：请更新你的版本并重新载入世界。"
 }

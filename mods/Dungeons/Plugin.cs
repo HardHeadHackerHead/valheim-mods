@@ -27,7 +27,7 @@ namespace Dungeons
     {
         public const string Guid = "com.quad.dungeons";
         public const string Name = "Dungeons";
-        public const string Version = "0.2.3";
+        public const string Version = "0.2.4";
 
         internal static Plugin Instance;
         internal static ManualLogSource Log;
