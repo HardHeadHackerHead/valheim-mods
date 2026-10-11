@@ -7,7 +7,7 @@
 
 **A portal network: press E on a portal and pick where it goes from a list. No more matching portal names to teleport where you want.**
 
-![version: 1.4.1](https://img.shields.io/badge/version-1.4.1-3b6e8f?style=flat-square)  ![multiplayer: everyone + host](https://img.shields.io/badge/multiplayer-everyone%20%2B%20host-7a5c2e?style=flat-square)  ![made with: Claude Code](https://img.shields.io/badge/made%20with-Claude%20Code-c26a3d?style=flat-square)
+![version: 1.4.2](https://img.shields.io/badge/version-1.4.2-3b6e8f?style=flat-square)  ![multiplayer: everyone + host](https://img.shields.io/badge/multiplayer-everyone%20%2B%20host-7a5c2e?style=flat-square)  ![made with: Claude Code](https://img.shields.io/badge/made%20with-Claude%20Code-c26a3d?style=flat-square)
 
 <!-- GITHUB-ONLY -->[Thunderstore](https://thunderstore.io/c/valheim/p/Quads_Lab/Quads_Portal_Hub/)  ·  <!-- END GITHUB-ONLY -->[Source code](https://github.com/HardHeadHackerHead/valheim-mods/tree/main/mods/PortalHub)  ·  [Report a bug](https://github.com/HardHeadHackerHead/valheim-mods/issues/new?template=bug.yml&title=%5BQuad%27s%20Portal%20Hub%5D%20)  ·  [Discord](https://discord.gg/EwTjQxEZPy)
 
@@ -83,7 +83,7 @@ In `BepInEx/config/com.quad.portalhub.cfg`, made the first time the game runs wi
 | Setting | Default | What it does |
 |---|---|---|
 | `Enabled` | `true` | Use the portal menu when you press E on a portal. (Off: portals work like in the base game.) In multiplayer the server's value applies. |
-| `HideWardedPortals` | `false` | Leave portals inside someone else's protected area (a switched-on ward you are not on) out of each player's list and map, and refuse links to them. (Portals in such an area can never be changed by others either way.) In multiplayer the server's value applies. |
+| `HideWardedPortals` | `false` | Leave portals inside someone else's protected area (a switched-on ward you are not on) out of each player's list and map. (Either way, nobody can change a portal in such an area or link a portal into one.) In multiplayer the server's value applies. |
 | `ShowDestinationOnHover` | `true` | When you look at a portal, show where it goes. |
 
 **Map**
@@ -132,8 +132,8 @@ and tested in our own world, with **bobisme** as our tester.
 
 ## 📜 Recent changes
 
+- **1.4.2** Its windows no longer fill the log with "The LiberationSans SDF Font Asset was not found": each text is given the game's font before it starts (it looked for TextMeshPro's default font, which the game doesn't have, every time a text was made). Nothing changes on screen.
 - **1.4.1** Fix: a portal could be linked one way into someone else's protected area, so anyone could walk into their base through it. The host now refuses a link to a portal in a switched-on ward you are not on, whatever HideWardedPortals says (that setting now only hides those portals from the list and map). Links that already lead into a protected area their maker may not enter (a ward built or switched on since) are dropped, and the portal goes back to pairing by name. Links made with an older version didn't record who made them, so they are left as they are. Fix: a portal renamed at the moment the host saved its link or id could lose the new name: the host now asks the game that holds the portal to save them (as the game does with its own portal links), and saves them itself only when nobody else holds it, or after a few seconds for a player with an older PortalHub. The host's portal pass every 5 seconds no longer searches the whole portal list once for each linked portal.
 - **1.4.0** Now in your language: English, Russian, German, Chinese (Simplified), Portuguese (Brazil), Spanish, French, Polish and Turkish, following the game's own Language setting. The game's own names are used for its things (items, creatures, lands, stations). The translations were made with AI: to correct a line, or add a language, put a file in BepInEx/config/translations/com.quad.portalhub/ named after the game's name for the language (German.json...) with only the lines you change, copied from translations/English.json on GitHub. The host's two refusals (a portal in someone's ward, a one-way link) reach each player in their own language. Players on a server should update together: a player on an older version sees those two as a key name. The narrow buttons on each portal's row shrink their words to fit.
-- **1.3.0** The portal menu now looks like part of the game: the crafting screen's wood panel, the game's buttons, fonts and scrollbar, and the game's own text boxes for the name and search (E and Tab type in them). Long portal lists scroll smoothly. E or Tab closes the menu as they close a chest, and the E that closes it no longer opens it again. The link lines on the big map are part of the map now: they stay under the portal icons and move and hide with it.
 
 <!-- GITHUB-ONLY -->[Every change](CHANGELOG.txt)<!-- END GITHUB-ONLY --><!-- THUNDERSTORE-ONLY: Every change is on the Changelog tab. -->

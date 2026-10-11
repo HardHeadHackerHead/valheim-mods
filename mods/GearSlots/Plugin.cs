@@ -24,7 +24,7 @@ namespace GearSlots
         public const string Guid = "com.quad.gearslots";
         public const string OldGuid = "com.dhack.gearslots"; // (its id until 2026-10: settings move over by themselves, see Shared/Migration.cs)
         public const string Name = "GearSlots";
-        public const string Version = "1.3.0";
+        public const string Version = "1.3.1";
 
         internal static Plugin Instance;
         internal static BepInEx.Logging.ManualLogSource Log;

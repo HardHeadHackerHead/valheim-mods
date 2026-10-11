@@ -7,7 +7,7 @@
 
 **Build a Recycler and turn old weapons, armor and tools back into a share of their materials: recycle, salvage and reclaim the gear you've outgrown.**
 
-![version: 1.3.1](https://img.shields.io/badge/version-1.3.1-3b6e8f?style=flat-square)  ![multiplayer: everyone + host](https://img.shields.io/badge/multiplayer-everyone%20%2B%20host-7a5c2e?style=flat-square)  ![made with: Claude Code](https://img.shields.io/badge/made%20with-Claude%20Code-c26a3d?style=flat-square)
+![version: 1.3.2](https://img.shields.io/badge/version-1.3.2-3b6e8f?style=flat-square)  ![multiplayer: everyone + host](https://img.shields.io/badge/multiplayer-everyone%20%2B%20host-7a5c2e?style=flat-square)  ![made with: Claude Code](https://img.shields.io/badge/made%20with-Claude%20Code-c26a3d?style=flat-square)
 
 <!-- GITHUB-ONLY -->[Thunderstore](https://thunderstore.io/c/valheim/p/Quads_Lab/Quads_Recycler/)  ·  <!-- END GITHUB-ONLY -->[Source code](https://github.com/HardHeadHackerHead/valheim-mods/tree/main/mods/Recycler)  ·  [Report a bug](https://github.com/HardHeadHackerHead/valheim-mods/issues/new?template=bug.yml&title=%5BQuad%27s%20Recycler%5D%20)  ·  [Discord](https://discord.gg/EwTjQxEZPy)
 
@@ -131,8 +131,8 @@ and tested in our own world, with **bobisme** as our tester.
 
 ## 📜 Recent changes
 
+- **1.3.2** Its windows no longer fill the log with "The LiberationSans SDF Font Asset was not found": each text is given the game's font before it starts (it looked for TextMeshPro's default font, which the game doesn't have, every time a text was made). Nothing changes on screen.
 - **1.3.1** Its build piece now also clears destroyed pieces left in the hammer's list by other mods when it registers: after a mod is reloaded at the main menu, a leftover one made every change to your bag throw an error half-way (crafting gave the item without taking the cost) until the game was restarted.
 - **1.3.0** Now in your language: English, Russian, German, Chinese (Simplified), Portuguese (Brazil), Spanish, French, Polish and Turkish, following the game's own Language setting. The game's own names are used for its things (items, creatures, lands, stations). The translations were made with AI: to correct a line, or add a language, put a file in BepInEx/config/translations/com.quad.recycler/ named after the game's name for the language (German.json...) with only the lines you change, copied from translations/English.json on GitHub. The Recycler and the Press have translated names and hover texts too.
-- **1.2.1** Tab no longer opens your inventory under the Recycler's window (it closes the window, as it closes a chest), and the chat and map keys stay quiet while it's open.
 
 <!-- GITHUB-ONLY -->[Every change](CHANGELOG.txt)<!-- END GITHUB-ONLY --><!-- THUNDERSTORE-ONLY: Every change is on the Changelog tab. -->

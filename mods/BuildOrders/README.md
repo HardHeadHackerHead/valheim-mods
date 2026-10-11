@@ -7,7 +7,7 @@
 
 **Shared ghost build orders and blueprints, a build planner for your party: plan pieces (or import a blueprint) for everyone, then build them by walking up and pressing E.**
 
-![version: 1.14.2](https://img.shields.io/badge/version-1.14.2-3b6e8f?style=flat-square)  ![multiplayer: only who wants it](https://img.shields.io/badge/multiplayer-only%20who%20wants%20it-7a5c2e?style=flat-square)  ![made with: Claude Code](https://img.shields.io/badge/made%20with-Claude%20Code-c26a3d?style=flat-square)
+![version: 1.14.3](https://img.shields.io/badge/version-1.14.3-3b6e8f?style=flat-square)  ![multiplayer: only who wants it](https://img.shields.io/badge/multiplayer-only%20who%20wants%20it-7a5c2e?style=flat-square)  ![made with: Claude Code](https://img.shields.io/badge/made%20with-Claude%20Code-c26a3d?style=flat-square)
 
 <!-- GITHUB-ONLY -->[Thunderstore](https://thunderstore.io/c/valheim/p/Quads_Lab/Quads_Build_Orders/)  ·  <!-- END GITHUB-ONLY -->[Source code](https://github.com/HardHeadHackerHead/valheim-mods/tree/main/mods/BuildOrders)  ·  [Report a bug](https://github.com/HardHeadHackerHead/valheim-mods/issues/new?template=bug.yml&title=%5BQuad%27s%20Build%20Orders%5D%20)  ·  [Discord](https://discord.gg/EwTjQxEZPy)
 
@@ -205,8 +205,8 @@ and tested in our own world, with **bobisme** as our tester.
 
 ## 📜 Recent changes
 
+- **1.14.3** Its windows no longer fill the log with "The LiberationSans SDF Font Asset was not found": each text is given the game's font before it starts (it looked for TextMeshPro's default font, which the game doesn't have, every time a text was made). Nothing changes on screen.
 - **1.14.2** Fix: after reloading the mod at the main menu (the mod manager's reload, or F6), its bridge tool stayed in the hammer's list after it was gone, and every change to your bag threw an error half-way: crafting gave the item without taking the cost, and picking things up could go wrong, until the game was restarted. The bridge tool now comes off the list it was put on, and destroyed pieces left there by any mod are cleared when it registers.
 - **1.14.1** Smoother multiplayer. Placing or removing a big plan sent the other players one message per piece, all at the same moment (a 1000-piece blueprint: 1000 messages at once, a lag spike for everyone). The pieces now go many to a message, a few at a time over the next frames, in the order they happened. Older versions on the same server read the new messages as before.
-- **1.14.0** Now in your language: English, Russian, German, Chinese (Simplified), Portuguese (Brazil), Spanish, French, Polish and Turkish, following the game's own Language setting. The game's own names are used for its things (items, creatures, lands, stations). The translations were made with AI: to correct a line, or add a language, put a file in BepInEx/config/translations/com.quad.buildorders/ named after the game's name for the language (German.json...) with only the lines you change, copied from translations/English.json on GitHub. Blueprint and plan names are kept as they are; only what is shown is translated, so old plans load as before. The Bridge piece's name is translated too, so the game may tell you about it once as a new piece. Fixed: the hold-E text on the build prompt spilled past its bar.
 
 <!-- GITHUB-ONLY -->[Every change](CHANGELOG.txt)<!-- END GITHUB-ONLY --><!-- THUNDERSTORE-ONLY: Every change is on the Changelog tab. -->

@@ -366,9 +366,14 @@ namespace Arena
             go.transform.SetParent(parent, false);
             go.transform.localPosition = at;
             go.transform.localRotation = Quaternion.Euler(0f, 180f, 0f);   // read from the court
+            // (off while the text is made and given its font: added to an object that is on, TextMeshPro wakes at once with no font, looks for its
+            // default one, which the game doesn't have, and says so in the log every time)
+            bool tmpWasOn = go.activeSelf;
+            go.SetActive(false);
             var tmp = go.AddComponent<TextMeshPro>();
             TMP_FontAsset font = Font();
             if (font != null) tmp.font = font;
+            go.SetActive(tmpWasOn);
             tmp.text = text;
             tmp.enableAutoSizing = true;
             tmp.fontSizeMin = 0.5f; tmp.fontSizeMax = 2.4f;

@@ -26,7 +26,7 @@ namespace PortalHub
         public const string Guid = "com.quad.portalhub";
         public const string OldGuid = "com.dhack.portalhub"; // (its id until 2026-10: settings move over by themselves, see Shared/Migration.cs)
         public const string Name = "PortalHub";
-        public const string Version = "1.4.1";
+        public const string Version = "1.4.2";
 
         internal static Plugin Instance;
         internal static DHack.Shared.ServerSettings Synced;   // the settings the server decides in multiplayer

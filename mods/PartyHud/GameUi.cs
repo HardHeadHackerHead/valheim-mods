@@ -206,8 +206,13 @@ namespace PartyHud
         {
             Vector2 a = anchor ?? new Vector2(0f, 1f);
             RectTransform r = Rect(parent, "Text", a, a, pos, size);
+            // (off while the text is made and given its font: added to an object that is on, TextMeshPro wakes at once with no font, looks for its
+            // default one, which the game doesn't have, and says so in the log every time)
+            bool tWasOn = r.gameObject.activeSelf;
+            r.gameObject.SetActive(false);
             var t = r.gameObject.AddComponent<TextMeshProUGUI>();
             t.font = font ?? Sans;
+            r.gameObject.SetActive(tWasOn);
             t.fontSize = fontSize; t.color = color; t.alignment = align; t.richText = true;
             t.enableWordWrapping = true; t.overflowMode = TextOverflowModes.Overflow;
             t.text = text;

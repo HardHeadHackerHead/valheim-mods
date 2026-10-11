@@ -7,7 +7,7 @@
 
 **A party HUD: health bars, stamina and distance for every player in your group, live and at any range, on the right of the screen.**
 
-![version: 1.10.1](https://img.shields.io/badge/version-1.10.1-3b6e8f?style=flat-square)  ![multiplayer: only who wants it](https://img.shields.io/badge/multiplayer-only%20who%20wants%20it-7a5c2e?style=flat-square)  ![made with: Claude Code](https://img.shields.io/badge/made%20with-Claude%20Code-c26a3d?style=flat-square)
+![version: 1.10.2](https://img.shields.io/badge/version-1.10.2-3b6e8f?style=flat-square)  ![multiplayer: only who wants it](https://img.shields.io/badge/multiplayer-only%20who%20wants%20it-7a5c2e?style=flat-square)  ![made with: Claude Code](https://img.shields.io/badge/made%20with-Claude%20Code-c26a3d?style=flat-square)
 
 <!-- GITHUB-ONLY -->[Thunderstore](https://thunderstore.io/c/valheim/p/Quads_Lab/Quads_Party_HUD/)  ·  <!-- END GITHUB-ONLY -->[Source code](https://github.com/HardHeadHackerHead/valheim-mods/tree/main/mods/PartyHud)  ·  [Report a bug](https://github.com/HardHeadHackerHead/valheim-mods/issues/new?template=bug.yml&title=%5BQuad%27s%20Party%20HUD%5D%20)  ·  [Discord](https://discord.gg/EwTjQxEZPy)
 
@@ -143,8 +143,8 @@ and tested in our own world, with **bobisme** as our tester.
 
 ## 📜 Recent changes
 
+- **1.10.2** Its party panel no longer fill the log with "The LiberationSans SDF Font Asset was not found": each text is given the game's font before it starts (it looked for TextMeshPro's default font, which the game doesn't have, every time a text was made). Nothing changes on screen.
 - **1.10.1** Much less network traffic: your game now sends your health, stamina, food and buffs to the other players only when something they would see has changed (at most once a second, and every 2 seconds anyway), instead of three times a second. On a busy server that is about a third of the traffic or less, and the party panel looks the same. Works with players on older versions.
 - **1.10.0** Now in your language: English, Russian, German, Chinese (Simplified), Portuguese (Brazil), Spanish, French, Polish and Turkish, following the game's own Language setting. The game's own names are used for its things (items, creatures, lands, stations). The translations were made with AI: to correct a line, or add a language, put a file in BepInEx/config/translations/com.quad.partyhud/ named after the game's name for the language (German.json...) with only the lines you change, copied from translations/English.json on GitHub. Fixed: names and status lines no longer vanish in Chinese.
-- **1.9.0** The party panel is now part of the game's own HUD, made from its own pieces: the inventory's sunken boxes and bars, the game's lettering, and the minimap's arrow for which way each player is. It hides with the HUD (and in cutscenes), follows the interface scale you set in the game's settings, and is lighter to draw: rows are only built again when someone joins or leaves or you change a setting. Every setting still works.
 
 <!-- GITHUB-ONLY -->[Every change](CHANGELOG.txt)<!-- END GITHUB-ONLY --><!-- THUNDERSTORE-ONLY: Every change is on the Changelog tab. -->

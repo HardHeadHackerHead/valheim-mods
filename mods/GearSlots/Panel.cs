@@ -211,8 +211,13 @@ namespace GearSlots
         {
             var go = new GameObject("GearSlotsLabel", typeof(RectTransform));
             go.transform.SetParent(parent, false);
+            // (off while the text is made and given its font: added to an object that is on, TextMeshPro wakes at once with no font, looks for its
+            // default one, which the game doesn't have, and says so in the log every time)
+            bool tWasOn = go.activeSelf;
+            go.SetActive(false);
             var t = go.AddComponent<TextMeshProUGUI>();
             t.font = font.font;
+            go.SetActive(tWasOn);
             t.fontSharedMaterial = font.fontSharedMaterial;
             t.text = text;
             t.fontSize = 12f;
