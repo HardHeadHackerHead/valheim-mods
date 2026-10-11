@@ -219,11 +219,14 @@ namespace FeedFromChests
         private const float Settle = 1f, Retry = 5f, Forget = 10f;
 
         private class Claim { public float At; public float RetryAt = -1f; }
-        private static readonly Dictionary<ZDOID, Claim> Recent = new Dictionary<ZDOID, Claim>();
+        // (by the chest's object id as its two numbers: a ZDOID works out its hash from a table the game empties each time you join a
+        // world, so one kept from before you left for the main menu can't be looked up again, and can throw)
+        private static readonly Dictionary<(long, uint), Claim> Recent = new Dictionary<(long, uint), Claim>();
+        private static (long, uint) Id(ZDOID uid) => (uid.UserID, uid.ID);
         private static float _prunedAt;
 
         /// <summary>Our recent claim on something, or null (an old one no longer matters and is forgotten).</summary>
-        private static Claim Find(ZDOID id, float now)
+        private static Claim Find((long, uint) id, float now)
         {
             if (!Recent.TryGetValue(id, out Claim claim)) return null;
             if (claim.RetryAt >= 0f ? now < claim.RetryAt : now - claim.At < Forget) return claim;
@@ -236,7 +239,7 @@ namespace FeedFromChests
         {
             if (view == null || !view.IsValid()) return false;
             float now = Time.unscaledTime;
-            Claim claim = Find(view.GetZDO().m_uid, now);
+            Claim claim = Find(Id(view.GetZDO().m_uid), now);
             if (!view.IsOwner())
             {
                 if (claim != null && claim.RetryAt < 0f) claim.RetryAt = now + Retry; // another player's game has taken it from us
@@ -253,9 +256,9 @@ namespace FeedFromChests
             if (now - _prunedAt > 30f)
             {
                 _prunedAt = now;
-                foreach (ZDOID id in new List<ZDOID>(Recent.Keys)) Find(id, now);
+                foreach (var id in new List<(long, uint)>(Recent.Keys)) Find(id, now);
             }
-            Claim claim = Find(view.GetZDO().m_uid, now);
+            Claim claim = Find(Id(view.GetZDO().m_uid), now);
             if (claim != null)
             {
                 if (claim.RetryAt < 0f) claim.RetryAt = now + Retry; // (taken from us a moment ago: leave it to them for now)
@@ -269,7 +272,7 @@ namespace FeedFromChests
         {
             if (view == null || !view.IsValid() || view.IsOwner()) return;
             view.ClaimOwnership();
-            Recent[view.GetZDO().m_uid] = new Claim { At = Time.unscaledTime };
+            Recent[Id(view.GetZDO().m_uid)] = new Claim { At = Time.unscaledTime };
         }
 
         public static void Clear() => Recent.Clear();

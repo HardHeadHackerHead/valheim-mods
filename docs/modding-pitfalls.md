@@ -41,6 +41,11 @@ Every time a world loads, the game gives each object a new `ZDOID` (`ZDO.Load` s
 object across restarts, store your own random id on it (PortalHub's `dh_pid` in `mods/PortalHub/Plugin.Net.cs`), or use the game's
 connections (`ZDO.SetConnection`), which it re-links by hash when the world loads.
 
+Not even in memory across worlds: a `ZDOID` works out its hash (and its `UserID`) from a table the game empties each time you join a world
+(`ZDOID.Reset`). A dictionary keyed by ZDOIDs that lives on through a trip to the main menu can't find its old keys, and looking them up can
+throw: QualityOfLife's ship pins threw every second after a rejoin. Key such collections by `(zdoid.UserID, zdoid.ID)` taken when you add
+them, or empty them when a new world starts.
+
 ## Fill a tombstone with the game's own move
 
 A tombstone's (or cargo crate's) container is only a few slots big until the game fills it: `Inventory.MoveInventoryToGrave(original)`

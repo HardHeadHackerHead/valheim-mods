@@ -7,7 +7,7 @@
 
 **Craft from chests: crafting stations, and hand-crafting from your inventory, use materials from nearby chests and containers.**
 
-![version: 1.5.1](https://img.shields.io/badge/version-1.5.1-3b6e8f?style=flat-square)  ![multiplayer: only who wants it](https://img.shields.io/badge/multiplayer-only%20who%20wants%20it-7a5c2e?style=flat-square)  ![made with: Claude Code](https://img.shields.io/badge/made%20with-Claude%20Code-c26a3d?style=flat-square)
+![version: 1.5.2](https://img.shields.io/badge/version-1.5.2-3b6e8f?style=flat-square)  ![multiplayer: only who wants it](https://img.shields.io/badge/multiplayer-only%20who%20wants%20it-7a5c2e?style=flat-square)  ![made with: Claude Code](https://img.shields.io/badge/made%20with-Claude%20Code-c26a3d?style=flat-square)
 
 <!-- GITHUB-ONLY -->[Thunderstore](https://thunderstore.io/c/valheim/p/Quads_Lab/Quads_Craft_From_Chests/)  ·  <!-- END GITHUB-ONLY -->[Source code](https://github.com/HardHeadHackerHead/valheim-mods/tree/main/mods/CraftFromChests)  ·  [Report a bug](https://github.com/HardHeadHackerHead/valheim-mods/issues/new?template=bug.yml&title=%5BQuad%27s%20Craft%20From%20Chests%5D%20)  ·  [Discord](https://discord.gg/EwTjQxEZPy)
 
@@ -125,8 +125,8 @@ and tested in our own world, with **bobisme** as our tester.
 
 ## 📜 Recent changes
 
+- **1.5.2** Fix: after leaving a world for the main menu and joining one again, the chests claimed just before could no longer be looked up, and crafting from chests could stop working until a restart (the game renumbers its object ids on each join).
 - **1.5.1** Fixed in multiplayer: two players crafting from the same chest at the same moment could both be paid for with the same materials (a free craft). A chest another player's game was looking after is now taken over when the crafting window opens and counts a moment later, and a craft is only paid from chests that are yours by then, so what the window shows is what will be paid.
 - **1.5.0** Now in your language: English, Russian, German, Chinese (Simplified), Portuguese (Brazil), Spanish, French, Polish and Turkish, following the game's own Language setting. The game's own names are used for its things (items, creatures, lands, stations). The translations were made with AI: to correct a line, or add a language, put a file in BepInEx/config/translations/com.quad.craftfromchests/ named after the game's name for the language (German.json...) with only the lines you change, copied from translations/English.json on GitHub.
-- **1.4.3** Fixed: it never takes from or puts into the game's Obliterator (what is in it burns when the lever is pulled), a Ledger Chest or the Arena's chests; only ordinary storage chests count.
 
 <!-- GITHUB-ONLY -->[Every change](CHANGELOG.txt)<!-- END GITHUB-ONLY --><!-- THUNDERSTORE-ONLY: Every change is on the Changelog tab. -->

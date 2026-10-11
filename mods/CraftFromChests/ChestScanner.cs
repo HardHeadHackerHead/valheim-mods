@@ -138,11 +138,14 @@ namespace CraftFromChests
         private const float Settle = 1f, Retry = 5f, Forget = 10f;
 
         private class Claim { public float At; public float RetryAt = -1f; }
-        private static readonly Dictionary<ZDOID, Claim> Claims = new Dictionary<ZDOID, Claim>();
+        // (by the chest's object id as its two numbers: a ZDOID works out its hash from a table the game empties each time you join a
+        // world, so one kept from before you left for the main menu can't be looked up again, and can throw)
+        private static readonly Dictionary<(long, uint), Claim> Claims = new Dictionary<(long, uint), Claim>();
+        private static (long, uint) Id(ZDOID uid) => (uid.UserID, uid.ID);
         private static float _prunedAt, _refreshAt = -1f;
 
         /// <summary>Our recent claim on a chest, or null (an old one no longer matters and is forgotten).</summary>
-        private static Claim ClaimOn(ZDOID id, float now)
+        private static Claim ClaimOn((long, uint) id, float now)
         {
             if (!Claims.TryGetValue(id, out Claim claim)) return null;
             if (claim.RetryAt >= 0f ? now < claim.RetryAt : now - claim.At < Forget) return claim;
@@ -156,7 +159,7 @@ namespace CraftFromChests
             ZNetView nview = NView.GetValue(c) as ZNetView;
             if (nview == null || !nview.IsValid()) return false;
             float now = Time.unscaledTime;
-            Claim claim = ClaimOn(nview.GetZDO().m_uid, now);
+            Claim claim = ClaimOn(Id(nview.GetZDO().m_uid), now);
             if (!nview.IsOwner())
             {
                 if (claim != null && claim.RetryAt < 0f) claim.RetryAt = now + Retry; // another player's game has taken it from us
@@ -182,9 +185,9 @@ namespace CraftFromChests
             if (now - _prunedAt > 30f)
             {
                 _prunedAt = now;
-                foreach (ZDOID id in new List<ZDOID>(Claims.Keys)) ClaimOn(id, now);
+                foreach (var id in new List<(long, uint)>(Claims.Keys)) ClaimOn(id, now);
             }
-            ZDOID uid = nview.GetZDO().m_uid;
+            var uid = Id(nview.GetZDO().m_uid);
             Claim claim = ClaimOn(uid, now);
             if (claim != null)
             {

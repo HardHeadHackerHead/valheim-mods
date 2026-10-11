@@ -21,7 +21,7 @@ namespace QualityOfLife
         public const string Guid = "com.quad.qualityoflife";
         public const string OldGuid = "com.dhack.qualityoflife"; // (its id until 2026-10: settings move over by themselves, see Shared/Migration.cs)
         public const string Name = "QualityOfLife";
-        public const string Version = "1.13.1";
+        public const string Version = "1.13.2";
 
         private ConfigEntry<bool> _quickSetEnabled, _showBadges, _hammerEnabled, _showMessages;
         private ConfigEntry<KeyboardShortcut> _quickSetKey, _hammerKey;

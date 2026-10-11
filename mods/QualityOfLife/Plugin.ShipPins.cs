@@ -16,7 +16,10 @@ namespace QualityOfLife
     {
         private ConfigEntry<bool> _shipPins;
         private ConfigEntry<Minimap.PinType> _shipPinType;
-        private readonly Dictionary<ZDOID, Minimap.PinData> _shipPinsByZdo = new Dictionary<ZDOID, Minimap.PinData>();
+        // By the ship's object id, kept as its two numbers: a ZDOID itself works out its hash from a table the game empties each time you
+        // join a world (ZDOID.Reset), so ZDOIDs kept from before you left for the main menu can't be found again (it threw every second).
+        private readonly Dictionary<(long, uint), Minimap.PinData> _shipPinsByZdo = new Dictionary<(long, uint), Minimap.PinData>();
+        private Minimap _shipPinsOn;   // the map those pins are on (a new world has a new one)
         private Dictionary<int, string> _shipKinds;   // prefab hash -> name shown on the pin
         private Sprite _shipIcon;
         private float _nextShipPinScan;
@@ -32,6 +35,7 @@ namespace QualityOfLife
         {
             if (Minimap.instance == null || ZDOMan.instance == null || ZNetScene.instance == null) return;
             if (!_shipPins.Value) { ClearShipPins(); return; }
+            if (_shipPinsOn != Minimap.instance) { _shipPinsByZdo.Clear(); _shipPinsOn = Minimap.instance; }   // (another world: its own pins)
             if (Time.unscaledTime < _nextShipPinScan) return;
             _nextShipPinScan = Time.unscaledTime + 1f;
 
@@ -49,7 +53,7 @@ namespace QualityOfLife
             if (_shipIcon == null) _shipIcon = LoadShipIcon();
 
             // every ship the world knows of (its saved object, which moves with it), by kind
-            var seen = new HashSet<ZDOID>();
+            var seen = new HashSet<(long, uint)>();
             var list = new List<ZDO>();
             foreach (var kind in _shipKinds)
             {
@@ -61,23 +65,24 @@ namespace QualityOfLife
                 foreach (ZDO zdo in list)
                 {
                     if (zdo == null || !zdo.IsValid()) continue;
-                    seen.Add(zdo.m_uid);
+                    var key = (zdo.m_uid.UserID, zdo.m_uid.ID);
+                    seen.Add(key);
                     Vector3 at = zdo.GetPosition();
-                    if (_shipPinsByZdo.TryGetValue(zdo.m_uid, out Minimap.PinData pin) && PinStillThere(pin)) { pin.m_pos = at; continue; }
+                    if (_shipPinsByZdo.TryGetValue(key, out Minimap.PinData pin) && PinStillThere(pin)) { pin.m_pos = at; continue; }
                     pin = Minimap.instance.AddPin(at, _shipPinType.Value, kind.Value, false, false, 0L);
                     if (_shipIcon != null)
                     {
                         pin.m_icon = _shipIcon;
                         if (pin.m_iconElement != null) pin.m_iconElement.sprite = _shipIcon;
                     }
-                    _shipPinsByZdo[zdo.m_uid] = pin;
+                    _shipPinsByZdo[key] = pin;
                     Logger.LogInfo($"Ship on the map: {kind.Value} at ({at.x:0}, {at.z:0}){(_shipIcon == null ? " (no longship picture: the mod's ship.png was not found)" : "")}");
                 }
             }
-            foreach (ZDOID gone in _shipPinsByZdo.Keys.Where(k => !seen.Contains(k)).ToList())
+            foreach (var gone in _shipPinsByZdo.Where(kv => !seen.Contains(kv.Key)).ToList())
             {
-                Minimap.instance.RemovePin(_shipPinsByZdo[gone]); // (sunk, taken apart, or out of this game's sight)
-                _shipPinsByZdo.Remove(gone);
+                Minimap.instance.RemovePin(gone.Value); // (sunk, taken apart, or out of this game's sight)
+                _shipPinsByZdo.Remove(gone.Key);
             }
         }
 
