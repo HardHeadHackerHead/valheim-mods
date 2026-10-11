@@ -62,32 +62,52 @@ namespace JetSkis
             foreach (Player p in Player.GetAllPlayers())
                 if (p != null && p.GetPlayerID() == user)
                 {
-                    if (p == Player.m_localPlayer && !p.IsAttached()) return null;
-                    return Vector3.Distance(p.transform.position, _controls.m_attachPoint.position) < 1f ? p : null;
+                    if (p == Player.m_localPlayer) return p.IsAttached() && Vector3.Distance(p.transform.position, _controls.m_attachPoint.position) < 1f ? p : null;
+                    return Vector3.Distance(p.transform.position, _controls.m_attachPoint.position) < 6f ? p : null;   // (another game's: their place arrives late)
                 }
             return null;
         }
 
-        /// <summary>Who sits behind the rider now, or null (another game's player: whoever is seated right there).</summary>
+        private const string PassengerMark = "dh_jetski_passenger";   // (on a player's own data: the jet ski they sit behind the rider on, this session)
+        private static ZDOID _markShown = ZDOID.None;
+
+        /// <summary>
+        /// Who sits behind the rider now, or null. This game's player: sitting in the seat. Another game's: marked so on their own data by
+        /// their game (MarkLocal), as their body's place reaches this game late and lags behind a moving jet ski.
+        /// </summary>
         internal Player PassengerNow()
         {
-            if (_passengerSeat == null) return null;
+            if (_passengerSeat == null || !_nview.IsValid()) return null;
+            ZDOID mine = _nview.GetZDO().m_uid;
             foreach (Player p in Player.GetAllPlayers())
             {
-                if (p == null || Vector3.Distance(p.transform.position, _passengerSeat.position) > 0.35f) continue;
-                if (p == Player.m_localPlayer ? p.IsAttached() : Seated(p)) return p;
+                if (p == null) continue;
+                if (p == Player.m_localPlayer)
+                {
+                    if (p.IsAttached() && Vector3.Distance(p.transform.position, _passengerSeat.position) < 0.35f) return p;
+                    continue;
+                }
+                ZDO zdo = p.GetComponent<ZNetView>()?.GetZDO();
+                if (zdo != null && zdo.GetZDOID(PassengerMark) == mine && Vector3.Distance(p.transform.position, _passengerSeat.position) < 6f) return p;
             }
             return null;
         }
 
+        /// <summary>Every frame on each game: marks (or unmarks) this game's player as a passenger, on their own data, when that changes.</summary>
+        internal static void MarkLocal(bool leaving = false)
+        {
+            Player me = Player.m_localPlayer;
+            ZNetView view = me != null ? me.GetComponent<ZNetView>() : null;
+            if (view == null || !view.IsValid()) return;
+            JetSki on = leaving ? null : PassengerOf(me);
+            ZDOID want = on != null ? on._nview.GetZDO().m_uid : ZDOID.None;
+            if (want == _markShown) return;
+            view.GetZDO().Set(PassengerMark, want);
+            _markShown = want;
+        }
+
         internal Transform PassengerSeat => _passengerSeat;
 
-        /// <summary>Another game's player is sitting (their seat animation is shared with everyone).</summary>
-        private static bool Seated(Player p)
-        {
-            Animator a = p.GetComponentInChildren<Animator>();
-            return a != null && a.GetBool(Things.AttachAnimation);
-        }
 
         /// <summary>The jet ski this player sits behind the rider on now, or null.</summary>
         internal static JetSki PassengerOf(Player p)

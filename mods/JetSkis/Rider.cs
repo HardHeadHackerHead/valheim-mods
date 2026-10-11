@@ -58,6 +58,7 @@ namespace JetSkis
 
         internal static void Reset()
         {
+            JetSki.MarkLocal(leaving: true);
             foreach (Body b in Bodies.Values) Riding(b, false);
             Bodies.Clear();
         }
@@ -87,6 +88,7 @@ namespace JetSkis
         /// <summary>Every frame after the animation: each rider near enough to see is posed on their jet ski.</summary>
         internal static void Late()
         {
+            JetSki.MarkLocal();
             Gone.Clear();
             foreach (KeyValuePair<Player, Body> kv in Bodies) if (kv.Key == null) Gone.Add(kv.Key);
             foreach (Player p in Gone) Bodies.Remove(p);
@@ -95,15 +97,27 @@ namespace JetSkis
             {
                 if (ski == null) continue;
                 Player rider = ski.RiderNow();
+                if (rider != null) Seat(rider, ski.Controls.m_attachPoint);
                 Body rb = rider != null ? Prepare(rider) : null;
                 if (rb != null) { Pose(rb, ski); Remember(rb); if (rider == Player.m_localPlayer) Snapshot(rb, ski); }
                 Player passenger = ski.PassengerNow();
+                if (passenger != null && passenger != rider) Seat(passenger, ski.PassengerSeat);
                 Body pb = passenger != null && passenger != rider ? Prepare(passenger) : null;
                 if (pb != null) { PosePassenger(pb, ski, rb); Remember(pb); }
             }
             // (anyone not on a jet ski this frame starts from nothing next time)
             foreach (KeyValuePair<Player, Body> kv in Bodies)
                 if (kv.Key != null && kv.Value.PosedAt != Time.frameCount) { kv.Value.W = 0f; kv.Value.Wrote = false; Riding(kv.Value, false); }
+        }
+
+        /// <summary>
+        /// Another game's player on a jet ski is put exactly on this game's copy of their seat: their place reaches this game a moment late,
+        /// so on a moving jet ski they'd trail behind it. (This game's own player is already there: the game holds them to the seat.)
+        /// </summary>
+        private static void Seat(Player p, Transform seat)
+        {
+            if (p == Player.m_localPlayer || seat == null) return;
+            p.transform.SetPositionAndRotation(seat.position, seat.rotation);
         }
 
         /// <summary>A player about to be posed this frame: rigged, animated every frame, back to the animation's own pose (null: can't be).</summary>

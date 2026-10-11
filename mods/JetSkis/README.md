@@ -7,7 +7,7 @@
 
 **A jet ski for Valheim: a fast little boat for one (and a friend), pushed along by a surtling core's fire instead of the wind.**
 
-![version: 0.2.0](https://img.shields.io/badge/version-0.2.0-3b6e8f?style=flat-square)  ![multiplayer: everyone + host](https://img.shields.io/badge/multiplayer-everyone%20%2B%20host-7a5c2e?style=flat-square)  ![made with: Claude Code](https://img.shields.io/badge/made%20with-Claude%20Code-c26a3d?style=flat-square)
+![version: 0.2.1](https://img.shields.io/badge/version-0.2.1-3b6e8f?style=flat-square)  ![multiplayer: everyone + host](https://img.shields.io/badge/multiplayer-everyone%20%2B%20host-7a5c2e?style=flat-square)  ![made with: Claude Code](https://img.shields.io/badge/made%20with-Claude%20Code-c26a3d?style=flat-square)
 
 [Source code](https://github.com/HardHeadHackerHead/valheim-mods/tree/main/mods/JetSkis)  ·  [Report a bug](https://github.com/HardHeadHackerHead/valheim-mods/issues/new?template=bug.yml&title=%5BQuad%27s%20JetSkis%5D%20)  ·  [Discord](https://discord.gg/EwTjQxEZPy)
 
@@ -138,6 +138,7 @@ and tested in our own world, with **bobisme** as our tester.
 
 ## 📜 Recent changes
 
+- **0.2.1** The passenger hugs the rider on every player's screen: each game now knows for sure who sits behind whom (it went by where their body was, which arrives late from another player's game), and puts other players exactly on their seats, so nobody trails behind a jet ski at speed. Both of you need 0.2.1.
 - **0.2.0** You ride it like a jet ski now: leaning over the bars with your hands on the grips and feet on the pads, your head turning where you steer and bobbing over the waves (everyone sees it). A passenger seat behind, the passenger hugging the rider. Saddlebags (8 slots, a cargo crate if it breaks): E on them, or Tab while riding. Paint it with E on the cowl (red, blue, green, teal, purple, black, bare wood). An engine sound, spray off the nozzle and in hard turns, and a core that glows brighter with the throttle. A gauge at the bottom right (speed, throttle) in place of the boat's wheel. It sits right in the water (it rode too low), and stays level in hard turns. Shift+E is left to other mods (Wayfinder names boats with it). Restart the game to see the new parts on jet skis already built.
 - **0.1.0** First release: a jet ski built with the hammer on the water. Hold W to go (Shift for full speed, S to back up), A and D steer and it leans into turns, E climbs on from the water, Jump gets off. A surtling core pushes it, not the wind. Its look is built in the game: a red-banded wooden hull with bronze rivets, shields and a curled prow, a leather saddle, iron handlebars and a caged, glowing core.
 

@@ -229,7 +229,14 @@ namespace JetSkis
                             ["bagItems"] = c != null && c.GetInventory() != null ? c.GetInventory().NrOfItems() : -1,
                         });
                     }
-                    output(new JObject { ["jetskis"] = list });
+                    var players = new JArray();
+                    foreach (Player p in Player.GetAllPlayers().Where(p => p != null))
+                    {
+                        ZDO z = p.GetComponent<ZNetView>()?.GetZDO();
+                        players.Add(new JObject { ["name"] = p.GetPlayerName(), ["attachedHere"] = p == me && p.IsAttached(), ["passengerMark"] = z != null ? z.GetZDOID("dh_jetski_passenger").ToString() : null,
+                                                  ["at"] = new JArray(Math.Round(p.transform.position.x, 1), Math.Round(p.transform.position.y, 1), Math.Round(p.transform.position.z, 1)) });
+                    }
+                    output(new JObject { ["jetskis"] = list, ["players"] = players });
                     return null;
                 }
 
