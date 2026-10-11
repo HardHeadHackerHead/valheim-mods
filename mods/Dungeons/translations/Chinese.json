@@ -1,0 +1,18 @@
+{
+  "dungeons_entrance": "地下城入口",
+  "dungeons_enter": "进入{0}",
+  "dungeons_forming": "仍在成形：请稍候。",
+  "dungeons_broken": "无法生成此地下城：{0}",
+  "dungeons_renews_on": "将于第 {0} 天焕然一新",
+  "dungeons_way_out": "出口",
+  "dungeons_leave": "离开{0}",
+  "dungeons_unknown_kind": "此版本的 Quad's Dungeons 中没有它的类型（{0}）",
+  "dungeons_wait": "{0} 仍在成形：一旦就绪你就会进入。",
+  "dungeons_holding": "稍等：地下城仍在你周围成形。",
+  "dungeons_sent_out": "地下城未能成形：你回到了它的入口。",
+  "dungeons_rescued": "你脚下空无一物：你已回到地面。",
+  "dungeons_pack_testcrypt": "测试墓穴",
+  "dungeons_lever": "拉杆",
+  "dungeons_pack_shiftinghalls": "变幻大厅",
+  "dungeons_pack_testmechs": "测试机关"
+}

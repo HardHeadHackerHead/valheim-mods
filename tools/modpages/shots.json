@@ -42,6 +42,11 @@
     "Chest lines from the workbench to every chest in use",
     "Recipe counts with materials from the chests"
   ],
+  "Dungeons": [
+    "The way in: a giant's iron door in a hill, the fallen giant's skull and sword, and a huge cogwheel half buried",
+    "Inside the Shifting Halls: four storeys of grausten and black marble, gears turning the stairs in cold blue light",
+    "Pulling the last lever: the vault's gate opening at the top of the hall"
+  ],
   "FeedFromChests": [
     "A smelter fed from the chests round it",
     "A cooking station filling itself"

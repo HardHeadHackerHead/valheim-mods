@@ -1,0 +1,18 @@
+{
+  "dungeons_entrance": "Dungeon entrance",
+  "dungeons_enter": "Enter {0}",
+  "dungeons_forming": "Still forming: it takes a moment.",
+  "dungeons_broken": "This dungeon can't be made: {0}",
+  "dungeons_renews_on": "Comes back new on day {0}",
+  "dungeons_way_out": "The way out",
+  "dungeons_leave": "Leave {0}",
+  "dungeons_unknown_kind": "its kind ({0}) isn't in this version of Quad's Dungeons",
+  "dungeons_wait": "{0} is still forming: you go in as soon as it's ready.",
+  "dungeons_holding": "Hold on: the dungeon is still forming around you.",
+  "dungeons_sent_out": "The dungeon didn't form: you are back at its entrance.",
+  "dungeons_rescued": "There was nothing below you: you are back on the ground.",
+  "dungeons_pack_testcrypt": "Test Crypt",
+  "dungeons_lever": "Lever",
+  "dungeons_pack_shiftinghalls": "Shifting Halls",
+  "dungeons_pack_testmechs": "Test Mechanisms"
+}

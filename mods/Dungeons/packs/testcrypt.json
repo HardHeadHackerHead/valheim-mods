@@ -1,0 +1,38 @@
+{
+  "name": "testcrypt",
+  "title": "$dungeons_pack_testcrypt",
+  "environment": "Crypt",
+  "entranceLook": "crypt",
+  "minRooms": 6,
+  "maxRooms": 12,
+  "maxSize": [100, 48, 100],
+  "rooms": [
+    { "game": "forestcrypt_entrance_large", "tags": ["entrance"] },
+
+    { "game": "forestcrypt_Corridor1", "weight": 2 },
+    { "game": "forestcrypt_Corridor2", "weight": 2 },
+    { "game": "forestcrypt_Corridor3", "weight": 2 },
+    { "game": "forestcrypt_Bend1" },
+    { "game": "forestcrypt_Bend2", "weight": 0.5 },
+    { "game": "forestcrypt_Stairs1", "max": 2, "minDepth": 1 },
+    { "game": "forestcrypt_room1", "weight": 1.5 },
+    { "game": "forestcrypt_room_16", "max": 1, "minDepth": 2 },
+    { "game": "forestcrypt_Chasm01", "weight": 0.5, "max": 1, "minDepth": 2 },
+    { "game": "forestcrypt_new_Burialchamber03", "weight": 0.5, "max": 1, "minDepth": 2 },
+    { "game": "forestcrypt_new_Burialchamber04", "weight": 0.5, "max": 1, "minDepth": 2 },
+    { "game": "forestcrypt_new_Burialchamber05", "weight": 0.5, "max": 1, "minDepth": 2 },
+
+    { "game": "forestcrypt_new_BurialChamber01", "minDepth": 3, "tags": ["end"] },
+    { "game": "forestcrypt_new_BurialChamber02", "minDepth": 3, "tags": ["end"] },
+
+    { "game": "forestcrypt_EndCap", "weight": 0.5 },
+    { "game": "forestcrypt_EndCap2" },
+    { "game": "forestcrypt_EndCap3", "weight": 0.5 }
+  ],
+  "plan": [
+    { "tag": "entrance", "id": "start" },
+    { "tag": "end", "id": "end" }
+  ],
+  "creatures": ["Skeleton", "Ghost"],
+  "loot": []
+}

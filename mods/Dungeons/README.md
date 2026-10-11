@@ -1,0 +1,172 @@
+<!-- This page is made by tools/modpages/make_pages.py from the mod's thunderstore.toml, DESCRIPTION.txt, CHANGELOG.txt,
+     settings and the repo's README. Change those, or the HAND-WRITTEN parts, not the rest of this page. -->
+
+# Quad's Dungeons
+
+<img src="cover.png" alt="Quad's Dungeons" width="100%">
+
+**Dungeons made from a seed: go in through a giant's iron door, turn the stairs and pull the levers to reach the vault, and fight enemies that fit the land outside. Each dungeon comes back new a few days later.**
+
+![version: 0.1.0](https://img.shields.io/badge/version-0.1.0-3b6e8f?style=flat-square)  ![multiplayer: only who wants it](https://img.shields.io/badge/multiplayer-only%20who%20wants%20it-7a5c2e?style=flat-square)  ![made with: Claude Code](https://img.shields.io/badge/made%20with-Claude%20Code-c26a3d?style=flat-square)
+
+<!-- GITHUB-ONLY -->[Thunderstore](https://thunderstore.io/c/valheim/p/Quads_Lab/Quads_Dungeons/)  ·  <!-- END GITHUB-ONLY -->[Source code](https://github.com/HardHeadHackerHead/valheim-mods/tree/main/mods/Dungeons)  ·  [Report a bug](https://github.com/HardHeadHackerHead/valheim-mods/issues/new?template=bug.yml&title=%5BQuad%27s%20Dungeons%5D%20)  ·  [Discord](https://discord.gg/EwTjQxEZPy)
+
+[![Join us on Discord](https://img.shields.io/badge/Join_us_on-Discord-5865F2?style=for-the-badge&logo=discord&logoColor=white)](https://discord.gg/EwTjQxEZPy)
+
+<!-- GITHUB-ONLY -->**Install:** with [r2modman](https://thunderstore.io/c/valheim/p/ebkr/r2modman/) or Thunderstore Mod Manager from [Thunderstore](https://thunderstore.io/c/valheim/p/Quads_Lab/Quads_Dungeons/), or press **F7** in the game with our [mod manager](https://github.com/HardHeadHackerHead/valheim-mod-manager).<!-- END GITHUB-ONLY -->
+
+## ✨ Features
+
+Each dungeon has an entrance in the world. Behind it, every player's game builds the same rooms from the dungeon's kind and its seed, high above the entrance, the way the game builds its own crypts. Only the entrance is saved: which dungeon it is, its seed, and how far players got.
+
+Dungeons don't appear in the world by themselves yet. For now, an admin or a tester puts an entrance down with a test command (see the commands below).
+
+### Going in and out
+
+- Press E on the entrance to go in. If the dungeon is still forming, you go in as soon as it's ready.
+- Press E on the way out, the door in the first room, to come back out in front of the entrance.
+- Once someone has been in, the entrance shows the day the dungeon comes back new.
+
+### The dungeons
+
+- Shifting Halls: a Giants' clockwork vault. Ancient Jotunn machinery in grausten and black marble, bronze and iron gears, chains, and cold blue light. A hall four storeys high with turning staircases driven by gears, levers, a round drum room that turns every 12 seconds, and a vault at the top behind a gate. Every room in it is new, made for this mod.
+- Its entrance is a giant iron door in a hill. Beside it lie the bones of a fallen giant: a skull, a sword and a huge cogwheel.
+- Test Crypt: the game's own Black Forest crypt rooms, joined in new ways. Made to test the dungeon system.
+- Test Mechanisms: a small dungeon with one of each moving part: a lever, a pressure plate, a turning stair, a lift and a gate.
+- The same seed always gives the same dungeon. A dungeon's puzzle is checked when it's laid out, so it can always be solved.
+
+### Moving parts and puzzles
+
+- Levers: press E to pull one. A lever can turn a staircase, open a gate or start a machine.
+- Pressure plates: stand on one to press it.
+- Turning staircases turn a quarter at a time and join a different pair of landings. Lifts carry you up and down. Some rooms turn by themselves, on a timer.
+- Some machinery just turns: gears that spin while their mechanism moves, and backwards when it goes back.
+- Anything that moves carries whoever stands on it, up, down and round.
+- Every player sees every moving part in the same place at the same time.
+- In the Shifting Halls, set the stairs in the right order to reach the vault. It takes about 9 to 14 pulls of the levers.
+
+### Enemies and loot that fit the land
+
+- Enemies fit the land the entrance stands in. A dungeon in the Mountains has Mountain enemies (and some from the Swamp), and nothing from a land further on. A creature that doesn't fit is swapped for one of the same kind (a fighter, an archer or a flyer) that does.
+- No bosses. Enemies have up to 1 star in the Meadows and the Black Forest, and up to 2 stars from the Swamp on.
+- Loot fits the land too. Chests are filled with things from that land (or an earlier one), and the vault's chests hold more. Nothing inside gives anything from a land further on: plants to pick, pots, rocks and the pieces you can break keep only what fits.
+- A room's enemies appear once, the first time someone comes in.
+
+### Coming back new
+
+- Some in-game days after a dungeon was first entered (3, set by the server), it comes back new: its enemies, its loot and its puzzle.
+- It never happens while anyone is inside.
+- Anything you left in one of its chests is dropped on the floor first, so you don't lose it. Creatures still alive and items on the floor stay.
+
+### Safe inside
+
+- You can't fall out of a dungeon. If you get there before it has formed (after a teleport, or a lag spike), you are held still until it has.
+- Log out inside and you log back in at the entrance, even if the mod was removed in between.
+- Die inside and your gravestone stays inside, where you died, as in the game's own crypts.
+
+### Commands for admins and testers
+
+- With our Claude Tools mod, type them in the game's console (F5) after "claude". For example, claude dungeon spawn shiftinghalls puts a Shifting Halls entrance in front of you (the others: testcrypt, testmechs).
+- dungeon list shows the dungeons in the world, dungeon map a dungeon's layout floor by floor, dungeon solve its puzzle's solution, dungeon reset makes it new again now, and dungeon remove takes it away for good.
+- Commands that change the world follow the game's cheat rule: they work in single player, for the host, or with devcommands on.
+
+### Coming
+
+- Dungeons placed in the world for you to find as you explore, with entrances that fit the land.
+- Your own dungeons from a folder: a pack is only data (its rooms, moving parts, enemies, loot and entrance), so new kinds of dungeon need no code. For now the packs are built into the mod, because every player must have the same ones; packs from a folder need the server to share them first.
+
+Everyone needs it, and the host above all: each dungeon's entrance is saved in the world, with the dungeon's state, and a game without the mod deletes the entrances when their area loads. Players without it can't see or enter dungeons.
+
+## 📸 Screenshots
+
+<!-- HAND-WRITTEN: screenshots -->
+**The way in: a giant's iron door in a hill, the fallen giant's skull and sword, and a huge cogwheel half buried**
+
+<img src="images/1.png" alt="The way in: a giant&#x27;s iron door in a hill, the fallen giant&#x27;s skull and sword, and a huge cogwheel half buried" width="100%">
+
+**Inside the Shifting Halls: four storeys of grausten and black marble, gears turning the stairs in cold blue light**
+
+<img src="images/2.png" alt="Inside the Shifting Halls: four storeys of grausten and black marble, gears turning the stairs in cold blue light" width="100%">
+
+**Pulling the last lever: the vault's gate opening at the top of the hall**
+
+<img src="images/3.png" alt="Pulling the last lever: the vault&#x27;s gate opening at the top of the hall" width="100%">
+<!-- END HAND-WRITTEN: screenshots -->
+
+<!-- HAND-WRITTEN: how-to-use -->
+
+<!-- END HAND-WRITTEN: how-to-use -->
+
+## 🧩 Other mods
+
+<!-- HAND-WRITTEN: other-mods -->
+**Known clashes:** none known.
+<!-- END HAND-WRITTEN: other-mods -->
+
+Found a clash with another mod? [Tell us](https://github.com/HardHeadHackerHead/valheim-mods/issues/new?template=bug.yml&title=%5BQuad%27s%20Dungeons%5D%20) which one and what happened.
+
+## 👥 Multiplayer
+
+**Who needs it:** Only the players who want it.
+
+It adds dungeon entrances (objects the world saves). Restart the game after installing or updating it so they register cleanly: an entrance whose area loads while it is not registered is deleted by the host. The host and every player need the same version.
+
+<!-- HAND-WRITTEN: multiplayer -->
+**On a dedicated server, the server needs the mod too**, or it deletes the entrances. The rooms themselves are built on each player's own game, from the dungeon's seed, so they are the same for everyone. Moving parts follow the server's clock: every player sees a staircase turn at the same moment.
+
+**The host decides** how many in-game days pass before a dungeon comes back new. While you play on their world their value replaces yours (your file isn't changed).
+<!-- END HAND-WRITTEN: multiplayer -->
+
+## 🌍 Languages
+
+**English, Русский (Russian), Deutsch (German), 简体中文 (Chinese), Português do Brasil (Portuguese), Español (Spanish), Français (French), Polski (Polish), Türkçe (Turkish).** It follows the game's own language setting.
+
+The translations were made with AI, so a few words may be off. To correct one, or to add your language, put a file in `BepInEx/config/translations/com.quad.dungeons/` named after the game's name for the language (`German.json`, `Italian.json`, `Japanese.json`...) with only the lines you change, copied from [English.json](https://github.com/HardHeadHackerHead/valheim-mods/blob/main/mods/Dungeons/translations/English.json) (it wins over the built-in one). Or [tell us](https://github.com/HardHeadHackerHead/valheim-mods/issues/new?template=bug.yml&title=%5BQuad%27s%20Dungeons%5D%20Translation%3A%20) the better words and we'll put them in for everyone.
+
+## ⚙️ Settings
+
+In `BepInEx/config/com.quad.dungeons.cfg`, made the first time the game runs with the mod. r2modman and Thunderstore Mod Manager edit it under **Config editor**.<!-- GITHUB-ONLY --> With our mod manager: **F7**, then **Mod settings**.<!-- END GITHUB-ONLY -->
+
+**1 - Dungeons**
+
+| Setting | Default | What it does |
+|---|---|---|
+| `ResetDays` | `3` | In-game days after a dungeon is first entered before it comes back new: its enemies, loot and puzzle (only once nobody is inside). 0: never. [Synced with Server] |
+
+## 🤖 Made with AI
+
+Made with the help of Claude (Anthropic), with Claude Code: designed, written and checked together, and tried in the game.
+
+## 💬 Join us on Discord
+
+<a href="https://discord.gg/EwTjQxEZPy"><img src="https://raw.githubusercontent.com/HardHeadHackerHead/valheim-mods/main/tools/modpages/discord-banner.jpg" alt="Join the Quads Lab Discord" width="100%"></a>
+
+Come hang out with the people who make and play these mods. In the **Quads Lab Discord** you can:
+
+- 🛠️ **Get help** and report bugs straight to us
+- 👀 **See new mods first**, and help test them before they're released
+- 🗳️ **Suggest ideas** and vote on what we make next
+- 🏰 **Share your builds**, bases and arena runs
+- 🤖 **Talk AI coding and vibe coding** with people building things with AI, the way these mods are made
+
+**[Join the Quads Lab Discord →](https://discord.gg/EwTjQxEZPy)**
+
+## 🧪 About Quads Lab
+
+Quads Lab is where **Quad H** ([HardHeadHackerHead](https://github.com/HardHeadHackerHead)) builds software with AI, of every kind:
+these Valheim mods are one of its projects. Each mod is designed by a player, written with [Claude Code](https://claude.com/claude-code)
+and tested in our own world, with **bobisme** as our tester.
+
+- 🌐 [quadslab.io](https://quadslab.io)
+- 🧰 [All Quads Lab mods on Thunderstore](https://thunderstore.io/c/valheim/p/Quads_Lab/)
+- 💻 [Source code on GitHub](https://github.com/HardHeadHackerHead/valheim-mods)
+- 💬 [Discord](https://discord.gg/EwTjQxEZPy)
+- 🐞 Found a bug? [Open an issue on GitHub](https://github.com/HardHeadHackerHead/valheim-mods/issues/new/choose)
+
+## 📜 Recent changes
+
+- **0.1.0** First test release (the F7 feed). The Shifting Halls remade as a Giants' clockwork vault, every room our own: grausten and black marble, bronze gears that turn, chains, cold blue light, a giant's door into a hill. Enemies and loot fit the land the entrance stands in (spawners swapped, chests refilled, nothing above the land's tier to pick, break or take). Entrance looks are data (packs/looks). Layouts are made on a background thread and the game's rooms load in the background, so a dungeon appears without a stutter. dungeon remove. For now dungeons are put down with a test command (claude dungeon spawn shiftinghalls, single player, the host or devcommands).
+- **0.0.2** Steps 2 and 3: moving parts and puzzles, and the Shifting Halls. Mechanisms in the rooms (levers, pressure plates, gates and doors, platforms, turning stairs, rotating rooms) whose state is kept on the entrance and whose motion comes from the server's clock, so every player sees them in the same place; only the entrance's owner changes them (a lever's pull is checked to come from someone standing at it); what stands on a moving part goes with it; some turn by themselves on a timer; resets put them all back. The game's own lever words and sound (the Obliterator's) and its gate sounds. Real entrances: the Black Forest's burial chamber for the crypts, a black marble Dvergr gate, and a giant's door into a hill with the giant's bones around it (one saved prefab per look). Machinery's gears turn while their mechanism moves. Test commands dungeon mechs, use, set and solve; dungeon state shows the mechanisms and the solution. Gravestones and everything else saved inside never fall: anything saved above 3000 m waits until a dungeon is built under it on that game (the zone of a gravestone can load before the zone of its dungeon's entrance), a dungeon stays built while its player is inside even when its entrance's zone unloads, and whatever falls out of one anyway is put back on its floor (a gravestone at the spot it was made). dungeon bring <player>.
+- **0.0.1** Step 1: the dungeon system. An entrance that saves its pack, seed and state; every player builds the same dungeon from them 5000 m above it, while its entrance is loaded; enter and leave by the entrance and the way out in the entrance room; the logout point moved to the entrance while inside, players held still above a dungeon not built yet, the objects inside waiting for it, no fall damage from our teleports; timed resets (a server setting, 3 days); test commands (dungeon spawn, list, enter, leave, map, seeds, state, reset, packs, rooms); in 9 languages.
+
+<!-- GITHUB-ONLY -->[Every change](CHANGELOG.txt)<!-- END GITHUB-ONLY --><!-- THUNDERSTORE-ONLY: Every change is on the Changelog tab. -->

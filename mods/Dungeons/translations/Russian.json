@@ -1,0 +1,18 @@
+{
+  "dungeons_entrance": "Вход в подземелье",
+  "dungeons_enter": "Войти: {0}",
+  "dungeons_forming": "Ещё формируется: подождите немного.",
+  "dungeons_broken": "Это подземелье нельзя создать: {0}",
+  "dungeons_renews_on": "Обновится в день {0}",
+  "dungeons_way_out": "Выход",
+  "dungeons_leave": "Покинуть: {0}",
+  "dungeons_unknown_kind": "его вида ({0}) нет в этой версии Quad's Dungeons",
+  "dungeons_wait": "{0} ещё формируется: вы войдёте, как только оно будет готово.",
+  "dungeons_holding": "Подождите: подземелье ещё формируется вокруг вас.",
+  "dungeons_sent_out": "Подземелье не сформировалось: вы снова у его входа.",
+  "dungeons_rescued": "Под вами ничего не было: вы снова на земле.",
+  "dungeons_pack_testcrypt": "Тестовый склеп",
+  "dungeons_lever": "Рычаг",
+  "dungeons_pack_shiftinghalls": "Изменчивые залы",
+  "dungeons_pack_testmechs": "Тестовые механизмы"
+}

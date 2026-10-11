@@ -1,0 +1,18 @@
+{
+  "dungeons_entrance": "Dungeon-Eingang",
+  "dungeons_enter": "{0} betreten",
+  "dungeons_forming": "Formt sich noch: einen Moment.",
+  "dungeons_broken": "Dieser Dungeon kann nicht entstehen: {0}",
+  "dungeons_renews_on": "Wird an Tag {0} wieder neu",
+  "dungeons_way_out": "Der Ausgang",
+  "dungeons_leave": "{0} verlassen",
+  "dungeons_unknown_kind": "seine Art ({0}) gibt es in dieser Version von Quad's Dungeons nicht",
+  "dungeons_wait": "{0} formt sich noch: du gehst hinein, sobald er bereit ist.",
+  "dungeons_holding": "Warte: der Dungeon formt sich noch um dich herum.",
+  "dungeons_sent_out": "Der Dungeon hat sich nicht geformt: du bist wieder an seinem Eingang.",
+  "dungeons_rescued": "Unter dir war nichts: du stehst wieder auf dem Boden.",
+  "dungeons_pack_testcrypt": "Testgruft",
+  "dungeons_lever": "Hebel",
+  "dungeons_pack_shiftinghalls": "Wandelnde Hallen",
+  "dungeons_pack_testmechs": "Testmechanismen"
+}

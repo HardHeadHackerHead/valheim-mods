@@ -1,0 +1,18 @@
+{
+  "dungeons_entrance": "Entrée du donjon",
+  "dungeons_enter": "Entrer dans {0}",
+  "dungeons_forming": "Encore en formation : un instant.",
+  "dungeons_broken": "Ce donjon ne peut pas être créé : {0}",
+  "dungeons_renews_on": "Redevient neuf le jour {0}",
+  "dungeons_way_out": "La sortie",
+  "dungeons_leave": "Quitter {0}",
+  "dungeons_unknown_kind": "son type ({0}) n'existe pas dans cette version de Quad's Dungeons",
+  "dungeons_wait": "{0} est encore en formation : vous entrerez dès qu'il sera prêt.",
+  "dungeons_holding": "Patience : le donjon se forme encore autour de vous.",
+  "dungeons_sent_out": "Le donjon ne s'est pas formé : vous voilà de retour à son entrée.",
+  "dungeons_rescued": "Il n'y avait rien sous vous : vous voilà de retour sur la terre ferme.",
+  "dungeons_pack_testcrypt": "Crypte d'essai",
+  "dungeons_lever": "Levier",
+  "dungeons_pack_shiftinghalls": "Salles changeantes",
+  "dungeons_pack_testmechs": "Mécanismes de test"
+}

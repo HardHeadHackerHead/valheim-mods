@@ -1,0 +1,18 @@
+{
+  "dungeons_entrance": "Wejście do lochu",
+  "dungeons_enter": "Wejdź: {0}",
+  "dungeons_forming": "Wciąż się formuje: to chwilę potrwa.",
+  "dungeons_broken": "Tego lochu nie da się utworzyć: {0}",
+  "dungeons_renews_on": "Odnowi się w dniu {0}",
+  "dungeons_way_out": "Wyjście",
+  "dungeons_leave": "Opuść: {0}",
+  "dungeons_unknown_kind": "jego rodzaju ({0}) nie ma w tej wersji Quad's Dungeons",
+  "dungeons_wait": "{0} wciąż się formuje: wejdziesz, gdy tylko będzie gotowy.",
+  "dungeons_holding": "Zaczekaj: loch wciąż formuje się wokół ciebie.",
+  "dungeons_sent_out": "Loch się nie uformował: jesteś z powrotem przy jego wejściu.",
+  "dungeons_rescued": "Pod tobą nic nie było: jesteś z powrotem na ziemi.",
+  "dungeons_pack_testcrypt": "Krypta testowa",
+  "dungeons_lever": "Dźwignia",
+  "dungeons_pack_shiftinghalls": "Ruchome Sale",
+  "dungeons_pack_testmechs": "Mechanizmy testowe"
+}

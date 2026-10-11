@@ -1,0 +1,29 @@
+{
+  "name": "giant",
+  "about": "A giant's door into a hill (the Giants' clockwork vault): the Ashlands fortress's iron gate leaf brought up to 7 x 10 m between carved grausten pillars, a grausten lintel with a carved head and a chain across it, a hill of Mistlands rock, a bronze cogwheel half buried, the giant's skull and sword, blue flames either side of the way in. Things below y 0 are buried.",
+  "front": 5,
+  "parts": [
+    {"prefab": "Ashlands_Fortress_Gate_Door", "at": [0, 0, -1.6], "scale": [1.75, 1.8, 1]},
+    {"prefab": "Ashlands_Boss_Pillar", "at": [-5.9, 0, -1.8], "scale": [1, 1.35, 1]},
+    {"prefab": "Ashlands_Boss_Pillar", "at": [5.9, 0, -1.8], "scale": [1, 1.35, 1]},
+    {"prefab": "Ashlands_floor_large", "at": [0, 11.8, -2], "scale": [1.6, 1, 0.55]},
+    {"prefab": "blackmarble_head_big01", "at": [0, 11.8, 1.2], "scale": [1.4, 1.4, 1.4]},
+    {"prefab": "rock_mistlands1", "at": [-11, 6, -6], "euler": [0, 90, 0], "scale": [3.5, 3.5, 2.5]},
+    {"prefab": "rock_mistlands1", "at": [11, 6, -6], "euler": [0, -90, 0], "scale": [3.5, 3.5, 2.5]},
+    {"prefab": "rock_mistlands1", "at": [0, 15, -7], "scale": [4.5, 2.5, 2.5]},
+    {"prefab": "rock_mistlands1", "at": [-6, 13.5, -8], "euler": [0, 30, 0], "scale": [3, 2.5, 3]},
+    {"prefab": "rock_mistlands1", "at": [6, 13.5, -8], "euler": [0, -30, 0], "scale": [3, 2.5, 3]},
+    {"prefab": "rock_mistlands1", "at": [0, 8, -14], "scale": [5, 3.5, 3]},
+    {"prefab": "rock_mistlands1", "at": [-15, 2.5, -2], "euler": [0, 60, 0], "scale": [2.5, 2.5, 2.5]},
+    {"prefab": "rock_mistlands1", "at": [15, 2.5, -2], "euler": [0, -60, 0], "scale": [2.5, 2.5, 2.5]},
+    {"prefab": "widestone_2", "at": [-8.5, -0.2, 2.5], "euler": [0, 20, 0], "scale": [1.4, 1.4, 1.4]},
+    {"prefab": "highstone_2", "at": [9.5, -0.5, 1.5], "euler": [0, -10, 0], "scale": [1.3, 1.3, 1.3]},
+    {"prefab": "giant_skull", "at": [17, -3.5, 7], "euler": [0, -40, 8]},
+    {"prefab": "giant_sword1", "at": [-17, -3.5, 5], "euler": [6, 35, -12]},
+    {"prefab": "CharredCogwheel", "at": [-9.5, 3, 1.5], "euler": [90, 15, 0], "scale": [10, 10, 10]},
+    {"prefab": "Morkhalla_Chain", "at": [0, 12.2, 1.6], "scale": [0.75, 0.55, 1]},
+    {"prefab": "Ashlands_floor_large", "at": [0, -0.95, 4.2], "scale": [0.8, 1, 0.6]},
+    {"prefab": "Morkhalla_giant_railing_torch", "at": [-4.2, 0.65, 2.2], "scale": [1.3, 1.3, 1.3]},
+    {"prefab": "Morkhalla_giant_railing_torch", "at": [4.2, 0.65, 2.2], "scale": [1.3, 1.3, 1.3]}
+  ]
+}

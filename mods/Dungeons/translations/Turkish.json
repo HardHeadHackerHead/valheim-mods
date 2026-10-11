@@ -1,0 +1,18 @@
+{
+  "dungeons_entrance": "Zindan girişi",
+  "dungeons_enter": "Gir: {0}",
+  "dungeons_forming": "Hâlâ oluşuyor: biraz sürer.",
+  "dungeons_broken": "Bu zindan oluşturulamıyor: {0}",
+  "dungeons_renews_on": "{0}. günde yeniden yenilenir",
+  "dungeons_way_out": "Çıkış",
+  "dungeons_leave": "Ayrıl: {0}",
+  "dungeons_unknown_kind": "türü ({0}) Quad's Dungeons'ın bu sürümünde yok",
+  "dungeons_wait": "{0} hâlâ oluşuyor: hazır olur olmaz içeri gireceksin.",
+  "dungeons_holding": "Bekle: zindan hâlâ etrafında oluşuyor.",
+  "dungeons_sent_out": "Zindan oluşmadı: girişine geri döndün.",
+  "dungeons_rescued": "Altında hiçbir şey yoktu: yere geri döndün.",
+  "dungeons_pack_testcrypt": "Test Mezarı",
+  "dungeons_lever": "Kol",
+  "dungeons_pack_shiftinghalls": "Değişen Salonlar",
+  "dungeons_pack_testmechs": "Test Mekanizmaları"
+}

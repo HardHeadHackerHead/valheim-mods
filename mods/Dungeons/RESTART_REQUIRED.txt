@@ -1,0 +1,1 @@
+It adds dungeon entrances (objects the world saves). Restart the game after installing or updating it so they register cleanly: an entrance whose area loads while it is not registered is deleted by the host. The host and every player need the same version.

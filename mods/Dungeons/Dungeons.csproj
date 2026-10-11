@@ -1,0 +1,23 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <AssemblyName>Dungeons</AssemblyName>
+    <RootNamespace>Dungeons</RootNamespace>
+  </PropertyGroup>
+  <ItemGroup>
+    <Reference Include="netstandard"><HintPath>$(ManagedDir)/netstandard.dll</HintPath><Private>false</Private></Reference>
+    <!-- The game's dungeon rooms are soft references, loaded on demand (DungeonDB.RoomData.m_prefab). -->
+    <Reference Include="SoftReferenceableAssets"><HintPath>$(ManagedDir)/SoftReferenceableAssets.dll</HintPath><Private>false</Private></Reference>
+    <!-- Fire and particles on scaled-up parts grow with the part (ParticleSystem.main.scalingMode). -->
+    <Reference Include="UnityEngine.ParticleSystemModule"><HintPath>$(ManagedDir)/UnityEngine.ParticleSystemModule.dll</HintPath><Private>false</Private></Reference>
+  </ItemGroup>
+  <ItemGroup>
+    <!-- The strengths the server decides in multiplayer, and the cheat rule for the test commands (shared with our other mods). -->
+    <Compile Include="../Shared/ServerSettings.cs" Link="Shared/ServerSettings.cs" /> <Compile Include="../Shared/TestCommands.cs" Link="Shared/TestCommands.cs" />
+  </ItemGroup>
+  <ItemGroup>
+    <!-- The built-in packs (Packs.cs reads them as "packs/<name>.json"). -->
+    <EmbeddedResource Include="packs/*.json" LogicalName="packs/%(Filename)%(Extension)" />
+    <!-- The entrance looks (EntranceLooks.cs reads them as "looks/<name>.json"). -->
+    <EmbeddedResource Include="packs/looks/*.json" LogicalName="looks/%(Filename)%(Extension)" />
+  </ItemGroup>
+</Project>

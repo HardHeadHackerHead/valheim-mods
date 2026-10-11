@@ -1,0 +1,8 @@
+{
+  "name": "crypt",
+  "about": "The Black Forest's burial chamber: the game's Crypt4 location's stone house, the stones round it and its dark doorway.",
+  "front": 3.2,
+  "parts": [
+    {"location": "Crypt4", "keep": ["exterior", "Gateway/Cube"], "doorway": [0, 0, 6.96], "at": [0, 0, 0]}
+  ]
+}

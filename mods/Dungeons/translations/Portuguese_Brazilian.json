@@ -1,0 +1,18 @@
+{
+  "dungeons_entrance": "Entrada da masmorra",
+  "dungeons_enter": "Entrar em {0}",
+  "dungeons_forming": "Ainda se formando: leva um momento.",
+  "dungeons_broken": "Esta masmorra não pode ser criada: {0}",
+  "dungeons_renews_on": "Volta a ser nova no dia {0}",
+  "dungeons_way_out": "A saída",
+  "dungeons_leave": "Sair de {0}",
+  "dungeons_unknown_kind": "o tipo dela ({0}) não existe nesta versão do Quad's Dungeons",
+  "dungeons_wait": "{0} ainda está se formando: você entra assim que estiver pronta.",
+  "dungeons_holding": "Espere: a masmorra ainda está se formando ao seu redor.",
+  "dungeons_sent_out": "A masmorra não se formou: você voltou para a entrada dela.",
+  "dungeons_rescued": "Não havia nada abaixo de você: você voltou ao chão.",
+  "dungeons_pack_testcrypt": "Cripta de Teste",
+  "dungeons_lever": "Alavanca",
+  "dungeons_pack_shiftinghalls": "Salões Mutáveis",
+  "dungeons_pack_testmechs": "Mecanismos de teste"
+}
