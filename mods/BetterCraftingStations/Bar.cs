@@ -27,6 +27,10 @@ namespace BetterCraftingStations
         /// <summary>The recipes the station offered, before the chips narrowed them (set when the game builds the list).</summary>
         public static List<Recipe> All;
 
+        /// <summary>The chips are due but the crafting list isn't on screen yet: the game sets the panel up while opening, before the
+        /// inventory is shown, so the bar is built on a later frame (Plugin's InventoryGui.Update patch), once the list is there.</summary>
+        public static bool Pending;
+
         private static GameObject _root;
         private static readonly List<GameObject> Chips = new List<GameObject>();
         private static RectTransform _list, _scrollbar;
@@ -49,12 +53,14 @@ namespace BetterCraftingStations
             bool show = Plugin.Enabled && All != null && All.Count > 0 && gui != null && !gui.InUpradeTab() && Player.m_localPlayer?.GetCurrentCraftingStation() != null;
             if (!show)
             {
+                Pending = false;
                 if (_root != null && _root.activeSelf) Plugin.Log.LogInfo($"Chips hidden: enabled {Plugin.Enabled}, recipes {All?.Count ?? -1}, craft tab {gui != null && !gui.InUpradeTab()}, station {Player.m_localPlayer?.GetCurrentCraftingStation() != null}");
                 Hide();
                 return;
             }
-            RectTransform list = ListRoot(gui)?.GetComponentInParent<ScrollRect>()?.GetComponent<RectTransform>();
-            if (list == null) return;
+            RectTransform list = ListRoot(gui)?.GetComponentInParent<ScrollRect>(true)?.GetComponent<RectTransform>();
+            if (list == null || !list.gameObject.activeInHierarchy) { Pending = true; return; }   // (opening: not on screen yet)
+            Pending = false;
 
             string station = Filters.StationKey();
             Filters.State state = Filters.Of(station);
@@ -185,9 +191,13 @@ namespace BetterCraftingStations
                 float x = 0f;
                 foreach (var chip in row)
                 {
-                    float w = Mathf.Max(28f, chip.Label.Sum(c => c >= 0x2E80 ? 2 : 1) * 6.3f + 10f);   // (Chinese letters take two widths)
+                    float guess = Mathf.Max(28f, chip.Label.Sum(c => c >= 0x2E80 ? 2 : 1) * 6.3f + 10f);   // (Chinese letters take two widths)
+                    GameObject made = MakeChip(template, chip.Label, chip.On, chip.Click, gui, 0f, 0f, guess);
+                    var rt = (RectTransform)made.transform;
+                    float w = rt.sizeDelta.x;                                          // (as wide as its words really are: see MakeChip)
                     if (x > 0f && x + w > width) { x = 0f; y += ChipHeight + Gap; }   // (the row wraps)
-                    Chips.Add(MakeChip(template, chip.Label, chip.On, chip.Click, gui, x, y, w));
+                    rt.anchoredPosition = new Vector2(x, -y);
+                    Chips.Add(made);
                     x += w + Gap;
                 }
                 y += ChipHeight + Gap;
@@ -222,6 +232,11 @@ namespace BetterCraftingStations
                 text.enableAutoSizing = false;
                 text.textWrappingMode = TextWrappingModes.NoWrap;
                 text.overflowMode = TextOverflowModes.Ellipsis;
+                // the letters' real width (wide ones, as in "Ammo", outgrow a guess from how many there are), plus the text's own margins
+                var tr = (RectTransform)text.transform;
+                float margins = Mathf.Max(0f, w - tr.rect.width);
+                float need = Mathf.Ceil(text.GetPreferredValues(label, 1000f, 0f).x + Mathf.Max(margins, 8f) + 4f);
+                if (need > w) rt.sizeDelta = new Vector2(need, ChipHeight);
             }
             foreach (LayoutElement le in go.GetComponents<LayoutElement>()) UnityEngine.Object.Destroy(le);
             return go;

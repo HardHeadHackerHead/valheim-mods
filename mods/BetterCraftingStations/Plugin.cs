@@ -19,7 +19,7 @@ namespace BetterCraftingStations
         public const string Guid = "com.quad.bettercraftingstations";
         public const string OldGuid = "com.dhack.bettercraftingstations"; // (its id until 2026-10: settings move over by themselves, see Shared/Migration.cs)
         public const string Name = "BetterCraftingStations";
-        public const string Version = "0.2.0";
+        public const string Version = "0.2.1";
 
         internal static ManualLogSource Log;
         private static ConfigEntry<bool> _enabled;
@@ -66,6 +66,13 @@ namespace BetterCraftingStations
     internal static class InventoryGui_UpdateCraftingPanel
     {
         private static void Postfix(InventoryGui __instance) => Bar.Refresh(__instance);
+    }
+
+    // The station's panel is set up as the inventory opens, before it is on screen: the chips follow on the first frame it is.
+    [HarmonyPatch(typeof(InventoryGui), "Update")]
+    internal static class InventoryGui_Update
+    {
+        private static void Postfix(InventoryGui __instance) { if (Bar.Pending) Bar.Refresh(__instance); }
     }
 
     [HarmonyPatch(typeof(InventoryGui), nameof(InventoryGui.Hide))]

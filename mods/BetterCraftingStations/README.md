@@ -7,7 +7,7 @@
 
 **Recipe filter chips above the crafting list: pick a type, a tier or what you can make now, at every crafting station.**
 
-![version: 0.2.0](https://img.shields.io/badge/version-0.2.0-3b6e8f?style=flat-square)  ![multiplayer: only who wants it](https://img.shields.io/badge/multiplayer-only%20who%20wants%20it-7a5c2e?style=flat-square)  ![made with: Claude Code](https://img.shields.io/badge/made%20with-Claude%20Code-c26a3d?style=flat-square)
+![version: 0.2.1](https://img.shields.io/badge/version-0.2.1-3b6e8f?style=flat-square)  ![multiplayer: only who wants it](https://img.shields.io/badge/multiplayer-only%20who%20wants%20it-7a5c2e?style=flat-square)  ![made with: Claude Code](https://img.shields.io/badge/made%20with-Claude%20Code-c26a3d?style=flat-square)
 
 <!-- GITHUB-ONLY -->[Thunderstore](https://thunderstore.io/c/valheim/p/Quads_Lab/Quads_Crafting_Filters/)  ·  <!-- END GITHUB-ONLY -->[Source code](https://github.com/HardHeadHackerHead/valheim-mods/tree/main/mods/BetterCraftingStations)  ·  [Report a bug](https://github.com/HardHeadHackerHead/valheim-mods/issues/new?template=bug.yml&title=%5BQuad%27s%20Crafting%20Filters%5D%20)  ·  [Discord](https://discord.gg/EwTjQxEZPy)
 
@@ -92,8 +92,8 @@ and tested in our own world, with **bobisme** as our tester.
 
 ## 📜 Recent changes
 
+- **0.2.1** Fixed: the filter chips didn't show when you opened a crafting station, only after switching between Craft and Upgrade. Each chip is now as wide as its words, so none is cut short ("Ammo", and the longer words of other languages).
 - **0.2.0** Now in your language: English, Russian, German, Chinese (Simplified), Portuguese (Brazil), Spanish, French, Polish and Turkish, following the game's own Language setting. The game's own names are used for its things (items, creatures, lands, stations). The translations were made with AI: to correct a line, or add a language, put a file in BepInEx/config/translations/com.quad.bettercraftingstations/ named after the game's name for the language (German.json...) with only the lines you change, copied from translations/English.json on GitHub. The filter chips use the game's own names for the tiers (Bronze, Iron, Black metal...).
 - **0.1.3** A clearer page: what it does, who needs it in multiplayer, how it gets on with other mods, and where to report a bug. The game itself is unchanged.
-- **0.1.2** A new id, com.quad.bettercraftingstations (it was com.dhack.bettercraftingstations): your settings move over by themselves the first time it starts, and the old settings file is kept as a backup. Restart the game after this update. If an old copy is still installed beside it, this one stands down and says which file to delete, so the two never both run. The DLL now says it was made with AI, as Thunderstore asks.
 
 <!-- GITHUB-ONLY -->[Every change](CHANGELOG.txt)<!-- END GITHUB-ONLY --><!-- THUNDERSTORE-ONLY: Every change is on the Changelog tab. -->
