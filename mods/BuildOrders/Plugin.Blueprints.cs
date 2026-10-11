@@ -273,8 +273,17 @@ namespace BuildOrders
             finally
             {
                 ZNetView.m_forceDisableInit = false;
-                if (copy != null) UnityEngine.Object.Destroy(copy);
+                if (copy != null)
+                {
+                    // A shield generator that never started (its network part was off) cleans up a dome it never made when destroyed, and
+                    // throws: as for a placement ghost, there is nothing to clean up.
+                    foreach (ShieldGenerator shield in copy.GetComponentsInChildren<ShieldGenerator>(true)) ShieldGhost(shield) = true;
+                    UnityEngine.Object.Destroy(copy);
+                }
             }
         }
+
+        private static readonly HarmonyLib.AccessTools.FieldRef<ShieldGenerator, bool> ShieldGhost =
+            HarmonyLib.AccessTools.FieldRefAccess<ShieldGenerator, bool>("m_isPlacementGhost");
     }
 }
