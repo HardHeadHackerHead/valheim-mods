@@ -7,7 +7,7 @@
 
 **Dungeons made from a seed: go in through a giant's iron door, turn the stairs and pull the levers to reach the vault, and fight enemies that fit the land outside. Each dungeon comes back new a few days later.**
 
-![version: 0.2.4](https://img.shields.io/badge/version-0.2.4-3b6e8f?style=flat-square)  ![multiplayer: only who wants it](https://img.shields.io/badge/multiplayer-only%20who%20wants%20it-7a5c2e?style=flat-square)  ![made with: Claude Code](https://img.shields.io/badge/made%20with-Claude%20Code-c26a3d?style=flat-square)
+![version: 0.3.0](https://img.shields.io/badge/version-0.3.0-3b6e8f?style=flat-square)  ![multiplayer: only who wants it](https://img.shields.io/badge/multiplayer-only%20who%20wants%20it-7a5c2e?style=flat-square)  ![made with: Claude Code](https://img.shields.io/badge/made%20with-Claude%20Code-c26a3d?style=flat-square)
 
 <!-- GITHUB-ONLY -->[Thunderstore](https://thunderstore.io/c/valheim/p/Quads_Lab/Quads_Dungeons/)  ·  <!-- END GITHUB-ONLY -->[Source code](https://github.com/HardHeadHackerHead/valheim-mods/tree/main/mods/Dungeons)  ·  [Report a bug](https://github.com/HardHeadHackerHead/valheim-mods/issues/new?template=bug.yml&title=%5BQuad%27s%20Dungeons%5D%20)  ·  [Discord](https://discord.gg/EwTjQxEZPy)
 
@@ -47,12 +47,22 @@ Dungeons don't appear in the world by themselves yet. For now, an admin or a tes
 - Every player sees every moving part in the same place at the same time.
 - In the Shifting Halls, set the stairs in the right order to reach the vault. It takes about 12 to 17 uses of the levers and plates.
 
+### Boss fights
+
+- A dungeon ends in a boss fight. The doors shut, the boss arrives with a banner, and the room changes as the fight goes on.
+- Its big attacks are shown first: a red ring on the floor (or a lane for a charge) and a sound. Roll out of the way.
+- Bosses fight in phases. Some put up a shield that only the room's machinery breaks: light the braziers, or lure the boss under a hammer and pull its lever. Some get a second wind: at low health they recover part of it and come back faster and harder-hitting.
+- The messages say plainly what's happening and what to do.
+- One player can win every fight. Each extra player inside makes a boss tougher.
+- In the Shifting Halls: a mini boss, the Cog-Thrall, on the way, and the Clockwork Warden at the end. The Warden leaves a trophy for an item stand.
+
 ### Enemies and loot that fit the land
 
 - Enemies fit the land the entrance stands in. A dungeon in the Mountains has Mountain enemies (and some from the Swamp), and nothing from a land further on. A creature that doesn't fit is swapped for one of the same kind (a fighter, an archer or a flyer) that does.
 - None of the game's bosses (the Clockwork Warden is the land's toughest enemy, made stronger). Enemies have up to 1 star in the Meadows and the Black Forest, and up to 2 stars from the Swamp on.
 - Loot fits the land too. Chests are filled with things from that land (or an earlier one), and the vault's chests hold more. Nothing inside gives anything from a land further on: plants to pick, pots, rocks and the pieces you can break keep only what fits.
 - A room's enemies appear once, the first time someone comes in.
+- A dungeon's walls, doors, chests and furniture can't be broken or taken down with the hammer. Pots, bone piles, roots and the cracked walls of secret rooms still break.
 
 ### Coming back new
 
@@ -146,6 +156,12 @@ In `BepInEx/config/com.quad.dungeons.cfg`, made the first time the game runs wit
 |---|---|---|
 | `ReloadPacksOnSave` | `false` | Reload BepInEx/config/Dungeons/packs a second after a file there is saved (as `dungeon reload`), in single player or as the host. Dungeons of a changed pack are remade, unless someone is inside. For people making packs; off for play. |
 
+**3 - Look and feel**
+
+| Setting | Default | What it does |
+|---|---|---|
+| `ScreenShake` | `50` | How much the camera shakes at a dungeon boss's big moments (its landing, a shield breaking, its death), in percent. 0: never. Your own, not synced. |
+
 ## 🤖 Made with AI
 
 Made with the help of Claude (Anthropic), with Claude Code: designed, written and checked together, and tried in the game.
@@ -178,8 +194,8 @@ and tested in our own world, with **bobisme** as our tester.
 
 ## 📜 Recent changes
 
+- **0.3.0** Epic boss fights. The Clockwork Warden and the Cog-Thrall are remade as real fights: an intro (gates slam, torches gutter and relight, a title banner, the music), a leap off the dais with its landing shown first, telegraphed attacks with a red ring and a sound (slam, falling stone, charge, servants from the alcoves), phases that change the room, a shield you break by lighting both braziers together twice between the hammers' blows, a second wind that heals the boss back up, enrage, and a death moment. The Cog-Thrall is armoured: lure it onto the plate under the giant hammer and pull a lever; chains hold it while the hammer falls. Boss health comes from a target fight length for the land (the Warden about 4-5 minutes solo), tougher with more players, and the final boss is always the hardest fight. Fixed: bosses stuck on their dais (steps a creature can walk, a leap when stuck), the Warden's trophy never existed (it drops now), boss blows ignoring its toughness, an old boss or wave surviving a reset or rebuild. Dungeon walls, gates, chests and furniture can't be smashed or taken down with the hammer (secret walls, pots and roots still break). Braziers keep one model and only their fire changes. New setting Screen shake (each player's own, 0-100%). For pack makers: the boss toolkit (look, intro and death timelines, abilities, phases, shields, weak points, healTo, fight, trophy), dungeon test, dungeon tour (camera-only pictures of every room, with a bright option), dungeon boss go/hurt/cast.
 - **0.2.4** Players on different versions of the mod in one game (one updated while playing): a lever pull the dungeon's owner doesn't understand is no longer lost. Your game takes the dungeon over and does it ("your game runs it now"), or tells you to try again, never silence. After an update while playing, the host is told which players need to update Quad's Dungeons and rejoin; nobody is kicked.
 - **0.2.3** Levers, plates, fights and secret walls deep inside a big dungeon could do nothing: when every player was far from the entrance, the game kept taking the dungeon's owner away, and what players did in between was lost (a fight that wouldn't start, gates that stayed shut after it was won). Now the owner is kept while players are inside, an unowned dungeon is taken at once, and every action is answered or sent again, never lost and never done twice. Only the item layer is made solid in our rooms now (smoke and effects stay walk-through). New test commands for pack makers: dungeon test <pack> (checks a pack in the game) and dungeon tour (pictures of every room, camera only). Test Blocks: the key's plinth no longer stands in the way out.
-- **0.2.2** Dungeons can be reloaded inside a world (for testing and quick fixes): the old copy hands its built dungeons over as they stand and the new one builds them again while anyone inside is held still, so nothing falls, no wave spawns twice and nothing resets; the dungeon items (giant cogs, the trophy, keys) stay registered and the ones in bags and chests keep working. Things moved out of a dungeon (gravestones, chest contents, items, tames) now land on the ground in front of its door, never on top of the entrance's hill. The log says why a fight's next wave came (the last one dead, or the wave timed out).
 
 <!-- GITHUB-ONLY -->[Every change](CHANGELOG.txt)<!-- END GITHUB-ONLY --><!-- THUNDERSTORE-ONLY: Every change is on the Changelog tab. -->

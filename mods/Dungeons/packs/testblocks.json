@@ -47,8 +47,7 @@
      "at": [-3.5, -1.0, 1.0],
      "parts": [
       {"prefab": "blackmarble_column_1", "at": [0.0, 0.4, 0.0], "scale": [0.6, 0.798, 0.6]},
-      {"prefab": "CastleKit_groundtorch_unlit", "at": [0.005, 1.452, 0.0], "show": [0]},
-      {"prefab": "CastleKit_groundtorch", "at": [0.004, 0.852, 0.001], "show": [1]}
+      {"prefab": "CastleKit_groundtorch", "at": [0.004, 0.852, 0.001]}
      ],
      "poses": [],
      "start": 0,
@@ -62,8 +61,7 @@
      "at": [0.0, -1.0, 2.5],
      "parts": [
       {"prefab": "blackmarble_column_1", "at": [0.0, 0.4, 0.0], "scale": [0.6, 0.798, 0.6]},
-      {"prefab": "CastleKit_groundtorch_unlit", "at": [0.005, 1.452, 0.0], "show": [0]},
-      {"prefab": "CastleKit_groundtorch", "at": [0.004, 0.852, 0.001], "show": [1]}
+      {"prefab": "CastleKit_groundtorch", "at": [0.004, 0.852, 0.001]}
      ],
      "poses": [],
      "start": 0,
@@ -77,8 +75,7 @@
      "at": [3.5, -1.0, 1.0],
      "parts": [
       {"prefab": "blackmarble_column_1", "at": [0.0, 0.4, 0.0], "scale": [0.6, 0.798, 0.6]},
-      {"prefab": "CastleKit_groundtorch_unlit", "at": [0.005, 1.452, 0.0], "show": [0]},
-      {"prefab": "CastleKit_groundtorch", "at": [0.004, 0.852, 0.001], "show": [1]}
+      {"prefab": "CastleKit_groundtorch", "at": [0.004, 0.852, 0.001]}
      ],
      "poses": [],
      "start": 0,

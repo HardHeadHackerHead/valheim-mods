@@ -2,10 +2,10 @@
 Test Mechanisms (packs/testmechs.json): the smallest pack with every kind of moving part once, for trying the mechanisms in the game.
 The game's forest crypt rooms, and two rooms of ours in crypt stone:
 
-  mechroom (tag "lever")  16 x 10 x 14, its way in low (south), its way out on a ledge 4 m up (north). In it:
+  mechroom (tag "lever")  16 x 14 x 14 (deep enough for the sunk stair), its way in low (south), its way out on a ledge 4 m up (north). In it:
       lever   by the way in: opens the gate in the next room (wire "step:gate1", set:1);
       plate   a pressure plate on the floor: each time someone steps on it, the stair turns (next);
-      stair   a turning stair, 2 states: 0 turned away to the south and sunk 1.6 m (joins nothing), 1 climbs to the ledge (joins
+      stair   a turning stair, 2 states: 0 turned away to the south and sunk 3.4 m (joins nothing), 1 climbs to the ledge (joins
               in and out);
       lift    a moving platform in the east corner that rises to the ledge and back by itself every 8 s (cycle): joins in and out
               when it's up.
@@ -35,7 +35,7 @@ def torch(room, k, lateral, y, depth):
 
 
 def mech_room():
-    r = Room("mechroom", (16, 10, 14), tags=["lever"], max=1)
+    r = Room("mechroom", (16, 14, 14), tags=["lever"], max=1)
     r.doorway("in", (0, -3.5, -7), (0, 0, 1), type="")
     r.doorway("out", (0, 0.5, 7), (0, 0, -1), type="")
     r.extra["drops"] = [{"a": "out", "b": "in"}]          # off the ledge to the floor: 4 m, no harm
@@ -45,10 +45,9 @@ def mech_room():
         _side_wall(r, k, half, across, -5.0, 5.0, doors)
     slab(r, -hx, hx, -hz, hz, -3.5, STONE, thickness=1.5, cell=4.0)
     slab(r, -hx, hx, -hz, hz, 5.0, STONE, thickness=0.5, cell=4.0)
-    # the ledge: 4 m up along the north wall, on stone pillars
+    # the ledge: 4 m up along the north wall, on a sheer stone face (pillars under it were footholds up to it: the gap check)
     slab(r, -hx + 1, hx - 1, 3.0, hz - 0.5, 0.5, STONE, thickness=0.6, cell=4.0)
-    for x in (-5.0, -1.0, 3.0):
-        r.fill("stone_pillar", (x, -1.6, 3.4), (0.8, 3.8, 0.8))
+    r.fill(STONE, (0.0, -1.8, 3.3), (2 * (hx - 1), 3.4, 0.6), euler=(90, 0, 0))
     for x in (-6.5, -2.5, 1.5, 5.5):
         r.fill("wood_beam", (x + 1.0, 1.15, 3.1), (2.0, 0.2, 0.2))
     # the lever by the way in, the plate by the stair's foot
@@ -66,7 +65,8 @@ def mech_room():
     st.fill("wood_beam", (-1.15, -0.45, 0), (0.2, 0.25, 6.6))
     st.fill("wood_beam", (1.15, -0.45, 0), (0.2, 0.25, 6.6))
     st.fill("stone_pillar", (0, -1.6, 0), (0.9, 0.8, 0.9))
-    st.pose(at=(0, -1.6, 0), euler=(0, 180, 0)).pose(euler=(0, 0, 0))     # 0: turned away and sunk, its top far from the ledge
+    # 0: turned away and sunk 3.4 m, its top more than a jump (3.1 m at Jump 100) below the ledge
+    st.pose(at=(0, -3.4, 0), euler=(0, 180, 0)).pose(euler=(0, 0, 0))
     st.seconds = 2.5
     st.join("in", "out", state=1)
     # the lift: a 2 x 2 stone platform by the ledge's east end, up and down by itself

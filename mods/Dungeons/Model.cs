@@ -33,6 +33,9 @@ namespace Dungeons
         // (added by triggers, TriggerModel.cs) a mechanism's part only: the states it shows in ("show": [1]: a brazier's flames, a
         // teleporter's glow); null: always
         public List<int> Show;
+        // (added by triggers) a mechanism's part only: the states its own fire burns in ("lit": [1, 2]: its Fireplace's flame, light,
+        // warmth and crackle, or its lights, particles and looping sounds; the model itself stays). null: always (a brazier's: lit only)
+        public List<int> Lit;
     }
 
     // ---- step 2: moving parts and puzzles ----
@@ -202,7 +205,7 @@ namespace Dungeons
 
     /// <summary>(Added in step 3, Runtime.) An encounter's boss: the land's elite at the level cap, harder to kill by Health, with the game's
     /// boss bar and a name; its phases fire wires and bring adds as its health falls.</summary>
-    internal class BossDef
+    internal partial class BossDef
     {
         public string Name;              // what its bar says (a $ key)
         public string Role = "elite";    // the creature picked for it (Builder.EncounterCreature)
@@ -210,7 +213,7 @@ namespace Dungeons
         public List<BossPhase> Phases = new List<BossPhase>();
     }
 
-    internal class BossPhase
+    internal partial class BossPhase
     {
         public float At;                 // its health fraction (0.66: at two thirds)
         public List<Wire> Wires = new List<Wire>();                       // fired then (mechanisms of the room)

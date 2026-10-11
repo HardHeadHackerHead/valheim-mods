@@ -14,6 +14,8 @@ format is kept at the top of `Packs.cs`. If this skill disagrees with the code, 
 - **[pack-format.md](pack-format.md)**: every field of a pack, its rooms, plan, mechanisms, encounters, enemies, loot and entrance looks.
 - **[authoring.md](authoring.md)**: writing our own rooms with the generators (`dungeon_parts.py`, `giant_kit.py`), the checks in
   detail, the conventions, and the lessons from authoring rooms.
+- **[bosses.md](bosses.md)**: the boss toolkit (intro, abilities and telegraphs, phases, shields, weak spots, death), rule one (a boss
+  must reach the players), designing a fight, and checking it.
 - **[triggers.md](triggers.md)**: triggers and actions, the building blocks (pedestal, brazier, push block, trap, teleporter, lock,
   checkpoint), key items, what the solver can check, and their commands.
 - **[map.md](map.md)**: how the in-game map reads a pack (floors from doorway heights, stairs by name), and how to check it offline.
@@ -55,7 +57,7 @@ Read `docs/modding-pitfalls.md` too before changing the mod's code: it has the r
   dungeon is built under them there. What falls out anyway goes back to its floor; a gravestone to the spot it was made. Our teleports
   count no fall.
 - **Every player and the server need it**, at the same version (see "Packs from a folder" below).
-- **Reload level `world`** (`HotReload.cs`; **not yet tested in the game**): `reload Dungeons`, or the mod manager's auto-reload, works
+- **Reload level `world`** (`HotReload.cs`; tested in the game): `reload Dungeons`, or the mod manager's auto-reload, works
   inside a world.
   - The entrance prefabs and items stay registered over the reload, and the new copy replaces them by name. Standing entrances get the new
     copy's component and look. Items in this game's bags, chests, on the ground and held by a pedestal are pointed at the new prefabs.
@@ -81,9 +83,7 @@ Read `docs/modding-pitfalls.md` too before changing the mod's code: it has the r
     act) needs a Carry/Take in `HotReload.cs`; a component of ours on a **saved** object needs `HotReload.Reattach` (only
     `DungeonEntrance` has one). Local built objects are fine: they're built again. **Items** (rewards, packs' key items) are added only
     through `Builder.DefineItem` / `RegisterItems` → `ItemReload.Replace`: never add to ObjectDB any other way.
-  - Why it's careful (a lesson to confirm once tested): a reload in a world is a frame with no mod. With no hold-back patch, saved objects
-    up there get made and fall, spawners spawn unfitted creatures, and a landing after our teleport counts a 5000 m fall. The old copy
-    installs a small gap guard under its own Harmony id, which the new copy removes.
+  - Why it's careful: lesson 29.
 
 ## Packs from a folder, the server's packs, and versions (SyncPacks.cs, SyncNet.cs)
 
@@ -213,8 +213,9 @@ far enter, use, set, bring, `mapshot all`, `orphans remove`.
 | `dungeon list` | The dungeons in the world (all on the host, the ones this game knows on a client). |
 | `dungeon enter [id]` / `leave` | In or out as the entrance and the way out do. |
 | `dungeon map [id \| <pack> <seed>]` | The layout floor by floor as text (also `BepInEx/claude/dungeon-map.txt`). |
+| `dungeon boss [id]` / `boss go <room>` / `boss hurt <percent> [room]` / `boss cast <ability> [room]` | Every boss fight's state / to a boss room's way in / hurt the boss / cast an ability now (the last three: cheats): bosses.md. |
 | `dungeon test <pack> [seeds]` | The gate's per-layout checks over many seeds, in the game (changes nothing): new-dungeon.md. |
-| `dungeon tour [id] [rooms] [views]` | Camera-only pictures of a built dungeon's rooms (untested in the game yet): new-dungeon.md. |
+| `dungeon tour [id] [rooms] [views] [bright]` | Camera-only pictures of a built dungeon's rooms (`bright`: lit up to show shapes and gaps): new-dungeon.md. |
 | `dungeon mapshot [floor] [all] [open]` / `mapshot mini` | The in-game map as this character sees it, as a picture in `BepInEx/claude/shots/`. |
 | `dungeon seeds <pack> <count>` | Lays out seeds 1..count: failures and why, room counts, sizes, time. |
 | `dungeon state [id]` | Everything about one dungeon. |
@@ -285,7 +286,8 @@ Each of these happened in a test. Don't undo the fix; check new work against it.
 2. **Item-layer colliders are walk-through.** An item's collider is on the `item` layer, which characters pass, and is a small box for
    lying on the ground. Players walked through the giant `CharredCogwheel` gears. `BuildSolid.cs` now moves scenery colliders on
    pass-through layers to `static_solid` and gives items a collider of their own shape (mesh, a disc for a gear, or a box). Expect any item
-   prefab used as scenery to need this; `piece_nonsolid` (banners, cloth) is left walk-through on purpose.
+   prefab used as scenery to need this; `piece_nonsolid` is left walk-through on purpose (crypt cloth, webs, candles, rugs). Banners and curtains are solid (the piece layer),
+   though nothing to climb in the plain game; what players can climb is in new-dungeon.md ("Footholds").
 3. **Floating props.** The first giant Shifting Halls had 35 lanterns hanging in mid-air (the player saw one floating up a staircase): the
    generator put them at a height with nothing above them. A script places props by numbers, and nothing tells it the floor or ceiling
    isn't there. Now hanging lights hang on chains from a ceiling or a beam, and `prop_check.py` fails any prop with nothing under it or
@@ -391,6 +393,26 @@ Each of these happened in a test. Don't undo the fix; check new work against it.
     player action goes through `Site.Act`: never call the owner's handler directly, and never require `IsOwner` on the acting game. An
     act that's sent once a second anyway gets its prefix in `Acts.Repeated`. (The release check-list has the test: two players far
     inside, the entrance unloaded on both, pull a lever.)
+28. **A boss must be able to walk off its dais.** The first Warden spawned on a dais of two 0.6 m tiers. Valheim's creature navmesh
+    (`Pathfinding`, built at runtime) steps 0.3 m for humanoid agents and 0.6 m for troll-sized ones, and creatures never jump down, so the
+    dais top was an island and the boss stood at its edge ("it looked like he couldn't actually get down"). The fix: daises in 0.2 m steps
+    on every side (`boss_rooms.step_dais`), a runtime leap when a boss is stuck (`unstick`, 5 s), and the gate's `creatures` step
+    (`creature_check.py`). The game's navmesh also reaches y 5500 at most: a boss above that can't walk (logged when the fight starts).
+    The boss code: `BossModel.cs`, `PackReaderBoss.cs`, `BossRecord.cs`, `BossFight.cs`, `BossShow.cs`, `BossBody.cs`, `BossMarks.cs`,
+    saved in the entrance's ZDO (`quaddungeon_bossfight`); the tools `boss_rooms.py` (the Warden's and guardian's rooms, used by
+    `shifting_halls.py`) and `creature_check.py`.
+29. **A reload in a world is a frame with no mod.** With no hold-back patch, saved objects up there get made and fall, spawners spawn
+    unfitted creatures, and a landing after our teleport counts a 5000 m fall. So the old copy hands each built dungeon over as it stands
+    (the "husk"), installs a small gap guard under its own Harmony id, and the new copy removes it once it has taken over (`HotReload.cs`).
+30. **Dungeon parts can't be hammered or smashed.** Every saved part the builder makes is marked a dungeon part (`Dungeons_part`): the
+    hammer can't take it down (no free build refund from a vault chest, no taking a dungeon's doors, torches or furniture apart), and its
+    building pieces (walls, floors, stairs, gates, grates, doors, chests, torches, black marble) take no damage: a hit shows "too hard"
+    (`BuildSaved.cs`, `Builder.Unbreakable`). Nobody smashes a way round a puzzle, a chest open, or black marble for Mistlands materials in a
+    Meadows dungeon. The game's own breakables (pots, bone piles, roots, rubble, Mórk halla's gate doors) still break, their drops kept to
+    the land's tier, and so do our breakable walls.
+31. **Puzzles must hold against the best jumper.** The gap check models the game's own jump at its worst case for us, Jump 100 and Run 100
+    (the user's choice): up to 3.1 m up, and 10.9 m across on the level for a sprinter (`GapCheck.cs`). A puzzle that a skilled player can
+    jump round fails.
 
 ## Not built yet
 

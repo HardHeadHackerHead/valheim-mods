@@ -16,7 +16,13 @@ namespace Dungeons
     ///     is; a mechanism's parts as they stand in that state's pose), made axis-aligned again (a tilted beam counts as its whole box);
     ///   - the room is cut into 0.5 m columns; a box's top is a place to stand where it covers a column's middle and nothing else is in
     ///     the column from just above it to 1.8 m up (anything touching a column at all counts there, so a thin wall still splits a floor);
-    ///   - places join by walking (next columns, at most 0.6 m up or down), by jumping (at most 6 m across and 1.5 m up, nothing in the
+    ///   - a prop (not a structure piece: a stair, floor or wall is a surface like any other) with footholds (the palettes' "climb.top": upward faces a jump apart, measured from the game's colliders; standing as the
+    ///     prefab stands) is climbed: from the floor beside its foot to any place within a jump of it (and of that foot spot, across at most 3 m of the prop),
+    ///     up to its highest foothold + one jump, with nothing in the way at body height (as a jump) but the prop itself;
+    ///   - with Quad's Parkour (when the pack allows it), a wall climb or ledge grab reaches 6 m up within 2 m: "only with Parkour", its own
+    ///     section; a failure only when the pack says "parkour": true itself, information when it's left to the default;
+    ///   - places join by walking (next columns, at most 0.6 m up or down), by jumping (one jump, the game's: up to 3.1 m up at Jump 100 (1.6 m at
+    ///     Jump 0), and across as far as a sprinter flies to that height, 10.9 m on the level at Jump 100 and Run 100, further down; nothing in the
     ///     way at body height: a rail can be jumped over, a wall can't) and by falling (as a jump, any height down: one way);
     ///   - each doorway stands on the place under its point a metre into the room (or two or three, past a gate standing in it).
     /// Then, against the solver in the same state ("inside" joins, the mechanisms' joins, "drops"), each way from one doorway to another
@@ -32,9 +38,71 @@ namespace Dungeons
     /// </summary>
     internal static class GapCheck
     {
-        public const float JumpAcross = 6f, JumpUp = 1.5f, Step = 0.6f, Headroom = 1.8f, Cell = 0.5f;
+        public const float Step = 0.6f, Headroom = 1.8f, Cell = 0.5f;
+
+        /// <summary>One jump, from the game's numbers (builder2, from the game files: Character.Jump, the air control, the run speed):
+        /// upward speed V = 8 × (1 + 0.4 × Jump skill), gravity 20, so the feet rise V²/40 (1.6 m at Jump 0, 3.1 m at Jump 100); a sprinter
+        /// leaves at the run speed S = 7 × (1 + 0.25 × Run skill) and lands h higher after (V + √(V² − 40h)) / 20 s, with a 0.4 × (1 + 0.4 ×
+        /// Jump skill) m push forward, and the body (radius 0.5 m) catches a ledge that much sooner. Puzzles must hold at any skill: by
+        /// default the worst case, Jump 100 and Run 100 (the user's choice). Set by Skills().</summary>
+        public static int JumpSkill { get; private set; } = 100;
+        public static int RunSkill { get; private set; } = 100;
+        public const float BodyRadius = 0.5f;
+        private static readonly bool AllSpots = Environment.GetEnvironmentVariable("GAPALLSPOTS") == "1";   // (jumps from and to every spot, not only edges: to check the shortcut)
+        private static float V = 11.2f, S = 8.75f;
+        public static float JumpUp => V * V / 40f;
+        /// <summary>How far across a jump reaches landing h higher (lower: negative); -1 if it can't get that high.</summary>
+        public static float Reach(float h)
+        {
+            float d = V * V - 40f * h;
+            return d < 0f ? -1f : S * (V + (float)Math.Sqrt(d)) / 20f + 0.4f * (1f + 0.4f * JumpSkill / 100f) + BodyRadius;
+        }
+        public static float JumpAcross => Reach(0f);
+        public static void Skills(int jump, int run)
+        {
+            JumpSkill = Math.Max(0, Math.Min(100, jump));
+            RunSkill = Math.Max(0, Math.Min(100, run));
+            V = 8f * (1f + 0.4f * JumpSkill / 100f);
+            S = 7f * (1f + 0.25f * RunSkill / 100f);
+        }
         public const float SafeFall = 4f;   // the game's fall damage starts above this: a route with no longer fall is a plain jump
+        public const float ClimbAcross = 3f;   // a climbed prop's width counted in its reach at most (the far side of a pillar or statue)
+        public const float ParkourUp = 6f, ParkourAcross = 2f;   // with Quad's Parkour: a wall climb and a ledge grab reach this high, this close
+
+        /// <summary>Props a player can climb in the plain game, and how high (m above their foot at scale 1): the palettes' "climb.top" (Jump
+        /// 0) and "climb.top_skilled" (Jump 100), the highest standable face (38° or flatter, room for the feet) reachable from the floor
+        /// with footholds a jump apart (builder2 measured them from the game's colliders). Not the "structure" pieces (stairs, floors,
+        /// walls, arches): they're the room's own surfaces, walked and jumped from as they are. Set by Palettes().</summary>
+        public static readonly Dictionary<string, KeyValuePair<float, float>> Climbers = new Dictionary<string, KeyValuePair<float, float>>(StringComparer.Ordinal);
+        private sealed class Climb { public string Prefab; public float Top; }
+        private static readonly System.Runtime.CompilerServices.ConditionalWeakTable<Vector3[], Climb> Climbable =
+            new System.Runtime.CompilerServices.ConditionalWeakTable<Vector3[], Climb>();
+
+        /// <summary>Prefabs not to climb (env GAPNOCLIMB, comma-separated): to see what one prop's footholds open.</summary>
+        private static readonly HashSet<string> NoClimb = new HashSet<string>(
+            (Environment.GetEnvironmentVariable("GAPNOCLIMB") ?? "").Split(new[] { ',' }, StringSplitOptions.RemoveEmptyEntries).Select(x => x.Trim()));
+
+        /// <summary>Reads the palettes (tools/dungeons/palettes/*.json): every piece that isn't a "structure" piece and has footholds
+        /// ("climb": {"top" or "top_skilled": more than 0}) can be climbed to that height. How many were read.</summary>
+        public static int Palettes(string dir)
+        {
+            if (!Directory.Exists(dir)) return 0;
+            foreach (string f in Directory.GetFiles(dir, "*.json"))
+                try
+                {
+                    foreach (JObject e in (JObject.Parse(File.ReadAllText(f))["pieces"] as JArray ?? new JArray()).OfType<JObject>())
+                    {
+                        var climb = e["climb"] as JObject;
+                        float top = (float?)climb?["top"] ?? 0f, skilled = (float?)climb?["top_skilled"] ?? top;
+                        if ((top > 0f || skilled > 0f) && (string)e["mount"] != "structure" && !string.IsNullOrEmpty((string)e["prefab"])
+                            && !NoClimb.Contains((string)e["prefab"])) Climbers[(string)e["prefab"]] = new KeyValuePair<float, float>(top, skilled);
+                    }
+                }
+                catch (Exception) { }
+            return Climbers.Count;
+        }
         private const float ClearLow = 1.2f, ClearHigh = 2.4f;   // a jump's body passes this high above the higher of its two ends
+        // (and its feet go over anything up to a jump above where it leaves: a rail or bars stop a jump only if they stand higher than that)
         private const int MaxStates = 512;                        // combinations checked per room at most
         private static readonly System.Runtime.CompilerServices.ConditionalWeakTable<Vector3[], string> Names =
             new System.Runtime.CompilerServices.ConditionalWeakTable<Vector3[], string>();
@@ -190,47 +258,124 @@ namespace Dungeons
             }
 
             // Jumps and falls: from each area, the areas it reaches (and on from them).
-            int reachCells = (int)Math.Ceiling(JumpAcross / Cell);
-            bool Clear(int from, int to, float hi)
+            int reachCells = (int)Math.Ceiling(Reach(-room.Size.y) / Cell);   // (the farthest: a jump down the room's whole height)
+            bool Reaches(int from, int to)   // (one jump from spot to spot: across against the height it lands at)
             {
+                float r = Reach(spots[to].Value - spots[from].Value);
+                if (r < 0f) return false;
+                int ax = spots[from].Key / nz - spots[to].Key / nz, az = spots[from].Key % nz - spots[to].Key % nz;
+                return (ax * ax + az * az) * Cell * Cell <= r * r;
+            }
+            // (an area is jumped from its edge: the spot nearest anything outside it is on its edge, and it's walked to)
+            var edge = new bool[spots.Count];
+            {
+                var cellArea = new Dictionary<int, HashSet<int>>();
+                for (int s = 0; s < spots.Count; s++)
+                {
+                    if (!cellArea.TryGetValue(spots[s].Key, out var set)) cellArea[spots[s].Key] = set = new HashSet<int>();
+                    set.Add(Find(s));
+                }
+                var around = new[] { 1, 0, -1, 0, 0, 1, 0, -1 };
+                for (int s = 0; s < spots.Count; s++)
+                {
+                    int c = spots[s].Key, cx = c / nz, cz = c % nz, a = Find(s);
+                    for (int k = 0; k < 8 && !edge[s]; k += 2)
+                    {
+                        int x = cx + around[k], z = cz + around[k + 1];
+                        if (x < 0 || z < 0 || x >= nx || z >= nz || !cellArea.TryGetValue(x * nz + z, out var there) || !there.Contains(a)) edge[s] = true;
+                    }
+                }
+            }
+            // (and landed on at its edge too, for the same reason: the jumps go edge to edge)
+            var edgeAt = new List<int>[nx * nz];
+            float lowest = spots.Count > 0 ? spots.Min(sp => sp.Value) : 0f;
+            for (int s = 0; s < spots.Count; s++)
+                if (edge[s]) (edgeAt[spots[s].Key] ?? (edgeAt[spots[s].Key] = new List<int>())).Add(s);
+            bool Clear(int from, int to, float hi, Vector3[] over = null)
+            {
+                float low = over != null ? hi + ClearLow : Math.Max(hi + ClearLow, spots[from].Value + JumpUp);
                 int ax = spots[from].Key / nz, az = spots[from].Key % nz, bx = spots[to].Key / nz, bz = spots[to].Key % nz;
                 int steps = Math.Max(Math.Abs(bx - ax), Math.Abs(bz - az));
                 for (int k = 1; k < steps; k++)
                 {
                     int x = (int)Math.Round(ax + (bx - ax) * (float)k / steps), z = (int)Math.Round(az + (bz - az) * (float)k / steps);
-                    if (solid[x * nz + z].Any(s => s.x < hi + ClearHigh && s.y > hi + ClearLow)) return false;
+                    // (a climb: the prop's own box is what the player is going up, not in the way; anything else beside it still is)
+                    if (solid[x * nz + z].Any(s => s.x < hi + ClearHigh && s.y > low
+                        && !(over != null && Math.Abs(s.x - over[0].y) < 0.001f && Math.Abs(s.y - over[1].y) < 0.001f))) return false;
                 }
                 return true;
             }
-            var hops = new Dictionary<long, HashSet<int>>();
-            HashSet<int> Hops(int a, bool safe)
+            var climbs = new Dictionary<int, HashSet<int>>();   // area -> areas a tall prop beside it lets the player climb to
+            var climbVia = new Dictionary<long, KeyValuePair<KeyValuePair<int, int>, string>>();   // (from area, to area) -> ((a foot spot, the spot reached), the prop), for GAPDEBUG
+            foreach (Vector3[] b in boxes)
             {
-                if (hops.TryGetValue(a * 2L + (safe ? 1 : 0), out var set)) return set;
-                set = hops[a * 2L + (safe ? 1 : 0)] = new HashSet<int>();
+                if (!Climbable.TryGetValue(b, out Climb climb)) continue;
+                float hold = b[0].y + climb.Top, top = hold + JumpUp;   // (its highest foothold, then a jump)
+                // (from a foot spot, only as far as across the prop and a jump: a long beam or a flight of stairs isn't climbed at one end
+                // and left from the other; walking along its top is the walk's business)
+                float width = Math.Min(ClimbAcross, Math.Max(b[1].x - b[0].x, b[1].z - b[0].z));
+                var foot = new List<int>();
+                var up = new List<int>();
+                for (int sp = 0; sp < spots.Count; sp++)
+                {
+                    int c = spots[sp].Key;
+                    float cx = -half.x + (c / nz + 0.5f) * Cell, cz = -half.z + (c % nz + 0.5f) * Cell, y = spots[sp].Value;
+                    float dx = Math.Max(0f, Math.Max(b[0].x - cx, cx - b[1].x)), dz = Math.Max(0f, Math.Max(b[0].z - cz, cz - b[1].z));
+                    float d = (float)Math.Sqrt(dx * dx + dz * dz);
+                    if (d <= 1f && Math.Abs(y - b[0].y) <= Step + 0.5f) foot.Add(sp);
+                    if (y > b[0].y + JumpUp && y <= top && d <= Reach(y - hold)) up.Add(sp);
+                }
+                foreach (int f in foot)
+                {
+                    int fa = Find(f);
+                    if (!climbs.TryGetValue(fa, out var to)) climbs[fa] = to = new HashSet<int>();
+                    int fc = spots[f].Key;
+                    foreach (int u in up)
+                    {
+                        int uc = spots[u].Key;
+                        float ax = (uc / nz - fc / nz) * Cell, az = (uc % nz - fc % nz) * Cell, across = Reach(spots[u].Value - hold) + width;
+                        if (ax * ax + az * az > across * across || !Clear(f, u, spots[u].Value, b)) continue;   // (and nothing in the way of the jump off it)
+                        if (Find(u) != fa && to.Add(Find(u))) climbVia[((long)fa << 32) | (uint)Find(u)] = new KeyValuePair<KeyValuePair<int, int>, string>(new KeyValuePair<int, int>(f, u), climb.Prefab);
+                    }
+                }
+            }
+            var hops = new Dictionary<long, HashSet<int>>();
+            HashSet<int> Hops(int a, bool safe, bool parkour = false)
+            {
+                long hk = a * 4L + (safe ? 1 : 0) + (parkour ? 2 : 0);
+                if (hops.TryGetValue(hk, out var set)) return set;
+                set = hops[hk] = new HashSet<int>();
+                if (climbs.TryGetValue(a, out var climbed)) set.UnionWith(climbed);   // (up a tall prop: no fall)
                 foreach (int s in members[a])
                 {
+                    if (!edge[s] && !AllSpots) continue;
                     int sx = spots[s].Key / nz, sz = spots[s].Key % nz;
-                    for (int x = Math.Max(0, sx - reachCells); x <= Math.Min(nx - 1, sx + reachCells); x++)
-                        for (int z = Math.Max(0, sz - reachCells); z <= Math.Min(nz - 1, sz + reachCells); z++)
+                    // (no further than a jump down to the lowest place there is, or to a safe fall)
+                    int rc = Math.Min(reachCells, (int)Math.Ceiling(Reach(Math.Max(lowest - spots[s].Value, safe ? -SafeFall : float.MinValue)) / Cell));
+                    for (int x = Math.Max(0, sx - rc); x <= Math.Min(nx - 1, sx + rc); x++)
+                        for (int z = Math.Max(0, sz - rc); z <= Math.Min(nz - 1, sz + rc); z++)
                         {
-                            if ((x - sx) * (x - sx) + (z - sz) * (z - sz) > reachCells * reachCells) continue;
-                            foreach (int t in spotsAt[x * nz + z])
+                            if ((x - sx) * (x - sx) + (z - sz) * (z - sz) > rc * rc) continue;
+                            var at = AllSpots ? spotsAt[x * nz + z] : edgeAt[x * nz + z];
+                            if (at == null) continue;
+                            foreach (int t in at)
                             {
                                 int b = Find(t);
                                 float dy = spots[t].Value - spots[s].Value;
-                                if (b == a || set.Contains(b) || dy > JumpUp || (safe && dy < -SafeFall)) continue;
+                                bool climbUp = parkour && dy > JumpUp && dy <= ParkourUp && (x - sx) * (x - sx) + (z - sz) * (z - sz) <= (ParkourAcross / Cell) * (ParkourAcross / Cell);
+                                if (b == a || set.Contains(b) || (safe && dy < -SafeFall) || !(climbUp || Reaches(s, t))) continue;
                                 if (Clear(s, t, Math.Max(spots[s].Value, spots[t].Value))) set.Add(b);
                             }
                         }
                 }
                 return set;
             }
-            HashSet<int> From(int a, bool safe = false)
+            HashSet<int> From(int a, bool safe = false, bool parkour = false)
             {
                 var seen = new HashSet<int> { a };
                 var todo = new Stack<int>();
                 todo.Push(a);
-                while (todo.Count > 0) foreach (int b in Hops(todo.Pop(), safe)) if (seen.Add(b)) todo.Push(b);
+                while (todo.Count > 0) foreach (int b in Hops(todo.Pop(), safe, parkour)) if (seen.Add(b)) todo.Push(b);
                 return seen;
             }
 
@@ -300,9 +445,18 @@ namespace Dungeons
                 var via = new Dictionary<int, KeyValuePair<int, int>> { [start] = new KeyValuePair<int, int>(-1, -1) };
                 var q = new Queue<int>();
                 q.Enqueue(start);
+                var climbed = new Dictionary<int, string>();   // area -> the prop climbed into it
                 while (q.Count > 0 && !via.ContainsKey(goal))
                 {
                     int a = q.Dequeue();
+                    if (climbs.TryGetValue(a, out var up))
+                        foreach (int b in up)
+                            if (!via.ContainsKey(b) && climbVia.TryGetValue(((long)a << 32) | (uint)b, out var cv))
+                            {
+                                via[b] = cv.Key;
+                                climbed[b] = cv.Value;
+                                q.Enqueue(b);
+                            }
                     foreach (int s in members[a])
                     {
                         int sx = spots[s].Key / nz, sz = spots[s].Key % nz;
@@ -311,7 +465,7 @@ namespace Dungeons
                                 foreach (int t in spotsAt[x * nz + z])
                                 {
                                     int b = Find(t);
-                                    if (via.ContainsKey(b) || (x - sx) * (x - sx) + (z - sz) * (z - sz) > reachCells * reachCells || spots[t].Value - spots[s].Value > JumpUp) continue;
+                                    if (via.ContainsKey(b) || !Reaches(s, t)) continue;
                                     if (safeOnly && spots[t].Value - spots[s].Value < -SafeFall) continue;
                                     if (!Clear(s, t, Math.Max(spots[s].Value, spots[t].Value))) continue;
                                     via[b] = new KeyValuePair<int, int>(s, t);
@@ -326,7 +480,8 @@ namespace Dungeons
                     return $"({-half.x + (c / nz + 0.5f) * Cell:0.0}, {spots[s].Value:0.0}, {-half.z + (c % nz + 0.5f) * Cell:0.0}) on {what}";
                 }
                 var chain = new List<string>();
-                for (int a = goal; via[a].Key >= 0; a = Find(via[a].Key)) chain.Add($"  hop {Where(via[a].Key)} -> {Where(via[a].Value)}");
+                for (int a = goal; via.ContainsKey(a) && via[a].Key >= 0; a = Find(via[a].Key))
+                    chain.Add(climbed.TryGetValue(a, out string prop) ? $"  climb {prop} from {Where(via[a].Key)} up to {Where(via[a].Value)}" : $"  hop {Where(via[a].Key)} -> {Where(via[a].Value)}");
                 chain.Reverse();
                 Console.WriteLine($"GAPDEBUG {room.Name} state {string.Join(",", state)}: {Debug.Split(':')[1]} -> {Debug.Split(':')[2]}{(safeOnly ? " (no fall over 4 m)" : " (with a fall)")}" + Environment.NewLine + string.Join(Environment.NewLine, chain));
             }
@@ -389,6 +544,18 @@ namespace Dungeons
                 found.Add($"{b.Key} {(both ? "<->" : "->")} {b.Value}: blocked: the solver joins them, but there's no way to walk or jump it");
             }
             if (only != null) return found;   // (the rides only)
+            if (PackReader.Parkour(pack))   // (Quad's Parkour allowed inside: what it adds; a failure only when the pack asks for it)
+                foreach (string a in ids.Where(doorArea.ContainsKey))
+                {
+                    int aa = doorArea[a];
+                    HashSet<int> there = full.TryGetValue(aa, out var f0) ? f0 : full[aa] = From(aa);
+                    HashSet<int> pk = From(aa, false, true);
+                    HashSet<string> solver = Solver(a);
+                    foreach (string b in ids.Where(doorArea.ContainsKey))
+                        if (a != b && !solver.Contains(b) && !there.Contains(doorArea[b]) && pk.Contains(doorArea[b]))
+                            found.Add($"{a} -> {b}: only with Parkour (a wall climb or ledge grab), and the solver doesn't know it" +
+                                (PackReader.ParkourSaid(pack) ? " (the pack says \"parkour\": true: close it off)" : " (information)"));
+                }
             foreach (var r in routes)
             {
                 string a = r.Key.Key, b = r.Key.Value;
@@ -418,7 +585,17 @@ namespace Dungeons
             }
             var box = new[] { min, max };
             Names.Add(box, p.Prefab + (mech != null ? " (" + mech.Id + ")" : ""));
+            // (footholds only as the prefab stands: turned off upright, a part is climbed by its top end alone, as any box)
+            if (Climbers.TryGetValue(p.Prefab, out var tops) && (JumpSkill >= 100 ? tops.Value : tops.Key) > 0f
+                && Upright(p.Euler) && (pose == null || Upright(pose.Euler)) && (mech == null || Upright(mech.Euler)))
+                Climbable.Add(box, new Climb { Prefab = p.Prefab, Top = (JumpSkill >= 100 ? tops.Value : tops.Key) * p.Scale.y });
             return box;
+        }
+
+        private static bool Upright(Vector3 euler)
+        {
+            float Off(float a) { a = ((a % 360f) + 360f) % 360f; return Math.Min(a, 360f - a); }
+            return Off(euler.x) < 5f && Off(euler.z) < 5f;
         }
 
         private static Vector3 Rotate(Vector3 v, Vector3 euler)

@@ -417,8 +417,9 @@ namespace Dungeons
             foreach (Mech m in All)
             {
                 if (m.Def.Encounter == null || !InArea(m, p) || EncounterOf(m).State != EncounterRecord.Fighting) continue;
+                if (m.Def.Encounter.Boss != null) return BossMusic(m);   // (none until it wakes: BossShow.cs)
                 if (!string.IsNullOrEmpty(m.Def.Encounter.Music)) return m.Def.Encounter.Music;
-                return m.Def.Encounter.Boss != null ? DungeonMusic.BossDefault : DungeonMusic.FightDefault;
+                return DungeonMusic.FightDefault;
             }
             return null;
         }
@@ -526,6 +527,7 @@ namespace Dungeons
             }
             TellPlates();
             EncounterNotices();
+            BossShow();       // (the boss toolkit: telegraphs, beats, the boss's look: BossShow.cs)
             Breaks();
             BlocksUpdate();   // (triggers: blocks shown, pushed, firing, stepped on, BlockSet.cs)
         }

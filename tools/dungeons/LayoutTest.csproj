@@ -20,10 +20,14 @@
     <Reference Include="Newtonsoft.Json"><HintPath>$(ManagedDir)/Newtonsoft.Json.dll</HintPath></Reference>
     <Reference Include="netstandard"><HintPath>$(ManagedDir)/netstandard.dll</HintPath></Reference>
     <Compile Include="$(ModDir)/Model.cs" Link="Mod/Model.cs" />
+    <!-- the boss toolkit's data and reader (dungeon-boss) -->
+    <Compile Include="$(ModDir)/BossModel.cs" Link="Mod/BossModel.cs" />
+    <Compile Include="$(ModDir)/PackReaderBoss.cs" Link="Mod/PackReaderBoss.cs" />
     <Compile Include="$(ModDir)/Layouts.cs" Link="Mod/Layouts.cs" />
     <Compile Include="$(ModDir)/PackReader.cs" Link="Mod/PackReader.cs" />
     <Compile Include="$(ModDir)/LayoutSolver.cs" Link="Mod/LayoutSolver.cs" />
     <Compile Include="$(ModDir)/LookCheck.cs" Link="Mod/LookCheck.cs" />
+    <Compile Include="$(ModDir)/LayoutAudit.cs" Link="Mod/LayoutAudit.cs" />
     <Compile Include="$(ModDir)/TriggerModel.cs" Link="Mod/TriggerModel.cs" />
     <Compile Include="$(ModDir)/PackReaderTriggers.cs" Link="Mod/PackReaderTriggers.cs" />
     <Compile Include="$(ModDir)/TriggerSolve.cs" Link="Mod/TriggerSolve.cs" />

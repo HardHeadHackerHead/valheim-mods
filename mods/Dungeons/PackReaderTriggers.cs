@@ -39,8 +39,12 @@ namespace Dungeons
     /// BLOCKS (mechanism kinds; their look is their parts; a part's "show": [1] shows it only in those states):
     ///   pedestal  {"item": "smallkey" | "<game item>", "accepts": [...], "itemAt": [x,y,z]}: E puts its item on (or a hotbar key any it
     ///             accepts), hold E takes it off (dropped at its foot). States 0 empty, 1 its item, 2 another it accepts.
+    ///   Any mechanism's part may also have "lit": [states]: its own fire (a Fireplace's flame, light, warmth and crackle; or its lights,
+    ///             particles and looping sounds) burns only in those states, the model staying (torches that gutter out and relight).
     ///   brazier   {"burn": 60, "lightable": true}: lit by a player with a torch in hand (E) or a fire hit, or by an action; goes out after
-    ///             "burn" seconds (0: stays lit). States 0 out, 1 lit.
+    ///             "burn" seconds (0: stays lit). States 0 out, 1 lit. ONE model: give it the game's lit fire piece (any Fireplace prefab)
+    ///             as a plain part; only its fire (flame, light, warmth, crackle) is on while it's lit (BlockSet.FlamesOf). Never an
+    ///             unlit model in one state and a lit one in the other: SwapCheck reports any mechanism that swaps models in one spot.
     ///   pushblock {"cell": 2, "rows": ["#..#", "S...", "  .."]}: the grid seen from above (+z up, the mechanism's At its centre): '.' floor,
     ///             '#' wall, 'S' where it starts, ' ' floor for players only (the block can't go there). The grid is all the room the
     ///             block and the player pushing it have: off it is wall. A player walking into it pushes it one cell. States: the floor
@@ -87,8 +91,12 @@ namespace Dungeons
             {
                 List<JObject> list = parts.OfType<JObject>().ToList();
                 for (int i = 0; i < list.Count && i < mech.Parts.Count; i++)
+                {
                     if (list[i]["show"] is JArray show) mech.Parts[i].Show = show.Where(Num).Select(x => I(x, 0)).ToList();
+                    if (list[i]["lit"] is JArray lit) mech.Parts[i].Lit = lit.Where(Num).Select(x => I(x, 0)).ToList();
+                }
             }
+            SwapCheck(mech, problems, $"{where} mechanism {mech.Id}");
             string group = S(m["group"]);
             if (!IsBlock(mech))
             {
@@ -167,6 +175,23 @@ namespace Dungeons
                 problems.Add($"{me}: a {mech.Kind} doesn't cycle (\"cycle\" is left out; a trap has \"every\")");
                 mech.Cycle = 0f;
             }
+        }
+
+        /// <summary>A mechanism whose states swap one model for another in the same spot (two parts shown in states that never meet, less
+        /// than a metre apart): the player sees the model jump or change as it changes state. A block keeps one model and shows only what
+        /// it adds ("show": a glow, a flame on top); a brazier's flames come from its own fire, lit only while it's lit.</summary>
+        private static void SwapCheck(MechDef mech, List<string> problems, string me)
+        {
+            var shown = mech.Parts.Where(p => p.Show != null && p.Show.Count > 0).ToList();
+            for (int i = 0; i < shown.Count; i++)
+                for (int j = i + 1; j < shown.Count; j++)
+                {
+                    PartDef a = shown[i], b = shown[j];
+                    if (a.Show.Intersect(b.Show).Any() || (a.At - b.At).magnitude >= 1f) continue;
+                    problems.Add($"{me}: its parts {a.Prefab} (shown in {string.Join(",", a.Show)}) and {b.Prefab} (shown in {string.Join(",", b.Show)}) swap " +
+                                 "one model for another in the same spot: keep one model, and \"show\" only what a state adds");
+                    return;
+                }
         }
 
         /// <summary>At least n states: the poses padded with the last one (or where it stands), so a block with no moving parts has them.</summary>

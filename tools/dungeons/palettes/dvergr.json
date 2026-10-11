@@ -1,0 +1,4989 @@
+{
+ "theme": "dvergr",
+ "about": "A Dvergr hold, the contrast to the giants: human-scale black marble halls held up by Yggdrasil timber, lanterns on hooks and chains, crates and tools of a mine; warm orange light against blue mist light. Rooms on a 2 m grid, doorways 2-4 m.",
+ "made_by": "tools/dungeons/palette_tool.py (curation in CURATED there; everything else read from the game's files)",
+ "fields": {
+  "role": "what it's for; structural roles (arch, block, ceiling, door, floor, gate, pillar, platform, rail, ramp, stair, wall) must be solid",
+  "mount": "ground: stands on a floor (prop_check.py); hang: needs something right above its origin or a chain on its top; wall: against a wall; span: rests on two supports; structure: what others stand on; free: anywhere",
+  "scale": "[min, max] that looks right and stays solid; stairs keep 1 (step height)",
+  "tier": "the land it looks like it belongs to (1 Meadows .. 8 Deep North): a look hint, not gameplay (enemies and loot follow the entrance's biome)",
+  "size/min/max/origin": "its shape's box in its own frame (m); origin: where its origin sits on that box (foot, top, centre...)",
+  "solid": "a character bumps into it in our rooms (the game's collision matrix; items fixed by BuildSolid.cs)",
+  "lights": "range, intensity, colour; lit: shines once stripped (a Fireplace's burning objects are switched on); lod: fades with distance",
+  "gives": "what the game would make it give or do: stripped as scenery; a networked prefab (networked) may be a Saved part instead",
+  "height": "its height at scale 1 (m)",
+  "climb": "ledges: its footholds (faces a player can stand on, no steeper than 38 degrees, with at least 0.1 m2 of them seen from above in a 0.2 m height band) as height ranges above its foot at scale 1, upright as the prefab stands; top: the highest reachable from the floor, each within a jump (1.6 m: gravity 20, jump force 8, Jump skill 0) of the last; top_skilled: the same with Jump skill 100 (3.14 m); 0: none. Scale the ledges by the part's y scale; a part turned off upright exposes other faces (treat a smooth bar or column as only its top end)",
+  "upright": "flat (thin along y: a floor tile, stand it up for a wall), upright (thin along x or z: a wall piece, use as it is), block",
+  "safe": "fine as stripped scenery; saved_only: works only as a Saved part (chests, pickables, spawners)",
+  "by_role": "{role: [default, variants...]}: the roles below without their notes",
+  "sets": "the dressing sets it suits (giant: ossuary, ruin, forge, archive, engine, armoury; Dvergr: store, workshop, tavern, barracks)",
+  "max_span": "a panel's longest side (m) before its stretched texture smears",
+  "roles": "the same pieces by a theme recipe's roles (first = default, others = variants), with how each role's pieces are placed",
+  "render": "a picture in the mesh cache (C:\\Users\\DHack\\AppData\\Local\\Temp\\quaddungeon_meshes); the theme's contact sheet is palettes/dvergr_sheet.png there"
+ },
+ "pieces": [
+  {
+   "prefab": "blackmarble_floor",
+   "role": "floor",
+   "look": "black marble floor 2 x 2",
+   "mount": "structure",
+   "scale": [
+    0.5,
+    2
+   ],
+   "tier": 6,
+   "notes": "",
+   "exists": true,
+   "size": [
+    2.0,
+    1.0,
+    2.0
+   ],
+   "min": [
+    -1.0,
+    -0.5,
+    -1.0
+   ],
+   "max": [
+    1.0,
+    0.5,
+    1.0
+   ],
+   "origin": "centre",
+   "hollow": false,
+   "kinds": [
+    "Piece",
+    "WearNTear",
+    "ZNetView"
+   ],
+   "colliders": {
+    "piece": 1
+   },
+   "solid": true,
+   "solid_note": "",
+   "lights": [],
+   "fire": false,
+   "particles": 0,
+   "item": false,
+   "networked": true,
+   "gives": [],
+   "physics": false,
+   "height": 1.0,
+   "upright": "block",
+   "saved_only": false,
+   "safe": true,
+   "climb": {
+    "ledges": [
+     [
+      1.0,
+      1.2
+     ]
+    ],
+    "top": 1.2,
+    "top_skilled": 1.2
+   },
+   "render": "palettes/blackmarble_floor.png"
+  },
+  {
+   "prefab": "blackmarble_floor_large",
+   "role": "floor",
+   "look": "black marble floor 8 x 8",
+   "mount": "structure",
+   "scale": [
+    0.5,
+    2
+   ],
+   "tier": 6,
+   "notes": "",
+   "exists": true,
+   "size": [
+    8.0,
+    2.0,
+    8.0
+   ],
+   "min": [
+    -4.0,
+    -1.0,
+    -4.0
+   ],
+   "max": [
+    4.0,
+    1.0,
+    4.0
+   ],
+   "origin": "centre",
+   "hollow": false,
+   "max_span": 10.0,
+   "kinds": [
+    "Piece",
+    "WearNTear",
+    "ZNetView"
+   ],
+   "colliders": {
+    "piece": 1
+   },
+   "solid": true,
+   "solid_note": "",
+   "lights": [],
+   "fire": false,
+   "particles": 0,
+   "item": false,
+   "networked": true,
+   "gives": [],
+   "physics": false,
+   "height": 2.0,
+   "upright": "flat",
+   "saved_only": false,
+   "safe": true,
+   "climb": {
+    "ledges": [
+     [
+      2.0,
+      2.2
+     ]
+    ],
+    "top": 0.0,
+    "top_skilled": 2.2
+   },
+   "render": "palettes/blackmarble_floor_large.png"
+  },
+  {
+   "prefab": "blackmarble_tile_floor_2x2",
+   "role": "floor",
+   "look": "tiled black marble floor 2 x 2",
+   "mount": "structure",
+   "scale": [
+    0.5,
+    2
+   ],
+   "tier": 6,
+   "notes": "",
+   "exists": true,
+   "size": [
+    2.09,
+    0.19,
+    2.06
+   ],
+   "min": [
+    -1.05,
+    0.0,
+    -1.01
+   ],
+   "max": [
+    1.05,
+    0.2,
+    1.04
+   ],
+   "origin": "foot",
+   "hollow": false,
+   "max_span": 4.0,
+   "kinds": [
+    "Piece",
+    "WearNTear",
+    "ZNetView"
+   ],
+   "colliders": {
+    "piece": 1
+   },
+   "solid": true,
+   "solid_note": "",
+   "lights": [],
+   "fire": false,
+   "particles": 0,
+   "item": false,
+   "networked": true,
+   "gives": [],
+   "physics": false,
+   "height": 0.19,
+   "upright": "flat",
+   "saved_only": false,
+   "safe": true,
+   "climb": {
+    "ledges": [
+     [
+      0.0,
+      0.2
+     ]
+    ],
+    "top": 0.0,
+    "top_skilled": 0.0
+   },
+   "render": "palettes/blackmarble_tile_floor_2x2.png"
+  },
+  {
+   "prefab": "blackmarble_tile_wall_2x2",
+   "role": "wall",
+   "look": "tiled black marble wall 2 x 2",
+   "mount": "structure",
+   "scale": [
+    0.5,
+    2
+   ],
+   "tier": 6,
+   "notes": "",
+   "exists": true,
+   "size": [
+    2.09,
+    2.06,
+    0.19
+   ],
+   "min": [
+    -1.05,
+    -0.07,
+    0.01
+   ],
+   "max": [
+    1.05,
+    1.99,
+    0.2
+   ],
+   "origin": "foot",
+   "hollow": false,
+   "max_span": 4.0,
+   "kinds": [
+    "Piece",
+    "WearNTear",
+    "ZNetView"
+   ],
+   "colliders": {
+    "piece": 1
+   },
+   "solid": true,
+   "solid_note": "",
+   "lights": [],
+   "fire": false,
+   "particles": 0,
+   "item": false,
+   "networked": true,
+   "gives": [],
+   "physics": false,
+   "height": 2.06,
+   "upright": "upright",
+   "saved_only": false,
+   "safe": true,
+   "climb": {
+    "ledges": [
+     [
+      2.0,
+      2.2
+     ]
+    ],
+    "top": 0.0,
+    "top_skilled": 2.2
+   },
+   "render": "palettes/blackmarble_tile_wall_2x2.png"
+  },
+  {
+   "prefab": "blackmarble_tile_wall_2x4",
+   "role": "wall",
+   "look": "tiled black marble wall 2 x 4",
+   "mount": "structure",
+   "scale": [
+    0.5,
+    2
+   ],
+   "tier": 6,
+   "notes": "",
+   "exists": true,
+   "size": [
+    2.09,
+    4.12,
+    0.19
+   ],
+   "min": [
+    -1.05,
+    -0.08,
+    0.01
+   ],
+   "max": [
+    1.05,
+    4.04,
+    0.2
+   ],
+   "origin": "foot",
+   "hollow": false,
+   "max_span": 4.0,
+   "kinds": [
+    "Piece",
+    "WearNTear",
+    "ZNetView"
+   ],
+   "colliders": {
+    "piece": 1
+   },
+   "solid": true,
+   "solid_note": "",
+   "lights": [],
+   "fire": false,
+   "particles": 0,
+   "item": false,
+   "networked": true,
+   "gives": [],
+   "physics": false,
+   "height": 4.12,
+   "upright": "upright",
+   "saved_only": false,
+   "safe": true,
+   "climb": {
+    "ledges": [
+     [
+      4.0,
+      4.2
+     ]
+    ],
+    "top": 0.0,
+    "top_skilled": 0.0
+   },
+   "render": "palettes/blackmarble_tile_wall_2x4.png"
+  },
+  {
+   "prefab": "blackmarble_2x2x2",
+   "role": "block",
+   "look": "black marble block 2 x 2 x 2",
+   "mount": "structure",
+   "scale": [
+    0.5,
+    2
+   ],
+   "tier": 6,
+   "notes": "",
+   "exists": true,
+   "size": [
+    2.0,
+    2.0,
+    2.01
+   ],
+   "min": [
+    -1.0,
+    -1.0,
+    -1.0
+   ],
+   "max": [
+    1.0,
+    1.0,
+    1.01
+   ],
+   "origin": "centre",
+   "hollow": false,
+   "kinds": [
+    "Piece",
+    "WearNTear",
+    "ZNetView"
+   ],
+   "colliders": {
+    "piece": 1
+   },
+   "solid": true,
+   "solid_note": "",
+   "lights": [],
+   "fire": false,
+   "particles": 0,
+   "item": false,
+   "networked": true,
+   "gives": [],
+   "physics": false,
+   "height": 2.0,
+   "upright": "block",
+   "saved_only": false,
+   "safe": true,
+   "climb": {
+    "ledges": [
+     [
+      2.0,
+      2.2
+     ]
+    ],
+    "top": 0.0,
+    "top_skilled": 2.2
+   },
+   "render": "palettes/blackmarble_2x2x2.png"
+  },
+  {
+   "prefab": "blackmarble_2x2x1",
+   "role": "block",
+   "look": "black marble block 2 x 2 x 1",
+   "mount": "structure",
+   "scale": [
+    0.5,
+    2
+   ],
+   "tier": 6,
+   "notes": "TROUBLE: stretched, its bevels become spikes: don't use it as a stretched wall (blackmarble_tile_wall_2x4 instead).",
+   "exists": true,
+   "size": [
+    2.0,
+    2.0,
+    1.0
+   ],
+   "min": [
+    -1.0,
+    -1.0,
+    -0.5
+   ],
+   "max": [
+    1.0,
+    1.0,
+    0.5
+   ],
+   "origin": "centre",
+   "hollow": false,
+   "kinds": [
+    "Piece",
+    "WearNTear",
+    "ZNetView"
+   ],
+   "colliders": {
+    "piece": 1
+   },
+   "solid": true,
+   "solid_note": "",
+   "lights": [],
+   "fire": false,
+   "particles": 0,
+   "item": false,
+   "networked": true,
+   "gives": [],
+   "physics": false,
+   "height": 2.0,
+   "upright": "block",
+   "saved_only": false,
+   "safe": true,
+   "climb": {
+    "ledges": [
+     [
+      2.0,
+      2.2
+     ]
+    ],
+    "top": 0.0,
+    "top_skilled": 2.2
+   },
+   "render": "palettes/blackmarble_2x2x1.png"
+  },
+  {
+   "prefab": "blackmarble_2x1x1",
+   "role": "block",
+   "look": "black marble block 2 x 1 x 1: trim",
+   "mount": "structure",
+   "scale": [
+    0.5,
+    2
+   ],
+   "tier": 6,
+   "notes": "",
+   "exists": true,
+   "size": [
+    2.0,
+    1.0,
+    1.0
+   ],
+   "min": [
+    -1.0,
+    -0.5,
+    -0.5
+   ],
+   "max": [
+    1.0,
+    0.5,
+    0.5
+   ],
+   "origin": "centre",
+   "hollow": false,
+   "kinds": [
+    "Piece",
+    "WearNTear",
+    "ZNetView"
+   ],
+   "colliders": {
+    "piece": 1
+   },
+   "solid": true,
+   "solid_note": "",
+   "lights": [],
+   "fire": false,
+   "particles": 0,
+   "item": false,
+   "networked": true,
+   "gives": [],
+   "physics": false,
+   "height": 1.0,
+   "upright": "block",
+   "saved_only": false,
+   "safe": true,
+   "climb": {
+    "ledges": [
+     [
+      1.0,
+      1.2
+     ]
+    ],
+    "top": 1.2,
+    "top_skilled": 1.2
+   },
+   "render": "palettes/blackmarble_2x1x1.png"
+  },
+  {
+   "prefab": "blackmarble_1x1",
+   "role": "block",
+   "look": "black marble block 1 x 1",
+   "mount": "structure",
+   "scale": [
+    0.5,
+    2
+   ],
+   "tier": 6,
+   "notes": "",
+   "exists": true,
+   "size": [
+    1.0,
+    1.0,
+    1.0
+   ],
+   "min": [
+    -0.5,
+    -0.5,
+    -0.5
+   ],
+   "max": [
+    0.5,
+    0.5,
+    0.5
+   ],
+   "origin": "centre",
+   "hollow": false,
+   "kinds": [
+    "Piece",
+    "WearNTear",
+    "ZNetView"
+   ],
+   "colliders": {
+    "piece": 1
+   },
+   "solid": true,
+   "solid_note": "",
+   "lights": [],
+   "fire": false,
+   "particles": 0,
+   "item": false,
+   "networked": true,
+   "gives": [],
+   "physics": false,
+   "height": 1.0,
+   "upright": "block",
+   "saved_only": false,
+   "safe": true,
+   "climb": {
+    "ledges": [
+     [
+      1.0,
+      1.2
+     ]
+    ],
+    "top": 1.2,
+    "top_skilled": 1.2
+   },
+   "render": "palettes/blackmarble_1x1.png"
+  },
+  {
+   "prefab": "blackmarble_column_1",
+   "role": "pillar",
+   "look": "black marble column, short",
+   "mount": "ground",
+   "scale": [
+    0.5,
+    2
+   ],
+   "tier": 6,
+   "notes": "climbable: a player can stand 1.2 m above its foot (at scale 1; 1.2 m with Jump skill 100), so it's a stepping stone to a level up to about 2.8 m above its foot (4.3 m with Jump 100)",
+   "exists": true,
+   "size": [
+    1.0,
+    1.0,
+    1.0
+   ],
+   "min": [
+    -0.5,
+    -0.5,
+    -0.5
+   ],
+   "max": [
+    0.5,
+    0.5,
+    0.5
+   ],
+   "origin": "centre",
+   "hollow": false,
+   "kinds": [
+    "Piece",
+    "WearNTear",
+    "ZNetView"
+   ],
+   "colliders": {
+    "piece": 1
+   },
+   "solid": true,
+   "solid_note": "",
+   "lights": [],
+   "fire": false,
+   "particles": 0,
+   "item": false,
+   "networked": true,
+   "gives": [],
+   "physics": false,
+   "height": 1.0,
+   "upright": "block",
+   "saved_only": false,
+   "safe": true,
+   "climb": {
+    "ledges": [
+     [
+      0.0,
+      0.2
+     ],
+     [
+      1.0,
+      1.2
+     ]
+    ],
+    "top": 1.2,
+    "top_skilled": 1.2
+   },
+   "render": "palettes/blackmarble_column_1.png"
+  },
+  {
+   "prefab": "blackmarble_column_2",
+   "role": "pillar",
+   "look": "black marble column, medium",
+   "mount": "ground",
+   "scale": [
+    0.5,
+    2
+   ],
+   "tier": 6,
+   "notes": "climbable: a player can stand 1.2 m above its foot (at scale 1; 1.2 m with Jump skill 100), so it's a stepping stone to a level up to about 2.8 m above its foot (4.3 m with Jump 100)",
+   "exists": true,
+   "size": [
+    2.0,
+    1.0,
+    2.0
+   ],
+   "min": [
+    -1.0,
+    -0.5,
+    -1.0
+   ],
+   "max": [
+    1.0,
+    0.5,
+    1.0
+   ],
+   "origin": "centre",
+   "hollow": false,
+   "kinds": [
+    "Piece",
+    "WearNTear",
+    "ZNetView"
+   ],
+   "colliders": {
+    "piece": 1
+   },
+   "solid": true,
+   "solid_note": "",
+   "lights": [],
+   "fire": false,
+   "particles": 0,
+   "item": false,
+   "networked": true,
+   "gives": [],
+   "physics": false,
+   "height": 1.0,
+   "upright": "block",
+   "saved_only": false,
+   "safe": true,
+   "climb": {
+    "ledges": [
+     [
+      0.0,
+      0.2
+     ],
+     [
+      1.0,
+      1.2
+     ]
+    ],
+    "top": 1.2,
+    "top_skilled": 1.2
+   },
+   "render": "palettes/blackmarble_column_2.png"
+  },
+  {
+   "prefab": "blackmarble_column_3",
+   "role": "pillar",
+   "look": "black marble column 8 m",
+   "mount": "ground",
+   "scale": [
+    0.5,
+    2
+   ],
+   "tier": 6,
+   "notes": "",
+   "exists": true,
+   "size": [
+    2.01,
+    8.0,
+    2.01
+   ],
+   "min": [
+    -1.0,
+    -4.0,
+    -1.0
+   ],
+   "max": [
+    1.01,
+    4.0,
+    1.01
+   ],
+   "origin": "centre",
+   "hollow": false,
+   "kinds": [
+    "Piece",
+    "WearNTear",
+    "ZNetView"
+   ],
+   "colliders": {
+    "piece": 1
+   },
+   "solid": true,
+   "solid_note": "",
+   "lights": [],
+   "fire": false,
+   "particles": 0,
+   "item": false,
+   "networked": true,
+   "gives": [],
+   "physics": false,
+   "height": 8.0,
+   "upright": "upright",
+   "saved_only": false,
+   "safe": true,
+   "climb": {
+    "ledges": [
+     [
+      8.0,
+      8.2
+     ]
+    ],
+    "top": 0.0,
+    "top_skilled": 0.0
+   },
+   "render": "palettes/blackmarble_column_3.png"
+  },
+  {
+   "prefab": "blackmarble_base_1",
+   "role": "pillar",
+   "look": "column base",
+   "mount": "ground",
+   "scale": [
+    0.5,
+    2
+   ],
+   "tier": 6,
+   "notes": "",
+   "exists": true,
+   "size": [
+    2.02,
+    2.01,
+    1.02
+   ],
+   "min": [
+    -1.02,
+    -1.0,
+    -0.51
+   ],
+   "max": [
+    1.0,
+    1.01,
+    0.51
+   ],
+   "origin": "centre",
+   "hollow": false,
+   "kinds": [
+    "Piece",
+    "WearNTear",
+    "ZNetView"
+   ],
+   "colliders": {
+    "piece": 1
+   },
+   "solid": true,
+   "solid_note": "",
+   "lights": [],
+   "fire": false,
+   "particles": 0,
+   "item": false,
+   "networked": true,
+   "gives": [],
+   "physics": false,
+   "height": 2.01,
+   "upright": "block",
+   "saved_only": false,
+   "safe": true,
+   "climb": {
+    "ledges": [
+     [
+      0.0,
+      0.2
+     ],
+     [
+      2.0,
+      2.2
+     ]
+    ],
+    "top": 0.0,
+    "top_skilled": 2.2
+   },
+   "render": "palettes/blackmarble_base_1.png"
+  },
+  {
+   "prefab": "blackmarble_tip",
+   "role": "pillar",
+   "look": "column capital",
+   "mount": "ground",
+   "scale": [
+    0.5,
+    2
+   ],
+   "tier": 6,
+   "notes": "",
+   "exists": true,
+   "size": [
+    1.0,
+    2.02,
+    1.0
+   ],
+   "min": [
+    -0.5,
+    -1.02,
+    -0.5
+   ],
+   "max": [
+    0.5,
+    1.0,
+    0.5
+   ],
+   "origin": "centre",
+   "hollow": false,
+   "kinds": [
+    "Piece",
+    "WearNTear",
+    "ZNetView"
+   ],
+   "colliders": {
+    "piece": 1
+   },
+   "solid": true,
+   "solid_note": "",
+   "lights": [],
+   "fire": false,
+   "particles": 0,
+   "item": false,
+   "networked": true,
+   "gives": [],
+   "physics": false,
+   "height": 2.02,
+   "upright": "block",
+   "saved_only": false,
+   "safe": true,
+   "climb": {
+    "ledges": [
+     [
+      0.0,
+      0.2
+     ]
+    ],
+    "top": 0.0,
+    "top_skilled": 0.0
+   },
+   "render": "palettes/blackmarble_tip.png"
+  },
+  {
+   "prefab": "blackmarble_arch",
+   "role": "arch",
+   "look": "black marble arch",
+   "mount": "structure",
+   "scale": [
+    0.5,
+    2
+   ],
+   "tier": 6,
+   "notes": "",
+   "exists": true,
+   "size": [
+    1.99,
+    2.0,
+    1.0
+   ],
+   "min": [
+    -1.0,
+    -1.0,
+    -0.5
+   ],
+   "max": [
+    1.0,
+    1.0,
+    0.5
+   ],
+   "origin": "centre",
+   "hollow": false,
+   "kinds": [
+    "Piece",
+    "WearNTear",
+    "ZNetView"
+   ],
+   "colliders": {
+    "piece": 2
+   },
+   "solid": true,
+   "solid_note": "",
+   "lights": [],
+   "fire": false,
+   "particles": 0,
+   "item": false,
+   "networked": true,
+   "gives": [],
+   "physics": false,
+   "height": 2.0,
+   "upright": "block",
+   "saved_only": false,
+   "safe": true,
+   "climb": {
+    "ledges": [
+     [
+      0.8,
+      1.0
+     ],
+     [
+      1.8,
+      2.0
+     ]
+    ],
+    "top": 2.0,
+    "top_skilled": 2.0
+   },
+   "render": "palettes/blackmarble_arch.png"
+  },
+  {
+   "prefab": "blackmarble_stair",
+   "role": "stair",
+   "look": "black marble stair",
+   "mount": "structure",
+   "scale": [
+    1,
+    1
+   ],
+   "tier": 6,
+   "notes": "scale changes the step height: keep 1",
+   "exists": true,
+   "size": [
+    2.0,
+    1.0,
+    2.0
+   ],
+   "min": [
+    -1.0,
+    0.0,
+    -1.0
+   ],
+   "max": [
+    1.0,
+    1.0,
+    1.0
+   ],
+   "origin": "foot",
+   "hollow": false,
+   "kinds": [
+    "Piece",
+    "WearNTear",
+    "ZNetView"
+   ],
+   "colliders": {
+    "piece": 1
+   },
+   "solid": true,
+   "solid_note": "",
+   "lights": [],
+   "fire": false,
+   "particles": 0,
+   "item": false,
+   "networked": true,
+   "gives": [],
+   "physics": false,
+   "height": 1.0,
+   "upright": "block",
+   "saved_only": false,
+   "safe": true,
+   "climb": {
+    "ledges": [
+     [
+      0.0,
+      1.2
+     ]
+    ],
+    "top": 1.2,
+    "top_skilled": 1.2
+   },
+   "render": "palettes/blackmarble_stair.png"
+  },
+  {
+   "prefab": "blackmarble_stair_corner",
+   "role": "stair",
+   "look": "black marble corner stair",
+   "mount": "structure",
+   "scale": [
+    1,
+    1
+   ],
+   "tier": 6,
+   "notes": "keep 1",
+   "exists": true,
+   "size": [
+    2.0,
+    1.01,
+    2.0
+   ],
+   "min": [
+    -1.0,
+    -0.0,
+    -1.0
+   ],
+   "max": [
+    1.0,
+    1.0,
+    1.0
+   ],
+   "origin": "foot",
+   "hollow": false,
+   "kinds": [
+    "Piece",
+    "WearNTear",
+    "ZNetView"
+   ],
+   "colliders": {
+    "piece": 1
+   },
+   "solid": true,
+   "solid_note": "",
+   "lights": [],
+   "fire": false,
+   "particles": 0,
+   "item": false,
+   "networked": true,
+   "gives": [],
+   "physics": false,
+   "height": 1.01,
+   "upright": "block",
+   "saved_only": false,
+   "safe": true,
+   "climb": {
+    "ledges": [
+     [
+      0.0,
+      1.0
+     ]
+    ],
+    "top": 1.0,
+    "top_skilled": 1.0
+   },
+   "render": "palettes/blackmarble_stair_corner.png"
+  },
+  {
+   "prefab": "blackmarble_slope_1x2",
+   "role": "ramp",
+   "look": "black marble slope",
+   "mount": "structure",
+   "scale": [
+    0.5,
+    2
+   ],
+   "tier": 6,
+   "notes": "",
+   "exists": true,
+   "size": [
+    1.0,
+    2.0,
+    1.0
+   ],
+   "min": [
+    -0.5,
+    -1.0,
+    -0.5
+   ],
+   "max": [
+    0.5,
+    1.0,
+    0.5
+   ],
+   "origin": "centre",
+   "hollow": false,
+   "kinds": [
+    "Piece",
+    "WearNTear",
+    "ZNetView"
+   ],
+   "colliders": {
+    "piece": 1
+   },
+   "solid": true,
+   "solid_note": "",
+   "lights": [],
+   "fire": false,
+   "particles": 0,
+   "item": false,
+   "networked": true,
+   "gives": [],
+   "physics": false,
+   "height": 2.0,
+   "upright": "block",
+   "saved_only": false,
+   "safe": true,
+   "climb": {
+    "ledges": [
+     [
+      0.0,
+      0.2
+     ]
+    ],
+    "top": 0.0,
+    "top_skilled": 0.0
+   },
+   "render": "palettes/blackmarble_slope_1x2.png"
+  },
+  {
+   "prefab": "blackmarble_out_1",
+   "role": "decor",
+   "look": "carved black marble edge",
+   "mount": "structure",
+   "scale": [
+    0.5,
+    2
+   ],
+   "tier": 6,
+   "notes": "",
+   "exists": true,
+   "size": [
+    2.02,
+    2.01,
+    1.02
+   ],
+   "min": [
+    -1.02,
+    -1.01,
+    -0.51
+   ],
+   "max": [
+    1.0,
+    1.0,
+    0.51
+   ],
+   "origin": "centre",
+   "hollow": false,
+   "kinds": [
+    "Piece",
+    "WearNTear",
+    "ZNetView"
+   ],
+   "colliders": {
+    "piece": 1
+   },
+   "solid": true,
+   "solid_note": "",
+   "lights": [],
+   "fire": false,
+   "particles": 0,
+   "item": false,
+   "networked": true,
+   "gives": [],
+   "physics": false,
+   "height": 2.01,
+   "upright": "block",
+   "saved_only": false,
+   "safe": true,
+   "climb": {
+    "ledges": [
+     [
+      0.0,
+      0.2
+     ],
+     [
+      2.0,
+      2.2
+     ]
+    ],
+    "top": 0.0,
+    "top_skilled": 2.2
+   },
+   "render": "palettes/blackmarble_out_1.png"
+  },
+  {
+   "prefab": "blackmarble_head01",
+   "role": "decor",
+   "look": "a carved Dvergr head",
+   "mount": "wall",
+   "scale": [
+    0.5,
+    2
+   ],
+   "tier": 6,
+   "notes": "climbable: a player can stand 1.2 m above its foot (at scale 1; 1.2 m with Jump skill 100), so it's a stepping stone to a level up to about 2.8 m above its foot (4.3 m with Jump 100)",
+   "exists": true,
+   "size": [
+    1.0,
+    1.0,
+    1.0
+   ],
+   "min": [
+    -0.5,
+    -0.5,
+    -0.5
+   ],
+   "max": [
+    0.5,
+    0.5,
+    0.51
+   ],
+   "origin": "centre",
+   "hollow": false,
+   "kinds": [
+    "Piece",
+    "WearNTear",
+    "ZNetView"
+   ],
+   "colliders": {
+    "piece": 1
+   },
+   "solid": true,
+   "solid_note": "",
+   "lights": [],
+   "fire": false,
+   "particles": 0,
+   "item": false,
+   "networked": true,
+   "gives": [],
+   "physics": false,
+   "height": 1.0,
+   "upright": "block",
+   "saved_only": false,
+   "safe": true,
+   "climb": {
+    "ledges": [
+     [
+      1.0,
+      1.2
+     ]
+    ],
+    "top": 1.2,
+    "top_skilled": 1.2
+   },
+   "render": "palettes/blackmarble_head01.png"
+  },
+  {
+   "prefab": "blackmarble_altar_crystal",
+   "role": "light",
+   "look": "a cyan crystal on a stand (range 3)",
+   "mount": "ground",
+   "scale": [
+    0.5,
+    2
+   ],
+   "tier": 6,
+   "notes": "its light range, fade distance and fire grow with its scale (BuildScale.cs); as scenery its Destructible is stripped: it gives nothing; climbable: a player can stand 1.8 m above its foot (at scale 1; 1.8 m with Jump skill 100), so it's a stepping stone to a level up to about 3.4 m above its foot (4.9 m with Jump 100)",
+   "exists": true,
+   "size": [
+    1.23,
+    1.67,
+    1.23
+   ],
+   "min": [
+    -0.62,
+    -0.9,
+    -0.62
+   ],
+   "max": [
+    0.62,
+    0.76,
+    0.62
+   ],
+   "origin": "centre",
+   "hollow": false,
+   "kinds": [
+    "Destructible",
+    "LightLod",
+    "ZNetView"
+   ],
+   "colliders": {
+    "Default": 2
+   },
+   "solid": true,
+   "solid_note": "",
+   "lights": [
+    {
+     "range": 3.0,
+     "intensity": 3.0,
+     "colour": "#31eafa",
+     "lit": true,
+     "lod": true
+    }
+   ],
+   "fire": false,
+   "particles": 0,
+   "item": false,
+   "networked": true,
+   "gives": [
+    "Destructible"
+   ],
+   "physics": false,
+   "height": 1.67,
+   "upright": "block",
+   "saved_only": false,
+   "safe": true,
+   "climb": {
+    "ledges": [
+     [
+      0.0,
+      0.0
+     ],
+     [
+      0.6,
+      1.0
+     ],
+     [
+      1.6,
+      1.8
+     ]
+    ],
+    "top": 1.8,
+    "top_skilled": 1.8
+   },
+   "render": "palettes/blackmarble_altar_crystal.png"
+  },
+  {
+   "prefab": "dvergrtown_arch",
+   "role": "arch",
+   "look": "a Dvergr stone and timber arch",
+   "mount": "structure",
+   "scale": [
+    0.5,
+    2
+   ],
+   "tier": 6,
+   "notes": "as scenery its Destructible is stripped: it gives nothing",
+   "exists": true,
+   "size": [
+    2.19,
+    2.06,
+    1.06
+   ],
+   "min": [
+    -1.07,
+    -1.05,
+    -0.5
+   ],
+   "max": [
+    1.12,
+    1.02,
+    0.56
+   ],
+   "origin": "centre",
+   "hollow": false,
+   "kinds": [
+    "Destructible",
+    "ZNetView"
+   ],
+   "colliders": {
+    "Default": 2
+   },
+   "solid": true,
+   "solid_note": "",
+   "lights": [],
+   "fire": false,
+   "particles": 0,
+   "item": false,
+   "networked": true,
+   "gives": [
+    "Destructible"
+   ],
+   "physics": false,
+   "height": 2.06,
+   "upright": "block",
+   "saved_only": false,
+   "safe": true,
+   "climb": {
+    "ledges": [
+     [
+      1.0,
+      1.2
+     ],
+     [
+      2.0,
+      2.2
+     ]
+    ],
+    "top": 2.2,
+    "top_skilled": 2.2
+   },
+   "render": "palettes/dvergrtown_arch.png"
+  },
+  {
+   "prefab": "dvergrtown_wood_beam",
+   "role": "beam",
+   "look": "a Yggdrasil timber beam",
+   "mount": "span",
+   "scale": [
+    0.5,
+    2
+   ],
+   "tier": 6,
+   "notes": "as scenery its Destructible, DropOnDestroyed is stripped: it gives nothing; climbable: a player can stand 1.0 m above its foot (at scale 1; 1.0 m with Jump skill 100), so it's a stepping stone to a level up to about 2.6 m above its foot (4.1 m with Jump 100)",
+   "exists": true,
+   "size": [
+    6.11,
+    0.92,
+    0.92
+   ],
+   "min": [
+    -3.05,
+    -0.46,
+    -0.46
+   ],
+   "max": [
+    3.05,
+    0.46,
+    0.46
+   ],
+   "origin": "centre",
+   "hollow": false,
+   "kinds": [
+    "Destructible",
+    "DropOnDestroyed",
+    "ZNetView"
+   ],
+   "colliders": {
+    "Default": 1
+   },
+   "solid": true,
+   "solid_note": "",
+   "lights": [],
+   "fire": false,
+   "particles": 0,
+   "item": false,
+   "networked": true,
+   "gives": [
+    "Destructible",
+    "DropOnDestroyed"
+   ],
+   "physics": false,
+   "height": 0.92,
+   "upright": "flat",
+   "saved_only": false,
+   "safe": true,
+   "climb": {
+    "ledges": [
+     [
+      0.8,
+      1.0
+     ]
+    ],
+    "top": 1.0,
+    "top_skilled": 1.0
+   },
+   "render": "palettes/dvergrtown_wood_beam.png"
+  },
+  {
+   "prefab": "dvergrtown_wood_pole",
+   "role": "pillar",
+   "look": "a Yggdrasil timber post",
+   "mount": "ground",
+   "scale": [
+    0.5,
+    2
+   ],
+   "tier": 6,
+   "notes": "as scenery its Destructible, DropOnDestroyed is stripped: it gives nothing",
+   "exists": true,
+   "size": [
+    1.36,
+    4.0,
+    1.34
+   ],
+   "min": [
+    -0.68,
+    -2.0,
+    -0.67
+   ],
+   "max": [
+    0.68,
+    2.0,
+    0.67
+   ],
+   "origin": "centre",
+   "hollow": false,
+   "kinds": [
+    "Destructible",
+    "DropOnDestroyed",
+    "ZNetView"
+   ],
+   "colliders": {
+    "Default": 1
+   },
+   "solid": true,
+   "solid_note": "",
+   "lights": [],
+   "fire": false,
+   "particles": 0,
+   "item": false,
+   "networked": true,
+   "gives": [
+    "Destructible",
+    "DropOnDestroyed"
+   ],
+   "physics": false,
+   "height": 4.0,
+   "upright": "upright",
+   "saved_only": false,
+   "safe": true,
+   "climb": {
+    "ledges": [
+     [
+      4.0,
+      4.2
+     ]
+    ],
+    "top": 0.0,
+    "top_skilled": 0.0
+   },
+   "render": "palettes/dvergrtown_wood_pole.png"
+  },
+  {
+   "prefab": "dvergrtown_wood_support",
+   "role": "beam",
+   "look": "a timber prop with braces",
+   "mount": "ground",
+   "scale": [
+    0.5,
+    2
+   ],
+   "tier": 6,
+   "notes": "as scenery its Destructible, DropOnDestroyed is stripped: it gives nothing",
+   "exists": true,
+   "size": [
+    6.11,
+    4.71,
+    1.1
+   ],
+   "min": [
+    -3.05,
+    0.0,
+    -0.55
+   ],
+   "max": [
+    3.05,
+    4.71,
+    0.56
+   ],
+   "origin": "foot",
+   "hollow": false,
+   "kinds": [
+    "Destructible",
+    "DropOnDestroyed",
+    "ZNetView"
+   ],
+   "colliders": {
+    "Default": 3
+   },
+   "solid": true,
+   "solid_note": "",
+   "lights": [],
+   "fire": false,
+   "particles": 0,
+   "item": false,
+   "networked": true,
+   "gives": [
+    "Destructible",
+    "DropOnDestroyed"
+   ],
+   "physics": false,
+   "height": 4.71,
+   "upright": "upright",
+   "saved_only": false,
+   "safe": true,
+   "climb": {
+    "ledges": [
+     [
+      4.0,
+      4.2
+     ],
+     [
+      4.6,
+      4.8
+     ]
+    ],
+    "top": 0.0,
+    "top_skilled": 0.0
+   },
+   "render": "palettes/dvergrtown_wood_support.png"
+  },
+  {
+   "prefab": "dvergrtown_wood_wall01",
+   "role": "wall",
+   "look": "a Dvergr timber wall",
+   "mount": "structure",
+   "scale": [
+    0.5,
+    2
+   ],
+   "tier": 6,
+   "notes": "as scenery its Destructible, DropOnDestroyed is stripped: it gives nothing",
+   "exists": true,
+   "size": [
+    6.71,
+    5.42,
+    0.92
+   ],
+   "min": [
+    -3.36,
+    -2.71,
+    -0.46
+   ],
+   "max": [
+    3.35,
+    2.71,
+    0.46
+   ],
+   "origin": "centre",
+   "hollow": false,
+   "kinds": [
+    "Destructible",
+    "DropOnDestroyed",
+    "ZNetView"
+   ],
+   "colliders": {
+    "Default": 9
+   },
+   "solid": true,
+   "solid_note": "",
+   "lights": [],
+   "fire": false,
+   "particles": 0,
+   "item": false,
+   "networked": true,
+   "gives": [
+    "Destructible",
+    "DropOnDestroyed"
+   ],
+   "physics": false,
+   "height": 5.42,
+   "upright": "upright",
+   "saved_only": false,
+   "safe": true,
+   "climb": {
+    "ledges": [
+     [
+      7.2,
+      7.4
+     ]
+    ],
+    "top": 0.0,
+    "top_skilled": 0.0
+   },
+   "render": "palettes/dvergrtown_wood_wall01.png"
+  },
+  {
+   "prefab": "dvergrtown_wood_stakewall",
+   "role": "decor",
+   "look": "one sharp timber stake (despite the name: not a wall)",
+   "mount": "ground",
+   "scale": [
+    0.5,
+    2
+   ],
+   "tier": 6,
+   "notes": "climbable: a player can stand 1.4 m above its foot (at scale 1; 1.4 m with Jump skill 100), so it's a stepping stone to a level up to about 3.0 m above its foot (4.5 m with Jump 100)",
+   "exists": true,
+   "size": [
+    2.73,
+    2.48,
+    3.81
+   ],
+   "min": [
+    -1.2,
+    -0.8,
+    -1.86
+   ],
+   "max": [
+    1.54,
+    1.68,
+    1.95
+   ],
+   "origin": "inside",
+   "hollow": false,
+   "kinds": [
+    "ZNetView"
+   ],
+   "colliders": {
+    "Default": 5
+   },
+   "solid": true,
+   "solid_note": "",
+   "lights": [],
+   "fire": false,
+   "particles": 0,
+   "item": false,
+   "networked": true,
+   "gives": [],
+   "physics": false,
+   "height": 2.48,
+   "upright": "block",
+   "saved_only": false,
+   "safe": true,
+   "climb": {
+    "ledges": [
+     [
+      1.2,
+      1.4
+     ]
+    ],
+    "top": 1.4,
+    "top_skilled": 1.4
+   },
+   "render": "palettes/dvergrtown_wood_stakewall.png"
+  },
+  {
+   "prefab": "dvergrtown_wood_wall02",
+   "role": "wall",
+   "look": "a Dvergr timber wall, second look",
+   "mount": "structure",
+   "scale": [
+    0.5,
+    2
+   ],
+   "tier": 6,
+   "notes": "as scenery its Destructible, DropOnDestroyed is stripped: it gives nothing",
+   "exists": true,
+   "size": [
+    6.11,
+    4.92,
+    0.92
+   ],
+   "min": [
+    -3.05,
+    -0.46,
+    -0.46
+   ],
+   "max": [
+    3.05,
+    4.46,
+    0.46
+   ],
+   "origin": "inside",
+   "hollow": false,
+   "kinds": [
+    "Destructible",
+    "DropOnDestroyed",
+    "ZNetView"
+   ],
+   "colliders": {
+    "Default": 1
+   },
+   "solid": true,
+   "solid_note": "",
+   "lights": [],
+   "fire": false,
+   "particles": 0,
+   "item": false,
+   "networked": true,
+   "gives": [
+    "Destructible",
+    "DropOnDestroyed"
+   ],
+   "physics": false,
+   "height": 4.92,
+   "upright": "upright",
+   "saved_only": false,
+   "safe": true,
+   "climb": {
+    "ledges": [
+     [
+      5.0,
+      5.2
+     ]
+    ],
+    "top": 0.0,
+    "top_skilled": 0.0
+   },
+   "render": "palettes/dvergrtown_wood_wall02.png"
+  },
+  {
+   "prefab": "dvergrtown_wood_wall03",
+   "role": "wall",
+   "look": "a Dvergr timber wall, third look",
+   "mount": "structure",
+   "scale": [
+    0.5,
+    2
+   ],
+   "tier": 6,
+   "notes": "as scenery its Destructible, DropOnDestroyed is stripped: it gives nothing",
+   "exists": true,
+   "size": [
+    3.91,
+    4.02,
+    0.79
+   ],
+   "min": [
+    -1.96,
+    -0.02,
+    -0.33
+   ],
+   "max": [
+    1.96,
+    4.0,
+    0.46
+   ],
+   "origin": "foot",
+   "hollow": false,
+   "kinds": [
+    "Destructible",
+    "DropOnDestroyed",
+    "ZNetView"
+   ],
+   "colliders": {
+    "Default": 1
+   },
+   "solid": true,
+   "solid_note": "",
+   "lights": [],
+   "fire": false,
+   "particles": 0,
+   "item": false,
+   "networked": true,
+   "gives": [
+    "Destructible",
+    "DropOnDestroyed"
+   ],
+   "physics": false,
+   "height": 4.02,
+   "upright": "upright",
+   "saved_only": false,
+   "safe": true,
+   "climb": {
+    "ledges": [
+     [
+      0.0,
+      0.2
+     ],
+     [
+      0.8,
+      1.0
+     ],
+     [
+      1.8,
+      2.2
+     ],
+     [
+      2.4,
+      2.6
+     ],
+     [
+      3.0,
+      3.2
+     ],
+     [
+      3.8,
+      4.2
+     ]
+    ],
+    "top": 4.2,
+    "top_skilled": 4.2
+   },
+   "render": "palettes/dvergrtown_wood_wall03.png"
+  },
+  {
+   "prefab": "dvergrtown_wood_crane",
+   "role": "machine",
+   "look": "a timber crane arm: looks mechanical",
+   "mount": "ground",
+   "scale": [
+    0.5,
+    2
+   ],
+   "tier": 6,
+   "notes": "as scenery its DropOnDestroyed is stripped: it gives nothing",
+   "exists": true,
+   "size": [
+    6.23,
+    12.46,
+    1.34
+   ],
+   "min": [
+    -0.68,
+    -3.0,
+    -0.67
+   ],
+   "max": [
+    5.55,
+    9.46,
+    0.67
+   ],
+   "origin": "inside",
+   "hollow": false,
+   "sets": [
+    "workshop"
+   ],
+   "kinds": [
+    "DropOnDestroyed",
+    "WearNTear",
+    "ZNetView"
+   ],
+   "colliders": {
+    "piece": 6,
+    "Default": 9
+   },
+   "solid": true,
+   "solid_note": "",
+   "lights": [],
+   "fire": false,
+   "particles": 0,
+   "item": false,
+   "networked": true,
+   "gives": [
+    "DropOnDestroyed"
+   ],
+   "physics": false,
+   "height": 12.46,
+   "upright": "upright",
+   "saved_only": false,
+   "safe": true,
+   "climb": {
+    "ledges": [
+     [
+      2.8,
+      3.0
+     ],
+     [
+      4.0,
+      4.2
+     ],
+     [
+      6.8,
+      7.0
+     ],
+     [
+      8.0,
+      8.2
+     ],
+     [
+      10.8,
+      11.0
+     ],
+     [
+      11.6,
+      11.8
+     ],
+     [
+      12.0,
+      12.4
+     ]
+    ],
+    "top": 0.0,
+    "top_skilled": 12.4
+   },
+   "render": "palettes/dvergrtown_wood_crane.png"
+  },
+  {
+   "prefab": "dvergrprops_wood_beam",
+   "role": "beam",
+   "look": "a plain timber beam",
+   "mount": "span",
+   "scale": [
+    0.5,
+    3
+   ],
+   "tier": 6,
+   "notes": "as scenery its DropOnDestroyed is stripped: it gives nothing; climbable: a player can stand 1.0 m above its foot (at scale 1; 1.0 m with Jump skill 100), so it's a stepping stone to a level up to about 2.6 m above its foot (4.1 m with Jump 100)",
+   "exists": true,
+   "size": [
+    6.11,
+    0.92,
+    0.92
+   ],
+   "min": [
+    -3.05,
+    -0.46,
+    -0.46
+   ],
+   "max": [
+    3.05,
+    0.46,
+    0.46
+   ],
+   "origin": "centre",
+   "hollow": false,
+   "kinds": [
+    "DropOnDestroyed",
+    "WearNTear",
+    "ZNetView"
+   ],
+   "colliders": {
+    "piece": 1
+   },
+   "solid": true,
+   "solid_note": "",
+   "lights": [],
+   "fire": false,
+   "particles": 0,
+   "item": false,
+   "networked": true,
+   "gives": [
+    "DropOnDestroyed"
+   ],
+   "physics": false,
+   "height": 0.92,
+   "upright": "flat",
+   "saved_only": false,
+   "safe": true,
+   "climb": {
+    "ledges": [
+     [
+      0.8,
+      1.0
+     ]
+    ],
+    "top": 1.0,
+    "top_skilled": 1.0
+   },
+   "render": "palettes/dvergrprops_wood_beam.png"
+  },
+  {
+   "prefab": "dvergrprops_wood_pole",
+   "role": "pillar",
+   "look": "a plain timber pole",
+   "mount": "ground",
+   "scale": [
+    0.5,
+    3
+   ],
+   "tier": 6,
+   "notes": "as scenery its DropOnDestroyed is stripped: it gives nothing",
+   "exists": true,
+   "size": [
+    1.36,
+    4.0,
+    1.34
+   ],
+   "min": [
+    -0.68,
+    -2.0,
+    -0.67
+   ],
+   "max": [
+    0.68,
+    2.0,
+    0.67
+   ],
+   "origin": "centre",
+   "hollow": false,
+   "kinds": [
+    "DropOnDestroyed",
+    "WearNTear",
+    "ZNetView"
+   ],
+   "colliders": {
+    "piece": 1
+   },
+   "solid": true,
+   "solid_note": "",
+   "lights": [],
+   "fire": false,
+   "particles": 0,
+   "item": false,
+   "networked": true,
+   "gives": [
+    "DropOnDestroyed"
+   ],
+   "physics": false,
+   "height": 4.0,
+   "upright": "upright",
+   "saved_only": false,
+   "safe": true,
+   "climb": {
+    "ledges": [
+     [
+      4.0,
+      4.2
+     ]
+    ],
+    "top": 0.0,
+    "top_skilled": 0.0
+   },
+   "render": "palettes/dvergrprops_wood_pole.png"
+  },
+  {
+   "prefab": "dvergrprops_wood_wall",
+   "role": "wall",
+   "look": "a plain timber wall",
+   "mount": "structure",
+   "scale": [
+    0.5,
+    2
+   ],
+   "tier": 6,
+   "notes": "as scenery its DropOnDestroyed is stripped: it gives nothing",
+   "exists": true,
+   "size": [
+    4.97,
+    4.02,
+    1.48
+   ],
+   "min": [
+    -2.48,
+    -2.01,
+    -0.75
+   ],
+   "max": [
+    2.48,
+    2.01,
+    0.73
+   ],
+   "origin": "centre",
+   "hollow": false,
+   "kinds": [
+    "DropOnDestroyed",
+    "WearNTear",
+    "ZNetView"
+   ],
+   "colliders": {
+    "piece": 11
+   },
+   "solid": true,
+   "solid_note": "",
+   "lights": [],
+   "fire": false,
+   "particles": 0,
+   "item": false,
+   "networked": true,
+   "gives": [
+    "DropOnDestroyed"
+   ],
+   "physics": false,
+   "height": 4.02,
+   "upright": "upright",
+   "saved_only": false,
+   "safe": true,
+   "climb": {
+    "ledges": [
+     [
+      4.0,
+      4.2
+     ]
+    ],
+    "top": 0.0,
+    "top_skilled": 0.0
+   },
+   "render": "palettes/dvergrprops_wood_wall.png"
+  },
+  {
+   "prefab": "piece_dvergr_spiralstair_right",
+   "role": "stair",
+   "look": "a Dvergr spiral stair, turning right",
+   "mount": "structure",
+   "scale": [
+    1,
+    1
+   ],
+   "tier": 6,
+   "notes": "keep 1",
+   "exists": true,
+   "size": [
+    2.33,
+    1.24,
+    2.32
+   ],
+   "min": [
+    -0.34,
+    -0.08,
+    -0.32
+   ],
+   "max": [
+    1.98,
+    1.17,
+    2.0
+   ],
+   "origin": "foot",
+   "hollow": false,
+   "kinds": [
+    "Piece",
+    "WearNTear",
+    "ZNetView"
+   ],
+   "colliders": {
+    "piece": 2
+   },
+   "solid": true,
+   "solid_note": "",
+   "lights": [],
+   "fire": false,
+   "particles": 0,
+   "item": false,
+   "networked": true,
+   "gives": [],
+   "physics": false,
+   "height": 1.24,
+   "upright": "block",
+   "saved_only": false,
+   "safe": true,
+   "climb": {
+    "ledges": [
+     [
+      0.0,
+      1.4
+     ]
+    ],
+    "top": 1.4,
+    "top_skilled": 1.4
+   },
+   "render": "palettes/piece_dvergr_spiralstair_right.png"
+  },
+  {
+   "prefab": "dvergrtown_secretdoor",
+   "role": "door",
+   "look": "a secret stone door that looks like wall",
+   "mount": "structure",
+   "scale": [
+    1,
+    1
+   ],
+   "tier": 6,
+   "notes": "as scenery it doesn't open",
+   "exists": true,
+   "size": [
+    4.0,
+    4.0,
+    0.76
+   ],
+   "min": [
+    -2.0,
+    -0.0,
+    -0.38
+   ],
+   "max": [
+    2.0,
+    4.0,
+    0.38
+   ],
+   "origin": "foot",
+   "hollow": false,
+   "kinds": [
+    "Door",
+    "ZNetView"
+   ],
+   "colliders": {
+    "piece": 5
+   },
+   "solid": true,
+   "solid_note": "",
+   "lights": [],
+   "fire": false,
+   "particles": 0,
+   "item": false,
+   "networked": true,
+   "gives": [],
+   "physics": false,
+   "height": 4.0,
+   "upright": "upright",
+   "saved_only": false,
+   "safe": true,
+   "climb": {
+    "ledges": [
+     [
+      2.0,
+      2.2
+     ],
+     [
+      4.0,
+      4.2
+     ]
+    ],
+    "top": 0.0,
+    "top_skilled": 4.2
+   },
+   "render": "palettes/dvergrtown_secretdoor.png"
+  },
+  {
+   "prefab": "blackmarble_post01",
+   "role": "pillar",
+   "look": "a black marble post",
+   "mount": "ground",
+   "scale": [
+    0.5,
+    2
+   ],
+   "tier": 6,
+   "notes": "as scenery its Destructible, DropOnDestroyed is stripped: it gives nothing",
+   "exists": true,
+   "size": [
+    2.0,
+    6.25,
+    2.01
+   ],
+   "min": [
+    -1.0,
+    -1.0,
+    -1.0
+   ],
+   "max": [
+    1.0,
+    5.25,
+    1.01
+   ],
+   "origin": "inside",
+   "hollow": false,
+   "kinds": [
+    "Destructible",
+    "DropOnDestroyed",
+    "ZNetView"
+   ],
+   "colliders": {
+    "Default": 2
+   },
+   "solid": true,
+   "solid_note": "",
+   "lights": [],
+   "fire": false,
+   "particles": 0,
+   "item": false,
+   "networked": true,
+   "gives": [
+    "Destructible",
+    "DropOnDestroyed"
+   ],
+   "physics": false,
+   "height": 6.25,
+   "upright": "upright",
+   "saved_only": false,
+   "safe": true,
+   "climb": {
+    "ledges": [
+     [
+      4.2,
+      4.4
+     ],
+     [
+      5.6,
+      5.8
+     ]
+    ],
+    "top": 0.0,
+    "top_skilled": 0.0
+   },
+   "render": "palettes/blackmarble_post01.png"
+  },
+  {
+   "prefab": "blackmarble_tile_wall_1x1",
+   "role": "wall",
+   "look": "tiled black marble wall 1 x 1",
+   "mount": "structure",
+   "scale": [
+    0.5,
+    2
+   ],
+   "tier": 6,
+   "notes": "",
+   "exists": true,
+   "size": [
+    1.05,
+    1.03,
+    0.19
+   ],
+   "min": [
+    -0.52,
+    -0.06,
+    0.01
+   ],
+   "max": [
+    0.52,
+    0.97,
+    0.2
+   ],
+   "origin": "foot",
+   "hollow": false,
+   "kinds": [
+    "Piece",
+    "WearNTear",
+    "ZNetView"
+   ],
+   "colliders": {
+    "piece": 1
+   },
+   "solid": true,
+   "solid_note": "",
+   "lights": [],
+   "fire": false,
+   "particles": 0,
+   "item": false,
+   "networked": true,
+   "gives": [],
+   "physics": false,
+   "height": 1.03,
+   "upright": "upright",
+   "saved_only": false,
+   "safe": true,
+   "climb": {
+    "ledges": [
+     [
+      1.0,
+      1.2
+     ]
+    ],
+    "top": 1.2,
+    "top_skilled": 1.2
+   },
+   "render": "palettes/blackmarble_tile_wall_1x1.png"
+  },
+  {
+   "prefab": "blackmarble_creep_4x2x1",
+   "role": "block",
+   "look": "a black marble block overgrown with creep",
+   "mount": "structure",
+   "scale": [
+    0.5,
+    2
+   ],
+   "tier": 6,
+   "notes": "",
+   "exists": true,
+   "size": [
+    2.0,
+    4.0,
+    1.0
+   ],
+   "min": [
+    -1.0,
+    -2.0,
+    -0.5
+   ],
+   "max": [
+    1.0,
+    2.0,
+    0.5
+   ],
+   "origin": "centre",
+   "hollow": false,
+   "kinds": [
+    "Piece",
+    "WearNTear",
+    "ZNetView"
+   ],
+   "colliders": {
+    "piece": 1
+   },
+   "solid": true,
+   "solid_note": "",
+   "lights": [],
+   "fire": false,
+   "particles": 0,
+   "item": false,
+   "networked": true,
+   "gives": [],
+   "physics": false,
+   "height": 4.0,
+   "upright": "upright",
+   "saved_only": false,
+   "safe": true,
+   "climb": {
+    "ledges": [
+     [
+      4.0,
+      4.2
+     ]
+    ],
+    "top": 0.0,
+    "top_skilled": 0.0
+   },
+   "render": "palettes/blackmarble_creep_4x2x1.png"
+  },
+  {
+   "prefab": "blackmarble_pile",
+   "role": "decor",
+   "look": "a pile of black marble rubble",
+   "mount": "ground",
+   "scale": [
+    0.5,
+    2
+   ],
+   "tier": 6,
+   "notes": "climbable: a player can stand 1.0 m above its foot (at scale 1; 1.0 m with Jump skill 100), so it's a stepping stone to a level up to about 2.6 m above its foot (4.1 m with Jump 100)",
+   "exists": true,
+   "size": [
+    1.58,
+    0.99,
+    1.56
+   ],
+   "min": [
+    -0.77,
+    -0.08,
+    -0.74
+   ],
+   "max": [
+    0.81,
+    0.91,
+    0.82
+   ],
+   "origin": "foot",
+   "hollow": false,
+   "sets": [
+    "workshop",
+    "store"
+   ],
+   "kinds": [
+    "Piece",
+    "WearNTear",
+    "ZNetView"
+   ],
+   "colliders": {
+    "Default": 2
+   },
+   "solid": true,
+   "solid_note": "",
+   "lights": [],
+   "fire": false,
+   "particles": 0,
+   "item": false,
+   "networked": true,
+   "gives": [],
+   "physics": false,
+   "height": 0.99,
+   "upright": "block",
+   "saved_only": false,
+   "safe": true,
+   "climb": {
+    "ledges": [
+     [
+      0.0,
+      1.0
+     ]
+    ],
+    "top": 1.0,
+    "top_skilled": 1.0
+   },
+   "render": "palettes/blackmarble_pile.png"
+  },
+  {
+   "prefab": "dverger_demister_large",
+   "role": "light",
+   "look": "a large blue wisp light on a stand",
+   "mount": "ground",
+   "scale": [
+    0.5,
+    2
+   ],
+   "tier": 6,
+   "notes": "its light range, fade distance and fire grow with its scale (BuildScale.cs); climbable: a player can stand 0.8 m above its foot (at scale 1; 0.8 m with Jump skill 100), so it's a stepping stone to a level up to about 2.4 m above its foot (3.9 m with Jump 100)",
+   "exists": true,
+   "size": [
+    0.93,
+    0.74,
+    0.95
+   ],
+   "min": [
+    -0.48,
+    -0.9,
+    -0.48
+   ],
+   "max": [
+    0.45,
+    -0.16,
+    0.47
+   ],
+   "origin": "off the box",
+   "hollow": false,
+   "kinds": [
+    "LightLod",
+    "WearNTear",
+    "ZNetView"
+   ],
+   "colliders": {
+    "piece": 1
+   },
+   "solid": true,
+   "solid_note": "",
+   "lights": [
+    {
+     "range": 20.0,
+     "intensity": 1.0,
+     "colour": "#7bc8ff",
+     "lit": true,
+     "lod": true
+    }
+   ],
+   "fire": false,
+   "particles": 4,
+   "item": false,
+   "networked": true,
+   "gives": [],
+   "physics": false,
+   "height": 0.74,
+   "upright": "block",
+   "saved_only": false,
+   "safe": true,
+   "climb": {
+    "ledges": [
+     [
+      0.6,
+      0.8
+     ]
+    ],
+    "top": 0.8,
+    "top_skilled": 0.8
+   },
+   "render": "palettes/dverger_demister_large.png"
+  },
+  {
+   "prefab": "piece_blackmarble_table",
+   "role": "prop",
+   "look": "a black marble table",
+   "mount": "ground",
+   "scale": [
+    0.5,
+    2
+   ],
+   "tier": 6,
+   "notes": "climbable: a player can stand 1.0 m above its foot (at scale 1; 1.0 m with Jump skill 100), so it's a stepping stone to a level up to about 2.6 m above its foot (4.1 m with Jump 100)",
+   "exists": true,
+   "size": [
+    2.56,
+    0.82,
+    1.49
+   ],
+   "min": [
+    -1.28,
+    0.0,
+    -0.74
+   ],
+   "max": [
+    1.28,
+    0.82,
+    0.74
+   ],
+   "origin": "foot",
+   "hollow": false,
+   "sets": [
+    "tavern"
+   ],
+   "kinds": [
+    "Piece",
+    "WearNTear",
+    "ZNetView"
+   ],
+   "colliders": {
+    "piece": 3
+   },
+   "solid": true,
+   "solid_note": "",
+   "lights": [],
+   "fire": false,
+   "particles": 0,
+   "item": false,
+   "networked": true,
+   "gives": [],
+   "physics": false,
+   "height": 0.82,
+   "upright": "flat",
+   "saved_only": false,
+   "safe": true,
+   "climb": {
+    "ledges": [
+     [
+      0.6,
+      1.0
+     ]
+    ],
+    "top": 1.0,
+    "top_skilled": 1.0
+   },
+   "render": "palettes/piece_blackmarble_table.png"
+  },
+  {
+   "prefab": "piece_blackmarble_bench",
+   "role": "prop",
+   "look": "a black marble bench",
+   "mount": "ground",
+   "scale": [
+    0.5,
+    2
+   ],
+   "tier": 6,
+   "notes": "climbable: a player can stand 1.2 m above its foot (at scale 1; 1.2 m with Jump skill 100), so it's a stepping stone to a level up to about 2.8 m above its foot (4.3 m with Jump 100)",
+   "exists": true,
+   "size": [
+    2.55,
+    1.01,
+    0.63
+   ],
+   "min": [
+    -1.27,
+    -0.0,
+    -0.31
+   ],
+   "max": [
+    1.27,
+    1.01,
+    0.32
+   ],
+   "origin": "foot",
+   "hollow": false,
+   "sets": [
+    "tavern",
+    "barracks"
+   ],
+   "kinds": [
+    "Piece",
+    "WearNTear",
+    "ZNetView"
+   ],
+   "colliders": {
+    "piece": 2,
+    "piece_nonsolid": 3
+   },
+   "solid": true,
+   "solid_note": "",
+   "lights": [],
+   "fire": false,
+   "particles": 0,
+   "item": false,
+   "networked": true,
+   "gives": [],
+   "physics": false,
+   "height": 1.01,
+   "upright": "upright",
+   "saved_only": false,
+   "safe": true,
+   "climb": {
+    "ledges": [
+     [
+      0.4,
+      0.6
+     ],
+     [
+      1.0,
+      1.2
+     ]
+    ],
+    "top": 1.2,
+    "top_skilled": 1.2
+   },
+   "render": "palettes/piece_blackmarble_bench.png"
+  },
+  {
+   "prefab": "dvergrprops_wood_floor",
+   "role": "floor",
+   "look": "a timber floor",
+   "mount": "structure",
+   "scale": [
+    0.5,
+    2
+   ],
+   "tier": 6,
+   "notes": "",
+   "exists": true,
+   "size": [
+    2.07,
+    0.25,
+    2.09
+   ],
+   "min": [
+    -1.04,
+    -0.12,
+    -1.05
+   ],
+   "max": [
+    1.03,
+    0.13,
+    1.03
+   ],
+   "origin": "foot",
+   "hollow": false,
+   "kinds": [
+    "Piece",
+    "WearNTear",
+    "ZNetView"
+   ],
+   "colliders": {
+    "piece": 1
+   },
+   "solid": true,
+   "solid_note": "",
+   "lights": [],
+   "fire": false,
+   "particles": 0,
+   "item": false,
+   "networked": true,
+   "gives": [],
+   "physics": false,
+   "height": 0.25,
+   "upright": "flat",
+   "saved_only": false,
+   "safe": true,
+   "climb": {
+    "ledges": [
+     [
+      0.2,
+      0.4
+     ]
+    ],
+    "top": 0.4,
+    "top_skilled": 0.4
+   },
+   "render": "palettes/dvergrprops_wood_floor.png"
+  },
+  {
+   "prefab": "dvergrprops_wood_stair",
+   "role": "stair",
+   "look": "a timber stair",
+   "mount": "structure",
+   "scale": [
+    1,
+    1
+   ],
+   "tier": 6,
+   "notes": "keep 1",
+   "exists": true,
+   "size": [
+    2.27,
+    1.15,
+    2.1
+   ],
+   "min": [
+    -1.12,
+    -0.1,
+    -1.11
+   ],
+   "max": [
+    1.15,
+    1.05,
+    0.99
+   ],
+   "origin": "foot",
+   "hollow": false,
+   "kinds": [
+    "Piece",
+    "WearNTear",
+    "ZNetView"
+   ],
+   "colliders": {
+    "piece": 4
+   },
+   "solid": true,
+   "solid_note": "",
+   "lights": [],
+   "fire": false,
+   "particles": 0,
+   "item": false,
+   "networked": true,
+   "gives": [],
+   "physics": false,
+   "height": 1.15,
+   "upright": "block",
+   "saved_only": false,
+   "safe": true,
+   "climb": {
+    "ledges": [
+     [
+      0.0,
+      0.2
+     ],
+     [
+      0.4,
+      0.8
+     ],
+     [
+      1.0,
+      1.2
+     ]
+    ],
+    "top": 1.2,
+    "top_skilled": 1.2
+   },
+   "render": "palettes/dvergrprops_wood_stair.png"
+  },
+  {
+   "prefab": "piece_dvergr_spiralstair",
+   "role": "stair",
+   "look": "a Dvergr spiral stair",
+   "mount": "structure",
+   "scale": [
+    1,
+    1
+   ],
+   "tier": 6,
+   "notes": "keep 1",
+   "exists": true,
+   "size": [
+    2.32,
+    1.24,
+    2.32
+   ],
+   "min": [
+    -2.0,
+    -0.08,
+    -0.32
+   ],
+   "max": [
+    0.32,
+    1.17,
+    2.0
+   ],
+   "origin": "foot",
+   "hollow": false,
+   "kinds": [
+    "Piece",
+    "WearNTear",
+    "ZNetView"
+   ],
+   "colliders": {
+    "piece": 2
+   },
+   "solid": true,
+   "solid_note": "",
+   "lights": [],
+   "fire": false,
+   "particles": 0,
+   "item": false,
+   "networked": true,
+   "gives": [],
+   "physics": false,
+   "height": 1.24,
+   "upright": "block",
+   "saved_only": false,
+   "safe": true,
+   "climb": {
+    "ledges": [
+     [
+      0.0,
+      1.4
+     ]
+    ],
+    "top": 1.4,
+    "top_skilled": 1.4
+   },
+   "render": "palettes/piece_dvergr_spiralstair.png"
+  },
+  {
+   "prefab": "piece_dvergr_metal_wall_2x2",
+   "role": "wall",
+   "look": "a Dvergr metal wall panel",
+   "mount": "structure",
+   "scale": [
+    0.5,
+    2
+   ],
+   "tier": 6,
+   "notes": "thin (0.08 m): a single face may not show from behind (one-sided): check its render from both sides",
+   "exists": true,
+   "size": [
+    2.0,
+    2.0,
+    0.08
+   ],
+   "min": [
+    -1.0,
+    -1.0,
+    -0.04
+   ],
+   "max": [
+    1.0,
+    1.0,
+    0.04
+   ],
+   "origin": "centre",
+   "hollow": false,
+   "kinds": [
+    "Piece",
+    "WearNTear",
+    "ZNetView"
+   ],
+   "colliders": {
+    "piece": 2
+   },
+   "solid": true,
+   "solid_note": "",
+   "lights": [],
+   "fire": false,
+   "particles": 0,
+   "item": false,
+   "networked": true,
+   "gives": [],
+   "physics": false,
+   "height": 2.0,
+   "upright": "upright",
+   "saved_only": false,
+   "safe": true,
+   "climb": {
+    "ledges": [
+     [
+      2.0,
+      2.2
+     ]
+    ],
+    "top": 0.0,
+    "top_skilled": 2.2
+   },
+   "render": "palettes/piece_dvergr_metal_wall_2x2.png"
+  },
+  {
+   "prefab": "piece_dvergr_pole",
+   "role": "pillar",
+   "look": "a Dvergr metal pole",
+   "mount": "ground",
+   "scale": [
+    0.5,
+    3
+   ],
+   "tier": 6,
+   "notes": "",
+   "exists": true,
+   "size": [
+    0.61,
+    2.0,
+    0.6
+   ],
+   "min": [
+    -0.31,
+    -2.0,
+    -0.3
+   ],
+   "max": [
+    0.31,
+    0.0,
+    0.3
+   ],
+   "origin": "top",
+   "hollow": false,
+   "kinds": [
+    "Piece",
+    "WearNTear",
+    "ZNetView"
+   ],
+   "colliders": {
+    "piece": 1
+   },
+   "solid": true,
+   "solid_note": "",
+   "lights": [],
+   "fire": false,
+   "particles": 0,
+   "item": false,
+   "networked": true,
+   "gives": [],
+   "physics": false,
+   "height": 2.0,
+   "upright": "upright",
+   "saved_only": false,
+   "safe": true,
+   "climb": {
+    "ledges": [
+     [
+      2.0,
+      2.2
+     ]
+    ],
+    "top": 0.0,
+    "top_skilled": 2.2
+   },
+   "render": "palettes/piece_dvergr_pole.png"
+  },
+  {
+   "prefab": "dvergrtown_slidingdoor",
+   "role": "door",
+   "look": "a 4 x 4 sliding stone door: the theme's door between rooms (Pack.doors)",
+   "mount": "structure",
+   "scale": [
+    1,
+    1
+   ],
+   "tier": 6,
+   "notes": "placed by the Builder at joints as a saved door; as scenery it doesn't open",
+   "exists": true,
+   "size": [
+    4.0,
+    4.0,
+    0.36
+   ],
+   "min": [
+    -2.0,
+    -0.0,
+    -0.18
+   ],
+   "max": [
+    2.0,
+    4.0,
+    0.18
+   ],
+   "origin": "foot",
+   "hollow": false,
+   "kinds": [
+    "Door",
+    "ZNetView"
+   ],
+   "colliders": {
+    "Default": 2
+   },
+   "solid": true,
+   "solid_note": "",
+   "lights": [],
+   "fire": false,
+   "particles": 0,
+   "item": false,
+   "networked": true,
+   "gives": [],
+   "physics": false,
+   "height": 4.0,
+   "upright": "upright",
+   "saved_only": false,
+   "safe": true,
+   "climb": {
+    "ledges": [
+     [
+      4.0,
+      4.2
+     ]
+    ],
+    "top": 0.0,
+    "top_skilled": 0.0
+   },
+   "render": "palettes/dvergrtown_slidingdoor.png"
+  },
+  {
+   "prefab": "piece_dvergr_wood_door",
+   "role": "door",
+   "look": "a Dvergr wooden door",
+   "mount": "structure",
+   "scale": [
+    1,
+    1
+   ],
+   "tier": 6,
+   "notes": "as scenery it doesn't open: Pack.doors or a gate",
+   "exists": true,
+   "size": [
+    3.94,
+    4.22,
+    0.73
+   ],
+   "min": [
+    -2.97,
+    -2.1,
+    -0.36
+   ],
+   "max": [
+    0.97,
+    2.12,
+    0.37
+   ],
+   "origin": "centre",
+   "hollow": false,
+   "kinds": [
+    "Door",
+    "Piece",
+    "WearNTear",
+    "ZNetView"
+   ],
+   "colliders": {
+    "piece": 2
+   },
+   "solid": true,
+   "solid_note": "",
+   "lights": [],
+   "fire": false,
+   "particles": 0,
+   "item": false,
+   "networked": true,
+   "gives": [],
+   "physics": false,
+   "height": 4.22,
+   "upright": "upright",
+   "saved_only": false,
+   "safe": true,
+   "climb": {
+    "ledges": [
+     [
+      0.2,
+      0.4
+     ],
+     [
+      0.6,
+      0.8
+     ],
+     [
+      1.8,
+      2.0
+     ],
+     [
+      2.2,
+      2.4
+     ],
+     [
+      3.4,
+      3.6
+     ],
+     [
+      3.8,
+      4.0
+     ]
+    ],
+    "top": 4.0,
+    "top_skilled": 4.0
+   },
+   "render": "palettes/piece_dvergr_wood_door.png"
+  },
+  {
+   "prefab": "dvergrprops_lantern",
+   "role": "light",
+   "look": "a hanging Dvergr lantern",
+   "mount": "hang",
+   "scale": [
+    0.5,
+    2
+   ],
+   "tier": 6,
+   "notes": "hangs from its top: needs a beam or ceiling right above, or a chain (dvergrprops_hooknchain) whose foot is on its top; its light range, fade distance and fire grow with its scale (BuildScale.cs); as scenery its DropOnDestroyed is stripped: it gives nothing; climbable: a player can stand 1.4 m above its foot (at scale 1; 1.4 m with Jump skill 100), so it's a stepping stone to a level up to about 3.0 m above its foot (4.5 m with Jump 100); TROUBLE: floated in the first Shifting Halls (hanging lanterns with nothing above): hang it from a beam, a ceiling or dvergrprops_hooknchain / Morkhalla_WallChain1 with the chain's foot on its top (prop_check.py).",
+   "exists": true,
+   "size": [
+    1.14,
+    1.34,
+    0.67
+   ],
+   "min": [
+    -1.14,
+    -0.89,
+    -0.33
+   ],
+   "max": [
+    -0.0,
+    0.45,
+    0.33
+   ],
+   "origin": "inside",
+   "hollow": false,
+   "kinds": [
+    "DropOnDestroyed",
+    "LightLod",
+    "WearNTear",
+    "ZNetView"
+   ],
+   "colliders": {
+    "Default": 3
+   },
+   "solid": true,
+   "solid_note": "",
+   "lights": [
+    {
+     "range": 6.0,
+     "intensity": 1.5,
+     "colour": "#ffc849",
+     "lit": true,
+     "lod": true
+    },
+    {
+     "range": 6.0,
+     "intensity": 1.5,
+     "colour": "#ffc849",
+     "lit": false,
+     "lod": true
+    },
+    {
+     "range": 6.0,
+     "intensity": 1.5,
+     "colour": "#ffc849",
+     "lit": false,
+     "lod": true
+    }
+   ],
+   "fire": false,
+   "particles": 1,
+   "item": false,
+   "networked": true,
+   "gives": [
+    "DropOnDestroyed"
+   ],
+   "physics": false,
+   "height": 1.34,
+   "upright": "block",
+   "saved_only": false,
+   "safe": true,
+   "climb": {
+    "ledges": [
+     [
+      1.2,
+      1.4
+     ]
+    ],
+    "top": 1.4,
+    "top_skilled": 1.4
+   },
+   "render": "palettes/dvergrprops_lantern.png"
+  },
+  {
+   "prefab": "dvergrprops_lantern_standing",
+   "role": "light",
+   "look": "a Dvergr lantern on a stand",
+   "mount": "ground",
+   "scale": [
+    0.5,
+    2
+   ],
+   "tier": 6,
+   "notes": "its light range, fade distance and fire grow with its scale (BuildScale.cs); as scenery its DropOnDestroyed is stripped: it gives nothing",
+   "exists": true,
+   "size": [
+    0.36,
+    0.66,
+    0.36
+   ],
+   "min": [
+    -0.18,
+    0.02,
+    -0.18
+   ],
+   "max": [
+    0.18,
+    0.68,
+    0.18
+   ],
+   "origin": "foot",
+   "hollow": false,
+   "kinds": [
+    "DropOnDestroyed",
+    "LightLod",
+    "WearNTear",
+    "ZNetView"
+   ],
+   "colliders": {
+    "Default": 1
+   },
+   "solid": true,
+   "solid_note": "",
+   "lights": [
+    {
+     "range": 5.0,
+     "intensity": 1.5,
+     "colour": "#ffc849",
+     "lit": true,
+     "lod": true
+    }
+   ],
+   "fire": false,
+   "particles": 1,
+   "item": false,
+   "networked": true,
+   "gives": [
+    "DropOnDestroyed"
+   ],
+   "physics": false,
+   "height": 0.66,
+   "upright": "block",
+   "saved_only": false,
+   "safe": true,
+   "climb": {
+    "ledges": [],
+    "top": 0.0,
+    "top_skilled": 0.0
+   },
+   "render": "palettes/dvergrprops_lantern_standing.png"
+  },
+  {
+   "prefab": "piece_dvergr_lantern",
+   "role": "light",
+   "look": "a Dvergr wall lantern",
+   "mount": "wall",
+   "scale": [
+    0.5,
+    2
+   ],
+   "tier": 6,
+   "notes": "its light range, fade distance and fire grow with its scale (BuildScale.cs); climbable: a player can stand 1.4 m above its foot (at scale 1; 1.4 m with Jump skill 100), so it's a stepping stone to a level up to about 3.0 m above its foot (4.5 m with Jump 100)",
+   "exists": true,
+   "size": [
+    1.14,
+    1.34,
+    0.67
+   ],
+   "min": [
+    -1.14,
+    -0.89,
+    -0.33
+   ],
+   "max": [
+    -0.0,
+    0.45,
+    0.33
+   ],
+   "origin": "inside",
+   "hollow": false,
+   "kinds": [
+    "EffectArea",
+    "LightLod",
+    "Piece",
+    "WearNTear",
+    "ZNetView"
+   ],
+   "colliders": {
+    "piece": 4
+   },
+   "solid": true,
+   "solid_note": "",
+   "lights": [
+    {
+     "range": 6.0,
+     "intensity": 1.5,
+     "colour": "#ffc849",
+     "lit": true,
+     "lod": true
+    },
+    {
+     "range": 6.0,
+     "intensity": 1.5,
+     "colour": "#ffc849",
+     "lit": false,
+     "lod": true
+    },
+    {
+     "range": 4.0,
+     "intensity": 1.0,
+     "colour": "#ffc849",
+     "lit": false,
+     "lod": true
+    }
+   ],
+   "fire": false,
+   "particles": 1,
+   "item": false,
+   "networked": true,
+   "gives": [],
+   "physics": false,
+   "height": 1.34,
+   "upright": "block",
+   "saved_only": false,
+   "safe": true,
+   "climb": {
+    "ledges": [
+     [
+      1.2,
+      1.4
+     ]
+    ],
+    "top": 1.4,
+    "top_skilled": 1.4
+   },
+   "render": "palettes/piece_dvergr_lantern.png"
+  },
+  {
+   "prefab": "piece_dvergr_lantern_pole",
+   "role": "light",
+   "look": "a Dvergr lantern on a pole",
+   "mount": "ground",
+   "scale": [
+    0.5,
+    2
+   ],
+   "tier": 6,
+   "notes": "its light range, fade distance and fire grow with its scale (BuildScale.cs)",
+   "exists": true,
+   "size": [
+    1.21,
+    3.53,
+    0.54
+   ],
+   "min": [
+    -1.13,
+    -3.0,
+    -0.27
+   ],
+   "max": [
+    0.07,
+    0.53,
+    0.27
+   ],
+   "origin": "inside",
+   "hollow": false,
+   "kinds": [
+    "EffectArea",
+    "LightLod",
+    "Piece",
+    "WearNTear",
+    "ZNetView"
+   ],
+   "colliders": {
+    "piece": 6
+   },
+   "solid": true,
+   "solid_note": "",
+   "lights": [
+    {
+     "range": 6.0,
+     "intensity": 1.5,
+     "colour": "#ffc849",
+     "lit": true,
+     "lod": true
+    },
+    {
+     "range": 6.0,
+     "intensity": 1.5,
+     "colour": "#ffc849",
+     "lit": false,
+     "lod": true
+    },
+    {
+     "range": 4.0,
+     "intensity": 1.0,
+     "colour": "#ffc849",
+     "lit": false,
+     "lod": true
+    }
+   ],
+   "fire": false,
+   "particles": 1,
+   "item": false,
+   "networked": true,
+   "gives": [],
+   "physics": false,
+   "height": 3.53,
+   "upright": "upright",
+   "saved_only": false,
+   "safe": true,
+   "climb": {
+    "ledges": [
+     [
+      0.0,
+      0.2
+     ],
+     [
+      3.4,
+      3.6
+     ]
+    ],
+    "top": 0.0,
+    "top_skilled": 0.0
+   },
+   "render": "palettes/piece_dvergr_lantern_pole.png"
+  },
+  {
+   "prefab": "dverger_demister",
+   "role": "light",
+   "look": "a blue wisp light (range 10), its mesh below its origin: hang it",
+   "mount": "hang",
+   "scale": [
+    0.5,
+    2
+   ],
+   "tier": 6,
+   "notes": "its light range, fade distance and fire grow with its scale (BuildScale.cs); climbable: a player can stand 0.8 m above its foot (at scale 1; 0.8 m with Jump skill 100), so it's a stepping stone to a level up to about 2.4 m above its foot (3.9 m with Jump 100); TROUBLE: floated in 35 places in Shifting Halls: its origin is at its top (the mesh hangs below it), so stood at a point it's in the air. Hang it on a chain from the first part above it (giant_kit.wisp).",
+   "exists": true,
+   "size": [
+    0.93,
+    0.74,
+    0.95
+   ],
+   "min": [
+    -0.48,
+    -0.65,
+    -0.48
+   ],
+   "max": [
+    0.45,
+    0.09,
+    0.47
+   ],
+   "origin": "top",
+   "hollow": false,
+   "kinds": [
+    "LightLod",
+    "WearNTear",
+    "ZNetView"
+   ],
+   "colliders": {
+    "piece": 1
+   },
+   "solid": true,
+   "solid_note": "",
+   "lights": [
+    {
+     "range": 10.0,
+     "intensity": 1.0,
+     "colour": "#7bc8ff",
+     "lit": true,
+     "lod": true
+    }
+   ],
+   "fire": false,
+   "particles": 3,
+   "item": false,
+   "networked": true,
+   "gives": [],
+   "physics": false,
+   "height": 0.74,
+   "upright": "block",
+   "saved_only": false,
+   "safe": true,
+   "climb": {
+    "ledges": [
+     [
+      0.6,
+      0.8
+     ]
+    ],
+    "top": 0.8,
+    "top_skilled": 0.8
+   },
+   "render": "palettes/dverger_demister.png"
+  },
+  {
+   "prefab": "dvergrprops_hooknchain",
+   "role": "chain",
+   "look": "a hook on a chain: hangs lanterns",
+   "mount": "hang",
+   "scale": [
+    0.5,
+    2
+   ],
+   "tier": 6,
+   "notes": "as scenery its DropOnDestroyed is stripped: it gives nothing",
+   "exists": true,
+   "size": [
+    0.52,
+    2.89,
+    0.52
+   ],
+   "min": [
+    -0.26,
+    -0.41,
+    -0.26
+   ],
+   "max": [
+    0.26,
+    2.48,
+    0.26
+   ],
+   "origin": "inside",
+   "hollow": false,
+   "kinds": [
+    "DropOnDestroyed",
+    "WearNTear",
+    "ZNetView"
+   ],
+   "colliders": {
+    "piece": 2
+   },
+   "solid": true,
+   "solid_note": "",
+   "lights": [],
+   "fire": false,
+   "particles": 0,
+   "item": false,
+   "networked": true,
+   "gives": [
+    "DropOnDestroyed"
+   ],
+   "physics": false,
+   "height": 2.89,
+   "upright": "upright",
+   "saved_only": false,
+   "safe": true,
+   "climb": {
+    "ledges": [
+     [
+      2.8,
+      3.0
+     ]
+    ],
+    "top": 0.0,
+    "top_skilled": 3.0
+   },
+   "render": "palettes/dvergrprops_hooknchain.png"
+  },
+  {
+   "prefab": "dvergrprops_banner",
+   "role": "decor",
+   "look": "a Dvergr banner",
+   "mount": "wall",
+   "scale": [
+    0.5,
+    2
+   ],
+   "tier": 6,
+   "notes": "as scenery its DropOnDestroyed is stripped: it gives nothing; TROUBLE: its origin is in its middle (2 m above its foot): stood at a point it reaches 2 m higher than it seems, and left a 6 m room's box.",
+   "exists": true,
+   "size": [
+    0.34,
+    4.29,
+    2.0
+   ],
+   "min": [
+    -0.17,
+    -2.0,
+    -1.0
+   ],
+   "max": [
+    0.17,
+    2.29,
+    1.0
+   ],
+   "origin": "centre",
+   "hollow": false,
+   "sets": [
+    "barracks"
+   ],
+   "kinds": [
+    "DropOnDestroyed",
+    "WearNTear",
+    "ZNetView"
+   ],
+   "colliders": {
+    "Default": 1
+   },
+   "solid": true,
+   "solid_note": "",
+   "lights": [],
+   "fire": false,
+   "particles": 0,
+   "item": false,
+   "networked": true,
+   "gives": [
+    "DropOnDestroyed"
+   ],
+   "physics": false,
+   "height": 4.29,
+   "upright": "upright",
+   "saved_only": false,
+   "safe": true,
+   "climb": {
+    "ledges": [
+     [
+      4.2,
+      4.4
+     ]
+    ],
+    "top": 0.0,
+    "top_skilled": 0.0
+   },
+   "render": "palettes/dvergrprops_banner.png"
+  },
+  {
+   "prefab": "dvergrprops_curtain",
+   "role": "decor",
+   "look": "a Dvergr curtain",
+   "mount": "wall",
+   "scale": [
+    0.5,
+    2
+   ],
+   "tier": 6,
+   "notes": "as scenery its DropOnDestroyed is stripped: it gives nothing; climbable: a player can stand 1.8 m above its foot (at scale 1; 1.8 m with Jump skill 100), so it's a stepping stone to a level up to about 3.4 m above its foot (4.9 m with Jump 100)",
+   "exists": true,
+   "size": [
+    0.35,
+    1.7,
+    4.4
+   ],
+   "min": [
+    -0.17,
+    -2.0,
+    -2.2
+   ],
+   "max": [
+    0.17,
+    -0.3,
+    2.2
+   ],
+   "origin": "off the box",
+   "hollow": false,
+   "sets": [
+    "barracks",
+    "tavern"
+   ],
+   "kinds": [
+    "DropOnDestroyed",
+    "WearNTear",
+    "ZNetView"
+   ],
+   "colliders": {
+    "Default": 2
+   },
+   "solid": true,
+   "solid_note": "",
+   "lights": [],
+   "fire": false,
+   "particles": 0,
+   "item": false,
+   "networked": true,
+   "gives": [
+    "DropOnDestroyed"
+   ],
+   "physics": false,
+   "height": 1.7,
+   "upright": "upright",
+   "saved_only": false,
+   "safe": true,
+   "climb": {
+    "ledges": [
+     [
+      1.6,
+      1.8
+     ]
+    ],
+    "top": 1.8,
+    "top_skilled": 1.8
+   },
+   "render": "palettes/dvergrprops_curtain.png"
+  },
+  {
+   "prefab": "dvergrprops_barrel",
+   "role": "prop",
+   "look": "a barrel",
+   "mount": "ground",
+   "scale": [
+    0.5,
+    2
+   ],
+   "tier": 6,
+   "notes": "as scenery its Destructible, DropOnDestroyed is stripped: it gives nothing; climbable: a player can stand 1.6 m above its foot (at scale 1; 1.6 m with Jump skill 100), so it's a stepping stone to a level up to about 3.2 m above its foot (4.7 m with Jump 100)",
+   "exists": true,
+   "size": [
+    1.51,
+    1.59,
+    1.78
+   ],
+   "min": [
+    -0.76,
+    0.0,
+    -0.78
+   ],
+   "max": [
+    0.75,
+    1.6,
+    1.0
+   ],
+   "origin": "foot",
+   "hollow": false,
+   "sets": [
+    "store",
+    "tavern"
+   ],
+   "kinds": [
+    "Destructible",
+    "DropOnDestroyed",
+    "ZNetView"
+   ],
+   "colliders": {
+    "piece": 2
+   },
+   "solid": true,
+   "solid_note": "",
+   "lights": [],
+   "fire": false,
+   "particles": 0,
+   "item": false,
+   "networked": true,
+   "gives": [
+    "Destructible",
+    "DropOnDestroyed"
+   ],
+   "physics": false,
+   "height": 1.59,
+   "upright": "block",
+   "saved_only": false,
+   "safe": true,
+   "climb": {
+    "ledges": [
+     [
+      0.4,
+      0.6
+     ],
+     [
+      1.4,
+      1.6
+     ]
+    ],
+    "top": 1.6,
+    "top_skilled": 1.6
+   },
+   "render": "palettes/dvergrprops_barrel.png"
+  },
+  {
+   "prefab": "dvergrprops_crate",
+   "role": "prop",
+   "look": "a crate",
+   "mount": "ground",
+   "scale": [
+    0.5,
+    2
+   ],
+   "tier": 6,
+   "notes": "as scenery its DropOnDestroyed is stripped: it gives nothing; climbable: a player can stand 1.2 m above its foot (at scale 1; 1.2 m with Jump skill 100), so it's a stepping stone to a level up to about 2.8 m above its foot (4.3 m with Jump 100)",
+   "exists": true,
+   "size": [
+    1.03,
+    1.02,
+    1.03
+   ],
+   "min": [
+    -0.51,
+    0.0,
+    -0.51
+   ],
+   "max": [
+    0.51,
+    1.02,
+    0.51
+   ],
+   "origin": "foot",
+   "hollow": false,
+   "sets": [
+    "store",
+    "workshop"
+   ],
+   "kinds": [
+    "DropOnDestroyed",
+    "WearNTear",
+    "ZNetView"
+   ],
+   "colliders": {
+    "piece": 12
+   },
+   "solid": true,
+   "solid_note": "",
+   "lights": [],
+   "fire": false,
+   "particles": 0,
+   "item": false,
+   "networked": true,
+   "gives": [
+    "DropOnDestroyed"
+   ],
+   "physics": false,
+   "height": 1.02,
+   "upright": "block",
+   "saved_only": false,
+   "safe": true,
+   "climb": {
+    "ledges": [
+     [
+      0.8,
+      1.2
+     ]
+    ],
+    "top": 1.2,
+    "top_skilled": 1.2
+   },
+   "render": "palettes/dvergrprops_crate.png"
+  },
+  {
+   "prefab": "dvergrprops_crate_long",
+   "role": "prop",
+   "look": "a long crate",
+   "mount": "ground",
+   "scale": [
+    0.5,
+    2
+   ],
+   "tier": 6,
+   "notes": "as scenery its DropOnDestroyed is stripped: it gives nothing; climbable: a player can stand 0.8 m above its foot (at scale 1; 0.8 m with Jump skill 100), so it's a stepping stone to a level up to about 2.4 m above its foot (3.9 m with Jump 100)",
+   "exists": true,
+   "size": [
+    2.22,
+    0.64,
+    0.69
+   ],
+   "min": [
+    -1.11,
+    -0.09,
+    -0.42
+   ],
+   "max": [
+    1.11,
+    0.55,
+    0.27
+   ],
+   "origin": "foot",
+   "hollow": false,
+   "sets": [
+    "store"
+   ],
+   "kinds": [
+    "DropOnDestroyed",
+    "WearNTear",
+    "ZNetView"
+   ],
+   "colliders": {
+    "Default": 1,
+    "hitbox": 1
+   },
+   "solid": true,
+   "solid_note": "",
+   "lights": [],
+   "fire": false,
+   "particles": 0,
+   "item": false,
+   "networked": true,
+   "gives": [
+    "DropOnDestroyed"
+   ],
+   "physics": false,
+   "height": 0.64,
+   "upright": "flat",
+   "saved_only": false,
+   "safe": true,
+   "climb": {
+    "ledges": [
+     [
+      0.6,
+      0.8
+     ]
+    ],
+    "top": 0.8,
+    "top_skilled": 0.8
+   },
+   "render": "palettes/dvergrprops_crate_long.png"
+  },
+  {
+   "prefab": "dvergrprops_table",
+   "role": "prop",
+   "look": "a table",
+   "mount": "ground",
+   "scale": [
+    0.5,
+    2
+   ],
+   "tier": 6,
+   "notes": "as scenery its DropOnDestroyed is stripped: it gives nothing; climbable: a player can stand 0.8 m above its foot (at scale 1; 0.8 m with Jump skill 100), so it's a stepping stone to a level up to about 2.4 m above its foot (3.9 m with Jump 100)",
+   "exists": true,
+   "size": [
+    1.83,
+    0.78,
+    1.35
+   ],
+   "min": [
+    -0.92,
+    0.0,
+    -0.68
+   ],
+   "max": [
+    0.92,
+    0.78,
+    0.68
+   ],
+   "origin": "foot",
+   "hollow": false,
+   "sets": [
+    "tavern",
+    "workshop"
+   ],
+   "kinds": [
+    "DropOnDestroyed",
+    "WearNTear",
+    "ZNetView"
+   ],
+   "colliders": {
+    "piece": 2,
+    "Default": 12
+   },
+   "solid": true,
+   "solid_note": "",
+   "lights": [],
+   "fire": false,
+   "particles": 0,
+   "item": false,
+   "networked": true,
+   "gives": [
+    "DropOnDestroyed"
+   ],
+   "physics": false,
+   "height": 0.78,
+   "upright": "flat",
+   "saved_only": false,
+   "safe": true,
+   "climb": {
+    "ledges": [
+     [
+      0.4,
+      0.8
+     ]
+    ],
+    "top": 0.8,
+    "top_skilled": 0.8
+   },
+   "render": "palettes/dvergrprops_table.png"
+  },
+  {
+   "prefab": "dvergrprops_chair",
+   "role": "prop",
+   "look": "a chair (stays a seat)",
+   "mount": "ground",
+   "scale": [
+    1,
+    1
+   ],
+   "tier": 6,
+   "notes": "as scenery its DropOnDestroyed is stripped: it gives nothing; climbable: a player can stand 0.4 m above its foot (at scale 1; 0.4 m with Jump skill 100), so it's a stepping stone to a level up to about 2.0 m above its foot (3.5 m with Jump 100)",
+   "exists": true,
+   "size": [
+    0.75,
+    1.05,
+    0.66
+   ],
+   "min": [
+    -0.36,
+    0.0,
+    -0.35
+   ],
+   "max": [
+    0.39,
+    1.05,
+    0.31
+   ],
+   "origin": "foot",
+   "hollow": false,
+   "sets": [
+    "tavern",
+    "barracks"
+   ],
+   "kinds": [
+    "DropOnDestroyed",
+    "WearNTear",
+    "ZNetView"
+   ],
+   "colliders": {
+    "piece": 2
+   },
+   "solid": true,
+   "solid_note": "",
+   "lights": [],
+   "fire": false,
+   "particles": 0,
+   "item": false,
+   "networked": true,
+   "gives": [
+    "DropOnDestroyed"
+   ],
+   "physics": false,
+   "height": 1.05,
+   "upright": "block",
+   "saved_only": false,
+   "safe": true,
+   "climb": {
+    "ledges": [
+     [
+      0.2,
+      0.4
+     ]
+    ],
+    "top": 0.4,
+    "top_skilled": 0.4
+   },
+   "render": "palettes/dvergrprops_chair.png"
+  },
+  {
+   "prefab": "dvergrprops_stool",
+   "role": "prop",
+   "look": "a stool",
+   "mount": "ground",
+   "scale": [
+    0.5,
+    2
+   ],
+   "tier": 6,
+   "notes": "as scenery its DropOnDestroyed is stripped: it gives nothing; climbable: a player can stand 0.6 m above its foot (at scale 1; 0.6 m with Jump skill 100), so it's a stepping stone to a level up to about 2.2 m above its foot (3.7 m with Jump 100)",
+   "exists": true,
+   "size": [
+    0.61,
+    0.41,
+    0.61
+   ],
+   "min": [
+    -0.31,
+    0.0,
+    -0.35
+   ],
+   "max": [
+    0.31,
+    0.42,
+    0.26
+   ],
+   "origin": "foot",
+   "hollow": false,
+   "sets": [
+    "tavern"
+   ],
+   "kinds": [
+    "DropOnDestroyed",
+    "WearNTear",
+    "ZNetView"
+   ],
+   "colliders": {
+    "piece": 1
+   },
+   "solid": true,
+   "solid_note": "",
+   "lights": [],
+   "fire": false,
+   "particles": 0,
+   "item": false,
+   "networked": true,
+   "gives": [
+    "DropOnDestroyed"
+   ],
+   "physics": false,
+   "height": 0.41,
+   "upright": "block",
+   "saved_only": false,
+   "safe": true,
+   "climb": {
+    "ledges": [
+     [
+      0.4,
+      0.6
+     ]
+    ],
+    "top": 0.6,
+    "top_skilled": 0.6
+   },
+   "render": "palettes/dvergrprops_stool.png"
+  },
+  {
+   "prefab": "dvergrprops_shelf",
+   "role": "prop",
+   "look": "a shelf",
+   "mount": "ground",
+   "scale": [
+    0.5,
+    2
+   ],
+   "tier": 6,
+   "notes": "as scenery its DropOnDestroyed is stripped: it gives nothing; climbable: a player can stand 1.6 m above its foot (at scale 1; 1.6 m with Jump skill 100), so it's a stepping stone to a level up to about 3.2 m above its foot (4.7 m with Jump 100)",
+   "exists": true,
+   "size": [
+    1.83,
+    1.52,
+    0.55
+   ],
+   "min": [
+    -0.91,
+    0.0,
+    -0.45
+   ],
+   "max": [
+    0.91,
+    1.53,
+    0.1
+   ],
+   "origin": "foot",
+   "hollow": false,
+   "sets": [
+    "store",
+    "workshop"
+   ],
+   "kinds": [
+    "DropOnDestroyed",
+    "WearNTear",
+    "ZNetView"
+   ],
+   "colliders": {
+    "piece": 5,
+    "Default": 5
+   },
+   "solid": true,
+   "solid_note": "",
+   "lights": [],
+   "fire": false,
+   "particles": 0,
+   "item": false,
+   "networked": true,
+   "gives": [
+    "DropOnDestroyed"
+   ],
+   "physics": false,
+   "height": 1.52,
+   "upright": "upright",
+   "saved_only": false,
+   "safe": true,
+   "climb": {
+    "ledges": [
+     [
+      0.4,
+      0.6
+     ],
+     [
+      0.8,
+      1.0
+     ],
+     [
+      1.4,
+      1.6
+     ]
+    ],
+    "top": 1.6,
+    "top_skilled": 1.6
+   },
+   "render": "palettes/dvergrprops_shelf.png"
+  },
+  {
+   "prefab": "dvergrprops_bed",
+   "role": "prop",
+   "look": "a bed",
+   "mount": "ground",
+   "scale": [
+    0.5,
+    2
+   ],
+   "tier": 6,
+   "notes": "as scenery its DropOnDestroyed is stripped: it gives nothing; climbable: a player can stand 0.8 m above its foot (at scale 1; 0.8 m with Jump skill 100), so it's a stepping stone to a level up to about 2.4 m above its foot (3.9 m with Jump 100)",
+   "exists": true,
+   "size": [
+    1.15,
+    0.67,
+    2.09
+   ],
+   "min": [
+    -0.52,
+    -0.0,
+    -1.02
+   ],
+   "max": [
+    0.63,
+    0.67,
+    1.07
+   ],
+   "origin": "foot",
+   "hollow": false,
+   "sets": [
+    "barracks"
+   ],
+   "kinds": [
+    "DropOnDestroyed",
+    "WearNTear",
+    "ZNetView"
+   ],
+   "colliders": {
+    "piece": 2
+   },
+   "solid": true,
+   "solid_note": "",
+   "lights": [],
+   "fire": false,
+   "particles": 0,
+   "item": false,
+   "networked": true,
+   "gives": [
+    "DropOnDestroyed"
+   ],
+   "physics": false,
+   "height": 0.67,
+   "upright": "flat",
+   "saved_only": false,
+   "safe": true,
+   "climb": {
+    "ledges": [
+     [
+      0.4,
+      0.8
+     ]
+    ],
+    "top": 0.8,
+    "top_skilled": 0.8
+   },
+   "render": "palettes/dvergrprops_bed.png"
+  },
+  {
+   "prefab": "dvergrprops_pickaxe",
+   "role": "prop",
+   "look": "a pickaxe leaning",
+   "mount": "ground",
+   "scale": [
+    0.5,
+    2
+   ],
+   "tier": 6,
+   "notes": "its 'item'-layer collider is made solid by the Builder (BuildSolid.cs); as scenery its Destructible, DropOnDestroyed is stripped: it gives nothing; climbable: a player can stand 0.8 m above its foot (at scale 1; 0.8 m with Jump skill 100), so it's a stepping stone to a level up to about 2.4 m above its foot (3.9 m with Jump 100)",
+   "exists": true,
+   "size": [
+    0.9,
+    0.83,
+    0.16
+   ],
+   "min": [
+    0.55,
+    -0.13,
+    -0.08
+   ],
+   "max": [
+    1.44,
+    0.7,
+    0.08
+   ],
+   "origin": "foot",
+   "hollow": false,
+   "sets": [
+    "workshop"
+   ],
+   "kinds": [
+    "Destructible",
+    "DropOnDestroyed",
+    "ZNetView"
+   ],
+   "colliders": {
+    "item": 1
+   },
+   "solid": true,
+   "solid_note": "its 'item'-layer collider is made solid by the Builder (BuildSolid.cs)",
+   "lights": [],
+   "fire": false,
+   "particles": 0,
+   "item": false,
+   "networked": true,
+   "gives": [
+    "Destructible",
+    "DropOnDestroyed"
+   ],
+   "physics": false,
+   "height": 0.83,
+   "upright": "upright",
+   "saved_only": false,
+   "safe": true,
+   "climb": {
+    "ledges": [
+     [
+      0.6,
+      0.8
+     ]
+    ],
+    "top": 0.8,
+    "top_skilled": 0.8
+   },
+   "render": "palettes/dvergrprops_pickaxe.png"
+  },
+  {
+   "prefab": "CreepProp_hanging01",
+   "role": "decor",
+   "look": "Mistlands creep hanging from a ceiling",
+   "mount": "hang",
+   "scale": [
+    0.5,
+    2
+   ],
+   "tier": 6,
+   "notes": "as scenery its Destructible is stripped: it gives nothing",
+   "exists": true,
+   "size": [
+    0.37,
+    2.11,
+    4.69
+   ],
+   "min": [
+    -0.18,
+    0.08,
+    -2.37
+   ],
+   "max": [
+    0.18,
+    2.19,
+    2.32
+   ],
+   "origin": "foot",
+   "hollow": false,
+   "kinds": [
+    "Destructible",
+    "ZNetView"
+   ],
+   "colliders": {
+    "Default": 1
+   },
+   "solid": true,
+   "solid_note": "",
+   "lights": [],
+   "fire": false,
+   "particles": 1,
+   "item": false,
+   "networked": true,
+   "gives": [
+    "Destructible"
+   ],
+   "physics": false,
+   "height": 2.11,
+   "upright": "upright",
+   "saved_only": false,
+   "safe": true,
+   "climb": {
+    "ledges": [],
+    "top": 0.0,
+    "top_skilled": 0.0
+   },
+   "render": "palettes/CreepProp_hanging01.png"
+  },
+  {
+   "prefab": "CreepProp_wall01",
+   "role": "decor",
+   "look": "Mistlands creep on a wall",
+   "mount": "wall",
+   "scale": [
+    0.5,
+    2
+   ],
+   "tier": 6,
+   "notes": "its light range, fade distance and fire grow with its scale (BuildScale.cs)",
+   "exists": true,
+   "size": [
+    2.58,
+    3.04,
+    0.35
+   ],
+   "min": [
+    -1.36,
+    -1.51,
+    -0.27
+   ],
+   "max": [
+    1.22,
+    1.53,
+    0.07
+   ],
+   "origin": "centre",
+   "hollow": false,
+   "kinds": [
+    "LightLod",
+    "ZNetView"
+   ],
+   "colliders": {
+    "Default": 1
+   },
+   "solid": true,
+   "solid_note": "",
+   "lights": [
+    {
+     "range": 5.0,
+     "intensity": 1.0,
+     "colour": "#ff0000",
+     "lit": false,
+     "lod": true
+    }
+   ],
+   "fire": false,
+   "particles": 0,
+   "item": false,
+   "networked": true,
+   "gives": [],
+   "physics": false,
+   "height": 3.04,
+   "upright": "upright",
+   "saved_only": false,
+   "safe": true,
+   "climb": {
+    "ledges": [],
+    "top": 0.0,
+    "top_skilled": 0.0
+   },
+   "render": "palettes/CreepProp_wall01.png"
+  },
+  {
+   "prefab": "YggdrasilRoot",
+   "role": "decor",
+   "look": "a great Yggdrasil root, 44 m long",
+   "mount": "ground",
+   "scale": [
+    0.05,
+    0.5
+   ],
+   "tier": 6,
+   "notes": "climbable: a player can stand 15.0 m above its foot (at scale 1; 15.0 m with Jump skill 100), so it's a stepping stone to a level up to about 16.6 m above its foot (18.1 m with Jump 100)",
+   "exists": true,
+   "size": [
+    43.9,
+    15.28,
+    17.71
+   ],
+   "min": [
+    -25.13,
+    -11.07,
+    -11.2
+   ],
+   "max": [
+    18.77,
+    4.21,
+    6.51
+   ],
+   "origin": "inside",
+   "hollow": false,
+   "kinds": [
+    "ZNetView"
+   ],
+   "colliders": {
+    "static_solid": 1
+   },
+   "solid": true,
+   "solid_note": "",
+   "lights": [],
+   "fire": false,
+   "particles": 0,
+   "item": false,
+   "networked": true,
+   "gives": [],
+   "physics": false,
+   "height": 15.28,
+   "upright": "flat",
+   "saved_only": false,
+   "safe": true,
+   "climb": {
+    "ledges": [
+     [
+      0.4,
+      0.6
+     ],
+     [
+      1.2,
+      1.4
+     ],
+     [
+      1.6,
+      1.8
+     ],
+     [
+      2.2,
+      2.4
+     ],
+     [
+      2.8,
+      3.2
+     ],
+     [
+      3.4,
+      4.0
+     ],
+     [
+      4.8,
+      5.4
+     ],
+     [
+      6.0,
+      6.2
+     ],
+     [
+      6.4,
+      6.6
+     ],
+     [
+      7.2,
+      8.4
+     ],
+     [
+      8.6,
+      9.6
+     ],
+     [
+      9.8,
+      11.4
+     ],
+     [
+      11.6,
+      12.0
+     ],
+     [
+      12.4,
+      15.0
+     ]
+    ],
+    "top": 15.0,
+    "top_skilled": 15.0
+   },
+   "render": "palettes/YggdrasilRoot.png"
+  }
+ ],
+ "roles": {
+  "wall": {
+   "pieces": [
+    "piece_dvergr_metal_wall_2x2",
+    "blackmarble_tile_wall_2x2"
+   ],
+   "how": "a floor slab stood up: euler (-90, side yaw, 0), its top face inwards (dungeon_parts.wall); a wall piece (tile wall, metal wall, timber wall) stands as it is, turned by yaw"
+  },
+  "wall_alt": {
+   "pieces": [
+    "dvergrtown_wood_wall01",
+    "dvergrtown_wood_wall02",
+    "dvergrtown_wood_wall03",
+    "dvergrprops_wood_wall",
+    "blackmarble_tile_wall_2x4"
+   ],
+   "how": "as wall"
+  },
+  "floor": {
+   "pieces": [
+    "blackmarble_tile_floor_2x2",
+    "blackmarble_floor",
+    "dvergrprops_wood_floor"
+   ],
+   "how": "flat as it is; most slabs have their origin in their middle (see each piece's origin and min/max)"
+  },
+  "ceiling": {
+   "pieces": [
+    "blackmarble_floor",
+    "dvergrprops_wood_floor"
+   ],
+   "how": "a floor slab turned over: euler (180, 0, 0) (dungeon_parts.slab with ceiling=True); its origin is in the slab's middle"
+  },
+  "trim": {
+   "pieces": [
+    "blackmarble_2x1x1",
+    "blackmarble_out_1",
+    "blackmarble_base_1",
+    "blackmarble_tip",
+    "blackmarble_head01"
+   ]
+  },
+  "pillar": {
+   "pieces": [
+    "blackmarble_column_3",
+    "dvergrtown_wood_pole",
+    "blackmarble_2x2x2"
+   ]
+  },
+  "column": {
+   "pieces": [
+    "blackmarble_column_1",
+    "blackmarble_column_2",
+    "blackmarble_post01",
+    "piece_dvergr_pole",
+    "dvergrprops_wood_pole"
+   ]
+  },
+  "beam": {
+   "pieces": [
+    "dvergrtown_wood_beam",
+    "dvergrprops_wood_beam",
+    "dvergrtown_wood_support"
+   ]
+  },
+  "rail": {
+   "pieces": []
+  },
+  "grate": {
+   "pieces": []
+  },
+  "door_leaf": {
+   "pieces": [
+    "dvergrtown_slidingdoor",
+    "piece_dvergr_wood_door",
+    "dvergrtown_secretdoor"
+   ],
+   "how": "as scenery it doesn't open: Pack.doors (saved, at joints) or a gate mechanism moves it"
+  },
+  "stair": {
+   "pieces": [
+    "blackmarble_stair",
+    "dvergrprops_wood_stair",
+    "blackmarble_stair_corner"
+   ],
+   "how": "keep scale 1 (step height); stack or repeat for a wider or longer stair"
+  },
+  "stair_spiral": {
+   "pieces": [
+    "piece_dvergr_spiralstair",
+    "piece_dvergr_spiralstair_right"
+   ],
+   "how": "keep scale 1"
+  },
+  "light_stand": {
+   "pieces": [
+    "dvergrprops_lantern_standing",
+    "piece_dvergr_lantern_pole",
+    "dverger_demister_large",
+    "blackmarble_altar_crystal"
+   ]
+  },
+  "light_hang": {
+   "pieces": [
+    "dvergrprops_lantern",
+    "dverger_demister"
+   ],
+   "how": "hang it from the first part above it (ceiling, balcony, a mechanism's lid) on the theme's chain, the chain's foot on the light's top: giant, a thinned Morkhalla_WallChain1 (giant_kit.wisp); Dvergr, dvergrprops_lantern on dvergrprops_hooknchain. Stood at a point it floats (dverger_demister's mesh is below its origin)"
+  },
+  "light_wall": {
+   "pieces": [
+    "piece_dvergr_lantern"
+   ],
+   "how": "against a wall, its back to it"
+  },
+  "gear": {
+   "pieces": [],
+   "how": "CharredCogwheel is an item: the Builder makes it solid with a disc collider; scale it up, never make it a Saved part"
+  },
+  "machine": {
+   "pieces": [
+    "dvergrtown_wood_crane",
+    "dvergrtown_wood_support"
+   ]
+  },
+  "chain": {
+   "pieces": [
+    "dvergrprops_hooknchain"
+   ],
+   "how": "a wall chain hangs from its anchor at the top; a span rests on two anchors"
+  },
+  "chest": {
+   "pieces": [
+    "TreasureChest_dvergr_loose_stone",
+    "TreasureChest_dvergrtown"
+   ],
+   "how": "Saved parts only, scale 1: the Builder refills them from the pack's loot for the biome"
+  },
+  "decor_small": {
+   "pieces": [
+    "dvergrprops_crate",
+    "dvergrprops_barrel",
+    "dvergrprops_stool",
+    "dvergrprops_pickaxe",
+    "dvergrprops_chair"
+   ],
+   "how": "pick by the room's dressing set (each piece's \"sets\")"
+  },
+  "decor_large": {
+   "pieces": [
+    "dvergrprops_table",
+    "dvergrprops_shelf",
+    "dvergrprops_bed",
+    "dvergrprops_crate_long",
+    "piece_blackmarble_table",
+    "piece_blackmarble_bench",
+    "dvergrprops_banner",
+    "dvergrprops_curtain"
+   ],
+   "how": "pick by the room's dressing set (each piece's \"sets\")"
+  },
+  "rubble": {
+   "pieces": [
+    "blackmarble_pile",
+    "dvergrtown_wood_stakewall"
+   ]
+  },
+  "bones": {
+   "pieces": [],
+   "how": "giant bones are huge (a skull is 10 x 12 x 17 m): scale them down for human-scale rooms"
+  }
+ },
+ "by_role": {
+  "wall": [
+   "piece_dvergr_metal_wall_2x2",
+   "blackmarble_tile_wall_2x2"
+  ],
+  "wall_alt": [
+   "dvergrtown_wood_wall01",
+   "dvergrtown_wood_wall02",
+   "dvergrtown_wood_wall03",
+   "dvergrprops_wood_wall",
+   "blackmarble_tile_wall_2x4"
+  ],
+  "floor": [
+   "blackmarble_tile_floor_2x2",
+   "blackmarble_floor",
+   "dvergrprops_wood_floor"
+  ],
+  "ceiling": [
+   "blackmarble_floor",
+   "dvergrprops_wood_floor"
+  ],
+  "trim": [
+   "blackmarble_2x1x1",
+   "blackmarble_out_1",
+   "blackmarble_base_1",
+   "blackmarble_tip",
+   "blackmarble_head01"
+  ],
+  "pillar": [
+   "blackmarble_column_3",
+   "dvergrtown_wood_pole",
+   "blackmarble_2x2x2"
+  ],
+  "column": [
+   "blackmarble_column_1",
+   "blackmarble_column_2",
+   "blackmarble_post01",
+   "piece_dvergr_pole",
+   "dvergrprops_wood_pole"
+  ],
+  "beam": [
+   "dvergrtown_wood_beam",
+   "dvergrprops_wood_beam",
+   "dvergrtown_wood_support"
+  ],
+  "rail": [],
+  "grate": [],
+  "door_leaf": [
+   "dvergrtown_slidingdoor",
+   "piece_dvergr_wood_door",
+   "dvergrtown_secretdoor"
+  ],
+  "stair": [
+   "blackmarble_stair",
+   "dvergrprops_wood_stair",
+   "blackmarble_stair_corner"
+  ],
+  "stair_spiral": [
+   "piece_dvergr_spiralstair",
+   "piece_dvergr_spiralstair_right"
+  ],
+  "light_stand": [
+   "dvergrprops_lantern_standing",
+   "piece_dvergr_lantern_pole",
+   "dverger_demister_large",
+   "blackmarble_altar_crystal"
+  ],
+  "light_hang": [
+   "dvergrprops_lantern",
+   "dverger_demister"
+  ],
+  "light_wall": [
+   "piece_dvergr_lantern"
+  ],
+  "gear": [],
+  "machine": [
+   "dvergrtown_wood_crane",
+   "dvergrtown_wood_support"
+  ],
+  "chain": [
+   "dvergrprops_hooknchain"
+  ],
+  "chest": [
+   "TreasureChest_dvergr_loose_stone",
+   "TreasureChest_dvergrtown"
+  ],
+  "decor_small": [
+   "dvergrprops_crate",
+   "dvergrprops_barrel",
+   "dvergrprops_stool",
+   "dvergrprops_pickaxe",
+   "dvergrprops_chair"
+  ],
+  "decor_large": [
+   "dvergrprops_table",
+   "dvergrprops_shelf",
+   "dvergrprops_bed",
+   "dvergrprops_crate_long",
+   "piece_blackmarble_table",
+   "piece_blackmarble_bench",
+   "dvergrprops_banner",
+   "dvergrprops_curtain"
+  ],
+  "rubble": [
+   "blackmarble_pile",
+   "dvergrtown_wood_stakewall"
+  ],
+  "bones": []
+ }
+}

@@ -199,6 +199,8 @@ Levers and exits get an invisible aim box 0.3 m bigger than their parts, and E f
   bar and `name`, taking 1/`health` of each hit. Each phase fires its wires and brings `adds` once, as its health passes `at` (a
   fraction between 0 and 1). On its death: the clear wires, the warden's trophy dropped where it fell, the vault moment and every
   player's vault reward. A room tagged `boss` also gets a boss chest with a trophy: use one or the other in a dungeon, or there are two.
+  **The boss toolkit** adds `title`, `fight`, `trophy`, `scale`, `mini`, `perPlayer`, `armour`, `armourOff`, `unstick`, `look`, `intro`, `death`,
+  `abilities` and `weakTo`, and on phases `use`, `leap`, `enrage`, `banner`, `message`, `sound`, `shake`, `healTo` and `shield` (with `times`): bosses.md.
 - `level`, `eliteLevel`: the game's levels (1 = no star), capped to the land.
 - The state is saved on the entrance (it survives a relog); its creatures are counted by a tag, never by ZDOID.
 - `dungeon set <key> 0|1|2`: idle, start, cleared.
@@ -218,7 +220,11 @@ than `step:`); an unknown `do`; `hold` on anything but a plate; `start` on anyth
 `once` with a `next` or `hold` wire; `cycleIn` without `cycle` or naming a state it hasn't; an empty `spinScale`; a machine that joins or
 closes a doorway; an encounter wave role other than melee, ranged, flying or elite; waves or a boss with no `points`; a point outside its
 area or its room; a boss together with waves; a boss phase outside 0..1; a lock that isn't a gate, door or platform; `holdBy` that isn't a
-plate, `lockLever` that isn't a lever in the room.
+plate, `lockLever` that isn't a lever in the room. And for a boss (`PackReaderBoss.cs`): an unknown ability kind; a beat, ability or
+shield wire to a mechanism not in the room, doing anything but `next` or `set:n`, or `set:n` past its states; phases not in falling order;
+a shield with no `seconds`, or one nothing breaks; an armoured boss with no `weakTo` that breaks it; an intro over 30 s, waking after its
+end, or leaping before it wakes; a `scale` outside 0.5-3 or an `enrage` outside 1-2; a leap or summon point outside the room; a warning
+under 0.5 s; a `healTo` at or below its phase's `at`, or above 1; across the pack, a final boss that doesn't take at least twice as long as every mini boss (bosses.md).
 
 ## Enemies
 

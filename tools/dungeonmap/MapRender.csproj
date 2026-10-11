@@ -29,6 +29,8 @@
     <Compile Include="$(ModDir)/TriggerModel.cs" Link="Mod/TriggerModel.cs" />
     <Compile Include="$(ModDir)/PackReaderTriggers.cs" Link="Mod/PackReaderTriggers.cs" />
     <Compile Include="$(ModDir)/TriggerSolve.cs" Link="Mod/TriggerSolve.cs" />
+    <Compile Include="$(ModDir)/BossModel.cs" Link="Mod/BossModel.cs" />
+    <Compile Include="$(ModDir)/PackReaderBoss.cs" Link="Mod/PackReaderBoss.cs" />
     <Compile Include="$(ModDir)/MapLayout.cs" Link="Mod/MapLayout.cs" />
     <Compile Include="$(ModDir)/MapDraw.cs" Link="Mod/MapDraw.cs" />
   </ItemGroup>

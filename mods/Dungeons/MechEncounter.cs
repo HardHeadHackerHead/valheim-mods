@@ -162,7 +162,7 @@ namespace Dungeons
             m.EncAlive = 0;
             m.EncNextSpawn = 0f;
             WriteEncounter(m, new EncounterRecord { State = EncounterRecord.Fighting, Wave = 0, Kills = e.Boss != null ? 1 : 0, Time = MechClock.Now, Before = before.ToString() }, "started (" + why + ")");
-            if (e.Boss != null) SpawnBoss(m);
+            if (e.Boss != null) BossStart(m);   // (the boss toolkit: BossFight.cs)
             else if (e.Siege <= 0 && e.Waves.Count > 0) SpawnWave(m, 0);
             return true;
         }
@@ -204,6 +204,7 @@ namespace Dungeons
                 v.ClaimOwnership();
                 ZNetScene.instance.Destroy(c.gameObject);
             }
+            if (m.Def.Encounter.Boss != null) BossReset(m);
             if (r.State == EncounterRecord.Fighting)
             {
                 var pending = new Dictionary<Mech, int>();
@@ -225,6 +226,7 @@ namespace Dungeons
                     return true;
                 case EncounterRecord.Cleared:
                     foreach (Character c in Spawned(m)) { c.GetComponent<ZNetView>()?.ClaimOwnership(); ZNetScene.instance.Destroy(c.gameObject); }
+                    if (m.Def.Encounter.Boss != null) BossReset(m);
                     if (EncounterOf(m).State != EncounterRecord.Fighting) WriteEncounter(m, new EncounterRecord { State = EncounterRecord.Fighting, Time = MechClock.Now, Before = "" }, "set");
                     ClearEncounter(m, "the set command");
                     return true;
@@ -276,86 +278,7 @@ namespace Dungeons
             return made;
         }
 
-        // ---- the boss
-
-        private static readonly int BossTag = "quaddungeon_boss".GetStableHashCode();     // string on the boss's ZDO: its name (a $ key)
-        private static readonly int BossX = "quaddungeon_bossx".GetStableHashCode();      // float: it takes 1/this of each hit
-
-        /// <summary>The boss: the land's elite (or its role) at the level cap, at the first point, made a boss on every game (Character.m_boss:
-        /// the game's boss bar with its name, for everyone near) and harder to kill (Dungeons_BossDamage).</summary>
-        private void SpawnBoss(Mech m)
-        {
-            BossDef b = m.Def.Encounter.Boss;
-            if (Site.Built == null || m.Def.Encounter.Points.Count == 0) { WarnOnce($"Encounter {m.Key}: a boss with no points"); return; }
-            var rng = new System.Random(unchecked(Site.Seed * 31 + m.Key.GetStableHashCode()));
-            GameObject prefab = Builder.EncounterCreature(Site.Built, string.IsNullOrEmpty(b.Role) ? "elite" : b.Role, rng, out _);
-            if (prefab == null) { WarnOnce($"Encounter {m.Key}: no creature fits its boss here"); return; }
-            Vector3 at = RoomPoint(m, m.Def.Encounter.Points[0]) + Vector3.up * 0.2f;
-            GameObject go = Spawn(m, prefab, at, Builder.LevelCapOf(Site.Built));
-            if (go == null) return;
-            ZDO z = go.GetComponent<ZNetView>()?.GetZDO();
-            z?.Set(BossTag, string.IsNullOrEmpty(b.Name) ? prefab.GetComponent<Character>()?.m_name ?? "" : b.Name);
-            z?.Set(BossX, Mathf.Max(1f, b.Health));
-            MakeBoss(go.GetComponent<Character>(), z);
-            Plugin.Log.LogInfo($"Dungeon {Site.Id}: encounter {m.Key}: its boss is {prefab.name} ({b.Name}, x{b.Health:0.#} health)");
-        }
-
-        /// <summary>The owner: the boss's trophy (Builder's reward item) where it fell (or at its point after a relog), a saved item.</summary>
-        private void DropTrophy(Mech m)
-        {
-            GameObject trophy = Builder.RewardItem(Builder.TrophyItem);
-            if (trophy == null) { WarnOnce("The boss's trophy item isn't registered: no trophy"); return; }
-            Vector3 at = m.BossLast != Vector3.zero ? m.BossLast : RoomPoint(m, m.Def.Encounter.Points.Count > 0 ? m.Def.Encounter.Points[0] : Vector3.zero);
-            try { Object.Instantiate(trophy, at + Vector3.up * 1f, Quaternion.identity); }
-            catch (Exception e) { WarnOnce("Dropping the boss's trophy: " + e.Message); }
-        }
-
-        /// <summary>A character whose ZDO says it's one of our bosses: the game's boss (its bar) with our name. On every game, when it wakes.</summary>
-        public static void MakeBoss(Character c, ZDO z)
-        {
-            if (c == null || z == null) return;
-            string name = z.GetString(BossTag);
-            if (string.IsNullOrEmpty(name)) return;
-            c.m_boss = true;
-            c.m_name = name;
-        }
-
-        /// <summary>How much harder our boss is to kill (1: an ordinary creature).</summary>
-        public static float BossToughness(ZDO z) => z == null ? 1f : Mathf.Max(1f, z.GetFloat(BossX, 1f));
-
-        private bool IsBoss(Character c)
-        {
-            ZDO z = c.GetComponent<ZNetView>()?.GetZDO();
-            return z != null && !string.IsNullOrEmpty(z.GetString(BossTag));
-        }
-
-        /// <summary>The boss's fight, each tick: its phases as its health falls, cleared when it's dead.</summary>
-        private void TickBoss(Mech m, EncounterRecord r, List<Character> alive)
-        {
-            BossDef b = m.Def.Encounter.Boss;
-            Character boss = alive.FirstOrDefault(IsBoss);
-            if (boss == null)
-            {
-                if (r.Kills <= 0) return;
-                DropTrophy(m);
-                ClearEncounter(m, "its boss is dead");
-                return;
-            }
-            m.BossLast = boss.transform.position;
-            float health = boss.GetHealthPercentage();
-            while (r.Wave < b.Phases.Count && health <= b.Phases[r.Wave].At)
-            {
-                BossPhase phase = b.Phases[r.Wave];
-                var pending = new Dictionary<Mech, int>();
-                int Cur(Mech x) => pending.TryGetValue(x, out int s) ? s : StateOf(x);
-                if (phase.Wires.Count > 0) ApplyWires(m, pending, Cur, false, true, phase.Wires);
-                if (pending.Count > 0) Change(pending.ToList(), $"encounter {m.Key}: its boss's phase {r.Wave + 1}");
-                if (phase.Adds.Count > 0) SpawnRoles(m, phase.Adds, 0, $"boss phase {r.Wave + 1}");
-                r.Wave++;
-                r.Time = MechClock.Now;
-                WriteEncounter(m, r, $"its boss at {health:P0}: phase {r.Wave}");
-            }
-        }
+        // ---- the boss: BossFight.cs (its record, intro, phases, shields, abilities), BossShow.cs (every game), BossBody.cs
 
         private GameObject Spawn(Mech m, GameObject prefab, Vector3 at, int level)
         {
@@ -406,7 +329,7 @@ namespace Dungeons
             else if (m.EncEmptySince < 0f) m.EncEmptySince = Time.time;
             else if (Time.time - m.EncEmptySince > WipeAfter) { ResetEncounter(m, $"nobody in it for {WipeAfter:0} s"); return; }
 
-            if (e.Boss != null) { TickBoss(m, r, Spawned(m)); return; }
+            if (e.Boss != null) { BossTick(m, r, Spawned(m)); return; }   // (BossFight.cs)
 
             // guard mode: cleared when nothing is alive in the area
             if (e.Waves.Count == 0)
@@ -489,11 +412,10 @@ namespace Dungeons
                 if (first || MechClock.Now - r.Time > 2.0) continue;
                 bool here = p != null && InArea(m, p.transform.position);
                 BossDef boss = m.Def.Encounter.Boss;
-                string bossName = boss != null && Localization.instance != null ? Localization.instance.Localize(boss.Name ?? "") : "";
                 if (r.State == EncounterRecord.Fighting)
                 {
                     int waves = Math.Max(1, m.Def.Encounter.Waves.Count);
-                    if (boss != null) { if (here && r.Wave == 0) p.Message(MessageHud.MessageType.Center, T("dungeons_boss_awakens", bossName)); }
+                    if (boss != null) BossNotices(m, r, here, p);   // (BossShow.cs)
                     else if (here) p.Message(MessageHud.MessageType.Center, r.Wave == 0 ? T("dungeons_fight_start") : T("dungeons_fight_wave", r.Wave + 1, waves));
                 }
                 else if (r.State == EncounterRecord.Cleared)
@@ -501,16 +423,7 @@ namespace Dungeons
                     PlayAt(UnlockClunk, m.WorldPos);
                     PlayAt(UnlockChime, m.WorldPos);
                     foreach (string id in m.Def.Encounter.Lock) { Mech l = Sibling(m, id); if (l != null) PlayAt(UnlockChime, l.WorldPos); }
-                    if (boss != null)
-                    {
-                        // the vault moment, for everyone inside the dungeon
-                        if (p != null && Site.Contains(p.transform.position))
-                        {
-                            PlayAt(VaultSolved, p.transform.position + Vector3.up);
-                            p.Message(MessageHud.MessageType.Center, T("dungeons_boss_defeated", bossName));
-                            VaultReward.Give(Site);
-                        }
-                    }
+                    if (boss != null) BossNotices(m, r, here, p);   // (the vault moment, for everyone inside the dungeon: BossShow.cs)
                     else if (here) p.Message(MessageHud.MessageType.Center, T("dungeons_fight_clear"));
                 }
             }

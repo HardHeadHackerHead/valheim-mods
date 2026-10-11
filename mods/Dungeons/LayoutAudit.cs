@@ -182,7 +182,7 @@ namespace Dungeons
             {
                 MechDef e = Layouts.Mech(l, key, out int room);
                 var s0 = new Dictionary<string, int>(state);
-                var wires = (e.Encounter?.Boss?.Phases.SelectMany(p => p.Wires) ?? Enumerable.Empty<Wire>()).Concat(e.Wires);
+                var wires = (e.Encounter?.Boss?.AllWires() ?? Enumerable.Empty<Wire>()).Concat(e.Wires);
                 foreach (Wire w in wires) if (w.Do != "hold") Act(Layouts.Target(l, room, w), w.Do);
                 Into(key, s0);
             }

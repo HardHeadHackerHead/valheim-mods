@@ -15,7 +15,7 @@ using Object = UnityEngine.Object;
 namespace Dungeons
 {
     /// <summary>
-    /// `dungeon tour [id] [rooms] [views]`: pictures of every room of a built dungeon, for whoever makes a pack (an AI among them) to see what
+    /// `dungeon tour [id] [rooms] [views] [bright]`: pictures of every room of a built dungeon, for whoever makes a pack (an AI among them) to see what
     /// it built, taken by the CAMERA ONLY. The player is never moved, held or teleported (moving them has killed them), so it works with
     /// them standing outside: the dungeon is built on this game while its entrance is loaded.
     ///
@@ -26,10 +26,13 @@ namespace Dungeons
     /// braziers near the view switched on as the game's light LOD switches on lights near a player (it measures from the player, who may be
     /// far below). All of it is put back in the same instant. One picture a frame.
     ///
-    /// Views per room: 1 from the doorway it's entered by (the one towards the entrance), 1.5 m in, at head height and a little above,
-    /// looking at the room's far middle; 2 across, from the far side looking back; 3 and on from its other doorways, and for a room two or
+    /// Views per room: 1 from the doorway it's entered by (the one towards the entrance): on the room's centrepiece if it has one (a boss
+    /// arena, a fight, a chest, a pedestal, the way out...: near enough to fill the picture, from a little above), else 1.5 m in, at head
+    /// height and a little above, looking at the room's far middle; 2 across, from the far side looking back; 3 and on from its other doorways, and for a room two or
     /// more floors tall, from high up looking down. Pictures go to BepInEx/claude/shots/tour/&lt;pack&gt;-&lt;seed&gt;/&lt;room&gt;-&lt;n&gt;.png
-    /// with tour.json beside them (each picture's room, camera and target).
+    /// with tour.json beside them (each picture's room, camera and target). "bright" lights the pictures more than the game does (the ambient
+    /// raised to a grey dusk, the fog thinned, a soft light at the camera), so shapes, gaps and floating props show in a dark room: its
+    /// files end in "-bright" and tour.json says so. Left out, the pictures are as the game draws them.
     /// </summary>
     internal static class DungeonTour
     {
@@ -68,12 +71,15 @@ namespace Dungeons
             MapLayout map = DungeonMap.MapOf(site.Layout);
             int views = 2;
             string roomsArg = "all";
+            bool roomsGiven = false, bright = false;
             foreach (string a in rest)
             {
+                if (a.Equals("bright", StringComparison.OrdinalIgnoreCase)) { bright = true; continue; }
                 if (a.StartsWith("views=")) { int.TryParse(a.Substring(6), out views); continue; }
-                if (a.StartsWith("rooms=")) { roomsArg = a.Substring(6); continue; }
-                if (int.TryParse(a, out int n) && roomsArg != "all" && n > 0 && n <= 8) { views = n; continue; }
+                if (a.StartsWith("rooms=")) { roomsArg = a.Substring(6); roomsGiven = true; continue; }
+                if (roomsGiven && int.TryParse(a, out int n) && n > 0 && n <= 8) { views = n; continue; }
                 roomsArg = a;
+                roomsGiven = true;
             }
             views = Mathf.Clamp(views, 1, 6);
             List<int> rooms = Rooms(site.Layout, map, roomsArg, out string bad);
@@ -95,13 +101,14 @@ namespace Dungeons
                     {
                         yield return new WaitForEndOfFrame();
                         if (site.Gone || !site.Ready) { error("the dungeon was taken down during the tour"); yield break; }
-                        string file = Path.Combine(dir, $"{room:00}-{Clean(r.Def.Name)}-{k + 1}.png");
-                        string why = Shoot(site, cam, list[k], file);
+                        string file = Path.Combine(dir, $"{room:00}-{Clean(r.Def.Name)}-{k + 1}{(bright ? "-bright" : "")}.png");
+                        string why = Shoot(site, cam, list[k], file, bright);
                         if (why != null) { problems.Add($"{room} {r.Def.Name} view {k + 1}: {why}"); continue; }
                         shots.Add(new JObject
                         {
                             ["file"] = Path.GetFileName(file), ["room"] = room, ["name"] = r.Def.Name, ["view"] = list[k].What,
                             ["camera"] = V(list[k].At - site.Origin), ["target"] = V(list[k].Target - site.Origin),
+                            ["bright"] = bright,
                         });
                     }
                 }
@@ -115,6 +122,8 @@ namespace Dungeons
                 ["pictures"] = shots.Count,
                 ["player"] = site.Contains(p.transform.position) ? "inside (not moved)" : "outside (not moved)",
                 ["environment"] = EnvOf(site)?.m_name ?? "(the game's current one)",
+                ["lighting"] = bright ? "bright: brighter than in the game (ambient raised, fog thinned, a light at the camera), to see shapes; not how it looks"
+                                      : "as in the game",
             };
             if (problems.Count > 0) summary["problems"] = problems;
             try { File.WriteAllText(Path.Combine(dir, "tour.json"), new JObject { ["summary"] = summary.DeepClone(), ["shots"] = shots }.ToString(Formatting.Indented)); }
@@ -182,10 +191,29 @@ namespace Dungeons
                 Vector3 into = r.DoorwayFacing(d); into.y = 0f; into = into.sqrMagnitude > 0.01f ? into.normalized : Vector3.forward;
                 Vector3 at = r.DoorwayPos(d) + into * Inward;
                 at.y = r.DoorwayPos(d).y - 1f + Eye;
-                first = at;
-                // looking at the far middle: past the room's centre, a little down
-                Vector3 far = Inside(middle + into * Mathf.Min(box.extents.x, box.extents.z) * 0.5f, 1f);
-                views.Add(new View { At = o + at, Target = o + far, What = "from the doorway " + r.Def.Doorways[d].Id });
+                if (Focus(site.Layout, map, room, floorY, out Vector3 focus, out string what))
+                {
+                    // the room's centrepiece (a boss arena, a chest, a pedestal...): from the doorway's side, near enough to fill the picture
+                    // with it, a little above, looking down at it
+                    Vector3 way = focus - at; way.y = 0f;
+                    float dist = way.magnitude;
+                    if (dist > 0.5f)
+                    {
+                        float keep = Mathf.Clamp(dist * 0.55f, 5f, 10f);
+                        at += way / dist * Mathf.Max(0f, dist - keep);
+                    }
+                    at = Inside(at, Inward);
+                    at.y = floorY + Eye + 1.4f;
+                    first = at;
+                    views.Add(new View { At = o + at, Target = o + focus, What = $"from the doorway {r.Def.Doorways[d].Id}'s side, on the {what}" });
+                }
+                else
+                {
+                    first = at;
+                    // looking at the far middle: past the room's centre, a little down
+                    Vector3 far = Inside(middle + into * Mathf.Min(box.extents.x, box.extents.z) * 0.5f, 1f);
+                    views.Add(new View { At = o + at, Target = o + far, What = "from the doorway " + r.Def.Doorways[d].Id });
+                }
             }
             else views.Add(new View { At = o + Inside(box.center + Vector3.back * box.extents.z, Inward) + Vector3.up * (floorY + Eye - box.center.y), Target = o + middle, What = "from the south wall" });
 
@@ -223,11 +251,37 @@ namespace Dungeons
             return views.Take(count).ToList();
         }
 
+        /// <summary>A room's centrepiece, if it has one (dungeon frame, a metre above its floor): a fight's arena (a boss's first), then a
+        /// chest (a saved part named like one), a pedestal, the way out. What it is, for the view's name.</summary>
+        private static bool Focus(Layout layout, MapLayout map, int room, float floorY, out Vector3 at, out string what)
+        {
+            at = default;
+            what = null;
+            PlacedRoom r = layout.Rooms[room];
+            // (not levers, plates or braziers: on a wall or in a corner, framing one leaves the room out)
+            int Rank(MechDef m) => m.Encounter?.Boss != null ? 0 : m.Kind == "encounter" ? 1 : m.Kind == "pedestal" ? 3 : m.Kind == "exit" ? 4 : 99;
+            MechDef best = r.Def.Mechs.Where(m => Rank(m) < 99).OrderBy(Rank).FirstOrDefault();
+            PartDef chest = r.Def.Parts?.FirstOrDefault(pt => pt.Saved && (pt.Prefab ?? "").IndexOf("chest", StringComparison.OrdinalIgnoreCase) >= 0);
+            if (best != null && (Rank(best) <= 1 || chest == null))
+            {
+                at = map.MechAt(room, best);
+                what = best.Encounter?.Boss != null ? "boss arena" : best.Kind == "encounter" ? "fight" : best.Kind;
+            }
+            else if (chest != null)
+            {
+                at = r.Pos + Layouts.Turn(chest.At, MapLayout.Quarter(r.Yaw));
+                what = "chest";
+            }
+            else return false;
+            at.y = floorY + 1f;
+            return true;
+        }
+
         // ---- one picture
 
         /// <summary>The game's camera at a view, drawn once into a picture with the dungeon lit as inside, then everything put back as it
         /// was. Null when it worked, else why not.</summary>
-        private static string Shoot(Site site, Camera cam, View view, string file)
+        private static string Shoot(Site site, Camera cam, View view, string file, bool bright)
         {
             Transform t = cam.transform;
             Vector3 pos = t.position;
@@ -238,14 +292,16 @@ namespace Dungeons
             RenderTexture rt = RenderTexture.GetTemporary(width, height, 24, RenderTextureFormat.ARGB32);
             var lights = new List<LightWas>();
             var canvases = new List<Canvas>();
-            Lighting was = default;
-            bool lit = false;
+            Lighting was = default, was2 = default;
+            bool lit = false, brightened = false;
+            GameObject lamp = null;
             try
             {
                 Vector3 look = view.Target - view.At;
                 t.SetPositionAndRotation(view.At, Quaternion.LookRotation(look.sqrMagnitude > 0.01f ? look : Vector3.forward, Vector3.up));
                 cam.fieldOfView = Fov;
                 lit = LightUp(site, out was);
+                if (bright) { Brighten(out was2); brightened = true; lamp = Lamp(view.At); }
                 Wake(view.At, lights);
                 // interface drawn by this camera (none of the game's is: its HUD is drawn over the screen; another mod's might be)
                 foreach (Canvas ui in Object.FindObjectsByType<Canvas>(FindObjectsSortMode.None))
@@ -275,6 +331,8 @@ namespace Dungeons
                 cam.fieldOfView = fov;
                 t.SetPositionAndRotation(pos, rot);
                 foreach (LightWas l in lights) l.Restore();
+                if (lamp != null) Object.DestroyImmediate(lamp);
+                if (brightened) Unlight(was2);
                 foreach (Canvas ui in canvases) if (ui != null) ui.enabled = true;
                 if (lit) Unlight(was);
                 RenderTexture.ReleaseTemporary(rt);
@@ -368,6 +426,40 @@ namespace Dungeons
             Shader.SetGlobalColor(SunColor, sun.color * sun.intensity);
             Shader.SetGlobalColor(AmbientColor, RenderSettings.ambientLight);
             return true;
+        }
+
+        /// <summary>"bright": the ambient light raised to at least a grey dusk, the fog thinned to a quarter, for one picture (put back with
+        /// Unlight). Not how the game looks: to see the shapes in a dark room.</summary>
+        private static void Brighten(out Lighting was)
+        {
+            Light sun = EnvMan.instance != null ? EnvMan.instance.m_dirLight : null;
+            was = new Lighting
+            {
+                Fog = RenderSettings.fogColor, FogDensity = RenderSettings.fogDensity, Ambient = RenderSettings.ambientLight, Mode = RenderSettings.ambientMode,
+                SunColor = Shader.GetGlobalColor(SunColor), SunFog = Shader.GetGlobalColor(SunFogColor), AmbientGlobal = Shader.GetGlobalColor(AmbientColor),
+                DirColor = sun != null ? sun.color : Color.black, DirIntensity = sun != null ? sun.intensity : 0f, DirMode = sun != null ? sun.renderMode : LightRenderMode.Auto,
+            };
+            Color floor = new Color(0.55f, 0.52f, 0.48f);
+            Color amb = RenderSettings.ambientLight;
+            RenderSettings.ambientMode = AmbientMode.Flat;
+            RenderSettings.ambientLight = new Color(Mathf.Max(amb.r, floor.r), Mathf.Max(amb.g, floor.g), Mathf.Max(amb.b, floor.b));
+            RenderSettings.fogDensity = RenderSettings.fogDensity * 0.25f;
+            Shader.SetGlobalColor(AmbientColor, RenderSettings.ambientLight);
+        }
+
+        /// <summary>"bright": a soft light at the camera (no shadows), for one picture.</summary>
+        private static GameObject Lamp(Vector3 at)
+        {
+            var go = new GameObject("quaddungeon_tourlamp");
+            go.transform.position = at;
+            Light l = go.AddComponent<Light>();
+            l.type = LightType.Point;
+            l.range = 40f;
+            l.intensity = 1.6f;
+            l.color = new Color(1f, 0.95f, 0.88f);
+            l.shadows = LightShadows.None;
+            l.renderMode = LightRenderMode.ForcePixel;
+            return go;
         }
 
         private static void Unlight(Lighting was)

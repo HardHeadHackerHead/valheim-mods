@@ -23,7 +23,8 @@ The plan, in order (each step only through the one before it):
              fourth lever opens the vault's iron gate. Three halls, each with its own corners, levers and start (the layout picks one);
   vault      at the top: the giants' hoard, only joined to the hall's top storey (its own doorway type).
 """
-import argparse, collections, math, os, sys
+import argparse
+import tempfile, collections, math, os, sys
 import numpy as np
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
@@ -31,8 +32,11 @@ from dungeon_parts import Room, Pack, CREATURES, LOOT, yaw_turn, side_point, wal
 from giant_kit import (Shell, STONE, DARK, PILLAR, COLUMN, HEAD, GEAR, BAR, BLOCK, GRATE, CHAINS, DOOR, RAIL, CRYSTAL, TYPE,  # noqa: E402
                        DOOR_W, DOOR_H, WALL, SIDES, facing, door_frame, torch, wisp, brazier, crystal, hang_chain, gear, axle, girder,
                        spawner, stairs, giant_lever, machine, bar, grate_wall)
+from boss_rooms import warden_hall, guardian_room  # noqa: E402  (the boss rooms: boss_rooms.py, dungeon-boss's)
 
 REPO = os.path.abspath(os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", ".."))
+# The shipped pack. (specs/shiftinghalls.toml remakes it from recipes + the giant theme + these signature rooms; that version is made
+# in tools/dungeons/bin/made and replaces this one only after it passes the gate and a tour in the game.)
 OUT = os.path.join(REPO, "mods", "Dungeons", "packs", "shiftinghalls.json")
 VAULT = "quaddungeon_vault"     # the hall's top storey to the Warden's hall: only those two have one
 WARDEN = "quaddungeon_warden"   # the Warden's hall to the vault
@@ -656,37 +660,6 @@ def treasury_ambush():
     return r
 
 
-def guardian_room():
-    """The guardian before the great machine: a long, high hall with room to fight. Step past the threshold and both gates shut;
-    the land's elite at its strongest comes down from the dais; when it falls the way on opens."""
-    s = Shell("guardian", (24, 16, 32), [("in", 2, 0, -7), ("out", 0, 0, -7), ("side", 1, 8.0, -7)], tags=["guardian"], weight=1.0,
-              max=1, min_depth=3)
-    r = s.r
-    r.extra["joinBy"] = ["in"]
-    door_gate(r, "ingate", 2, 16.0, -7, start=1, doorway="in")
-    door_gate(r, "outgate", 0, 16.0, -7, start=0, doorway="out")
-    # a side door, shut until the guardian falls: where the shortcut back to the entrance ends (Layout puts it there or nearby)
-    door_gate(r, "sidegate", 1, 12.0, -7, start=0, doorway="side", open_dir=-1, lateral=8.0)
-    r.fill(DARK, (0, -6.6, 9.5), (10.0, 0.8, 5.0))                                       # the dais it waits on
-    for z in (-10.0, -2.0, 6.0):
-        for x in (-9.0, 9.0):
-            r.stand(PILLAR, (x, -7, z), scale=(0.6, 1.6, 0.6))
-            torch(r, (x * 0.8, -7, z + 2.0))
-    box(r, "giant_helmet2", (-9.5, -5.6, 12.0), (3.0, 2.8, 3.2), yaw=200)
-    r.stand("skull_pile", (9.0, -7, 12.5), scale=(1.6, 1.6, 1.6))
-    r.stand("bone_stack", (-9.6, -7, -13.0), yaw=30, scale=(1.5, 1.5, 1.5))
-    for x in (-5.0, 5.0):
-        brazier(r, (x, 0.0, 0.0), chain=4.5)
-    hang_chain(r, (0, 7.0, -6.0), 5.0)
-    wisp(r, (0, 3.0, 10.0))
-    encounter(r, "guardian", (-11.0, -7, -11.0), (11.0, 3, 15.0), "enter",
-              [{"elite": 1}],
-              [(0.0, -6.2, 10.0)],
-              lock=["ingate", "outgate"], opens=["ingate", "outgate", "sidegate"], reached_from="in", elite_level=3,
-              music="boss_gdking")
-    return r
-
-
 def ledge_gallery():
     """A gallery whose far gate is shut: its lever is up on a ledge along the wall, reached by a stair at the near end."""
     s = Shell("ledgegallery", (12, 12, 24), [("in", 2, 0, -5), ("out", 0, 0, -5)], weight=1.0, max=2)
@@ -862,7 +835,8 @@ def rotunda():
     for a in (0, 90, 180, 270):
         crystal(r, yaw_turn((0, -5, 1.6), a), yaw=a)
     for k in range(4):
-        torch(r, s.inside(k, 4.2, -5, 0.6))
+        wisp(r, s.inside(k, 4.2, 1.5, 1.0))                         # (lanterns hung by the doorways: a torch stand by the drum's
+        #                                                            wall would be a step up and over it)
     return r
 
 
@@ -925,7 +899,7 @@ def secret_shrine():
     """A giant's shrine: a carved face in the far wall, an altar with an offering chest, bones of the faithful, cold light."""
     r = secret_room("secret_shrine", (16, 12, 12), None, 1.0)
     lo, hi = bounds("Morkhalla_StatuePieceFace_big")
-    box(r, "Morkhalla_StatuePieceFace_big", (0, 1.5, 4.6), (hi - lo) * 1.2, yaw=180)
+    box(r, "Morkhalla_StatuePieceFace_big", (0, 1.5, 3.9), (hi - lo) * 1.1, yaw=180)
     r.fill(DARK, (0, -4.4, 2.6), (5.0, 1.2, 2.4))
     r.stand("TreasureChest_trollcave", (0, -3.8, 2.6), yaw=180, saved=True)
     r.stand("Morkhalla_Eye5_gemstone", (2.0, -3.8, 2.4), yaw=30)
@@ -935,78 +909,6 @@ def secret_shrine():
     for x in (-3.0, 3.0):
         crystal(r, (x, -5, 4.2))
     wisp(r, (0, 2.5, -1.0))
-    return r
-
-
-def warden_hall():
-    """The Clockwork Warden's hall, between the great hall and the vault: a vast floor, the Warden on a dais before the vault's
-    gate. Step in and the gate behind shuts. At two thirds of its health the hammers over the side lanes start to fall and the wall
-    gears race; at one third four blocks rise out of the floor and its servants come out of the alcoves. When it falls the vault's
-    gate opens (the vault's way out is beyond, untouched). Its trophy is the Warden's own drop (Runtime), so the room has no chest."""
-    F = WD_FLOOR
-    s = Shell("warden", WD_SIZE, [("in", 2, 0, F), ("out", 0, 0, F)], tags=["boss"], max=1, floor=False, door_type=VAULT)
-    r = s.r
-    r.doorways[1]["type"] = WARDEN
-    r.extra["joinBy"] = ["in"]
-    slab(r, -18, 18, -20, 20, F, STONE, thickness=F + WD_SIZE[1] / 2, cell=10.0)
-    door_gate(r, "ingate", 2, 20.0, F, start=1, doorway="in")
-    door_gate(r, "outgate", 0, 20.0, F, start=0, doorway="out")
-    # the dais: two black tiers before the vault's gate (around it on both sides to the gate)
-    r.fill(DARK, (0, F + 0.3, 10.5), (15.0, 0.6, 9.0))
-    r.fill(DARK, (0, F + 0.9, 11.0), (11.0, 0.6, 6.0))
-    for x in (-4.5, 4.5):
-        brazier(r, (x, F + 1.2, 13.0))
-    # the walls: black columns in pairs, alcoves between them on the east and west walls (where the servants come from)
-    for x in (-16.4, 16.4):
-        for z in (-15.0, -9.0, -3.0, 3.0, 9.0, 15.0):
-            r.fill(COLUMN, (x, F + 7.0, z), (1.4, 14.0, 1.4))
-    for z in (-18.4, 18.4):
-        for x in (-12.0, -6.0, 6.0, 12.0):
-            r.fill(COLUMN, (x, F + 7.0, z), (1.4, 14.0, 1.4))
-    for x in (-16.0, 16.0):
-        for z in (-6.0, 6.0):
-            r.stand("bone_stack", (x * 1.02, F, z + 1.6), yaw=90 if x < 0 else 270, scale=(1.3, 1.3, 1.3))
-    # the machinery the fight wakes
-    gears = machine(r, "gears")
-    gears.extra["spinScale"] = [1, 2.5, 4.0]                       # racing faster at each phase
-    gears.pose().pose()                                            # (a pose per state: they only turn faster)
-    for x, sign in ((-17.2, 1), (17.2, -1)):
-        gear(gears, (x, F + 12.0, 0.0), 10.0, axis="z", yaw=90, thickness=0.8, turn=6 * sign)
-        gear(gears, (x, F + 7.0, -8.5), 5.0, axis="z", yaw=90, thickness=0.6, turn=-12 * sign)
-    gear(gears, (0, F + 13.5, 19.0), 8.0, axis="z", thickness=0.7, turn=9)
-    for i, x in enumerate((-10.0, 10.0)):
-        h = r.mech(f"crusher{i + 1}", "platform", (x, F + 10.0, -2.0))
-        box(h, BLOCK, (0, 0, 0), (6.0, 3.0, 5.0))
-        for bx in (-2.2, 2.2):
-            bar(h, (bx, 1.5, 0), (bx, 5.0, 0), 0.6)
-        h.pose().pose(at=(0, -5.4, 0))                            # (down: its foot 3.1 m over the floor)
-        h.seconds = 0.8
-        h.cycle = 3.0 + 0.7 * i                                   # slamming over and over, once woken (state 1)
-        h.extra["cycleIn"] = [1]
-        for bx, bz in ((-3.6, -3.0), (3.6, -3.0), (-3.6, 3.0), (3.6, 3.0)):
-            bar(r, (x + bx, F, -2.0 + bz), (x + bx, F + 14.0, -2.0 + bz), 0.5)
-    for i, (x, z) in enumerate(((-12.0, -13.0), (12.0, -13.0), (-12.0, 4.5), (12.0, 4.5))):
-        b = r.mech(f"riser{i + 1}", "platform", (x, F, z))
-        b.fill(STONE, (0, -1.4, 0), (4.0, 3.6, 4.0))              # its top 0.4 m over the floor, 3.4 m when risen
-        b.pose().pose(at=(0, 3.0, 0))
-        b.seconds = 3.0
-    for x, z in ((-8.0, -17.0), (8.0, -17.0), (-15.0, 12.0), (15.0, 12.0), (-15.0, -17.5), (15.0, -17.5)):
-        torch(r, (x, F, z))
-    for x, z in ((-6.0, -6.0), (6.0, -6.0), (0.0, 3.0)):
-        brazier(r, (x, F + 8.0, z), chain=WD_SIZE[1] / 2 - 1.0 - (F + 8.0 + 1.6))
-    wisp(r, (0, F + 9.0, -14.0))
-    # the Warden: the land's elite at its cap, four times its health, on the dais; at two thirds the hammers wake and two of its
-    # servants come out of the alcoves, at one third the blocks rise and two more come (the trophy is Runtime's, on its death)
-    alcoves = [(x * 15.6, F, z) for x in (-1, 1) for z in (-6.0, 6.0)]
-    encounter(r, "warden", (-17.0, F, -17.0), (17.0, F + 12.0, 19.0), "enter", [], [(0.0, F + 1.2, 12.0)] + alcoves,
-              lock=["ingate"], opens=["ingate", "outgate"], reached_from="in", music="boss_frozenking",
-              boss={"name": "$dungeons_boss_warden", "role": "elite", "health": 4,
-                    "phases": [{"at": 0.66, "wires": [{"target": "crusher1", "do": "set:1"}, {"target": "crusher2", "do": "set:1"},
-                                                      {"target": "gears", "do": "set:1"}],
-                                "adds": {"melee": 2}},
-                               {"at": 0.33, "wires": [{"target": f"riser{i}", "do": "set:1"} for i in range(1, 5)]
-                                + [{"target": "gears", "do": "set:2"}],
-                                "adds": {"melee": 1, "ranged": 2}}]})
     return r
 
 
@@ -1074,14 +976,18 @@ def warden_cap():
 
 # ---------------------------------------------------------------- the Shifting Hall
 
-HALF, TOP, BOTTOM = 16.0, 24.0, -24.0
+# Puzzles hold at any skill (Jump 100 + Run 100: 3.1 m up, 10.4 m across, 12.9 m landing 4 m lower). So the void is wide (32 m
+# across): from anywhere on a turning stair every balcony it isn't landing at is more than 13 m off; and every balcony's edge is barred
+# floor to ceiling but for the stairs' mouth (|lateral| <= MOUTH: two mouths round a corner are 18 m apart).
+HALF, TOP, BOTTOM = 22.0, 24.0, -24.0
 STOREYS = [-23.0, -11.0, 1.0, 13.0]     # threshold (floor) heights
-VOID = 10.0                             # balconies from here to the walls
+VOID = 16.0                             # balconies from here to the walls
 WALL_IN = HALF - WALL                   # the walls' inside face
-R_IN, R_OUT = 9.94, 9.96                # nothing on a turning stair reaches past R_IN; nothing still comes inside R_OUT
+R_IN, R_OUT = VOID - 0.06, VOID - 0.04  # nothing on a turning stair reaches past R_IN; nothing still comes inside R_OUT
 FLIGHT_LAT = (-2.75, -0.5)              # a stair's width, beside the middle (all on the same hand, so two never meet at a storey)
-FLIGHT_RUN = 9.3                        # the steps run from -9.3 to 9.3; thin plates take its ends on to R_IN
-BARRIER_FROM = 4.0                      # a fallen corner's bars start this far from the middle along the void's edge
+FLIGHT_RUN = 12.0                       # the steps run from -12 to 12; landings take its ends on to R_IN
+MOUTH = 3.0                             # the balconies' edges are open within this of the middle: where the stairs land
+BARRIER_FROM = VOID                     # a fallen corner's bars: along both balconies' ends, from the void's edge to the wall
 
 
 def door_lateral(s):
@@ -1184,20 +1090,20 @@ def hall(name, corners, levers, start, falls, weight=1.0):
                 z = math.sqrt(R_OUT ** 2 - near ** 2)
                 if VOID - z > 0.05:
                     _floor(r, k, l0, l1, z, VOID, y, dy=-0.004)
-            for l0, l1 in ((-(BARRIER_FROM if not corners[s - 1][(k + 3) % 4] else VOID), -3.0),
-                           (3.0, BARRIER_FROM if not corners[s - 1][k] else VOID)):
-                box(r, RAIL, side_point(k, (l0 + l1) / 2, y + 0.85, VOID + 0.35), (0.6, 1.7, l1 - l0), yaw=(90 + 90 * k) % 360)
+            # the void's edge: iron bars from the floor to the balcony above (the ceiling), but for the stairs' mouth
+            top = (STOREYS[s + 1] - 1.0) if s < 3 else TOP - 1.0
+            for l0, l1 in ((-VOID, -MOUTH), (MOUTH, VOID)):
+                grate_wall(r, side_point(k, l0, 0, VOID + 0.15), side_point(k, l1, 0, VOID + 0.15), y, top)
             if not corners[s - 1][k]:
-                # a fallen corner: iron bars from the floor to the balcony above, along both balconies' ends and 6 m on along the void's
-                # edge, so the two sides are 8.5 m apart through the air (no jump crosses that) and the hole below can't be reached
-                top = (STOREYS[s + 1] - 1.0) if s < 3 else TOP - 1.0
+                # a fallen corner: iron bars from the floor to the balcony above along both balconies' ends, closing the barred edges
+                # (the hole below can't be reached; the two sides only meet through the air, beyond any jump)
                 grate_wall(r, side_point(k, VOID, 0, BARRIER_FROM), side_point(k, VOID, 0, WALL_IN), y, top)
                 grate_wall(r, side_point((k + 1) % 4, -VOID, 0, BARRIER_FROM), side_point((k + 1) % 4, -VOID, 0, WALL_IN), y, top)
     # the machine: pillars at the void's corners, the axle, wall gears between the doorways, chains, blue light
     for cx, cz in ((1, 1), (1, -1), (-1, 1), (-1, -1)):
         for y in np.arange(BOTTOM, TOP - 1, 8.0):
             r.stand(PILLAR, (cx * (VOID + 1.4), y + (1.0 if y == BOTTOM else 0.0), cz * (VOID + 1.4)), scale=(0.6, 1.0, 0.6))
-        hang_chain(r, (cx * 7.0, TOP - 1.0, cz * 7.0), 7.0)
+        hang_chain(r, (cx * 8.4, TOP - 1.0, cz * 8.4), 7.0)
     axle(r, (0, STOREYS[0], 0), TOP - 1.0 - STOREYS[0], 0.8)
     wheels = machine(r, "wallgears")
     for s, y in enumerate(STOREYS[:3]):
@@ -1207,17 +1113,17 @@ def hall(name, corners, levers, start, falls, weight=1.0):
             bar(r, side_point(k, 0.0, y + 6.5, WALL_IN + 0.2), side_point(k, 0.0, y + 6.5, WALL_IN - 1.0), 1.0)
     for s, y in enumerate(STOREYS):
         for k in range(4):
-            torch(r, side_point(k, 3.6 * (1 if (s + k) % 2 else -1), y, VOID + 0.9))
-    for x, z in ((5.5, 5.5), (-5.5, -5.5), (5.5, -5.5), (-5.5, 5.5)):
+            torch(r, side_point(k, 5.0 * (1 if (s + k) % 2 else -1), y, VOID + 1.2))
+    for x, z in ((6.5, 6.5), (-6.5, -6.5), (6.5, -6.5), (-6.5, 6.5)):
         brazier(r, (x, TOP - 1.0 - 2.5 - 1.6, z), chain=2.5)
     for k in range(4):
-        crystal(r, side_point(k, 9.0, STOREYS[0], 13.5))
-    spawner(r, "melee", side_point(1, 0.0, STOREYS[0], 12.5))
-    spawner(r, "melee", side_point(3, 0.0, STOREYS[0], 12.5))
+        crystal(r, side_point(k, VOID - 1.0, STOREYS[0], VOID + 3.5))
+    spawner(r, "melee", side_point(1, 0.0, STOREYS[0], VOID + 2.5))
+    spawner(r, "melee", side_point(3, 0.0, STOREYS[0], VOID + 2.5))
     for s, y in enumerate(STOREYS[1:], 1):
         for k in range(4):
             if corners[s - 1][k]:
-                wisp(r, side_point(k, 12.5, y + 4.0, 12.5))
+                wisp(r, side_point(k, VOID + 2.5, y + 4.0, VOID + 2.5))
 
     for s in range(3):
         flight(r, s, start[s])
@@ -1233,7 +1139,7 @@ def hall(name, corners, levers, start, falls, weight=1.0):
         pull = (side_point(k, -out if n == 0 else out, 0, 0) - side_point(k, 0, 0, 0))     # where the player stands, from it
         yaw = math.degrees(math.atan2(-pull[0], -pull[2])) % 360
         gate = any(t == "vaultgate" for t, _ in wires)
-        giant_lever(r, "vaultlever" if gate else f"lever{i + 1}", side_point(k, lat, STOREYS[s], 13.0), yaw, wires,
+        giant_lever(r, "vaultlever" if gate else f"lever{i + 1}", side_point(k, lat, STOREYS[s], VOID + 3.0), yaw, wires,
                     reached_from=door_id(s, k))
     # the vault's gate: a studded iron leaf in the top storey's north doorway, sliding sideways into the wall
     g = r.mech("vaultgate", "gate", side_point(0, door_lateral(3), STOREYS[3], HALF - 0.5))

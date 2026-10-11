@@ -199,6 +199,14 @@ CraftFromChests and BuildFromChests add chest items in `Inventory.CountItems`; V
 AzuCraftyBoxes add them in `Player.HaveRequirementItems`/`HaveRequirements`. Installed together, chests count twice and crafts pay half. Stand
 down when one of them is installed.
 
+## Scaling a hit leaves its untyped damage alone
+
+`HitData.ApplyModifier(x)` multiplies blunt, slash, pierce, chop, pickaxe, fire, frost, lightning, poison and spirit damage, but **not**
+`m_damage.m_damage` (untyped damage). A mod that makes something tougher or weaker by scaling hits with `ApplyModifier` leaves any
+untyped part at full strength. Quad's Dungeons made its bosses tougher this way, and its own blows are untyped: a shield break meant to
+take 8% of a boss's health took 48%. Scale a whole hit with `hit.m_damage.Modify(x)` (or scale `m_damage.m_damage` as well), and test
+with a hit that carries untyped damage.
+
 ## Name everything after your mod
 
 Prefabs, RPCs, ZDO and `m_customData` keys, `$` keys, commands and the Harmony id share one space with every other mod. ClaudeTools' `check`

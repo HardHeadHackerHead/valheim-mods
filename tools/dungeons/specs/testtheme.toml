@@ -1,0 +1,40 @@
+# testtheme: a TEST pack (other dungeon kinds are parked). The same recipes as Shifting Halls in a contrasting theme: Dvergr workings
+# in black marble, tight and many-levelled, with one signature room of its own (the crane shaft).
+name = "testtheme"
+title = "$dungeons_pack_testtheme"
+theme = "dvergr"
+seed = 1
+difficulty = "normal"
+biome = "any"
+environment = "Caves"
+entrance_look = "dvergr"
+rooms = [12, 24]
+max_size = [200, 100, 200]
+min_uses = 1
+parkour = false
+variants = 3
+
+plan = [
+  {id = "start", room = "entrance"},
+  {id = "fight1", job = "fight"},
+  {id = "hub1", job = "hub"},
+  {id = "lever1", job = "lever", from = "hub1"},
+  {id = "gate1", job = "gate", opens_with = "lever1", from = "hub1"},
+  {id = "timing1", job = "timing"},
+  {id = "shaft", room = "crane_shaft"},
+  {id = "plate1", job = "plate", variants = 2},
+  {id = "drop1", job = "drop"},
+  {id = "vault", room = "vault"},
+]
+
+signatures = ["cap_plain"]
+
+[fill]
+breather = 3
+pillarhall = 2
+machineroom = 3
+corridor = 2
+stairhall = 2
+nook = 3
+twolevers = 1
+ambush = 1

@@ -7,7 +7,7 @@ namespace Dungeons
 {
     // Items only dungeons give: copies of the game's own item prefabs (their models, icons and the way they lie on the ground and hang on
     // an item stand) under our names. Worth nothing at the trader (m_value 0). Ours:
-    // - quaddungeon_trophy_warden: a giant warden's trophy (the troll's trophy, bigger and heavier), from the Warden or a boss's chest;
+    // - quaddungeon_trophy_warden: a giant warden's trophy (a Jotunn warrior's head, bigger and heavier), from the Warden or a boss's chest;
     // - quaddungeon_giantcog: a giant's cog (the charred cogwheel), a material kept for crafting later: 1-3 in every vault chest;
     // and any other part's (the packs' key items, BlockKeys.cs) through DefineItem: one way to make and register them all.
     // Registered as docs/modding-pitfalls.md says: in ZNetScene (saved and dropped items load by prefab name) and ObjectDB (bags, chests,
@@ -18,8 +18,9 @@ namespace Dungeons
         internal const string TrophyItem = "quaddungeon_trophy_warden";
         internal const string CogItem = "quaddungeon_giantcog";
 
-        /// <summary>One of our items: a copy of the game's item Look, named Name (the prefab), with words Display and Description ($ keys
-        /// or plain), its weight, its size against the game's, a stack limit (0: the game item's), and whether portals let it through.</summary>
+        /// <summary>One of our items: a copy of the game's item Look (or the first of several, comma separated, this game has), named Name
+        /// (the prefab), with words Display and Description ($ keys or plain), its weight, its size against the game's, a stack limit (0: the
+        /// game item's), and whether portals let it through.</summary>
         internal class ItemSpec
         {
             public string Name, Look, Display, Description;
@@ -30,7 +31,8 @@ namespace Dungeons
 
         private static readonly List<ItemSpec> Specs = new List<ItemSpec>
         {
-            new ItemSpec { Name = TrophyItem, Look = "TrophyTroll", Display = "$dungeons_item_trophy_warden",
+            // (the game has no "TrophyTroll": the troll's is TrophyForestTroll; a Jotunn warrior's head suits a giant warden better)
+            new ItemSpec { Name = TrophyItem, Look = "TrophyJotunWarrior,TrophyForestTroll", Display = "$dungeons_item_trophy_warden",
                            Description = "$dungeons_item_trophy_warden_desc", Weight = 8f, Size = 1.4f },
             new ItemSpec { Name = CogItem, Look = "CharredCogwheel", Display = "$dungeons_item_giantcog", Description = "$dungeons_item_giantcog_desc",
                            Weight = 4f },
@@ -95,15 +97,23 @@ namespace Dungeons
         private static Dictionary<int, GameObject> NamedPrefabs(ZNetScene scene) =>
             (Dictionary<int, GameObject>)AccessTools.Field(typeof(ZNetScene), "m_namedPrefabs").GetValue(scene);
 
-        /// <summary>Every spec not made yet whose game item can be found now (the next hook tries the others again).</summary>
+        /// <summary>Every spec not made yet whose game item can be found now (the next hook tries the others again). One whose game item
+        /// isn't there although the game's items are is logged once by name: it would never be made (a wrong Look).</summary>
         private static void MakeItems(ObjectDB db, ZNetScene scene)
         {
             var made = new List<string>();
             foreach (ItemSpec spec in Specs)
             {
                 if (RewardItem(spec.Name) != null) continue;
-                GameObject look = GameItem(spec.Look, db, scene);
-                if (look == null) continue;
+                GameObject look = null;
+                foreach (string name in spec.Look.Split(','))
+                    if ((look = GameItem(name.Trim(), db, scene)) != null) break;
+                if (look == null)
+                {
+                    bool itemsThere = (scene != null && scene.GetPrefab("Wood") != null) || (db != null && db.GetItemPrefab("Wood") != null);
+                    if (itemsThere) WarnOnce($"Dungeon item {spec.Name} isn't made: this game has no item {spec.Look.Replace(",", " or ")} to copy");
+                    continue;
+                }
                 if (_rewardHolder == null)
                 {
                     _rewardHolder = new GameObject("quaddungeon_items");
@@ -111,7 +121,7 @@ namespace Dungeons
                     Object.DontDestroyOnLoad(_rewardHolder);
                 }
                 RewardItems.Add(CopyItem(look, spec));
-                made.Add($"{spec.Name} (from {spec.Look})");
+                made.Add($"{spec.Name} (from {look.name})");
             }
             if (made.Count > 0) Plugin.Log.LogInfo("Dungeon items made: " + string.Join(", ", made));
         }

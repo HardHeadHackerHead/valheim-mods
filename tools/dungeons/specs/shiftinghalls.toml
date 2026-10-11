@@ -1,0 +1,52 @@
+# Shifting Halls: the Jotunn's clockwork vault. Giant scale; a fight, a hub with a key wing and its gate, a timed bridge, a drop, a
+# held gate, a rotunda, the guardian, then the Shifting Hall (turning stairs), the Clockwork Warden and the vault.
+name = "shiftinghalls"
+title = "$dungeons_pack_shiftinghalls"
+theme = "giant"
+seed = 1
+difficulty = "normal"
+biome = "any"
+environment = "Caves"
+entrance_look = "giant"
+rooms = [16, 28]
+max_size = [320, 140, 320]
+min_uses = 8
+music = "forestcrypt"
+parkour = false
+variants = 2
+
+plan = [
+  {id = "start", room = "entrance"},
+  {id = "fight1", job = "fight"},
+  {id = "hub1", job = "hub"},
+  {id = "lever1", job = "lever", from = "hub1"},                       # a side wing: the key to the gate
+  {id = "gate1", job = "gate", opens_with = "lever1", from = "hub1"},
+  {id = "timing1", job = "timing"},
+  {id = "drop1", job = "drop"},
+  {id = "plate1", job = "plate"},
+  {id = "rotunda", room = "rotunda"},                                  # (four ways out: the big hall finds room off it more easily)
+  {id = "guardian1", job = "guardian", variants = 1},
+  {id = "hall", rooms = ["hall_a", "hall_b", "hall_c"]},
+  {id = "warden", room = "warden"},
+  {id = "vault", room = "vault"},
+]
+
+# the rooms between the steps: walk-throughs, stairs, dead ends and treasure rooms
+signatures = ["greathall", "secret_cache", "secret_shrine", "shortcut_near", "shortcut_far", "cap_gate", "cap_rubble",
+              "vault_cap", "warden_cap"]
+
+[fill]
+breather = 4
+pillarhall = 3
+machineroom = 3
+corridor = 3
+stairhall = 2
+nook = 4
+twolevers = 1
+ambush = 1
+timeddoor = 1
+
+[shortcut]
+near = "shortcut_near"
+far = "shortcut_far"
+far_step = "guardian1"

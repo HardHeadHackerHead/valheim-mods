@@ -19,6 +19,7 @@ namespace Dungeons
             public Vector3 MaxSize;
             public int MinUses;
             public bool Parkour = true;
+            public bool ParkourSaid;   // the pack says "parkour": true itself (not left to the default)
             public string EntranceCap;
             public ShortcutSpec Shortcut;
             public readonly Dictionary<string, MechDef> Gates = new Dictionary<string, MechDef>();
@@ -97,6 +98,9 @@ namespace Dungeons
         /// a puzzle can't be climbed round). True when the pack doesn't say.</summary>
         public static bool Parkour(Pack pack) => pack == null || !Extras.TryGetValue(pack, out Extra e) || e.Parkour;
 
+        /// <summary>Whether the pack itself says "parkour": true (a puzzle in it must then hold with Quad's Parkour too).</summary>
+        public static bool ParkourSaid(Pack pack) => pack != null && Extras.TryGetValue(pack, out Extra e) && e.ParkourSaid;
+
         /// <summary>The end cap the entrance room's way in takes ("entranceCap": a room's name), or null: any plain one (flat, nothing in it).</summary>
         public static string EntranceCap(Pack pack) => pack != null && Extras.TryGetValue(pack, out Extra e) ? e.EntranceCap : null;
 
@@ -149,6 +153,7 @@ namespace Dungeons
                 MaxSize = json["maxSize"] is JArray max ? Vec(max) : Vector3.zero,
                 MinUses = (int?)json["minUses"] ?? 0,
                 Parkour = (bool?)json["parkour"] ?? true,
+                ParkourSaid = (bool?)json["parkour"] == true,
                 EntranceCap = (string)json["entranceCap"],
             };
             pack.Music = (string)json["music"];
@@ -187,6 +192,7 @@ namespace Dungeons
                     problems.Add($"{pack.Name}: {def.Name}: \"joinBy\" names doorway {id}, which the room doesn't have");
                 if (joinBy.Count > 0) extra.JoinBy[def.Name] = joinBy;
             }
+            BossReader.CheckPack(pack, problems);   // (dungeon-boss: the final bosses the hardest fights in the pack, PackReaderBoss.cs)
             foreach (JObject s in (json["plan"] as JArray ?? new JArray()).OfType<JObject>())
             {
                 var step = new PlanStep { Tag = (string)s["tag"], Id = (string)s["id"], OpensWith = (string)s["opensWith"] };
@@ -310,20 +316,7 @@ namespace Dungeons
                     LockLever = (string)m["lockLever"],
                     Music = (string)m["music"],
                 };
-                if (m["boss"] is JObject b)
-                {
-                    enc.Boss = new BossDef { Name = (string)b["name"], Role = (string)b["role"] ?? "elite", Health = (float?)b["health"] ?? 4f };
-                    // (its phases in the boss, or, as one draft wrote them, on the encounter)
-                    foreach (JObject ph in ((b["phases"] ?? m["phases"]) as JArray ?? new JArray()).OfType<JObject>())
-                    {
-                        var phase = new BossPhase { At = (float?)ph["at"] ?? 0.5f };
-                        foreach (JObject w in (ph["wires"] as JArray ?? new JArray()).OfType<JObject>())
-                            phase.Wires.Add(new Wire { Target = (string)w["target"], Do = (string)w["do"] ?? "next" });
-                        if (ph["adds"] is JObject adds)
-                            foreach (JProperty a in adds.Properties().Where(p => p.Value.Type == JTokenType.Integer)) phase.Adds[a.Name] = (int)a.Value;
-                        enc.Boss.Phases.Add(phase);
-                    }
-                }
+                if (m["boss"] is JObject b) enc.Boss = BossReader.Read(b, m);   // (the boss toolkit's fields: PackReaderBoss.cs)
                 if (m["area"] is JArray area) enc.Area = Vec(area);
                 enc.Lock.AddRange(Strings(m["lock"]));
                 foreach (JObject w in (m["waves"] as JArray ?? new JArray()).OfType<JObject>())
@@ -370,7 +363,7 @@ namespace Dungeons
                 if (m.Kind == "shortcut" && string.IsNullOrEmpty(m.Pair)) problems.Add($"{me}: a shortcut needs its \"pair\"");
                 if (m.Kind == "breakable")
                 {
-                    if (string.IsNullOrEmpty(m.Doorway)) problems.Add($"{me}: a breakable needs the \"doorway\" it closes");
+                    // (a "doorway" is optional: a wall in front of a stash closes none; a secret room's way in is checked by Secret)
                     if (m.Health <= 0f) problems.Add($"{me}: a breakable needs its \"health\" (the damage it takes to break)");
                     if (m.Poses.Count > 0 && m.Poses.Count != 2) problems.Add($"{me}: a breakable has two poses (standing, broken), not {m.Poses.Count}");
                 }
@@ -387,21 +380,7 @@ namespace Dungeons
                     foreach (string role in e.Waves.SelectMany(w => w.Keys).Distinct().Where(r => r != "melee" && r != "ranged" && r != "flying" && r != "elite"))
                         problems.Add($"{me}: a wave has role {role} (melee, ranged, flying or elite)");
                     if (e.Waves.Count > 0 && e.Points.Count == 0) problems.Add($"{me}: has waves but no \"points\" for them to come at");
-                    if (e.Boss != null)
-                    {
-                        string[] roles = { "melee", "ranged", "flying", "elite" };
-                        if (!roles.Contains(e.Boss.Role)) problems.Add($"{me}: the boss's role {e.Boss.Role} (melee, ranged, flying or elite)");
-                        if (e.Boss.Health <= 0f) problems.Add($"{me}: the boss's health {e.Boss.Health} (more than 0)");
-                        if (e.Waves.Count > 0) problems.Add($"{me}: has a boss and waves (a boss fight is one creature instead of waves)");
-                        if (e.Points.Count == 0) problems.Add($"{me}: has a boss but no \"points\" for it to come at");
-                        foreach (BossPhase ph in e.Boss.Phases)
-                        {
-                            if (ph.At <= 0f || ph.At >= 1f) problems.Add($"{me}: a boss phase at {ph.At} (a health fraction between 0 and 1)");
-                            foreach (Wire w in ph.Wires.Where(w => !def.Mechs.Any(o => o.Id == w.Target)))
-                                problems.Add($"{me}: a boss phase is wired to {w.Target}, which isn't a mechanism in its room");
-                            foreach (string role in ph.Adds.Keys.Where(r => !roles.Contains(r))) problems.Add($"{me}: a boss phase adds role {role}");
-                        }
-                    }
+                    if (e.Boss != null) BossReader.Check(def, m, e, problems, me);   // (PackReaderBoss.cs)
                     foreach (string id in e.Lock)
                     {
                         MechDef l = def.Mechs.FirstOrDefault(o => o.Id == id);

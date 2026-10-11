@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using HarmonyLib;
 using UnityEngine;
 using Object = UnityEngine.Object;
 
@@ -118,11 +119,65 @@ namespace Dungeons
             return prefab != null && prefab.GetComponent<ZNetView>() != null ? prefab : null;
         }
 
-        /// <summary>As PlaceRoom does for the game rooms' parts: a building piece is marked as standing since before the snow
-        /// (ZDOVars.s_preSnow: it starts with snow on it where it snows, rather than gathering it).</summary>
+        private static readonly int PartKey = "Dungeons_part".GetStableHashCode();
+
+        /// <summary>Every saved object the builder makes, once made: as PlaceRoom does for the game rooms' parts, a building piece is marked
+        /// as standing since before the snow (ZDOVars.s_preSnow: it starts with snow on it where it snows, rather than gathering it); and it's
+        /// marked as a dungeon part ("Dungeons_part"), so it can never be taken down with the hammer (KeepPart, now and whenever it loads).</summary>
         private static void Settle(GameObject go)
         {
-            if (go.GetComponent<WearNTear>() != null) go.GetComponent<ZNetView>()?.GetZDO()?.Set(ZDOVars.s_preSnow, true);
+            ZDO zdo = go.GetComponent<ZNetView>()?.GetZDO();
+            if (go.GetComponent<WearNTear>() != null) zdo?.Set(ZDOVars.s_preSnow, true);
+            zdo?.Set(PartKey, true);
+            KeepPart(go);
+        }
+
+        /// <summary>A dungeon's saved part can't be removed with the hammer: no free build refund from a vault chest, no taking a dungeon's
+        /// doors, torches or furniture apart (Player.RemovePiece refuses a Piece with m_canBeRemoved off). A prefab field: set on the object
+        /// each time it's made (the ZNetView.Awake patch in BuildLoot.cs, for objects marked Dungeons_part, or Runtime's quaddungeon_partof
+        /// on parts made before this mark).</summary>
+        internal static void KeepPart(GameObject go)
+        {
+            foreach (Piece piece in go.GetComponentsInChildren<Piece>(true)) piece.m_canBeRemoved = false;
+        }
+
+        /// <summary>Whether a saved object is one of a dungeon's parts (ours, or marked by Runtime as part of a dungeon).</summary>
+        internal static bool IsDungeonPart(ZDO zdo) =>
+            zdo != null && (zdo.GetBool(PartKey) || !string.IsNullOrEmpty(zdo.GetString(Keys.PartOf)));
+
+        /// <summary>A dungeon's building pieces (WearNTear: walls, floors, stairs, gates, grates, doors, chests, torches, black marble) don't
+        /// take damage: hits, wear, lost support, fire all go through WearNTear.ApplyDamage (the patches below). Nobody smashes a way round a
+        /// puzzle, or a chest open, or black marble for Mistlands materials in a Meadows dungeon. The game's own breakables (Destructible: pots,
+        /// bone piles, roots across a crypt corridor, creep, rubble, Mórk halla's gate doors) still break as in its dungeons, their drops kept
+        /// to the land's tier; so do our mechanisms' breakable walls (Runtime's DungeonBreakable, not saved, not a WearNTear).</summary>
+        internal static bool Unbreakable(WearNTear piece)
+        {
+            ZNetView view = piece != null ? piece.GetComponent<ZNetView>() : null;
+            return view != null && IsDungeonPart(view.GetZDO());
+        }
+    }
+
+    // A dungeon's building pieces don't take damage (Builder.Unbreakable): a hit shows "too hard" (as a tool too weak does) and does
+    // nothing; wear, lost support and fire (all through ApplyDamage) do nothing either.
+    [HarmonyPatch(typeof(WearNTear), "RPC_Damage")]
+    internal static class Dungeons_WearNTear_RPC_Damage
+    {
+        private static bool Prefix(WearNTear __instance, HitData hit)
+        {
+            if (!Builder.Unbreakable(__instance)) return true;
+            if (hit != null && DamageText.instance != null) DamageText.instance.ShowText(DamageText.TextType.TooHard, hit.m_point, 0f);
+            return false;
+        }
+    }
+
+    [HarmonyPatch(typeof(WearNTear), nameof(WearNTear.ApplyDamage))]
+    internal static class Dungeons_WearNTear_ApplyDamage
+    {
+        private static bool Prefix(WearNTear __instance, ref bool __result)
+        {
+            if (!Builder.Unbreakable(__instance)) return true;
+            __result = false;
+            return false;
         }
     }
 }

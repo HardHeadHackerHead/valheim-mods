@@ -1,5 +1,8 @@
 # Authoring rooms with the generators (tools/dungeons)
 
+> For a **new dungeon kind**, start with new-dungeon.md: specs, themes and recipes (`tools/dungeons/authoring/`) make most rooms
+> now. This file is the library underneath them, the checks, and how Shifting Halls' hand-made rooms are written.
+
 How the Shifting Halls rooms are made, and how to make a pack of your own the same way. Packs of our own rooms are written by Python
 scripts, never by hand: a room is hundreds of parts, and the checks below read the same data.
 
@@ -32,6 +35,7 @@ scripts, never by hand: a room is hundreds of parts, and the checks below read t
 
 ## The checks (each exits 1 on a problem; run them all after every change)
 
+- **`box_check.py`**: every part, in every pose, inside its room's box (a part poking out shows up in the next room).
 - **`walk_check.py [pack] [width]`**: every pair of doorways the solver joins must be walkable: 0.5 m columns, 1.8 m headroom, steps up to
   0.6 m, jumps 1.5 m up. With a width (3), only ways that wide count. Rough on stairs: check those by eye.
 - **`prop_check.py`**: anything standing (lanterns, torches, braziers, chests, bones, rubble, remains, spawners) needs a top within 0.3 m

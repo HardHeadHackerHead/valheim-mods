@@ -1,0 +1,2055 @@
+{
+ "theme": "crypt",
+ "about": "Stone crypts (the game's forest and sunken crypts, joined by type \"\"): grey stone walls, arches and pillars, torches, bones and roots, iron gates. Human scale: rooms on a 2-4 m grid, doorways 2-3 m.",
+ "made_by": "tools/dungeons/palette_tool.py (curation in CURATED there; everything else read from the game's files)",
+ "fields": {
+  "role": "what it's for; structural roles (arch, block, ceiling, door, floor, gate, pillar, platform, rail, ramp, stair, wall) must be solid",
+  "mount": "ground: stands on a floor (prop_check.py); hang: needs something right above its origin or a chain on its top; wall: against a wall; span: rests on two supports; structure: what others stand on; free: anywhere",
+  "scale": "[min, max] that looks right and stays solid; stairs keep 1 (step height)",
+  "tier": "the land it looks like it belongs to (1 Meadows .. 8 Deep North): a look hint, not gameplay (enemies and loot follow the entrance's biome)",
+  "size/min/max/origin": "its shape's box in its own frame (m); origin: where its origin sits on that box (foot, top, centre...)",
+  "solid": "a character bumps into it in our rooms (the game's collision matrix; items fixed by BuildSolid.cs)",
+  "lights": "range, intensity, colour; lit: shines once stripped (a Fireplace's burning objects are switched on); lod: fades with distance",
+  "gives": "what the game would make it give or do: stripped as scenery; a networked prefab (networked) may be a Saved part instead",
+  "height": "its height at scale 1 (m)",
+  "climb": "ledges: its footholds (faces a player can stand on, no steeper than 38 degrees, with at least 0.1 m2 of them seen from above in a 0.2 m height band) as height ranges above its foot at scale 1, upright as the prefab stands; top: the highest reachable from the floor, each within a jump (1.6 m: gravity 20, jump force 8, Jump skill 0) of the last; top_skilled: the same with Jump skill 100 (3.14 m); 0: none. Scale the ledges by the part's y scale; a part turned off upright exposes other faces (treat a smooth bar or column as only its top end)",
+  "upright": "flat (thin along y: a floor tile, stand it up for a wall), upright (thin along x or z: a wall piece, use as it is), block",
+  "safe": "fine as stripped scenery; saved_only: works only as a Saved part (chests, pickables, spawners)",
+  "by_role": "{role: [default, variants...]}: the roles below without their notes",
+  "sets": "the dressing sets it suits (giant: ossuary, ruin, forge, archive, engine, armoury; Dvergr: store, workshop, tavern, barracks)",
+  "max_span": "a panel's longest side (m) before its stretched texture smears",
+  "roles": "the same pieces by a theme recipe's roles (first = default, others = variants), with how each role's pieces are placed",
+  "render": "a picture in the mesh cache (C:\\Users\\DHack\\AppData\\Local\\Temp\\quaddungeon_meshes); the theme's contact sheet is palettes/crypt_sheet.png there"
+ },
+ "pieces": [
+  {
+   "prefab": "stone_wall_4x2",
+   "role": "wall",
+   "look": "stone wall 4 x 2",
+   "mount": "structure",
+   "scale": [
+    0.5,
+    2
+   ],
+   "tier": 2,
+   "notes": "",
+   "exists": true,
+   "size": [
+    4.22,
+    2.22,
+    1.34
+   ],
+   "min": [
+    -2.16,
+    -1.11,
+    -0.69
+   ],
+   "max": [
+    2.06,
+    1.11,
+    0.66
+   ],
+   "origin": "centre",
+   "hollow": false,
+   "kinds": [
+    "Piece",
+    "WearNTear",
+    "ZNetView"
+   ],
+   "colliders": {
+    "piece": 2
+   },
+   "solid": true,
+   "solid_note": "",
+   "lights": [],
+   "fire": false,
+   "particles": 0,
+   "item": false,
+   "networked": true,
+   "gives": [],
+   "physics": false,
+   "height": 2.22,
+   "upright": "upright",
+   "saved_only": false,
+   "safe": true,
+   "climb": {
+    "ledges": [
+     [
+      1.0,
+      1.2
+     ],
+     [
+      2.0,
+      2.2
+     ]
+    ],
+    "top": 2.2,
+    "top_skilled": 2.2
+   },
+   "render": "palettes/stone_wall_4x2.png"
+  },
+  {
+   "prefab": "stone_wall_2x1",
+   "role": "wall",
+   "look": "stone wall 2 x 1",
+   "mount": "structure",
+   "scale": [
+    0.5,
+    2
+   ],
+   "tier": 2,
+   "notes": "",
+   "exists": true,
+   "size": [
+    2.18,
+    1.18,
+    1.2
+   ],
+   "min": [
+    -1.09,
+    -0.58,
+    -0.59
+   ],
+   "max": [
+    1.09,
+    0.6,
+    0.61
+   ],
+   "origin": "centre",
+   "hollow": false,
+   "kinds": [
+    "Piece",
+    "WearNTear",
+    "ZNetView"
+   ],
+   "colliders": {
+    "piece": 1
+   },
+   "solid": true,
+   "solid_note": "",
+   "lights": [],
+   "fire": false,
+   "particles": 0,
+   "item": false,
+   "networked": true,
+   "gives": [],
+   "physics": false,
+   "height": 1.18,
+   "upright": "block",
+   "saved_only": false,
+   "safe": true,
+   "climb": {
+    "ledges": [
+     [
+      1.0,
+      1.2
+     ]
+    ],
+    "top": 1.2,
+    "top_skilled": 1.2
+   },
+   "render": "palettes/stone_wall_2x1.png"
+  },
+  {
+   "prefab": "stone_wall_1x1",
+   "role": "wall",
+   "look": "stone wall 1 x 1",
+   "mount": "structure",
+   "scale": [
+    0.5,
+    2
+   ],
+   "tier": 2,
+   "notes": "",
+   "exists": true,
+   "size": [
+    1.09,
+    1.18,
+    1.2
+   ],
+   "min": [
+    -0.54,
+    -0.58,
+    -0.59
+   ],
+   "max": [
+    0.56,
+    0.6,
+    0.61
+   ],
+   "origin": "centre",
+   "hollow": false,
+   "kinds": [
+    "Piece",
+    "WearNTear",
+    "ZNetView"
+   ],
+   "colliders": {
+    "piece": 1
+   },
+   "solid": true,
+   "solid_note": "",
+   "lights": [],
+   "fire": false,
+   "particles": 0,
+   "item": false,
+   "networked": true,
+   "gives": [],
+   "physics": false,
+   "height": 1.18,
+   "upright": "block",
+   "saved_only": false,
+   "safe": true,
+   "climb": {
+    "ledges": [
+     [
+      1.0,
+      1.2
+     ]
+    ],
+    "top": 1.2,
+    "top_skilled": 1.2
+   },
+   "render": "palettes/stone_wall_1x1.png"
+  },
+  {
+   "prefab": "stone_wall_ruin",
+   "role": "wall",
+   "look": "a ruined stone wall",
+   "mount": "structure",
+   "scale": [
+    0.5,
+    2
+   ],
+   "tier": 2,
+   "notes": "",
+   "exists": true,
+   "size": [
+    4.35,
+    3.19,
+    3.35
+   ],
+   "min": [
+    -2.19,
+    -0.58,
+    -0.67
+   ],
+   "max": [
+    2.16,
+    2.61,
+    2.68
+   ],
+   "origin": "inside",
+   "hollow": false,
+   "kinds": [
+    "WearNTear",
+    "ZNetView"
+   ],
+   "colliders": {
+    "piece": 6
+   },
+   "solid": true,
+   "solid_note": "",
+   "lights": [],
+   "fire": false,
+   "particles": 0,
+   "item": false,
+   "networked": true,
+   "gives": [],
+   "physics": false,
+   "height": 3.19,
+   "upright": "block",
+   "saved_only": false,
+   "safe": true,
+   "climb": {
+    "ledges": [
+     [
+      1.0,
+      1.2
+     ],
+     [
+      2.0,
+      2.2
+     ],
+     [
+      3.0,
+      3.2
+     ]
+    ],
+    "top": 3.2,
+    "top_skilled": 3.2
+   },
+   "render": "palettes/stone_wall_ruin.png"
+  },
+  {
+   "prefab": "stone_floor_2x2",
+   "role": "floor",
+   "look": "stone floor 2 x 2",
+   "mount": "structure",
+   "scale": [
+    0.5,
+    2
+   ],
+   "tier": 2,
+   "notes": "",
+   "exists": true,
+   "size": [
+    2.0,
+    1.0,
+    2.0
+   ],
+   "min": [
+    -1.0,
+    -0.5,
+    -1.0
+   ],
+   "max": [
+    1.0,
+    0.5,
+    1.0
+   ],
+   "origin": "centre",
+   "hollow": false,
+   "kinds": [
+    "Piece",
+    "WearNTear",
+    "ZNetView"
+   ],
+   "colliders": {
+    "piece": 1
+   },
+   "solid": true,
+   "solid_note": "",
+   "lights": [],
+   "fire": false,
+   "particles": 0,
+   "item": false,
+   "networked": true,
+   "gives": [],
+   "physics": false,
+   "height": 1.0,
+   "upright": "block",
+   "saved_only": false,
+   "safe": true,
+   "climb": {
+    "ledges": [
+     [
+      1.0,
+      1.2
+     ]
+    ],
+    "top": 1.2,
+    "top_skilled": 1.2
+   },
+   "render": "palettes/stone_floor_2x2.png"
+  },
+  {
+   "prefab": "stone_floor",
+   "role": "floor",
+   "look": "stone floor 4 x 4",
+   "mount": "structure",
+   "scale": [
+    0.5,
+    2
+   ],
+   "tier": 2,
+   "notes": "",
+   "exists": true,
+   "size": [
+    4.0,
+    1.0,
+    4.0
+   ],
+   "min": [
+    -2.0,
+    -0.5,
+    -2.0
+   ],
+   "max": [
+    2.0,
+    0.5,
+    2.0
+   ],
+   "origin": "centre",
+   "hollow": false,
+   "kinds": [
+    "Piece",
+    "WearNTear",
+    "ZNetView"
+   ],
+   "colliders": {
+    "piece": 1
+   },
+   "solid": true,
+   "solid_note": "",
+   "lights": [],
+   "fire": false,
+   "particles": 0,
+   "item": false,
+   "networked": true,
+   "gives": [],
+   "physics": false,
+   "height": 1.0,
+   "upright": "flat",
+   "saved_only": false,
+   "safe": true,
+   "climb": {
+    "ledges": [
+     [
+      1.0,
+      1.2
+     ]
+    ],
+    "top": 1.2,
+    "top_skilled": 1.2
+   },
+   "render": "palettes/stone_floor.png"
+  },
+  {
+   "prefab": "stone_pillar",
+   "role": "pillar",
+   "look": "stone pillar",
+   "mount": "ground",
+   "scale": [
+    0.5,
+    2
+   ],
+   "tier": 2,
+   "notes": "climbable: a player can stand 2.2 m above its foot (at scale 1; 2.2 m with Jump skill 100), so it's a stepping stone to a level up to about 3.8 m above its foot (5.3 m with Jump 100)",
+   "exists": true,
+   "size": [
+    1.14,
+    2.0,
+    1.13
+   ],
+   "min": [
+    -0.56,
+    -1.0,
+    -0.57
+   ],
+   "max": [
+    0.58,
+    1.0,
+    0.56
+   ],
+   "origin": "centre",
+   "hollow": false,
+   "kinds": [
+    "Piece",
+    "WearNTear",
+    "ZNetView"
+   ],
+   "colliders": {
+    "piece": 2
+   },
+   "solid": true,
+   "solid_note": "",
+   "lights": [],
+   "fire": false,
+   "particles": 0,
+   "item": false,
+   "networked": true,
+   "gives": [],
+   "physics": false,
+   "height": 2.0,
+   "upright": "block",
+   "saved_only": false,
+   "safe": true,
+   "climb": {
+    "ledges": [
+     [
+      1.0,
+      1.2
+     ],
+     [
+      2.0,
+      2.2
+     ]
+    ],
+    "top": 2.2,
+    "top_skilled": 2.2
+   },
+   "render": "palettes/stone_pillar.png"
+  },
+  {
+   "prefab": "stone_arch",
+   "role": "arch",
+   "look": "stone arch",
+   "mount": "structure",
+   "scale": [
+    0.5,
+    2
+   ],
+   "tier": 2,
+   "notes": "",
+   "exists": true,
+   "size": [
+    2.01,
+    1.02,
+    1.13
+   ],
+   "min": [
+    -1.01,
+    -0.53,
+    -0.57
+   ],
+   "max": [
+    1.0,
+    0.5,
+    0.56
+   ],
+   "origin": "centre",
+   "hollow": false,
+   "kinds": [
+    "Piece",
+    "WearNTear",
+    "ZNetView"
+   ],
+   "colliders": {
+    "piece": 3
+   },
+   "solid": true,
+   "solid_note": "",
+   "lights": [],
+   "fire": false,
+   "particles": 0,
+   "item": false,
+   "networked": true,
+   "gives": [],
+   "physics": false,
+   "height": 1.02,
+   "upright": "block",
+   "saved_only": false,
+   "safe": true,
+   "climb": {
+    "ledges": [
+     [
+      0.8,
+      1.2
+     ]
+    ],
+    "top": 1.2,
+    "top_skilled": 1.2
+   },
+   "render": "palettes/stone_arch.png"
+  },
+  {
+   "prefab": "stone_stair",
+   "role": "stair",
+   "look": "stone stair",
+   "mount": "structure",
+   "scale": [
+    1,
+    1
+   ],
+   "tier": 2,
+   "notes": "keep 1",
+   "exists": true,
+   "size": [
+    2.04,
+    1.0,
+    2.0
+   ],
+   "min": [
+    -1.02,
+    0.0,
+    -1.0
+   ],
+   "max": [
+    1.02,
+    1.0,
+    1.0
+   ],
+   "origin": "foot",
+   "hollow": false,
+   "kinds": [
+    "Piece",
+    "WearNTear",
+    "ZNetView"
+   ],
+   "colliders": {
+    "piece": 1
+   },
+   "solid": true,
+   "solid_note": "",
+   "lights": [],
+   "fire": false,
+   "particles": 0,
+   "item": false,
+   "networked": true,
+   "gives": [],
+   "physics": false,
+   "height": 1.0,
+   "upright": "flat",
+   "saved_only": false,
+   "safe": true,
+   "climb": {
+    "ledges": [
+     [
+      0.0,
+      1.2
+     ]
+    ],
+    "top": 1.2,
+    "top_skilled": 1.2
+   },
+   "render": "palettes/stone_stair.png"
+  },
+  {
+   "prefab": "Piece_grausten_pillar_arch",
+   "role": "arch",
+   "look": "grausten pillar arch (a darker crypt)",
+   "mount": "structure",
+   "scale": [
+    0.5,
+    2
+   ],
+   "tier": 7,
+   "notes": "",
+   "exists": true,
+   "size": [
+    2.52,
+    2.48,
+    1.0
+   ],
+   "min": [
+    -2.02,
+    -0.01,
+    -0.5
+   ],
+   "max": [
+    0.51,
+    2.47,
+    0.5
+   ],
+   "origin": "foot",
+   "hollow": false,
+   "kinds": [
+    "Piece",
+    "WearNTear",
+    "ZNetView"
+   ],
+   "colliders": {
+    "piece": 1
+   },
+   "solid": true,
+   "solid_note": "",
+   "lights": [],
+   "fire": false,
+   "particles": 0,
+   "item": false,
+   "networked": true,
+   "gives": [],
+   "physics": false,
+   "height": 2.48,
+   "upright": "block",
+   "saved_only": false,
+   "safe": true,
+   "climb": {
+    "ledges": [
+     [
+      0.0,
+      0.2
+     ],
+     [
+      1.2,
+      1.4
+     ],
+     [
+      1.6,
+      1.8
+     ],
+     [
+      2.0,
+      2.4
+     ]
+    ],
+    "top": 2.4,
+    "top_skilled": 2.4
+   },
+   "render": "palettes/Piece_grausten_pillar_arch.png"
+  },
+  {
+   "prefab": "dungeon_forestcrypt_door",
+   "role": "door",
+   "look": "the forest crypt's wooden door (Pack.doors for type \"\")",
+   "mount": "structure",
+   "scale": [
+    1,
+    1
+   ],
+   "tier": 2,
+   "notes": "placed by the Builder at joints as a saved door; as scenery it doesn't open",
+   "exists": true,
+   "size": [
+    2.28,
+    3.01,
+    0.5
+   ],
+   "min": [
+    -1.15,
+    -0.01,
+    -0.25
+   ],
+   "max": [
+    1.13,
+    3.01,
+    0.25
+   ],
+   "origin": "foot",
+   "hollow": false,
+   "kinds": [
+    "Door",
+    "WearNTear",
+    "ZNetView"
+   ],
+   "colliders": {
+    "Default": 3
+   },
+   "solid": true,
+   "solid_note": "",
+   "lights": [],
+   "fire": false,
+   "particles": 0,
+   "item": false,
+   "networked": true,
+   "gives": [],
+   "physics": false,
+   "height": 3.01,
+   "upright": "upright",
+   "saved_only": false,
+   "safe": true,
+   "climb": {
+    "ledges": [
+     [
+      2.8,
+      3.2
+     ]
+    ],
+    "top": 0.0,
+    "top_skilled": 3.2
+   },
+   "render": "palettes/dungeon_forestcrypt_door.png"
+  },
+  {
+   "prefab": "dungeon_sunkencrypt_irongate",
+   "role": "gate",
+   "look": "the sunken crypt's iron gate",
+   "mount": "structure",
+   "scale": [
+    1,
+    1
+   ],
+   "tier": 3,
+   "notes": "as scenery it doesn't open; thin (0.11 m): a single face may not show from behind (one-sided): check its render from both sides",
+   "exists": true,
+   "size": [
+    2.0,
+    3.05,
+    0.11
+   ],
+   "min": [
+    -1.0,
+    -0.4,
+    -0.06
+   ],
+   "max": [
+    1.0,
+    2.65,
+    0.06
+   ],
+   "origin": "inside",
+   "hollow": false,
+   "kinds": [
+    "Door",
+    "WearNTear",
+    "ZNetView"
+   ],
+   "colliders": {
+    "Default": 5
+   },
+   "solid": true,
+   "solid_note": "",
+   "lights": [],
+   "fire": false,
+   "particles": 0,
+   "item": false,
+   "networked": true,
+   "gives": [],
+   "physics": false,
+   "height": 3.05,
+   "upright": "upright",
+   "saved_only": false,
+   "safe": true,
+   "climb": {
+    "ledges": [
+     [
+      3.2,
+      3.4
+     ]
+    ],
+    "top": 0.0,
+    "top_skilled": 0.0
+   },
+   "render": "palettes/dungeon_sunkencrypt_irongate.png"
+  },
+  {
+   "prefab": "CastleKit_groundtorch",
+   "role": "light",
+   "look": "a standing iron torch (orange)",
+   "mount": "ground",
+   "scale": [
+    0.5,
+    2
+   ],
+   "tier": 2,
+   "notes": "its light range, fade distance and fire grow with its scale (BuildScale.cs)",
+   "exists": true,
+   "size": [
+    0.23,
+    1.48,
+    0.24
+   ],
+   "min": [
+    -0.12,
+    -0.05,
+    -0.12
+   ],
+   "max": [
+    0.11,
+    1.43,
+    0.12
+   ],
+   "origin": "foot",
+   "hollow": false,
+   "kinds": [
+    "EffectArea",
+    "LightLod",
+    "WearNTear",
+    "ZNetView"
+   ],
+   "colliders": {
+    "Default": 1
+   },
+   "solid": true,
+   "solid_note": "",
+   "lights": [
+    {
+     "range": 6.0,
+     "intensity": 2.0,
+     "colour": "#ff9e7a",
+     "lit": true,
+     "lod": true
+    }
+   ],
+   "fire": false,
+   "particles": 2,
+   "item": false,
+   "networked": true,
+   "gives": [],
+   "physics": false,
+   "height": 1.48,
+   "upright": "upright",
+   "saved_only": false,
+   "safe": true,
+   "climb": {
+    "ledges": [],
+    "top": 0.0,
+    "top_skilled": 0.0
+   },
+   "render": "palettes/CastleKit_groundtorch.png"
+  },
+  {
+   "prefab": "CastleKit_groundtorch_green",
+   "role": "light",
+   "look": "a standing iron torch, green fire",
+   "mount": "ground",
+   "scale": [
+    0.5,
+    2
+   ],
+   "tier": 3,
+   "notes": "its light range, fade distance and fire grow with its scale (BuildScale.cs)",
+   "exists": true,
+   "size": [
+    0.23,
+    1.48,
+    0.24
+   ],
+   "min": [
+    -0.12,
+    -0.05,
+    -0.12
+   ],
+   "max": [
+    0.11,
+    1.43,
+    0.12
+   ],
+   "origin": "foot",
+   "hollow": false,
+   "kinds": [
+    "EffectArea",
+    "LightLod",
+    "WearNTear",
+    "ZNetView"
+   ],
+   "colliders": {
+    "Default": 1
+   },
+   "solid": true,
+   "solid_note": "",
+   "lights": [
+    {
+     "range": 6.0,
+     "intensity": 2.0,
+     "colour": "#b6ff7a",
+     "lit": true,
+     "lod": true
+    }
+   ],
+   "fire": false,
+   "particles": 2,
+   "item": false,
+   "networked": true,
+   "gives": [],
+   "physics": false,
+   "height": 1.48,
+   "upright": "upright",
+   "saved_only": false,
+   "safe": true,
+   "climb": {
+    "ledges": [],
+    "top": 0.0,
+    "top_skilled": 0.0
+   },
+   "render": "palettes/CastleKit_groundtorch_green.png"
+  },
+  {
+   "prefab": "CastleKit_groundtorch_blue",
+   "role": "light",
+   "look": "a standing iron torch, blue fire",
+   "mount": "ground",
+   "scale": [
+    0.5,
+    2
+   ],
+   "tier": 4,
+   "notes": "its light range, fade distance and fire grow with its scale (BuildScale.cs)",
+   "exists": true,
+   "size": [
+    0.23,
+    1.48,
+    0.24
+   ],
+   "min": [
+    -0.12,
+    -0.05,
+    -0.12
+   ],
+   "max": [
+    0.11,
+    1.43,
+    0.12
+   ],
+   "origin": "foot",
+   "hollow": false,
+   "kinds": [
+    "EffectArea",
+    "LightLod",
+    "WearNTear",
+    "ZNetView"
+   ],
+   "colliders": {
+    "Default": 1
+   },
+   "solid": true,
+   "solid_note": "",
+   "lights": [
+    {
+     "range": 6.0,
+     "intensity": 2.0,
+     "colour": "#bffeff",
+     "lit": true,
+     "lod": true
+    }
+   ],
+   "fire": false,
+   "particles": 2,
+   "item": false,
+   "networked": true,
+   "gives": [],
+   "physics": false,
+   "height": 1.48,
+   "upright": "upright",
+   "saved_only": false,
+   "safe": true,
+   "climb": {
+    "ledges": [],
+    "top": 0.0,
+    "top_skilled": 0.0
+   },
+   "render": "palettes/CastleKit_groundtorch_blue.png"
+  },
+  {
+   "prefab": "piece_walltorch",
+   "role": "light",
+   "look": "a wall sconce torch",
+   "mount": "wall",
+   "scale": [
+    0.5,
+    2
+   ],
+   "tier": 1,
+   "notes": "its light range, fade distance and fire grow with its scale (BuildScale.cs); climbable: a player can stand 1.0 m above its foot (at scale 1; 1.0 m with Jump skill 100), so it's a stepping stone to a level up to about 2.6 m above its foot (4.1 m with Jump 100)",
+   "exists": true,
+   "size": [
+    0.45,
+    0.95,
+    0.31
+   ],
+   "min": [
+    -0.2,
+    -0.33,
+    -0.15
+   ],
+   "max": [
+    0.24,
+    0.62,
+    0.15
+   ],
+   "origin": "inside",
+   "hollow": false,
+   "kinds": [
+    "EffectArea",
+    "Fireplace",
+    "LightLod",
+    "Piece",
+    "WearNTear",
+    "ZNetView"
+   ],
+   "colliders": {
+    "piece": 1
+   },
+   "solid": true,
+   "solid_note": "",
+   "lights": [
+    {
+     "range": 12.0,
+     "intensity": 1.5,
+     "colour": "#ff9e7a",
+     "lit": true,
+     "lod": true
+    }
+   ],
+   "fire": true,
+   "particles": 2,
+   "item": false,
+   "networked": true,
+   "gives": [],
+   "physics": false,
+   "height": 0.95,
+   "upright": "upright",
+   "saved_only": false,
+   "safe": true,
+   "climb": {
+    "ledges": [
+     [
+      0.8,
+      1.0
+     ]
+    ],
+    "top": 1.0,
+    "top_skilled": 1.0
+   },
+   "render": "palettes/piece_walltorch.png"
+  },
+  {
+   "prefab": "piece_groundtorch_green",
+   "role": "light",
+   "look": "a green standing torch",
+   "mount": "ground",
+   "scale": [
+    0.5,
+    2
+   ],
+   "tier": 3,
+   "notes": "its light range, fade distance and fire grow with its scale (BuildScale.cs)",
+   "exists": true,
+   "size": [
+    0.23,
+    1.48,
+    0.24
+   ],
+   "min": [
+    -0.12,
+    -0.65,
+    -0.12
+   ],
+   "max": [
+    0.11,
+    0.82,
+    0.12
+   ],
+   "origin": "centre",
+   "hollow": false,
+   "kinds": [
+    "EffectArea",
+    "Fireplace",
+    "LightLod",
+    "Piece",
+    "WearNTear",
+    "ZNetView"
+   ],
+   "colliders": {
+    "piece": 1
+   },
+   "solid": true,
+   "solid_note": "",
+   "lights": [
+    {
+     "range": 10.0,
+     "intensity": 1.5,
+     "colour": "#a0ff7a",
+     "lit": true,
+     "lod": true
+    }
+   ],
+   "fire": true,
+   "particles": 2,
+   "item": false,
+   "networked": true,
+   "gives": [],
+   "physics": false,
+   "height": 1.48,
+   "upright": "upright",
+   "saved_only": false,
+   "safe": true,
+   "climb": {
+    "ledges": [],
+    "top": 0.0,
+    "top_skilled": 0.0
+   },
+   "render": "palettes/piece_groundtorch_green.png"
+  },
+  {
+   "prefab": "piece_brazierfloor01",
+   "role": "light",
+   "look": "a floor brazier",
+   "mount": "ground",
+   "scale": [
+    0.5,
+    3
+   ],
+   "tier": 2,
+   "notes": "its light range, fade distance and fire grow with its scale (BuildScale.cs); climbable: a player can stand 1.2 m above its foot (at scale 1; 1.2 m with Jump skill 100), so it's a stepping stone to a level up to about 2.8 m above its foot (4.3 m with Jump 100)",
+   "exists": true,
+   "size": [
+    1.0,
+    1.02,
+    0.99
+   ],
+   "min": [
+    -0.49,
+    -1.06,
+    -0.49
+   ],
+   "max": [
+    0.51,
+    -0.04,
+    0.51
+   ],
+   "origin": "top",
+   "hollow": false,
+   "kinds": [
+    "EffectArea",
+    "Fireplace",
+    "LightLod",
+    "Piece",
+    "WearNTear",
+    "ZNetView"
+   ],
+   "colliders": {
+    "piece": 1,
+    "pathblocker": 2
+   },
+   "solid": true,
+   "solid_note": "",
+   "lights": [
+    {
+     "range": 10.0,
+     "intensity": 2.0,
+     "colour": "#ff9e7a",
+     "lit": true,
+     "lod": true
+    },
+    {
+     "range": 2.5,
+     "intensity": 1.5,
+     "colour": "#d58669",
+     "lit": false,
+     "lod": true
+    }
+   ],
+   "fire": true,
+   "particles": 3,
+   "item": false,
+   "networked": true,
+   "gives": [],
+   "physics": false,
+   "height": 1.02,
+   "upright": "block",
+   "saved_only": false,
+   "safe": true,
+   "climb": {
+    "ledges": [
+     [
+      1.0,
+      1.2
+     ]
+    ],
+    "top": 1.2,
+    "top_skilled": 1.2
+   },
+   "render": "palettes/piece_brazierfloor01.png"
+  },
+  {
+   "prefab": "piece_brazierceiling01",
+   "role": "light",
+   "look": "a brazier hanging from a ceiling",
+   "mount": "hang",
+   "scale": [
+    0.5,
+    3
+   ],
+   "tier": 2,
+   "notes": "its light range, fade distance and fire grow with its scale (BuildScale.cs); TROUBLE: hangs: needs a ceiling or beam right above its origin.",
+   "exists": true,
+   "size": [
+    1.0,
+    1.95,
+    0.99
+   ],
+   "min": [
+    -0.49,
+    0.03,
+    -0.49
+   ],
+   "max": [
+    0.51,
+    1.98,
+    0.51
+   ],
+   "origin": "foot",
+   "hollow": false,
+   "kinds": [
+    "EffectArea",
+    "Fireplace",
+    "LightLod",
+    "Piece",
+    "WearNTear",
+    "ZNetView"
+   ],
+   "colliders": {
+    "piece": 1,
+    "piece_nonsolid": 1,
+    "pathblocker": 1
+   },
+   "solid": true,
+   "solid_note": "",
+   "lights": [
+    {
+     "range": 10.0,
+     "intensity": 2.0,
+     "colour": "#ff9e7a",
+     "lit": true,
+     "lod": true
+    },
+    {
+     "range": 2.5,
+     "intensity": 1.5,
+     "colour": "#d58669",
+     "lit": false,
+     "lod": true
+    }
+   ],
+   "fire": true,
+   "particles": 3,
+   "item": false,
+   "networked": true,
+   "gives": [],
+   "physics": false,
+   "height": 1.95,
+   "upright": "block",
+   "saved_only": false,
+   "safe": true,
+   "climb": {
+    "ledges": [
+     [
+      0.0,
+      0.2
+     ]
+    ],
+    "top": 0.0,
+    "top_skilled": 0.0
+   },
+   "render": "palettes/piece_brazierceiling01.png"
+  },
+  {
+   "prefab": "Candle_resin",
+   "role": "light",
+   "look": "a resin candle",
+   "mount": "ground",
+   "scale": [
+    0.5,
+    2
+   ],
+   "tier": 1,
+   "notes": "players walk through it; its light range, fade distance and fire grow with its scale (BuildScale.cs)",
+   "exists": true,
+   "size": [
+    0.25,
+    0.32,
+    0.25
+   ],
+   "min": [
+    -0.07,
+    -0.03,
+    -0.12
+   ],
+   "max": [
+    0.18,
+    0.3,
+    0.14
+   ],
+   "origin": "foot",
+   "hollow": false,
+   "kinds": [
+    "EffectArea",
+    "Fireplace",
+    "LightLod",
+    "Piece",
+    "WearNTear",
+    "ZNetView"
+   ],
+   "colliders": {
+    "piece_nonsolid": 1
+   },
+   "solid": false,
+   "solid_note": "players walk through it",
+   "lights": [
+    {
+     "range": 1.0,
+     "intensity": 2.0,
+     "colour": "#ffa438",
+     "lit": true,
+     "lod": true
+    },
+    {
+     "range": 1.0,
+     "intensity": 2.0,
+     "colour": "#ffa438",
+     "lit": false,
+     "lod": true
+    }
+   ],
+   "fire": true,
+   "particles": 1,
+   "item": false,
+   "networked": true,
+   "gives": [],
+   "physics": false,
+   "height": 0.32,
+   "upright": "block",
+   "saved_only": false,
+   "safe": true,
+   "climb": {
+    "ledges": [],
+    "top": 0.0,
+    "top_skilled": 0.0
+   },
+   "render": "palettes/Candle_resin.png"
+  },
+  {
+   "prefab": "Skull1",
+   "role": "remains",
+   "look": "a skull",
+   "mount": "ground",
+   "scale": [
+    0.5,
+    2
+   ],
+   "tier": 2,
+   "notes": "",
+   "exists": true,
+   "size": [
+    0.31,
+    0.24,
+    0.2
+   ],
+   "min": [
+    -0.17,
+    -0.0,
+    -0.1
+   ],
+   "max": [
+    0.14,
+    0.24,
+    0.1
+   ],
+   "origin": "foot",
+   "hollow": false,
+   "kinds": [
+    "ZNetView"
+   ],
+   "colliders": {
+    "static_solid": 1
+   },
+   "solid": true,
+   "solid_note": "",
+   "lights": [],
+   "fire": false,
+   "particles": 0,
+   "item": false,
+   "networked": true,
+   "gives": [],
+   "physics": false,
+   "height": 0.24,
+   "upright": "block",
+   "saved_only": false,
+   "safe": true,
+   "climb": {
+    "ledges": [],
+    "top": 0.0,
+    "top_skilled": 0.0
+   },
+   "render": "palettes/Skull1.png"
+  },
+  {
+   "prefab": "Skull2",
+   "role": "remains",
+   "look": "a skull",
+   "mount": "ground",
+   "scale": [
+    0.5,
+    2
+   ],
+   "tier": 2,
+   "notes": "",
+   "exists": true,
+   "size": [
+    4.16,
+    4.13,
+    3.83
+   ],
+   "min": [
+    -1.7,
+    -1.27,
+    -1.03
+   ],
+   "max": [
+    2.46,
+    2.86,
+    2.8
+   ],
+   "origin": "inside",
+   "hollow": false,
+   "kinds": [
+    "ZNetView"
+   ],
+   "colliders": {
+    "static_solid": 1
+   },
+   "solid": true,
+   "solid_note": "",
+   "lights": [],
+   "fire": false,
+   "particles": 0,
+   "item": false,
+   "networked": true,
+   "gives": [],
+   "physics": false,
+   "height": 4.13,
+   "upright": "block",
+   "saved_only": false,
+   "safe": true,
+   "climb": {
+    "ledges": [
+     [
+      4.2,
+      4.4
+     ]
+    ],
+    "top": 0.0,
+    "top_skilled": 0.0
+   },
+   "render": "palettes/Skull2.png"
+  },
+  {
+   "prefab": "root07",
+   "role": "decor",
+   "look": "roots through a wall",
+   "mount": "wall",
+   "scale": [
+    0.5,
+    2
+   ],
+   "tier": 2,
+   "notes": "as scenery its Destructible, DropOnDestroyed is stripped: it gives nothing",
+   "exists": true,
+   "size": [
+    1.22,
+    1.61,
+    0.44
+   ],
+   "min": [
+    -0.21,
+    -0.85,
+    -0.11
+   ],
+   "max": [
+    1.01,
+    0.76,
+    0.33
+   ],
+   "origin": "centre",
+   "hollow": false,
+   "kinds": [
+    "Destructible",
+    "DropOnDestroyed",
+    "ZNetView"
+   ],
+   "colliders": {
+    "Default": 1
+   },
+   "solid": true,
+   "solid_note": "",
+   "lights": [],
+   "fire": false,
+   "particles": 0,
+   "item": false,
+   "networked": true,
+   "gives": [
+    "Destructible",
+    "DropOnDestroyed"
+   ],
+   "physics": false,
+   "height": 1.61,
+   "upright": "upright",
+   "saved_only": false,
+   "safe": true,
+   "climb": {
+    "ledges": [],
+    "top": 0.0,
+    "top_skilled": 0.0
+   },
+   "render": "palettes/root07.png"
+  },
+  {
+   "prefab": "root11",
+   "role": "decor",
+   "look": "roots through a ceiling",
+   "mount": "hang",
+   "scale": [
+    0.5,
+    2
+   ],
+   "tier": 2,
+   "notes": "as scenery its Destructible, DropOnDestroyed is stripped: it gives nothing; climbable: a player can stand 0.4 m above its foot (at scale 1; 0.4 m with Jump skill 100), so it's a stepping stone to a level up to about 2.0 m above its foot (3.5 m with Jump 100)",
+   "exists": true,
+   "size": [
+    1.67,
+    0.38,
+    2.07
+   ],
+   "min": [
+    -0.47,
+    -0.0,
+    -1.61
+   ],
+   "max": [
+    1.21,
+    0.38,
+    0.46
+   ],
+   "origin": "foot",
+   "hollow": false,
+   "kinds": [
+    "Destructible",
+    "DropOnDestroyed",
+    "ZNetView"
+   ],
+   "colliders": {
+    "Default": 1
+   },
+   "solid": true,
+   "solid_note": "",
+   "lights": [],
+   "fire": false,
+   "particles": 0,
+   "item": false,
+   "networked": true,
+   "gives": [
+    "Destructible",
+    "DropOnDestroyed"
+   ],
+   "physics": false,
+   "height": 0.38,
+   "upright": "flat",
+   "saved_only": false,
+   "safe": true,
+   "climb": {
+    "ledges": [
+     [
+      0.0,
+      0.4
+     ]
+    ],
+    "top": 0.4,
+    "top_skilled": 0.4
+   },
+   "render": "palettes/root11.png"
+  },
+  {
+   "prefab": "vertical_web",
+   "role": "decor",
+   "look": "a spider web, upright",
+   "mount": "free",
+   "scale": [
+    0.5,
+    2
+   ],
+   "tier": 2,
+   "notes": "no collider: players walk through it",
+   "exists": true,
+   "size": [
+    27.19,
+    59.87,
+    27.19
+   ],
+   "min": [
+    -12.0,
+    0.0,
+    -10.3
+   ],
+   "max": [
+    15.19,
+    59.87,
+    16.89
+   ],
+   "origin": "foot",
+   "hollow": false,
+   "kinds": [
+    "ZNetView"
+   ],
+   "colliders": {},
+   "solid": false,
+   "solid_note": "no collider: players walk through it",
+   "lights": [],
+   "fire": false,
+   "particles": 0,
+   "item": false,
+   "networked": true,
+   "gives": [],
+   "physics": false,
+   "height": 59.87,
+   "upright": "block",
+   "saved_only": false,
+   "safe": true,
+   "climb": {
+    "ledges": [],
+    "top": 0.0,
+    "top_skilled": 0.0
+   },
+   "render": "palettes/vertical_web.png"
+  },
+  {
+   "prefab": "horizontal_web",
+   "role": "decor",
+   "look": "a spider web, flat",
+   "mount": "free",
+   "scale": [
+    0.5,
+    2
+   ],
+   "tier": 2,
+   "notes": "no collider: players walk through it; thin (0.0 m): a single face may not show from behind (one-sided): check its render from both sides",
+   "exists": true,
+   "size": [
+    33.08,
+    0.0,
+    33.08
+   ],
+   "min": [
+    -16.54,
+    16.54,
+    -16.54
+   ],
+   "max": [
+    16.54,
+    16.54,
+    16.54
+   ],
+   "origin": "off the box",
+   "hollow": false,
+   "kinds": [
+    "ZNetView"
+   ],
+   "colliders": {},
+   "solid": false,
+   "solid_note": "no collider: players walk through it",
+   "lights": [],
+   "fire": false,
+   "particles": 0,
+   "item": false,
+   "networked": true,
+   "gives": [],
+   "physics": false,
+   "height": 0.0,
+   "upright": "flat",
+   "saved_only": false,
+   "safe": true,
+   "climb": {
+    "ledges": [],
+    "top": 0.0,
+    "top_skilled": 0.0
+   },
+   "render": "palettes/horizontal_web.png"
+  },
+  {
+   "prefab": "cloth_hanging_long",
+   "role": "decor",
+   "look": "a long hanging cloth",
+   "mount": "hang",
+   "scale": [
+    0.5,
+    2
+   ],
+   "tier": 2,
+   "notes": "players walk through it; as scenery its Destructible, DropOnDestroyed is stripped: it gives nothing; thin (0.13 m): a single face may not show from behind (one-sided): check its render from both sides",
+   "exists": true,
+   "size": [
+    2.0,
+    8.0,
+    0.13
+   ],
+   "min": [
+    -1.0,
+    0.25,
+    -0.06
+   ],
+   "max": [
+    1.0,
+    8.25,
+    0.06
+   ],
+   "origin": "off the box",
+   "hollow": false,
+   "kinds": [
+    "Destructible",
+    "DropOnDestroyed",
+    "ZNetView"
+   ],
+   "colliders": {
+    "piece_nonsolid": 1
+   },
+   "solid": false,
+   "solid_note": "players walk through it",
+   "lights": [],
+   "fire": false,
+   "particles": 0,
+   "item": false,
+   "networked": true,
+   "gives": [
+    "Destructible",
+    "DropOnDestroyed"
+   ],
+   "physics": false,
+   "height": 8.0,
+   "upright": "upright",
+   "saved_only": false,
+   "safe": true,
+   "climb": {
+    "ledges": [],
+    "top": 0.0,
+    "top_skilled": 0.0
+   },
+   "render": "palettes/cloth_hanging_long.png"
+  },
+  {
+   "prefab": "mudpile",
+   "role": "decor",
+   "look": "a pile of mud (sunken crypts)",
+   "mount": "ground",
+   "scale": [
+    0.5,
+    2
+   ],
+   "tier": 3,
+   "notes": "as scenery its Destructible is stripped: it gives nothing; climbable: a player can stand 1.6 m above its foot (at scale 1; 1.6 m with Jump skill 100), so it's a stepping stone to a level up to about 3.2 m above its foot (4.7 m with Jump 100)",
+   "exists": true,
+   "size": [
+    2.9,
+    1.46,
+    3.19
+   ],
+   "min": [
+    -1.46,
+    -0.07,
+    -1.74
+   ],
+   "max": [
+    1.44,
+    1.4,
+    1.45
+   ],
+   "origin": "foot",
+   "hollow": false,
+   "kinds": [
+    "Destructible",
+    "ZNetView"
+   ],
+   "colliders": {
+    "Default": 1
+   },
+   "solid": true,
+   "solid_note": "",
+   "lights": [],
+   "fire": false,
+   "particles": 1,
+   "item": false,
+   "networked": true,
+   "gives": [
+    "Destructible"
+   ],
+   "physics": false,
+   "height": 1.46,
+   "upright": "flat",
+   "saved_only": false,
+   "safe": true,
+   "climb": {
+    "ledges": [
+     [
+      0.0,
+      0.2
+     ],
+     [
+      0.4,
+      1.6
+     ]
+    ],
+    "top": 1.6,
+    "top_skilled": 1.6
+   },
+   "render": "palettes/mudpile.png"
+  }
+ ],
+ "roles": {
+  "wall": {
+   "pieces": [
+    "stone_wall_4x2",
+    "stone_wall_2x1"
+   ],
+   "how": "a floor slab stood up: euler (-90, side yaw, 0), its top face inwards (dungeon_parts.wall); a wall piece (tile wall, metal wall, timber wall) stands as it is, turned by yaw"
+  },
+  "wall_alt": {
+   "pieces": [
+    "stone_wall_ruin",
+    "stone_wall_1x1"
+   ],
+   "how": "as wall"
+  },
+  "floor": {
+   "pieces": [
+    "stone_floor_2x2",
+    "stone_floor"
+   ],
+   "how": "flat as it is; most slabs have their origin in their middle (see each piece's origin and min/max)"
+  },
+  "ceiling": {
+   "pieces": [
+    "stone_floor_2x2"
+   ],
+   "how": "a floor slab turned over: euler (180, 0, 0) (dungeon_parts.slab with ceiling=True); its origin is in the slab's middle"
+  },
+  "trim": {
+   "pieces": [
+    "stone_arch",
+    "Piece_grausten_pillar_arch"
+   ]
+  },
+  "pillar": {
+   "pieces": [
+    "stone_pillar"
+   ]
+  },
+  "column": {
+   "pieces": [
+    "stone_pillar"
+   ]
+  },
+  "beam": {
+   "pieces": []
+  },
+  "rail": {
+   "pieces": []
+  },
+  "grate": {
+   "pieces": [
+    "dungeon_sunkencrypt_irongate"
+   ]
+  },
+  "door_leaf": {
+   "pieces": [
+    "dungeon_forestcrypt_door",
+    "dungeon_sunkencrypt_irongate"
+   ],
+   "how": "as scenery it doesn't open: Pack.doors (saved, at joints) or a gate mechanism moves it"
+  },
+  "stair": {
+   "pieces": [
+    "stone_stair"
+   ],
+   "how": "keep scale 1 (step height); stack or repeat for a wider or longer stair"
+  },
+  "light_stand": {
+   "pieces": [
+    "CastleKit_groundtorch",
+    "CastleKit_groundtorch_green",
+    "piece_groundtorch_green",
+    "piece_brazierfloor01",
+    "Candle_resin"
+   ]
+  },
+  "light_hang": {
+   "pieces": [
+    "piece_brazierceiling01"
+   ],
+   "how": "hang it from the first part above it (ceiling, balcony, a mechanism's lid) on the theme's chain, the chain's foot on the light's top: giant, a thinned Morkhalla_WallChain1 (giant_kit.wisp); Dvergr, dvergrprops_lantern on dvergrprops_hooknchain. Stood at a point it floats (dverger_demister's mesh is below its origin)"
+  },
+  "light_wall": {
+   "pieces": [
+    "piece_walltorch"
+   ],
+   "how": "against a wall, its back to it"
+  },
+  "chest": {
+   "pieces": [
+    "TreasureChest_forestcrypt"
+   ],
+   "how": "Saved parts only, scale 1: the Builder refills them from the pack's loot for the biome"
+  },
+  "decor_small": {
+   "pieces": [
+    "Skull1",
+    "Skull2",
+    "Candle_resin"
+   ],
+   "how": "pick by the room's dressing set (each piece's \"sets\")"
+  },
+  "decor_large": {
+   "pieces": [
+    "cloth_hanging_long",
+    "root07",
+    "root11",
+    "vertical_web",
+    "horizontal_web"
+   ],
+   "how": "pick by the room's dressing set (each piece's \"sets\")"
+  },
+  "rubble": {
+   "pieces": [
+    "mudpile",
+    "stone_pile"
+   ]
+  },
+  "bones": {
+   "pieces": [
+    "skull_pile",
+    "bone_stack",
+    "Skull1",
+    "Skull2",
+    "crypt_skeleton_chest"
+   ],
+   "how": "giant bones are huge (a skull is 10 x 12 x 17 m): scale them down for human-scale rooms"
+  }
+ },
+ "by_role": {
+  "wall": [
+   "stone_wall_4x2",
+   "stone_wall_2x1"
+  ],
+  "wall_alt": [
+   "stone_wall_ruin",
+   "stone_wall_1x1"
+  ],
+  "floor": [
+   "stone_floor_2x2",
+   "stone_floor"
+  ],
+  "ceiling": [
+   "stone_floor_2x2"
+  ],
+  "trim": [
+   "stone_arch",
+   "Piece_grausten_pillar_arch"
+  ],
+  "pillar": [
+   "stone_pillar"
+  ],
+  "column": [
+   "stone_pillar"
+  ],
+  "beam": [],
+  "rail": [],
+  "grate": [
+   "dungeon_sunkencrypt_irongate"
+  ],
+  "door_leaf": [
+   "dungeon_forestcrypt_door",
+   "dungeon_sunkencrypt_irongate"
+  ],
+  "stair": [
+   "stone_stair"
+  ],
+  "light_stand": [
+   "CastleKit_groundtorch",
+   "CastleKit_groundtorch_green",
+   "piece_groundtorch_green",
+   "piece_brazierfloor01",
+   "Candle_resin"
+  ],
+  "light_hang": [
+   "piece_brazierceiling01"
+  ],
+  "light_wall": [
+   "piece_walltorch"
+  ],
+  "chest": [
+   "TreasureChest_forestcrypt"
+  ],
+  "decor_small": [
+   "Skull1",
+   "Skull2",
+   "Candle_resin"
+  ],
+  "decor_large": [
+   "cloth_hanging_long",
+   "root07",
+   "root11",
+   "vertical_web",
+   "horizontal_web"
+  ],
+  "rubble": [
+   "mudpile",
+   "stone_pile"
+  ],
+  "bones": [
+   "skull_pile",
+   "bone_stack",
+   "Skull1",
+   "Skull2",
+   "crypt_skeleton_chest"
+  ]
+ }
+}

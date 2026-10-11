@@ -273,30 +273,5 @@ namespace Dungeons
         }
     }
 
-    // ---- the boss's patches
-
-    // On every game: a character whose ZDO marks it as one of our bosses becomes the game's boss (its bar), with our name.
-    [HarmonyPatch(typeof(Character), "Awake")]
-    internal static class Dungeons_Character_Awake
-    {
-        private static void Postfix(Character __instance)
-        {
-            ZNetView v = __instance.GetComponent<ZNetView>();
-            if (v != null && v.IsValid()) MechSet.MakeBoss(__instance, v.GetZDO());
-        }
-    }
-
-    // On the creature's owner: our boss takes only its share of each hit (MechDef boss "health": 4 is four times the health).
-    [HarmonyPatch(typeof(Character), "RPC_Damage")]
-    internal static class Dungeons_Character_RPC_Damage
-    {
-        private static void Prefix(Character __instance, HitData hit)
-        {
-            if (hit == null) return;
-            ZNetView v = __instance.GetComponent<ZNetView>();
-            if (v == null || !v.IsValid()) return;
-            float x = MechSet.BossToughness(v.GetZDO());
-            if (x > 1f) hit.ApplyModifier(1f / x);
-        }
-    }
+    // (the boss's patches: BossBody.cs)
 }

@@ -57,12 +57,14 @@ def check_room(room, bounds):
         aims = [pivot, (lo + hi) / 2]
         # the floor a player stands on to use it: the highest place below the pivot just in front of it (or, for an exit, round it)
         floor = None
-        for a in ((BASE + 0.5,) if lever else (1.0, 1.5)):
+        for a in ((BASE + 0.5, BASE + 1.0, BASE + 1.5) if lever else (1.0, 1.5)):   # (a cell touching the base has none)
             for t in ((front,) if lever else [np.array([math.cos(u), 0, math.sin(u)]) for u in np.arange(0, 6.28, 0.785)]):
                 p = pivot + t * a
                 ys = [y for y in spots.get((int((p[0] + half[0]) // CELL), int((p[2] + half[2]) // CELL)), []) if y <= pivot[1] + 0.3]
                 if ys and (floor is None or max(ys) > floor):
                     floor = max(ys)
+            if floor is not None and lever:
+                break
         if floor is None:
             problems.append(f"{m['id']}: no floor in front of it")
             continue

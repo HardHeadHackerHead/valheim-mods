@@ -927,8 +927,8 @@ namespace Dungeons
         }
 
         /// <summary>Back to new (the owner, nobody inside): the networked parts it made are removed (made again by the next tend), its rooms
-        /// count as not done, every mechanism is back at its start, the entry day is forgotten. Creatures still alive and items dropped
-        /// inside stay. Since nobody may be inside, nobody stands in a door it takes away. False when it can't now.</summary>
+        /// count as not done, every mechanism is back at its start, the entry day is forgotten. Its encounters' creatures (a boss, a wave)
+        /// are removed with their records; the spawners' creatures and items dropped inside stay. Since nobody may be inside, nobody stands in a door it takes away. False when it can't now.</summary>
         public static bool Reset(Site site, string why)
         {
             if (!site.IsOwner || AnyoneInside(site)) return false;
@@ -937,10 +937,11 @@ namespace Dungeons
             // a new generation of parts: the old ones out of this game's range go too (the server goes through every saved object)
             int gen = zdo.GetInt(Keys.Gen) + 1;
             zdo.Set(Keys.Gen, gen);
-            Sweep.Everywhere(site.Id, gen, false);
+            Sweep.Everywhere(site.Id, gen, true);   // (its encounters' creatures too: their records are cleared, so a boss or a wave left over would join the next fight)
             zdo.Set(Keys.Done, "");
             zdo.Set(Keys.Mechs, "");
             zdo.Set(Keys.Encounters, "");
+            zdo.Set(MechSet.BossKeyHash, "");   // (the boss fights' records: BossFight.cs)
             site.Mechs?.Forget();
             zdo.Set(Keys.Entered, -1);
             zdo.Set(Keys.Resets, zdo.GetInt(Keys.Resets) + 1);

@@ -31,6 +31,8 @@ namespace Dungeons
         {
             public readonly List<KeyValuePair<GameObject, List<int>>> Shown = new List<KeyValuePair<GameObject, List<int>>>();
             public int ShownState = -2;         // the state its "show" parts were last set for (-2: never)
+            // its parts' fire, light, warmth and crackle, each with the states it burns in (null: a brazier's, lit only)
+            public readonly List<KeyValuePair<GameObject, List<int>>> Flames = new List<KeyValuePair<GameObject, List<int>>>();
             public Transform Anchor;            // a pedestal: where its item shows
             public GameObject ItemVisual;
             public string ItemShown;
@@ -66,10 +68,59 @@ namespace Dungeons
 
         // ---- made (MakeOne's hooks)
 
-        /// <summary>MakeOne, each part made: one shown only in some states is kept, to show and hide.</summary>
+        /// <summary>MakeOne, each part made: one shown only in some states is kept, to show and hide; a brazier's flames are found. Both are
+        /// set for the state it's in at once, before the frame is drawn: nothing ever shows lit and then goes out.</summary>
         private void BlockParts(Mech m, PartDef part, GameObject made)
         {
-            if (made != null && part?.Show != null && part.Show.Count > 0) BlockOf(m).Shown.Add(new KeyValuePair<GameObject, List<int>>(made, part.Show));
+            if (made == null || part == null) return;
+            bool shown = part.Show != null && part.Show.Count > 0, burns = part.Lit != null || m.Def.Kind == "brazier";
+            if (!shown && !burns) return;
+            BlockRun r = BlockOf(m);
+            int s = FirstState(m);
+            r.ShownState = s;
+            if (shown)
+            {
+                r.Shown.Add(new KeyValuePair<GameObject, List<int>>(made, part.Show));
+                made.SetActive(part.Show.Contains(s));
+            }
+            if (burns)
+                foreach (GameObject flame in FlamesOf(made))
+                {
+                    r.Flames.Add(new KeyValuePair<GameObject, List<int>>(flame, part.Lit));
+                    flame.SetActive(Burns(part.Lit, s));
+                }
+        }
+
+        /// <summary>A part's fire in a state: its "lit" states, or a brazier's (lit only).</summary>
+        private static bool Burns(List<int> lit, int state) => lit != null ? lit.Contains(state) : state >= 1;
+
+        /// <summary>The state a block shows as it's made: its saved one (a dungeon built again with its braziers lit), a checkpoint's
+        /// whether it's this player's.</summary>
+        private int FirstState(Mech m)
+        {
+            if (m.Def.Kind == "checkpoint") return Checkpoints.IsMine(Site, m) ? 1 : 0;
+            ReadRecords();
+            return Motion(m, MechClock.Now).To;
+        }
+
+        /// <summary>
+        /// A part's flames (a brazier's, or one with "lit"): what the game's fire turns on when it burns (each Fireplace's m_enabledObject and m_enabledObjectHigh:
+        /// the flame particles, the light, the warmth, the crackle), read before Builder.Strip's destroying of the Fireplace takes effect
+        /// (Strip lights every fire it strips, the game's "unlit" torches included). A part with no Fireplace: its lights, particle systems
+        /// and looping sounds. Never the part's own model: a brazier keeps one model, lit or out.
+        /// </summary>
+        private static List<GameObject> FlamesOf(GameObject part)
+        {
+            var found = new List<GameObject>();
+            foreach (Fireplace f in part.GetComponentsInChildren<Fireplace>(true))
+                foreach (GameObject on in new[] { f.m_enabledObject, f.m_enabledObjectHigh })
+                    if (on != null && on != part && !found.Contains(on)) found.Add(on);
+            if (found.Count > 0) return found;
+            var bits = part.GetComponentsInChildren<Light>(true).Select(c => c.gameObject)
+                .Concat(part.GetComponentsInChildren<ParticleSystem>(true).Where(ps => ps.transform.parent == null || ps.transform.parent.GetComponentInParent<ParticleSystem>() == null).Select(c => c.gameObject))
+                .Concat(part.GetComponentsInChildren<AudioSource>(true).Where(a => a.loop).Select(c => c.gameObject));
+            foreach (GameObject go in bits) if (go != part && !found.Contains(go)) found.Add(go);
+            return found;
         }
 
         /// <summary>MakeOne, at its end: what a block needs on its pivot (what E finds, what moves on its own clock).</summary>
@@ -168,6 +219,7 @@ namespace Dungeons
                         bool first = r.ShownState == -2;
                         r.ShownState = s;
                         foreach (KeyValuePair<GameObject, List<int>> part in r.Shown) if (part.Key != null) part.Key.SetActive(part.Value.Contains(s));
+                        foreach (KeyValuePair<GameObject, List<int>> flame in r.Flames) if (flame.Key != null) flame.Key.SetActive(Burns(flame.Value, s));
                         // its sound, where the change is fresh (a block built again in a state plays nothing)
                         if (!first && m.Def.Block != null && m.Def.Kind != "trap" && m.Def.Kind != "checkpoint" && now - Motion(m, now).Start < 1.5)
                             foreach (string fx in m.Def.Block.Fx) PlayAt(fx, m.WorldPos);

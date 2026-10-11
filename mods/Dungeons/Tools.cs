@@ -36,8 +36,9 @@ namespace Dungeons
     ///                                  BepInEx/claude/shots/dungeon-map-&lt;floor&gt;.png (floor 1 the lowest; left out, the player's); "all": every
     ///                                  room, fog of war ignored (a cheat); "open": the window opened there too, for a screenshot (MapWindow.cs)
     ///   dungeon mapshot mini           what the corner minimap shows inside a dungeon, to BepInEx/claude/shots/dungeon-map-mini.png (MapMini.cs)
-    ///   dungeon tour [id] [rooms] [views]   pictures of each room (rooms: "all", or indices and names with commas; views a room, 2 by
-    ///                                  default) by the camera only, the player never moved: BepInEx/claude/shots/tour/<pack>-<seed>/ (MapTour.cs)
+    ///   dungeon tour [id] [rooms] [views] [bright]   pictures of each room (rooms: "all", or indices and names with commas; views a
+    ///                                  room, 2 by default; bright: lit more than the game, to see shapes) by the camera only, the player
+    ///                                  never moved: BepInEx/claude/shots/tour/<pack>-<seed>/ (MapTour.cs)
     ///   dungeon seeds &lt;pack&gt; &lt;count&gt;   lays out seeds 1..count without building them: failures and why, room counts, sizes, time
     ///   dungeon state [id]             everything about one dungeon: its saved state, where it stands, what's built here, who's inside
     ///   dungeon reset [id]             back to new now, as the timed reset does (nobody may be inside): mechanisms back at their start too
@@ -63,7 +64,7 @@ namespace Dungeons
     /// </summary>
     internal static class Tools
     {
-        private const string Usage = "dungeon packs | sync | reload [force] | respawn [same|new] [force] [id] | spawn <pack> [seed] | list | enter [id] | leave | map [id | <pack> <seed>] | mapshot [floor] [all] [open] | mapshot mini | tour [id] [rooms] [views] | seeds <pack> <count> | test <pack> [seeds] | state [id] | reset [id] | remove [id] | mechs [id] | use <key> [id] | set <key> <state> [id] | solve [id] | check [pack] | aim | music | orphans [remove] | bring <player> | rooms [theme] | " + TriggerTools.Usage + "";
+        private const string Usage = "dungeon packs | sync | reload [force] | respawn [same|new] [force] [id] | spawn <pack> [seed] | list | enter [id] | leave | map [id | <pack> <seed>] | mapshot [floor] [all] [open] | mapshot mini | tour [id] [rooms] [views] [bright] | seeds <pack> <count> | test <pack> [seeds] | state [id] | reset [id] | remove [id] | mechs [id] | use <key> [id] | set <key> <state> [id] | solve [id] | check [pack] | aim | music | orphans [remove] | bring <player> | rooms [theme] | " + TriggerTools.Usage + " | " + BossTools.Usage + "";
         private const string NoWorld = "the packs need the game's dungeon rooms: load a world first";
         private static BaseUnityPlugin _claudeTools;
         private static float _next;
@@ -139,6 +140,7 @@ namespace Dungeons
                 case "aim": output(UseReach.Report()); yield break;
                 case "triggers": case "fire": case "blocks": case "checkpoint": TriggerTools.Command(sub, args, output, error, Find); yield break;   // (triggers: TriggerTools.cs)
                 case "music": output(DungeonMusic.Report()); yield break;
+                case "boss": { IEnumerator run = BossTools.Command(args, output, error, Find); while (run.MoveNext()) yield return run.Current; yield break; }   // (the boss toolkit's tests: BossTools.cs)
                 case "orphans":
                     if (ZNet.instance == null || !ZNet.instance.IsServer()) { error("only the host (or the server) knows every saved object: run it there"); yield break; }
                     bool remove = args.Length > 1 && args[1].ToLowerInvariant() == "remove";

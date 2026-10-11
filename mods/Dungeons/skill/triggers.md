@@ -67,12 +67,21 @@ that change mechanisms are applied together, after the trigger's other actions; 
 
 ## Building blocks (mechanism kinds)
 
-Any mechanism's part may have `"show": [states]` (it appears only in those states), and any block `"fx": [game prefabs]` played when it acts.
+Any mechanism's part may have `"show": [states]` (it appears only in those states; set for the mechanism's state the moment it's made, so
+it never flickers on the first frame), and any block `"fx": [game prefabs]` played when it acts. **`show` is for what a state adds** (a
+glow on a lit teleporter, a torch on your own checkpoint), **never for swapping one model for another**: two parts of one mechanism
+shown in states that never meet, under 1 m apart, fail the pack.
+
+**`"lit": [states]`** on any mechanism's part makes the part's own fire burn only in those states (a Fireplace's flame, light, warmth and
+crackle; for a part with no Fireplace, its lights, particles and looping sounds). The model stays; set as it's built (no flash), then
+following state changes on every game. `show` hides and shows the whole part; `lit` only its fire. A brazier's parts act as if they had
+`"lit": [1]` unless they say otherwise. Example: torches that gutter out and relight in pairs, one mechanism with four identical poses
+whose torch parts have `"lit": [1,2,3]`, `[2,3]` and `[3]`, set to 0, 1, 2 or 3 by triggers.
 
 | Kind | Fields | What it is |
 |---|---|---|
 | `pedestal` | `item` (a key item or a game item), `accepts` [...], `itemAt` | States: 0 empty, 1 its item, 2 another it accepts. E puts its item on (or a hotbar key it accepts); **hold E** takes it off (dropped at its foot, +z). Only an item as found (quality 1, no wear, no custom data but a key's binding): nothing of value can be lost. The player's game holds the item until the owner confirms, and gives it back if there's no answer in 6 s. A reset drops what's on it at its foot; a dungeon removed for good drops it outside the entrance. |
-| `brazier` | `burn` (s), `lightable` | States: 0 out, 1 lit. Lit by E with a torch (or any fire-damage item) in hand, a fire hit, or an action; goes out `burn` s after it was lit (0: stays lit). Typical look: an unlit torch part with `"show": [0]`, a lit one with `"show": [1]`. |
+| `brazier` | `burn` (s), `lightable` | States: 0 out, 1 lit. Lit by E with a torch (or any fire-damage item) in hand, a fire hit, or an action; goes out `burn` s after it was lit (0: stays lit). **One model**: use the game's lit fire piece (any Fireplace prefab: `CastleKit_groundtorch`, `piece_brazierfloor01`, `MountainKit_brazier`...) as a plain part with no `show`. The mod switches only its fire (the Fireplace's flame, light, warmth and crackle; for a part with no Fireplace, its lights, particles and looping sounds): on in state 1, off in state 0, set as it's built so it never shows lit first. |
 | `pushblock` | `cell` (m), `rows` | The grid seen from above (+z up, the mechanism's `at` its middle): `.` floor, `#` wall, `S` the start, ` ` (a space) floor for players only (the block can't go there). Off the grid counts as wall. States: the floor cells in reading order (row 0 first). A player walking into a face for a moment pushes it one cell, if the cell ahead is floor and free of other push blocks, and only from a `.` or ` ` cell behind it: give the grid a ring of ` ` so players can walk round it (`testblocks.json`'s pushroom: `["     ", " S.. ", " .#. ", " ... ", "     "]`). Give it a `group` and a trigger that resets the group (a lever), or the reader says it can get stuck. |
 | `trap` | `damage` (pierce, blunt, slash, fire, frost, lightning, poison, spirit), `scale`, `every`, `for`, `offset`, `area`, `areaAt`, `poses` [rest, fired] | States: 0 off, 1 on. On, it fires `for` s every `every` s of the server's clock (default on); `every` 0: once each time an action sets it to 1 (default off). The mechanism stands at its rest pose (the first) in both states; its parts move from there to the fired pose on its own clock. Damage by the land: Meadows 8, Black Forest 15, Swamp 25, Mountain 35, Plains 50, Mistlands 65, Ashlands 80, Deep North 95, times `scale`, and never more than 34% of the victim's health up to the Black Forest, 50% to the Mountain, 70% after (never a one-shot kill at low tiers). Each player is hurt once per firing; creatures too. No `area`: its parts' box plus 1.2 m above. |
 | `teleporter` | `pair`, `send`, `step` | States: 0 off, 1 on (default on; `"start": 0` to switch it on with an action). E (or stepping on it with `"step": true`) takes the player to 1.5 m in front (+z) of the pair's other end, while this end is on. `"send": false`: arrival only (a one-way pair). Two ends per pair. |
@@ -126,6 +135,7 @@ own.
 - A key dropped outside its dungeon vanishes.
 - Trap damage is capped per hit, but repeated hits still kill.
 - Music from a trigger lasts until a trigger gives it back with `""`.
+- A brazier is one lit fire piece, not an unlit and a lit model swapped with `show` (the reader fails that).
 - Teleporter pairs are matched by `pair` across the whole dungeon (the first two ends): a room with one end goes in the layout at most once
   (`"max": 1`), or put both ends in one room.
 - `dungeon_parts.py` always writes `start`: set `start` 1 on traps with `every`, and on teleporters that should be on.

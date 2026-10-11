@@ -55,9 +55,11 @@ def room_boxes(room, bounds, states=None, tag=False):
     mechanism id (None for the room's own) as a fourth item."""
     allb = [b + ((None,) if tag else ()) for b in boxes_of(room.get("parts", []), np.eye(4), bounds)]
     for m in room.get("mechs", []):
-        st = (states or {}).get(m["id"], 1 if m.get("kind") in ("gate", "door", "breakable") else m.get("start", 0))   # gates open
+        st = (states or {}).get(m["id"], 1 if m.get("kind") in ("gate", "door", "lock", "breakable") else m.get("start", 0))   # gates open
         if m.get("kind") == "breakable" and st >= 1:
             continue                                            # (broken: its parts are gone)
+        if m.get("kind") == "trap":
+            st = 0                                              # (a trap's poses are rest and fired on its own clock: it rests)
         mf = frame(m["at"], m.get("euler", [0, 0, 0]))
         if m.get("poses"):
             pose = m["poses"][min(st, len(m["poses"]) - 1)]
@@ -117,8 +119,16 @@ def check_room(room, bounds, states=None, width=0.0):
 
     def place(d):
         at, f = np.array(d["at"]), np.array(d["facing"])
+        if not width:
+            # the floor 1 to 3 m in (as the gap check: past a gate standing in the doorway)
+            for dist in (1.5, 1.0, 2.0, 2.5, 3.0):
+                q = at + f * dist
+                ii, jj = int((q[0] + half[0]) // CELL), int((q[2] + half[2]) // CELL)
+                cands = [y for y in spots.get((ii, jj), []) if y <= at[1] + 0.6]
+                if cands:
+                    return (ii, jj, max(cands))
+            return None
         p = at + f * 1.5
-        i, j = int((p[0] + half[0]) // CELL), int((p[2] + half[2]) // CELL)
         for di in range(0, 9):                           # (a wide way: the nearest wide place further in)
             ii, jj = int((p[0] + f[0] * di * CELL + half[0]) // CELL), int((p[2] + f[2] * di * CELL + half[2]) // CELL)
             cands = [y for y in spots.get((ii, jj), []) if y <= at[1] + (0.6 if not width or di == 0 else 2.1)]   # (a step or two up)

@@ -2535,6 +2535,48 @@
      "doorway": "side"
     },
     {
+     "id": "hammer",
+     "kind": "platform",
+     "at": [0.0, -7.0, -1.0],
+     "parts": [
+      {"prefab": "Morkhalla_Block", "at": [0.0, 0.4, 0.001], "scale": [1.1, 0.625, 1.1]},
+      {"prefab": "CharredCogwheel", "at": [0.036, 2.938, -0.033], "scale": [2.291, 1.003, 2.291]}
+     ],
+     "poses": [{"at": [0.0, 5.0, 0.0], "euler": [0.0, 0.0, 0.0]}, {"at": [0.0, 0.0, 0.0], "euler": [0.0, 0.0, 0.0]}],
+     "start": 0,
+     "seconds": 1.4
+    },
+    {
+     "id": "hammerleverw",
+     "kind": "lever",
+     "at": [-6.8, -5.4, -1.0],
+     "euler": [0.0, 270.0, 0.0],
+     "parts": [
+      {"prefab": "CharredCogwheel", "at": [-0.077, 0.015, -0.016], "euler": [90.0, 90.0, 0.0], "scale": [1.057, 1.253, 1.057]},
+      {"prefab": "Morkhalla_MetalBar", "at": [0.0, 1.2, 0.0], "euler": [0.0, 0.0, 90.0], "scale": [0.14, 0.32, 0.32]},
+      {"prefab": "blackmarble_head_big01", "at": [0.0, 2.75, -0.003], "scale": [0.3, 0.3, 0.3]}
+     ],
+     "poses": [{"at": [0.0, 0.0, 0.0], "euler": [-32.0, 0.0, 0.0]}, {"at": [0.0, 0.0, 0.0], "euler": [32.0, 0.0, 0.0]}],
+     "start": 0,
+     "seconds": 0.8,
+     "wires": [{"target": "hammer", "do": "next"}]
+    },
+    {
+     "id": "hammerlevere",
+     "kind": "lever",
+     "at": [6.8, -5.4, -1.0],
+     "euler": [0.0, 90.0, 0.0],
+     "parts": [
+      {"prefab": "CharredCogwheel", "at": [-0.077, 0.015, -0.016], "euler": [90.0, 90.0, 0.0], "scale": [1.057, 1.253, 1.057]},
+      {"prefab": "Morkhalla_MetalBar", "at": [0.0, 1.2, 0.0], "euler": [0.0, 0.0, 90.0], "scale": [0.14, 0.32, 0.32]},
+      {"prefab": "blackmarble_head_big01", "at": [0.0, 2.75, -0.003], "scale": [0.3, 0.3, 0.3]}
+     ],
+     "poses": [{"at": [0.0, 0.0, 0.0], "euler": [-32.0, 0.0, 0.0]}, {"at": [0.0, 0.0, 0.0], "euler": [32.0, 0.0, 0.0]}],
+     "start": 0,
+     "seconds": 0.8,
+     "wires": [{"target": "hammer", "do": "next"}]
+    },
+    {
      "id": "guardian",
      "kind": "encounter",
      "at": [0.0, -2.0, 2.0],
@@ -2547,13 +2589,51 @@
      "area": [22.0, 10.0, 26.0],
      "startOn": "enter",
      "lock": ["ingate", "outgate"],
-     "waves": [{"elite": 1}],
      "level": 1,
      "eliteLevel": 3,
      "pause": 4.0,
      "timeout": 40.0,
-     "points": [[0.0, -6.2, 10.0]],
-     "music": "boss_gdking"
+     "points": [[0.0, -6.2, 10.5], [-8.0, -7.0, -6.0], [8.0, -7.0, -6.0]],
+     "music": "boss_gdking",
+     "boss": {
+      "name": "$dungeons_boss_thrall",
+      "title": "$dungeons_boss_thrall_title",
+      "role": "elite",
+      "fight": 45,
+      "perPlayer": 0.5,
+      "scale": 1.4,
+      "mini": true,
+      "armour": 0.25,
+      "armourOff": 12,
+      "look": {"light": [1.0, 0.62, 0.3], "range": 5, "aura": "vfx_Smoked"},
+      "intro": {
+       "seconds": 5.6,
+       "wake": 1.2,
+       "leap": [0.0, -7.0, 4.5],
+       "leapAt": 2.6,
+       "beats": [
+        {"at": 0.0, "message": "$dungeons_fight_start", "sound": "sfx_prespawn", "where": [0.0, -6.2, 10.5], "shake": 0.2},
+        {"at": 1.2, "fx": "vfx_spawn_large", "sound": "sfx_skeleton_big_alerted", "shake": 0.4, "banner": true, "where": [0.0, -6.2, 10.5]},
+        {"at": 5.6, "message": "$dungeons_boss_thrall_hint"}
+       ]
+      },
+      "abilities": [{"id": "slam", "kind": "slam", "every": 12, "first": 6, "warn": 1.6, "radius": 4, "scale": 2, "push": 35}],
+      "weakTo": [
+       {"mech": "hammer", "state": 1, "area": [6.0, 5.0, 6.0], "areaAt": [0.0, 1.5, 0.0], "share": 0.12, "stagger": true, "breaks": true, "hurt": 2.0}
+      ],
+      "phases": [
+       {
+        "at": 0.3,
+        "healTo": 0.55,
+        "enrage": 1.2,
+        "adds": {"melee": 1},
+        "message": "$dungeons_boss_thrall_p2",
+        "sound": "sfx_gdking_scream",
+        "shake": 0.5
+       }
+      ],
+      "death": {"seconds": 2.5, "beats": [{"at": 0.0, "sound": "sfx_skeleton_big_death", "shake": 0.6, "banner": true}]}
+     }
     }
    ],
    "parts": [
@@ -2625,7 +2705,10 @@
     {"prefab": "Ashlands_floor_large", "at": [7.946, 7.5, -4.083], "euler": [180.0, 0.0, 0.0], "scale": [0.8, 0.5, 0.8]},
     {"prefab": "Ashlands_floor_large", "at": [7.946, 7.5, 3.917], "euler": [180.0, 0.0, 0.0], "scale": [0.8, 0.5, 0.8]},
     {"prefab": "Ashlands_floor_large", "at": [7.946, 7.5, 11.917], "euler": [180.0, 0.0, 0.0], "scale": [0.8, 0.5, 0.8]},
-    {"prefab": "blackmarble_floor_large", "at": [0.0, -6.6, 9.5], "scale": [1.25, 0.4, 0.625]},
+    {"prefab": "blackmarble_floor_large", "at": [0.0, -6.9, 10.5], "scale": [1.25, 0.1, 0.75]},
+    {"prefab": "blackmarble_floor_large", "at": [0.0, -6.8, 10.5], "scale": [1.125, 0.2, 0.625]},
+    {"prefab": "blackmarble_floor_large", "at": [0.0, -6.7, 10.5], "scale": [1.0, 0.3, 0.5]},
+    {"prefab": "blackmarble_floor_large", "at": [0.0, -6.6, 10.5], "scale": [0.875, 0.4, 0.375]},
     {"prefab": "Ashlands_Boss_Pillar", "at": [-9.012, -6.978, -10.0], "scale": [0.6, 1.6, 0.6]},
     {"prefab": "Morkhalla_giant_railing_torch", "at": [-7.2, -6.35, -8.0], "scale": [1.3, 1.3, 1.3]},
     {"prefab": "Ashlands_Boss_Pillar", "at": [8.988, -6.978, -10.0], "scale": [0.6, 1.6, 0.6]},
@@ -2645,9 +2728,20 @@
     {"prefab": "Morkhalla_WallChain1", "at": [-5.0, 5.186, 0.0], "scale": [1.014, 1.014, 1.014]},
     {"prefab": "MountainKit_brazier_blue", "at": [4.992, 1.693, -0.016], "scale": [1.6, 1.6, 1.6]},
     {"prefab": "Morkhalla_WallChain1", "at": [5.0, 5.186, 0.0], "scale": [1.014, 1.014, 1.014]},
-    {"prefab": "Morkhalla_WallChain1", "at": [0.0, 5.985, -6.0], "scale": [1.127, 1.127, 1.127]},
     {"prefab": "Morkhalla_WallChain1", "at": [0.0, 6.206, 10.0], "scale": [0.7, 0.881, 0.7]},
-    {"prefab": "dverger_demister", "at": [0.0, 3.0, 10.0]}
+    {"prefab": "dverger_demister", "at": [0.0, 3.0, 10.0]},
+    {"prefab": "Ashlands_floor_large", "at": [-0.038, -6.97, -0.942], "scale": [0.56, 0.03, 0.56]},
+    {"prefab": "blackmarble_floor_large", "at": [0.0, -6.95, -1.0], "scale": [0.575, 0.03, 0.575]},
+    {"prefab": "Morkhalla_MetalBar", "at": [-2.8, 4.5, -3.8], "euler": [0.0, 0.0, 90.0], "scale": [0.35, 0.45, 0.45]},
+    {"prefab": "Morkhalla_MetalBar", "at": [2.8, 4.5, -3.8], "euler": [0.0, 0.0, 90.0], "scale": [0.35, 0.45, 0.45]},
+    {"prefab": "Morkhalla_MetalBar", "at": [-2.8, 4.5, 1.8], "euler": [0.0, 0.0, 90.0], "scale": [0.35, 0.45, 0.45]},
+    {"prefab": "Morkhalla_MetalBar", "at": [2.8, 4.5, 1.8], "euler": [0.0, 0.0, 90.0], "scale": [0.35, 0.45, 0.45]},
+    {"prefab": "Morkhalla_Block", "at": [-6.8, -7.0, -1.0], "euler": [0.0, 270.0, 0.0], "scale": [0.45, 0.25, 0.45]},
+    {"prefab": "iron_wall_2x2", "at": [-7.007, -5.744, -1.42], "euler": [0.0, 270.0, 0.0], "scale": [0.06, 0.694, 9.016]},
+    {"prefab": "iron_wall_2x2", "at": [-7.007, -5.744, -0.58], "euler": [0.0, 270.0, 0.0], "scale": [0.06, 0.694, 9.016]},
+    {"prefab": "Morkhalla_Block", "at": [6.8, -7.0, -1.0], "euler": [0.0, 90.0, 0.0], "scale": [0.45, 0.25, 0.45]},
+    {"prefab": "iron_wall_2x2", "at": [7.007, -5.744, -0.58], "euler": [0.0, 90.0, 0.0], "scale": [0.06, 0.694, 9.016]},
+    {"prefab": "iron_wall_2x2", "at": [7.007, -5.744, -1.42], "euler": [0.0, 90.0, 0.0], "scale": [0.06, 0.694, 9.016]}
    ]
   },
   {
@@ -5682,6 +5776,10 @@
    "tags": ["boss"],
    "max": 1,
    "joinBy": ["in"],
+   "triggers": [
+    {"id": "brazierLfire", "on": {"event": "lever", "mech": "brazierLlever"}, "do": [{"set": "brazierL", "to": 1}], "repeat": true},
+    {"id": "brazierRfire", "on": {"event": "lever", "mech": "brazierRlever"}, "do": [{"set": "brazierR", "to": 1}], "repeat": true}
+   ],
    "doorways": [
     {"id": "in", "type": "quaddungeon_vault", "at": [0.0, -8.0, -20.0], "facing": [0.0, 0.0, 1.0], "door": true},
     {"id": "out", "type": "quaddungeon_warden", "at": [0.0, -8.0, 20.0], "facing": [0.0, 0.0, -1.0], "door": true}
@@ -5709,6 +5807,85 @@
      "doorway": "out"
     },
     {
+     "id": "lamps",
+     "kind": "platform",
+     "at": [0.0, 0.0, 0.0],
+     "parts": [
+      {"prefab": "Morkhalla_giant_railing_torch", "at": [-8.0, -7.35, -17.0], "scale": [1.3, 1.3, 1.3], "lit": [1, 2, 3]},
+      {"prefab": "Morkhalla_giant_railing_torch", "at": [8.0, -7.35, -17.0], "scale": [1.3, 1.3, 1.3], "lit": [1, 2, 3]},
+      {"prefab": "Morkhalla_giant_railing_torch", "at": [-15.0, -7.35, -17.5], "scale": [1.3, 1.3, 1.3], "lit": [1, 2, 3]},
+      {"prefab": "Morkhalla_giant_railing_torch", "at": [15.0, -7.35, -17.5], "scale": [1.3, 1.3, 1.3], "lit": [1, 2, 3]},
+      {"prefab": "Morkhalla_giant_railing_torch", "at": [-14.0, -7.35, -9.0], "scale": [1.3, 1.3, 1.3], "lit": [2, 3]},
+      {"prefab": "Morkhalla_giant_railing_torch", "at": [14.0, -7.35, -9.0], "scale": [1.3, 1.3, 1.3], "lit": [2, 3]},
+      {"prefab": "Morkhalla_giant_railing_torch", "at": [-15.0, -7.35, 12.0], "scale": [1.3, 1.3, 1.3], "lit": [3]},
+      {"prefab": "Morkhalla_giant_railing_torch", "at": [15.0, -7.35, 12.0], "scale": [1.3, 1.3, 1.3], "lit": [3]},
+      {"prefab": "Morkhalla_giant_railing_torch", "at": [-4.2, -6.15, 11.3], "scale": [1.3, 1.3, 1.3], "lit": [3]},
+      {"prefab": "Morkhalla_giant_railing_torch", "at": [4.2, -6.15, 11.3], "scale": [1.3, 1.3, 1.3], "lit": [3]}
+     ],
+     "poses": [
+      {"at": [0.0, 0.0, 0.0], "euler": [0.0, 0.0, 0.0]},
+      {"at": [0.0, 0.0, 0.0], "euler": [0.0, 0.0, 0.0]},
+      {"at": [0.0, 0.0, 0.0], "euler": [0.0, 0.0, 0.0]},
+      {"at": [0.0, 0.0, 0.0], "euler": [0.0, 0.0, 0.0]}
+     ],
+     "start": 3,
+     "seconds": 0.0
+    },
+    {
+     "id": "brazierL",
+     "kind": "brazier",
+     "at": [-10.0, -8.0, 5.4],
+     "parts": [
+      {"prefab": "Morkhalla_Block", "at": [0.0, 0.0, 0.0], "scale": [0.35, 0.25, 0.35]},
+      {"prefab": "MountainKit_brazier_blue", "at": [-0.007, 2.481, -0.014], "scale": [1.4, 1.4, 1.4]}
+     ],
+     "poses": [{"at": [0.0, 0.0, 0.0], "euler": [0.0, 0.0, 0.0]}],
+     "start": 0,
+     "seconds": 0.2,
+     "burn": 15,
+     "fx": ["vfx_FireAddFuel", "sfx_FireAddFuel"]
+    },
+    {
+     "id": "brazierLlever",
+     "kind": "lever",
+     "at": [-10.0, -6.4, 2.6],
+     "parts": [
+      {"prefab": "CharredCogwheel", "at": [-0.077, 0.015, -0.016], "euler": [90.0, 90.0, 0.0], "scale": [1.057, 1.253, 1.057]},
+      {"prefab": "Morkhalla_MetalBar", "at": [0.0, 1.2, 0.0], "euler": [0.0, 0.0, 90.0], "scale": [0.14, 0.32, 0.32]},
+      {"prefab": "blackmarble_head_big01", "at": [0.0, 2.75, -0.003], "scale": [0.3, 0.3, 0.3]}
+     ],
+     "poses": [{"at": [0.0, 0.0, 0.0], "euler": [-32.0, 0.0, 0.0]}, {"at": [0.0, 0.0, 0.0], "euler": [32.0, 0.0, 0.0]}],
+     "start": 0,
+     "seconds": 0.8
+    },
+    {
+     "id": "brazierR",
+     "kind": "brazier",
+     "at": [10.0, -8.0, 5.4],
+     "parts": [
+      {"prefab": "Morkhalla_Block", "at": [0.0, 0.0, 0.0], "scale": [0.35, 0.25, 0.35]},
+      {"prefab": "MountainKit_brazier_blue", "at": [-0.007, 2.481, -0.014], "scale": [1.4, 1.4, 1.4]}
+     ],
+     "poses": [{"at": [0.0, 0.0, 0.0], "euler": [0.0, 0.0, 0.0]}],
+     "start": 0,
+     "seconds": 0.2,
+     "burn": 15,
+     "fx": ["vfx_FireAddFuel", "sfx_FireAddFuel"]
+    },
+    {
+     "id": "brazierRlever",
+     "kind": "lever",
+     "at": [10.0, -6.4, 2.6],
+     "parts": [
+      {"prefab": "CharredCogwheel", "at": [-0.077, 0.015, -0.016], "euler": [90.0, 90.0, 0.0], "scale": [1.057, 1.253, 1.057]},
+      {"prefab": "Morkhalla_MetalBar", "at": [0.0, 1.2, 0.0], "euler": [0.0, 0.0, 90.0], "scale": [0.14, 0.32, 0.32]},
+      {"prefab": "blackmarble_head_big01", "at": [0.0, 2.75, -0.003], "scale": [0.3, 0.3, 0.3]}
+     ],
+     "poses": [{"at": [0.0, 0.0, 0.0], "euler": [-32.0, 0.0, 0.0]}, {"at": [0.0, 0.0, 0.0], "euler": [32.0, 0.0, 0.0]}],
+     "start": 0,
+     "seconds": 0.8
+    },
+    {
      "id": "gears",
      "kind": "machine",
      "at": [0.0, 0.0, 0.0],
@@ -5719,43 +5896,39 @@
       {"prefab": "CharredCogwheel", "at": [17.108, -0.936, -8.568], "euler": [90.0, 90.0, 0.0], "scale": [4.405, 1.504, 4.405], "spin": [0, 12, 0]},
       {"prefab": "CharredCogwheel", "at": [0.109, 5.602, 18.892], "euler": [90.0, 0.0, 0.0], "scale": [7.048, 1.754, 7.048], "spin": [0, 9, 0]}
      ],
-     "poses": [
-      {"at": [0.0, 0.0, 0.0], "euler": [0.0, 0.0, 0.0]},
-      {"at": [0.0, 0.0, 0.0], "euler": [0.0, 0.0, 0.0]},
-      {"at": [0.0, 0.0, 0.0], "euler": [0.0, 0.0, 0.0]}
-     ],
+     "poses": [{"at": [0.0, 0.0, 0.0], "euler": [0.0, 0.0, 0.0]}],
      "start": 0,
      "seconds": 1.5,
-     "spinScale": [1, 2.5, 4.0]
+     "spinScale": [1, 2.5, 4.0, 0]
     },
     {
      "id": "crusher1",
      "kind": "platform",
-     "at": [-10.0, 2.0, -2.0],
+     "at": [-10.0, -8.0, -2.0],
      "parts": [
-      {"prefab": "Morkhalla_Block", "at": [0.0, -1.5, 0.001], "scale": [1.5, 0.75, 1.25]},
-      {"prefab": "Morkhalla_MetalBar", "at": [-2.199, 3.25, 0.0], "euler": [0.0, 0.0, 90.0], "scale": [0.175, 0.6, 0.6]},
-      {"prefab": "Morkhalla_MetalBar", "at": [2.201, 3.25, 0.0], "euler": [0.0, 0.0, 90.0], "scale": [0.175, 0.6, 0.6]}
+      {"prefab": "Morkhalla_Block", "at": [0.0, 0.4, 0.001], "scale": [1.5, 0.75, 1.25]},
+      {"prefab": "Morkhalla_MetalBar", "at": [-2.199, 5.2, 0.0], "euler": [0.0, 0.0, 90.0], "scale": [0.18, 0.6, 0.6]},
+      {"prefab": "Morkhalla_MetalBar", "at": [2.201, 5.2, 0.0], "euler": [0.0, 0.0, 90.0], "scale": [0.18, 0.6, 0.6]}
      ],
-     "poses": [{"at": [0.0, 0.0, 0.0], "euler": [0.0, 0.0, 0.0]}, {"at": [0.0, -5.4, 0.0], "euler": [0.0, 0.0, 0.0]}],
+     "poses": [{"at": [0.0, 8.5, 0.0], "euler": [0.0, 0.0, 0.0]}, {"at": [0.0, 0.0, 0.0], "euler": [0.0, 0.0, 0.0]}],
      "start": 0,
-     "seconds": 0.8,
-     "cycle": 3.0,
+     "seconds": 1.2,
+     "cycle": 3.5,
      "cycleIn": [1]
     },
     {
      "id": "crusher2",
      "kind": "platform",
-     "at": [10.0, 2.0, -2.0],
+     "at": [10.0, -8.0, -2.0],
      "parts": [
-      {"prefab": "Morkhalla_Block", "at": [0.0, -1.5, 0.001], "scale": [1.5, 0.75, 1.25]},
-      {"prefab": "Morkhalla_MetalBar", "at": [-2.199, 3.25, 0.0], "euler": [0.0, 0.0, 90.0], "scale": [0.175, 0.6, 0.6]},
-      {"prefab": "Morkhalla_MetalBar", "at": [2.201, 3.25, 0.0], "euler": [0.0, 0.0, 90.0], "scale": [0.175, 0.6, 0.6]}
+      {"prefab": "Morkhalla_Block", "at": [0.0, 0.4, 0.001], "scale": [1.5, 0.75, 1.25]},
+      {"prefab": "Morkhalla_MetalBar", "at": [-2.199, 5.2, 0.0], "euler": [0.0, 0.0, 90.0], "scale": [0.18, 0.6, 0.6]},
+      {"prefab": "Morkhalla_MetalBar", "at": [2.201, 5.2, 0.0], "euler": [0.0, 0.0, 90.0], "scale": [0.18, 0.6, 0.6]}
      ],
-     "poses": [{"at": [0.0, 0.0, 0.0], "euler": [0.0, 0.0, 0.0]}, {"at": [0.0, -5.4, 0.0], "euler": [0.0, 0.0, 0.0]}],
+     "poses": [{"at": [0.0, 8.5, 0.0], "euler": [0.0, 0.0, 0.0]}, {"at": [0.0, 0.0, 0.0], "euler": [0.0, 0.0, 0.0]}],
      "start": 0,
-     "seconds": 0.8,
-     "cycle": 3.7,
+     "seconds": 1.2,
+     "cycle": 4.2,
      "cycleIn": [1]
     },
     {
@@ -5779,7 +5952,7 @@
     {
      "id": "riser3",
      "kind": "platform",
-     "at": [-12.0, -8.0, 4.5],
+     "at": [-5.0, -8.0, -7.0],
      "parts": [{"prefab": "Ashlands_floor_large", "at": [-0.027, -1.401, 0.042], "scale": [0.4, 1.799, 0.4]}],
      "poses": [{"at": [0.0, 0.0, 0.0], "euler": [0.0, 0.0, 0.0]}, {"at": [0.0, 3.0, 0.0], "euler": [0.0, 0.0, 0.0]}],
      "start": 0,
@@ -5788,7 +5961,7 @@
     {
      "id": "riser4",
      "kind": "platform",
-     "at": [12.0, -8.0, 4.5],
+     "at": [5.0, -8.0, -7.0],
      "parts": [{"prefab": "Ashlands_floor_large", "at": [-0.027, -1.401, 0.042], "scale": [0.4, 1.799, 0.4]}],
      "poses": [{"at": [0.0, 0.0, 0.0], "euler": [0.0, 0.0, 0.0]}, {"at": [0.0, 3.0, 0.0], "euler": [0.0, 0.0, 0.0]}],
      "start": 0,
@@ -5811,20 +5984,95 @@
      "eliteLevel": 3,
      "pause": 4.0,
      "timeout": 40.0,
-     "points": [[0.0, -6.8, 12.0], [-15.6, -8.0, -6.0], [-15.6, -8.0, 6.0], [15.6, -8.0, -6.0], [15.6, -8.0, 6.0]],
+     "points": [[0.0, -6.8, 11.0], [-15.6, -8.0, -6.0], [-15.6, -8.0, 6.0], [15.6, -8.0, -6.0], [15.6, -8.0, 6.0]],
      "music": "boss_frozenking",
      "boss": {
       "name": "$dungeons_boss_warden",
+      "title": "$dungeons_boss_warden_title",
       "role": "elite",
-      "health": 4,
+      "fight": 200,
+      "perPlayer": 0.5,
+      "scale": 1.7,
+      "look": {"light": [0.45, 0.75, 1.0], "range": 7, "aura": "vfx_Burning_blue", "enraged": [1.0, 0.45, 0.2]},
+      "intro": {
+       "seconds": 8.4,
+       "wake": 4.0,
+       "leap": [0.0, -8.0, 1.0],
+       "leapAt": 5.2,
+       "beats": [
+        {
+         "at": 0.0,
+         "wires": [{"target": "lamps", "do": "set:0"}],
+         "sound": "sfx_prespawnLastBossGate",
+         "shake": 0.3,
+         "message": "$dungeons_fight_start",
+         "where": [0.0, -8.0, -12.0]
+        },
+        {"at": 1.6, "wires": [{"target": "lamps", "do": "set:1"}], "sound": "sfx_FireAddFuel", "where": [0.0, -8.0, -17.0]},
+        {"at": 2.6, "wires": [{"target": "lamps", "do": "set:2"}], "sound": "sfx_FireAddFuel", "where": [0.0, -8.0, -9.0]},
+        {"at": 3.6, "wires": [{"target": "lamps", "do": "set:3"}], "sound": "sfx_FireAddFuel", "where": [0.0, -8.0, 12.0]},
+        {"at": 4.0, "fx": "vfx_spawn_large", "sound": "sfx_gdking_alert", "shake": 0.5, "banner": true, "where": [0.0, -6.8, 11.0]},
+        {"at": 4.1, "fx": "fx_eikthyr_stomp", "where": [0.0, -6.8, 11.0]}
+       ]
+      },
+      "abilities": [
+       {"id": "slam", "kind": "slam", "every": 9, "first": 4, "warn": 1.6, "radius": 5, "scale": 2.5, "push": 40, "phases": [0, 2]},
+       {"id": "debris", "kind": "rain", "every": 6.5, "first": 3, "warn": 1.8, "radius": 2.2, "scale": 1.5, "push": 10, "count": 2, "phases": [1, 2]},
+       {
+        "id": "servants",
+        "kind": "summon",
+        "every": 14,
+        "first": 6,
+        "warn": 2.0,
+        "adds": {"melee": 1},
+        "points": [[-13.0, -8.0, 3.5], [13.0, -8.0, 3.5], [-7.0, -8.0, 3.5], [7.0, -8.0, 3.5]],
+        "phases": [1]
+       },
+       {"id": "charge", "kind": "charge", "every": 11, "first": 4, "warn": 1.3, "width": 3, "length": 20, "scale": 2.5, "push": 50, "phases": [2]}
+      ],
+      "weakTo": [
+       {
+        "mech": "crusher1",
+        "state": 1,
+        "area": [6.0, 4.0, 7.2],
+        "areaAt": [0.0, 1.0, 0.6],
+        "share": 0.06,
+        "stagger": true,
+        "breaks": false,
+        "hurt": 2.0
+       },
+       {
+        "mech": "crusher2",
+        "state": 1,
+        "area": [6.0, 4.0, 7.2],
+        "areaAt": [0.0, 1.0, 0.6],
+        "share": 0.06,
+        "stagger": true,
+        "breaks": false,
+        "hurt": 2.0
+       }
+      ],
       "phases": [
        {
         "at": 0.66,
         "wires": [{"target": "crusher1", "do": "set:1"}, {"target": "crusher2", "do": "set:1"}, {"target": "gears", "do": "set:1"}],
-        "adds": {"melee": 2}
+        "adds": {"melee": 2},
+        "leap": [0.0, -6.8, 11.0],
+        "sound": "sfx_gdking_scream",
+        "shake": 0.6,
+        "shield": {
+         "take": 0,
+         "until": [{"mech": "brazierL", "state": 1}, {"mech": "brazierR", "state": 1}],
+         "seconds": 110,
+         "times": 2,
+         "hold": true,
+         "breakShare": 0.08,
+         "hint": "$dungeons_boss_warden_shield"
+        }
        },
        {
-        "at": 0.33,
+        "at": 0.3,
+        "healTo": 0.5,
         "wires": [
          {"target": "riser1", "do": "set:1"},
          {"target": "riser2", "do": "set:1"},
@@ -5832,9 +6080,33 @@
          {"target": "riser4", "do": "set:1"},
          {"target": "gears", "do": "set:2"}
         ],
-        "adds": {"melee": 1, "ranged": 2}
+        "adds": {"melee": 1, "ranged": 1},
+        "enrage": 1.25,
+        "message": "$dungeons_boss_warden_p3",
+        "sound": "sfx_gdking_scream",
+        "shake": 0.8
        }
-      ]
+      ],
+      "death": {
+       "seconds": 4.0,
+       "beats": [
+        {
+         "at": 0.0,
+         "wires": [{"target": "crusher1", "do": "set:0"}, {"target": "crusher2", "do": "set:0"}],
+         "sound": "sfx_gdking_death",
+         "shake": 1.0,
+         "banner": true
+        },
+        {
+         "at": 1.2,
+         "wires": [{"target": "gears", "do": "set:3"}],
+         "sound": "sfx_rock_destroyed",
+         "fx": "vfx_RockDestroyed_large",
+         "where": [0.0, -8.0, 0.0],
+         "shake": 0.5
+        }
+       ]
+      }
      }
     }
    ],
@@ -5935,10 +6207,14 @@
     {"prefab": "Ashlands_floor_large", "at": [13.439, -10.001, -4.896], "scale": [0.9, 1.999, 1.0]},
     {"prefab": "Ashlands_floor_large", "at": [13.439, -10.001, 5.104], "scale": [0.9, 1.999, 1.0]},
     {"prefab": "Ashlands_floor_large", "at": [13.439, -10.001, 15.104], "scale": [0.9, 1.999, 1.0]},
-    {"prefab": "blackmarble_floor_large", "at": [0.0, -7.7, 10.5], "scale": [1.875, 0.3, 1.125]},
-    {"prefab": "blackmarble_floor_large", "at": [0.0, -7.1, 11.0], "scale": [1.375, 0.3, 0.75]},
-    {"prefab": "MountainKit_brazier_blue", "at": [-4.508, -5.107, 12.984], "scale": [1.6, 1.6, 1.6]},
-    {"prefab": "MountainKit_brazier_blue", "at": [4.492, -5.107, 12.984], "scale": [1.6, 1.6, 1.6]},
+    {"prefab": "blackmarble_floor_large", "at": [0.0, -7.9, 10.5], "scale": [1.875, 0.1, 1.125]},
+    {"prefab": "blackmarble_floor_large", "at": [0.0, -7.8, 10.5], "scale": [1.75, 0.2, 1.0]},
+    {"prefab": "blackmarble_floor_large", "at": [0.0, -7.7, 10.5], "scale": [1.625, 0.3, 0.875]},
+    {"prefab": "blackmarble_floor_large", "at": [0.0, -7.6, 10.5], "scale": [1.5, 0.4, 0.75]},
+    {"prefab": "blackmarble_floor_large", "at": [0.0, -7.5, 10.5], "scale": [1.375, 0.5, 0.625]},
+    {"prefab": "blackmarble_floor_large", "at": [0.0, -7.4, 10.5], "scale": [1.25, 0.6, 0.5]},
+    {"prefab": "blackmarble_altar_crystal", "at": [-3.0, -5.897, 12.1]},
+    {"prefab": "blackmarble_altar_crystal", "at": [3.0, -5.897, 12.1]},
     {"prefab": "blackmarble_column_3", "at": [-16.403, -1.0, -15.003], "scale": [0.697, 1.75, 0.697]},
     {"prefab": "blackmarble_column_3", "at": [-16.403, -1.0, -9.003], "scale": [0.697, 1.75, 0.697]},
     {"prefab": "blackmarble_column_3", "at": [-16.403, -1.0, -3.003], "scale": [0.697, 1.75, 0.697]},
@@ -5963,20 +6239,22 @@
     {"prefab": "bone_stack", "at": [-16.334, -7.921, 7.625], "euler": [0.0, 90.0, 0.0], "scale": [1.3, 1.3, 1.3]},
     {"prefab": "bone_stack", "at": [16.334, -7.921, -4.425], "euler": [0.0, 270.0, 0.0], "scale": [1.3, 1.3, 1.3]},
     {"prefab": "bone_stack", "at": [16.334, -7.921, 7.575], "euler": [0.0, 270.0, 0.0], "scale": [1.3, 1.3, 1.3]},
+    {"prefab": "Morkhalla_Block", "at": [-10.0, -8.0, 2.6], "scale": [0.45, 0.25, 0.45]},
+    {"prefab": "iron_wall_2x2", "at": [-10.42, -6.744, 2.807], "scale": [0.06, 0.694, 9.016]},
+    {"prefab": "iron_wall_2x2", "at": [-9.58, -6.744, 2.807], "scale": [0.06, 0.694, 9.016]},
+    {"prefab": "Morkhalla_Block", "at": [10.0, -8.0, 2.6], "scale": [0.45, 0.25, 0.45]},
+    {"prefab": "iron_wall_2x2", "at": [9.58, -6.744, 2.807], "scale": [0.06, 0.694, 9.016]},
+    {"prefab": "iron_wall_2x2", "at": [10.42, -6.744, 2.807], "scale": [0.06, 0.694, 9.016]},
     {"prefab": "Morkhalla_MetalBar", "at": [-13.599, -1.0, -5.0], "euler": [0.0, 0.0, 90.0], "scale": [0.7, 0.5, 0.5]},
     {"prefab": "Morkhalla_MetalBar", "at": [-6.4, -1.0, -5.0], "euler": [0.0, 0.0, 90.0], "scale": [0.7, 0.5, 0.5]},
     {"prefab": "Morkhalla_MetalBar", "at": [-13.599, -1.0, 1.0], "euler": [0.0, 0.0, 90.0], "scale": [0.7, 0.5, 0.5]},
     {"prefab": "Morkhalla_MetalBar", "at": [-6.4, -1.0, 1.0], "euler": [0.0, 0.0, 90.0], "scale": [0.7, 0.5, 0.5]},
+    {"prefab": "blackmarble_floor_large", "at": [-10.0, -7.99, -2.0], "scale": [0.8, 0.01, 0.675]},
     {"prefab": "Morkhalla_MetalBar", "at": [6.401, -1.0, -5.0], "euler": [0.0, 0.0, 90.0], "scale": [0.7, 0.5, 0.5]},
     {"prefab": "Morkhalla_MetalBar", "at": [13.601, -1.0, -5.0], "euler": [0.0, 0.0, 90.0], "scale": [0.7, 0.5, 0.5]},
     {"prefab": "Morkhalla_MetalBar", "at": [6.401, -1.0, 1.0], "euler": [0.0, 0.0, 90.0], "scale": [0.7, 0.5, 0.5]},
     {"prefab": "Morkhalla_MetalBar", "at": [13.601, -1.0, 1.0], "euler": [0.0, 0.0, 90.0], "scale": [0.7, 0.5, 0.5]},
-    {"prefab": "Morkhalla_giant_railing_torch", "at": [-8.0, -7.35, -17.0], "scale": [1.3, 1.3, 1.3]},
-    {"prefab": "Morkhalla_giant_railing_torch", "at": [8.0, -7.35, -17.0], "scale": [1.3, 1.3, 1.3]},
-    {"prefab": "Morkhalla_giant_railing_torch", "at": [-15.0, -7.35, 12.0], "scale": [1.3, 1.3, 1.3]},
-    {"prefab": "Morkhalla_giant_railing_torch", "at": [15.0, -7.35, 12.0], "scale": [1.3, 1.3, 1.3]},
-    {"prefab": "Morkhalla_giant_railing_torch", "at": [-15.0, -7.35, -17.5], "scale": [1.3, 1.3, 1.3]},
-    {"prefab": "Morkhalla_giant_railing_torch", "at": [15.0, -7.35, -17.5], "scale": [1.3, 1.3, 1.3]},
+    {"prefab": "blackmarble_floor_large", "at": [10.0, -7.99, -2.0], "scale": [0.8, 0.01, 0.675]},
     {"prefab": "MountainKit_brazier_blue", "at": [-6.008, 1.693, -6.016], "scale": [1.6, 1.6, 1.6]},
     {"prefab": "Morkhalla_WallChain1", "at": [-6.0, 9.091, -6.0], "scale": [2.119, 2.119, 2.119]},
     {"prefab": "MountainKit_brazier_blue", "at": [5.992, 1.693, -6.016], "scale": [1.6, 1.6, 1.6]},

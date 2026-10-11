@@ -63,8 +63,8 @@ def shown(part, states):
 def brazier(r, id, at, group=None):
     b = r.mech(id, "brazier", at)
     b.fill("blackmarble_column_1", (0, 0.4, 0), (0.6, 0.8, 0.6))
-    shown(b.stand("CastleKit_groundtorch_unlit", (0, 0.8, 0)), [0])
-    shown(b.stand("CastleKit_groundtorch", (0, 0.8, 0)), [1])
+    # one model, lit or out: the mod lights only its fire (the game torch's own flame, light, warmth and crackle) while it's lit
+    b.stand("CastleKit_groundtorch", (0, 0.8, 0))
     b.seconds = 0.2
     b.extra["fx"] = ["vfx_FireAddFuel", "sfx_FireAddFuel"]
     if group:
@@ -90,10 +90,10 @@ def brazier_room():
 
 def key_room():
     r = shell("keyroom", ["key"])
-    r.fill("blackmarble_2x2x1", (0, FLOOR + 0.4, 4.6), (1.2, 0.8, 0.8))       # a plinth the key falls on
+    r.fill("blackmarble_2x2x1", (3.5, FLOOR + 0.4, 4.6), (1.2, 0.8, 0.8))     # a plinth the key falls on (beside the way out)
     r.extra["triggers"] = [
         {"id": "key", "on": {"event": "enter", "at": [0, 0, -2], "size": [12, 5, 8]},
-         "do": [{"item": "smallkey", "at": [0, 0.2, 4.6]}, {"sound": "sfx_secretfound", "at": [0, 0, 4.6]},
+         "do": [{"item": "smallkey", "at": [3.5, 0.2, 4.6]}, {"sound": "sfx_secretfound", "at": [3.5, 0, 4.6]},
                 {"message": "Something glints by the north wall."}]},
         {"id": "kills", "on": {"event": "kills", "count": 3}, "solver": "ignore",
          "do": [{"message": "Three have fallen here.", "to": "dungeon"}]},

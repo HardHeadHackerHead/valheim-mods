@@ -68,10 +68,10 @@ namespace Dungeons
             // Ashlands
             ["FlametalOreNew"] = new Item(7, 2, 4), ["AskHide"] = new Item(7, 1, 2), ["CharredBone"] = new Item(7, 2, 4), ["CelestialFeather"] = new Item(7, 1, 2),
             ["MoltenCore"] = new Item(7, 1, 1), ["ProustitePowder"] = new Item(7, 1, 3), ["SulfurStone"] = new Item(7, 2, 4), ["CharcoalResin"] = new Item(7, 2, 4),
-            ["Bellfragment"] = new Item(7, 1, 1), ["MushroomSmokePuff"] = new Item(7, 2, 4), ["ArrowCharred"] = new Item(7, 10, 20),
+            ["BellFragment"] = new Item(7, 1, 1), ["MushroomSmokePuff"] = new Item(7, 2, 4), ["ArrowCharred"] = new Item(7, 10, 20),
             ["GemstoneBlue"] = new Item(7, 1, 1), ["GemstoneGreen"] = new Item(7, 1, 1), ["GemstoneRed"] = new Item(7, 1, 1),
             ["Grausten"] = new Item(7), ["FlametalOre"] = new Item(7), ["Flametal"] = new Item(7), ["FlametalNew"] = new Item(7), ["AskBladder"] = new Item(7),
-            ["Blackwood"] = new Item(7), ["MorgenHeart"] = new Item(7), ["MorgenSinew"] = new Item(7), ["FiddleheadFern"] = new Item(7),
+            ["Blackwood"] = new Item(7), ["MorgenHeart"] = new Item(7), ["MorgenSinew"] = new Item(7), ["Fiddleheadfern"] = new Item(7),
             ["Vineberry"] = new Item(7), ["Pukeberries"] = new Item(7),
         };
 
@@ -423,8 +423,9 @@ namespace Dungeons
         }
     }
 
-    // A saved object the builder kept to a land's tier (Dungeons_loot in its ZDO) is made from its prefab again after every load: keep its
-    // drops to that tier again. Only objects with the key are touched.
+    // A dungeon's saved object is made from its prefab again after every load, with the prefab's fields: put back what the builder set. A
+    // part (Dungeons_part, or Runtime's quaddungeon_partof) can't be taken down with the hammer (Builder.KeepPart); one kept to a land's tier
+    // (Dungeons_loot) drops only what fits it. Only objects with those keys are touched.
     [HarmonyPatch(typeof(ZNetView), "Awake")]
     internal static class Dungeons_ZNetView_Awake_Loot
     {
@@ -434,6 +435,8 @@ namespace Dungeons
         {
             ZDO zdo = __instance.GetZDO();
             if (zdo == null) return;
+            try { if (Builder.IsDungeonPart(zdo)) Builder.KeepPart(__instance.gameObject); }
+            catch (Exception e) { Plugin.Log.LogWarning($"Keeping {__instance.name} in its dungeon: {e.Message}"); }
             int tier = zdo.GetInt(Key, 0);
             if (tier <= 0) return;
             try { Builder.ApplyLoot(__instance.gameObject, tier); }

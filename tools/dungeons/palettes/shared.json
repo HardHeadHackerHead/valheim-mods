@@ -1,0 +1,1387 @@
+{
+ "theme": "shared",
+ "about": "Pieces any theme uses: saved parts (chests, spawners, treasure), lights and props that fit anywhere.",
+ "made_by": "tools/dungeons/palette_tool.py (curation in CURATED there; everything else read from the game's files)",
+ "fields": {
+  "role": "what it's for; structural roles (arch, block, ceiling, door, floor, gate, pillar, platform, rail, ramp, stair, wall) must be solid",
+  "mount": "ground: stands on a floor (prop_check.py); hang: needs something right above its origin or a chain on its top; wall: against a wall; span: rests on two supports; structure: what others stand on; free: anywhere",
+  "scale": "[min, max] that looks right and stays solid; stairs keep 1 (step height)",
+  "tier": "the land it looks like it belongs to (1 Meadows .. 8 Deep North): a look hint, not gameplay (enemies and loot follow the entrance's biome)",
+  "size/min/max/origin": "its shape's box in its own frame (m); origin: where its origin sits on that box (foot, top, centre...)",
+  "solid": "a character bumps into it in our rooms (the game's collision matrix; items fixed by BuildSolid.cs)",
+  "lights": "range, intensity, colour; lit: shines once stripped (a Fireplace's burning objects are switched on); lod: fades with distance",
+  "gives": "what the game would make it give or do: stripped as scenery; a networked prefab (networked) may be a Saved part instead",
+  "height": "its height at scale 1 (m)",
+  "climb": "ledges: its footholds (faces a player can stand on, no steeper than 38 degrees, with at least 0.1 m2 of them seen from above in a 0.2 m height band) as height ranges above its foot at scale 1, upright as the prefab stands; top: the highest reachable from the floor, each within a jump (1.6 m: gravity 20, jump force 8, Jump skill 0) of the last; top_skilled: the same with Jump skill 100 (3.14 m); 0: none. Scale the ledges by the part's y scale; a part turned off upright exposes other faces (treat a smooth bar or column as only its top end)",
+  "upright": "flat (thin along y: a floor tile, stand it up for a wall), upright (thin along x or z: a wall piece, use as it is), block",
+  "safe": "fine as stripped scenery; saved_only: works only as a Saved part (chests, pickables, spawners)",
+  "by_role": "{role: [default, variants...]}: the roles below without their notes",
+  "sets": "the dressing sets it suits (giant: ossuary, ruin, forge, archive, engine, armoury; Dvergr: store, workshop, tavern, barracks)",
+  "max_span": "a panel's longest side (m) before its stretched texture smears",
+  "roles": "the same pieces by a theme recipe's roles (first = default, others = variants), with how each role's pieces are placed",
+  "render": "a picture in the mesh cache (C:\\Users\\DHack\\AppData\\Local\\Temp\\quaddungeon_meshes); the theme's contact sheet is palettes/shared_sheet.png there"
+ },
+ "pieces": [
+  {
+   "prefab": "Morkhalla_ChestAncient",
+   "role": "container",
+   "look": "the Jotunn's ancient chest, 3.2 x 2.1 x 2.2 m, 32 slots: the biggest real chest (Saved: refilled by the Builder)",
+   "mount": "ground",
+   "scale": [
+    1,
+    1
+   ],
+   "tier": 8,
+   "notes": "Saved only, scale 1 (as scenery Strip takes its Container off: it opens nothing); climbable: a player can stand 1.4 m above its foot (at scale 1; 1.4 m with Jump skill 100), so it's a stepping stone to a level up to about 3.0 m above its foot (4.5 m with Jump 100)",
+   "exists": true,
+   "size": [
+    3.22,
+    2.13,
+    2.19
+   ],
+   "min": [
+    -1.61,
+    -0.02,
+    -1.09
+   ],
+   "max": [
+    1.61,
+    2.11,
+    1.09
+   ],
+   "origin": "foot",
+   "hollow": false,
+   "kinds": [
+    "Container",
+    "Piece",
+    "WearNTear",
+    "ZNetView"
+   ],
+   "colliders": {
+    "piece": 2
+   },
+   "solid": true,
+   "solid_note": "",
+   "lights": [],
+   "fire": false,
+   "particles": 0,
+   "item": false,
+   "networked": true,
+   "gives": [
+    "Container"
+   ],
+   "physics": false,
+   "height": 2.13,
+   "upright": "block",
+   "saved_only": true,
+   "safe": false,
+   "climb": {
+    "ledges": [
+     [
+      0.0,
+      0.6
+     ],
+     [
+      0.8,
+      1.4
+     ]
+    ],
+    "top": 1.4,
+    "top_skilled": 1.4
+   },
+   "render": "palettes/Morkhalla_ChestAncient.png"
+  },
+  {
+   "prefab": "TreasureChest_morkhalla",
+   "role": "container",
+   "look": "the Jotunn chest, 2.6 x 1.1 x 1.6 m, 8 slots (Saved)",
+   "mount": "ground",
+   "scale": [
+    1,
+    1
+   ],
+   "tier": 8,
+   "notes": "Saved only; keep scale 1; climbable: a player can stand 1.2 m above its foot (at scale 1; 1.2 m with Jump skill 100), so it's a stepping stone to a level up to about 2.8 m above its foot (4.3 m with Jump 100)",
+   "exists": true,
+   "size": [
+    2.61,
+    1.06,
+    1.58
+   ],
+   "min": [
+    -1.31,
+    0.03,
+    -0.78
+   ],
+   "max": [
+    1.31,
+    1.09,
+    0.8
+   ],
+   "origin": "foot",
+   "hollow": false,
+   "kinds": [
+    "Container",
+    "Piece",
+    "WearNTear",
+    "ZNetView"
+   ],
+   "colliders": {
+    "piece": 1
+   },
+   "solid": true,
+   "solid_note": "",
+   "lights": [],
+   "fire": false,
+   "particles": 0,
+   "item": false,
+   "networked": true,
+   "gives": [
+    "Container"
+   ],
+   "physics": false,
+   "height": 1.06,
+   "upright": "flat",
+   "saved_only": true,
+   "safe": false,
+   "climb": {
+    "ledges": [
+     [
+      1.0,
+      1.2
+     ]
+    ],
+    "top": 1.2,
+    "top_skilled": 1.2
+   },
+   "render": "palettes/TreasureChest_morkhalla.png"
+  },
+  {
+   "prefab": "TreasureChest_charredfortress",
+   "role": "container",
+   "look": "the Ashlands charred chest, 2.7 x 1.75 x 1.76 m, 8 slots (Saved)",
+   "mount": "ground",
+   "scale": [
+    1,
+    1
+   ],
+   "tier": 7,
+   "notes": "Saved only; keep scale 1; climbable: a player can stand 1.6 m above its foot (at scale 1; 1.6 m with Jump skill 100), so it's a stepping stone to a level up to about 3.2 m above its foot (4.7 m with Jump 100)",
+   "exists": true,
+   "size": [
+    2.71,
+    1.75,
+    1.76
+   ],
+   "min": [
+    -1.35,
+    -0.04,
+    -0.88
+   ],
+   "max": [
+    1.35,
+    1.71,
+    0.88
+   ],
+   "origin": "foot",
+   "hollow": false,
+   "kinds": [
+    "Container",
+    "Piece",
+    "WearNTear",
+    "ZNetView"
+   ],
+   "colliders": {
+    "Default": 1
+   },
+   "solid": true,
+   "solid_note": "",
+   "lights": [],
+   "fire": false,
+   "particles": 0,
+   "item": false,
+   "networked": true,
+   "gives": [
+    "Container"
+   ],
+   "physics": false,
+   "height": 1.75,
+   "upright": "block",
+   "saved_only": true,
+   "safe": false,
+   "climb": {
+    "ledges": [
+     [
+      0.0,
+      0.2
+     ],
+     [
+      0.4,
+      1.6
+     ]
+    ],
+    "top": 1.6,
+    "top_skilled": 1.6
+   },
+   "render": "palettes/TreasureChest_charredfortress.png"
+  },
+  {
+   "prefab": "piece_chest_grausten",
+   "role": "container",
+   "look": "a grausten chest, 1.7 x 1.2 x 1.2 m, 40 slots (Saved)",
+   "mount": "ground",
+   "scale": [
+    1,
+    1
+   ],
+   "tier": 7,
+   "notes": "Saved only; keep scale 1; climbable: a player can stand 0.8 m above its foot (at scale 1; 0.8 m with Jump skill 100), so it's a stepping stone to a level up to about 2.4 m above its foot (3.9 m with Jump 100)",
+   "exists": true,
+   "size": [
+    1.71,
+    1.17,
+    1.21
+   ],
+   "min": [
+    -0.85,
+    0.0,
+    -0.61
+   ],
+   "max": [
+    0.86,
+    1.17,
+    0.59
+   ],
+   "origin": "foot",
+   "hollow": false,
+   "kinds": [
+    "Container",
+    "Piece",
+    "WearNTear",
+    "ZNetView"
+   ],
+   "colliders": {
+    "piece": 1
+   },
+   "solid": true,
+   "solid_note": "",
+   "lights": [],
+   "fire": false,
+   "particles": 0,
+   "item": false,
+   "networked": true,
+   "gives": [
+    "Container"
+   ],
+   "physics": false,
+   "height": 1.17,
+   "upright": "block",
+   "saved_only": true,
+   "safe": false,
+   "climb": {
+    "ledges": [
+     [
+      0.6,
+      0.8
+     ]
+    ],
+    "top": 0.8,
+    "top_skilled": 0.8
+   },
+   "render": "palettes/piece_chest_grausten.png"
+  },
+  {
+   "prefab": "TreasureChest_dvergr_loose_stone",
+   "role": "container",
+   "look": "a Dvergr stone chest, 2 x 1 x 2 m, 8 slots (Saved)",
+   "mount": "ground",
+   "scale": [
+    1,
+    1
+   ],
+   "tier": 6,
+   "notes": "Saved only; keep scale 1; climbable: a player can stand 0.8 m above its foot (at scale 1; 0.8 m with Jump skill 100), so it's a stepping stone to a level up to about 2.4 m above its foot (3.9 m with Jump 100)",
+   "exists": true,
+   "size": [
+    2.01,
+    1.0,
+    2.01
+   ],
+   "min": [
+    -1.0,
+    -0.5,
+    -1.0
+   ],
+   "max": [
+    1.0,
+    0.5,
+    1.01
+   ],
+   "origin": "centre",
+   "hollow": false,
+   "kinds": [
+    "Container",
+    "Piece",
+    "WearNTear",
+    "ZNetView"
+   ],
+   "colliders": {
+    "Default": 1
+   },
+   "solid": true,
+   "solid_note": "",
+   "lights": [],
+   "fire": false,
+   "particles": 0,
+   "item": false,
+   "networked": true,
+   "gives": [
+    "Container"
+   ],
+   "physics": false,
+   "height": 1.0,
+   "upright": "flat",
+   "saved_only": true,
+   "safe": false,
+   "climb": {
+    "ledges": [
+     [
+      0.6,
+      0.8
+     ]
+    ],
+    "top": 0.8,
+    "top_skilled": 0.8
+   },
+   "render": "palettes/TreasureChest_dvergr_loose_stone.png"
+  },
+  {
+   "prefab": "TreasureChest_trollcave",
+   "role": "container",
+   "look": "a stone-lidded chest: vault chests (Saved: refilled by the Builder from the pack's loot)",
+   "mount": "ground",
+   "scale": [
+    1,
+    1
+   ],
+   "tier": 2,
+   "notes": "Saved only (as scenery it opens nothing); keep scale 1; climbable: a player can stand 0.6 m above its foot (at scale 1; 0.6 m with Jump skill 100), so it's a stepping stone to a level up to about 2.2 m above its foot (3.7 m with Jump 100)",
+   "exists": true,
+   "size": [
+    2.02,
+    0.65,
+    0.87
+   ],
+   "min": [
+    -1.01,
+    0.0,
+    -0.44
+   ],
+   "max": [
+    1.01,
+    0.65,
+    0.42
+   ],
+   "origin": "foot",
+   "hollow": false,
+   "kinds": [
+    "Container",
+    "Piece",
+    "WearNTear",
+    "ZNetView"
+   ],
+   "colliders": {
+    "Default": 1
+   },
+   "solid": true,
+   "solid_note": "",
+   "lights": [],
+   "fire": false,
+   "particles": 0,
+   "item": false,
+   "networked": true,
+   "gives": [
+    "Container"
+   ],
+   "physics": false,
+   "height": 0.65,
+   "upright": "flat",
+   "saved_only": true,
+   "safe": false,
+   "climb": {
+    "ledges": [
+     [
+      0.0,
+      0.6
+     ]
+    ],
+    "top": 0.6,
+    "top_skilled": 0.6
+   },
+   "render": "palettes/TreasureChest_trollcave.png"
+  },
+  {
+   "prefab": "TreasureChest_forestcrypt",
+   "role": "container",
+   "look": "a crypt chest (Saved)",
+   "mount": "ground",
+   "scale": [
+    1,
+    1
+   ],
+   "tier": 2,
+   "notes": "Saved only; keep scale 1; climbable: a player can stand 0.6 m above its foot (at scale 1; 0.6 m with Jump skill 100), so it's a stepping stone to a level up to about 2.2 m above its foot (3.7 m with Jump 100)",
+   "exists": true,
+   "size": [
+    2.02,
+    0.65,
+    0.87
+   ],
+   "min": [
+    -1.01,
+    0.0,
+    -0.44
+   ],
+   "max": [
+    1.01,
+    0.65,
+    0.42
+   ],
+   "origin": "foot",
+   "hollow": false,
+   "kinds": [
+    "Container",
+    "Piece",
+    "WearNTear",
+    "ZNetView"
+   ],
+   "colliders": {
+    "Default": 1
+   },
+   "solid": true,
+   "solid_note": "",
+   "lights": [],
+   "fire": false,
+   "particles": 0,
+   "item": false,
+   "networked": true,
+   "gives": [
+    "Container"
+   ],
+   "physics": false,
+   "height": 0.65,
+   "upright": "flat",
+   "saved_only": true,
+   "safe": false,
+   "climb": {
+    "ledges": [
+     [
+      0.0,
+      0.6
+     ]
+    ],
+    "top": 0.6,
+    "top_skilled": 0.6
+   },
+   "render": "palettes/TreasureChest_forestcrypt.png"
+  },
+  {
+   "prefab": "TreasureChest_dvergrtown",
+   "role": "container",
+   "look": "a Dvergr chest (Saved)",
+   "mount": "ground",
+   "scale": [
+    1,
+    1
+   ],
+   "tier": 6,
+   "notes": "Saved only; keep scale 1; climbable: a player can stand 0.6 m above its foot (at scale 1; 0.6 m with Jump skill 100), so it's a stepping stone to a level up to about 2.2 m above its foot (3.7 m with Jump 100)",
+   "exists": true,
+   "size": [
+    1.39,
+    0.73,
+    0.77
+   ],
+   "min": [
+    -0.7,
+    -0.0,
+    -0.39
+   ],
+   "max": [
+    0.7,
+    0.73,
+    0.38
+   ],
+   "origin": "foot",
+   "hollow": false,
+   "kinds": [
+    "Container",
+    "Piece",
+    "WearNTear",
+    "ZNetView"
+   ],
+   "colliders": {
+    "Default": 1
+   },
+   "solid": true,
+   "solid_note": "",
+   "lights": [],
+   "fire": false,
+   "particles": 0,
+   "item": false,
+   "networked": true,
+   "gives": [
+    "Container"
+   ],
+   "physics": false,
+   "height": 0.73,
+   "upright": "block",
+   "saved_only": true,
+   "safe": false,
+   "climb": {
+    "ledges": [
+     [
+      0.0,
+      0.2
+     ],
+     [
+      0.4,
+      0.6
+     ]
+    ],
+    "top": 0.6,
+    "top_skilled": 0.6
+   },
+   "render": "palettes/TreasureChest_dvergrtown.png"
+  },
+  {
+   "prefab": "crypt_skeleton_chest",
+   "role": "remains",
+   "look": "a skeleton slumped over a chest: NOT a container but a breakable that drops loot and may hatch a creature (EggHatch)",
+   "mount": "ground",
+   "scale": [
+    1,
+    1
+   ],
+   "tier": 2,
+   "notes": "Saved: its drops and what it hatches are fitted to the biome; as scenery a prop; as scenery its Destructible, DropOnDestroyed is stripped: it gives nothing; climbable: a player can stand 1.0 m above its foot (at scale 1; 1.0 m with Jump skill 100), so it's a stepping stone to a level up to about 2.6 m above its foot (4.1 m with Jump 100)",
+   "exists": true,
+   "size": [
+    3.03,
+    0.97,
+    1.3
+   ],
+   "min": [
+    -1.51,
+    0.0,
+    -0.66
+   ],
+   "max": [
+    1.51,
+    0.97,
+    0.64
+   ],
+   "origin": "foot",
+   "hollow": false,
+   "kinds": [
+    "Destructible",
+    "DropOnDestroyed",
+    "EggHatch",
+    "ZNetView"
+   ],
+   "colliders": {
+    "Default": 1
+   },
+   "solid": true,
+   "solid_note": "",
+   "lights": [],
+   "fire": false,
+   "particles": 0,
+   "item": false,
+   "networked": true,
+   "gives": [
+    "Destructible",
+    "DropOnDestroyed"
+   ],
+   "physics": false,
+   "height": 0.97,
+   "upright": "flat",
+   "saved_only": false,
+   "safe": true,
+   "climb": {
+    "ledges": [
+     [
+      0.0,
+      0.4
+     ],
+     [
+      0.6,
+      1.0
+     ]
+    ],
+    "top": 1.0,
+    "top_skilled": 1.0
+   },
+   "render": "palettes/crypt_skeleton_chest.png"
+  },
+  {
+   "prefab": "Spawner_Draugr",
+   "role": "spawner",
+   "look": "an invisible spawn point: melee (Saved; swapped for the biome's melee)",
+   "mount": "ground",
+   "scale": [
+    1,
+    1
+   ],
+   "tier": 3,
+   "notes": "Saved only; invisible; stands 0.5 m above its floor; no collider: players walk through it",
+   "exists": true,
+   "size": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "min": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "max": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "origin": "foot",
+   "hollow": false,
+   "kinds": [
+    "CreatureSpawner",
+    "ZNetView"
+   ],
+   "colliders": {},
+   "solid": false,
+   "solid_note": "no collider: players walk through it",
+   "lights": [],
+   "fire": false,
+   "particles": 0,
+   "item": false,
+   "networked": true,
+   "gives": [],
+   "physics": false,
+   "height": 0.0,
+   "upright": "block",
+   "saved_only": true,
+   "safe": false,
+   "climb": {
+    "ledges": [],
+    "top": 0.0,
+    "top_skilled": 0.0
+   },
+   "render": "palettes/Spawner_Draugr.png"
+  },
+  {
+   "prefab": "Spawner_Draugr_Ranged",
+   "role": "spawner",
+   "look": "an invisible spawn point: ranged (Saved; swapped for the biome's ranged)",
+   "mount": "ground",
+   "scale": [
+    1,
+    1
+   ],
+   "tier": 3,
+   "notes": "Saved only; no collider: players walk through it",
+   "exists": true,
+   "size": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "min": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "max": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "origin": "foot",
+   "hollow": false,
+   "kinds": [
+    "CreatureSpawner",
+    "ZNetView"
+   ],
+   "colliders": {},
+   "solid": false,
+   "solid_note": "no collider: players walk through it",
+   "lights": [],
+   "fire": false,
+   "particles": 0,
+   "item": false,
+   "networked": true,
+   "gives": [],
+   "physics": false,
+   "height": 0.0,
+   "upright": "block",
+   "saved_only": true,
+   "safe": false,
+   "climb": {
+    "ledges": [],
+    "top": 0.0,
+    "top_skilled": 0.0
+   },
+   "render": "palettes/Spawner_Draugr_Ranged.png"
+  },
+  {
+   "prefab": "Spawner_Ghost",
+   "role": "spawner",
+   "look": "an invisible spawn point: flying (Saved; swapped for the biome's flyer)",
+   "mount": "ground",
+   "scale": [
+    1,
+    1
+   ],
+   "tier": 2,
+   "notes": "Saved only; no collider: players walk through it",
+   "exists": true,
+   "size": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "min": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "max": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "origin": "foot",
+   "hollow": false,
+   "kinds": [
+    "CreatureSpawner",
+    "ZNetView"
+   ],
+   "colliders": {},
+   "solid": false,
+   "solid_note": "no collider: players walk through it",
+   "lights": [],
+   "fire": false,
+   "particles": 0,
+   "item": false,
+   "networked": true,
+   "gives": [],
+   "physics": false,
+   "height": 0.0,
+   "upright": "block",
+   "saved_only": true,
+   "safe": false,
+   "climb": {
+    "ledges": [],
+    "top": 0.0,
+    "top_skilled": 0.0
+   },
+   "render": "palettes/Spawner_Ghost.png"
+  },
+  {
+   "prefab": "BonePileSpawner",
+   "role": "spawner",
+   "look": "a bone pile that spawns skeletons until broken (Saved)",
+   "mount": "ground",
+   "scale": [
+    1,
+    1
+   ],
+   "tier": 2,
+   "notes": "Saved only; what it spawns is fitted to the biome; climbable: a player can stand 0.6 m above its foot (at scale 1; 0.6 m with Jump skill 100), so it's a stepping stone to a level up to about 2.2 m above its foot (3.7 m with Jump 100)",
+   "exists": true,
+   "size": [
+    2.0,
+    1.01,
+    1.98
+   ],
+   "min": [
+    -0.98,
+    -0.06,
+    -0.99
+   ],
+   "max": [
+    1.02,
+    0.94,
+    0.98
+   ],
+   "origin": "foot",
+   "hollow": false,
+   "kinds": [
+    "Destructible",
+    "SpawnArea",
+    "ZNetView"
+   ],
+   "colliders": {
+    "Default": 1,
+    "hitbox": 1
+   },
+   "solid": true,
+   "solid_note": "",
+   "lights": [],
+   "fire": false,
+   "particles": 3,
+   "item": false,
+   "networked": true,
+   "gives": [
+    "Destructible"
+   ],
+   "physics": false,
+   "height": 1.01,
+   "upright": "block",
+   "saved_only": true,
+   "safe": false,
+   "climb": {
+    "ledges": [
+     [
+      0.0,
+      0.6
+     ]
+    ],
+    "top": 0.6,
+    "top_skilled": 0.6
+   },
+   "render": "palettes/BonePileSpawner.png"
+  },
+  {
+   "prefab": "Pickable_DvergrMineTreasure",
+   "role": "pickable",
+   "look": "a Dvergr treasure pile, one fixed item (Saved: swapped for a fitting pickable, or left out, below the Mistlands)",
+   "mount": "ground",
+   "scale": [
+    1,
+    1
+   ],
+   "tier": 6,
+   "notes": "Saved only; as scenery it shows loot that can't be taken; its 'item'-layer collider is made solid by the Builder (BuildSolid.cs); climbable: a player can stand 0.4 m above its foot (at scale 1; 0.4 m with Jump skill 100), so it's a stepping stone to a level up to about 2.0 m above its foot (3.5 m with Jump 100)",
+   "exists": true,
+   "size": [
+    2.3,
+    0.4,
+    2.3
+   ],
+   "min": [
+    -1.15,
+    0.04,
+    -1.15
+   ],
+   "max": [
+    1.15,
+    0.45,
+    1.15
+   ],
+   "origin": "foot",
+   "hollow": false,
+   "kinds": [
+    "Pickable",
+    "ZNetView"
+   ],
+   "colliders": {
+    "item": 1
+   },
+   "solid": true,
+   "solid_note": "its 'item'-layer collider is made solid by the Builder (BuildSolid.cs)",
+   "lights": [],
+   "fire": false,
+   "particles": 0,
+   "item": false,
+   "networked": true,
+   "gives": [
+    "Pickable"
+   ],
+   "physics": false,
+   "height": 0.4,
+   "upright": "flat",
+   "saved_only": true,
+   "safe": false,
+   "climb": {
+    "ledges": [
+     [
+      0.0,
+      0.4
+     ]
+    ],
+    "top": 0.4,
+    "top_skilled": 0.4
+   },
+   "render": "palettes/Pickable_DvergrMineTreasure.png"
+  },
+  {
+   "prefab": "skull_pile",
+   "role": "remains",
+   "look": "a pile of skulls",
+   "mount": "ground",
+   "scale": [
+    0.5,
+    2
+   ],
+   "tier": 2,
+   "notes": "climbable: a player can stand 0.6 m above its foot (at scale 1; 0.6 m with Jump skill 100), so it's a stepping stone to a level up to about 2.2 m above its foot (3.7 m with Jump 100)",
+   "exists": true,
+   "size": [
+    1.18,
+    0.85,
+    1.09
+   ],
+   "min": [
+    -0.55,
+    -0.07,
+    -0.57
+   ],
+   "max": [
+    0.63,
+    0.78,
+    0.52
+   ],
+   "origin": "foot",
+   "hollow": false,
+   "sets": [
+    "ossuary"
+   ],
+   "kinds": [
+    "Piece",
+    "WearNTear",
+    "ZNetView"
+   ],
+   "colliders": {
+    "piece": 2
+   },
+   "solid": true,
+   "solid_note": "",
+   "lights": [],
+   "fire": false,
+   "particles": 0,
+   "item": false,
+   "networked": true,
+   "gives": [],
+   "physics": false,
+   "height": 0.85,
+   "upright": "block",
+   "saved_only": false,
+   "safe": true,
+   "climb": {
+    "ledges": [
+     [
+      0.0,
+      0.6
+     ]
+    ],
+    "top": 0.6,
+    "top_skilled": 0.6
+   },
+   "render": "palettes/skull_pile.png"
+  },
+  {
+   "prefab": "bone_stack",
+   "role": "remains",
+   "look": "a stack of bones",
+   "mount": "ground",
+   "scale": [
+    0.5,
+    2
+   ],
+   "tier": 2,
+   "notes": "climbable: a player can stand 0.6 m above its foot (at scale 1; 0.6 m with Jump skill 100), so it's a stepping stone to a level up to about 2.2 m above its foot (3.7 m with Jump 100)",
+   "exists": true,
+   "size": [
+    1.01,
+    0.63,
+    1.05
+   ],
+   "min": [
+    -0.48,
+    -0.06,
+    -0.52
+   ],
+   "max": [
+    0.52,
+    0.56,
+    0.54
+   ],
+   "origin": "foot",
+   "hollow": false,
+   "sets": [
+    "ossuary"
+   ],
+   "kinds": [
+    "Piece",
+    "WearNTear",
+    "ZNetView"
+   ],
+   "colliders": {
+    "piece": 1
+   },
+   "solid": true,
+   "solid_note": "",
+   "lights": [],
+   "fire": false,
+   "particles": 0,
+   "item": false,
+   "networked": true,
+   "gives": [],
+   "physics": false,
+   "height": 0.63,
+   "upright": "block",
+   "saved_only": false,
+   "safe": true,
+   "climb": {
+    "ledges": [
+     [
+      0.4,
+      0.6
+     ]
+    ],
+    "top": 0.6,
+    "top_skilled": 0.6
+   },
+   "render": "palettes/bone_stack.png"
+  },
+  {
+   "prefab": "rug_fur",
+   "role": "decor",
+   "look": "a fur rug",
+   "mount": "ground",
+   "scale": [
+    0.5,
+    2
+   ],
+   "tier": 2,
+   "notes": "players walk through it; thin (0.08 m): a single face may not show from behind (one-sided): check its render from both sides",
+   "exists": true,
+   "size": [
+    3.06,
+    0.08,
+    3.97
+   ],
+   "min": [
+    -1.53,
+    0.03,
+    -1.98
+   ],
+   "max": [
+    1.53,
+    0.11,
+    1.98
+   ],
+   "origin": "foot",
+   "hollow": false,
+   "kinds": [
+    "Piece",
+    "WearNTear",
+    "ZNetView"
+   ],
+   "colliders": {
+    "piece_nonsolid": 1
+   },
+   "solid": false,
+   "solid_note": "players walk through it",
+   "lights": [],
+   "fire": false,
+   "particles": 0,
+   "item": false,
+   "networked": true,
+   "gives": [],
+   "physics": false,
+   "height": 0.08,
+   "upright": "flat",
+   "saved_only": false,
+   "safe": true,
+   "climb": {
+    "ledges": [],
+    "top": 0.0,
+    "top_skilled": 0.0
+   },
+   "render": "palettes/rug_fur.png"
+  },
+  {
+   "prefab": "piece_banner01",
+   "role": "decor",
+   "look": "a banner",
+   "mount": "wall",
+   "scale": [
+    0.5,
+    2
+   ],
+   "tier": 1,
+   "notes": "",
+   "exists": true,
+   "size": [
+    0.2,
+    3.03,
+    1.41
+   ],
+   "min": [
+    -0.1,
+    -2.93,
+    -0.7
+   ],
+   "max": [
+    0.1,
+    0.1,
+    0.7
+   ],
+   "origin": "top",
+   "hollow": false,
+   "kinds": [
+    "Piece",
+    "WearNTear",
+    "ZNetView"
+   ],
+   "colliders": {
+    "piece": 1
+   },
+   "solid": true,
+   "solid_note": "",
+   "lights": [],
+   "fire": false,
+   "particles": 0,
+   "item": false,
+   "networked": true,
+   "gives": [],
+   "physics": false,
+   "height": 3.03,
+   "upright": "upright",
+   "saved_only": false,
+   "safe": true,
+   "climb": {
+    "ledges": [
+     [
+      3.0,
+      3.2
+     ]
+    ],
+    "top": 0.0,
+    "top_skilled": 3.2
+   },
+   "render": "palettes/piece_banner01.png"
+  },
+  {
+   "prefab": "bar_iron_stack",
+   "role": "prop",
+   "look": "a stack of iron bars",
+   "mount": "ground",
+   "scale": [
+    0.5,
+    2
+   ],
+   "tier": 3,
+   "notes": "climbable: a player can stand 1.0 m above its foot (at scale 1; 1.0 m with Jump skill 100), so it's a stepping stone to a level up to about 2.6 m above its foot (4.1 m with Jump 100)",
+   "exists": true,
+   "size": [
+    0.62,
+    1.0,
+    0.63
+   ],
+   "min": [
+    -0.31,
+    0.01,
+    -0.33
+   ],
+   "max": [
+    0.32,
+    1.0,
+    0.31
+   ],
+   "origin": "foot",
+   "hollow": false,
+   "sets": [
+    "forge",
+    "store"
+   ],
+   "kinds": [
+    "Piece",
+    "WearNTear",
+    "ZNetView"
+   ],
+   "colliders": {
+    "piece": 1
+   },
+   "solid": true,
+   "solid_note": "",
+   "lights": [],
+   "fire": false,
+   "particles": 0,
+   "item": false,
+   "networked": true,
+   "gives": [],
+   "physics": false,
+   "height": 1.0,
+   "upright": "block",
+   "saved_only": false,
+   "safe": true,
+   "climb": {
+    "ledges": [
+     [
+      0.8,
+      1.0
+     ]
+    ],
+    "top": 1.0,
+    "top_skilled": 1.0
+   },
+   "render": "palettes/bar_iron_stack.png"
+  },
+  {
+   "prefab": "wood_core_stack",
+   "role": "prop",
+   "look": "a stack of logs",
+   "mount": "ground",
+   "scale": [
+    0.5,
+    2
+   ],
+   "tier": 2,
+   "notes": "climbable: a player can stand 1.4 m above its foot (at scale 1; 1.4 m with Jump skill 100), so it's a stepping stone to a level up to about 3.0 m above its foot (4.5 m with Jump 100)",
+   "exists": true,
+   "size": [
+    1.99,
+    1.32,
+    2.22
+   ],
+   "min": [
+    -0.99,
+    -0.04,
+    -1.11
+   ],
+   "max": [
+    1.0,
+    1.28,
+    1.11
+   ],
+   "origin": "foot",
+   "hollow": false,
+   "kinds": [
+    "Piece",
+    "WearNTear",
+    "ZNetView"
+   ],
+   "colliders": {
+    "piece": 2
+   },
+   "solid": true,
+   "solid_note": "",
+   "lights": [],
+   "fire": false,
+   "particles": 0,
+   "item": false,
+   "networked": true,
+   "gives": [],
+   "physics": false,
+   "height": 1.32,
+   "upright": "block",
+   "saved_only": false,
+   "safe": true,
+   "climb": {
+    "ledges": [
+     [
+      0.0,
+      0.2
+     ],
+     [
+      0.4,
+      0.6
+     ],
+     [
+      0.8,
+      1.0
+     ],
+     [
+      1.2,
+      1.4
+     ]
+    ],
+    "top": 1.4,
+    "top_skilled": 1.4
+   },
+   "render": "palettes/wood_core_stack.png"
+  },
+  {
+   "prefab": "stone_pile",
+   "role": "prop",
+   "look": "a pile of stones",
+   "mount": "ground",
+   "scale": [
+    0.5,
+    2
+   ],
+   "tier": 1,
+   "notes": "climbable: a player can stand 1.0 m above its foot (at scale 1; 1.0 m with Jump skill 100), so it's a stepping stone to a level up to about 2.6 m above its foot (4.1 m with Jump 100)",
+   "exists": true,
+   "size": [
+    1.67,
+    0.92,
+    1.54
+   ],
+   "min": [
+    -0.78,
+    -0.09,
+    -0.69
+   ],
+   "max": [
+    0.89,
+    0.82,
+    0.85
+   ],
+   "origin": "foot",
+   "hollow": false,
+   "kinds": [
+    "Piece",
+    "WearNTear",
+    "ZNetView"
+   ],
+   "colliders": {
+    "piece": 1
+   },
+   "solid": true,
+   "solid_note": "",
+   "lights": [],
+   "fire": false,
+   "particles": 0,
+   "item": false,
+   "networked": true,
+   "gives": [],
+   "physics": false,
+   "height": 0.92,
+   "upright": "block",
+   "saved_only": false,
+   "safe": true,
+   "climb": {
+    "ledges": [
+     [
+      0.0,
+      1.0
+     ]
+    ],
+    "top": 1.0,
+    "top_skilled": 1.0
+   },
+   "render": "palettes/stone_pile.png"
+  }
+ ],
+ "trouble": {
+  "Morkhalla_MetalPillar": "not in the game's ZNetScene (it's only part of Mórk halla rooms): dungeon_parts.py refuses it. Use Piece_flametal_pillar or Morkhalla_MetalBar stood up.",
+  "CharredCogwheel": "an item prefab: players walked through the giant gears (its collider is a 1.14 x 0.4 x 1.14 box on the 'item' layer). The Builder now moves it to static_solid and fits a disc collider (BuildSolid.cs). Never Saved: it would be an Ashlands item.",
+  "dvergrprops_lantern": "floated in the first Shifting Halls (hanging lanterns with nothing above): hang it from a beam, a ceiling or dvergrprops_hooknchain / Morkhalla_WallChain1 with the chain's foot on its top (prop_check.py).",
+  "piece_brazierceiling01": "hangs: needs a ceiling or beam right above its origin.",
+  "dverger_guardstone": "a ward (PrivateArea): stripped it's only a look, but it reads as a player's ward. Don't use.",
+  "MistArea": "the Mistlands mist: it hides everything around it in a dungeon. Don't use (also MistArea_small, MistArea_edge).",
+  "Morkhalla_Rubble1_fall": "falls (physics) in the game: stripped it's frozen mid-air. Use Morkhalla_Rubble1.",
+  "dverger_demister": "floated in 35 places in Shifting Halls: its origin is at its top (the mesh hangs below it), so stood at a point it's in the air. Hang it on a chain from the first part above it (giant_kit.wisp).",
+  "dvergrprops_banner": "its origin is in its middle (2 m above its foot): stood at a point it reaches 2 m higher than it seems, and left a 6 m room's box.",
+  "blackmarble_2x2x1": "stretched, its bevels become spikes: don't use it as a stretched wall (blackmarble_tile_wall_2x4 instead).",
+  "Ashlands_floor_large_fractured": "looks the same as Ashlands_floor_large: no use for a cracked floor.",
+  "giant_ribs": "huge (0.75 scale is still about 14 m long), and hollow: its collider is boxes in prefab_shapes.json. Scale giant remains by their box.",
+  "*_frac": "fractured debris (physics pieces of something broken): don't use as scenery.",
+  "Pickable_*": "as scenery a pickable shows its item but can't be taken: confusing. Use only as Saved parts.",
+  "TreasureChest_*": "as scenery a chest opens nothing: Saved only, scale 1.",
+  "Spawner_*": "invisible and does nothing as scenery: Saved only."
+ }
+}

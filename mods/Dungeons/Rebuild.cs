@@ -205,11 +205,12 @@ namespace Dungeons
             // its parts everywhere, and its state
             int gen = zdo.GetInt(Keys.Gen) + 1;
             zdo.Set(Keys.Gen, gen);
-            Sweep.Everywhere(site.Id, gen, false);
+            Sweep.Everywhere(site.Id, gen, true);   // (its encounters' creatures too, loaded or not: a boss or a wave from the old fight never joins the new one)
             Strays.Around(site.EntrancePos, Dungeons.UnknownReach, 15f);   // (laid out again by then: what's left outside its new box)
             zdo.Set(Keys.Done, "");
             zdo.Set(Keys.Mechs, "");
             zdo.Set(Keys.Encounters, "");
+            zdo.Set(MechSet.BossKeyHash, "");   // (the boss fights' records: BossFight.cs)
             zdo.Set(Keys.LayoutSig, 0);
             site.Mechs?.Forget();
             Plugin.Log.LogInfo($"Dungeon {site.Id} ({site.PackName} seed {site.Seed}): {reason}, from its pack as it is now");

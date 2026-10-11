@@ -21,7 +21,7 @@
   {"game": "forestcrypt_EndCap2"},
   {
    "name": "mechroom",
-   "size": [16.0, 10.0, 14.0],
+   "size": [16.0, 14.0, 14.0],
    "tags": ["lever"],
    "max": 1,
    "drops": [{"a": "out", "b": "in"}],
@@ -69,7 +69,7 @@
       {"prefab": "wood_beam", "at": [1.15, -0.45, 0.0], "scale": [0.1, 0.625, 16.5]},
       {"prefab": "stone_pillar", "at": [-0.007, -1.6, 0.0], "scale": [0.788, 0.4, 0.796]}
      ],
-     "poses": [{"at": [0.0, -1.6, 0.0], "euler": [0.0, 180.0, 0.0]}, {"at": [0.0, 0.0, 0.0], "euler": [0.0, 0.0, 0.0]}],
+     "poses": [{"at": [0.0, -3.4, 0.0], "euler": [0.0, 180.0, 0.0]}, {"at": [0.0, 0.0, 0.0], "euler": [0.0, 0.0, 0.0]}],
      "start": 0,
      "seconds": 2.5,
      "joins": [{"state": 1, "a": "in", "b": "out"}]
@@ -189,9 +189,7 @@
     {"prefab": "stone_floor_2x2", "at": [-1.75, 0.2, 4.75], "scale": [1.75, 0.599, 1.75]},
     {"prefab": "stone_floor_2x2", "at": [1.75, 0.2, 4.75], "scale": [1.75, 0.599, 1.75]},
     {"prefab": "stone_floor_2x2", "at": [5.25, 0.2, 4.75], "scale": [1.75, 0.599, 1.75]},
-    {"prefab": "stone_pillar", "at": [-5.006, -1.6, 3.4], "scale": [0.701, 1.9, 0.707]},
-    {"prefab": "stone_pillar", "at": [-1.006, -1.6, 3.4], "scale": [0.701, 1.9, 0.707]},
-    {"prefab": "stone_pillar", "at": [2.994, -1.6, 3.4], "scale": [0.701, 1.9, 0.707]},
+    {"prefab": "stone_floor_2x2", "at": [0.0, -1.8, 3.3], "euler": [90.0, 0.0, 0.0], "scale": [7.0, 0.599, 1.7]},
     {"prefab": "wood_beam", "at": [-5.5, 1.15, 3.1], "scale": [1.0, 0.5, 0.5]},
     {"prefab": "wood_beam", "at": [-1.5, 1.15, 3.1], "scale": [1.0, 0.5, 0.5]},
     {"prefab": "wood_beam", "at": [2.5, 1.15, 3.1], "scale": [1.0, 0.5, 0.5]},

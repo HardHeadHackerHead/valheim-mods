@@ -192,7 +192,7 @@ namespace Dungeons
                     if (act == "start")   // (an encounter started is won: its wires, and the triggers on its win)
                     {
                         if (target.Def.Kind != "encounter" || depth >= 4) return;
-                        var wires = (target.Def.Encounter?.Boss?.Phases.SelectMany(p => p.Wires) ?? Enumerable.Empty<Wire>()).Concat(target.Def.Wires);
+                        var wires = (target.Def.Encounter?.Boss?.AllWires() ?? Enumerable.Empty<Wire>()).Concat(target.Def.Wires);
                         foreach (Wire w in wires)
                             if (w.Do != "hold" || together) AddAct(use, part, Target(layout, target.Room, w), w.Do == "hold" ? "set:1" : w.Do, depth + 1);
                         if (into.TryGetValue(target.Key, out var won))

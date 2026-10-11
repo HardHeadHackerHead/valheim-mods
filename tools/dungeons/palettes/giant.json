@@ -1,0 +1,3870 @@
+{
+ "theme": "giant",
+ "about": "The Giants' clockwork vault (Shifting Halls): ancient Jotunn machinery at giant scale. Huge grey grausten blocks with black marble, bronze gears and iron chains, giant bones and statues, cold blue light. Rooms on an 8 m grid, 12 m a storey, doorways 5 x 8 m (tools/dungeons/giant_kit.py has the style sheet and the helpers).",
+ "made_by": "tools/dungeons/palette_tool.py (curation in CURATED there; everything else read from the game's files)",
+ "fields": {
+  "role": "what it's for; structural roles (arch, block, ceiling, door, floor, gate, pillar, platform, rail, ramp, stair, wall) must be solid",
+  "mount": "ground: stands on a floor (prop_check.py); hang: needs something right above its origin or a chain on its top; wall: against a wall; span: rests on two supports; structure: what others stand on; free: anywhere",
+  "scale": "[min, max] that looks right and stays solid; stairs keep 1 (step height)",
+  "tier": "the land it looks like it belongs to (1 Meadows .. 8 Deep North): a look hint, not gameplay (enemies and loot follow the entrance's biome)",
+  "size/min/max/origin": "its shape's box in its own frame (m); origin: where its origin sits on that box (foot, top, centre...)",
+  "solid": "a character bumps into it in our rooms (the game's collision matrix; items fixed by BuildSolid.cs)",
+  "lights": "range, intensity, colour; lit: shines once stripped (a Fireplace's burning objects are switched on); lod: fades with distance",
+  "gives": "what the game would make it give or do: stripped as scenery; a networked prefab (networked) may be a Saved part instead",
+  "height": "its height at scale 1 (m)",
+  "climb": "ledges: its footholds (faces a player can stand on, no steeper than 38 degrees, with at least 0.1 m2 of them seen from above in a 0.2 m height band) as height ranges above its foot at scale 1, upright as the prefab stands; top: the highest reachable from the floor, each within a jump (1.6 m: gravity 20, jump force 8, Jump skill 0) of the last; top_skilled: the same with Jump skill 100 (3.14 m); 0: none. Scale the ledges by the part's y scale; a part turned off upright exposes other faces (treat a smooth bar or column as only its top end)",
+  "upright": "flat (thin along y: a floor tile, stand it up for a wall), upright (thin along x or z: a wall piece, use as it is), block",
+  "safe": "fine as stripped scenery; saved_only: works only as a Saved part (chests, pickables, spawners)",
+  "by_role": "{role: [default, variants...]}: the roles below without their notes",
+  "sets": "the dressing sets it suits (giant: ossuary, ruin, forge, archive, engine, armoury; Dvergr: store, workshop, tavern, barracks)",
+  "max_span": "a panel's longest side (m) before its stretched texture smears",
+  "roles": "the same pieces by a theme recipe's roles (first = default, others = variants), with how each role's pieces are placed",
+  "render": "a picture in the mesh cache (C:\\Users\\DHack\\AppData\\Local\\Temp\\quaddungeon_meshes); the theme's contact sheet is palettes/giant_sheet.png there"
+ },
+ "pieces": [
+  {
+   "prefab": "Ashlands_floor_large",
+   "role": "floor",
+   "look": "10 x 2 x 10 grausten slab: floors, ceilings (euler x 180), and stood up, walls",
+   "mount": "structure",
+   "scale": [
+    0.5,
+    3
+   ],
+   "tier": 7,
+   "notes": "as scenery its Destructible is stripped: it gives nothing",
+   "exists": true,
+   "size": [
+    10.0,
+    2.0,
+    10.0
+   ],
+   "min": [
+    -4.93,
+    -1.0,
+    -5.1
+   ],
+   "max": [
+    5.07,
+    1.0,
+    4.9
+   ],
+   "origin": "centre",
+   "hollow": false,
+   "max_span": 10.0,
+   "kinds": [
+    "Destructible",
+    "ZNetView"
+   ],
+   "colliders": {
+    "piece": 1
+   },
+   "solid": true,
+   "solid_note": "",
+   "lights": [],
+   "fire": false,
+   "particles": 0,
+   "item": false,
+   "networked": true,
+   "gives": [
+    "Destructible"
+   ],
+   "physics": false,
+   "height": 2.0,
+   "upright": "flat",
+   "saved_only": false,
+   "safe": true,
+   "climb": {
+    "ledges": [
+     [
+      2.0,
+      2.2
+     ]
+    ],
+    "top": 0.0,
+    "top_skilled": 2.2
+   },
+   "render": "palettes/Ashlands_floor_large.png"
+  },
+  {
+   "prefab": "blackmarble_floor_large",
+   "role": "floor",
+   "look": "8 x 2 x 8 black marble slab: lintels, plinths, inlays",
+   "mount": "structure",
+   "scale": [
+    0.5,
+    3
+   ],
+   "tier": 6,
+   "notes": "",
+   "exists": true,
+   "size": [
+    8.0,
+    2.0,
+    8.0
+   ],
+   "min": [
+    -4.0,
+    -1.0,
+    -4.0
+   ],
+   "max": [
+    4.0,
+    1.0,
+    4.0
+   ],
+   "origin": "centre",
+   "hollow": false,
+   "max_span": 10.0,
+   "kinds": [
+    "Piece",
+    "WearNTear",
+    "ZNetView"
+   ],
+   "colliders": {
+    "piece": 1
+   },
+   "solid": true,
+   "solid_note": "",
+   "lights": [],
+   "fire": false,
+   "particles": 0,
+   "item": false,
+   "networked": true,
+   "gives": [],
+   "physics": false,
+   "height": 2.0,
+   "upright": "flat",
+   "saved_only": false,
+   "safe": true,
+   "climb": {
+    "ledges": [
+     [
+      2.0,
+      2.2
+     ]
+    ],
+    "top": 0.0,
+    "top_skilled": 2.2
+   },
+   "render": "palettes/blackmarble_floor_large.png"
+  },
+  {
+   "prefab": "Ashlands_Boss_Pillar",
+   "role": "pillar",
+   "look": "carved grausten pillar 4.6 x 8 x 4.6, origin at its foot",
+   "mount": "ground",
+   "scale": [
+    0.5,
+    2
+   ],
+   "tier": 7,
+   "notes": "as scenery its DropOnDestroyed is stripped: it gives nothing",
+   "exists": true,
+   "size": [
+    4.62,
+    8.03,
+    4.56
+   ],
+   "min": [
+    -2.29,
+    -0.01,
+    -2.28
+   ],
+   "max": [
+    2.33,
+    8.02,
+    2.28
+   ],
+   "origin": "foot",
+   "hollow": false,
+   "kinds": [
+    "DropOnDestroyed",
+    "WearNTear",
+    "ZNetView"
+   ],
+   "colliders": {
+    "piece": 1
+   },
+   "solid": true,
+   "solid_note": "",
+   "lights": [],
+   "fire": false,
+   "particles": 0,
+   "item": false,
+   "networked": true,
+   "gives": [
+    "DropOnDestroyed"
+   ],
+   "physics": false,
+   "height": 8.03,
+   "upright": "block",
+   "saved_only": false,
+   "safe": true,
+   "climb": {
+    "ledges": [
+     [
+      0.0,
+      0.2
+     ],
+     [
+      8.0,
+      8.2
+     ]
+    ],
+    "top": 0.0,
+    "top_skilled": 0.0
+   },
+   "render": "palettes/Ashlands_Boss_Pillar.png"
+  },
+  {
+   "prefab": "Ashlands_Pillar4",
+   "role": "pillar",
+   "look": "plain grausten column",
+   "mount": "ground",
+   "scale": [
+    0.5,
+    3
+   ],
+   "tier": 7,
+   "notes": "as scenery its DropOnDestroyed is stripped: it gives nothing",
+   "exists": true,
+   "size": [
+    2.28,
+    4.01,
+    2.31
+   ],
+   "min": [
+    -1.14,
+    -0.01,
+    -1.14
+   ],
+   "max": [
+    1.14,
+    4.01,
+    1.16
+   ],
+   "origin": "foot",
+   "hollow": false,
+   "kinds": [
+    "DropOnDestroyed",
+    "WearNTear",
+    "ZNetView"
+   ],
+   "colliders": {
+    "piece": 1
+   },
+   "solid": true,
+   "solid_note": "",
+   "lights": [],
+   "fire": false,
+   "particles": 0,
+   "item": false,
+   "networked": true,
+   "gives": [
+    "DropOnDestroyed"
+   ],
+   "physics": false,
+   "height": 4.01,
+   "upright": "block",
+   "saved_only": false,
+   "safe": true,
+   "climb": {
+    "ledges": [
+     [
+      4.0,
+      4.2
+     ]
+    ],
+    "top": 0.0,
+    "top_skilled": 0.0
+   },
+   "render": "palettes/Ashlands_Pillar4.png"
+  },
+  {
+   "prefab": "blackmarble_column_3",
+   "role": "pillar",
+   "look": "2 x 8 x 2 black marble column: door posts",
+   "mount": "ground",
+   "scale": [
+    0.5,
+    2
+   ],
+   "tier": 6,
+   "notes": "",
+   "exists": true,
+   "size": [
+    2.01,
+    8.0,
+    2.01
+   ],
+   "min": [
+    -1.0,
+    -4.0,
+    -1.0
+   ],
+   "max": [
+    1.01,
+    4.0,
+    1.01
+   ],
+   "origin": "centre",
+   "hollow": false,
+   "kinds": [
+    "Piece",
+    "WearNTear",
+    "ZNetView"
+   ],
+   "colliders": {
+    "piece": 1
+   },
+   "solid": true,
+   "solid_note": "",
+   "lights": [],
+   "fire": false,
+   "particles": 0,
+   "item": false,
+   "networked": true,
+   "gives": [],
+   "physics": false,
+   "height": 8.0,
+   "upright": "upright",
+   "saved_only": false,
+   "safe": true,
+   "climb": {
+    "ledges": [
+     [
+      8.0,
+      8.2
+     ]
+    ],
+    "top": 0.0,
+    "top_skilled": 0.0
+   },
+   "render": "palettes/blackmarble_column_3.png"
+  },
+  {
+   "prefab": "Piece_flametal_pillar",
+   "role": "pillar",
+   "look": "dark metal pillar",
+   "mount": "ground",
+   "scale": [
+    0.5,
+    3
+   ],
+   "tier": 7,
+   "notes": "",
+   "exists": true,
+   "size": [
+    0.5,
+    2.01,
+    0.5
+   ],
+   "min": [
+    -0.25,
+    0.0,
+    -0.25
+   ],
+   "max": [
+    0.25,
+    2.01,
+    0.25
+   ],
+   "origin": "foot",
+   "hollow": false,
+   "kinds": [
+    "Piece",
+    "WearNTear",
+    "ZNetView"
+   ],
+   "colliders": {
+    "piece": 2
+   },
+   "solid": true,
+   "solid_note": "",
+   "lights": [],
+   "fire": false,
+   "particles": 0,
+   "item": false,
+   "networked": true,
+   "gives": [],
+   "physics": false,
+   "height": 2.01,
+   "upright": "upright",
+   "saved_only": false,
+   "safe": true,
+   "climb": {
+    "ledges": [
+     [
+      1.8,
+      2.0
+     ]
+    ],
+    "top": 0.0,
+    "top_skilled": 2.0
+   },
+   "render": "palettes/Piece_flametal_pillar.png"
+  },
+  {
+   "prefab": "Morkhalla_Block",
+   "role": "block",
+   "look": "a big carved stone block",
+   "mount": "ground",
+   "scale": [
+    0.5,
+    3
+   ],
+   "tier": 8,
+   "notes": "",
+   "exists": true,
+   "size": [
+    4.0,
+    4.0,
+    4.0
+   ],
+   "min": [
+    -2.0,
+    0.0,
+    -2.0
+   ],
+   "max": [
+    2.0,
+    4.0,
+    2.0
+   ],
+   "origin": "foot",
+   "hollow": false,
+   "kinds": [
+    "ZNetView"
+   ],
+   "colliders": {
+    "Default": 1
+   },
+   "solid": true,
+   "solid_note": "",
+   "lights": [],
+   "fire": false,
+   "particles": 0,
+   "item": false,
+   "networked": true,
+   "gives": [],
+   "physics": false,
+   "height": 4.0,
+   "upright": "block",
+   "saved_only": false,
+   "safe": true,
+   "climb": {
+    "ledges": [
+     [
+      4.0,
+      4.2
+     ]
+    ],
+    "top": 0.0,
+    "top_skilled": 0.0
+   },
+   "render": "palettes/Morkhalla_Block.png"
+  },
+  {
+   "prefab": "Ashlands_WallBlock",
+   "role": "wall",
+   "look": "grausten wall block",
+   "mount": "structure",
+   "scale": [
+    0.5,
+    3
+   ],
+   "tier": 7,
+   "notes": "as scenery its Destructible is stripped: it gives nothing",
+   "exists": true,
+   "size": [
+    1.0,
+    2.0,
+    2.0
+   ],
+   "min": [
+    -0.5,
+    -1.0,
+    -1.0
+   ],
+   "max": [
+    0.5,
+    1.0,
+    1.0
+   ],
+   "origin": "centre",
+   "hollow": false,
+   "kinds": [
+    "Destructible",
+    "ZNetView"
+   ],
+   "colliders": {
+    "piece": 1
+   },
+   "solid": true,
+   "solid_note": "",
+   "lights": [],
+   "fire": false,
+   "particles": 0,
+   "item": false,
+   "networked": true,
+   "gives": [
+    "Destructible"
+   ],
+   "physics": false,
+   "height": 2.0,
+   "upright": "block",
+   "saved_only": false,
+   "safe": true,
+   "climb": {
+    "ledges": [
+     [
+      2.0,
+      2.2
+     ]
+    ],
+    "top": 0.0,
+    "top_skilled": 2.2
+   },
+   "render": "palettes/Ashlands_WallBlock.png"
+  },
+  {
+   "prefab": "Ashlands_Fortress_Floor",
+   "role": "floor",
+   "look": "fortress floor tile",
+   "mount": "structure",
+   "scale": [
+    0.5,
+    3
+   ],
+   "tier": 7,
+   "notes": "as scenery its DropOnDestroyed is stripped: it gives nothing",
+   "exists": true,
+   "size": [
+    2.0,
+    1.0,
+    2.0
+   ],
+   "min": [
+    -1.0,
+    -0.5,
+    -1.0
+   ],
+   "max": [
+    1.0,
+    0.5,
+    1.0
+   ],
+   "origin": "centre",
+   "hollow": false,
+   "kinds": [
+    "DropOnDestroyed",
+    "WearNTear",
+    "ZNetView"
+   ],
+   "colliders": {
+    "piece": 1
+   },
+   "solid": true,
+   "solid_note": "",
+   "lights": [],
+   "fire": false,
+   "particles": 0,
+   "item": false,
+   "networked": true,
+   "gives": [
+    "DropOnDestroyed"
+   ],
+   "physics": false,
+   "height": 1.0,
+   "upright": "block",
+   "saved_only": false,
+   "safe": true,
+   "climb": {
+    "ledges": [
+     [
+      1.0,
+      1.2
+     ]
+    ],
+    "top": 1.2,
+    "top_skilled": 1.2
+   },
+   "render": "palettes/Ashlands_Fortress_Floor.png"
+  },
+  {
+   "prefab": "Morkhalla_Floor_4x4",
+   "role": "floor",
+   "look": "Mórk halla floor tile 4 x 4",
+   "mount": "structure",
+   "scale": [
+    0.5,
+    3
+   ],
+   "tier": 8,
+   "notes": "",
+   "exists": true,
+   "size": [
+    4.0,
+    1.0,
+    4.0
+   ],
+   "min": [
+    -2.0,
+    -0.5,
+    -2.0
+   ],
+   "max": [
+    2.0,
+    0.5,
+    2.0
+   ],
+   "origin": "centre",
+   "hollow": false,
+   "kinds": [
+    "ZNetView"
+   ],
+   "colliders": {
+    "piece": 1
+   },
+   "solid": true,
+   "solid_note": "",
+   "lights": [],
+   "fire": false,
+   "particles": 0,
+   "item": false,
+   "networked": true,
+   "gives": [],
+   "physics": false,
+   "height": 1.0,
+   "upright": "flat",
+   "saved_only": false,
+   "safe": true,
+   "climb": {
+    "ledges": [
+     [
+      0.8,
+      1.0
+     ]
+    ],
+    "top": 1.0,
+    "top_skilled": 1.0
+   },
+   "render": "palettes/Morkhalla_Floor_4x4.png"
+  },
+  {
+   "prefab": "piece_grausten_stonestair",
+   "role": "stair",
+   "look": "2 x 1 x 2 grausten stair block, climbs -z",
+   "mount": "structure",
+   "scale": [
+    1,
+    1
+   ],
+   "tier": 7,
+   "notes": "scale changes the step height: keep 1 (stack them for a wider stair)",
+   "exists": true,
+   "size": [
+    2.0,
+    1.0,
+    2.0
+   ],
+   "min": [
+    -1.0,
+    0.0,
+    -1.0
+   ],
+   "max": [
+    1.0,
+    1.0,
+    1.0
+   ],
+   "origin": "foot",
+   "hollow": false,
+   "kinds": [
+    "Piece",
+    "WearNTear",
+    "ZNetView"
+   ],
+   "colliders": {
+    "piece": 1
+   },
+   "solid": true,
+   "solid_note": "",
+   "lights": [],
+   "fire": false,
+   "particles": 0,
+   "item": false,
+   "networked": true,
+   "gives": [],
+   "physics": false,
+   "height": 1.0,
+   "upright": "block",
+   "saved_only": false,
+   "safe": true,
+   "climb": {
+    "ledges": [
+     [
+      0.0,
+      1.2
+     ]
+    ],
+    "top": 1.2,
+    "top_skilled": 1.2
+   },
+   "render": "palettes/piece_grausten_stonestair.png"
+  },
+  {
+   "prefab": "Morkhalla_Stairs_giant_short",
+   "role": "stair",
+   "look": "giant stone stair with steps a person can climb",
+   "mount": "structure",
+   "scale": [
+    1,
+    1
+   ],
+   "tier": 8,
+   "notes": "",
+   "exists": true,
+   "size": [
+    4.0,
+    3.5,
+    4.0
+   ],
+   "min": [
+    -2.0,
+    -1.0,
+    0.0
+   ],
+   "max": [
+    2.0,
+    2.5,
+    4.0
+   ],
+   "origin": "inside",
+   "hollow": false,
+   "kinds": [
+    "ZNetView"
+   ],
+   "colliders": {
+    "Default": 1,
+    "piece": 2
+   },
+   "solid": true,
+   "solid_note": "",
+   "lights": [],
+   "fire": false,
+   "particles": 0,
+   "item": false,
+   "networked": true,
+   "gives": [],
+   "physics": false,
+   "height": 3.5,
+   "upright": "block",
+   "saved_only": false,
+   "safe": true,
+   "climb": {
+    "ledges": [
+     [
+      2.0,
+      2.2
+     ],
+     [
+      3.4,
+      3.6
+     ]
+    ],
+    "top": 0.0,
+    "top_skilled": 3.6
+   },
+   "render": "palettes/Morkhalla_Stairs_giant_short.png"
+  },
+  {
+   "prefab": "Ashlands_Arch1",
+   "role": "arch",
+   "look": "grausten arch",
+   "mount": "structure",
+   "scale": [
+    0.5,
+    2
+   ],
+   "tier": 7,
+   "notes": "",
+   "exists": true,
+   "size": [
+    2.97,
+    3.98,
+    1.96
+   ],
+   "min": [
+    -0.0,
+    0.0,
+    -0.98
+   ],
+   "max": [
+    2.97,
+    3.98,
+    0.98
+   ],
+   "origin": "foot",
+   "hollow": false,
+   "kinds": [
+    "Piece",
+    "WearNTear",
+    "ZNetView"
+   ],
+   "colliders": {
+    "piece": 1
+   },
+   "solid": true,
+   "solid_note": "",
+   "lights": [],
+   "fire": false,
+   "particles": 0,
+   "item": false,
+   "networked": true,
+   "gives": [],
+   "physics": false,
+   "height": 3.98,
+   "upright": "block",
+   "saved_only": false,
+   "safe": true,
+   "climb": {
+    "ledges": [
+     [
+      0.0,
+      0.2
+     ]
+    ],
+    "top": 0.0,
+    "top_skilled": 0.0
+   },
+   "render": "palettes/Ashlands_Arch1.png"
+  },
+  {
+   "prefab": "Ashlands_Ruins_twist_ArchBig",
+   "role": "arch",
+   "look": "a big twisted grausten arch",
+   "mount": "structure",
+   "scale": [
+    0.5,
+    2
+   ],
+   "tier": 7,
+   "notes": "as scenery its DropOnDestroyed is stripped: it gives nothing",
+   "exists": true,
+   "size": [
+    4.08,
+    4.08,
+    1.14
+   ],
+   "min": [
+    -1.58,
+    -2.5,
+    -0.57
+   ],
+   "max": [
+    2.5,
+    1.58,
+    0.57
+   ],
+   "origin": "centre",
+   "hollow": false,
+   "kinds": [
+    "DropOnDestroyed",
+    "WearNTear",
+    "ZNetView"
+   ],
+   "colliders": {
+    "piece": 3
+   },
+   "solid": true,
+   "solid_note": "",
+   "lights": [],
+   "fire": false,
+   "particles": 0,
+   "item": false,
+   "networked": true,
+   "gives": [
+    "DropOnDestroyed"
+   ],
+   "physics": false,
+   "height": 4.08,
+   "upright": "upright",
+   "saved_only": false,
+   "safe": true,
+   "climb": {
+    "ledges": [
+     [
+      0.8,
+      1.2
+     ],
+     [
+      2.6,
+      3.8
+     ],
+     [
+      4.0,
+      4.2
+     ]
+    ],
+    "top": 4.2,
+    "top_skilled": 4.2
+   },
+   "render": "palettes/Ashlands_Ruins_twist_ArchBig.png"
+  },
+  {
+   "prefab": "blackmarble_head_big01",
+   "role": "decor",
+   "look": "a 2 m carved head: keystones",
+   "mount": "wall",
+   "scale": [
+    0.5,
+    3
+   ],
+   "tier": 6,
+   "notes": "climbable: a player can stand 2.0 m above its foot (at scale 1; 2.0 m with Jump skill 100), so it's a stepping stone to a level up to about 3.6 m above its foot (5.1 m with Jump 100)",
+   "exists": true,
+   "size": [
+    2.0,
+    2.0,
+    2.0
+   ],
+   "min": [
+    -1.0,
+    -1.0,
+    -0.99
+   ],
+   "max": [
+    1.0,
+    1.0,
+    1.01
+   ],
+   "origin": "centre",
+   "hollow": false,
+   "kinds": [
+    "Piece",
+    "WearNTear",
+    "ZNetView"
+   ],
+   "colliders": {
+    "piece": 1
+   },
+   "solid": true,
+   "solid_note": "",
+   "lights": [],
+   "fire": false,
+   "particles": 0,
+   "item": false,
+   "networked": true,
+   "gives": [],
+   "physics": false,
+   "height": 2.0,
+   "upright": "block",
+   "saved_only": false,
+   "safe": true,
+   "climb": {
+    "ledges": [
+     [
+      0.0,
+      0.0
+     ],
+     [
+      0.4,
+      0.6
+     ],
+     [
+      1.0,
+      1.4
+     ],
+     [
+      1.8,
+      2.0
+     ]
+    ],
+    "top": 2.0,
+    "top_skilled": 2.0
+   },
+   "render": "palettes/blackmarble_head_big01.png"
+  },
+  {
+   "prefab": "CharredCogwheel",
+   "role": "gear",
+   "look": "a bronze cogwheel 1.1 m across, lying flat: scaled 5-17 times into the machine's gears",
+   "mount": "free",
+   "scale": [
+    1,
+    17
+   ],
+   "tier": 7,
+   "notes": "an ITEM prefab: its collider is a small box on the 'item' layer players pass through; the Builder moves it to static_solid and gives it a disc collider of its shape (BuildSolid.cs). In loot it would be the Ashlands item: never Saved.; an item: made solid and fitted to its shape by the Builder (BuildSolid.cs); as scenery its ItemDrop is stripped: it gives nothing; climbable: a player can stand 0.4 m above its foot (at scale 1; 0.4 m with Jump skill 100), so it's a stepping stone to a level up to about 2.0 m above its foot (3.5 m with Jump 100); TROUBLE: an item prefab: players walked through the giant gears (its collider is a 1.14 x 0.4 x 1.14 box on the 'item' layer). The Builder now moves it to static_solid and fits a disc collider (BuildSolid.cs). Never Saved: it would be an Ashlands item.",
+   "exists": true,
+   "size": [
+    1.14,
+    0.4,
+    1.14
+   ],
+   "min": [
+    -0.58,
+    -0.14,
+    -0.55
+   ],
+   "max": [
+    0.55,
+    0.26,
+    0.58
+   ],
+   "origin": "foot",
+   "hollow": false,
+   "sets": [
+    "engine"
+   ],
+   "kinds": [
+    "ItemDrop",
+    "ZNetView"
+   ],
+   "colliders": {
+    "item": 1
+   },
+   "solid": true,
+   "solid_note": "an item: made solid and fitted to its shape by the Builder (BuildSolid.cs)",
+   "lights": [],
+   "fire": false,
+   "particles": 2,
+   "item": true,
+   "networked": true,
+   "gives": [
+    "ItemDrop"
+   ],
+   "physics": false,
+   "height": 0.4,
+   "upright": "flat",
+   "saved_only": false,
+   "safe": true,
+   "climb": {
+    "ledges": [
+     [
+      0.2,
+      0.4
+     ]
+    ],
+    "top": 0.4,
+    "top_skilled": 0.4
+   },
+   "render": "palettes/CharredCogwheel.png"
+  },
+  {
+   "prefab": "Morkhalla_MetalBar",
+   "role": "beam",
+   "look": "studded iron bar 20 x 1 x 1, centred, along x: axles, lever handles, grilles",
+   "mount": "span",
+   "scale": [
+    0.2,
+    2
+   ],
+   "tier": 8,
+   "notes": "climbable: a player can stand 1.0 m above its foot (at scale 1; 1.0 m with Jump skill 100), so it's a stepping stone to a level up to about 2.6 m above its foot (4.1 m with Jump 100)",
+   "exists": true,
+   "size": [
+    20.0,
+    1.0,
+    1.0
+   ],
+   "min": [
+    -10.0,
+    -0.5,
+    -0.5
+   ],
+   "max": [
+    10.0,
+    0.5,
+    0.5
+   ],
+   "origin": "centre",
+   "hollow": false,
+   "sets": [
+    "engine"
+   ],
+   "kinds": [
+    "ZNetView"
+   ],
+   "colliders": {
+    "Default": 6
+   },
+   "solid": true,
+   "solid_note": "",
+   "lights": [],
+   "fire": false,
+   "particles": 0,
+   "item": false,
+   "networked": true,
+   "gives": [],
+   "physics": false,
+   "height": 1.0,
+   "upright": "flat",
+   "saved_only": false,
+   "safe": true,
+   "climb": {
+    "ledges": [
+     [
+      0.6,
+      1.0
+     ]
+    ],
+    "top": 1.0,
+    "top_skilled": 1.0
+   },
+   "render": "palettes/Morkhalla_MetalBar.png"
+  },
+  {
+   "prefab": "Piece_flametal_beam",
+   "role": "beam",
+   "look": "dark metal beam 2 x 0.56: girders, rails, gear spokes",
+   "mount": "span",
+   "scale": [
+    0.5,
+    4
+   ],
+   "tier": 7,
+   "notes": "climbable: a player can stand 0.6 m above its foot (at scale 1; 0.6 m with Jump skill 100), so it's a stepping stone to a level up to about 2.2 m above its foot (3.7 m with Jump 100)",
+   "exists": true,
+   "size": [
+    2.0,
+    0.56,
+    0.56
+   ],
+   "min": [
+    -1.0,
+    -0.28,
+    -0.28
+   ],
+   "max": [
+    1.0,
+    0.28,
+    0.28
+   ],
+   "origin": "centre",
+   "hollow": false,
+   "sets": [
+    "engine"
+   ],
+   "kinds": [
+    "Piece",
+    "WearNTear",
+    "ZNetView"
+   ],
+   "colliders": {
+    "piece": 2
+   },
+   "solid": true,
+   "solid_note": "",
+   "lights": [],
+   "fire": false,
+   "particles": 0,
+   "item": false,
+   "networked": true,
+   "gives": [],
+   "physics": false,
+   "height": 0.56,
+   "upright": "flat",
+   "saved_only": false,
+   "safe": true,
+   "climb": {
+    "ledges": [
+     [
+      0.2,
+      0.6
+     ]
+    ],
+    "top": 0.6,
+    "top_skilled": 0.6
+   },
+   "render": "palettes/Piece_flametal_beam.png"
+  },
+  {
+   "prefab": "iron_grate",
+   "role": "gate",
+   "look": "iron grate 2 x 3: portcullis",
+   "mount": "structure",
+   "scale": [
+    0.5,
+    3
+   ],
+   "tier": 3,
+   "notes": "thin (0.11 m): a single face may not show from behind (one-sided): check its render from both sides",
+   "exists": true,
+   "size": [
+    2.01,
+    3.0,
+    0.11
+   ],
+   "min": [
+    -1.01,
+    -1.0,
+    -0.06
+   ],
+   "max": [
+    1.0,
+    2.0,
+    0.06
+   ],
+   "origin": "inside",
+   "hollow": false,
+   "kinds": [
+    "Door",
+    "Piece",
+    "WearNTear",
+    "ZNetView"
+   ],
+   "colliders": {
+    "piece": 5
+   },
+   "solid": true,
+   "solid_note": "",
+   "lights": [],
+   "fire": false,
+   "particles": 0,
+   "item": false,
+   "networked": true,
+   "gives": [],
+   "physics": false,
+   "height": 3.0,
+   "upright": "upright",
+   "saved_only": false,
+   "safe": true,
+   "climb": {
+    "ledges": [
+     [
+      0.0,
+      0.2
+     ],
+     [
+      2.8,
+      3.0
+     ]
+    ],
+    "top": 0.0,
+    "top_skilled": 3.0
+   },
+   "render": "palettes/iron_grate.png"
+  },
+  {
+   "prefab": "Ashlands_Fortress_Gate_Door",
+   "role": "door",
+   "look": "studded iron gate leaf 4 x 5.6: sealed doors, the vault gate",
+   "mount": "structure",
+   "scale": [
+    0.5,
+    2
+   ],
+   "tier": 7,
+   "notes": "as scenery it doesn't open: a gate mechanism moves it (Runtime)",
+   "exists": true,
+   "size": [
+    4.04,
+    5.63,
+    1.67
+   ],
+   "min": [
+    -2.02,
+    -0.03,
+    -1.29
+   ],
+   "max": [
+    2.02,
+    5.6,
+    0.38
+   ],
+   "origin": "foot",
+   "hollow": false,
+   "kinds": [
+    "WearNTear",
+    "ZNetView"
+   ],
+   "colliders": {
+    "piece": 2
+   },
+   "solid": true,
+   "solid_note": "",
+   "lights": [],
+   "fire": false,
+   "particles": 0,
+   "item": false,
+   "networked": true,
+   "gives": [],
+   "physics": false,
+   "height": 5.63,
+   "upright": "upright",
+   "saved_only": false,
+   "safe": true,
+   "climb": {
+    "ledges": [
+     [
+      0.0,
+      0.4
+     ],
+     [
+      2.4,
+      2.6
+     ],
+     [
+      2.8,
+      3.0
+     ],
+     [
+      4.0,
+      4.6
+     ],
+     [
+      4.8,
+      5.6
+     ]
+    ],
+    "top": 0.4,
+    "top_skilled": 5.6
+   },
+   "render": "palettes/Ashlands_Fortress_Gate_Door.png"
+  },
+  {
+   "prefab": "Morkhalla_WallChain1",
+   "role": "chain",
+   "look": "an iron chain hanging 4.4 m from a wall anchor",
+   "mount": "wall",
+   "scale": [
+    0.5,
+    3
+   ],
+   "tier": 8,
+   "notes": "",
+   "exists": true,
+   "size": [
+    1.0,
+    4.44,
+    1.56
+   ],
+   "min": [
+    -0.5,
+    -3.54,
+    -1.0
+   ],
+   "max": [
+    0.5,
+    0.9,
+    0.56
+   ],
+   "origin": "inside",
+   "hollow": false,
+   "sets": [
+    "engine",
+    "ossuary"
+   ],
+   "kinds": [
+    "ZNetView"
+   ],
+   "colliders": {
+    "Default": 2
+   },
+   "solid": true,
+   "solid_note": "",
+   "lights": [],
+   "fire": false,
+   "particles": 0,
+   "item": false,
+   "networked": true,
+   "gives": [],
+   "physics": false,
+   "height": 4.44,
+   "upright": "upright",
+   "saved_only": false,
+   "safe": true,
+   "climb": {
+    "ledges": [
+     [
+      3.8,
+      4.0
+     ],
+     [
+      4.4,
+      4.6
+     ]
+    ],
+    "top": 0.0,
+    "top_skilled": 0.0
+   },
+   "render": "palettes/Morkhalla_WallChain1.png"
+  },
+  {
+   "prefab": "Morkhalla_Chain",
+   "role": "chain",
+   "look": "a 20 m chain span between two anchors",
+   "mount": "span",
+   "scale": [
+    0.25,
+    2
+   ],
+   "tier": 8,
+   "notes": "",
+   "exists": true,
+   "size": [
+    20.0,
+    7.4,
+    1.0
+   ],
+   "min": [
+    -10.0,
+    -6.25,
+    -0.5
+   ],
+   "max": [
+    10.0,
+    1.15,
+    0.5
+   ],
+   "origin": "inside",
+   "hollow": false,
+   "sets": [
+    "engine"
+   ],
+   "kinds": [
+    "ZNetView"
+   ],
+   "colliders": {
+    "Default": 11
+   },
+   "solid": true,
+   "solid_note": "",
+   "lights": [],
+   "fire": false,
+   "particles": 0,
+   "item": false,
+   "networked": true,
+   "gives": [],
+   "physics": false,
+   "height": 7.4,
+   "upright": "upright",
+   "saved_only": false,
+   "safe": true,
+   "climb": {
+    "ledges": [
+     [
+      3.8,
+      4.0
+     ],
+     [
+      6.4,
+      7.0
+     ],
+     [
+      7.2,
+      7.4
+     ]
+    ],
+    "top": 0.0,
+    "top_skilled": 0.0
+   },
+   "render": "palettes/Morkhalla_Chain.png"
+  },
+  {
+   "prefab": "Morkhalla_giant_railing",
+   "role": "rail",
+   "look": "giant stone balustrade 4 m long",
+   "mount": "ground",
+   "scale": [
+    0.5,
+    2
+   ],
+   "tier": 8,
+   "notes": "",
+   "exists": true,
+   "size": [
+    1.0,
+    2.5,
+    4.1
+   ],
+   "min": [
+    -0.5,
+    -0.5,
+    -2.1
+   ],
+   "max": [
+    0.5,
+    2.0,
+    2.0
+   ],
+   "origin": "inside",
+   "hollow": false,
+   "kinds": [
+    "ZNetView"
+   ],
+   "colliders": {
+    "Default": 3
+   },
+   "solid": true,
+   "solid_note": "",
+   "lights": [],
+   "fire": false,
+   "particles": 0,
+   "item": false,
+   "networked": true,
+   "gives": [],
+   "physics": false,
+   "height": 2.5,
+   "upright": "upright",
+   "saved_only": false,
+   "safe": true,
+   "climb": {
+    "ledges": [
+     [
+      2.4,
+      2.6
+     ]
+    ],
+    "top": 0.0,
+    "top_skilled": 2.6
+   },
+   "render": "palettes/Morkhalla_giant_railing.png"
+  },
+  {
+   "prefab": "Morkhalla_giant_railing_corner",
+   "role": "rail",
+   "look": "the balustrade's corner",
+   "mount": "ground",
+   "scale": [
+    0.5,
+    2
+   ],
+   "tier": 8,
+   "notes": "",
+   "exists": true,
+   "size": [
+    1.6,
+    2.5,
+    1.51
+   ],
+   "min": [
+    -0.5,
+    -0.5,
+    -0.51
+   ],
+   "max": [
+    1.1,
+    2.0,
+    1.0
+   ],
+   "origin": "inside",
+   "hollow": false,
+   "kinds": [
+    "ZNetView"
+   ],
+   "colliders": {
+    "Default": 3
+   },
+   "solid": true,
+   "solid_note": "",
+   "lights": [],
+   "fire": false,
+   "particles": 0,
+   "item": false,
+   "networked": true,
+   "gives": [],
+   "physics": false,
+   "height": 2.5,
+   "upright": "block",
+   "saved_only": false,
+   "safe": true,
+   "climb": {
+    "ledges": [
+     [
+      2.4,
+      2.6
+     ]
+    ],
+    "top": 0.0,
+    "top_skilled": 2.6
+   },
+   "render": "palettes/Morkhalla_giant_railing_corner.png"
+  },
+  {
+   "prefab": "Morkhalla_giant_railing_torch",
+   "role": "light",
+   "look": "stone post with a blue flame (range 10)",
+   "mount": "ground",
+   "scale": [
+    0.5,
+    3
+   ],
+   "tier": 8,
+   "notes": "its light range, fade distance and fire grow with its scale (BuildScale.cs); climbable: a player can stand 1.4 m above its foot (at scale 1; 1.4 m with Jump skill 100), so it's a stepping stone to a level up to about 3.0 m above its foot (4.5 m with Jump 100)",
+   "exists": true,
+   "size": [
+    1.0,
+    1.5,
+    1.0
+   ],
+   "min": [
+    -0.5,
+    -0.5,
+    -0.5
+   ],
+   "max": [
+    0.5,
+    1.0,
+    0.5
+   ],
+   "origin": "inside",
+   "hollow": false,
+   "kinds": [
+    "EffectArea",
+    "LightLod",
+    "ZNetView"
+   ],
+   "colliders": {
+    "Default": 1
+   },
+   "solid": true,
+   "solid_note": "",
+   "lights": [
+    {
+     "range": 10.0,
+     "intensity": 1.5,
+     "colour": "#7bc4ff",
+     "lit": true,
+     "lod": true
+    }
+   ],
+   "fire": false,
+   "particles": 2,
+   "item": false,
+   "networked": true,
+   "gives": [],
+   "physics": false,
+   "height": 1.5,
+   "upright": "block",
+   "saved_only": false,
+   "safe": true,
+   "climb": {
+    "ledges": [
+     [
+      0.8,
+      1.4
+     ]
+    ],
+    "top": 1.4,
+    "top_skilled": 1.4
+   },
+   "render": "palettes/Morkhalla_giant_railing_torch.png"
+  },
+  {
+   "prefab": "MountainKit_brazier_blue",
+   "role": "light",
+   "look": "blue brazier on legs (range 5)",
+   "mount": "ground",
+   "scale": [
+    0.5,
+    3
+   ],
+   "tier": 4,
+   "notes": "its light range, fade distance and fire grow with its scale (BuildScale.cs); as scenery its Destructible, DropOnDestroyed is stripped: it gives nothing; climbable: a player can stand 0.8 m above its foot (at scale 1; 0.8 m with Jump skill 100), so it's a stepping stone to a level up to about 2.4 m above its foot (3.9 m with Jump 100)",
+   "exists": true,
+   "size": [
+    1.0,
+    0.99,
+    0.99
+   ],
+   "min": [
+    -0.49,
+    -1.06,
+    -0.49
+   ],
+   "max": [
+    0.51,
+    -0.07,
+    0.51
+   ],
+   "origin": "top",
+   "hollow": false,
+   "kinds": [
+    "Destructible",
+    "DropOnDestroyed",
+    "EffectArea",
+    "LightLod",
+    "ZNetView"
+   ],
+   "colliders": {
+    "piece": 1,
+    "pathblocker": 2
+   },
+   "solid": true,
+   "solid_note": "",
+   "lights": [
+    {
+     "range": 5.0,
+     "intensity": 2.0,
+     "colour": "#bffeff",
+     "lit": true,
+     "lod": true
+    }
+   ],
+   "fire": false,
+   "particles": 3,
+   "item": false,
+   "networked": true,
+   "gives": [
+    "Destructible",
+    "DropOnDestroyed"
+   ],
+   "physics": false,
+   "height": 0.99,
+   "upright": "block",
+   "saved_only": false,
+   "safe": true,
+   "climb": {
+    "ledges": [
+     [
+      0.6,
+      0.8
+     ]
+    ],
+    "top": 0.8,
+    "top_skilled": 0.8
+   },
+   "render": "palettes/MountainKit_brazier_blue.png"
+  },
+  {
+   "prefab": "dverger_demister",
+   "role": "light",
+   "look": "a blue wisp light (range 10), its mesh below its origin: hang it",
+   "mount": "hang",
+   "scale": [
+    0.5,
+    2
+   ],
+   "tier": 6,
+   "notes": "its light range, fade distance and fire grow with its scale (BuildScale.cs); climbable: a player can stand 0.8 m above its foot (at scale 1; 0.8 m with Jump skill 100), so it's a stepping stone to a level up to about 2.4 m above its foot (3.9 m with Jump 100); TROUBLE: floated in 35 places in Shifting Halls: its origin is at its top (the mesh hangs below it), so stood at a point it's in the air. Hang it on a chain from the first part above it (giant_kit.wisp).",
+   "exists": true,
+   "size": [
+    0.93,
+    0.74,
+    0.95
+   ],
+   "min": [
+    -0.48,
+    -0.65,
+    -0.48
+   ],
+   "max": [
+    0.45,
+    0.09,
+    0.47
+   ],
+   "origin": "top",
+   "hollow": false,
+   "kinds": [
+    "LightLod",
+    "WearNTear",
+    "ZNetView"
+   ],
+   "colliders": {
+    "piece": 1
+   },
+   "solid": true,
+   "solid_note": "",
+   "lights": [
+    {
+     "range": 10.0,
+     "intensity": 1.0,
+     "colour": "#7bc8ff",
+     "lit": true,
+     "lod": true
+    }
+   ],
+   "fire": false,
+   "particles": 3,
+   "item": false,
+   "networked": true,
+   "gives": [],
+   "physics": false,
+   "height": 0.74,
+   "upright": "block",
+   "saved_only": false,
+   "safe": true,
+   "climb": {
+    "ledges": [
+     [
+      0.6,
+      0.8
+     ]
+    ],
+    "top": 0.8,
+    "top_skilled": 0.8
+   },
+   "render": "palettes/dverger_demister.png"
+  },
+  {
+   "prefab": "blackmarble_altar_crystal",
+   "role": "light",
+   "look": "a cyan crystal on a stand (range 3): accents",
+   "mount": "ground",
+   "scale": [
+    0.5,
+    2
+   ],
+   "tier": 6,
+   "notes": "its light range, fade distance and fire grow with its scale (BuildScale.cs); as scenery its Destructible is stripped: it gives nothing; climbable: a player can stand 1.8 m above its foot (at scale 1; 1.8 m with Jump skill 100), so it's a stepping stone to a level up to about 3.4 m above its foot (4.9 m with Jump 100)",
+   "exists": true,
+   "size": [
+    1.23,
+    1.67,
+    1.23
+   ],
+   "min": [
+    -0.62,
+    -0.9,
+    -0.62
+   ],
+   "max": [
+    0.62,
+    0.76,
+    0.62
+   ],
+   "origin": "centre",
+   "hollow": false,
+   "kinds": [
+    "Destructible",
+    "LightLod",
+    "ZNetView"
+   ],
+   "colliders": {
+    "Default": 2
+   },
+   "solid": true,
+   "solid_note": "",
+   "lights": [
+    {
+     "range": 3.0,
+     "intensity": 3.0,
+     "colour": "#31eafa",
+     "lit": true,
+     "lod": true
+    }
+   ],
+   "fire": false,
+   "particles": 0,
+   "item": false,
+   "networked": true,
+   "gives": [
+    "Destructible"
+   ],
+   "physics": false,
+   "height": 1.67,
+   "upright": "block",
+   "saved_only": false,
+   "safe": true,
+   "climb": {
+    "ledges": [
+     [
+      0.0,
+      0.0
+     ],
+     [
+      0.6,
+      1.0
+     ],
+     [
+      1.6,
+      1.8
+     ]
+    ],
+    "top": 1.8,
+    "top_skilled": 1.8
+   },
+   "render": "palettes/blackmarble_altar_crystal.png"
+  },
+  {
+   "prefab": "Morkhalla_firepit",
+   "role": "light",
+   "look": "a stone fire pit",
+   "mount": "ground",
+   "scale": [
+    0.5,
+    2
+   ],
+   "tier": 8,
+   "notes": "its light range, fade distance and fire grow with its scale (BuildScale.cs); as scenery its Destructible, DropOnDestroyed is stripped: it gives nothing; climbable: a player can stand 1.2 m above its foot (at scale 1; 1.2 m with Jump skill 100), so it's a stepping stone to a level up to about 2.8 m above its foot (4.3 m with Jump 100)",
+   "exists": true,
+   "size": [
+    3.0,
+    1.91,
+    3.0
+   ],
+   "min": [
+    -1.5,
+    -0.0,
+    -1.5
+   ],
+   "max": [
+    1.5,
+    1.91,
+    1.5
+   ],
+   "origin": "foot",
+   "hollow": false,
+   "sets": [
+    "forge"
+   ],
+   "kinds": [
+    "Destructible",
+    "DropOnDestroyed",
+    "EffectArea",
+    "Fireplace",
+    "LightLod",
+    "Piece",
+    "ZNetView"
+   ],
+   "colliders": {
+    "piece": 2,
+    "Default": 1,
+    "pathblocker": 1
+   },
+   "solid": true,
+   "solid_note": "",
+   "lights": [
+    {
+     "range": 10.0,
+     "intensity": 2.0,
+     "colour": "#c13129",
+     "lit": true,
+     "lod": true
+    },
+    {
+     "range": 2.5,
+     "intensity": 1.5,
+     "colour": "#d58669",
+     "lit": false,
+     "lod": true
+    }
+   ],
+   "fire": true,
+   "particles": 3,
+   "item": false,
+   "networked": true,
+   "gives": [
+    "Destructible",
+    "DropOnDestroyed"
+   ],
+   "physics": false,
+   "height": 1.91,
+   "upright": "block",
+   "saved_only": false,
+   "safe": true,
+   "climb": {
+    "ledges": [
+     [
+      0.2,
+      0.4
+     ],
+     [
+      0.6,
+      1.2
+     ]
+    ],
+    "top": 1.2,
+    "top_skilled": 1.2
+   },
+   "render": "palettes/Morkhalla_firepit.png"
+  },
+  {
+   "prefab": "piece_walltorch",
+   "role": "light",
+   "look": "a wall sconce torch, warm orange (the giants' only wall light: an accent against the blue)",
+   "mount": "wall",
+   "scale": [
+    0.5,
+    3
+   ],
+   "tier": 1,
+   "notes": "its light range, fade distance and fire grow with its scale (BuildScale.cs); climbable: a player can stand 1.0 m above its foot (at scale 1; 1.0 m with Jump skill 100), so it's a stepping stone to a level up to about 2.6 m above its foot (4.1 m with Jump 100)",
+   "exists": true,
+   "size": [
+    0.45,
+    0.95,
+    0.31
+   ],
+   "min": [
+    -0.2,
+    -0.33,
+    -0.15
+   ],
+   "max": [
+    0.24,
+    0.62,
+    0.15
+   ],
+   "origin": "inside",
+   "hollow": false,
+   "kinds": [
+    "EffectArea",
+    "Fireplace",
+    "LightLod",
+    "Piece",
+    "WearNTear",
+    "ZNetView"
+   ],
+   "colliders": {
+    "piece": 1
+   },
+   "solid": true,
+   "solid_note": "",
+   "lights": [
+    {
+     "range": 12.0,
+     "intensity": 1.5,
+     "colour": "#ff9e7a",
+     "lit": true,
+     "lod": true
+    }
+   ],
+   "fire": true,
+   "particles": 2,
+   "item": false,
+   "networked": true,
+   "gives": [],
+   "physics": false,
+   "height": 0.95,
+   "upright": "upright",
+   "saved_only": false,
+   "safe": true,
+   "climb": {
+    "ledges": [
+     [
+      0.8,
+      1.0
+     ]
+    ],
+    "top": 1.0,
+    "top_skilled": 1.0
+   },
+   "render": "palettes/piece_walltorch.png"
+  },
+  {
+   "prefab": "giant_skull",
+   "role": "remains",
+   "look": "a giant's skull",
+   "mount": "ground",
+   "scale": [
+    0.3,
+    2
+   ],
+   "tier": 6,
+   "notes": "as scenery its Destructible is stripped: it gives nothing; climbable: a player can stand 11.4 m above its foot (at scale 1; 11.4 m with Jump skill 100), so it's a stepping stone to a level up to about 13.0 m above its foot (14.5 m with Jump 100)",
+   "exists": true,
+   "size": [
+    10.14,
+    11.57,
+    16.95
+   ],
+   "min": [
+    -5.05,
+    -1.18,
+    -7.84
+   ],
+   "max": [
+    5.08,
+    10.39,
+    9.12
+   ],
+   "origin": "inside",
+   "hollow": false,
+   "sets": [
+    "ossuary"
+   ],
+   "kinds": [
+    "Destructible",
+    "ZNetView"
+   ],
+   "colliders": {
+    "static_solid": 1
+   },
+   "solid": true,
+   "solid_note": "",
+   "lights": [],
+   "fire": false,
+   "particles": 0,
+   "item": false,
+   "networked": true,
+   "gives": [
+    "Destructible"
+   ],
+   "physics": false,
+   "height": 11.57,
+   "upright": "block",
+   "saved_only": false,
+   "safe": true,
+   "climb": {
+    "ledges": [
+     [
+      0.0,
+      4.2
+     ],
+     [
+      4.4,
+      5.4
+     ],
+     [
+      5.6,
+      6.2
+     ],
+     [
+      6.4,
+      7.8
+     ],
+     [
+      8.2,
+      8.4
+     ],
+     [
+      8.6,
+      10.6
+     ],
+     [
+      10.8,
+      11.4
+     ]
+    ],
+    "top": 11.4,
+    "top_skilled": 11.4
+   },
+   "render": "palettes/giant_skull.png"
+  },
+  {
+   "prefab": "giant_ribs",
+   "role": "remains",
+   "look": "a giant's ribcage you can walk inside (hollow: prefab_shapes.json)",
+   "mount": "ground",
+   "scale": [
+    0.3,
+    1.5
+   ],
+   "tier": 6,
+   "notes": "as scenery its Destructible is stripped: it gives nothing; climbable: a player can stand 5.0 m above its foot (at scale 1; 11.8 m with Jump skill 100), so it's a stepping stone to a level up to about 6.6 m above its foot (14.9 m with Jump 100); TROUBLE: huge (0.75 scale is still about 14 m long), and hollow: its collider is boxes in prefab_shapes.json. Scale giant remains by their box.",
+   "exists": true,
+   "size": [
+    16.91,
+    11.7,
+    19.29
+   ],
+   "min": [
+    -8.45,
+    -2.81,
+    -9.81
+   ],
+   "max": [
+    8.45,
+    8.9,
+    9.47
+   ],
+   "origin": "inside",
+   "hollow": true,
+   "sets": [
+    "ossuary"
+   ],
+   "kinds": [
+    "Destructible",
+    "ZNetView"
+   ],
+   "colliders": {
+    "static_solid": 1
+   },
+   "solid": true,
+   "solid_note": "",
+   "lights": [],
+   "fire": false,
+   "particles": 0,
+   "item": false,
+   "networked": true,
+   "gives": [
+    "Destructible"
+   ],
+   "physics": false,
+   "height": 11.7,
+   "upright": "block",
+   "saved_only": false,
+   "safe": true,
+   "climb": {
+    "ledges": [
+     [
+      0.6,
+      2.8
+     ],
+     [
+      3.0,
+      3.4
+     ],
+     [
+      3.6,
+      3.8
+     ],
+     [
+      4.0,
+      4.6
+     ],
+     [
+      4.8,
+      5.0
+     ],
+     [
+      7.0,
+      11.8
+     ]
+    ],
+    "top": 5.0,
+    "top_skilled": 11.8
+   },
+   "render": "palettes/giant_ribs.png"
+  },
+  {
+   "prefab": "giant_sword1",
+   "role": "remains",
+   "look": "a giant's sword",
+   "mount": "ground",
+   "scale": [
+    0.3,
+    2
+   ],
+   "tier": 6,
+   "notes": "may also hang on a wall (prop_check MOUNTED); as scenery its Destructible is stripped: it gives nothing; climbable: a player can stand 0.4 m above its foot (at scale 1; 0.4 m with Jump skill 100), so it's a stepping stone to a level up to about 2.0 m above its foot (3.5 m with Jump 100)",
+   "exists": true,
+   "size": [
+    6.92,
+    19.0,
+    0.7
+   ],
+   "min": [
+    -3.46,
+    -3.94,
+    -0.35
+   ],
+   "max": [
+    3.46,
+    15.06,
+    0.35
+   ],
+   "origin": "inside",
+   "hollow": false,
+   "sets": [
+    "armoury",
+    "ossuary"
+   ],
+   "kinds": [
+    "Destructible",
+    "ZNetView"
+   ],
+   "colliders": {
+    "static_solid": 1
+   },
+   "solid": true,
+   "solid_note": "",
+   "lights": [],
+   "fire": false,
+   "particles": 0,
+   "item": false,
+   "networked": true,
+   "gives": [
+    "Destructible"
+   ],
+   "physics": false,
+   "height": 19.0,
+   "upright": "upright",
+   "saved_only": false,
+   "safe": true,
+   "climb": {
+    "ledges": [
+     [
+      0.0,
+      0.4
+     ],
+     [
+      9.4,
+      9.8
+     ],
+     [
+      11.0,
+      11.2
+     ],
+     [
+      11.4,
+      11.6
+     ],
+     [
+      16.2,
+      16.4
+     ],
+     [
+      16.6,
+      16.8
+     ],
+     [
+      18.2,
+      18.4
+     ],
+     [
+      18.6,
+      19.0
+     ]
+    ],
+    "top": 0.4,
+    "top_skilled": 0.4
+   },
+   "render": "palettes/giant_sword1.png"
+  },
+  {
+   "prefab": "giant_helmet1",
+   "role": "remains",
+   "look": "a giant's helmet",
+   "mount": "ground",
+   "scale": [
+    0.3,
+    2
+   ],
+   "tier": 6,
+   "notes": "may also hang on a wall (prop_check MOUNTED); as scenery its Destructible is stripped: it gives nothing; climbable: a player can stand 10.0 m above its foot (at scale 1; 10.0 m with Jump skill 100), so it's a stepping stone to a level up to about 11.6 m above its foot (13.1 m with Jump 100)",
+   "exists": true,
+   "size": [
+    10.31,
+    9.94,
+    13.12
+   ],
+   "min": [
+    -5.72,
+    -2.9,
+    -6.08
+   ],
+   "max": [
+    4.59,
+    7.05,
+    7.04
+   ],
+   "origin": "inside",
+   "hollow": false,
+   "sets": [
+    "armoury",
+    "ossuary"
+   ],
+   "kinds": [
+    "Destructible",
+    "ZNetView"
+   ],
+   "colliders": {
+    "static_solid": 1
+   },
+   "solid": true,
+   "solid_note": "",
+   "lights": [],
+   "fire": false,
+   "particles": 0,
+   "item": false,
+   "networked": true,
+   "gives": [
+    "Destructible"
+   ],
+   "physics": false,
+   "height": 9.94,
+   "upright": "block",
+   "saved_only": false,
+   "safe": true,
+   "climb": {
+    "ledges": [
+     [
+      0.2,
+      0.6
+     ],
+     [
+      0.8,
+      2.0
+     ],
+     [
+      2.6,
+      5.4
+     ],
+     [
+      5.6,
+      7.6
+     ],
+     [
+      8.0,
+      10.0
+     ]
+    ],
+    "top": 10.0,
+    "top_skilled": 10.0
+   },
+   "render": "palettes/giant_helmet1.png"
+  },
+  {
+   "prefab": "giant_arm",
+   "role": "remains",
+   "look": "a giant's arm bone",
+   "mount": "ground",
+   "scale": [
+    0.3,
+    2
+   ],
+   "tier": 6,
+   "notes": "as scenery its Destructible is stripped: it gives nothing; climbable: a player can stand 1.4 m above its foot (at scale 1; 1.4 m with Jump skill 100), so it's a stepping stone to a level up to about 3.0 m above its foot (4.5 m with Jump 100)",
+   "exists": true,
+   "size": [
+    2.75,
+    2.61,
+    11.49
+   ],
+   "min": [
+    -1.12,
+    -0.55,
+    -6.68
+   ],
+   "max": [
+    1.63,
+    2.06,
+    4.81
+   ],
+   "origin": "inside",
+   "hollow": false,
+   "sets": [
+    "ossuary"
+   ],
+   "kinds": [
+    "Destructible",
+    "ZNetView"
+   ],
+   "colliders": {
+    "static_solid": 1
+   },
+   "solid": true,
+   "solid_note": "",
+   "lights": [],
+   "fire": false,
+   "particles": 0,
+   "item": false,
+   "networked": true,
+   "gives": [
+    "Destructible"
+   ],
+   "physics": false,
+   "height": 2.61,
+   "upright": "flat",
+   "saved_only": false,
+   "safe": true,
+   "climb": {
+    "ledges": [
+     [
+      0.2,
+      1.4
+     ]
+    ],
+    "top": 1.4,
+    "top_skilled": 1.4
+   },
+   "render": "palettes/giant_arm.png"
+  },
+  {
+   "prefab": "ancient_skull",
+   "role": "remains",
+   "look": "a large ancient skull",
+   "mount": "ground",
+   "scale": [
+    0.3,
+    2
+   ],
+   "tier": 6,
+   "notes": "as scenery its Destructible is stripped: it gives nothing; climbable: a player can stand 8.0 m above its foot (at scale 1; 8.0 m with Jump skill 100), so it's a stepping stone to a level up to about 9.6 m above its foot (11.1 m with Jump 100)",
+   "exists": true,
+   "size": [
+    5.62,
+    8.13,
+    10.08
+   ],
+   "min": [
+    -2.81,
+    -3.41,
+    -5.92
+   ],
+   "max": [
+    2.81,
+    4.72,
+    4.16
+   ],
+   "origin": "centre",
+   "hollow": false,
+   "sets": [
+    "ossuary"
+   ],
+   "kinds": [
+    "Destructible",
+    "ZNetView"
+   ],
+   "colliders": {
+    "Default": 2
+   },
+   "solid": true,
+   "solid_note": "",
+   "lights": [],
+   "fire": false,
+   "particles": 0,
+   "item": false,
+   "networked": true,
+   "gives": [
+    "Destructible"
+   ],
+   "physics": false,
+   "height": 8.13,
+   "upright": "block",
+   "saved_only": false,
+   "safe": true,
+   "climb": {
+    "ledges": [
+     [
+      0.2,
+      0.8
+     ],
+     [
+      2.4,
+      3.0
+     ],
+     [
+      3.2,
+      4.0
+     ],
+     [
+      4.6,
+      5.2
+     ],
+     [
+      5.4,
+      5.8
+     ],
+     [
+      6.0,
+      8.0
+     ]
+    ],
+    "top": 8.0,
+    "top_skilled": 8.0
+   },
+   "render": "palettes/ancient_skull.png"
+  },
+  {
+   "prefab": "Morkhalla_StatuePieceFace_big",
+   "role": "decor",
+   "look": "a Jotunn statue's face",
+   "mount": "wall",
+   "scale": [
+    0.3,
+    2
+   ],
+   "tier": 8,
+   "notes": "climbable: a player can stand 4.4 m above its foot (at scale 1; 4.4 m with Jump skill 100), so it's a stepping stone to a level up to about 6.0 m above its foot (7.5 m with Jump 100)",
+   "exists": true,
+   "size": [
+    3.5,
+    4.3,
+    4.12
+   ],
+   "min": [
+    -1.79,
+    21.08,
+    -1.25
+   ],
+   "max": [
+    1.71,
+    25.38,
+    2.87
+   ],
+   "origin": "off the box",
+   "hollow": false,
+   "sets": [
+    "archive",
+    "ruin"
+   ],
+   "kinds": [
+    "ZNetView"
+   ],
+   "colliders": {
+    "Default": 1
+   },
+   "solid": true,
+   "solid_note": "",
+   "lights": [],
+   "fire": false,
+   "particles": 0,
+   "item": false,
+   "networked": true,
+   "gives": [],
+   "physics": false,
+   "height": 4.3,
+   "upright": "block",
+   "saved_only": false,
+   "safe": true,
+   "climb": {
+    "ledges": [
+     [
+      0.0,
+      0.2
+     ],
+     [
+      0.8,
+      1.2
+     ],
+     [
+      1.6,
+      3.4
+     ],
+     [
+      3.6,
+      4.4
+     ]
+    ],
+    "top": 4.4,
+    "top_skilled": 4.4
+   },
+   "render": "palettes/Morkhalla_StatuePieceFace_big.png"
+  },
+  {
+   "prefab": "Morkhalla_StatueSword_hanging",
+   "role": "decor",
+   "look": "a statue's sword, hanging",
+   "mount": "hang",
+   "scale": [
+    0.3,
+    2
+   ],
+   "tier": 8,
+   "notes": "",
+   "exists": true,
+   "size": [
+    1.53,
+    8.2,
+    0.77
+   ],
+   "min": [
+    -0.76,
+    -5.53,
+    -0.84
+   ],
+   "max": [
+    0.77,
+    2.67,
+    -0.07
+   ],
+   "origin": "inside",
+   "hollow": false,
+   "sets": [
+    "armoury",
+    "archive"
+   ],
+   "kinds": [
+    "ZNetView"
+   ],
+   "colliders": {
+    "Default": 1
+   },
+   "solid": true,
+   "solid_note": "",
+   "lights": [],
+   "fire": false,
+   "particles": 0,
+   "item": false,
+   "networked": true,
+   "gives": [],
+   "physics": false,
+   "height": 8.2,
+   "upright": "upright",
+   "saved_only": false,
+   "safe": true,
+   "climb": {
+    "ledges": [
+     [
+      6.6,
+      7.0
+     ]
+    ],
+    "top": 0.0,
+    "top_skilled": 0.0
+   },
+   "render": "palettes/Morkhalla_StatueSword_hanging.png"
+  },
+  {
+   "prefab": "Morkhalla_Rubble1",
+   "role": "decor",
+   "look": "stone rubble",
+   "mount": "ground",
+   "scale": [
+    0.5,
+    2
+   ],
+   "tier": 8,
+   "notes": "as scenery its Destructible, DropOnDestroyed is stripped: it gives nothing; climbable: a player can stand 1.8 m above its foot (at scale 1; 1.8 m with Jump skill 100), so it's a stepping stone to a level up to about 3.4 m above its foot (4.9 m with Jump 100)",
+   "exists": true,
+   "size": [
+    4.17,
+    1.77,
+    3.86
+   ],
+   "min": [
+    -2.04,
+    -0.32,
+    -2.0
+   ],
+   "max": [
+    2.13,
+    1.45,
+    1.86
+   ],
+   "origin": "inside",
+   "hollow": false,
+   "sets": [
+    "ruin"
+   ],
+   "kinds": [
+    "Destructible",
+    "DropOnDestroyed",
+    "ZNetView"
+   ],
+   "colliders": {
+    "Default": 1
+   },
+   "solid": true,
+   "solid_note": "",
+   "lights": [],
+   "fire": false,
+   "particles": 0,
+   "item": false,
+   "networked": true,
+   "gives": [
+    "Destructible",
+    "DropOnDestroyed"
+   ],
+   "physics": false,
+   "height": 1.77,
+   "upright": "flat",
+   "saved_only": false,
+   "safe": true,
+   "climb": {
+    "ledges": [
+     [
+      0.0,
+      1.8
+     ]
+    ],
+    "top": 1.8,
+    "top_skilled": 1.8
+   },
+   "render": "palettes/Morkhalla_Rubble1.png"
+  },
+  {
+   "prefab": "Morkhalla_Rubble2",
+   "role": "decor",
+   "look": "more stone rubble",
+   "mount": "ground",
+   "scale": [
+    0.5,
+    2
+   ],
+   "tier": 8,
+   "notes": "as scenery its Destructible, DropOnDestroyed is stripped: it gives nothing; climbable: a player can stand 1.2 m above its foot (at scale 1; 1.2 m with Jump skill 100), so it's a stepping stone to a level up to about 2.8 m above its foot (4.3 m with Jump 100)",
+   "exists": true,
+   "size": [
+    3.66,
+    1.25,
+    2.44
+   ],
+   "min": [
+    -1.72,
+    -0.17,
+    -1.23
+   ],
+   "max": [
+    1.94,
+    1.09,
+    1.22
+   ],
+   "origin": "inside",
+   "hollow": false,
+   "sets": [
+    "ruin"
+   ],
+   "kinds": [
+    "Destructible",
+    "DropOnDestroyed",
+    "ZNetView"
+   ],
+   "colliders": {
+    "Default": 1
+   },
+   "solid": true,
+   "solid_note": "",
+   "lights": [],
+   "fire": false,
+   "particles": 0,
+   "item": false,
+   "networked": true,
+   "gives": [
+    "Destructible",
+    "DropOnDestroyed"
+   ],
+   "physics": false,
+   "height": 1.25,
+   "upright": "flat",
+   "saved_only": false,
+   "safe": true,
+   "climb": {
+    "ledges": [
+     [
+      0.0,
+      1.2
+     ]
+    ],
+    "top": 1.2,
+    "top_skilled": 1.2
+   },
+   "render": "palettes/Morkhalla_Rubble2.png"
+  },
+  {
+   "prefab": "Morkhalla_Stonepile",
+   "role": "decor",
+   "look": "a pile of cut stones",
+   "mount": "ground",
+   "scale": [
+    0.5,
+    2
+   ],
+   "tier": 8,
+   "notes": "no collider: players walk through it",
+   "exists": true,
+   "size": [
+    2.58,
+    0.81,
+    2.8
+   ],
+   "min": [
+    -1.36,
+    -0.1,
+    -1.05
+   ],
+   "max": [
+    1.22,
+    0.71,
+    1.75
+   ],
+   "origin": "foot",
+   "hollow": false,
+   "sets": [
+    "ruin",
+    "archive"
+   ],
+   "kinds": [
+    "Piece",
+    "WearNTear",
+    "ZNetView"
+   ],
+   "colliders": {},
+   "solid": false,
+   "solid_note": "no collider: players walk through it",
+   "lights": [],
+   "fire": false,
+   "particles": 0,
+   "item": false,
+   "networked": true,
+   "gives": [],
+   "physics": false,
+   "height": 0.81,
+   "upright": "flat",
+   "saved_only": false,
+   "safe": true,
+   "climb": {
+    "ledges": [],
+    "top": 0.0,
+    "top_skilled": 0.0
+   },
+   "render": "palettes/Morkhalla_Stonepile.png"
+  },
+  {
+   "prefab": "Morkhalla_Bench",
+   "role": "prop",
+   "look": "a giant's stone bench",
+   "mount": "ground",
+   "scale": [
+    0.5,
+    2
+   ],
+   "tier": 8,
+   "notes": "as scenery its DropOnDestroyed is stripped: it gives nothing; climbable: a player can stand 1.2 m above its foot (at scale 1; 1.2 m with Jump skill 100), so it's a stepping stone to a level up to about 2.8 m above its foot (4.3 m with Jump 100)",
+   "exists": true,
+   "size": [
+    3.46,
+    1.03,
+    0.86
+   ],
+   "min": [
+    -1.72,
+    -0.02,
+    -0.42
+   ],
+   "max": [
+    1.74,
+    1.01,
+    0.44
+   ],
+   "origin": "foot",
+   "hollow": false,
+   "sets": [
+    "archive"
+   ],
+   "kinds": [
+    "DropOnDestroyed",
+    "WearNTear",
+    "ZNetView"
+   ],
+   "colliders": {
+    "Default": 6
+   },
+   "solid": true,
+   "solid_note": "",
+   "lights": [],
+   "fire": false,
+   "particles": 0,
+   "item": false,
+   "networked": true,
+   "gives": [
+    "DropOnDestroyed"
+   ],
+   "physics": false,
+   "height": 1.03,
+   "upright": "upright",
+   "saved_only": false,
+   "safe": true,
+   "climb": {
+    "ledges": [
+     [
+      0.0,
+      0.2
+     ],
+     [
+      0.4,
+      0.6
+     ],
+     [
+      0.8,
+      1.2
+     ]
+    ],
+    "top": 1.2,
+    "top_skilled": 1.2
+   },
+   "render": "palettes/Morkhalla_Bench.png"
+  },
+  {
+   "prefab": "Morkhalla_Table",
+   "role": "prop",
+   "look": "a giant's stone table",
+   "mount": "ground",
+   "scale": [
+    0.5,
+    2
+   ],
+   "tier": 8,
+   "notes": "as scenery its DropOnDestroyed is stripped: it gives nothing; climbable: a player can stand 1.6 m above its foot (at scale 1; 1.6 m with Jump skill 100), so it's a stepping stone to a level up to about 3.2 m above its foot (4.7 m with Jump 100)",
+   "exists": true,
+   "size": [
+    3.96,
+    1.58,
+    2.19
+   ],
+   "min": [
+    -1.99,
+    -0.0,
+    -1.1
+   ],
+   "max": [
+    1.98,
+    1.58,
+    1.09
+   ],
+   "origin": "foot",
+   "hollow": false,
+   "sets": [
+    "archive",
+    "forge"
+   ],
+   "kinds": [
+    "DropOnDestroyed",
+    "WearNTear",
+    "ZNetView"
+   ],
+   "colliders": {
+    "Default": 1
+   },
+   "solid": true,
+   "solid_note": "",
+   "lights": [],
+   "fire": false,
+   "particles": 0,
+   "item": false,
+   "networked": true,
+   "gives": [
+    "DropOnDestroyed"
+   ],
+   "physics": false,
+   "height": 1.58,
+   "upright": "flat",
+   "saved_only": false,
+   "safe": true,
+   "climb": {
+    "ledges": [
+     [
+      0.0,
+      0.2
+     ],
+     [
+      0.6,
+      0.8
+     ],
+     [
+      1.0,
+      1.2
+     ],
+     [
+      1.4,
+      1.6
+     ]
+    ],
+    "top": 1.6,
+    "top_skilled": 1.6
+   },
+   "render": "palettes/Morkhalla_Table.png"
+  },
+  {
+   "prefab": "Morkhalla_WeaponStand",
+   "role": "prop",
+   "look": "a giant's weapon stand",
+   "mount": "ground",
+   "scale": [
+    0.5,
+    2
+   ],
+   "tier": 8,
+   "notes": "as scenery its Destructible, DropOnDestroyed is stripped: it gives nothing",
+   "exists": true,
+   "size": [
+    2.91,
+    2.44,
+    1.35
+   ],
+   "min": [
+    -1.51,
+    0.0,
+    -0.73
+   ],
+   "max": [
+    1.41,
+    2.44,
+    0.62
+   ],
+   "origin": "foot",
+   "hollow": false,
+   "sets": [
+    "armoury"
+   ],
+   "kinds": [
+    "Destructible",
+    "DropOnDestroyed",
+    "ZNetView"
+   ],
+   "colliders": {
+    "Default": 1
+   },
+   "solid": true,
+   "solid_note": "",
+   "lights": [],
+   "fire": false,
+   "particles": 0,
+   "item": false,
+   "networked": true,
+   "gives": [
+    "Destructible",
+    "DropOnDestroyed"
+   ],
+   "physics": false,
+   "height": 2.44,
+   "upright": "block",
+   "saved_only": false,
+   "safe": true,
+   "climb": {
+    "ledges": [
+     [
+      2.0,
+      2.2
+     ]
+    ],
+    "top": 0.0,
+    "top_skilled": 2.2
+   },
+   "render": "palettes/Morkhalla_WeaponStand.png"
+  },
+  {
+   "prefab": "Morkhalla_coal_pile_memorial",
+   "role": "decor",
+   "look": "a heap of coal",
+   "mount": "ground",
+   "scale": [
+    0.5,
+    2
+   ],
+   "tier": 8,
+   "notes": "its light range, fade distance and fire grow with its scale (BuildScale.cs); as scenery its DropOnDestroyed is stripped: it gives nothing; climbable: a player can stand 1.2 m above its foot (at scale 1; 1.2 m with Jump skill 100), so it's a stepping stone to a level up to about 2.8 m above its foot (4.3 m with Jump 100)",
+   "exists": true,
+   "size": [
+    1.89,
+    1.34,
+    1.93
+   ],
+   "min": [
+    -0.93,
+    -0.23,
+    -0.84
+   ],
+   "max": [
+    0.96,
+    1.11,
+    1.09
+   ],
+   "origin": "inside",
+   "hollow": false,
+   "sets": [
+    "forge"
+   ],
+   "kinds": [
+    "DropOnDestroyed",
+    "LightLod",
+    "WearNTear",
+    "ZNetView"
+   ],
+   "colliders": {
+    "piece": 2
+   },
+   "solid": true,
+   "solid_note": "",
+   "lights": [
+    {
+     "range": 2.5,
+     "intensity": 1.5,
+     "colour": "#963232",
+     "lit": true,
+     "lod": true
+    },
+    {
+     "range": 2.5,
+     "intensity": 1.5,
+     "colour": "#963232",
+     "lit": false,
+     "lod": true
+    }
+   ],
+   "fire": false,
+   "particles": 0,
+   "item": false,
+   "networked": true,
+   "gives": [
+    "DropOnDestroyed"
+   ],
+   "physics": false,
+   "height": 1.34,
+   "upright": "block",
+   "saved_only": false,
+   "safe": true,
+   "climb": {
+    "ledges": [
+     [
+      0.0,
+      0.4
+     ],
+     [
+      0.6,
+      1.2
+     ]
+    ],
+    "top": 1.2,
+    "top_skilled": 1.2
+   },
+   "render": "palettes/Morkhalla_coal_pile_memorial.png"
+  },
+  {
+   "prefab": "MemorialStone_Large",
+   "role": "decor",
+   "look": "a large carved memorial stone",
+   "mount": "ground",
+   "scale": [
+    0.3,
+    2
+   ],
+   "tier": 8,
+   "notes": "as scenery its Destructible, DropOnDestroyed is stripped: it gives nothing",
+   "exists": true,
+   "size": [
+    2.23,
+    4.95,
+    0.72
+   ],
+   "min": [
+    -1.07,
+    -0.33,
+    -0.36
+   ],
+   "max": [
+    1.17,
+    4.62,
+    0.36
+   ],
+   "origin": "inside",
+   "hollow": false,
+   "sets": [
+    "archive"
+   ],
+   "kinds": [
+    "Destructible",
+    "DropOnDestroyed",
+    "ZNetView"
+   ],
+   "colliders": {
+    "Default": 1
+   },
+   "solid": true,
+   "solid_note": "",
+   "lights": [],
+   "fire": false,
+   "particles": 0,
+   "item": false,
+   "networked": true,
+   "gives": [
+    "Destructible",
+    "DropOnDestroyed"
+   ],
+   "physics": false,
+   "height": 4.95,
+   "upright": "upright",
+   "saved_only": false,
+   "safe": true,
+   "climb": {
+    "ledges": [
+     [
+      0.0,
+      0.2
+     ],
+     [
+      3.4,
+      3.6
+     ],
+     [
+      3.8,
+      4.0
+     ],
+     [
+      4.8,
+      5.0
+     ]
+    ],
+    "top": 0.0,
+    "top_skilled": 0.0
+   },
+   "render": "palettes/MemorialStone_Large.png"
+  },
+  {
+   "prefab": "giant_helmet2",
+   "role": "remains",
+   "look": "a giant's helmet, second look",
+   "mount": "ground",
+   "scale": [
+    0.3,
+    2
+   ],
+   "tier": 6,
+   "notes": "may also hang on a wall (prop_check MOUNTED); as scenery its Destructible is stripped: it gives nothing; climbable: a player can stand 1.4 m above its foot (at scale 1; 9.8 m with Jump skill 100), so it's a stepping stone to a level up to about 3.0 m above its foot (12.9 m with Jump 100)",
+   "exists": true,
+   "size": [
+    10.57,
+    9.77,
+    5.76
+   ],
+   "min": [
+    -5.28,
+    -2.88,
+    -0.72
+   ],
+   "max": [
+    5.28,
+    6.89,
+    5.04
+   ],
+   "origin": "inside",
+   "hollow": false,
+   "sets": [
+    "armoury",
+    "ossuary"
+   ],
+   "kinds": [
+    "Destructible",
+    "ZNetView"
+   ],
+   "colliders": {
+    "static_solid": 1
+   },
+   "solid": true,
+   "solid_note": "",
+   "lights": [],
+   "fire": false,
+   "particles": 0,
+   "item": false,
+   "networked": true,
+   "gives": [
+    "Destructible"
+   ],
+   "physics": false,
+   "height": 9.77,
+   "upright": "block",
+   "saved_only": false,
+   "safe": true,
+   "climb": {
+    "ledges": [
+     [
+      0.8,
+      1.4
+     ],
+     [
+      3.6,
+      3.8
+     ],
+     [
+      4.2,
+      6.2
+     ],
+     [
+      7.8,
+      9.8
+     ]
+    ],
+    "top": 1.4,
+    "top_skilled": 9.8
+   },
+   "render": "palettes/giant_helmet2.png"
+  },
+  {
+   "prefab": "giant_brain",
+   "role": "remains",
+   "look": "a giant's brain (the Mistlands' remains)",
+   "mount": "ground",
+   "scale": [
+    0.3,
+    2
+   ],
+   "tier": 6,
+   "notes": "as scenery its Destructible is stripped: it gives nothing; climbable: a player can stand 1.8 m above its foot (at scale 1; 8.6 m with Jump skill 100), so it's a stepping stone to a level up to about 3.4 m above its foot (11.7 m with Jump 100)",
+   "exists": true,
+   "size": [
+    7.63,
+    8.61,
+    8.16
+   ],
+   "min": [
+    -3.81,
+    0.66,
+    -6.67
+   ],
+   "max": [
+    3.81,
+    9.27,
+    1.5
+   ],
+   "origin": "off the box",
+   "hollow": false,
+   "sets": [
+    "ossuary"
+   ],
+   "kinds": [
+    "Destructible",
+    "ZNetView"
+   ],
+   "colliders": {
+    "static_solid": 1
+   },
+   "solid": true,
+   "solid_note": "",
+   "lights": [],
+   "fire": false,
+   "particles": 0,
+   "item": false,
+   "networked": true,
+   "gives": [
+    "Destructible"
+   ],
+   "physics": false,
+   "height": 8.61,
+   "upright": "block",
+   "saved_only": false,
+   "safe": true,
+   "climb": {
+    "ledges": [
+     [
+      0.0,
+      1.0
+     ],
+     [
+      1.6,
+      1.8
+     ],
+     [
+      3.6,
+      4.0
+     ],
+     [
+      4.8,
+      5.2
+     ],
+     [
+      5.4,
+      5.8
+     ],
+     [
+      6.4,
+      6.8
+     ],
+     [
+      7.2,
+      8.6
+     ]
+    ],
+    "top": 1.8,
+    "top_skilled": 8.6
+   },
+   "render": "palettes/giant_brain.png"
+  },
+  {
+   "prefab": "grausten_pile",
+   "role": "decor",
+   "look": "a pile of grausten blocks",
+   "mount": "ground",
+   "scale": [
+    0.5,
+    2
+   ],
+   "tier": 7,
+   "notes": "climbable: a player can stand 1.4 m above its foot (at scale 1; 1.4 m with Jump skill 100), so it's a stepping stone to a level up to about 3.0 m above its foot (4.5 m with Jump 100)",
+   "exists": true,
+   "size": [
+    2.19,
+    1.48,
+    2.39
+   ],
+   "min": [
+    -1.07,
+    -0.15,
+    -1.24
+   ],
+   "max": [
+    1.11,
+    1.33,
+    1.15
+   ],
+   "origin": "inside",
+   "hollow": false,
+   "sets": [
+    "ruin",
+    "forge"
+   ],
+   "kinds": [
+    "Piece",
+    "WearNTear",
+    "ZNetView"
+   ],
+   "colliders": {
+    "piece": 2
+   },
+   "solid": true,
+   "solid_note": "",
+   "lights": [],
+   "fire": false,
+   "particles": 0,
+   "item": false,
+   "networked": true,
+   "gives": [],
+   "physics": false,
+   "height": 1.48,
+   "upright": "block",
+   "saved_only": false,
+   "safe": true,
+   "climb": {
+    "ledges": [
+     [
+      0.0,
+      1.4
+     ]
+    ],
+    "top": 1.4,
+    "top_skilled": 1.4
+   },
+   "render": "palettes/grausten_pile.png"
+  },
+  {
+   "prefab": "Morkhalla_Banner1",
+   "role": "decor",
+   "look": "a Mórk halla banner",
+   "mount": "wall",
+   "scale": [
+    0.5,
+    2
+   ],
+   "tier": 8,
+   "notes": "as scenery its DropOnDestroyed is stripped: it gives nothing",
+   "exists": true,
+   "size": [
+    3.0,
+    6.37,
+    0.47
+   ],
+   "min": [
+    -1.51,
+    -4.5,
+    -0.49
+   ],
+   "max": [
+    1.49,
+    1.87,
+    -0.01
+   ],
+   "origin": "inside",
+   "hollow": false,
+   "sets": [
+    "archive",
+    "armoury"
+   ],
+   "kinds": [
+    "DropOnDestroyed",
+    "WearNTear",
+    "ZNetView"
+   ],
+   "colliders": {
+    "Default": 1
+   },
+   "solid": true,
+   "solid_note": "",
+   "lights": [],
+   "fire": false,
+   "particles": 0,
+   "item": false,
+   "networked": true,
+   "gives": [
+    "DropOnDestroyed"
+   ],
+   "physics": false,
+   "height": 6.37,
+   "upright": "upright",
+   "saved_only": false,
+   "safe": true,
+   "climb": {
+    "ledges": [
+     [
+      6.2,
+      6.4
+     ]
+    ],
+    "top": 0.0,
+    "top_skilled": 0.0
+   },
+   "render": "palettes/Morkhalla_Banner1.png"
+  }
+ ],
+ "roles": {
+  "wall": {
+   "pieces": [
+    "Ashlands_floor_large",
+    "Ashlands_WallBlock"
+   ],
+   "how": "a floor slab stood up: euler (-90, side yaw, 0), its top face inwards (dungeon_parts.wall); a wall piece (tile wall, metal wall, timber wall) stands as it is, turned by yaw"
+  },
+  "wall_alt": {
+   "pieces": [
+    "blackmarble_floor_large"
+   ],
+   "how": "as wall"
+  },
+  "floor": {
+   "pieces": [
+    "Ashlands_floor_large",
+    "Morkhalla_Floor_4x4",
+    "Ashlands_Fortress_Floor"
+   ],
+   "how": "flat as it is; most slabs have their origin in their middle (see each piece's origin and min/max)"
+  },
+  "ceiling": {
+   "pieces": [
+    "Ashlands_floor_large"
+   ],
+   "how": "a floor slab turned over: euler (180, 0, 0) (dungeon_parts.slab with ceiling=True); its origin is in the slab's middle"
+  },
+  "trim": {
+   "pieces": [
+    "blackmarble_floor_large",
+    "blackmarble_column_3",
+    "blackmarble_head_big01"
+   ]
+  },
+  "pillar": {
+   "pieces": [
+    "Ashlands_Boss_Pillar",
+    "Ashlands_Pillar4",
+    "Morkhalla_Block"
+   ]
+  },
+  "column": {
+   "pieces": [
+    "blackmarble_column_3",
+    "Piece_flametal_pillar"
+   ]
+  },
+  "beam": {
+   "pieces": [
+    "Piece_flametal_beam",
+    "Morkhalla_MetalBar"
+   ]
+  },
+  "rail": {
+   "pieces": [
+    "Morkhalla_giant_railing",
+    "Morkhalla_giant_railing_corner"
+   ]
+  },
+  "grate": {
+   "pieces": [
+    "iron_grate"
+   ]
+  },
+  "door_leaf": {
+   "pieces": [
+    "Ashlands_Fortress_Gate_Door",
+    "iron_grate"
+   ],
+   "how": "as scenery it doesn't open: Pack.doors (saved, at joints) or a gate mechanism moves it"
+  },
+  "stair": {
+   "pieces": [
+    "piece_grausten_stonestair",
+    "Morkhalla_Stairs_giant_short"
+   ],
+   "how": "keep scale 1 (step height); stack or repeat for a wider or longer stair"
+  },
+  "light_stand": {
+   "pieces": [
+    "Morkhalla_giant_railing_torch",
+    "MountainKit_brazier_blue",
+    "blackmarble_altar_crystal",
+    "Morkhalla_firepit"
+   ]
+  },
+  "light_hang": {
+   "pieces": [
+    "dverger_demister"
+   ],
+   "how": "hang it from the first part above it (ceiling, balcony, a mechanism's lid) on the theme's chain, the chain's foot on the light's top: giant, a thinned Morkhalla_WallChain1 (giant_kit.wisp); Dvergr, dvergrprops_lantern on dvergrprops_hooknchain. Stood at a point it floats (dverger_demister's mesh is below its origin)"
+  },
+  "light_wall": {
+   "pieces": [
+    "piece_walltorch"
+   ],
+   "how": "against a wall, its back to it"
+  },
+  "gear": {
+   "pieces": [
+    "CharredCogwheel"
+   ],
+   "how": "CharredCogwheel is an item: the Builder makes it solid with a disc collider; scale it up, never make it a Saved part"
+  },
+  "machine": {
+   "pieces": [
+    "Morkhalla_MetalBar",
+    "Piece_flametal_beam",
+    "CharredCogwheel"
+   ]
+  },
+  "chain": {
+   "pieces": [
+    "Morkhalla_WallChain1",
+    "Morkhalla_Chain"
+   ],
+   "how": "a wall chain hangs from its anchor at the top; a span rests on two anchors"
+  },
+  "chest": {
+   "pieces": [
+    "Morkhalla_ChestAncient",
+    "TreasureChest_morkhalla",
+    "piece_chest_grausten",
+    "TreasureChest_charredfortress",
+    "TreasureChest_trollcave"
+   ],
+   "how": "Saved parts only, scale 1: the Builder refills them from the pack's loot for the biome"
+  },
+  "decor_small": {
+   "pieces": [
+    "grausten_pile",
+    "Morkhalla_Stonepile",
+    "Morkhalla_WeaponStand",
+    "bar_iron_stack",
+    "Morkhalla_coal_pile_memorial"
+   ],
+   "how": "pick by the room's dressing set (each piece's \"sets\")"
+  },
+  "decor_large": {
+   "pieces": [
+    "Morkhalla_Bench",
+    "Morkhalla_Table",
+    "MemorialStone_Large",
+    "Morkhalla_StatuePieceFace_big",
+    "Morkhalla_StatueSword_hanging",
+    "Morkhalla_Banner1"
+   ],
+   "how": "pick by the room's dressing set (each piece's \"sets\")"
+  },
+  "rubble": {
+   "pieces": [
+    "Morkhalla_Rubble1",
+    "Morkhalla_Rubble2",
+    "grausten_pile"
+   ]
+  },
+  "bones": {
+   "pieces": [
+    "giant_skull",
+    "giant_ribs",
+    "giant_arm",
+    "giant_sword1",
+    "giant_helmet1",
+    "giant_helmet2",
+    "giant_brain",
+    "ancient_skull",
+    "skull_pile",
+    "bone_stack"
+   ],
+   "how": "giant bones are huge (a skull is 10 x 12 x 17 m): scale them down for human-scale rooms"
+  }
+ },
+ "by_role": {
+  "wall": [
+   "Ashlands_floor_large",
+   "Ashlands_WallBlock"
+  ],
+  "wall_alt": [
+   "blackmarble_floor_large"
+  ],
+  "floor": [
+   "Ashlands_floor_large",
+   "Morkhalla_Floor_4x4",
+   "Ashlands_Fortress_Floor"
+  ],
+  "ceiling": [
+   "Ashlands_floor_large"
+  ],
+  "trim": [
+   "blackmarble_floor_large",
+   "blackmarble_column_3",
+   "blackmarble_head_big01"
+  ],
+  "pillar": [
+   "Ashlands_Boss_Pillar",
+   "Ashlands_Pillar4",
+   "Morkhalla_Block"
+  ],
+  "column": [
+   "blackmarble_column_3",
+   "Piece_flametal_pillar"
+  ],
+  "beam": [
+   "Piece_flametal_beam",
+   "Morkhalla_MetalBar"
+  ],
+  "rail": [
+   "Morkhalla_giant_railing",
+   "Morkhalla_giant_railing_corner"
+  ],
+  "grate": [
+   "iron_grate"
+  ],
+  "door_leaf": [
+   "Ashlands_Fortress_Gate_Door",
+   "iron_grate"
+  ],
+  "stair": [
+   "piece_grausten_stonestair",
+   "Morkhalla_Stairs_giant_short"
+  ],
+  "light_stand": [
+   "Morkhalla_giant_railing_torch",
+   "MountainKit_brazier_blue",
+   "blackmarble_altar_crystal",
+   "Morkhalla_firepit"
+  ],
+  "light_hang": [
+   "dverger_demister"
+  ],
+  "light_wall": [
+   "piece_walltorch"
+  ],
+  "gear": [
+   "CharredCogwheel"
+  ],
+  "machine": [
+   "Morkhalla_MetalBar",
+   "Piece_flametal_beam",
+   "CharredCogwheel"
+  ],
+  "chain": [
+   "Morkhalla_WallChain1",
+   "Morkhalla_Chain"
+  ],
+  "chest": [
+   "Morkhalla_ChestAncient",
+   "TreasureChest_morkhalla",
+   "piece_chest_grausten",
+   "TreasureChest_charredfortress",
+   "TreasureChest_trollcave"
+  ],
+  "decor_small": [
+   "grausten_pile",
+   "Morkhalla_Stonepile",
+   "Morkhalla_WeaponStand",
+   "bar_iron_stack",
+   "Morkhalla_coal_pile_memorial"
+  ],
+  "decor_large": [
+   "Morkhalla_Bench",
+   "Morkhalla_Table",
+   "MemorialStone_Large",
+   "Morkhalla_StatuePieceFace_big",
+   "Morkhalla_StatueSword_hanging",
+   "Morkhalla_Banner1"
+  ],
+  "rubble": [
+   "Morkhalla_Rubble1",
+   "Morkhalla_Rubble2",
+   "grausten_pile"
+  ],
+  "bones": [
+   "giant_skull",
+   "giant_ribs",
+   "giant_arm",
+   "giant_sword1",
+   "giant_helmet1",
+   "giant_helmet2",
+   "giant_brain",
+   "ancient_skull",
+   "skull_pile",
+   "bone_stack"
+  ]
+ }
+}
