@@ -15,7 +15,8 @@ namespace JetSkis
     ///
     /// It is the game's raft underneath (floating, saving, wear, ownership in multiplayer all stay the game's), with a new body and its own
     /// motor and steering. Split across files: Plugin.cs (settings, setup), Things.cs (the piece), Model.cs (its look), JetSki.cs (what one
-    /// does: the motor, steering, the rider climbing on, the lean), Patches.cs (the game's boat code handing over to it), Look.cs (materials).
+    /// does: the motor, steering, the rider climbing on, the lean), Patches.cs (the game's boat code handing over to it), Rider.cs (how the rider sits on it), JetHud.cs (its gauge), GameUi.cs (the game's look for it), Look.cs (materials),
+    /// Tools.cs (a Claude Tools command for testing).
     /// </summary>
     [BepInPlugin(Guid, Name, Version)]
     public class Plugin : BaseUnityPlugin
@@ -28,7 +29,7 @@ namespace JetSkis
         internal static ManualLogSource Log;
         internal static DHack.Shared.ServerSettings Synced;   // how fast and how nimble is the server's in multiplayer
 
-        internal static ConfigEntry<float> Cruise, TopSpeed, Reverse, Accel, Coast, TurnRate, Grip;
+        internal static ConfigEntry<float> Cruise, TopSpeed, Reverse, Accel, Coast, TurnRate, Grip, EngineVolume;
         internal static ConfigEntry<bool> Lean, Help;
 
         private Harmony _harmony;
@@ -48,8 +49,9 @@ namespace JetSkis
             Coast = Synced.Add(Config.Bind("1 - Driving", "Coasting", 2.5f, new ConfigDescription("How quickly it slows down with nothing held (metres per second, each second). [Synced with Server]", new AcceptableValueRange<float>(0.5f, 10f))));
             TurnRate = Synced.Add(Config.Bind("1 - Driving", "TurnRate", 95f, new ConfigDescription("How fast it turns at full lock (degrees per second). It turns slower when barely moving. [Synced with Server]", new AcceptableValueRange<float>(20f, 200f))));
             Grip = Synced.Add(Config.Bind("1 - Driving", "Grip", 3f, new ConfigDescription("How much it holds its line in a turn instead of sliding sideways (higher grips more). [Synced with Server]", new AcceptableValueRange<float>(0.5f, 10f))));
-            Lean = Config.Bind("2 - Look", "LeanIntoTurns", true, "The jet ski (and you on it) leans into turns and lifts its nose at speed.");
+            Lean = Config.Bind("2 - Look", "LeanIntoTurns", true, "The jet ski (and you on it) leans into turns and lifts its nose at speed, your head turns where you steer and you bob over the waves.");
             Help = Config.Bind("2 - Look", "ShowControls", true, "Show the controls the first time you get on in a session.");
+            EngineVolume = Config.Bind("2 - Look", "EngineVolume", 1f, new ConfigDescription("How loud the engine is (0 is silent, 1 as made; the game's own volume settings apply on top).", new AcceptableValueRange<float>(0f, 2f)));
             Config.SaveOnConfigSet = true;
             Config.Save();
 
@@ -59,11 +61,20 @@ namespace JetSkis
             Logger.LogInfo($"{Name} {Version} loaded");
         }
 
-        private void Update() => Synced?.Update();
+        private void Update()
+        {
+            Synced?.Update();
+            Tools.Update();
+        }
+
+        private void LateUpdate() => Rider.Late();   // (after the animation: the riders' pose on top of it)
 
         private void OnDestroy()
         {
             _harmony?.UnpatchSelf();
+            Tools.Unregister();
+            Rider.Reset();
+            JetHud.Destroy();
             Things.Unregister();
             Synced?.Dispose();
             DHack.Shared.Translations.Unload();

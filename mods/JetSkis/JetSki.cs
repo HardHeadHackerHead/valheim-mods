@@ -17,7 +17,9 @@ namespace JetSkis
     /// </summary>
     internal class JetSki : MonoBehaviour
     {
-        private const string RpcThrottle = "dh_jetski_Throttle";
+        private const string RpcThrottle = "dh_jetski_Throttle", RpcPaint = "dh_jetski_Paint";
+        private const string PaintKey = "dh_jetski_paint";   // (saved on the jet ski: its colour)
+        private const float Waterline = -0.02f;   // where the water comes up to on the hull (its body's y)
 
         private static readonly Dictionary<Ship, JetSki> All = new Dictionary<Ship, JetSki>();
         private static readonly AccessTools.FieldRef<Ship, Ship.Speed> SpeedRef = AccessTools.FieldRefAccess<Ship, Ship.Speed>("m_speed");
@@ -30,7 +32,11 @@ namespace JetSkis
         private Rigidbody _body;
         private ShipControlls _controls;
         private Transform _model, _bars;
-        private WaterVolume _waterCache;
+        private WaterVolume _waterCache, _effectsWater;
+        private bool _floatSet;
+        private Effects _effects;
+        private Transform _passengerSeat;
+        private float _paintReadAt;
 
         // the rider's side
         private float _steer, _steerSentAt, _steerSent, _throttleSentAt;
@@ -39,6 +45,83 @@ namespace JetSkis
         private Vector3 _lastPos, _velocity;
 
         internal static JetSki Of(Ship ship) => ship != null && All.TryGetValue(ship, out JetSki j) && j != null ? j : null;
+        internal static IEnumerable<JetSki> Loaded => All.Values;
+        internal Transform Body => _model;
+        internal Transform Bars => _bars;
+        internal ShipControlls Controls => _controls;
+        internal float Speed { get; private set; }   // forwards, metres a second (every game: from how it moves)
+        internal Ship.Speed Throttle => _ship.GetSpeedSetting();
+        internal float Rudder => _ship.GetRudderValue();
+
+        /// <summary>Who sits on it now (anyone's game can tell: the rider is in its saved data), or null.</summary>
+        internal Player RiderNow()
+        {
+            if (_controls == null || !_nview.IsValid()) return null;
+            long user = _controls.GetUser();
+            if (user == 0L) return null;
+            foreach (Player p in Player.GetAllPlayers())
+                if (p != null && p.GetPlayerID() == user)
+                {
+                    if (p == Player.m_localPlayer && !p.IsAttached()) return null;
+                    return Vector3.Distance(p.transform.position, _controls.m_attachPoint.position) < 1f ? p : null;
+                }
+            return null;
+        }
+
+        /// <summary>Who sits behind the rider now, or null (another game's player: whoever is seated right there).</summary>
+        internal Player PassengerNow()
+        {
+            if (_passengerSeat == null) return null;
+            foreach (Player p in Player.GetAllPlayers())
+            {
+                if (p == null || Vector3.Distance(p.transform.position, _passengerSeat.position) > 0.35f) continue;
+                if (p == Player.m_localPlayer ? p.IsAttached() : Seated(p)) return p;
+            }
+            return null;
+        }
+
+        internal Transform PassengerSeat => _passengerSeat;
+
+        /// <summary>Another game's player is sitting (their seat animation is shared with everyone).</summary>
+        private static bool Seated(Player p)
+        {
+            Animator a = p.GetComponentInChildren<Animator>();
+            return a != null && a.GetBool(Things.AttachAnimation);
+        }
+
+        /// <summary>The jet ski this player sits behind the rider on now, or null.</summary>
+        internal static JetSki PassengerOf(Player p)
+        {
+            foreach (JetSki ski in All.Values) if (ski != null && ski.PassengerNow() == p) return ski;
+            return null;
+        }
+
+        internal int PaintIndex => _nview.IsValid() ? _nview.GetZDO().GetInt(PaintKey) : 0;
+
+        /// <summary>Shift+E: the next colour (asked of the game that owns it, which saves it on the jet ski for everyone).</summary>
+        internal void NextPaint(Player player)
+        {
+            if (!_nview.IsValid() || player == null) return;
+            if (!PrivateArea.CheckAccess(transform.position)) return;   // (someone else's ward: not theirs to paint)
+            _nview.InvokeRPC(RpcPaint);
+        }
+
+        private void RPC_Paint(long sender)
+        {
+            try
+            {
+                if (!_nview.IsValid() || !_nview.IsOwner()) return;
+                _nview.GetZDO().Set(PaintKey, (_nview.GetZDO().GetInt(PaintKey) + 1) % Effects.Paints.Length);
+            }
+            catch (System.Exception e) { Plugin.Log.LogWarning("Paint: " + e); }
+        }
+
+        /// <summary>The jet ski this player rides now, or null.</summary>
+        internal static JetSki RidingOf(Player p)
+        {
+            foreach (JetSki ski in All.Values) if (ski != null && ski.RiderNow() == p) return ski;
+            return null;
+        }
 
         private void Awake()
         {
@@ -48,16 +131,23 @@ namespace JetSkis
             _controls = _ship != null ? _ship.m_shipControlls : null;
             _model = transform.Find(Model.BodyName);
             _bars = _model != null ? _model.Find(Model.BarsName) : null;
+            if (_controls != null && _controls.m_attachPoint != null) _controls.m_attachPoint.localPosition = Model.SeatPoint;   // (jet skis already in the world get a moved seat too)
             _lastPos = transform.position;
             if (_ship == null || _nview == null || _nview.GetZDO() == null) { enabled = false; return; }
             All[_ship] = this;
             _nview.Register<int>(RpcThrottle, RPC_Throttle);
+            _nview.Register(RpcPaint, RPC_Paint);
+            _passengerSeat = GetComponentInChildren<Chair>(true)?.m_attachPoint;
+            if (_passengerSeat != null) _passengerSeat.localPosition = Model.PassengerPoint;
+            _effects = new Effects(transform, _model);
+            _effects.Paint(_nview.GetZDO().GetInt(PaintKey));
         }
 
         private void OnDestroy()
         {
             if (_ship != null && All.TryGetValue(_ship, out JetSki j) && j == this) All.Remove(_ship);
-            if (_nview != null && _nview.GetZDO() != null) _nview.Unregister(RpcThrottle);   // (a hot reload's copy registers it again)
+            if (_nview != null && _nview.GetZDO() != null) { _nview.Unregister(RpcThrottle); _nview.Unregister(RpcPaint); }   // (a hot reload's copy registers them again)
+            _effects?.Dispose();
         }
 
         // ---- the rider's game ---------------------------------------------------------------------------------------------
@@ -89,11 +179,11 @@ namespace JetSkis
         }
 
         /// <summary>E on the jet ski: from the water or the shore, you climb onto the saddle first.</summary>
-        internal void Mount(Player player)
+        internal void Mount(Player player, bool anyDistance = false)
         {
             if (player == null || player.IsAttached() || !_nview.IsValid()) return;
             if (player.IsEncumbered()) { player.Message(MessageHud.MessageType.Center, "$jetskis_too_heavy"); return; }
-            if (Vector3.Distance(player.transform.position, _controls.m_attachPoint.position) > _controls.m_maxUseRange)
+            if (!anyDistance && Vector3.Distance(player.transform.position, _controls.m_attachPoint.position) > _controls.m_maxUseRange)
             {
                 player.Message(MessageHud.MessageType.Center, "$jetskis_too_far");
                 return;
@@ -117,6 +207,7 @@ namespace JetSkis
                 if (_ship.IsPlayerInBoat(player))
                 {
                     _nview.InvokeRPC("RequestControl", player.GetPlayerID());   // the game's own: the owner says yes unless someone else rides
+                    player.HideHandItems();   // both hands on the grips
                     if (!_helped && Plugin.Help.Value)
                     {
                         _helped = true;
@@ -155,9 +246,22 @@ namespace JetSkis
         }
 
         /// <summary>After the game's own boat physics each step, on the owner's game: the motor and the steering.</summary>
+        internal int MotorCalls;   // (for the test command)
+        internal bool FloatSet => _floatSet;
+
         internal void Motor(float dt)
         {
+            MotorCalls++;
             if (!_nview.IsValid() || !_nview.IsOwner()) return;
+            if (!_floatSet)
+            {
+                // floating: the game's boat pushes up harder the deeper its centre of mass sits below (water + offset), and settles where that
+                // push equals gravity (this far under). The offset puts the waterline just under the red band, whatever the centre of mass
+                // (read here, once physics has worked it out).
+                float settle = _ship.m_forceDistance * -Physics.gravity.y / (50f * Mathf.Max(0.01f, _ship.m_force));
+                _ship.m_waterLevelOffset = _body.centerOfMass.y + settle - Waterline;
+                _floatSet = true;
+            }
             if (!_controls.HaveValidUser() && _ship.GetSpeedSetting() != Ship.Speed.Stop) SpeedRef(_ship) = Ship.Speed.Stop;   // nobody at the handlebars
 
             Vector3 com = _body.worldCenterOfMass;
@@ -199,6 +303,12 @@ namespace JetSkis
             Vector3 up = t.up, spin = _body.angularVelocity;
             float yaw = Vector3.Dot(spin, up);
             _body.angularVelocity = spin + up * (Mathf.MoveTowards(yaw, wanted, 8f * dt) - yaw);
+
+            // it stays nearly level in a turn (the body leans for show: Update), so a hard turn doesn't tip the hull or the view with it
+            Vector3 axis = t.forward;
+            float roll = Vector3.SignedAngle(Vector3.ProjectOnPlane(Vector3.up, axis), t.up, axis) * Mathf.Deg2Rad;
+            float rolling = Vector3.Dot(_body.angularVelocity, axis);
+            _body.angularVelocity += axis * (Mathf.MoveTowards(rolling, -roll * 5f, 14f * dt) - rolling);
         }
 
         // ---- every game ---------------------------------------------------------------------------------------------------------
@@ -211,7 +321,14 @@ namespace JetSkis
             _velocity = Vector3.Lerp(_velocity, (pos - _lastPos) / dt, Mathf.Clamp01(dt * 6f));
             _lastPos = pos;
             float along = Vector3.Dot(_velocity, transform.forward);
+            Speed = along;
             float rudder = _ship.GetRudderValue();
+            if (_effects != null)
+            {
+                bool inWater = transform.position.y - Floating.GetWaterLevel(transform.position, ref _effectsWater) < 0.4f;
+                _effects.Tick(along, _ship.GetSpeedSetting(), rudder, _controls != null && _controls.HaveValidUser(), inWater);
+                if (Time.time > _paintReadAt) { _paintReadAt = Time.time + 0.5f; _effects.Paint(PaintIndex); }
+            }
 
             if (_bars != null) _bars.localRotation = Quaternion.Euler(0f, rudder * 25f, 0f);
             if (_model != null)

@@ -15,7 +15,8 @@ namespace JetSkis
     /// </summary>
     internal static class Model
     {
-        internal static readonly Vector3 SeatPoint = new Vector3(0f, 0.58f, -0.5f);   // where the rider sits (the "attach" point)
+        internal static readonly Vector3 SeatPoint = new Vector3(0f, 0.34f, -0.35f);   // the rider's feet-level origin: the seat animation lifts the hips about 0.5 above it, onto the saddle
+        internal static readonly Vector3 PassengerPoint = new Vector3(0f, 0.33f, -0.82f);   // the passenger's, behind
         internal const string BarsName = "Bars", BodyName = "Model";
 
         private const float Stern = -1.35f, Bow = 1.65f;
@@ -30,6 +31,9 @@ namespace JetSkis
         private static float Crown(float t) => DeckY(t) + 0.05f * HalfWidth(t) / 0.55f;   // the deck is a touch higher in the middle
         private static float T(float z) => Mathf.Clamp01((z - Stern) / (Bow - Stern));
         private static float Sq(float x) => x * x;
+
+        /// <summary>The top of the deck at a point, in the body's own space (where the rider's feet go).</summary>
+        internal static float DeckHeight(float x, float z) => DeckAt(x, z);
 
         /// <summary>The top of the deck at a point (it rises from the gunwale to the middle).</summary>
         private static float DeckAt(float x, float z)
@@ -78,7 +82,7 @@ namespace JetSkis
             // the handlebars: their own object, turned by the steering (JetSki.cs)
             var bars = new GameObject(BarsName) { layer = layer };
             bars.transform.SetParent(root, false);
-            bars.transform.localPosition = new Vector3(0f, 0.86f, 0.06f);
+            bars.transform.localPosition = new Vector3(0f, 0.98f, 0.06f);
             var b = new Parts();
             b.Prim(PrimitiveType.Cylinder, Vector3.zero, new Vector3(0.035f, 0.33f, 0.035f), new Vector3(0f, 0f, 90f), "Iron");
             foreach (float side in new[] { -1f, 1f })
@@ -203,7 +207,7 @@ namespace JetSkis
             // a round shield hung on each side by the saddle, as on a longship: wood, an iron rim, a bronze boss
             foreach (float side in new[] { -1f, 1f })
             {
-                var at = new Vector3(side * 0.56f, 0.12f, -0.8f);
+                var at = new Vector3(side * 0.56f, 0.12f, -0.45f);
                 var axis = new Vector3(side, 0f, 0f);
                 parts.Prim(PrimitiveType.Cylinder, at, new Vector3(0.34f, 0.012f, 0.34f), new Vector3(0f, 0f, 90f), "Planks");
                 parts.Add(Ring(at + axis * 0.006f, 0.17f, 0.014f, axis), Matrix4x4.identity, "Iron");
@@ -211,6 +215,17 @@ namespace JetSkis
                 parts.Prim(PrimitiveType.Cube, at + axis * 0.016f, new Vector3(0.006f, 0.3f, 0.03f), Vector3.zero, "Paint");   // a painted cross
                 parts.Prim(PrimitiveType.Cube, at + axis * 0.016f, new Vector3(0.006f, 0.03f, 0.3f), Vector3.zero, "Paint");
             }
+
+            // saddlebags hung either side of the stern, a strap across the deck between them (the storage: Things.cs)
+            foreach (float side in new[] { -1f, 1f })
+            {
+                Vector3 bag = BagCentre(side);
+                parts.Prim(PrimitiveType.Cube, bag, new Vector3(0.13f, 0.27f, 0.3f), Vector3.zero, "Leather");
+                parts.Prim(PrimitiveType.Cylinder, bag + new Vector3(0f, -0.135f, 0f), new Vector3(0.13f, 0.15f, 0.13f), new Vector3(90f, 0f, 0f), "Leather");   // (a rounded bottom)
+                parts.Prim(PrimitiveType.Cube, bag + new Vector3(side * 0.012f, 0.1f, 0f), new Vector3(0.15f, 0.09f, 0.32f), new Vector3(0f, 0f, side * -6f), "LeatherDark");   // the flap
+                parts.Prim(PrimitiveType.Cube, bag + new Vector3(side * 0.077f, 0.035f, 0f), new Vector3(0.012f, 0.05f, 0.05f), Vector3.zero, "Bronze");   // its buckle
+            }
+            parts.Prim(PrimitiveType.Cube, new Vector3(0f, DeckAt(0f, BagZ) + 0.012f, BagZ), new Vector3(1.0f, 0.016f, 0.07f), Vector3.zero, "LeatherDark");
 
             // the prow: a post rising from the bow tip and curling back, as a longship's does
             var prow = new List<Vector3>
@@ -226,7 +241,7 @@ namespace JetSkis
         /// <summary>The saddle: a rounded leather cushion, higher at the back, on a dark wooden plinth.</summary>
         private static void Saddle(Parts parts)
         {
-            const float back = -1.0f, front = 0.0f;
+            const float back = -1.06f, front = 0.06f;   // (long enough for two)
             var rings = new List<Vector3[]>();
             var centres = new List<Vector3>();
             const int steps = 18;
@@ -235,13 +250,13 @@ namespace JetSkis
                 float s = i / (float)steps;                                    // 0 at the back, 1 at the front
                 float z = Mathf.Lerp(back, front, s);
                 float end = Mathf.Pow(Mathf.Max(0f, 1f - Mathf.Pow(Mathf.Abs(2f * s - 1f), 5f)), 0.2f);   // rounded ends
-                float top = 0.6f - 0.04f * s + 0.015f * Mathf.Sin(s * Mathf.PI), bottom = 0.4f;
+                float top = 0.74f - 0.04f * s + 0.015f * Mathf.Sin(s * Mathf.PI), bottom = 0.54f;
                 float rx = (0.215f - 0.03f * s) * end, ry = (top - bottom) * 0.5f * end, cy = (top + bottom) * 0.5f;
                 rings.Add(SuperEllipse(new Vector3(0f, cy, z), rx, ry, 4.5f, 16));
                 centres.Add(new Vector3(0f, cy, z));
             }
             parts.Add(Loft(rings, centres), Matrix4x4.identity, "Leather");
-            parts.Prim(PrimitiveType.Cube, new Vector3(0f, 0.37f, -0.5f), new Vector3(0.36f, 0.12f, 0.86f), Vector3.zero, "Dark");
+            parts.Prim(PrimitiveType.Cube, new Vector3(0f, 0.43f, -0.5f), new Vector3(0.34f, 0.26f, 0.96f), Vector3.zero, "Dark");   // (tall enough that the rider's knees sit below the hips)
         }
 
         /// <summary>The cowl: rises out of the deck ahead of the rider to the steering column, painted red, with a bronze strip on top.</summary>
@@ -266,13 +281,16 @@ namespace JetSkis
             parts.Add(Loft(rings, centres), Matrix4x4.identity, "Paint");
             parts.Add(Tube(ridge, i => 0.018f, 6, true), Matrix4x4.identity, "Bronze");
             // the steering column, out of the cowl to the handlebars
-            parts.Add(Tube(new List<Vector3> { new Vector3(0f, 0.6f, 0.16f), new Vector3(0f, 0.86f, 0.06f) }, i => 0.032f, 8, false), Matrix4x4.identity, "Iron");
+            parts.Add(Tube(new List<Vector3> { new Vector3(0f, 0.6f, 0.16f), new Vector3(0f, 0.98f, 0.06f) }, i => 0.032f, 8, false), Matrix4x4.identity, "Iron");
             // a gauge on the cowl's back face: a bronze ring round a glowing rune
             parts.Prim(PrimitiveType.Cylinder, new Vector3(0f, 0.63f, 0.115f), new Vector3(0.1f, 0.012f, 0.1f), new Vector3(-62f, 0f, 0f), "Bronze");
             parts.Prim(PrimitiveType.Cylinder, new Vector3(0f, 0.632f, 0.108f), new Vector3(0.07f, 0.012f, 0.07f), new Vector3(-62f, 0f, 0f), "RuneGlow");
         }
 
-        private static readonly Vector3 CorePos = new Vector3(0f, 0.5f, -1.2f);
+        internal const float BagZ = -1.1f;
+        internal static Vector3 BagCentre(float side) => new Vector3(side * (0.9f * HalfWidth(T(BagZ)) + 0.075f), DeckAt(0.4f, BagZ) - 0.1f, BagZ);
+
+        private static readonly Vector3 CorePos = new Vector3(0f, 0.5f, -1.23f);
 
         /// <summary>The surtling core in its cage, and the jet nozzle under the stern.</summary>
         private static void Engine(Parts parts)

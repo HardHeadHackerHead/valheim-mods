@@ -19,7 +19,7 @@ namespace JetSkis
         {
             { "StoneDark", new Color(0.36f, 0.36f, 0.38f) }, { "Coal", new Color(0.15f, 0.15f, 0.17f) }, { "Parchment", new Color(0.90f, 0.82f, 0.63f) },
             { "Ink", new Color(0.16f, 0.11f, 0.08f) }, { "Bone", new Color(0.92f, 0.89f, 0.80f) }, { "Red", new Color(0.66f, 0.10f, 0.08f) },
-            { "Gold", new Color(0.93f, 0.72f, 0.20f) }, { "Leather", new Color(0.24f, 0.14f, 0.08f) }, { "Glow", new Color(1.0f, 0.72f, 0.28f) },
+            { "Gold", new Color(0.93f, 0.72f, 0.20f) }, { "Leather", new Color(0.24f, 0.14f, 0.08f) }, { "LeatherDark", new Color(0.12f, 0.07f, 0.045f) }, { "Glow", new Color(1.0f, 0.72f, 0.28f) },
             { "Cream", new Color(0.95f, 0.92f, 0.84f) }, { "Black", new Color(0.06f, 0.06f, 0.07f) }, { "Green", new Color(0.18f, 0.5f, 0.25f) },
             { "Blue", new Color(0.2f, 0.35f, 0.7f) }, { "Teal", new Color(0.25f, 0.75f, 0.8f) }, { "RedDark", new Color(0.38f, 0.05f, 0.05f) },
             { "Chrome", new Color(0.78f, 0.8f, 0.84f) },

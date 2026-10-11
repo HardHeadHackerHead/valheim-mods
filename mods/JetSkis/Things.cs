@@ -13,6 +13,7 @@ namespace JetSkis
     internal static class Things
     {
         internal const string Prefab = "dh_jetski";
+        internal static string AttachAnimation = "attach_chair";   // the game's seat animation the rider sits in (the pose goes on top: Rider.cs)
 
         private static GameObject _holder, _prefab;
 
@@ -95,12 +96,16 @@ namespace JetSkis
             ShipControlls controls = go.GetComponentInChildren<ShipControlls>(true);
             controls.transform.localPosition = Vector3.zero;
             controls.transform.localRotation = Quaternion.identity;
+            // the hit boxes you look at and press E on: on a layer that players don't bump into (the rider sits inside one)
+            int handles = LayerMask.NameToLayer("piece_nonsolid");
+            if (handles < 0) handles = controls.gameObject.layer;
+            controls.gameObject.layer = handles;
             BoxCollider grab = controls.GetComponent<BoxCollider>();
-            grab.center = new Vector3(0f, 0.75f, 0.0f);   // the saddle and the handlebars: look at them and press E
-            grab.size = new Vector3(0.8f, 0.8f, 1.7f);
+            grab.center = new Vector3(0f, 0.8f, -0.1f);   // the front of the saddle and the handlebars: the rider's
+            grab.size = new Vector3(0.8f, 0.8f, 0.95f);
             controls.m_hoverText = "$jetskis_ride";
             controls.m_maxUseRange = 4f;
-            controls.m_attachAnimation = "attach_chair";
+            controls.m_attachAnimation = AttachAnimation;
             controls.m_detachOffset = new Vector3(0f, 0.6f, 0f);
             Transform gui = root.Find("ControlGui");
             if (gui != null) gui.localPosition = new Vector3(0f, 1.3f, -0.4f);
@@ -133,6 +138,49 @@ namespace JetSkis
             seat.SetParent(model != null ? model : root, false);
             seat.localPosition = Model.SeatPoint;
             controls.m_attachPoint = seat;
+
+            // the passenger's seat behind: the game's own seat (Chair), on a boat
+            var back = new GameObject("passenger") { layer = handles };
+            back.transform.SetParent(root, false);
+            var backBox = back.AddComponent<BoxCollider>();
+            backBox.center = new Vector3(0f, 0.8f, Model.PassengerPoint.z);
+            backBox.size = new Vector3(0.6f, 0.6f, 0.42f);
+            var backSeat = new GameObject("attachpoint").transform;
+            backSeat.SetParent(model != null ? model : root, false);
+            backSeat.localPosition = Model.PassengerPoint;
+            Chair chair = back.AddComponent<Chair>();
+            chair.m_name = "$jetskis_passenger";
+            chair.m_useDistance = 3.5f;
+            chair.m_attachPoint = backSeat;
+            chair.m_attachAnimation = AttachAnimation;
+            chair.m_inShip = true;
+            chair.m_detachOffset = new Vector3(0f, 0.6f, 0f);
+
+            // the saddlebags: a small store, as the Karve's hold (its contents drop in a cargo crate if the jet ski breaks)
+            var bags = new GameObject("saddlebags") { layer = handles };
+            bags.transform.SetParent(root, false);
+            foreach (float side in new[] { -1f, 1f })
+            {
+                var bag = new GameObject(side < 0 ? "left" : "right") { layer = handles };
+                bag.transform.SetParent(bags.transform, false);
+                var bagBox = bag.AddComponent<BoxCollider>();
+                bagBox.center = Model.BagCentre(side);
+                bagBox.size = new Vector3(0.2f, 0.4f, 0.36f);
+            }
+            Container hold = bags.AddComponent<Container>();
+            hold.m_name = "$jetskis_bags";
+            hold.m_width = 4;
+            hold.m_height = 2;
+            hold.m_rootObjectOverride = go.GetComponent<ZNetView>();
+            Container karve = scene.GetPrefab("Karve")?.GetComponentInChildren<Container>(true);
+            if (karve != null)
+            {
+                hold.m_bkg = karve.m_bkg;
+                hold.m_openEffects = karve.m_openEffects;
+                hold.m_closeEffects = karve.m_closeEffects;
+                hold.m_destroyedLootPrefab = karve.m_destroyedLootPrefab;
+            }
+            else Plugin.Log.LogWarning("The Karve's hold was not found: the saddlebags drop nothing special if the jet ski breaks");
 
             Piece piece = go.GetComponent<Piece>();
             piece.m_name = "$jetskis_jetski";
