@@ -6,7 +6,7 @@ schemaVersion = "0.0.1"
 [package]
 namespace = "Quads_Lab"
 name = "Quads_Arena"
-versionNumber = "0.4.0"
+versionNumber = "0.4.1"
 description = "The Arena: a stone colosseum in your world where you fight waves of monsters and champions for the crowd, for gold and for glory, or duel your friends (PvP), like the arena in the first Fable."
 websiteUrl = "https://github.com/HardHeadHackerHead/valheim-mods/tree/main/mods/Arena"
 containsNsfwContent = false
