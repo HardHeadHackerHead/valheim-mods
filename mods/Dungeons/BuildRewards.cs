@@ -61,28 +61,15 @@ namespace Dungeons
             ZNetScene scene = ZNetScene.instance;
             if (db == null && scene == null) return;
             MakeItems(db, scene);
-
-            if (scene != null)
-            {
-                Dictionary<int, GameObject> named = NamedPrefabs(scene);
-                foreach (GameObject item in RewardItems)
-                {
-                    if (!scene.m_prefabs.Contains(item)) scene.m_prefabs.Add(item);
-                    named[item.name.GetStableHashCode()] = item;
-                }
-            }
-            if (db != null)
-            {
-                bool changed = false;
-                foreach (GameObject item in RewardItems)
-                    if (!db.m_items.Contains(item)) { db.m_items.RemoveAll(i => i == null || i.name == item.name); db.m_items.Add(item); changed = true; }
-                if (changed) AccessTools.Method(typeof(ObjectDB), "UpdateRegisters")?.Invoke(db, null);
-            }
+            ItemReload.Replace(scene, db, RewardItems);   // (in both, an older copy's replaced by name: a reload in a world, ItemReload.cs)
         }
 
         /// <summary>Takes the items out of the game's lists (only entries that are still ours) and destroys them: the plugin unloading.</summary>
         internal static void UnregisterItems()
         {
+            // a reload in a world: left registered and alive (items in bags and chests hold these prefabs; saved and dropped ones would be
+            // lost loading in the gap); the next copy replaces them by name and points the items it finds at its own (ItemReload.cs)
+            if (ItemReload.KeepOnUnload) return;
             ZNetScene scene = ZNetScene.instance;
             if (scene != null)
             {

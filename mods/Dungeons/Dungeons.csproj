@@ -9,6 +9,8 @@
     <Reference Include="SoftReferenceableAssets"><HintPath>$(ManagedDir)/SoftReferenceableAssets.dll</HintPath><Private>false</Private></Reference>
     <!-- Fire and particles on scaled-up parts grow with the part (ParticleSystem.main.scalingMode). -->
     <Reference Include="UnityEngine.ParticleSystemModule"><HintPath>$(ManagedDir)/UnityEngine.ParticleSystemModule.dll</HintPath><Private>false</Private></Reference>
+    <!-- A reload in a world mutes the last copy's builds while they're handed over (HotReload.cs). -->
+    <Reference Include="UnityEngine.AudioModule"><HintPath>$(ManagedDir)/UnityEngine.AudioModule.dll</HintPath><Private>false</Private></Reference>
   </ItemGroup>
   <ItemGroup>
     <!-- The strengths the server decides in multiplayer, and the cheat rule for the test commands (shared with our other mods). -->

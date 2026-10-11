@@ -448,9 +448,12 @@ namespace Dungeons
                 if (dead) ClearEncounter(m, "its last wave is dead");
                 return;   // (the last wave isn't timed out: it must die)
             }
+            // why it moved on, in the log (a regression test tells a wave killed from one timed out)
+            string why = dead ? $"the last one dead {Time.time - m.EncDeadAt:0} s ago"
+                              : $"wave {r.Wave + 1} timed out after {e.Timeout:0} s with {alive.Count} alive";
             r.Wave++;
             r.Time = now;
-            WriteEncounter(m, r, $"wave {r.Wave + 1} of {e.Waves.Count}");
+            WriteEncounter(m, r, $"wave {r.Wave + 1} of {e.Waves.Count} ({why})");
             SpawnWave(m, r.Wave);
         }
 

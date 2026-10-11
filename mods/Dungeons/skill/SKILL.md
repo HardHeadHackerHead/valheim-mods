@@ -52,8 +52,36 @@ Read `docs/modding-pitfalls.md` too before changing the mod's code: it has the r
   dungeon not built yet is held still until it is, or taken out to its entrance. Saved objects above 3000 m aren't made on a game until a
   dungeon is built under them there. What falls out anyway goes back to its floor; a gravestone to the spot it was made. Our teleports
   count no fall.
-- **Reload level `menu`**: the entrance and the reward items are registered prefabs, so the mod reloads only at the main menu, and every
-  player and the server need it.
+- **Every player and the server need it**, at the same version (see "Packs from a folder" below).
+- **Reload level `world`** (`HotReload.cs`; **not yet tested in the game**): `reload Dungeons`, or the mod manager's auto-reload, works
+  inside a world.
+  - The entrance prefabs and items stay registered over the reload, and the new copy replaces them by name. Standing entrances get the new
+    copy's component and look. Items in this game's bags, chests, on the ground and held by a pedestal are pointed at the new prefabs.
+  - Each built dungeon is handed over as it stands (a "husk": the old copy's components off, sounds muted, floors kept), so nothing inside
+    falls. The new copy lays it out and builds it again from the entrance's ZDO (state, encounters, triggers and map fog are saved, so
+    nothing resets and nothing spawns twice), holds a player inside still ("hold on") until its build and mechanisms are complete, then
+    removes the husk.
+  - Carried over: the packs in use (a client's server set), the version check, Safety's hold and teleport grace, and bodies frozen for
+    unbuilt dungeons. Until it settles (at least 10 s), keys aren't taken from players.
+  - **Not kept:** a forced remake still waiting for players to leave (`reload force` or `respawn force` mid-wait: run it again); work a
+    coroutine was doing (a pack watcher pass, a stray pass); a kill or act sent in the one frame between the copies.
+  - A build whose packs changed: dungeons of a changed pack are laid out otherwise, so a player inside is taken out to the entrance first
+    (as a remake), the old build goes, and the owner remakes the dungeon (`LayoutMatches`). A host whose own pack set changed with the
+    build sends it again to its players.
+  - The DLL declares `ClaudeTools.Reload` = `world`. Its items are registered through `ItemReload.cs` (a copy of Claude Tools' new
+    `templates/ItemReload.cs`); Claude Tools' changed `modcheck` (not yet released) gives `world` only when every ObjectDB item add goes
+    through ItemReload and the mod calls `ItemReload.Repoint`. The `modcheck` released so far still says `menu`: until Claude Tools is
+    released, use `reload Dungeons force` in a world.
+  - A client reloading in a world asks the server for its settings (`ResetDays`) again at once (in `HotReload.cs`).
+  - If the hand-over fails anywhere, each part fails on its own: the error is logged ("Reload in a world: ... failed"), every built
+    dungeon stays standing, the player stays held, and the new copy builds again from the entrances' ZDOs.
+  - **When you change the mod's code:** anything kept only in memory that matters across a reload (an item taken from a player, a pending
+    act) needs a Carry/Take in `HotReload.cs`; a component of ours on a **saved** object needs `HotReload.Reattach` (only
+    `DungeonEntrance` has one). Local built objects are fine: they're built again. **Items** (rewards, packs' key items) are added only
+    through `Builder.DefineItem` / `RegisterItems` → `ItemReload.Replace`: never add to ObjectDB any other way.
+  - Why it's careful (a lesson to confirm once tested): a reload in a world is a frame with no mod. With no hold-back patch, saved objects
+    up there get made and fall, spawners spawn unfitted creatures, and a landing after our teleport counts a 5000 m fall. The old copy
+    installs a small gap guard under its own Harmony id, which the new copy removes.
 
 ## Packs from a folder, the server's packs, and versions (SyncPacks.cs, SyncNet.cs)
 
@@ -152,8 +180,9 @@ Read `docs/modding-pitfalls.md` too before changing the mod's code: it has the r
    - The map: `tools/dungeonmap` draws every floor of a seed as the in-game map does (map.md).
 4. **Build the mod.** The packs and looks are embedded, so a pack change needs a build. A plain `dotnet build mods/Dungeons -c Release`
    also copies the DLL into the game's `BepInEx/scripts` (`mods/Directory.Build.props`); `-p:DeployToGame=false` builds without
-   touching the game. **Never deploy while a player is in the game.** The mod manager reloads a copied DLL by itself, but this mod's
-   reload level is `menu`: the new copy loads at the main menu.
+   touching the game. **Never deploy while a player is in the game** unless that's the test. The mod manager reloads a copied DLL by
+   itself; this mod reloads in a world (reload level `world`, above), but until Claude Tools is released with the ItemReload rule,
+   reload it with `reload Dungeons force`.
 5. **Check in the game**, in a test world:
    - `dungeon check [pack]`: every prefab, game room and location the packs and looks name that this game doesn't have.
    - `dungeon packs`: each pack's problems as read in this world (missing rooms, plan tags no room has).

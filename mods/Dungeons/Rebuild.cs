@@ -253,7 +253,7 @@ namespace Dungeons
                     // companion, another mod's), goes out with the loose things: never removed
                     if (z.GetBool(ZDOVars.s_tamed) || !Strays.DungeonCreature(prefab.name))
                     {
-                        Vector3 outAt = Ground(Spot(outside, right, outward, moved), outside.y);
+                        Vector3 outAt = OnGroundOut(Spot(outside, right, outward, moved), outside.y);
                         Place(z, outAt, false);
                         Plugin.Log.LogInfo($"Dungeon {id} built again: {prefab.name} (tame, or not a dungeon's creature) moved out to its entrance, {outAt}");
                         moved++;
@@ -264,7 +264,7 @@ namespace Dungeons
                 if (BlockKeys.IsKey(prefab.name)) { if (Sweep.Destroy(z)) removed++; continue; }   // (a remake makes its keys again)
                 bool grave = prefab.GetComponent<TombStone>() != null;
                 if (!grave && prefab.GetComponent<ItemDrop>() == null) continue;
-                Vector3 to = Ground(Spot(outside, right, outward, moved), outside.y);
+                Vector3 to = OnGroundOut(Spot(outside, right, outward, moved), outside.y);
                 Place(z, to, grave);
                 if (grave) Plugin.Log.LogWarning($"Dungeon {id} built again: {z.GetString(ZDOVars.s_ownerName)}'s gravestone moved out to its entrance, {to}");
                 moved++;
@@ -304,7 +304,7 @@ namespace Dungeons
             foreach (ItemDrop.ItemData item in inv.GetAllItems().ToList())
             {
                 if (item?.m_dropPrefab == null) continue;
-                Vector3 at = Ground(Spot(outside, right, outward, i++ % 25), outside.y);
+                Vector3 at = OnGroundOut(Spot(outside, right, outward, i++ % 25), outside.y);
                 ItemDrop.DropItem(item, item.m_stack, at, Quaternion.Euler(0f, UnityEngine.Random.Range(0f, 360f), 0f));
                 given.Add($"{item.m_dropPrefab.name} x{item.m_stack}");
             }
@@ -344,13 +344,32 @@ namespace Dungeons
             outward = outward.sqrMagnitude < 0.01f ? Vector3.forward : outward.normalized;
             int i = OutCount.TryGetValue(id ?? "", out int used) ? used : 0;
             OutCount[id ?? ""] = i + 1;
-            return Ground(Spot(outside, Vector3.Cross(Vector3.up, outward), outward, i % 25), outside.y);
+            return OnGroundOut(Spot(outside, Vector3.Cross(Vector3.up, outward), outward, i % 25), outside.y);
         }
 
         private static Vector3 Spot(Vector3 outside, Vector3 right, Vector3 outward, int i) =>
             outside + right * ((i % 5) - 2) * 0.9f + outward * (i / 5) * 0.9f;
 
-        /// <summary>The ground at a point (what's built there, or the terrain), never below the entrance's own height.</summary>
+        /// <summary>
+        /// The walkable ground at a spot in front of an entrance, from its way-out point's height (where players come out): the ray starts
+        /// 2 m above that, so the entrance look's own colliders over it (a giant door's hill) are never landed on. Nothing hit there (not
+        /// loaded, or the spot is on a slope higher than that): the terrain, else the world's height. Never under the terrain.
+        /// </summary>
+        internal static Vector3 OnGroundOut(Vector3 p, float wayOut)
+        {
+            float top = wayOut + 2f;
+            float terrain = float.NaN;
+            if (ZoneSystem.instance != null && ZoneSystem.instance.GetGroundHeight(new Vector3(p.x, top, p.z), out float h)) terrain = h;
+            else if (WorldGenerator.instance != null) terrain = WorldGenerator.instance.GetHeight(p.x, p.z);
+            float y;
+            if (Physics.Raycast(new Vector3(p.x, top, p.z), Vector3.down, out RaycastHit hit, 40f, LayerMask.GetMask("Default", "static_solid", "Default_small", "piece", "terrain")))
+                y = float.IsNaN(terrain) ? hit.point.y : Mathf.Max(hit.point.y, terrain);   // (never under the terrain)
+            else y = float.IsNaN(terrain) ? wayOut - 0.3f : terrain;   // (terrain higher than the start, a slope: on it, never under it)
+            return new Vector3(p.x, y + 0.5f, p.z);
+        }
+
+        /// <summary>The ground at a point (what's built there, or the terrain), never below atLeast (a stray with no entrance near: straight
+        /// down from it).</summary>
         internal static Vector3 Ground(Vector3 p, float atLeast)
         {
             float y = ZoneSystem.instance != null ? ZoneSystem.instance.GetGroundHeight(p) : p.y;

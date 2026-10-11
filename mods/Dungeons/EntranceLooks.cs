@@ -235,6 +235,9 @@ namespace Dungeons
                 yield break;
             }
             if (standIn != null) standIn.SetActive(false);
+            // a reload in a world dresses a standing entrance again (HotReload.cs): the last copy's look goes only now that this one stands
+            foreach (Transform t in entrance.transform)
+                if (t != root.transform && t.name.StartsWith("quaddungeon_look_")) Object.Destroy(t.gameObject);
         }
 
         /// <summary>A location part: its kept children copied (as they stand in the location, moved so its doorway point is at the part's

@@ -28,7 +28,7 @@ namespace Dungeons
     /// is kept with it and listed by `dungeon packs` (a pack's problems with the game's rooms only show in a world: Packs.Get reads it
     /// with them). The rule is the same on every game, so the server and its players always end up with the same set.
     /// </summary>
-    internal static class PackSync
+    internal static partial class PackSync   // (HotReload.cs: the set in use carried over a reload)
     {
         public const string BuiltIn = "built in", Config = "config", Server = "server";
         private const int MaxFile = 8 << 20;        // one pack or look's JSON (Shifting Halls is ~0.5 MB)

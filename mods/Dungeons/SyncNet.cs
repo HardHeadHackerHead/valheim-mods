@@ -29,7 +29,7 @@ namespace Dungeons
     ///      told why. Never the player's own packs on a server: the world would split.
     /// Settings: the server's ResetDays (Plugin.cs, through ServerSettings); it's the only gameplay setting.
     /// </summary>
-    internal static class SyncNet
+    internal static partial class SyncNet   // (HotReload.cs: its state and handlers carried over a reload)
     {
         public const int Protocol = 1;
         private const string VersionRpc = "Dungeons_Version";   // ZPackage: protocol, the mod's version, the sender's own set's hash

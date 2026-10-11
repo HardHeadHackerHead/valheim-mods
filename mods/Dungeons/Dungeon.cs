@@ -151,7 +151,7 @@ namespace Dungeons
     /// to be made until it is built (Safety.HoldBack). A dungeon can be wider than the zones loaded around a player, though: one this game's
     /// player is inside when its entrance unloads stays built (Detached) until they leave it.
     /// </summary>
-    internal static class Dungeons
+    internal static partial class Dungeons   // (HotReload.cs: Frozen is carried over a reload)
     {
         public const float Height = 5000f;       // above the entrance, as the game's own interiors (Location.Awake)
         public const float Step = 50f;           // a dungeon that would overlap another goes up by steps of this

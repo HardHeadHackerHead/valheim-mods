@@ -25,7 +25,7 @@ namespace Dungeons
     ///   out of its dungeon on purpose. A player who falls out of one is put back at its way in.
     /// - Our teleports count no fall: while one runs and for a moment after it lands, falls are measured from where the player is.
     /// </summary>
-    internal static class Safety
+    internal static partial class Safety   // (HotReload.cs: what it holds is carried over a reload)
     {
         private const float HoldLimit = 30f;     // seconds held before being taken out to the entrance
         private const float GraceSeconds = 3f;   // after one of our teleports lands
@@ -77,6 +77,7 @@ namespace Dungeons
                 site = Dungeons.Covering(pos);
             }
             bool hold = site != null ? !site.Ready : asking || !ZNetScene.instance.IsAreaReady(pos) && Location.GetZoneLocation(pos) == null;
+            hold |= HotReload.Holds(pos);   // (a reload: the last copy's build still stands here until this copy's is complete, mechanisms too)
             if (!hold)
             {
                 Release();

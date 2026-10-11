@@ -69,6 +69,7 @@ namespace Dungeons
         {
             if (p == null || p != Player.m_localPlayer || Time.time < _next) return;
             _next = Time.time + 1f;
+            if (HotReload.Settling) return;   // (just reloaded: the dungeons aren't known and built here again yet, so "outside" means nothing)
             MechSet.SettleOrphan(p);
             Checkpoints.Tick(p);
             if (p.IsDead() || p.IsTeleporting() || Safety.Holding) return;

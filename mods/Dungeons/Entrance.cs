@@ -116,6 +116,7 @@ namespace Dungeons
             var named = (Dictionary<int, GameObject>)AccessTools.Field(typeof(ZNetScene), "m_namedPrefabs").GetValue(scene);
             foreach (GameObject prefab in Prefabs.Values)
             {
+                scene.m_prefabs.RemoveAll(p => p != prefab && p != null && p.name == prefab.name);   // (an older copy's: a reload in a world)
                 if (!scene.m_prefabs.Contains(prefab)) scene.m_prefabs.Add(prefab);
                 named[prefab.name.GetStableHashCode()] = prefab;   // lets it be made and loaded from saves
             }
@@ -123,7 +124,9 @@ namespace Dungeons
 
         public static void Unregister()
         {
-            if (_prefab == null) return;
+            // a reload in a world: left registered (an area loading before the next copy wakes would lose its entrances); the next copy
+            // replaces them by name (HotReload.cs)
+            if (_prefab == null || HotReload.Leaving) return;
             if (ZNetScene.instance != null)
             {
                 var named = (Dictionary<int, GameObject>)AccessTools.Field(typeof(ZNetScene), "m_namedPrefabs").GetValue(ZNetScene.instance);
@@ -225,6 +228,7 @@ namespace Dungeons
             if (View == null || View.GetZDO() == null) return;
             View.Register<string>("Dungeons_Act", RPC_Act);
             ZDO zdo = View.GetZDO();
+            Look = Entrance.LookOf(zdo);   // (as its prefab says; also when it's added to a standing entrance after a reload, HotReload.cs)
             if (View.IsOwner() && string.IsNullOrEmpty(zdo.GetString(Keys.Id))) zdo.Set(Keys.Id, Dungeons.NewId());
             Site = Dungeons.Track(this);
         }
