@@ -38,6 +38,7 @@ namespace Dungeons
         public MechSet Mechs;           // its moving parts, once it's built (null: none, or not built)
         public bool MechsMade;
         public float NextOwnerCheck;
+        public float NextClaim;         // (Tend: an entrance nobody owns, claimed at most once a second)
 
         public ZNetView View => Entrance != null ? Entrance.View : null;
         /// <summary>The entrance's ZDO: its object's, or the one kept from it while this game's ZDOMan still has it (its object unloaded, or
@@ -53,7 +54,8 @@ namespace Dungeons
         public void Act(string act)
         {
             if (ZRoutedRpc.instance == null || Id.Length == 0) return;
-            ZRoutedRpc.instance.InvokeRoutedRPC(ZRoutedRpc.Everybody, Dungeons.SiteRpc, Id, act);
+            string wire = Acts.Sent(this, act);   // (a one-off act gets an id: answered by the owner, sent again if not, never done twice: Acts.cs)
+            ZRoutedRpc.instance.InvokeRoutedRPC(ZRoutedRpc.Everybody, Dungeons.SiteRpc, Id, wire);
         }
 
         /// <summary>This game takes the entrance's ZDO (a command, or nobody owning it while this game's player is far inside).</summary>
@@ -300,7 +302,22 @@ namespace Dungeons
         private static void RPC_Site(long sender, string id, string act)
         {
             Site site = Sites.FirstOrDefault(s => !s.Gone && s.Id == id && s.IsOwner);
-            if (site != null) HandleAct(site, sender, act);
+            if (site == null && ZNet.instance != null && ZNet.instance.IsServer())
+            {
+                // nobody owns the entrance (or a game that left): the server decides, alone (every act passes it). With the dungeon built
+                // here it takes the entrance and acts; else the sender is told to (Acts.cs). Never dropped, never done twice.
+                Site built = Sites.FirstOrDefault(s => !s.Gone && s.Id == id && s.Ready && s.Mechs != null);
+                ZDO entrance = built?.Zdo ?? EntranceZdos().FirstOrDefault(z => z.GetString(Keys.Id) == id);
+                if (entrance != null && Acts.Unowned(entrance))
+                {
+                    if (built == null) { Acts.TellNoOwner(sender, id, act); return; }
+                    Plugin.Log.LogWarning($"Dungeon {id}: \"{act}\" came while nobody owned its entrance (owner {entrance.GetOwner()}): the server takes it and acts on it");
+                    built.Claim();
+                    site = built;
+                }
+            }
+            if (site == null) return;
+            Acts.Handle(site, sender, act);   // (once per act id, answered)
         }
 
         public static void HandleAct(Site site, long sender, string act)
@@ -473,7 +490,10 @@ namespace Dungeons
             Sweep.Register();
             Rebuild.Register();
             Strays.Register();
+            Acts.Register();
             Sweep.Tick();
+            try { Acts.Tick(); }
+            catch (Exception e) { if (Warned.Add("acts")) Plugin.Log.LogWarning("Acts waiting for an answer: " + e); }
             try { DungeonMusic.Update(); }
             catch (Exception e) { if (Warned.Add("music")) Plugin.Log.LogWarning("The dungeon's music: " + e); }
             try { UseReach.Update(); }
@@ -507,6 +527,19 @@ namespace Dungeons
         private static void Tend(Site site)
         {
             Rebuild.Watch(site);
+            // nobody owns the entrance (or a game that left) while a player is inside: this game takes it if its player is in there, the
+            // server if anyone is (an act needs an owner: Acts.cs)
+            if (site.Ready && Acts.Unowned(site.Zdo) && Time.time >= site.NextClaim)
+            {
+                Player me = Player.m_localPlayer;
+                bool mine = me != null && site.Contains(me.transform.position);
+                if (mine || (ZNet.instance != null && ZNet.instance.IsServer() && AnyoneInside(site)))
+                {
+                    site.NextClaim = Time.time + 1f;
+                    Plugin.Log.LogInfo($"Dungeon {site.Id}: nobody owned its entrance (owner {site.Zdo.GetOwner()}) with {(mine ? "this game's player" : "a player")} inside: this game takes it");
+                    site.Claim();
+                }
+            }
             if (site.IsOwner && site.Id.Length == 0) site.Zdo.Set(Keys.Id, NewId());   // (one made before it had an owner here)
             if (site.Layout == null && site.Problem == null && DungeonDB.instance != null && !string.IsNullOrEmpty(site.PackName))
             {

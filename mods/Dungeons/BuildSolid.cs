@@ -8,16 +8,20 @@ namespace Dungeons
     // Scenery parts players can't walk through. Some of the game's prefabs keep their colliders on layers characters pass (an item's
     // collider is on "item": players walked through the giant CharredCogwheel gears), and an item's collider is a small box for lying on the
     // ground, not its shape. So every scenery part (our rooms' and the mechanisms' moving parts, both made by MakePart):
-    // - its solid colliders on a pass-through layer go to "static_solid", one of the layers the game's characters stand on and bump into
-    //   (Character's ground mask: Default, static_solid, Default_small, piece, terrain, blocker, vehicle). "piece_nonsolid" is left alone:
-    //   the game means those (banners, cloth) to be walked through;
+    // - its solid colliders on the "item" layer (characters pass through it: the game means items to be picked up) go to "static_solid", one
+    //   of the layers the game's characters stand on and bump into (Character's ground mask: Default, static_solid, Default_small, piece,
+    //   terrain, blocker, vehicle). The other layers characters pass through are left alone (see PassThrough);
     // - an item gets a collider of its own shape when its own is much smaller than its mesh: its mesh when Unity can read it, else a
-    //   16-sided disc for a flat round one (a gear), else a box over its mesh. Added as a child, so they move with the part (a mechanism's
-    //   kinematic body carries its children's colliders: Character.m_lastGroundCollider finds them).
+    //   16-sided disc for a flat round one (a gear), else a box over its mesh. Added as a child, so they move with the part (Runtime moves a
+    //   mechanism's pivot and finds what a player stands on in its table of the colliders under it, made after MakePart returns).
     internal static partial class Builder
     {
-        /// <summary>Layers characters pass through that a scenery part's solid collider may still be on.</summary>
-        private static readonly string[] PassThrough = { "item", "effect", "smoke", "Ignore Raycast" };
+        /// <summary>Layers characters pass through that a scenery part's solid collider may still be on, and should not. Only "item": the game's
+        /// collision matrix (PhysicsManager, read with tools/dungeons/palette_tool.py) also lets characters through TransparentFX, Ignore
+        /// Raycast, UI, effect, ghost, piece_nonsolid, character_ghost, hitbox, skybox, pathblocker, viewblock and smoke, but those are meant
+        /// to be walked through (effects, helpers, the AI's path blockers, camera blockers): made solid they'd be invisible walls. An item is
+        /// the one thing the game makes non-solid because it's a pickup, which as scenery it isn't.</summary>
+        private static readonly string[] PassThrough = { "item" };
 
         private static HashSet<int> _passLayers;
         private static int _solidLayer = -2;

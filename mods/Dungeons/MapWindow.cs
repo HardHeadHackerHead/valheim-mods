@@ -771,7 +771,7 @@ namespace Dungeons
         }
 
         /// <summary>The engine's PNG encoder (ImageConversion, its own module: found by reflection, so the mod needs no reference to it).</summary>
-        private static byte[] EncodeToPng(Texture2D tex)
+        internal static byte[] EncodeToPng(Texture2D tex)
         {
             Type t = Type.GetType("UnityEngine.ImageConversion, UnityEngine.ImageConversionModule");
             MethodInfo encode = t?.GetMethod("EncodeToPNG", BindingFlags.Public | BindingFlags.Static, null, new[] { typeof(Texture2D) }, null);

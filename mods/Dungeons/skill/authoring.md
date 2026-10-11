@@ -23,6 +23,7 @@ scripts, never by hand: a room is hundreds of parts, and the checks below read t
   declared drops, with free descent and with no falls. Helpers: `encounter`, `door_gate`, `cracked_panel`, `secret_room`,
   `shortcut_door`.
 - **`testmechs.py`**: the small test pack, one room per mechanism, joined to the game's forest crypt rooms.
+- **`palettes/*.json`** (`palette_tool.py`): each theme's chosen pieces by role, with their facts from the game's files: new-dungeon.md.
 - **`prefab_bounds.json`**: each prefab's box in its own frame (filled by `bounds()` from the game's files the first time a prefab is used).
 - **`prefab_shapes.json`** (`prefab_shapes.py`): a hollow prefab's collider as many boxes (`giant_ribs`: a ribcage you walk through). The
   walk and gap checks use it in place of the one box.

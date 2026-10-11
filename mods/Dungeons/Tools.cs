@@ -36,6 +36,8 @@ namespace Dungeons
     ///                                  BepInEx/claude/shots/dungeon-map-&lt;floor&gt;.png (floor 1 the lowest; left out, the player's); "all": every
     ///                                  room, fog of war ignored (a cheat); "open": the window opened there too, for a screenshot (MapWindow.cs)
     ///   dungeon mapshot mini           what the corner minimap shows inside a dungeon, to BepInEx/claude/shots/dungeon-map-mini.png (MapMini.cs)
+    ///   dungeon tour [id] [rooms] [views]   pictures of each room (rooms: "all", or indices and names with commas; views a room, 2 by
+    ///                                  default) by the camera only, the player never moved: BepInEx/claude/shots/tour/<pack>-<seed>/ (MapTour.cs)
     ///   dungeon seeds &lt;pack&gt; &lt;count&gt;   lays out seeds 1..count without building them: failures and why, room counts, sizes, time
     ///   dungeon state [id]             everything about one dungeon: its saved state, where it stands, what's built here, who's inside
     ///   dungeon reset [id]             back to new now, as the timed reset does (nobody may be inside): mechanisms back at their start too
@@ -61,7 +63,7 @@ namespace Dungeons
     /// </summary>
     internal static class Tools
     {
-        private const string Usage = "dungeon packs | sync | reload [force] | respawn [same|new] [force] [id] | spawn <pack> [seed] | list | enter [id] | leave | map [id | <pack> <seed>] | mapshot [floor] [all] [open] | mapshot mini | seeds <pack> <count> | state [id] | reset [id] | remove [id] | mechs [id] | use <key> [id] | set <key> <state> [id] | solve [id] | check [pack] | aim | music | orphans [remove] | bring <player> | rooms [theme] | " + TriggerTools.Usage + "";
+        private const string Usage = "dungeon packs | sync | reload [force] | respawn [same|new] [force] [id] | spawn <pack> [seed] | list | enter [id] | leave | map [id | <pack> <seed>] | mapshot [floor] [all] [open] | mapshot mini | tour [id] [rooms] [views] | seeds <pack> <count> | test <pack> [seeds] | state [id] | reset [id] | remove [id] | mechs [id] | use <key> [id] | set <key> <state> [id] | solve [id] | check [pack] | aim | music | orphans [remove] | bring <player> | rooms [theme] | " + TriggerTools.Usage + "";
         private const string NoWorld = "the packs need the game's dungeon rooms: load a world first";
         private static BaseUnityPlugin _claudeTools;
         private static float _next;
@@ -99,7 +101,7 @@ namespace Dungeons
             switch (sub)
             {
                 case "rooms": Rooms(args, output, error); yield break;
-                case "packs": case "spawn": case "seeds": case "map": case "check":
+                case "packs": case "spawn": case "seeds": case "map": case "check": case "test":
                     if (DungeonDB.instance == null) { error(NoWorld); yield break; }
                     break;
             }
@@ -144,10 +146,20 @@ namespace Dungeons
                     output(Sweep.Orphans(remove));
                     yield break;
                 case "mapshot": DungeonMap.Shot(args, output, error); yield break;   // (added by the map: MapWindow.cs)
+                case "tour": { IEnumerator run = DungeonTour.Run(args, output, error); while (run.MoveNext()) yield return run.Current; yield break; }   // (added by the map agent: MapTour.cs)
                 case "spawn":
                     if (PackSync.OffReason != null) { error("dungeons are off on this server: " + PackSync.OffReason); yield break; }   // (SyncNet.cs)
                     { IEnumerator run = Spawn(args, output, error); while (run.MoveNext()) yield return run.Current; yield break; }
                 case "seeds": { IEnumerator run = Seeds(args, output, error); while (run.MoveNext()) yield return run.Current; yield break; }
+                case "test":   // (PackTest.cs, layout's: the offline gate's pack checks over many seeds; changes nothing)
+                {
+                    if (args.Length < 2) { error("dungeon test <pack> [seeds]: which pack? (dungeon packs lists them)"); yield break; }
+                    int seeds = 200;
+                    if (args.Length > 2 && !int.TryParse(args[2], out seeds)) { error($"dungeon test: \"{args[2]}\" isn't a number of seeds"); yield break; }
+                    IEnumerator run = PackTest.Run(args[1], seeds, output, error);
+                    while (run.MoveNext()) yield return run.Current;
+                    yield break;
+                }
                 case "enter":
                 case "leave": { IEnumerator run = Move(sub, args, output, error); while (run.MoveNext()) yield return run.Current; yield break; }
             }

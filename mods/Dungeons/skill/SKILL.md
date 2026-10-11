@@ -9,6 +9,8 @@ The mod is `mods/Dungeons` in the valheim-mods repo (`E:\valhiem`); its design i
 know about making dungeons with it. **The code is the truth**: every file starts with a comment saying what it does and why, and the pack
 format is kept at the top of `Packs.cs`. If this skill disagrees with the code, the code wins: fix the skill.
 
+- **[new-dungeon.md](new-dungeon.md)**: the playbook for a new dungeon kind, from idea to passing the gate, and what the player cares
+  about. Start here for a new kind.
 - **[pack-format.md](pack-format.md)**: every field of a pack, its rooms, plan, mechanisms, encounters, enemies, loot and entrance looks.
 - **[authoring.md](authoring.md)**: writing our own rooms with the generators (`dungeon_parts.py`, `giant_kit.py`), the checks in
   detail, the conventions, and the lessons from authoring rooms.
@@ -211,6 +213,8 @@ far enter, use, set, bring, `mapshot all`, `orphans remove`.
 | `dungeon list` | The dungeons in the world (all on the host, the ones this game knows on a client). |
 | `dungeon enter [id]` / `leave` | In or out as the entrance and the way out do. |
 | `dungeon map [id \| <pack> <seed>]` | The layout floor by floor as text (also `BepInEx/claude/dungeon-map.txt`). |
+| `dungeon test <pack> [seeds]` | The gate's per-layout checks over many seeds, in the game (changes nothing): new-dungeon.md. |
+| `dungeon tour [id] [rooms] [views]` | Camera-only pictures of a built dungeon's rooms (untested in the game yet): new-dungeon.md. |
 | `dungeon mapshot [floor] [all] [open]` / `mapshot mini` | The in-game map as this character sees it, as a picture in `BepInEx/claude/shots/`. |
 | `dungeon seeds <pack> <count>` | Lays out seeds 1..count: failures and why, room counts, sizes, time. |
 | `dungeon state [id]` | Everything about one dungeon. |
@@ -378,6 +382,15 @@ Each of these happened in a test. Don't undo the fix; check new work against it.
     dungeon chests with whatever players had left in them, and the first `LootSig` check would have deleted touched loot on every reset
     without a word. Read `s_items` with `GetByteArray` (or load the chest's `Inventory`), and test every "is it empty / untouched" check
     with a chest that holds something.
+27. **The entrance can lose its owner while everyone is inside.** Everything a player does in a dungeon (`Site.Act`) is handled by the
+    entrance's owner. The game's server releases an object's ownership when its owner's active area no longer reaches it
+    (`ZDOMan.ReleaseNearbyZDOS`, every 2 s): about 140 m into a big dungeon. In Quadbobheim (0.2.2) everyone was deep inside, nobody owned
+    the entrance, and lever pulls were dropped without a word. The fix (`Acts.cs`): the server keeps the entrance with its owner while
+    they're above 3000 m; a game whose player is inside, or the server, claims an unowned entrance; the owner answers every one-off act
+    (`Dungeons_Ack`), and a sender with no answer in 1.5 s takes the entrance over or sends again. **Rules for new code:** every new
+    player action goes through `Site.Act`: never call the owner's handler directly, and never require `IsOwner` on the acting game. An
+    act that's sent once a second anyway gets its prefix in `Acts.Repeated`. (The release check-list has the test: two players far
+    inside, the entrance unloaded on both, pull a lever.)
 
 ## Not built yet
 

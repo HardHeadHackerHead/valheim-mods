@@ -252,15 +252,15 @@
     {"prefab": "piece_walltorch", "at": [-5.3, 1.133, 3.018], "euler": [0.0, 90.0, 0.0]},
     {"prefab": "piece_walltorch", "at": [5.3, 1.133, -3.018], "euler": [0.0, 270.0, 0.0]},
     {"prefab": "piece_walltorch", "at": [-5.3, 1.133, -2.982], "euler": [0.0, 90.0, 0.0]},
-    {"prefab": "blackmarble_2x2x1", "at": [0.0, -0.6, 4.6], "scale": [0.6, 0.4, 0.8]}
+    {"prefab": "blackmarble_2x2x1", "at": [3.5, -0.6, 4.6], "scale": [0.6, 0.4, 0.8]}
    ],
    "triggers": [
     {
      "id": "key",
      "on": {"event": "enter", "at": [0, 0, -2], "size": [12, 5, 8]},
      "do": [
-      {"item": "smallkey", "at": [0, 0.2, 4.6]},
-      {"sound": "sfx_secretfound", "at": [0, 0, 4.6]},
+      {"item": "smallkey", "at": [3.5, 0.2, 4.6]},
+      {"sound": "sfx_secretfound", "at": [3.5, 0, 4.6]},
       {"message": "Something glints by the north wall."}
      ]
     },
