@@ -19,6 +19,27 @@ namespace FeedFromChests
     {
         private static float _next, _summaryAt = -100f;
 
+        // Every shield generator, ballista and sap extractor that exists, kept up to date as they appear (searching the whole scene
+        // for them every few seconds cost real time).
+        private static readonly List<ShieldGenerator> Shields = new List<ShieldGenerator>();
+        private static readonly List<Turret> Ballistas = new List<Turret>();
+        private static readonly List<SapCollector> Extractors = new List<SapCollector>();
+
+        private static void Add<T>(List<T> list, T item) where T : Object { if (item != null && !list.Contains(item)) list.Add(item); }
+        public static void Register(ShieldGenerator g) => Add(Shields, g);
+        public static void Register(Turret t) => Add(Ballistas, t);
+        public static void Register(SapCollector c) => Add(Extractors, c);
+
+        /// <summary>Pick up the ones that already exist (once, when the mod loads or reloads).</summary>
+        public static void Seed()
+        {
+            foreach (ShieldGenerator g in Object.FindObjectsByType<ShieldGenerator>(FindObjectsSortMode.None)) Register(g);
+            foreach (Turret t in Object.FindObjectsByType<Turret>(FindObjectsSortMode.None)) Register(t);
+            foreach (SapCollector c in Object.FindObjectsByType<SapCollector>(FindObjectsSortMode.None)) Register(c);
+        }
+
+        public static void Clear() { Shields.Clear(); Ballistas.Clear(); Extractors.Clear(); }
+
         public static void Tick(Plugin plugin, Player player, float range, float feedRadius, float outRadius, bool shields, bool ballistas, bool sap)
         {
             if (!shields && !ballistas && !sap) return;
@@ -27,36 +48,40 @@ namespace FeedFromChests
             float max = range * range;
             int sh = 0, ba = 0, sa = 0;
 
+            Shields.RemoveAll(g => g == null);
+            Ballistas.RemoveAll(t => t == null);
+            Extractors.RemoveAll(c => c == null);
+
             if (shields)
-                foreach (ShieldGenerator g in Object.FindObjectsOfType<ShieldGenerator>())
+                foreach (ShieldGenerator g in Shields.ToArray())
                 {
                     if ((g.transform.position - player.transform.position).sqrMagnitude > max || !Mine(g)) continue;
                     ZDO z = g.GetComponent<ZNetView>().GetZDO();
                     float fuel = z.GetFloat(ZDOVars.s_fuel, g.m_defaultFuel);
                     if (fuel > g.m_maxFuel - 1f || g.m_fuelItems.Count == 0) continue;
                     List<Container> chests = Chests.Near(g.transform.position, feedRadius);
-                    ItemDrop item = g.m_fuelItems.FirstOrDefault(f => f != null && Chests.Count(chests, f.m_itemData.m_shared.m_name) > plugin.KeepFuel);
+                    ItemDrop item = g.m_fuelItems.FirstOrDefault(f => f != null && Chests.Stock(chests, f.m_itemData.m_shared.m_name) > plugin.KeepFuel);
                     if (item == null || Chests.Take(chests, item.m_itemData.m_shared.m_name, 1) < 1) continue;
                     g.GetComponent<ZNetView>().InvokeRPC("RPC_AddFuel");
                     sh++;
                 }
 
             if (ballistas)
-                foreach (Turret t in Object.FindObjectsOfType<Turret>())
+                foreach (Turret t in Ballistas.ToArray())
                 {
                     if (t.m_maxAmmo <= 0 || (t.transform.position - player.transform.position).sqrMagnitude > max || !Mine(t)) continue;
                     if (t.GetAmmo() >= t.m_maxAmmo) continue;
                     List<Container> chests = Chests.Near(t.transform.position, feedRadius);
                     string current = t.GetAmmo() > 0 ? t.GetAmmoType() : null; // it holds one kind at a time
                     ItemDrop ammo = t.m_allowedAmmo.Select(a => a.m_ammo).FirstOrDefault(a => a != null && (current == null || a.gameObject.name == current)
-                                                                                                   && Chests.Count(chests, a.m_itemData.m_shared.m_name) > plugin.KeepFuel);
+                                                                                                   && Chests.Stock(chests, a.m_itemData.m_shared.m_name) > plugin.KeepFuel);
                     if (ammo == null || Chests.Take(chests, ammo.m_itemData.m_shared.m_name, 1) < 1) continue;
                     t.GetComponent<ZNetView>().InvokeRPC("RPC_AddAmmo", ammo.gameObject.name);
                     ba++;
                 }
 
             if (sap)
-                foreach (SapCollector c in Object.FindObjectsOfType<SapCollector>())
+                foreach (SapCollector c in Extractors.ToArray())
                 {
                     if ((c.transform.position - player.transform.position).sqrMagnitude > max || !Mine(c) || c.m_spawnItem == null) continue;
                     ZNetView view = c.GetComponent<ZNetView>();
@@ -96,5 +121,23 @@ namespace FeedFromChests
             v.ClaimOwnership();
             return true;
         }
+    }
+
+    [HarmonyPatch(typeof(ShieldGenerator), "Start")]
+    internal static class ShieldGenerator_Start
+    {
+        private static void Postfix(ShieldGenerator __instance) => Defenses.Register(__instance);
+    }
+
+    [HarmonyPatch(typeof(Turret), "Awake")]
+    internal static class Turret_Awake
+    {
+        private static void Postfix(Turret __instance) => Defenses.Register(__instance);
+    }
+
+    [HarmonyPatch(typeof(SapCollector), "Awake")]
+    internal static class SapCollector_Awake
+    {
+        private static void Postfix(SapCollector __instance) => Defenses.Register(__instance);
     }
 }

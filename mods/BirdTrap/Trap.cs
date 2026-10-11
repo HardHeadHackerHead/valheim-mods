@@ -12,11 +12,12 @@ namespace BirdTrap
     /// Everything is kept on the trap (how much bait, when the next bird comes, whether one is in), in game time, so birds come while you
     /// are away and everyone nearby sees the same trap. The game that owns the trap (usually the nearest player's) decides the catch, and
     /// it alone changes the trap: pressing E asks it (an RPC), and the feathers come only on its yes, so two players plucking one bird at
-    /// once can't both get them.
+    /// once can't both get them. Bait put in is taken from your bag at once and given back if the owner doesn't answer (it left, or the trap
+    /// went out of range here), and the bait still in a trap that is broken or removed drops beside it, as a smelter's ore does.
     /// </summary>
     public class TrapPiece : MonoBehaviour, Interactable, Hoverable
     {
-        private const string KeyBait = "bt_bait", KeyNext = "bt_next", KeyBird = "bt_bird", KeyWhy = "bt_why", KeyFrom = "bt_from";
+        private const string KeyBait = "bt_bait", KeyKinds = "bt_kinds", KeyNext = "bt_next", KeyBird = "bt_bird", KeyWhy = "bt_why", KeyFrom = "bt_from";
 
         // Where the model's moving parts sit (tools/modelkit/birdtrap.py): the door raised when set, and lowered by Lift when it drops.
         private const float Lift = 0.3f;
@@ -35,8 +36,12 @@ namespace BirdTrap
         private float _doorAt = 1f;          // 1 = up (set), 0 = down (sprung): where the door is drawn
         private bool _hadBird, _seen;
         private float _nextThink, _pluckAskedAt = -9f;
-        private readonly System.Collections.Generic.List<string> _baitSent = new System.Collections.Generic.List<string>(); // bait on its way to the owner (given back if it doesn't fit)
-        private float _baitSentAt;
+        private WearNTear _wnt;
+
+        /// <summary>Bait sent to the trap's owner, waiting for its answer (what doesn't fit comes back).</summary>
+        private class BaitAsk { public long To; public string[] Items; public float At; public bool Back; }
+        private readonly System.Collections.Generic.List<BaitAsk> _asks = new System.Collections.Generic.List<BaitAsk>();
+        private const float AnswerWait = 5f;   // seconds: no answer by then, the bait comes back
 
         private const string RpcBait = "bt_Bait", RpcBaitTaken = "bt_BaitTaken", RpcPluck = "bt_Pluck", RpcPlucked = "bt_Plucked";
         private static readonly string[] Rpcs = { RpcBait, RpcBaitTaken, RpcPluck, RpcPlucked };
@@ -45,6 +50,10 @@ namespace BirdTrap
         {
             All.Remove(this);
             if (_nview != null) foreach (string rpc in Rpcs) _nview.Unregister(rpc); // (a reloaded copy registers them again)
+            if (_wnt != null) _wnt.m_onDestroyed -= OnPieceDestroyed;
+            // Out of range here (or gone) with bait on its way: its answer can't arrive any more, so the bait comes back now.
+            foreach (BaitAsk ask in _asks) if (!ask.Back) GiveBack(ask, 0);
+            _asks.Clear();
         }
 
         private void Awake()
@@ -58,6 +67,8 @@ namespace BirdTrap
                 _nview.Register<int>(RpcBaitTaken, RPC_BaitTaken);
                 _nview.Register(RpcPluck, RPC_Pluck);
                 _nview.Register<int>(RpcPlucked, RPC_Plucked);
+                _wnt = GetComponent<WearNTear>();
+                if (_wnt != null) _wnt.m_onDestroyed += OnPieceDestroyed;   // (on the owner's game: the bait in it drops)
             }
             foreach (Transform t in GetComponentsInChildren<Transform>(true))
             {
@@ -85,6 +96,7 @@ namespace BirdTrap
         {
             ZDO zdo = Zdo;
             if (zdo == null) return;
+            if (_asks.Count > 0) CheckAsks();
             if (zdo.IsOwner() && Time.time >= _nextThink)
             {
                 _nextThink = Time.time + 1f;
@@ -117,6 +129,8 @@ namespace BirdTrap
             }
             zdo.Set(KeyWhy, "");
             zdo.Set(KeyBait, bait - 1);   // it ate the bait it came for
+            var kinds = Kinds(zdo);
+            if (kinds.Count >= bait && kinds.Count > 0) { kinds.RemoveAt(0); zdo.Set(KeyKinds, string.Join(",", kinds.ToArray())); }   // (oldest first: bait put in before 1.2.1 isn't listed)
             zdo.Set(KeyNext, 0L);
             zdo.Set(KeyBird, true);
         }
@@ -213,8 +227,7 @@ namespace BirdTrap
 
             int bait = zdo.GetInt(KeyBait, 0), max = Plugin.MaxBait.Value;
             if (bait >= max) { player.Message(MessageHud.MessageType.Center, T("birdtrap_full")); return true; }
-            if (_baitSent.Count > 0 && Time.time - _baitSentAt < 5f) return true; // (still waiting for the owner's answer)
-            _baitSent.Clear(); // (no answer came: the owner left, and that bait went with it, as the game's own fermenter does)
+            if (_asks.Exists(a => !a.Back)) return true; // (still waiting for the owner's answer)
             Inventory inv = player.GetInventory();
             var sent = new System.Collections.Generic.List<string>();
             while (bait + sent.Count < max)
@@ -226,10 +239,67 @@ namespace BirdTrap
                 if (!alt) break; // one at a time; the alternate use fills it
             }
             if (sent.Count == 0) { player.Message(MessageHud.MessageType.Center, T("birdtrap_need_bait")); return true; }
-            _baitSent.AddRange(sent);
-            _baitSentAt = Time.time;
+            _asks.Add(new BaitAsk { To = zdo.GetOwner(), Items = sent.ToArray(), At = Time.time });   // (before asking: a trap this game owns answers at once)
             _nview.InvokeRPC(RpcBait, string.Join(",", sent.ToArray()));
             return true;
+        }
+
+        /// <summary>No answer from the owner in time (it left, or the message was lost): the bait comes back. Kept a while after, so a late
+        /// answer that took it after all takes it from the bag again rather than counting it twice.</summary>
+        private void CheckAsks()
+        {
+            foreach (BaitAsk ask in _asks)
+                if (!ask.Back && Time.time - ask.At > AnswerWait) { GiveBack(ask, 0); ask.Back = true; }
+            _asks.RemoveAll(a => a.Back && Time.time - a.At > 120f);
+        }
+
+        /// <summary>The bait of this ask past the first <paramref name="taken"/>, back into your bag (or at your feet when it's full).</summary>
+        private static void GiveBack(BaitAsk ask, int taken)
+        {
+            Player player = Player.m_localPlayer;
+            if (player == null || ZNetScene.instance == null) return;
+            for (int i = taken; i < ask.Items.Length; i++)
+            {
+                GameObject back = ZNetScene.instance.GetPrefab(ask.Items[i]);
+                if (back == null) continue;
+                if (player.GetInventory().CanAddItem(back, 1)) player.GetInventory().AddItem(back, 1);
+                else Instantiate(back, player.transform.position + Vector3.up, Quaternion.identity);
+            }
+        }
+
+        /// <summary>A late answer for bait already given back: the trap took <paramref name="taken"/> of it after all, so that much leaves the
+        /// bag again (the same kind, or other bait).</summary>
+        private static void TakeAgain(Player player, BaitAsk ask, int taken)
+        {
+            Inventory inv = player.GetInventory();
+            for (int i = 0; i < taken; i++)
+            {
+                string kind = ask.Items[i];
+                ItemDrop.ItemData food = inv.GetAllItems().FirstOrDefault(x => x.m_dropPrefab != null && x.m_dropPrefab.name == kind) ?? inv.GetAllItems().FirstOrDefault(IsBait);
+                if (food == null) break;
+                inv.RemoveItem(food, 1);
+            }
+        }
+
+        /// <summary>The kinds of bait in the trap, oldest first (bait put in before 1.2.1 isn't listed).</summary>
+        private static System.Collections.Generic.List<string> Kinds(ZDO zdo) =>
+            zdo.GetString(KeyKinds, "").Split(new[] { ',' }, System.StringSplitOptions.RemoveEmptyEntries).ToList();
+
+        /// <summary>The owner: the trap was broken or removed. The bait still in it drops beside it (the game's smelter drops its ore so).</summary>
+        private void OnPieceDestroyed()
+        {
+            ZDO zdo = Zdo;
+            if (zdo == null || !_nview.IsOwner() || ZNetScene.instance == null) return;
+            int bait = zdo.GetInt(KeyBait, 0);
+            var kinds = Kinds(zdo);
+            foreach (string kind in kinds.Skip(Mathf.Max(0, kinds.Count - bait)))
+            {
+                GameObject prefab = ZNetScene.instance.GetPrefab(kind);
+                if (prefab == null) continue;
+                ItemDrop.OnCreateNew(Instantiate(prefab, transform.position + Vector3.up * 0.5f + Random.insideUnitSphere * 0.3f, Quaternion.Euler(0f, Random.Range(0f, 360f), 0f)));
+            }
+            zdo.Set(KeyBait, 0);
+            zdo.Set(KeyKinds, "");
         }
 
         // ---- the owner's answers --------------------------------------------------------------------------------------------------------
@@ -239,11 +309,15 @@ namespace BirdTrap
         {
             ZDO zdo = Zdo;
             if (zdo == null || !_nview.IsOwner()) { _nview.InvokeRPC(sender, RpcBaitTaken, 0); return; } // (not ours any more: they get it all back)
-            int offered = (items ?? "").Split(new[] { ',' }, System.StringSplitOptions.RemoveEmptyEntries).Length;
+            string[] offered = (items ?? "").Split(new[] { ',' }, System.StringSplitOptions.RemoveEmptyEntries).TakeWhile(n => Baits.Contains(n)).ToArray();   // (only bait: it drops again if the trap is broken)
             int bait = zdo.GetInt(KeyBait, 0);
-            int taken = Mathf.Clamp(Plugin.MaxBait.Value - bait, 0, offered);
+            int taken = Mathf.Clamp(Plugin.MaxBait.Value - bait, 0, offered.Length);
             if (zdo.GetBool(KeyBird, false)) taken = 0; // (a bird is in: pluck it first)
-            if (taken > 0) zdo.Set(KeyBait, bait + taken);
+            if (taken > 0)
+            {
+                zdo.Set(KeyBait, bait + taken);
+                zdo.Set(KeyKinds, string.Join(",", Kinds(zdo).Concat(offered.Take(taken)).ToArray()));
+            }
             _nview.InvokeRPC(sender, RpcBaitTaken, taken);
         }
 
@@ -251,17 +325,13 @@ namespace BirdTrap
         private void RPC_BaitTaken(long sender, int taken)
         {
             Player player = Player.m_localPlayer;
-            if (player == null || _baitSent.Count == 0) return;
-            taken = Mathf.Clamp(taken, 0, _baitSent.Count);
-            string used = _baitSent[0];
-            for (int i = taken; i < _baitSent.Count; i++)
-            {
-                GameObject back = ZNetScene.instance != null ? ZNetScene.instance.GetPrefab(_baitSent[i]) : null;
-                if (back == null) continue;
-                if (player.GetInventory().CanAddItem(back, 1)) player.GetInventory().AddItem(back, 1);
-                else Instantiate(back, player.transform.position + Vector3.up, Quaternion.identity);
-            }
-            _baitSent.Clear();
+            BaitAsk ask = _asks.Find(a => a.To == sender) ?? (_asks.Count > 0 ? _asks[0] : null);   // (an owner answers in the order asked)
+            if (player == null || ask == null) return;
+            _asks.Remove(ask);
+            taken = Mathf.Clamp(taken, 0, ask.Items.Length);
+            if (ask.Back) { if (taken == 0) return; TakeAgain(player, ask, taken); }   // (late: it was given back already)
+            else GiveBack(ask, taken);
+            string used = ask.Items[0];
             ZDO zdo = Zdo;
             int now = zdo != null ? zdo.GetInt(KeyBait, 0) : taken, max = Plugin.MaxBait.Value;
             GameObject usedPrefab = ZNetScene.instance != null ? ZNetScene.instance.GetPrefab(used) : null;

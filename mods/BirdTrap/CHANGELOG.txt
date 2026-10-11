@@ -1,3 +1,5 @@
+1.2.1: Fix: bait you put in a trap whose owner didn't answer (they left, or the trap went out of range) was lost: it now comes back to your bag after a few seconds. Fix: the bait still in a trap that is broken or removed now drops beside it, as a smelter's ore does (bait put in before this version isn't known by kind and doesn't drop).
+
 1.2.0: Now in your language: English, Russian, German, Chinese (Simplified), Portuguese (Brazil), Spanish, French, Polish and Turkish, following the game's own Language setting. The game's own names are used for its things (items, creatures, lands, stations). The translations were made with AI: to correct a line, or add a language, put a file in BepInEx/config/translations/com.quad.birdtrap/ named after the game's name for the language (German.json...) with only the lines you change, copied from translations/English.json on GitHub. The bait's name keeps its capital letters (German nouns need them).
 
 1.1.2: A clearer page: what it does, who needs it in multiplayer, how it gets on with other mods, and where to report a bug. The game itself is unchanged.

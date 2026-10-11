@@ -57,12 +57,18 @@ namespace FeedFromChests
             return conversion != null ? (float)AccessTools.Field(conversion.GetType(), "m_cookTime").GetValue(conversion) : 0f;
         }
 
-        /// <summary>Pressing E at a spit with food that is done: take all of it, into your inventory. Returns how many came off.</summary>
+        /// <summary>
+        /// Pressing E at a spit with food that is done: take all of it, into your inventory. Returns how many came off. Only on a station
+        /// this game runs (then the station's own removal runs right here, at once): one another player's game runs may be taking the
+        /// same food off by itself at this moment (its <see cref="Tick"/>), and taking it over here would hand that food out twice. There
+        /// this returns 0 and E does what it does in the game: the owner's game takes one off and throws it to you.
+        /// </summary>
         public static int TakeAllInto(Player player, CookingStation s)
         {
             ZNetView view = s.GetComponent<ZNetView>();
             if (view == null || !view.IsValid() || OnInteractM == null) return 0;
-            view.ClaimOwnership();                     // then the station's own removal runs right here, at once
+            if (!view.HasOwner()) view.ClaimOwnership(); // nobody runs it: ours (as the game does when food is put on)
+            if (!Claims.Settled(view)) return 0;
             int taken = 0;
             DeliverTo = player;
             try
@@ -90,6 +96,7 @@ namespace FeedFromChests
                 ZNetView view = s.GetComponent<ZNetView>();
                 if (view == null || !view.IsValid()) continue;
                 if (!view.IsOwner()) { if (view.HasOwner()) continue; view.ClaimOwnership(); } // exactly one player runs each station
+                if (!Claims.Settled(view)) continue; // (claimed from another player's game a moment ago: its last changes first)
                 AutoSetting setting = AutoFeed.Read(s);
                 if (setting.TakeOff && takeOffDefault) TakeOffDone(s, player.transform.position);
                 if (setting.On && setting.Allowed.Count > 0) plugin.CookAutoStep(player, s, setting);
@@ -212,14 +219,14 @@ namespace FeedFromChests
                 if (info.Fuel != null && station.m_useFuel && Cooking.Fuel(station) < station.m_maxFuel - 1)
                 {
                     string fuel = info.Fuel.m_itemData.m_shared.m_name;
-                    if (setting.Allowed.Contains(fuel) && Limits.MayFeed(info, setting, plan, info.Fuel, true, Chests.Count(chests, fuel), _outputRadius.Value, out _))
+                    if (setting.Allowed.Contains(fuel) && Limits.MayFeed(info, setting, plan, info.Fuel, true, Chests.Stock(chests, fuel), _outputRadius.Value, out _))
                         AddOne(player, info, info.Fuel, true, chests, chestsOnly: true);
                 }
                 if (!Cooking.HasFreeSlot(station)) return;
                 foreach (ItemDrop drop in info.Inputs.OrderBy(d => Tiers.Rank(d.m_itemData.m_shared)))
                 {
                     string name = drop.m_itemData.m_shared.m_name;
-                    if (!setting.Allowed.Contains(name) || !Limits.MayFeed(info, setting, plan, drop, false, Chests.Count(chests, name), _outputRadius.Value, out _)) continue;
+                    if (!setting.Allowed.Contains(name) || !Limits.MayFeed(info, setting, plan, drop, false, Chests.Stock(chests, name), _outputRadius.Value, out _)) continue;
                     if (AddOne(player, info, drop, false, chests, chestsOnly: true)) break; // one per step
                 }
             }

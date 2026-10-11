@@ -10,5 +10,6 @@
   "parkour_hint_shimmy": "Sol veya sağ seni kenar boyunca ilerletir.",
   "parkour_hint_slide": "Kayma! Kaymaya devam etmek için Çömel'i basılı tut, hızınla fırlamak için Zıpla.",
   "parkour_hint_landing_slide": "Alçak bir atlayıştan inerken kayarak inmek için yere değmeden hemen önce Çömel'e bas.",
-  "skill_195522812": "Parkur"
+  "skill_195522812": "Parkur",
+  "parkour_dungeon": "Burada parkur yapılamaz."
 }

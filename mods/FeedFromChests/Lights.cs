@@ -48,6 +48,7 @@ namespace FeedFromChests
                 if (view == null || !view.IsValid()) continue;
                 near++;
                 if (!view.IsOwner()) { if (view.HasOwner()) { others++; continue; } view.ClaimOwnership(); } // exactly one player runs each fire
+                if (!Claims.Settled(view)) continue; // (claimed from another player's game a moment ago: its last changes first)
                 if (Mathf.CeilToInt(FuelOf(f)) >= f.m_maxFuel) { full++; continue; }
                 tried++;
                 plugin.RefuelFromChests(player, f);
@@ -69,7 +70,7 @@ namespace FeedFromChests
         {
             if (!Stations.TryGet(fire.gameObject, out StationInfo info, out _) || info.Fuel == null) return;
             List<Container> chests = Chests.Near(info.Position, _autoRadius.Value);
-            if (chests.Count == 0 || Chests.Count(chests, info.Fuel.m_itemData.m_shared.m_name) <= KeepFuel) return; // always leave a few, for crafting
+            if (chests.Count == 0 || Chests.Stock(chests, info.Fuel.m_itemData.m_shared.m_name) <= KeepFuel) return; // always leave a few, for crafting
             AutoFeed.Silent = true;
             bool added;
             try { added = AddOne(player, info, info.Fuel, true, chests, chestsOnly: true); }

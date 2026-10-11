@@ -10,11 +10,11 @@ namespace SkalTavern
     /// <summary>
     /// Ale and mead that get you tipsy, and a toast. Four drinks come from the cauldron (ale, honey mead, blueberry wine, skaldic mead); each
     /// one raises how drunk you are, and that wears off with time. A little drink is warming and gives you a bit of stamina; more and the
-    /// world sways and your feet wander; too much and you stagger, and later have a hangover. Press the toast key beside friends (or your
-    /// companions) and everyone who raises a cup together gets a short Skal! buff.
+    /// world sways and your feet wander; too much and you stagger, and later have a hangover. A mug is drunk in four swigs, and every swig is
+    /// a toast: beside friends (or your companions), everyone who raises a cup together gets a short Skal! buff.
     ///
-    /// Split across files: Plugin.cs (settings, setup), Drinks.cs (the items, recipes and effects), Tipsy.cs (how drunk you are and what it
-    /// does), Toast.cs (the toast and its buff).
+    /// Split across files: Plugin.cs (settings, setup), Drinks.cs (the items, recipes and effects), Swigs.cs (a mug, four swigs), Tipsy.cs
+    /// (how drunk you are and what it does), Toast.cs (the toast and its buff).
     /// </summary>
     [BepInPlugin(Guid, Name, Version)]
     public class Plugin : BaseUnityPlugin
@@ -22,7 +22,7 @@ namespace SkalTavern
         public const string Guid = "com.quad.skaltavern";
         public const string OldGuid = "com.dhack.skaltavern"; // (its id until 2026-10: settings move over by themselves, see Shared/Migration.cs)
         public const string Name = "SkalTavern";
-        public const string Version = "0.4.0";
+        public const string Version = "0.5.0";
 
         internal static Plugin Instance;
         internal static ManualLogSource Log;
@@ -30,7 +30,6 @@ namespace SkalTavern
 
         internal static ConfigEntry<float> SoberMinutes, Sway, Drift, ToastSeconds, Strength;
         internal static ConfigEntry<bool> StumbleOn, PassOutOn, HangoverOn, ScreenFx, Muffle, StarsOn, LeanOn, HiccupsOn, SlurOn, ConfusionOn, PukeOn;
-        internal static ConfigEntry<KeyboardShortcut> ToastKey;
 
         private Harmony _harmony;
         internal int AwakeFrame;
@@ -59,8 +58,7 @@ namespace SkalTavern
             StumbleOn = Synced.Add(Config.Bind("Drinking", "Stumble", true, "Very drunk, you stagger now and then." + ServerSays));
             PassOutOn = Synced.Add(Config.Bind("Drinking", "PassOut", true, "Too much drink knocks you down (and sobers you a little)." + ServerSays));
             HangoverOn = Synced.Add(Config.Bind("Drinking", "Hangover", true, "After a big night you wake with a hangover: slower stamina and health for a few minutes." + ServerSays));
-            ToastKey = Config.Bind("Toast", "Key", new KeyboardShortcut(KeyCode.B), "Raise a cup: a toast with whoever is near. Friends who toast at the same time (and your companions) give each other a Skal! buff.");
-            ToastSeconds = Synced.Add(Config.Bind("Toast", "Window", 6f, new ConfigDescription("How many seconds apart two toasts can be and still count as together." + ServerSays, new AcceptableValueRange<float>(2f, 20f))));
+            ToastSeconds = Synced.Add(Config.Bind("Toast", "Window", 6f, new ConfigDescription("Every swig of a drink is a toast with whoever is near. How many seconds apart two toasts can be and still count as together: friends who drink together (and your companions) get a Skal! buff." + ServerSays, new AcceptableValueRange<float>(2f, 20f))));
 
             _harmony = new Harmony(Guid);
             _harmony.PatchAll(typeof(Plugin).Assembly);
@@ -78,12 +76,7 @@ namespace SkalTavern
             Tipsy.Tick(player, Time.deltaTime);
             Body.Tick(player, Time.deltaTime);
             Sound.Tick(Tipsy.Level);
-            if (ToastKey.Value.MainKey != KeyCode.None && Input.GetKeyDown(ToastKey.Value.MainKey) && !TypingOrMenuOpen()) Toast.Raise(player);
         }
-
-        private static bool TypingOrMenuOpen() =>
-            (Chat.instance != null && Chat.instance.HasFocus()) || Console.IsVisible() || TextInput.IsVisible() || Minimap.InTextInput() || Menu.IsVisible()
-            || Minimap.IsOpen() || StoreGui.IsVisible() || InventoryGui.IsVisible();
 
         private void OnDestroy()
         {

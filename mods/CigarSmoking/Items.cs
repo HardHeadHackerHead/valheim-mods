@@ -13,13 +13,13 @@ namespace CigarSmoking
             foreach (Strain s in Strains.All)
             {
                 MakeItem(source, s.Seeds, s.Key("seeds"), s.Key("seeds_desc"),
-                         ItemDrop.ItemData.ItemType.Material, 50, 0.05f, 3, Icons.Get("seeds_" + s.Id), "seeds_" + s.Id);
+                         ItemDrop.ItemData.ItemType.Material, 50, 0.05f, Icons.Get("seeds_" + s.Id), "seeds_" + s.Id);
                 MakeItem(source, s.Fresh, s.Key("leaf"), s.Key("leaf_desc"),
-                         ItemDrop.ItemData.ItemType.Material, 50, 0.1f, 4, Icons.Get("leaf_" + s.Id + "_fresh"), "leaf_" + s.Id + "_fresh");
+                         ItemDrop.ItemData.ItemType.Material, 50, 0.1f, Icons.Get("leaf_" + s.Id + "_fresh"), "leaf_" + s.Id + "_fresh");
                 MakeItem(source, s.Dried, s.Key("dried"), s.Key("dried_desc"),
-                         ItemDrop.ItemData.ItemType.Material, 50, 0.1f, 8, Icons.Get("leaf_" + s.Id + "_dried"), "leaf_" + s.Id + "_dried");
+                         ItemDrop.ItemData.ItemType.Material, 50, 0.1f, Icons.Get("leaf_" + s.Id + "_dried"), "leaf_" + s.Id + "_dried");
                 MakeItem(source, s.Aged, s.Key("aged"), s.Key("aged_desc"),
-                         ItemDrop.ItemData.ItemType.Material, 50, 0.1f, 14, Icons.Get("leaf_" + s.Id + "_aged"), "leaf_" + s.Id + "_aged");
+                         ItemDrop.ItemData.ItemType.Material, 50, 0.1f, Icons.Get("leaf_" + s.Id + "_aged"), "leaf_" + s.Id + "_aged");
             }
 
             foreach (CigarType t in Types.All)
@@ -27,7 +27,7 @@ namespace CigarSmoking
                 Sprite icon = Icons.Get("cigar_" + t.Id);
                 SE_Smoking effect = Smoking.Make(t, icon);
                 Effects.Add(effect);
-                GameObject cigar = MakeItem(source, t.Prefab, t.Display, t.Flavour, ItemDrop.ItemData.ItemType.Consumable, 20, 0.1f, t.Level == 1 ? 20 : 40, icon, null);
+                GameObject cigar = MakeItem(source, t.Prefab, t.Display, t.Flavour, ItemDrop.ItemData.ItemType.Consumable, 20, 0.1f, icon, null);
                 Safely(t.Prefab, () => Cigar.AddModels(cigar, t));
                 FitHitbox(cigar, new Bounds(Vector3.zero, new Vector3(Cigar.Length, Cigar.Radius * 4f, Cigar.Radius * 4f)));
                 ItemDrop.ItemData.SharedData shared = cigar.GetComponent<ItemDrop>().m_itemData.m_shared;
@@ -39,7 +39,7 @@ namespace CigarSmoking
 
         /// <summary>A copy of the Dandelion's item prefab (so it has everything an item needs to lie on the ground and be picked up) dressed as a new item.</summary>
         private static GameObject MakeItem(GameObject source, string prefab, string display, string description, ItemDrop.ItemData.ItemType type,
-                                           int stack, float weight, int value, Sprite icon, string model)
+                                           int stack, float weight, Sprite icon, string model)
         {
             GameObject go = UnityEngine.Object.Instantiate(source, _holder.transform);
             go.name = prefab;
@@ -65,7 +65,7 @@ namespace CigarSmoking
             s.m_icons = new[] { icon };
             s.m_maxStackSize = stack;
             s.m_weight = weight;
-            s.m_value = value;
+            s.m_value = 0;   // never sold: the trader buys anything worth more than 0, and seeds grow into more cigars (a coin machine)
             s.m_maxQuality = 1;
             s.m_variants = 0;
             s.m_food = 0f;

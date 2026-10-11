@@ -24,7 +24,7 @@ namespace Parkour
     {
         public const string Guid = "com.quad.parkour";
         public const string Name = "Parkour";
-        public const string Version = "0.1.0";
+        public const string Version = "0.1.1";
 
         internal static Plugin Instance;
         internal static ManualLogSource Log;
@@ -117,13 +117,12 @@ namespace Parkour
         private void LateUpdate()
         {
             Look.Late();   // after the animation has posed the player
-            Feel.CleanUpOnce();
             Bar.Late();    // after the HUD has placed the stamina bar
         }
 
         private void OnDestroy()
         {
-            Share.Reset();   // (first: our keys off the player's ZDO while it is still ours)
+            Share.Reset();   // (first: "no pose" on the player's ZDO while it is still ours)
             Moves.GiveHandsBack();   // (what a hang put away comes back out)
             Moves.Reset();
             Roll.Reset();

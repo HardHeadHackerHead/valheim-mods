@@ -10,5 +10,6 @@
   "parkour_hint_shimmy": "Left or right moves you along the edge.",
   "parkour_hint_slide": "Slide! Hold crouch to keep sliding, jump to leap out with its speed.",
   "parkour_hint_landing_slide": "Crouch just before landing from a low jump to land in a slide.",
-  "skill_195522812": "Parkour"
+  "skill_195522812": "Parkour",
+  "parkour_dungeon": "No parkour in here."
 }

@@ -10,5 +10,6 @@
   "parkour_hint_shimmy": "Izquierda o derecha te mueve a lo largo del borde.",
   "parkour_hint_slide": "¡Deslizamiento! Mantén Agacharse para seguir deslizándote, Saltar para salir de un salto con la velocidad.",
   "parkour_hint_landing_slide": "Pulsa Agacharse justo antes de aterrizar de un salto bajo para caer deslizándote.",
-  "skill_195522812": "Parkour"
+  "skill_195522812": "Parkour",
+  "parkour_dungeon": "Aquí no se puede hacer parkour."
 }

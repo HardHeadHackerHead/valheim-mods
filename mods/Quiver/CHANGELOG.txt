@@ -1,3 +1,5 @@
+0.2.3: Fix: arrows stuck in a creature come back only when it really dies (on your game or on the game that runs it, seen by its death or its body), not when it just goes away: one that despawns, is unsummoned, leaves at daybreak or is unloaded keeps its arrows. Fix: arrows that hit a creature early in a long fight (a boss) came back only if it died within two minutes of the first hit; it now counts from the last hit.
+
 0.2.2: A clearer page: what it does, who needs it in multiplayer, how it gets on with other mods, and where to report a bug. The game itself is unchanged.
 
 0.2.1: A new id, com.quad.quiver (it was com.dhack.quiver): your settings move over by themselves the first time it starts, and the old settings file is kept as a backup. Restart the game after this update. If an old copy is still installed beside it, this one stands down and says which file to delete, so the two never both run. The DLL now says it was made with AI, as Thunderstore asks.

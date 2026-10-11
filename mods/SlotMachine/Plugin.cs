@@ -21,7 +21,7 @@ namespace SlotMachine
         public const string Guid = "com.quad.slotmachine";
         public const string OldGuid = "com.dhack.slotmachine"; // (its id until 2026-10: settings move over by themselves, see Shared/Migration.cs)
         public const string Name = "SlotMachine";
-        public const string Version = "1.2.0";
+        public const string Version = "1.2.1";
         public const string PiecePrefab = "piece_slotmachine";
 
         internal static ConfigEntry<int> Bet, PayoutPercent;
@@ -73,7 +73,9 @@ namespace SlotMachine
                 _holder = new GameObject(Name + "Prefabs");
                 _holder.SetActive(false); // keeps the copy from waking up as a real object
                 Object.DontDestroyOnLoad(_holder);
-                Look.Harvest(scene, source.GetComponentInChildren<Renderer>(true).sharedMaterial);
+                // The look can fail (a game update renames a material) but the piece must still be registered, or the host deletes the placed ones.
+                try { Look.Harvest(scene, source.GetComponentInChildren<Renderer>(true).sharedMaterial); }
+                catch (System.Exception e) { Debug.LogWarning($"{Name}: could not gather the materials for its look: {e.Message}"); }
                 _prefab = Make(source, bench != null ? bench.GetComponent<CraftingStation>() : null);
             }
 
@@ -93,7 +95,7 @@ namespace SlotMachine
 
             int layer = LayerMask.NameToLayer("piece");
             if (layer < 0) layer = go.layer;
-            foreach (Renderer r in go.GetComponentsInChildren<Renderer>(true)) r.enabled = false; // hide the chest
+            Renderer[] chest = go.GetComponentsInChildren<Renderer>(true);
             foreach (Collider c in go.GetComponentsInChildren<Collider>(true)) Object.DestroyImmediate(c); // and its hitbox
             var hit = new GameObject("Hitbox") { layer = layer };
             hit.transform.SetParent(go.transform, false);
@@ -101,7 +103,18 @@ namespace SlotMachine
             box.center = new Vector3(0f, 1.13f, -0.02f);
             box.size = new Vector3(1.05f, 2.3f, 0.92f);
 
-            ModelBuilder.Build(go.transform, ModelData.Parts, go.layer);
+            // As with the materials: a model that fails to build leaves the chest's look, never an unregistered piece.
+            try
+            {
+                ModelBuilder.Build(go.transform, ModelData.Parts, go.layer);
+                foreach (Renderer r in chest) r.enabled = false; // hide the chest
+            }
+            catch (System.Exception e)
+            {
+                Debug.LogWarning($"{Name}: could not build the slot machine's look, it keeps the chest's: {e.Message}");
+                Transform model = go.transform.Find("Model");
+                if (model != null) Object.DestroyImmediate(model.gameObject);
+            }
 
             Piece piece = go.GetComponent<Piece>();
             piece.m_name = "$slotmachine_piece";
@@ -109,7 +122,12 @@ namespace SlotMachine
             piece.m_category = Piece.PieceCategory.Misc;
             piece.m_craftingStation = workbench;
             piece.m_resources = new[] { Req("FineWood", 15), Req("Bronze", 8), Req("Stone", 10) }.Where(r => r.m_resItem != null).ToArray();
-            piece.m_icon = Icon.Make(go);
+            try
+            {
+                Sprite picture = Icon.Make(go);
+                if (picture != null) piece.m_icon = picture;
+            }
+            catch (System.Exception e) { Debug.LogWarning($"{Name}: could not draw the build-menu picture: {e.Message}"); }
             go.AddComponent<SlotMachinePiece>();
             return go;
         }

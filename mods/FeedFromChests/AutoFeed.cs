@@ -90,7 +90,7 @@ namespace FeedFromChests
         {
             ZNetView view = station != null ? station.GetComponent<ZNetView>() : null;
             if (view == null || !view.IsValid()) return;
-            view.ClaimOwnership(); // only the owner can change it, and the owner is the one who then runs the feeding
+            Claims.Take(view); // only the owner can change it, and the owner is the one who then runs the feeding (once it has settled)
             view.GetZDO().Set(Key, setting.Encode());
         }
 
@@ -109,7 +109,7 @@ namespace FeedFromChests
             {
                 if ((smelter.transform.position - player.transform.position).sqrMagnitude > max) continue;
                 ZNetView view = smelter.GetComponent<ZNetView>();
-                if (view == null || !view.IsValid() || !view.IsOwner()) continue; // exactly one player runs each station
+                if (!Claims.Settled(view)) continue; // exactly one player runs each station (and not one claimed from another game a moment ago)
                 AutoSetting setting = Read(smelter);
                 if (!setting.On || setting.Allowed.Count == 0) continue;
 
@@ -202,7 +202,12 @@ namespace FeedFromChests
                 Inventory inventory = chest.GetInventory();
                 int max = product.m_itemData.m_shared.m_maxStackSize;
                 int take = Mathf.Min(remaining, max);
-                Chests.TakeOwnership(chest); // and load its latest contents, so the room check below is up to date
+                if (!Chests.Ready(chest)) // (it also loads the latest contents, so the room check below is up to date)
+                {
+                    Chests.Request(chest);
+                    log($"{smelter.m_name}: an assigned chest ({Vector3.Distance(smelter.transform.position, chest.transform.position):0} m away) is run by another player's game; it is claimed and takes output from a moment from now");
+                    continue;
+                }
                 if (!inventory.CanAddItem(product.gameObject, take)) { log($"{smelter.m_name}: an assigned chest ({Vector3.Distance(smelter.transform.position, chest.transform.position):0} m away) has no room for {take} {display}"); continue; }
 
                 int before = inventory.CountItems(name);
@@ -238,7 +243,7 @@ namespace FeedFromChests
                 if (remaining <= 0) break;
                 Container chest = pair.Value;
                 if (chest == null || Chests.InUse(chest)) continue;
-                Chests.TakeOwnership(chest);
+                if (!Chests.Ready(chest)) { Chests.Request(chest); continue; } // another player's game runs it: ours to fill a moment from now
                 Inventory inventory = chest.GetInventory();
                 int take = Mathf.Min(remaining, product.m_itemData.m_shared.m_maxStackSize);
                 if (!inventory.CanAddItem(product.gameObject, take)) continue;
@@ -377,7 +382,7 @@ namespace FeedFromChests
                     string fuel = info.Fuel.m_itemData.m_shared.m_name;
                     if (setting.Allowed.Contains(fuel))
                     {
-                        if (Limits.MayFeed(info, setting, plan, info.Fuel, true, Chests.Count(chests, fuel), _outputRadius.Value, out string line))
+                        if (Limits.MayFeed(info, setting, plan, info.Fuel, true, Chests.Stock(chests, fuel), _outputRadius.Value, out string line))
                             AddOne(player, info, info.Fuel, true, chests, chestsOnly: true);
                         else Why(smelter, line);
                     }
@@ -390,7 +395,7 @@ namespace FeedFromChests
                     {
                         string name = drop.m_itemData.m_shared.m_name;
                         if (!setting.Allowed.Contains(name)) continue;
-                        if (!Limits.MayFeed(info, setting, plan, drop, false, Chests.Count(chests, name), _outputRadius.Value, out string line)) { why = why ?? line; continue; }
+                        if (!Limits.MayFeed(info, setting, plan, drop, false, Chests.Stock(chests, name), _outputRadius.Value, out string line)) { why = why ?? line; continue; }
                         if (AddOne(player, info, drop, false, chests, chestsOnly: true)) { why = null; break; } // one per step: lowest tier first
                     }
                     if (why != null) Why(smelter, why);

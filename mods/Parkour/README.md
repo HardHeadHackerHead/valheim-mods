@@ -7,7 +7,7 @@
 
 **Parkour and free running: wall run, wall jump, climb walls, grab and hang from ledges, shimmy, vault, slide and roll, with a Parkour skill and a blue parkour bar instead of stamina.**
 
-![version: 0.1.0](https://img.shields.io/badge/version-0.1.0-3b6e8f?style=flat-square)  ![multiplayer: only who wants it](https://img.shields.io/badge/multiplayer-only%20who%20wants%20it-7a5c2e?style=flat-square)  ![made with: Claude Code](https://img.shields.io/badge/made%20with-Claude%20Code-c26a3d?style=flat-square)
+![version: 0.1.1](https://img.shields.io/badge/version-0.1.1-3b6e8f?style=flat-square)  ![multiplayer: only who wants it](https://img.shields.io/badge/multiplayer-only%20who%20wants%20it-7a5c2e?style=flat-square)  ![made with: Claude Code](https://img.shields.io/badge/made%20with-Claude%20Code-c26a3d?style=flat-square)
 
 <!-- GITHUB-ONLY -->[Thunderstore](https://thunderstore.io/c/valheim/p/Quads_Lab/Quads_Parkour/)  ·  <!-- END GITHUB-ONLY -->[Source code](https://github.com/HardHeadHackerHead/valheim-mods/tree/main/mods/Parkour)  ·  [Report a bug](https://github.com/HardHeadHackerHead/valheim-mods/issues/new?template=bug.yml&title=%5BQuad%27s%20Parkour%5D%20)  ·  [Discord](https://discord.gg/EwTjQxEZPy)
 
@@ -33,7 +33,7 @@
 
 - Every move costs stamina, like sprinting and jumping do: more in armour that slows you, less with gear and effects that save jump or run stamina. A wall jump costs a jump, a roll a dodge. No stamina comes back while you are on a wall.
 - Not while over-encumbered, swimming, riding, attacking, blocking or dodging. Wet, your wall runs are a third shorter.
-- Falls are fair: a fall is measured from where you left the wall, not from the top of the jump before it. Falling off a wall high up still hurts.
+- Falls are fair: a fall is measured from where you left the wall, not from the top of the jump before it. Falling off a wall high up still hurts, and a move only catches a fall a roll would take without damage (8 metres, 10 with the skill): from higher you can't grab a ledge or kick off a wall to save yourself.
 - The Parkour skill rises with every move: longer and faster wall runs, more wall jumps in a row, higher climbs, a longer roll window and a higher safe fall, up to a third less stamina at 100, and the auto-roll from 50.
 
 Only the players who want it need it: movement is each player's own, the mod isn't needed on the server, and the others see you run, lean, climb and roll whether they have it or not.
@@ -193,6 +193,7 @@ and tested in our own world, with **bobisme** as our tester.
 
 ## 📜 Recent changes
 
+- **0.1.1** Fixes. Other players no longer see you stuck in your last slide or pull-up after the move ends (the end of a move now reaches every game). Killed while hanging from a ledge, your weapon and shield go back in your hands before the grave is made, so a Hard death penalty no longer deletes them and keep-equipment worlds keep them. A big fall can no longer be cancelled by catching a ledge, starting a wall run or kicking off a wall just above the ground: a move catches a fall only as high as a roll takes without damage (8 metres, 10 with the skill); from higher you fall on and land with the fall damage. A new character, a respawn or another world starts with no move going on (it could be pulled to the last one's ledge).
 - **0.1.0** First release: wall runs, wall jumps (more in a row as you train), wall climbs, ledge grabs with a pull-up and a shimmy along the edge, slides out of a sprint or a low landing (with a boosted jump out of them), and a landing roll (on crouch, and by itself from Parkour level 50) that takes the sting out of falls. A new Parkour skill makes them longer, faster, higher and cheaper; stamina costs like the game's own sprint, jump and dodge (more in heavy armour); fair fall damage; the lean shared with every player; a blue bar over the stamina bar for what is left of a move; wall jumps that go where you look; and the game's own footsteps on walls and ledges, a camera lean on wall runs and a short widening of the view on kicks and pull-ups (each can be turned off). In your language: English, Russian, German, Chinese (Simplified), Portuguese (Brazil), Spanish, French, Polish and Turkish (made with AI: correct a line with a file in BepInEx/config/translations/com.quad.parkour/). Gets out of the way of Smooth Climbing, and takes turns with Just Vault.
 
 <!-- GITHUB-ONLY -->[Every change](CHANGELOG.txt)<!-- END GITHUB-ONLY --><!-- THUNDERSTORE-ONLY: Every change is on the Changelog tab. -->

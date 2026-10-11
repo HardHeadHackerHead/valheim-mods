@@ -83,15 +83,39 @@ namespace Parkour
         {
             Player p = Player.m_localPlayer;
             if (p != null && State != Move.None) WallRunning(p) = false;
-            State = Move.None;
-            _since = 0f;
-            _touchAt = _kickAt = _letGoAt = _climbEndAt = _otherClimbAt = _jumpAt = _crouchAt = _slideAt = _slideEndAt = -10f;
-            _kicked = false;
-            _kicks = 0;
-            _record = null;
+            Fresh();
             Done.Clear();
             Hinted.Clear();
+        }
+
+        /// <summary>No move going on, and nothing kept of the last one (its wall, its edge, the hands it put away, the kicks).</summary>
+        private static void Fresh()
+        {
+            State = Move.None;
+            _since = _missing = 0f;
+            _wall = _touch = default;
+            _ledge = default;
+            _sheathed = _kicked = _forwardFresh = false;
+            _touchAt = _kickAt = _letGoAt = _climbEndAt = _otherClimbAt = _jumpAt = _crouchAt = _slideAt = _slideEndAt = -10f;
+            _kicks = 0;
+            _record = null;
             LastRefusal = "";
+        }
+
+        // A new body (a respawn, another character, another world): nothing of the last one's moves carries over, or the new one could be
+        // pulled to the old one's ledge. (Unloading the mod resets too, but logging out doesn't unload it.)
+        [HarmonyPatch(typeof(Player), nameof(Player.OnSpawned))]
+        private static class Player_OnSpawned
+        {
+            private static void Postfix(Player __instance)
+            {
+                if (!ReferenceEquals(__instance, Player.m_localPlayer)) return;
+                Fresh();
+                Roll.Reset();
+                Share.Forget();
+                Compat.ForgetDungeons();   // (a new world: look for Quad's Dungeons again, the newest copy if it was reloaded)
+                Feel.Reset();
+            }
         }
 
         // ---- the input a move takes from the game (called from Controls, before the game acts on the keys) ----
@@ -100,8 +124,10 @@ namespace Parkour
         {
             if (!Plugin.Enabled.Value) return false;
             bool nearWall = State == Move.None && !p.IsOnGround() && Time.time - _touchAt <= KickGrace;
-            bool ours = State != Move.None || (nearWall && Plugin.WallJump.Value && !SameAsKicked(_touch) && KicksLeft(p) > 0);
+            bool ours = State != Move.None || (nearWall && Plugin.WallJump.Value && !SameAsKicked(_touch) && KicksLeft(p) > 0 && !TooFastToCatch(p));
+            if (ours && State == Move.None && DungeonSaysNo(p)) ours = false;   // (the game's own jump, then: no wall jump in here)
             if (ours) _jumpAt = Time.time;
+            else if (nearWall && TooFastToCatch(p)) LastRefusal = TooFast;
             else if (nearWall && SameAsKicked(_touch)) LastRefusal = "the same wall twice in a row";
             else if (nearWall && KicksLeft(p) <= 0) LastRefusal = "no wall jumps left: touch the ground";
             return ours;
@@ -126,8 +152,12 @@ namespace Parkour
             private static void Postfix(Character __instance, float dt, bool __runOriginal)
             {
                 if (!ReferenceEquals(__instance, Player.m_localPlayer)) return;
-                try { Tick((Player)__instance, dt, __runOriginal); Hands((Player)__instance); Share.Publish((Player)__instance); }
-                catch (Exception e) { Plugin.Log.LogError("Parkour step: " + e); End((Player)__instance, "error"); }
+                Player p = (Player)__instance;
+                try { Tick(p, dt, __runOriginal); }
+                catch (Exception e) { Plugin.Log.LogError("Parkour step: " + e); End(p, "error"); }
+                // (also after a move that ended in an error: what a hang put away comes back out, and the others see it end)
+                try { Hands(p); Share.Publish(p); }
+                catch (Exception e) { Plugin.Log.LogError("Parkour hands: " + e); }
             }
         }
 
@@ -160,6 +190,32 @@ namespace Parkour
             _sheathed = false;
         }
 
+        // Killed on a ledge: what the hang put away goes back in the hands before the game makes the grave (Player.OnDeath calls
+        // CreateTombStone), so it counts as equipped there. Put away, it is "unequipped": deleted on a world whose death penalty deletes
+        // unequipped items (Hard), and in the grave instead of kept with DeathKeepEquip. First, before other mods' death prefixes; and
+        // again before the grave, for a mod that makes it some other way. (The player is already dead here: EquipItem allows that.)
+        [HarmonyPatch(typeof(Player), nameof(Player.OnDeath))]
+        private static class Player_OnDeath
+        {
+            [HarmonyPriority(Priority.First)]
+            private static void Prefix(Player __instance) => HandsBackForDeath(__instance);
+        }
+
+        [HarmonyPatch(typeof(Player), nameof(Player.CreateTombStone))]
+        private static class Player_CreateTombStone
+        {
+            [HarmonyPriority(Priority.First)]
+            private static void Prefix(Player __instance) => HandsBackForDeath(__instance);
+        }
+
+        private static void HandsBackForDeath(Player p)
+        {
+            if (!_sheathed || !ReferenceEquals(p, Player.m_localPlayer)) return;
+            _sheathed = false;
+            try { ShowHandItems?.Invoke(p, false, false); }
+            catch (Exception e) { Plugin.Log.LogError("Parkour hands at death: " + e); }
+        }
+
         private static void Tick(Player p, float dt, bool gameMoved)
         {
             Compat.Check();
@@ -172,6 +228,8 @@ namespace Parkour
 
             if (State != Move.None && why != null) End(p, why);
             if (why != null) { LastRefusal = why; return; }
+            // a move that carried the player into a dungeon with parkour off ends there (a slide may go on: it climbs nothing)
+            if (State != Move.None && State != Move.Slide && Compat.DungeonForbids(p)) { End(p, Forbidden); LastRefusal = Forbidden; return; }
 
             if (!grounded) Touching(p);
 
@@ -280,6 +338,7 @@ namespace Parkour
         private static void TryStart(Player p, Rigidbody body)
         {
             if (TakeInput != null && !TakeInput(p) && Controls.Driving == null) { LastRefusal = "typing or in a menu"; return; }
+            if (TooFastToCatch(p)) { LastRefusal = TooFast; return; }   // (no grab, run or climb: the fall goes on to the ground)
             Vector3 vel = body.linearVelocity, flat = new Vector3(vel.x, 0f, vel.z);
             Vector3 wish = MoveDir(p);
             Vector3 heading = flat.magnitude > 2f ? flat.normalized : (wish.sqrMagnitude > 0.01f ? wish.normalized : p.transform.forward);
@@ -318,12 +377,35 @@ namespace Parkour
             }
         }
 
+        /// <summary>
+        /// A move that starts in the air (a ledge grab, a wall run or climb, a kick off a wall just touched) ends a fall without the game's
+        /// fall damage: each move step measures the fall again from where the player is. So it may only stop a fall a landing roll takes
+        /// without damage: up to the roll's safe height (RollSafeHeight: 8 m at skill 0, 10 m at 100, the server's). The game's falls hurt
+        /// from 4 m, 100/16 per metre more, so a move spares at most 25 (37 at skill 100), as a roll does. Normal parkour (a drop off a
+        /// wall run, a kick, a ledge onto the next one below) falls far less. From higher the hands and feet can't hold it: the player falls
+        /// on and lands with the game's fall damage (a roll still softens it).
+        /// </summary>
+        internal static bool TooFastToCatch(Player p) => MaxAirAltitude(p) - p.transform.position.y > Roll.SafeHeight(p);
+        private const string TooFast = "falling too fast to catch";
+        private const string Forbidden = "a dungeon forbids it";
+
+        /// <summary>Inside a dungeon of Quad's Dungeons that has parkour off (its puzzle would be skipped): no move starts, and the player
+        /// is told once.</summary>
+        private static bool DungeonSaysNo(Player p)
+        {
+            if (!Compat.DungeonForbids(p)) return false;
+            LastRefusal = Forbidden;
+            Hint(p, "parkour_dungeon");
+            return true;
+        }
+
         private static bool WallRunOn => Plugin.WallRun.Value;
         private static bool ClimbOn => Plugin.WallClimb.Value && !Compat.ClimbOff;
         private static bool LedgeOn => Plugin.LedgeGrab.Value && !Compat.LedgeOff;
 
         private static void StartRun(Player p, Rigidbody body, Walls.Wall wall, Vector3 heading, float speed)
         {
+            if (DungeonSaysNo(p)) return;
             if (!Pay(p, Cost(p, Plugin.WallRunCost.Value, true, heading))) return;
             Begin(p, Move.WallRun, wall);
             _runDir = Vector3.ProjectOnPlane(heading, wall.Normal);
@@ -342,6 +424,7 @@ namespace Parkour
 
         private static void StartClimb(Player p, Rigidbody body, Walls.Wall wall)
         {
+            if (DungeonSaysNo(p)) return;
             if (!Pay(p, Cost(p, Plugin.ClimbCost.Value, true, -wall.Normal))) return;
             Begin(p, Move.Climb, wall);
             _climbHeight = Mathf.Lerp(Plugin.ClimbMin.Value, Plugin.ClimbMax.Value, Skill.Factor(p));
@@ -354,6 +437,7 @@ namespace Parkour
 
         private static void StartHang(Player p, Rigidbody body, Walls.Ledge ledge)
         {
+            if (DungeonSaysNo(p)) return;
             Move was = State;
             if (was != Move.None) Finish(p, "caught the edge");
             Begin(p, Move.Hang, new Walls.Wall { Point = ledge.Edge, Normal = ledge.Normal, Collider = ledge.Face });
@@ -508,6 +592,7 @@ namespace Parkour
 
         private static void StartPullUp(Player p, Rigidbody body)
         {
+            if (DungeonSaysNo(p)) { LetGo(p, body, Forbidden); return; }
             Vector3 raised = new Vector3(_ledge.Hang.x, _ledge.Edge.y + 0.08f, _ledge.Hang.z);
             if (!Walls.Fits(raised, p.GetCollider().radius, p.GetCollider().height) || !Walls.Fits(_ledge.Stand + Vector3.up * 0.05f, p.GetCollider().radius, p.GetCollider().height))
             { LetGo(p, body, "no room on top"); return; }
@@ -550,7 +635,9 @@ namespace Parkour
         /// <summary>Kick off a wall: up, and out the way the player looks (never into the wall), keeping some of a run's speed along it.</summary>
         private static void Kick(Player p, Rigidbody body, Walls.Wall wall, Vector3 carry)
         {
+            if (DungeonSaysNo(p)) return;
             if (SameAsKicked(wall)) { LastRefusal = "the same wall twice in a row"; return; }
+            if (State == Move.None && TooFastToCatch(p)) { LastRefusal = TooFast; return; }   // (from a move: the fall is measured from it)
             if (KicksLeft(p) <= 0) { LastRefusal = "no wall jumps left: touch the ground"; return; }
             if (!p.HaveStamina(p.m_jumpStaminaUsage))
             {

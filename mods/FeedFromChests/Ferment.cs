@@ -70,6 +70,7 @@ namespace FeedFromChests
                 ZNetView view = f.GetComponent<ZNetView>();
                 if (view == null || !view.IsValid()) continue;
                 if (!view.IsOwner()) { if (view.HasOwner()) continue; view.ClaimOwnership(); } // exactly one player runs each fermenter
+                if (!Claims.Settled(view)) continue; // (claimed from another player's game a moment ago: its last changes first)
                 AutoSetting setting = AutoFeed.Read(f);
                 State state = StateOf(f, out _);
                 if (state == State.Ready && setting.TakeOff)
@@ -123,7 +124,7 @@ namespace FeedFromChests
                 foreach (ItemDrop drop in info.Inputs)
                 {
                     string name = drop.m_itemData.m_shared.m_name;
-                    if (!setting.Allowed.Contains(name) || !Limits.MayFeed(info, setting, plan, drop, false, Chests.Count(chests, name), _outputRadius.Value, out _)) continue;
+                    if (!setting.Allowed.Contains(name) || !Limits.MayFeed(info, setting, plan, drop, false, Chests.Stock(chests, name), _outputRadius.Value, out _)) continue;
                     if (AddOne(player, info, drop, false, chests, chestsOnly: true))
                     {
                         Logger.LogInfo($"{Localization.instance.Localize(fermenter.m_name)} at {fermenter.transform.position:F0} took {Localization.instance.Localize(name)} from a chest");

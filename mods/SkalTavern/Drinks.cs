@@ -16,7 +16,7 @@ namespace SkalTavern
         internal class Def
         {
             public string Prefab, Display, Flavour;   // the words: "$keys" in translations/*.json
-            public float Amount;          // how much drunker one makes you (0 to 100 is sober to very drunk)
+            public float Amount;          // how much drunker a whole mug makes you (0 to 100 is sober to very drunk): a quarter of it each swig
             public Color Liquid;
             public int Makes;
             public (string Item, int Count)[] Cost;
@@ -179,7 +179,8 @@ namespace SkalTavern
                 effect.m_name = d.Display;
                 effect.m_icon = icon;
                 effect.m_ttl = 1f;
-                effect.Amount = d.Amount;
+                effect.Amount = d.Amount / Swigs.PerMug;   // (one swig's worth: a mug is drunk in four, see Swigs.cs)
+                effect.Share = 1f / Swigs.PerMug;
                 Effects.Add(effect);
                 MakeItem(source, d, icon, effect);
             }
@@ -212,7 +213,7 @@ namespace SkalTavern
             ItemDrop drop = go.GetComponent<ItemDrop>();
             ItemDrop.ItemData.SharedData s = drop.m_itemData.m_shared;
             s.m_name = d.Display;
-            s.m_description = d.Flavour + "\n\n$skaltavern_drink_note";   // (the game translates each $key in it)
+            s.m_description = d.Flavour + "\n\n$skaltavern_drink_note\n$skaltavern_swig_note";   // (the game translates each $key in it)
             s.m_itemType = ItemDrop.ItemData.ItemType.Consumable;
             s.m_icons = new[] { icon };
             s.m_maxStackSize = 10;

@@ -1,7 +1,9 @@
 using System;
+using System.Linq;
 using System.Reflection;
 using BepInEx.Bootstrap;
 using HarmonyLib;
+using UnityEngine;
 
 namespace Parkour
 {
@@ -18,6 +20,8 @@ namespace Parkour
     ///     ledge than pull up turns our pull-up off (the PullUp setting).
     ///   Climbing (Rabid_Wolf_Studios, com.rabid-wolf.valheim.skills.climbing): only a skill that makes sprinting up steep ground cheaper.
     ///     Nothing overlaps.
+    ///   Quad's Dungeons (ours, com.quad.dungeons): a dungeon whose pack has parkour off forbids the moves inside it (they'd skip its
+    ///     puzzle). Asked through its public Dungeons.Api.BlocksParkour(Vector3), found by reflection when a player spawns.
     /// </summary>
     internal static class Compat
     {
@@ -35,6 +39,7 @@ namespace Parkour
 
         public static void Reset()
         {
+            ForgetDungeons();
             _checked = false;
             SmoothClimbing = JustVault = Climbing = false;
             _isClimbing = _isMantling = null;
@@ -68,6 +73,55 @@ namespace Parkour
         public static string Summary() =>
             (SmoothClimbing ? "Smooth Climbing: wall climb and ledge grab off; " : "") + (JustVault ? "Just Vault: taking turns; " : "") + (Climbing ? "Climbing: no overlap; " : "") +
             (!SmoothClimbing && !JustVault && !Climbing ? "none of the climbing mods installed" : "");
+
+        // ---- Quad's Dungeons ----
+
+        private static Func<Vector3, bool> _blocksParkour;
+        private static bool _dungeonsLooked;
+
+        /// <summary>Is the player inside a dungeon that forbids parkour? False when Quad's Dungeons isn't installed.</summary>
+        public static bool DungeonForbids(Player p)
+        {
+            if (!_dungeonsLooked)
+            {
+                _dungeonsLooked = true;
+                _blocksParkour = FindDungeons();
+            }
+            if (_blocksParkour == null || p == null) return false;
+            try { return _blocksParkour(p.transform.position); }
+            catch (Exception e)
+            {
+                Plugin.Log.LogWarning("Asking Quad's Dungeons whether parkour is allowed failed (not asked again): " + e.Message);
+                _blocksParkour = null;
+                return false;
+            }
+        }
+
+        public static void ForgetDungeons()
+        {
+            _dungeonsLooked = false;
+            _blocksParkour = null;
+        }
+
+        /// <summary>Dungeons.Api.BlocksParkour(Vector3) in the newest loaded copy of Quad's Dungeons (a reload leaves the old one loaded).</summary>
+        private static Func<Vector3, bool> FindDungeons()
+        {
+            try
+            {
+                foreach (Assembly asm in AppDomain.CurrentDomain.GetAssemblies().Reverse())
+                {
+                    Type api;
+                    try { api = asm.GetType("Dungeons.Api", false); }
+                    catch (Exception) { continue; }
+                    MethodInfo m = api?.GetMethod("BlocksParkour", BindingFlags.Public | BindingFlags.Static, null, new[] { typeof(Vector3) }, null);
+                    if (m == null || m.ReturnType != typeof(bool)) continue;
+                    Plugin.Log.LogInfo("Quad's Dungeons is installed: no parkour in its dungeons that forbid it");
+                    return (Func<Vector3, bool>)Delegate.CreateDelegate(typeof(Func<Vector3, bool>), m);
+                }
+            }
+            catch (Exception e) { Plugin.Log.LogWarning("Looking for Quad's Dungeons: " + e.Message); }
+            return null;
+        }
 
         private static bool Installed(string guid, string typeName)
         {

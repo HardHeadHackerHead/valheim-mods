@@ -14,7 +14,7 @@ The moves
 What it costs
 - Every move costs stamina, like sprinting and jumping do: more in armour that slows you, less with gear and effects that save jump or run stamina. A wall jump costs a jump, a roll a dodge. No stamina comes back while you are on a wall.
 - Not while over-encumbered, swimming, riding, attacking, blocking or dodging. Wet, your wall runs are a third shorter.
-- Falls are fair: a fall is measured from where you left the wall, not from the top of the jump before it. Falling off a wall high up still hurts.
+- Falls are fair: a fall is measured from where you left the wall, not from the top of the jump before it. Falling off a wall high up still hurts, and a move only catches a fall a roll would take without damage (8 metres, 10 with the skill): from higher you can't grab a ledge or kick off a wall to save yourself.
 - The Parkour skill rises with every move: longer and faster wall runs, more wall jumps in a row, higher climbs, a longer roll window and a higher safe fall, up to a third less stamina at 100, and the auto-roll from 50.
 
 Settings: each move on or off, the pull-up, the auto-roll, the blue bar, hints, the sounds, the camera lean and the view widening (turn those two off if camera motion makes you feel sick), for you; how long, high and far the moves go, how many wall jumps in a row, the shimmy's speed, the slide's length and burst, the roll's window and safe height, what each costs and how fast the skill rises are the server's in multiplayer.

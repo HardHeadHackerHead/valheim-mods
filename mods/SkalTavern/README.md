@@ -7,7 +7,7 @@
 
 **Ale and mead that get you drunk (tipsy, stumbling, a hangover), and a Skål! toast with your friends for a buff.**
 
-![version: 0.4.0](https://img.shields.io/badge/version-0.4.0-3b6e8f?style=flat-square)  ![multiplayer: everyone + host](https://img.shields.io/badge/multiplayer-everyone%20%2B%20host-7a5c2e?style=flat-square)  ![made with: Claude Code](https://img.shields.io/badge/made%20with-Claude%20Code-c26a3d?style=flat-square)
+![version: 0.5.0](https://img.shields.io/badge/version-0.5.0-3b6e8f?style=flat-square)  ![multiplayer: everyone + host](https://img.shields.io/badge/multiplayer-everyone%20%2B%20host-7a5c2e?style=flat-square)  ![made with: Claude Code](https://img.shields.io/badge/made%20with-Claude%20Code-c26a3d?style=flat-square)
 
 <!-- GITHUB-ONLY -->[Thunderstore](https://thunderstore.io/c/valheim/p/Quads_Lab/Quads_Skal_Tavern/)  ·  <!-- END GITHUB-ONLY -->[Source code](https://github.com/HardHeadHackerHead/valheim-mods/tree/main/mods/SkalTavern)  ·  [Report a bug](https://github.com/HardHeadHackerHead/valheim-mods/issues/new?template=bug.yml&title=%5BQuad%27s%20Skal%20Tavern%5D%20)  ·  [Discord](https://discord.gg/EwTjQxEZPy)
 
@@ -21,9 +21,9 @@
 
 - Four drinks from the cauldron: Tankard of Ale (barley and honey), Honey Mead (honey and raspberries), Blueberry Wine (blueberries and honey) and Skaldic Mead (honey and cloudberries). They are the real tankard in your hand and on the ground, each with its own colour.
 - Each drink makes you drunker, and it wears off with time. As you get drunk the picture darkens at the edges, blurs and doubles, colours drift and the view sways; your body leans and weaves, stars circle your head, you hiccup, sounds go muffled, you slide when you walk and your aim floats, and your chat slurs. Too much too fast and you throw up (the game's own effect), which sobers you a little. A little warms you and gives some stamina. More and the view sways and your feet wander, but the cold no longer bites; very drunk and you stagger now and then; too much and you fall down. A big night ends in a hangover.
-- Press B (changeable) to raise a cup. Everyone near you who has the mod and toasts within a few seconds, and your AICompanion companions standing by, drink together and get a Skal! buff: faster stamina and health for five minutes, more with more to drink with.
+- A mug holds four swigs: use it from the bag or the hotbar, as any drink, and you take one swig (a quarter of the drink). Every swig is a toast, with no key to press. Everyone near you who has the mod and drinks within a few seconds, and your AICompanion companions standing by, drink together and get a Skal! buff: faster stamina and health for five minutes, more with more to drink with.
 
-Every number and key is in the settings: how long to sober up, how strong the sway and wander are, whether you stumble, fall or get a hangover (on a server, the server's settings decide those). Only the player who drinks needs the mod for the drinks; a toast needs it on both sides.
+Every number is in the settings: how long to sober up, how strong the sway and wander are, whether you stumble, fall or get a hangover (on a server, the server's settings decide those). Only the player who drinks needs the mod for the drinks; a toast needs it on both sides.
 
 ## 📸 Screenshots
 
@@ -39,12 +39,8 @@ Every number and key is in the settings: how long to sober up, how strong the sw
 
 ## 🎮 How to use
 
-| Key | What it does |
-|---|---|
-| **B** | Raise a cup: toast with friends and companions beside you for a Skål! buff |
-
 <!-- HAND-WRITTEN: how-to-use -->
-
+No keys to remember. Drink as you would any drink: use it from the bag or the hotbar. Each use is one swig of the mug's four, and each swig is a toast: drink beside friends or your companions and you all get a Skål! buff.
 <!-- END HAND-WRITTEN: how-to-use -->
 
 ## 🧩 Other mods
@@ -108,7 +104,6 @@ In `BepInEx/config/com.quad.skaltavern.cfg`, made the first time the game runs w
 
 | Setting | Default | What it does |
 |---|---|---|
-| `Key` | `B` | Raise a cup: a toast with whoever is near. Friends who toast at the same time (and your companions) give each other a Skal! buff. |
 | `Window` | `6` | How many seconds apart two toasts can be and still count as together. In multiplayer the server's value applies. |
 
 ## 🤖 Made with AI
@@ -143,8 +138,8 @@ and tested in our own world, with **bobisme** as our tester.
 
 ## 📜 Recent changes
 
+- **0.5.0** No more toast key: B is used by other mods, and it was one more key to remember. Now a mug holds four swigs. Use it from the bag or the hotbar as before and you take one swig, with the game's drinking animation and a quarter of the drink (a whole mug is as strong as before); the mug is gone only after its last swig, and its tooltip shows the swigs left. Every swig is a toast: friends near you who drink within a few seconds, and your companions, get the Skal! buff as before (the others are told at most every 6 seconds). Drinking alone no longer tells you a toast is better with company. The drinks already in your bag and your chests are full mugs. The old Toast: Key line in your settings file does nothing now.
 - **0.4.0** Now in your language: English, Russian, German, Chinese (Simplified), Portuguese (Brazil), Spanish, French, Polish and Turkish, following the game's own Language setting. The game's own names are used for its things (items, creatures, lands, stations). The translations were made with AI: to correct a line, or add a language, put a file in BepInEx/config/translations/com.quad.skaltavern/ named after the game's name for the language (German.json...) with only the lines you change, copied from translations/English.json on GitHub.
 - **0.3.3** A clearer page: what it does, who needs it in multiplayer, how it gets on with other mods, and where to report a bug. The game itself is unchanged.
-- **0.3.2** Its test command for Claude Tools (skal ...) follows the game's cheat rule: level, sober and puke work only in single player, for the host or with devcommands; status, find, drink and drop (what a player does anyway) still work for everyone.
 
 <!-- GITHUB-ONLY -->[Every change](CHANGELOG.txt)<!-- END GITHUB-ONLY --><!-- THUNDERSTORE-ONLY: Every change is on the Changelog tab. -->

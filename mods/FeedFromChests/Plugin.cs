@@ -25,7 +25,7 @@ namespace FeedFromChests
         public const string Guid = "com.quad.feedfromchests";
         public const string OldGuid = "com.dhack.feedfromchests"; // (its id until 2026-10: settings move over by themselves, see Shared/Migration.cs)
         public const string Name = "FeedFromChests";
-        public const string Version = "1.8.0";
+        public const string Version = "1.8.1";
 
         internal static Plugin Instance;
         internal static DHack.Shared.ServerSettings Synced; // settings the server decides in multiplayer
@@ -104,6 +104,7 @@ namespace FeedFromChests
             Lights.Seed();
             Hives.Seed();
             Ferment.Seed();
+            Defenses.Seed();
 
             Logger.LogInfo($"{Name} {Version} loaded");
             StartCoroutine(Warmup());
@@ -122,6 +123,7 @@ namespace FeedFromChests
             Lights.Clear();
             Hives.Clear();
             Ferment.Clear();
+            Defenses.Clear();
             Feed.Prepaid = null;
             ContainerRegistry.Clear();
             if (Instance == this) Instance = null;
@@ -260,6 +262,11 @@ namespace FeedFromChests
         /// <summary>
         /// Fill up with the given items, a couple per frame (so the station's sounds and effects don't all fire in one frame). Each one is
         /// paid for as it goes in, so stopping half way (the station is destroyed, the mod reloads) never leaves anything unpaid.
+        ///
+        /// Each add is checked against this game's copy of the station ("is there room?"). On a station another player's game runs, that
+        /// copy can be a moment old and the station already full there: what it then refuses would be paid for and lost. So the station
+        /// is taken over first, and filling starts once it has been ours for a moment (its last changes have arrived); from then on each
+        /// add runs right here, at once, so the room check is always the real one. Filling stops if another game takes it back.
         /// </summary>
         private System.Collections.IEnumerator FillRoutine(Player player, StationInfo info, List<Row> rows)
         {
@@ -268,12 +275,21 @@ namespace FeedFromChests
             var parts = new List<string>();
             try
             {
+                ZNetView view = info.Component != null ? info.Component.GetComponent<ZNetView>() : null;
+                if (view != null && view.IsValid() && !Claims.Settled(view))
+                {
+                    Claims.Take(view);
+                    float giveUp = Time.unscaledTime + 3f;
+                    while (info.Alive && view.IsValid() && !Claims.Settled(view) && Time.unscaledTime < giveUp) yield return null;
+                }
+
                 foreach (Row row in rows)
                 {
                     int added = 0;
                     for (int i = 0; i < _fillLimit.Value; i++)
                     {
-                        if (!info.Alive || player == null || !AddOne(player, info, row.Drop, row.IsFuel, chests)) break;
+                        if (!info.Alive || player == null || (view != null && !Claims.Settled(view))) break;
+                        if (!AddOne(player, info, row.Drop, row.IsFuel, chests)) break;
                         added++;
                         if (added % 2 == 0) yield return null; // two per frame
                     }
@@ -314,7 +330,7 @@ namespace FeedFromChests
                 {
                     int taken = Cooking.TakeAllInto(player, cooking);
                     Mark($"took {taken} off a cooking station");
-                    return taken > 0;
+                    return taken > 0; // (none: another player's game runs it, and the game's own E takes it off there)
                 }
                 if (_stationAuto.Value && Stations.TryGet(go, out StationInfo cookInfo, out _))
                 {

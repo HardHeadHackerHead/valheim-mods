@@ -20,7 +20,7 @@ namespace Ziplines
         public const string Guid = "com.quad.ziplines";
         public const string OldGuid = "com.dhack.ziplines"; // (its id until 2026-10: settings move over by themselves, see Shared/Migration.cs)
         public const string Name = "Ziplines";
-        public const string Version = "0.3.0";
+        public const string Version = "0.3.1";
 
         internal static Plugin Instance;
         internal static ManualLogSource Log;
@@ -70,6 +70,7 @@ namespace Ziplines
         private void Update()
         {
             Synced?.Update();
+            Post.Network();
             Ride.Tick();
             Tools.Update();
         }
@@ -79,6 +80,7 @@ namespace Ziplines
             _harmony?.UnpatchSelf();
             Ride.End("The ziplines were reloaded.");
             Tools.Unregister();
+            Post.Unnetwork();
             Post.ForgetAll();
             Things.Unregister();
             Synced?.Dispose();

@@ -1,3 +1,5 @@
+1.5.1: Fixed in multiplayer: two players crafting from the same chest at the same moment could both be paid for with the same materials (a free craft). A chest another player's game was looking after is now taken over when the crafting window opens and counts a moment later, and a craft is only paid from chests that are yours by then, so what the window shows is what will be paid.
+
 1.5.0: Now in your language: English, Russian, German, Chinese (Simplified), Portuguese (Brazil), Spanish, French, Polish and Turkish, following the game's own Language setting. The game's own names are used for its things (items, creatures, lands, stations). The translations were made with AI: to correct a line, or add a language, put a file in BepInEx/config/translations/com.quad.craftfromchests/ named after the game's name for the language (German.json...) with only the lines you change, copied from translations/English.json on GitHub.
 
 1.4.3: Fixed: it never takes from or puts into the game's Obliterator (what is in it burns when the lever is pulled), a Ledger Chest or the Arena's chests; only ordinary storage chests count.

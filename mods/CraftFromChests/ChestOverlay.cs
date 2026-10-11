@@ -40,6 +40,7 @@ namespace CraftFromChests
         private void Update()
         {
             if (InventoryGui.IsVisible()) EnsureButtons(); // the buttons only matter (and only need looking after) while the inventory is open
+            ChestScanner.RefreshWhenSettled();             // chests claimed for this window have become ours: list the recipes again
 
             Player player = Player.m_localPlayer;
             CraftingStation station = player != null ? player.GetCurrentCraftingStation() : null;

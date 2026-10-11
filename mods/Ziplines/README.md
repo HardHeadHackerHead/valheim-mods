@@ -7,7 +7,7 @@
 
 **Ziplines: build two posts, run a rope between them and ride it, hanging from your axe.**
 
-![version: 0.3.0](https://img.shields.io/badge/version-0.3.0-3b6e8f?style=flat-square)  ![multiplayer: everyone + host](https://img.shields.io/badge/multiplayer-everyone%20%2B%20host-7a5c2e?style=flat-square)  ![made with: Claude Code](https://img.shields.io/badge/made%20with-Claude%20Code-c26a3d?style=flat-square)
+![version: 0.3.1](https://img.shields.io/badge/version-0.3.1-3b6e8f?style=flat-square)  ![multiplayer: everyone + host](https://img.shields.io/badge/multiplayer-everyone%20%2B%20host-7a5c2e?style=flat-square)  ![made with: Claude Code](https://img.shields.io/badge/made%20with-Claude%20Code-c26a3d?style=flat-square)
 
 <!-- GITHUB-ONLY -->[Thunderstore](https://thunderstore.io/c/valheim/p/Quads_Lab/Quads_Ziplines/)  ·  <!-- END GITHUB-ONLY -->[Source code](https://github.com/HardHeadHackerHead/valheim-mods/tree/main/mods/Ziplines)  ·  [Report a bug](https://github.com/HardHeadHackerHead/valheim-mods/issues/new?template=bug.yml&title=%5BQuad%27s%20Ziplines%5D%20)  ·  [Discord](https://discord.gg/EwTjQxEZPy)
 
@@ -130,8 +130,8 @@ and tested in our own world, with **bobisme** as our tester.
 
 ## 📜 Recent changes
 
+- **0.3.1** Fixes. Moving, attacking, blocking or crouching while you ride no longer drops you off the rope (only Jump lets go, as before). Logging out or the game saving while you ride now brings you back on the ground under the line, not hanging in the air to fall. Reloading the mod mid-ride sets you down on the ground instead of dropping you. Taking down a line, or running one, to a far post that isn't loaded on your game now changes that post too in multiplayer (the host does it), so no rope is left running to nowhere; the host needs this version for that.
 - **0.3.0** Now in your language: English, Russian, German, Chinese (Simplified), Portuguese (Brazil), Spanish, French, Polish and Turkish, following the game's own Language setting. The game's own names are used for its things (items, creatures, lands, stations). The translations were made with AI: to correct a line, or add a language, put a file in BepInEx/config/translations/com.quad.ziplines/ named after the game's name for the language (German.json...) with only the lines you change, copied from translations/English.json on GitHub. A blocking piece's name keeps its capital letters (German nouns need them).
 - **0.2.3** A clearer page: what it does, who needs it in multiplayer, how it gets on with other mods, and where to report a bug. The game itself is unchanged.
-- **0.2.2** Its test command for Claude Tools (zip ...) follows the game's cheat rule: spawning, removing and riding test lines and tp work only in single player, for the host or with devcommands; status, posts and hover still work for everyone.
 
 <!-- GITHUB-ONLY -->[Every change](CHANGELOG.txt)<!-- END GITHUB-ONLY --><!-- THUNDERSTORE-ONLY: Every change is on the Changelog tab. -->

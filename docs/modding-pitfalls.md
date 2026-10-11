@@ -93,6 +93,33 @@ resent with every step, so other creatures' updates arrived seconds late in mult
 anything that moves (AICompanion's `Book`: kept with its player's character, sent as small changes over routed RPCs and whole only when
 asked), and save values that change all the time (skills, stamina) every few seconds rather than on every change.
 
+## A removed ZDO key stays on every other game
+
+`ZDO.RemoveInt` (and the other `Remove...`) only removes the key on this game. A ZDO arrives on other games through `ZDO.Deserialize`,
+which only adds or overwrites keys (`ZDOExtraData.Add`); nothing is ever cleared there, nor on the server or for players who join later.
+Parkour 0.1.0 ended a move by removing the pose keys from the player's ZDO, so other players saw them frozen in their last slide or climb.
+Never remove a key others read: write an explicit "none" value (0, "", a version-tagged empty state) and treat it as nothing.
+
+## An attached player lets go on any input
+
+`Player.SetControls` calls `AttachStop()` whenever an attached player (a chair, a bed, a zipline, a cart) moves, attacks, blocks, jumps
+or crouches. Ziplines 0.3.0 let a rider tap W over a gorge and fall to their death. A mod that attaches the player somewhere dangerous
+neutralises those inputs while attached (a `SetControls` prefix) and lets go on its own terms, and sets the player down safely (ground
+under them, fall height reset) when it lets go for any other reason: a reload, a logout (the logout point is the hanging spot).
+
+## "True" from the game's UseItem doesn't mean it took the item
+
+`Fireplace.UseItem` returns true when the fire is full too (it only shows "can't add more"); other `UseItem`/`Interact` methods answer
+"I handled it", not "I took it". FeedFromChests 1.8.0 counted that as fuel added and lost one wood per press on a full fire. Check the
+station's state yourself (fuel against `m_maxFuel`, a free slot) before paying, or count the items before and after.
+
+## Take items only once the owner confirms, or give them back
+
+A station another player's game runs decides on its owner's game: your copy of it can be a moment old, and an RPC to an owner who has
+just left or unloaded it is dropped without an answer. Taking the items first and sending them over (BirdTrap's bait, the cigar curer,
+filling a fermenter run by another player) loses them whenever the owner refuses or never answers. Add one at a time and wait for the
+station to change, or keep what you sent until the owner confirms, and give it back if no answer comes.
+
 ## Every prefix runs, and ScriptEngine ignores incompatibility
 
 In the HarmonyX that BepInEx ships, a prefix returning false skips only the game's method: every other mod's prefixes still run. So a

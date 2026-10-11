@@ -25,6 +25,9 @@ namespace Ziplines
 
         public static bool Active => _rider != null;
 
+        /// <summary>Whether this player is riding (on this game).</summary>
+        public static bool Riding(Player player) => _rider != null && player != null && _rider == player;
+
         /// <summary>Every frame after the animation has posed the rider: arms up and legs hanging, the handle in the hands.</summary>
         public static void Late()
         {
@@ -139,11 +142,11 @@ namespace Ziplines
         }
 
         /// <summary>The ground at this spot: the highest solid thing under it that is not a post or a creature, else the fallback.</summary>
-        private static float GroundAt(Vector3 at, float fallback)
+        private static float GroundAt(Vector3 at, float fallback, float above = 6f, float reach = 80f)
         {
             int mask = LayerMask.GetMask("Default", "static_solid", "terrain", "piece", "Default_small");
             float best = float.MinValue;
-            foreach (RaycastHit hit in Physics.RaycastAll(at + Vector3.up * 6f, Vector3.down, 80f, mask, QueryTriggerInteraction.Ignore))
+            foreach (RaycastHit hit in Physics.RaycastAll(at + Vector3.up * above, Vector3.down, reach, mask, QueryTriggerInteraction.Ignore))
             {
                 if (hit.collider.GetComponentInParent<Post>() != null || hit.collider.GetComponentInParent<Character>() != null) continue;
                 best = Mathf.Max(best, hit.point.y);
@@ -151,10 +154,51 @@ namespace Ziplines
             return best > float.MinValue ? best : fallback;   // (NaN means: not loaded here yet)
         }
 
+        /// <summary>The ride is stopped from outside (the mod reloaded): you are set down on the ground, not dropped from the rope.</summary>
         public static void End(string why)
         {
-            if (_rider != null && _rider.IsAttached()) _rider.AttachStop();
+            if (_rider != null && _rider.IsAttached())
+            {
+                Vector3 spot = SafeSpot(out bool groundHere);
+                _rider.AttachStop();
+                SetDown(_rider, spot, groundHere);
+                Plugin.Log.LogInfo($"Ride ended ({why}): set down at {spot}");
+            }
             Finish();
+        }
+
+        /// <summary>
+        /// Somewhere safe to stand: the ground under the rider (or the water on it), else, where that is not loaded, the nearer end of the line
+        /// (where you got on, or where you would have landed).
+        /// </summary>
+        public static Vector3 SafeSpot(out bool groundHere)
+        {
+            Vector3 at = _rider.transform.position;
+            float ground = GroundAt(at, float.NaN, 1f, 3000f);   // (from just above your feet: not onto a branch over your head)
+            groundHere = !float.IsNaN(ground);
+            if (groundHere)
+            {
+                if (ZoneSystem.instance != null) ground = Mathf.Max(ground, ZoneSystem.instance.m_waterLevel);   // (over a lake or the sea: on the water, not the bottom)
+                return new Vector3(at.x, ground + 0.05f, at.z);
+            }
+            if (_t < 0.5f) return _start;
+            Vector3 beyond = _b + Flat(_b - _a) * 1.5f;
+            return new Vector3(beyond.x, _b.y - Things.Height, beyond.z);
+        }
+
+        private static readonly AccessTools.FieldRef<Character, float> MaxAirAltitude = AccessTools.FieldRefAccess<Character, float>("m_maxAirAltitude");
+
+        /// <summary>
+        /// Puts the player on this spot with no fall counted (the game counts a fall from the highest point since you last stood, the rope). A
+        /// spot that isn't loaded is reached with the game's own teleport, which waits for the ground there and takes no damage on the way.
+        /// </summary>
+        private static void SetDown(Player player, Vector3 spot, bool loaded)
+        {
+            if (!loaded && player.TeleportTo(spot, player.transform.rotation, true)) return;
+            player.transform.position = spot;
+            Rigidbody body = player.GetComponent<Rigidbody>();
+            if (body != null) body.linearVelocity = Vector3.zero;
+            MaxAirAltitude(player) = spot.y;
         }
 
         private static void Finish()
@@ -207,6 +251,36 @@ namespace Ziplines
             float speed01 = Mathf.InverseLerp(0f, Plugin.TopSpeed.Value * Plugin.SpeedScale.Value / 100f * 2f, _speed);
             _wind.volume = Mathf.Lerp(_wind.volume, Plugin.WindVolume.Value * speed01, Time.deltaTime * 4f);
             _wind.pitch = 0.8f + 0.7f * speed01;
+        }
+    }
+
+    // The game lets go of whatever you are attached to (a chair, a bed, a ship's mast) as soon as you move, attack, block, jump or crouch: on
+    // a zipline that dropped you from the rope at the first tap of W or click, often from a deadly height. While you ride, those inputs are
+    // not passed on. Letting go is the mod's own (Jump, read in Ride.Tick, once you are on the rope), and it is allowed anywhere along the
+    // line, high or not: that is the player's choice, as jumping off a cliff is.
+    [HarmonyPatch(typeof(Player), nameof(Player.SetControls))]
+    internal static class Player_SetControls
+    {
+        [HarmonyPriority(Priority.Last)]   // (after other mods' prefixes, so nothing they add gets through either)
+        private static void Prefix(Player __instance, ref Vector3 movedir, ref bool attack, ref bool attackHold, ref bool secondaryAttack, ref bool secondaryAttackHold,
+                                   ref bool block, ref bool blockHold, ref bool jump, ref bool crouch, ref bool autoRun, ref bool dodge)
+        {
+            if (!Ride.Riding(__instance)) return;
+            movedir = Vector3.zero;
+            attack = attackHold = secondaryAttack = secondaryAttackHold = block = blockHold = jump = crouch = autoRun = dodge = false;
+        }
+    }
+
+    // Logging out (or the game saving) while you ride would save the spot you hang in, high over the ground, as where you come back: you would
+    // fall when you next join. The ground under you is saved instead.
+    [HarmonyPatch(typeof(PlayerProfile), nameof(PlayerProfile.SaveLogoutPoint))]
+    internal static class PlayerProfile_SaveLogoutPoint
+    {
+        private static void Postfix(PlayerProfile __instance)
+        {
+            Player player = Player.m_localPlayer;
+            if (!Ride.Riding(player) || player.IsDead() || player.InIntro()) return;
+            __instance.SetLogoutPoint(Ride.SafeSpot(out _));
         }
     }
 

@@ -9,13 +9,15 @@ namespace Parkour
     /// written only when something changes enough to see: a new move, the facing turning more than 3 degrees, the edge rising or falling
     /// (or moving off its line) more than 5 cm, every 0.5 m along it, the shimmy changing. Between writes the other games slide the edge
     /// along its line with the body (Look.cs), so a shimmy needs no write for each step. Players without the mod never read them. A move
-    /// ending, and the mod unloading, clear them.
+    /// ending, and the mod unloading, write the pose "none": a key removed from a ZDO is never removed on the other games (a ZDO arrives
+    /// as its keys, which only add or overwrite there), so removing them left the others seeing the last pose until the next move.
     /// </summary>
     internal static class Share
     {
         // poses as shared: the format's version times ten plus the move (an unknown version is not posed)
         public const int Version = 1;
         public const int None = 0, Hang = 1, PullUp = 2, WallRun = 3, Climb = 4, Slide = 5, Vault = 6;   // (Vault: a pull-up over a thin top)
+        private const int NoPose = Version * 10 + None;   // (what a player out of a move shares; 0.1.0 reads it as no pose too)
 
         public static readonly int PoseKey = "parkour_pose".GetStableHashCode(), EdgeKey = "parkour_edge".GetStableHashCode(),
             NormalKey = "parkour_normal".GetStableHashCode(), ShimmyKey = "parkour_shimmy".GetStableHashCode();
@@ -55,7 +57,8 @@ namespace Parkour
             float shimmy = pose == Hang ? Look.LocalShimmy : 0f;
             if (pose == None)
             {
-                if (_pose != None) Clear(zdo);
+                // (also a pose left on the ZDO by a move this game no longer remembers: a reload, a new character)
+                if (_pose != None || (zdo.GetInt(PoseKey, NoPose) != NoPose)) Clear(zdo);
                 return;
             }
             bool newPose = pose != _pose, turned = Vector3.Dot(normal, _normal) <= 0.9986f;   // (3 degrees)
@@ -70,16 +73,19 @@ namespace Parkour
             _pose = pose;
         }
 
-        /// <summary>Our keys off the local player's ZDO (a move ended, or the mod unloads).</summary>
+        /// <summary>
+        /// No pose on the local player's ZDO (a move ended, or the mod unloads). Written, never removed: a removal never reaches the other
+        /// games. The edge, facing and shimmy are left as they are (nobody reads them without a pose).
+        /// </summary>
         public static void Clear(ZDO zdo)
         {
-            if (zdo != null && zdo.IsOwner())
-            {
-                zdo.RemoveInt(PoseKey);
-                zdo.RemoveVec3(EdgeKey);
-                zdo.RemoveVec3(NormalKey);
-                zdo.RemoveFloat(ShimmyKey);
-            }
+            if (zdo != null && zdo.IsOwner()) zdo.Set(PoseKey, NoPose);
+            Forget();
+        }
+
+        /// <summary>What was last written, forgotten (a new character's ZDO is a new one: Publish writes "none" there if it needs it).</summary>
+        public static void Forget()
+        {
             _pose = None;
             _edge = _normal = Vector3.zero;
             _shimmy = 0f;
@@ -93,7 +99,7 @@ namespace Parkour
             edge = normal = Vector3.zero;
             shimmy = 0f;
             int value = zdo.GetInt(PoseKey, 0);
-            if (value / 10 != Version) return None;
+            if (value / 10 != Version || value % 10 == None) return None;   // (an unknown format, or out of a move)
             edge = zdo.GetVec3(EdgeKey, Vector3.zero);
             normal = zdo.GetVec3(NormalKey, Vector3.zero);
             shimmy = zdo.GetFloat(ShimmyKey, 0f);

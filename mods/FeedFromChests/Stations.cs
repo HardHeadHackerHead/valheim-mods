@@ -101,7 +101,8 @@ namespace FeedFromChests
             {
                 info = new StationInfo { Component = fire, Title = fire.m_name, Position = fire.transform.position };
                 if (fire.m_canRefill && !fire.m_infiniteFuel && fire.m_fuelItem != null) info.Fuel = fire.m_fuelItem;
-                info.AddFuel = (p, item) => fire.UseItem(p, item) ? Outcome.AddedTakeOne : Outcome.Failed;
+                // The game's UseItem also says yes when the fire is full ("can't add more"), having put nothing in: check first, as it does.
+                info.AddFuel = (p, item) => Mathf.CeilToInt(Lights.FuelOf(fire)) < fire.m_maxFuel && fire.UseItem(p, item) ? Outcome.AddedTakeOne : Outcome.Failed;
 
                 // Where E would switch the fire on/off instead of refuelling, we stay out of the way.
                 float fuel = fire.GetComponent<ZNetView>()?.GetZDO()?.GetFloat(ZDOVars.s_fuel) ?? 0f;

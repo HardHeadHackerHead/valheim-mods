@@ -7,7 +7,7 @@
 
 **Smelters, kilns, cooking racks, fires and fermenters refuel and fill themselves from nearby chests (auto fuel and ore), and smelters and kilns can run themselves.**
 
-![version: 1.8.0](https://img.shields.io/badge/version-1.8.0-3b6e8f?style=flat-square)  ![multiplayer: only who wants it](https://img.shields.io/badge/multiplayer-only%20who%20wants%20it-7a5c2e?style=flat-square)  ![made with: Claude Code](https://img.shields.io/badge/made%20with-Claude%20Code-c26a3d?style=flat-square)
+![version: 1.8.1](https://img.shields.io/badge/version-1.8.1-3b6e8f?style=flat-square)  ![multiplayer: only who wants it](https://img.shields.io/badge/multiplayer-only%20who%20wants%20it-7a5c2e?style=flat-square)  ![made with: Claude Code](https://img.shields.io/badge/made%20with-Claude%20Code-c26a3d?style=flat-square)
 
 <!-- GITHUB-ONLY -->[Thunderstore](https://thunderstore.io/c/valheim/p/Quads_Lab/Quads_Feed_From_Chests/)  ·  <!-- END GITHUB-ONLY -->[Source code](https://github.com/HardHeadHackerHead/valheim-mods/tree/main/mods/FeedFromChests)  ·  [Report a bug](https://github.com/HardHeadHackerHead/valheim-mods/issues/new?template=bug.yml&title=%5BQuad%27s%20Feed%20From%20Chests%5D%20)  ·  [Discord](https://discord.gg/EwTjQxEZPy)
 
@@ -170,8 +170,8 @@ and tested in our own world, with **bobisme** as our tester.
 
 ## 📜 Recent changes
 
+- **1.8.1** Fixed: pressing E at a fire that was already full (or Fill on one) used up a fuel from your chests each time without adding it. Fixed in multiplayer: Fill on a station another player's game looks after could take more than the station had room for there, and the rest was lost; Fill now takes the station over first and starts a moment later. Taking done food off a spit another player's game looks after could hand it out twice; there E now takes it off as the game does. Two players taking from (or putting into) the same chest at the same moment could get the same items twice: a chest another player's game was looking after is now used a moment after it is taken over, and the menu counts it from then. Smoother: shield generators, ballistas and sap extractors are no longer searched for across the whole world every few seconds.
 - **1.8.0** Now in your language: English, Russian, German, Chinese (Simplified), Portuguese (Brazil), Spanish, French, Polish and Turkish, following the game's own Language setting. The game's own names are used for its things (items, creatures, lands, stations). The translations were made with AI: to correct a line, or add a language, put a file in BepInEx/config/translations/com.quad.feedfromchests/ named after the game's name for the language (German.json...) with only the lines you change, copied from translations/English.json on GitHub. Fixed: a help line read "add up to this much each thing it makes".
 - **1.7.0** The station menu (E on a smelter, kiln, cooking station, fermenter or fire) now looks like part of the game: its wood panel, buttons, fonts and item slots with their tooltips, in two columns (add by hand on the left, the station's auto-feed settings on the right). Settings are switches that say On or Off and numbers you change with -10, -1, +1 and +10, and the counts update as you watch. E closes the menu again, as it does a chest, without putting anything in. Fixed: it never takes from or puts into the game's Obliterator (what is in it burns when the lever is pulled), a Ledger Chest or the Arena's chests; only ordinary storage chests count.
-- **1.6.2** A clearer page: what it does, who needs it in multiplayer, how it gets on with other mods, and where to report a bug. The game itself is unchanged.
 
 <!-- GITHUB-ONLY -->[Every change](CHANGELOG.txt)<!-- END GITHUB-ONLY --><!-- THUNDERSTORE-ONLY: Every change is on the Changelog tab. -->

@@ -7,7 +7,7 @@
 
 **A portal network: press E on a portal and pick where it goes from a list. No more matching portal names to teleport where you want.**
 
-![version: 1.4.0](https://img.shields.io/badge/version-1.4.0-3b6e8f?style=flat-square)  ![multiplayer: everyone + host](https://img.shields.io/badge/multiplayer-everyone%20%2B%20host-7a5c2e?style=flat-square)  ![made with: Claude Code](https://img.shields.io/badge/made%20with-Claude%20Code-c26a3d?style=flat-square)
+![version: 1.4.1](https://img.shields.io/badge/version-1.4.1-3b6e8f?style=flat-square)  ![multiplayer: everyone + host](https://img.shields.io/badge/multiplayer-everyone%20%2B%20host-7a5c2e?style=flat-square)  ![made with: Claude Code](https://img.shields.io/badge/made%20with-Claude%20Code-c26a3d?style=flat-square)
 
 <!-- GITHUB-ONLY -->[Thunderstore](https://thunderstore.io/c/valheim/p/Quads_Lab/Quads_Portal_Hub/)  ·  <!-- END GITHUB-ONLY -->[Source code](https://github.com/HardHeadHackerHead/valheim-mods/tree/main/mods/PortalHub)  ·  [Report a bug](https://github.com/HardHeadHackerHead/valheim-mods/issues/new?template=bug.yml&title=%5BQuad%27s%20Portal%20Hub%5D%20)  ·  [Discord](https://discord.gg/EwTjQxEZPy)
 
@@ -43,9 +43,9 @@
 
 <!-- HAND-WRITTEN: how-to-use -->
 - **E on any portal opens the PortalHub menu** instead of the game's name box (press **Shift+E** for the game's own name box).
-- **Protected areas:** a portal inside someone else's switched-on ward can't be relinked or renamed by you, and "link it back" leaves such a
-  portal as it is (you get a one-way link). The host checks this, whatever a player's game says. With `HideWardedPortals` on (the host's
-  choice), those portals also stay out of your list and map.
+- **Protected areas:** a portal inside someone else's switched-on ward can't be relinked or renamed by you, and you can't link a portal
+  into it either (a link would let anyone walk into their base). The host checks this, whatever a player's game says. With
+  `HideWardedPortals` on (the host's choice), those portals also stay out of your list and map.
 <!-- END HAND-WRITTEN: how-to-use -->
 
 ## 🧩 Other mods
@@ -132,8 +132,8 @@ and tested in our own world, with **bobisme** as our tester.
 
 ## 📜 Recent changes
 
+- **1.4.1** Fix: a portal could be linked one way into someone else's protected area, so anyone could walk into their base through it. The host now refuses a link to a portal in a switched-on ward you are not on, whatever HideWardedPortals says (that setting now only hides those portals from the list and map). Links that already lead into a protected area their maker may not enter (a ward built or switched on since) are dropped, and the portal goes back to pairing by name. Links made with an older version didn't record who made them, so they are left as they are. Fix: a portal renamed at the moment the host saved its link or id could lose the new name: the host now asks the game that holds the portal to save them (as the game does with its own portal links), and saves them itself only when nobody else holds it, or after a few seconds for a player with an older PortalHub. The host's portal pass every 5 seconds no longer searches the whole portal list once for each linked portal.
 - **1.4.0** Now in your language: English, Russian, German, Chinese (Simplified), Portuguese (Brazil), Spanish, French, Polish and Turkish, following the game's own Language setting. The game's own names are used for its things (items, creatures, lands, stations). The translations were made with AI: to correct a line, or add a language, put a file in BepInEx/config/translations/com.quad.portalhub/ named after the game's name for the language (German.json...) with only the lines you change, copied from translations/English.json on GitHub. The host's two refusals (a portal in someone's ward, a one-way link) reach each player in their own language. Players on a server should update together: a player on an older version sees those two as a key name. The narrow buttons on each portal's row shrink their words to fit.
 - **1.3.0** The portal menu now looks like part of the game: the crafting screen's wood panel, the game's buttons, fonts and scrollbar, and the game's own text boxes for the name and search (E and Tab type in them). Long portal lists scroll smoothly. E or Tab closes the menu as they close a chest, and the E that closes it no longer opens it again. The link lines on the big map are part of the map now: they stay under the portal icons and move and hide with it.
-- **1.2.2** A clearer page: what it does, who needs it in multiplayer, how it gets on with other mods, and where to report a bug. The game itself is unchanged.
 
 <!-- GITHUB-ONLY -->[Every change](CHANGELOG.txt)<!-- END GITHUB-ONLY --><!-- THUNDERSTORE-ONLY: Every change is on the Changelog tab. -->

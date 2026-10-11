@@ -8,9 +8,10 @@ using static DHack.Shared.Translations;
 namespace SkalTavern
 {
     /// <summary>
-    /// The toast (Toast: Key). You raise a cup, and so does everyone near you who has the mod and toasts within a few seconds (the game's own
-    /// network call tells them, so it works whoever hosts). Each of you, and each companion of yours standing by (AICompanion), counts as
-    /// someone to drink with, and while the toast lasts you all get a Skal! buff: more stamina and health back, up to four to drink with.
+    /// The toast: every swig of a drink is one (Swigs.cs). You raise a cup, and so does everyone near you who has the mod and drinks within a
+    /// few seconds (the game's own network call tells them, so it works whoever hosts). Each of you, and each companion of yours standing by
+    /// (AICompanion), counts as someone to drink with, and while the toast lasts you all get a Skal! buff: more stamina and health back, up to
+    /// four to drink with.
     /// </summary>
     internal static class Toast
     {
@@ -59,18 +60,22 @@ namespace SkalTavern
 
         // ---- raising a cup ---------------------------------------------------------------------------------------------
 
+        /// <summary>
+        /// Every swig is a toast (Swigs.cs). The others near are told at most every 6 seconds: a swig sooner than that still counts as raising
+        /// your cup (a friend's toast now goes with it) and keeps the buff going, quietly. Drinking alone says nothing.
+        /// </summary>
         public static void Raise(Player player)
         {
-            if (Time.time < _nextAllowed || player.IsDead()) return;
-            _nextAllowed = Time.time + 6f;
+            if (player.IsDead()) return;
             _last = Time.time;
-            player.StartEmote("cheer");
+            if (Time.time < _nextAllowed) { Evaluate(player, false); return; }
+            _nextAllowed = Time.time + 6f;
             ZRoutedRpc.instance?.InvokeRoutedRPC(ZRoutedRpc.Everybody, Rpc, player.transform.position, player.GetPlayerName());
-            if (!Evaluate(player)) player.Message(MessageHud.MessageType.Center, T("skaltavern_toast_alone"));
+            Evaluate(player, true);
         }
 
-        /// <summary>Who you are drinking with, and the buff for it. False when there is no one.</summary>
-        private static bool Evaluate(Player player)
+        /// <summary>Who you are drinking with, and the buff for it (said on screen when say is true). False when there is no one.</summary>
+        private static bool Evaluate(Player player, bool say = true)
         {
             float window = Plugin.ToastSeconds.Value;
             if (Time.time - _last > window) return false;   // (you have not raised a cup yourself)
@@ -83,6 +88,7 @@ namespace SkalTavern
 
             Partners = Mathf.Min(partners, 4);
             player.GetSEMan().AddStatusEffect(Drinks.SkalHash, true);
+            if (!say) return true;
             // the players' names ("A and B and C"), then the companions: a whole sentence for each case, as languages word them differently
             string names = near.Count > 0 ? near.Select(o => o.Name).Aggregate((a, b) => T("skaltavern_and", a, b)) : null;
             string said = names == null ? T(companions == 1 ? "skaltavern_toast_companion" : "skaltavern_toast_companions")

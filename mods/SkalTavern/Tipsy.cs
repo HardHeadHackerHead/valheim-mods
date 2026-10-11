@@ -30,13 +30,14 @@ namespace SkalTavern
             }
         }
 
-        public static void Drink(float amount)
+        /// <summary>A drink, or a swig of one: share is how much of a whole drink it is (a swig is a quarter).</summary>
+        public static void Drink(float amount, float share = 1f)
         {
             Player player = Player.m_localPlayer;
             if (player == null) return;
             float before = Level;
-            // too much, too fast: the drink comes back up (and it counts for less)
-            if (amount > 0f && before >= 85f && Random.value < 0.4f) { Puke(player); before = Level; amount *= 0.5f; }
+            // too much, too fast: the drink comes back up (and it counts for less). Two in five for a whole drink, spread over its swigs.
+            if (amount > 0f && before >= 85f && Random.value < 1f - Mathf.Pow(0.6f, share)) { Puke(player); before = Level; amount *= 0.5f; }
             Level = Mathf.Min(130f, Level + amount);
             _peak = Mathf.Max(_peak, Level);
             SEMan sem = player.GetSEMan();
@@ -119,15 +120,16 @@ namespace SkalTavern
 
     // ---- the status effects ----------------------------------------------------------------------------------------
 
-    /// <summary>One drink: raises how drunk you are, then is gone (the Tipsy effect is what stays).</summary>
+    /// <summary>One swig of a drink: raises how drunk you are, then is gone (the Tipsy effect is what stays).</summary>
     public class SE_Drink : StatusEffect
     {
         public float Amount;
+        public float Share = 1f;   // (how much of a whole drink this is: a quarter, one swig)
 
         public override void Setup(Character character)
         {
             base.Setup(character);
-            if (character == Player.m_localPlayer) Tipsy.Drink(Amount);
+            if (character == Player.m_localPlayer) Tipsy.Drink(Amount, Share);
         }
     }
 

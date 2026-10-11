@@ -22,31 +22,36 @@ namespace SlotMachine
         private Transform _lever;
         private readonly List<Renderer> _bulbsA = new List<Renderer>(), _bulbsB = new List<Renderer>();
         private int[] _shown = { 0, 0, 0 };
+        private string _shownText;   // the stored reels _shown was read from (read again only when they change)
+        private ZDOID _id = ZDOID.None; // (kept: by the time OnDestroy runs the game has already taken the ZDO away from the view)
         private long _spinSeen;
         private readonly System.Random _rng = new System.Random();
 
-        // What this game's player is owed for a spin still turning. If they log out, or walk off so the machine unloads, before the
-        // reels stop, the winnings go straight into their inventory instead of being lost with the spin.
+        // What this game's player is still owed for their last spin: all of it while the reels turn, then whatever the tray has yet to
+        // pour out (it goes down with each stack that lands). If they log out, pull again, or the machine unloads or is taken down before
+        // that is 0, the rest goes straight into their inventory (or at their feet) instead of being lost.
         private static long _owedSpin;
         private static int _owedCoins;
         private static ZDOID _owedMachine = ZDOID.None;
+        private static bool _owedPouring;  // the tray has taken this spin over (it is marked paid on the machine) and is pouring it
+        private static long _settledSpin;  // the last spin paid here, so a machine loaded again within seconds can't pay it twice
 
-        /// <summary>Pay a spin that never got to finish on screen (logout, machine unloaded).</summary>
+        /// <summary>Pay what is still owed at once: a spin that never got to finish on screen, or the rest of a pour that was cut short.</summary>
         internal static void PayOwed()
         {
-            if (_owedCoins <= 0) { _owedSpin = 0L; return; }
+            if (_owedCoins <= 0) { _owedSpin = 0L; _owedPouring = false; return; }
             Player me = Player.m_localPlayer;
-            if (me == null) return;
+            GameObject prefab = ZNetScene.instance != null ? ZNetScene.instance.GetPrefab("Coins") : null;
+            if (me == null || prefab == null) return; // kept owed: paid at the next pull or logout
             int coins = _owedCoins, total = _owedCoins;
             ZDO zdo = ZDOMan.instance != null ? ZDOMan.instance.GetZDO(_owedMachine) : null;
-            if (zdo != null)
+            if (zdo != null && !_owedPouring)
             {
                 if (zdo.GetLong(KeyPaid, 0L) == _owedSpin) { _owedCoins = 0; _owedSpin = 0L; return; } // already paid out of the tray
                 if (zdo.IsOwner()) zdo.Set(KeyPaid, _owedSpin);
             }
-            _owedCoins = 0; _owedSpin = 0L;
-            GameObject prefab = ZNetScene.instance != null ? ZNetScene.instance.GetPrefab("Coins") : null;
-            if (prefab == null) return;
+            _settledSpin = _owedSpin;
+            _owedCoins = 0; _owedSpin = 0L; _owedPouring = false;
             Inventory inv = me.GetInventory();
             int max = Mathf.Max(1, prefab.GetComponent<ItemDrop>().m_itemData.m_shared.m_maxStackSize);
             while (coins > 0)
@@ -59,10 +64,10 @@ namespace SlotMachine
             me.Message(MessageHud.MessageType.TopLeft, T("slotmachine_paid_owed", total));
         }
 
+        // Unloaded or taken down while its reels turned or its tray poured: pay the rest now.
         private void OnDestroy()
         {
-            ZDO zdo = Zdo;
-            if (_owedCoins > 0 && zdo != null && zdo.m_uid == _owedMachine) PayOwed();
+            if (_owedCoins > 0 && !_id.IsNone() && _id == _owedMachine) PayOwed();
         }
 
         private void Awake()
@@ -122,12 +127,23 @@ namespace SlotMachine
             if (Spinning) { player.Message(MessageHud.MessageType.Center, T("slotmachine_still_turning")); return; }
 
             int bet = Plugin.Bet.Value;
-            if (player.GetInventory().CountItems("$item_coins") < bet)
+            Inventory inv = player.GetInventory();
+            int had = Coins(inv); // the player's own coins (other mods add chests to CountItems)
+            if (had < bet)
             {
                 player.Message(MessageHud.MessageType.Center, T("slotmachine_need_coins", bet));
                 return;
             }
-            player.GetInventory().RemoveItem("$item_coins", bet);
+            inv.RemoveItem("$item_coins", bet, -1, false);
+            int taken = had - Coins(inv);
+            if (taken < bet)
+            {
+                // something kept part of the bet back: give back what went and don't spin
+                GameObject coins = ZNetScene.instance != null ? ZNetScene.instance.GetPrefab("Coins") : null;
+                if (taken > 0 && coins != null) inv.AddItem(coins, taken);
+                player.Message(MessageHud.MessageType.Center, T("slotmachine_need_coins", bet));
+                return;
+            }
 
             int[] cells = Payout.Roll(_rng);
             int pay = Mathf.RoundToInt(Payout.Multiplier(cells) * bet * Plugin.PayoutPercent.Value / 100f);
@@ -139,9 +155,18 @@ namespace SlotMachine
             zdo.Set(KeyWho, ZDOMan.GetSessionID());
             long start = NowMs;
             zdo.Set(KeyStart, start);
-            if (_owedCoins > 0) PayOwed(); // a spin elsewhere that never settled
-            _owedSpin = start; _owedCoins = pay; _owedMachine = zdo.m_uid;
+            if (_owedCoins > 0) PayOwed(); // a spin elsewhere that never settled, or a pour still going
+            _id = zdo.m_uid;
+            _owedSpin = start; _owedCoins = pay; _owedMachine = zdo.m_uid; _owedPouring = false;
             Effect(false);
+        }
+
+        private static int Coins(Inventory inv)
+        {
+            int n = 0;
+            foreach (ItemDrop.ItemData item in inv.GetAllItems())
+                if (item.m_shared.m_name == "$item_coins") n += item.m_stack;
+            return n;
         }
 
         public string GetHoverText()
@@ -161,10 +186,13 @@ namespace SlotMachine
         {
             ZDO zdo = Zdo;
             if (zdo == null) return;
+            _id = zdo.m_uid;
 
             long start = zdo.GetLong(KeyStart, 0L);
             float t = start == 0L ? 999f : (NowMs - start) / 1000f;
-            int[] target = ParseCells(zdo.GetString(KeyCells, "0,0,0"));
+            string cellsText = zdo.GetString(KeyCells, "0,0,0");
+            if (cellsText != _shownText) { _shownText = cellsText; _shown = ParseCells(cellsText); }
+            int[] target = _shown;
 
             for (int i = 0; i < 3; i++)
             {
@@ -174,7 +202,6 @@ namespace SlotMachine
                 if (t >= 0f && t < stop) angle += 360f * (5 + i) * (1f - Ease(t / stop));
                 _reels[i].localRotation = Quaternion.Euler(angle, 0f, 0f);
             }
-            _shown = target;
 
             if (_lever != null)
             {
@@ -206,38 +233,47 @@ namespace SlotMachine
             _spinSeen = start;
             if (t > Total + 8f) return; // an old spin we only just walked up to
 
-            if (zdo.GetLong(KeyWho, 0L) != ZDOMan.GetSessionID() || zdo.GetLong(KeyPaid, 0L) == start) return;
+            if (zdo.GetLong(KeyWho, 0L) != ZDOMan.GetSessionID() || zdo.GetLong(KeyPaid, 0L) == start || _settledSpin == start) return;
             _nview.ClaimOwnership();
             zdo.Set(KeyPaid, start);
-            if (_owedSpin == start) { _owedSpin = 0L; _owedCoins = 0; } // paid here, out of the tray
+            _settledSpin = start;
 
             int pay = zdo.GetInt(KeyPay, 0), bet = zdo.GetInt(KeyBet, 0);
             Player me = Player.m_localPlayer;
             if (pay <= 0)
             {
+                if (_owedSpin == start) { _owedSpin = 0L; _owedCoins = 0; _owedPouring = false; }
                 if (me != null) me.Message(MessageHud.MessageType.TopLeft, T("slotmachine_no_luck"));
                 return;
             }
+            // The tray pays it from here: what is owed is now what it has yet to pour.
+            if (_owedSpin != start && _owedCoins > 0) PayOwed(); // (some other spin still owed: settle it first)
+            _owedSpin = start; _owedCoins = pay; _owedMachine = zdo.m_uid; _owedPouring = true;
+
             bool jackpot = Payout.IsJackpot(cells);
             if (me != null) me.Message(MessageHud.MessageType.Center, T(jackpot ? "slotmachine_jackpot" : "slotmachine_win", pay));
             Effect(true);
-            StartCoroutine(Spit(pay));
+            StartCoroutine(Spit(start));
         }
 
-        /// <summary>Coins come out of the tray one stack at a time, so a big win pours out.</summary>
-        private IEnumerator Spit(int coins)
+        /// <summary>
+        /// Coins come out of the tray one stack at a time, so a big win pours out. Each stack is taken off what is owed as it lands; if the
+        /// pour is cut short (the machine unloads or is taken down, the player logs out or pulls again) the rest is paid at once (PayOwed).
+        /// </summary>
+        private IEnumerator Spit(long spin)
         {
             GameObject prefab = ObjectDB.instance != null ? ObjectDB.instance.GetItemPrefab("Coins") : null;
-            if (prefab == null) yield break;
+            if (prefab == null) { PayOwed(); yield break; }
             int max = Mathf.Max(1, prefab.GetComponent<ItemDrop>().m_itemData.m_shared.m_maxStackSize);
-            while (coins > 0)
+            while (_owedSpin == spin && _owedPouring && _owedCoins > 0)
             {
-                int n = Mathf.Min(coins, max);
-                coins -= n;
+                int n = Mathf.Min(_owedCoins, max);
                 Vector3 from = transform.TransformPoint(new Vector3(0f, 0.36f, -0.5f) * ModelData.Scale);
                 GameObject drop = Instantiate(prefab, from, Quaternion.identity);
                 ItemDrop item = drop.GetComponent<ItemDrop>();
                 item.SetStack(n);
+                _owedCoins -= n;
+                if (_owedCoins <= 0) { _owedCoins = 0; _owedSpin = 0L; _owedPouring = false; }
                 Rigidbody body = drop.GetComponent<Rigidbody>();
                 if (body != null)
                     body.velocity = -transform.forward * Random.Range(1.2f, 1.8f) + Vector3.up * Random.Range(1.0f, 1.8f) + transform.right * Random.Range(-0.5f, 0.5f);

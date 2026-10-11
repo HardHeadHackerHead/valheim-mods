@@ -144,7 +144,7 @@ namespace FeedFromChests
         public static int Made(StationInfo info, ItemDrop product, float radius)
         {
             if (product == null) return 0;
-            int count = Chests.Count(Chests.Near(info.Position, radius), product.m_itemData.m_shared.m_name);
+            int count = Chests.Stock(Chests.Near(info.Position, radius), product.m_itemData.m_shared.m_name);
             ZNetView view = info.Component != null ? info.Component.GetComponent<ZNetView>() : null;
             if (view == null || !view.IsValid()) return count;
             ZDO zdo = view.GetZDO();

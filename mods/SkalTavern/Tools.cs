@@ -29,7 +29,7 @@ namespace SkalTavern
             try
             {
                 MethodInfo register = found.GetType().GetMethod("RegisterCommand", BindingFlags.Public | BindingFlags.Static);
-                register?.Invoke(null, new object[] { Plugin.Name, "skal", "skal status | level <n> | puke | find <text> | drop [drink] | drink [drink] | sober: how drunk the player is; drop a drink from the bag as the game does and say what came of it; drink one; sober up",
+                register?.Invoke(null, new object[] { Plugin.Name, "skal", "skal status | level <n> | puke | find <text> | drop [drink] | drink [drink] | sober: how drunk the player is; drop a drink from the bag as the game does and say what came of it; drink a swig of one (a quarter: four to a mug); sober up",
                     (Func<string[], Action<JObject>, Action<string>, IEnumerator>)Command });
                 Plugin.Log.LogInfo("Claude Tools found: skal command added");
             }
@@ -96,9 +96,13 @@ namespace SkalTavern
 
             if (sub == "drink")
             {
+                string drank = item.m_dropPrefab.name, name = item.m_shared.m_name;
+                int before = player.GetInventory().CountItems(name), swigsBefore = Swigs.Left(item);
                 player.UseItem(player.GetInventory(), item, true);
                 yield return new WaitForSeconds(2f);
-                output(new JObject { ["drank"] = item.m_dropPrefab.name, ["level"] = Tipsy.Level, ["stage"] = Tipsy.Stage(Tipsy.Level) });
+                bool still = player.GetInventory().ContainsItem(item);
+                output(new JObject { ["drank"] = drank, ["level"] = Tipsy.Level, ["stage"] = Tipsy.Stage(Tipsy.Level), ["swigsBefore"] = swigsBefore,
+                                     ["swigsLeft"] = still ? Swigs.Left(item) : (int?)null, ["bagBefore"] = before, ["bagAfter"] = player.GetInventory().CountItems(name) });
                 yield break;
             }
 

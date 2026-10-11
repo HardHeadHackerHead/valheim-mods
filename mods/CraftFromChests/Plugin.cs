@@ -12,7 +12,7 @@ namespace CraftFromChests
         public const string Guid = "com.quad.craftfromchests";
         public const string OldGuid = "com.dhack.craftfromchests"; // (its id until 2026-10: settings move over by themselves, see Shared/Migration.cs)
         public const string Name = "CraftFromChests";
-        public const string Version = "1.5.0";
+        public const string Version = "1.5.1";
 
         internal static ConfigEntry<bool> Enabled;
         internal static ConfigEntry<float> Radius;

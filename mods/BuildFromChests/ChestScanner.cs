@@ -17,7 +17,7 @@ namespace BuildFromChests
         private static readonly List<Container> AllContainers = new List<Container>();
         private static readonly List<Container> Nearby = new List<Container>();
 
-        private static readonly System.Reflection.MethodInfo CheckAccess = AccessTools.Method(typeof(Container), "CheckAccess");
+        private static readonly Func<Container, long, bool> CheckAccess = AccessTools.MethodDelegate<Func<Container, long, bool>>(AccessTools.Method(typeof(Container), "CheckAccess"));
         private static readonly System.Reflection.FieldInfo NView = AccessTools.Field(typeof(Container), "m_nview");
         private static readonly System.Reflection.MethodInfo Load = AccessTools.Method(typeof(Container), "Load");
 
@@ -65,14 +65,19 @@ namespace BuildFromChests
         private static float _nearbyAt = -10f;
         private static Vector3 _nearbyOrigin;
 
-        /// <summary>Chests near the player that we're allowed to use. Rebuilt at most four times a second, or when you move.</summary>
+        /// <summary>
+        /// Chests near the player that we're allowed to use. Rebuilt once a second, or sooner (at most four times a second) once you have
+        /// moved a few metres: with the Radius up to 150 m the list can hold hundreds of chests, and building it every frame while you
+        /// run with the hammer out cost real time. (A few metres either way at the edge of the range doesn't matter.)
+        /// </summary>
         internal static List<Container> GetNearby()
         {
             Player p = Player.m_localPlayer;
             if (p == null) { Nearby.Clear(); return Nearby; }
 
             Vector3 origin = p.transform.position;
-            if (Time.unscaledTime - _nearbyAt < 0.25f && (origin - _nearbyOrigin).sqrMagnitude < 0.04f)
+            float age = Time.unscaledTime - _nearbyAt;
+            if (age < 1f && (age < 0.25f || (origin - _nearbyOrigin).sqrMagnitude < 9f))
             {
                 Nearby.RemoveAll(c => c == null);
                 return Nearby;
@@ -91,7 +96,7 @@ namespace BuildFromChests
                 if ((c.transform.position - origin).sqrMagnitude > maxSqr) continue; // cheapest test first
                 if (c.GetInventory() == null || !IsStorage(c) || InUse(c)) continue;
                 if (c.m_checkGuardStone && !PrivateArea.CheckAccess(c.transform.position, 0f, false)) continue;
-                if (!(bool)CheckAccess.Invoke(c, new object[] { playerId })) continue;
+                if (!CheckAccess(c, playerId)) continue;
                 Nearby.Add(c);
             }
             return Nearby;
@@ -121,16 +126,73 @@ namespace BuildFromChests
             return nview != null && nview.IsValid() && !nview.IsOwner() && nview.GetZDO().GetInt(ZDOVars.s_inUse) == 1;
         }
 
-        /// <summary>
-        /// Only the owner can save a chest's contents, so take ownership first (matters in multiplayer). Then reload the contents from
-        /// the save data: until now we only had a copy that can be up to a second old, and saving that would undo another player's changes.
-        /// </summary>
-        private static void TakeOwnership(Container c)
+        // ---- whose chest is it? (multiplayer) ---------------------------------------------------------
+
+        // Only the game that owns a chest can save its contents, so a chest is claimed before it is paid from. But a claim takes a
+        // moment to reach the other games: until it does, the old owner may still pay from its copy, and then both payments come out
+        // of the same items (only one save survives: a free piece). So a chest we claimed is only paid from once it has been ours for
+        // Settle seconds, by when anything the old owner did has reached us. Chests are claimed ahead, as soon as a count asks for
+        // their items (for the piece in your hand, or the build menu), and only count once they are ours, so what you are shown is
+        // what can really be paid. A chest taken from us again (another player building from it as well) is left to them for Retry
+        // seconds, so two games don't keep taking it from each other. In single player, and for chests this game has owned all along, nothing changes.
+        private const float Settle = 1f, Retry = 5f, Forget = 10f;
+
+        private class Claim { public float At; public float RetryAt = -1f; }
+        private static readonly Dictionary<ZDOID, Claim> Claims = new Dictionary<ZDOID, Claim>();
+        private static float _prunedAt;
+
+        /// <summary>Our recent claim on a chest, or null (an old one no longer matters and is forgotten).</summary>
+        private static Claim ClaimOn(ZDOID id, float now)
+        {
+            if (!Claims.TryGetValue(id, out Claim claim)) return null;
+            if (claim.RetryAt >= 0f ? now < claim.RetryAt : now - claim.At < Forget) return claim;
+            Claims.Remove(id);
+            return null;
+        }
+
+        /// <summary>This chest is ours to change: this game owns it, and didn't claim it only a moment ago.</summary>
+        private static bool Settled(Container c)
         {
             ZNetView nview = NView.GetValue(c) as ZNetView;
-            if (nview == null || !nview.IsValid() || nview.IsOwner()) return;
-            nview.ClaimOwnership();
+            if (nview == null || !nview.IsValid()) return false;
+            float now = Time.unscaledTime;
+            Claim claim = ClaimOn(nview.GetZDO().m_uid, now);
+            if (!nview.IsOwner())
+            {
+                if (claim != null && claim.RetryAt < 0f) claim.RetryAt = now + Retry; // another player's game has taken it from us
+                return false;
+            }
+            return claim == null || now - claim.At >= Settle;
+        }
+
+        /// <summary>Ours to pay from now (see <see cref="Settled"/>), with its contents reloaded from the save data first.</summary>
+        private static bool Ready(Container c)
+        {
+            if (!Settled(c)) return false;
             Load?.Invoke(c, null); // the game's own reload: does nothing if our copy is already the latest
+            return true;
+        }
+
+        /// <summary>Claim a chest another game owns, so that it is ours to pay from in a moment (not one taken from us just now).</summary>
+        private static void Request(Container c)
+        {
+            ZNetView nview = NView.GetValue(c) as ZNetView;
+            if (nview == null || !nview.IsValid() || nview.IsOwner() || InUse(c)) return;
+            float now = Time.unscaledTime;
+            if (now - _prunedAt > 30f)
+            {
+                _prunedAt = now;
+                foreach (ZDOID id in new List<ZDOID>(Claims.Keys)) ClaimOn(id, now);
+            }
+            ZDOID uid = nview.GetZDO().m_uid;
+            Claim claim = ClaimOn(uid, now);
+            if (claim != null)
+            {
+                if (claim.RetryAt < 0f) claim.RetryAt = now + Retry; // (taken from us a moment ago: leave it to them for now)
+                return;
+            }
+            nview.ClaimOwnership();
+            Claims[uid] = new Claim { At = now };
         }
 
         // ---- how many of an item the chests hold (remembered within a frame) --------------------------
@@ -149,7 +211,13 @@ namespace BuildFromChests
             if (byKind.TryGetValue(kind, out int cached)) return cached; // the game asks the same question many times in a frame
 
             int total = 0;
-            foreach (Container c in GetNearby()) total += c.GetInventory().CountItems(name, quality, matchWorldLevel);
+            foreach (Container c in GetNearby())
+            {
+                int n = c.GetInventory().CountItems(name, quality, matchWorldLevel);
+                if (n <= 0 || InUse(c)) continue; // (opened since the list was made: it can't pay)
+                if (Settled(c)) total += n;
+                else Request(c); // another game's chest: claimed now, it counts (and pays) once it's ours, a moment from now
+            }
             byKind[kind] = total;
             return total;
         }
@@ -170,9 +238,8 @@ namespace BuildFromChests
         /// <summary>
         /// The game places the piece before it charges for it, so a shortfall found while paying is too late to refuse. So check first:
         /// what the chests must supply (what's needed minus what you carry and what other mods' sources, such as a backpack, will pay)
-        /// must really be in them, counted after taking each chest that has some over and reloading it (until then our copy can be a
-        /// second old, and another player may have emptied it). Taking them over also keeps other players' games from changing them
-        /// until we've paid. Returns the first material that's short, or null when everything is there.
+        /// must really be in them, counted only in chests that are ours to pay from (<see cref="Settled"/>), each reloaded first (another
+        /// player may have emptied it). Returns the first material that's short, or null when everything is there.
         /// </summary>
         internal static string FindShortfall(Inventory inv, Piece.Requirement[] resources)
         {
@@ -197,7 +264,7 @@ namespace BuildFromChests
                     if (c == null || InUse(c)) continue;
                     Inventory chest = c.GetInventory();
                     if (chest.CountItems(name, -1, true) <= 0) continue;
-                    TakeOwnership(c);
+                    if (!Ready(c)) { Request(c); continue; } // not ours yet: it can't pay this time
                     found += chest.CountItems(name, -1, true); // counted again: the reload may have changed it
                 }
                 InvalidateCounts();
@@ -215,8 +282,7 @@ namespace BuildFromChests
                 if (c == null || InUse(c)) continue; // someone opened it since we last looked
                 Inventory inv = c.GetInventory();
                 if (inv.CountItems(name, quality, matchWorldLevel) <= 0) continue;
-
-                TakeOwnership(c);
+                if (!Ready(c)) { Request(c); continue; } // only chests that are ours to pay from
                 int take = Math.Min(inv.CountItems(name, quality, matchWorldLevel), amount); // counted again: the reload may have changed it
                 if (take <= 0) continue;
 

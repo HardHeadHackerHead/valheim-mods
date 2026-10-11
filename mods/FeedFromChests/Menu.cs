@@ -235,7 +235,7 @@ namespace FeedFromChests
                 else if (_station.Component is Fermenter fermenter) _fermentLine = Ferment.Line(fermenter);
                 _autoStock.Clear();
                 List<Container> autoChests = Chests.Near(_station.Position, _autoRadius.Value);
-                foreach (AutoItem item in _autoItems) _autoStock[item.Name] = Chests.Count(autoChests, item.Name);
+                foreach (AutoItem item in _autoItems) _autoStock[item.Name] = Chests.Stock(autoChests, item.Name);
                 _limitLines.Clear();
                 if (_auto.On)
                     foreach (AutoItem item in _autoItems)

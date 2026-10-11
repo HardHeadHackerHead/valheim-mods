@@ -71,7 +71,6 @@ namespace Parkour
             Step(p, p.GetLastGroundCollider(), p.GetLastGroundNormal(), p.transform.position, motion);
 
         private static readonly AccessTools.FieldRef<Character, bool> GameSliding = AccessTools.FieldRefAccess<Character, bool>("m_sliding");
-        private static bool _cleaned;
 
         /// <summary>
         /// While sliding: the game's own slide effect. It is a continuous one (Character.UpdateContinousEffects starts it while the game's
@@ -81,29 +80,6 @@ namespace Parkour
         public static void SlideDust(Player p)
         {
             if (Plugin.Sounds.Value) GameSliding(p) = true;   // (the game clears it at the start of every step)
-        }
-
-        /// <summary>
-        /// Once per game: remove slide effects an earlier build of Parkour created and never removed (loose copies of the player's slide
-        /// effect prefabs, not attached to anyone).
-        /// </summary>
-        public static void CleanUpOnce()
-        {
-            Player p = Player.m_localPlayer;
-            if (_cleaned || p == null || ZNetScene.instance == null) return;
-            _cleaned = true;
-            var names = new System.Collections.Generic.HashSet<string>();
-            foreach (EffectList.EffectData e in p.m_slideEffects.m_effectPrefabs) if (e.m_prefab != null) names.Add(e.m_prefab.name + "(Clone)");
-            if (names.Count == 0) return;
-            int removed = 0;
-            foreach (GameObject go in UnityEngine.Object.FindObjectsByType<GameObject>(FindObjectsSortMode.None))
-            {
-                if (go == null || go.transform.parent != null || !names.Contains(go.name)) continue;
-                ZNetView view = go.GetComponent<ZNetView>();
-                if (view != null && view.IsValid()) { if (view.IsOwner()) { ZNetScene.instance.Destroy(go); removed++; } }
-                else { UnityEngine.Object.Destroy(go); removed++; }
-            }
-            if (removed > 0) Plugin.Log.LogInfo($"Removed {removed} slide effect(s) an earlier build left running");
         }
 
         /// <summary>The feet landing on top after a pull-up.</summary>

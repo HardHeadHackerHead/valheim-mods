@@ -313,8 +313,8 @@ Only you need the mod.
 Ale and mead that actually get you drunk. Four drinks from the cauldron (ale, honey mead, blueberry wine, skaldic mead), each the real tankard
 in your hand. A little warms you and gives some stamina. More and the screen darkens, blurs and doubles, colours drift, your body leans and weaves,
 stars circle your head, you hiccup, you slide when you walk, your aim floats and your chat slurs. Drink too much too fast and you throw up (the
-game's own effect), too much and you fall, and a big night ends in a hangover. Press **B** to raise a cup: friends who toast with you, and your
-companions, get a **Skål!** buff.
+game's own effect), too much and you fall, and a big night ends in a hangover. Each mug holds four swigs, and every swig is a toast: friends who drink with you, and
+your companions, get a **Skål!** buff.
 
 **[More: how it works, settings and screenshots →](mods/SkalTavern/README.md)**
 
@@ -398,7 +398,6 @@ caged core that lights the water at night. Everyone in the world needs it.
 |---|---|---|
 | **F7** | Mod manager | Open the mod manager |
 | **J** / hold **J** | AICompanion | Summon your companion or open its menu / your companions come with you, or go home |
-| **B** | SkalTavern | Raise a cup: toast with friends and companions beside you for a Skål! buff |
 | **H** | AICompanion | Point: attack it, chop or mine it (a whole patch), pick it up, put its things in that chest, pull that cart, wait here |
 | **E** / Shift + **E** at a bird trap | BirdTrap | Add bait (or pluck the bird) / fill it with bait |
 | **Q** | QualityOfLife | Build a quick set (inventory open) / swap to it and back |

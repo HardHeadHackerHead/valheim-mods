@@ -10,5 +10,6 @@
   "parkour_hint_shimmy": "Gauche ou droite vous déplace le long du rebord.",
   "parkour_hint_slide": "Glissade ! Maintenez S'accroupir pour continuer à glisser, Sauter pour bondir avec l'élan.",
   "parkour_hint_landing_slide": "Appuyez sur S'accroupir juste avant de toucher le sol après un petit saut pour atterrir en glissade.",
-  "skill_195522812": "Parkour"
+  "skill_195522812": "Parkour",
+  "parkour_dungeon": "Pas de parkour ici."
 }

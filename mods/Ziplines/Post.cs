@@ -187,10 +187,16 @@ namespace Ziplines
             if (hereId == 0L) { hereId = NewId(); mine.Set(IdKey, hereId); }
             mine.Set(ToKey, farId); mine.Set(ToPosKey, farAnchor);
 
-            // the far post: its saved data is written from here (it is ours to write while no one else has it)
-            if (farPost != null && !farPost._view.IsOwner()) farPost._view.ClaimOwnership();
-            else if (farPost == null) farZdo.SetOwner(ZDOMan.GetSessionID());
-            farZdo.Set(ToKey, hereId); farZdo.Set(ToPosKey, hereAnchor);
+            // the far post: written from here when it is loaded here (its data is current) or this game is the host (which holds every post's
+            // current data). Otherwise this game's copy of it can be old (another player may have run a line from it since), so the host
+            // writes it, and says so if it has a line by now.
+            if (farPost != null)
+            {
+                if (!farPost._view.IsOwner()) farPost._view.ClaimOwnership();
+                farZdo.Set(ToKey, hereId); farZdo.Set(ToPosKey, hereAnchor);
+            }
+            else if (IsServer) WriteFar(farZdo, hereId, hereAnchor);
+            else ZRoutedRpc.instance.InvokeRoutedRPC(RpcLink, farId, hereId, hereAnchor);   // (to the host)
             player.Message(MessageHud.MessageType.Center, T("ziplines_joined", length.ToString("0")));
             return true;
         }
@@ -206,7 +212,7 @@ namespace Ziplines
         private void TakeDown(Player player)
         {
             Post to = Partner;
-            long far = ToId;
+            long far = ToId, myId = Id;
             // both ends must be yours to change (the far one is checked when it is here: its wards are only known where it is loaded)
             if (!PrivateArea.CheckAccess(transform.position) || (to != null && !PrivateArea.CheckAccess(to.transform.position)))
             {
@@ -222,8 +228,10 @@ namespace Ziplines
             }
             if (to == null && far != 0L && ZDOMan.instance != null)
             {
-                // the far post is not loaded: still known to the game by its saved data, so it is freed too
-                foreach (ZDO z in FarPosts(far)) { z.SetOwner(ZDOMan.GetSessionID()); z.Set(ToKey, 0L); z.Set(ToPosKey, Vector3.zero); }
+                // the far post is not loaded here. The host holds every post's saved data and frees it (a player's game only holds the posts
+                // near where they have been, so it would often not find it, and its copy can be old). On the host, it is done here.
+                if (IsServer) Free(far, myId);
+                else ZRoutedRpc.instance.InvokeRoutedRPC(RpcFree, far, myId);   // (to the host)
             }
             player.Message(MessageHud.MessageType.Center, T("ziplines_down"));
         }
@@ -236,6 +244,81 @@ namespace Ziplines
             int hash = Things.PostPrefab.GetStableHashCode();
             for (int guard = 0; guard < 2000 && !ZDOMan.instance.GetAllZDOsWithPrefabIterative(Things.PostPrefab, found, ref index); guard++) { }
             return found.Where(z => z != null && z.GetLong(IdKey, 0L) == id && z.GetPrefab() == hash);
+        }
+
+        // ---- the far end, through the host ------------------------------------------------------------------------------------
+
+        private const string RpcLink = "Ziplines_LinkFar", RpcFree = "Ziplines_FreeFar", RpcRefused = "Ziplines_LinkRefused";
+        private static ZRoutedRpc _registeredOn;
+
+        private static bool IsServer => ZNet.instance != null && ZNet.instance.IsServer();
+
+        /// <summary>Every frame (the plugin's Update): registers the messages to and from the host whenever a world is joined.</summary>
+        public static void Network()
+        {
+            ZRoutedRpc rpc = ZRoutedRpc.instance;
+            if (rpc == _registeredOn) return;
+            Unnetwork();
+            if (rpc == null) return;
+            Forget(rpc);
+            rpc.Register<long, long, Vector3>(RpcLink, OnLink);
+            rpc.Register<long, long>(RpcFree, OnFree);
+            rpc.Register<long, long>(RpcRefused, OnRefused);
+            _registeredOn = rpc;
+        }
+
+        public static void Unnetwork()
+        {
+            if (_registeredOn != null) Forget(_registeredOn);
+            _registeredOn = null;
+        }
+
+        /// <summary>Removes our messages (the game throws when a name is registered twice, as after a hot reload).</summary>
+        private static void Forget(ZRoutedRpc rpc)
+        {
+            if (HarmonyLib.AccessTools.Field(typeof(ZRoutedRpc), "m_functions")?.GetValue(rpc) is System.Collections.IDictionary table)
+                foreach (string name in new[] { RpcLink, RpcFree, RpcRefused }) table.Remove(name.GetStableHashCode());
+        }
+
+        /// <summary>Writes a far post's link from the host, which may not own it: whoever has it loaded takes the newer data.</summary>
+        private static void WriteFar(ZDO zdo, long to, Vector3 toAnchor)
+        {
+            if (!zdo.HasOwner()) zdo.SetOwner(ZDOMan.GetSessionID());
+            zdo.Set(ToKey, to); zdo.Set(ToPosKey, toAnchor);
+        }
+
+        /// <summary>Frees the post with this id (on the host) if its line still runs to the given post.</summary>
+        private static void Free(long id, long linkedTo)
+        {
+            foreach (ZDO z in FarPosts(id).ToList())
+                if (z.GetLong(ToKey, 0L) == linkedTo) WriteFar(z, 0L, Vector3.zero);
+        }
+
+        // the host: a player ran a line to a post that isn't loaded on their game
+        private static void OnLink(long sender, long farId, long hereId, Vector3 hereAnchor)
+        {
+            if (!IsServer || ZDOMan.instance == null) return;
+            ZDO far = FarPosts(farId).FirstOrDefault();
+            long to = far?.GetLong(ToKey, 0L) ?? -1L;
+            if (far != null && (to == 0L || to == hereId)) { WriteFar(far, hereId, hereAnchor); return; }
+            // gone, or it has a line to another post by now: the player's end is taken back down
+            Plugin.Log.LogInfo($"A line to post {farId} was refused: {(far == null ? "no such post" : "it has another line")}");
+            ZRoutedRpc.instance.InvokeRoutedRPC(sender, RpcRefused, hereId, farId);
+        }
+
+        // the host: a player took down a line whose far post isn't loaded on their game
+        private static void OnFree(long sender, long farId, long hereId)
+        {
+            if (IsServer && ZDOMan.instance != null) Free(farId, hereId);
+        }
+
+        // the player who ran the line: the host found the first post gone or taken
+        private static void OnRefused(long sender, long hereId, long farId)
+        {
+            Post here = All.FirstOrDefault(p => p != null && p.Id == hereId);
+            if (here == null || here.ToId != farId) return;
+            here.ClearLine();
+            Player.m_localPlayer?.Message(MessageHud.MessageType.Center, T("ziplines_cancelled"));
         }
 
         // ---- the rope -------------------------------------------------------------------------------------------------------
