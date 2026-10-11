@@ -16,7 +16,7 @@ namespace AICompanion
         public string Missions = "";
         /// <summary>The whole book is known here (its player's game, or one told by it). Else only what happened here since.</summary>
         public bool Fresh;
-        public float AskedAt = -99f, UsedAt;
+        public float AskedAt = -99f, UsedAt, OfferedAt = -99f;
         public bool Dirty;   // (its player's game: into the profile at the next tick)
 
         // what changed here and is not told yet (sent once a second; kept while its player is offline)
@@ -40,12 +40,14 @@ namespace AICompanion
     ///
     /// While its player is offline, what it does waits on its ZDO (ParkedKey, at most 1500 characters: its newest entries and its counts), so
     /// it is not lost when the player whose game ran it leaves first; whoever runs it when its player is back hands it over. Books from before
-    /// 0.24.1 were on the ZDO: read from there once, and taken off it by its player's game.
+    /// 0.24.1 were on the ZDO: read from there once, and taken off it by its player's game, or by the game running it once its player's game
+    /// says it has it (RpcOffer, RpcTaken).
     /// </summary>
     internal static class Book
     {
         private const string RpcAsk = "DHack_CompanionBookAsk", RpcWhole = "DHack_CompanionBook", RpcNews = "DHack_CompanionBookNews";
-        public static readonly string[] RpcNames = { RpcAsk, RpcWhole, RpcNews };
+        private const string RpcOffer = "DHack_CompanionBookOffer", RpcTaken = "DHack_CompanionBookTaken";
+        public static readonly string[] RpcNames = { RpcAsk, RpcWhole, RpcNews, RpcOffer, RpcTaken };
         private const char Field = '\u001e', Item = '\u001f';   // (Words uses \u0001 to \u0004 inside the texts)
 
         // where 0.24.0 and older kept it, on the companion's ZDO
@@ -72,6 +74,8 @@ namespace AICompanion
             rpc.Register<string>(RpcAsk, OnAsk);
             rpc.Register<string>(RpcWhole, OnWhole);
             rpc.Register<string>(RpcNews, OnNews);
+            rpc.Register<string>(RpcOffer, OnOffer);
+            rpc.Register<string>(RpcTaken, OnTaken);
         }
 
         // ---- reading ----------------------------------------------------------------------------------------
@@ -212,29 +216,79 @@ namespace AICompanion
                 if (!b.Fresh && Time.time - b.UsedAt < 10f) Ask(b);   // (its player came back, say)
             }
 
-            if (me == null) return;
+            // A book from 0.24.0 or older, on its ZDO (the live copy then; the profile was a picture of it). Its player's game joins it with
+            // what it has and takes it off. Another game running it offers it to its player's game, and takes it off once that game says it
+            // has it (so one far from its player, or whose player is not about, gets light too); while its player is offline it stays.
             foreach (Humanoid c in Companion.All())
             {
                 ZNetView v = c.GetComponent<ZNetView>();
-                if (!v.IsOwner() || !Companion.IsMine(c, me) || !HasOld(v.GetZDO())) continue;
-                // A book from 0.24.0 or older, on its ZDO (the live copy then; the profile was a picture of it): joined with what this game
-                // has, then off the ZDO. Joined, not replaced: a player still on an older version may have written it while running it.
+                if (!v.IsOwner() || !HasOld(v.GetZDO())) continue;
                 ZDO z = v.GetZDO();
                 BookData b = Of(c);
-                var old = new BookData();
-                Fill(old, z.GetString(OldEntriesKey, ""), z.GetString(OldTallyKey, ""), z.GetString(OldMissionsKey, ""));
-                var known = new HashSet<string>(old.Entries);
-                List<string> entries = old.Entries.Concat(b.Entries.Where(e => !known.Contains(e))).ToList();
-                b.Entries.Clear();
-                b.Entries.AddRange(entries.Skip(Math.Max(0, entries.Count - Journal.MaxEntries)));
-                foreach (var kv in old.Tally) b.Tally[kv.Key] = Math.Max(kv.Value, b.Tally.TryGetValue(kv.Key, out int had) ? had : 0);
-                if (old.Missions != "") b.Missions = old.Missions;
-                b.Fresh = b.Dirty = true;
-                z.Set(OldEntriesKey, ""); z.Set(OldTallyKey, ""); z.Set(OldMissionsKey, "");
-                Plugin.Instance?.Note($"{Companion.NameOf(c)}'s journal moved off its network data (it was sent to every player with each step)");
+                string journal = z.GetString(OldEntriesKey, ""), tally = z.GetString(OldTallyKey, ""), missions = z.GetString(OldMissionsKey, "");
+                if (Ours(b))
+                {
+                    Join(b, journal, tally, missions);
+                    ClearOld(z);
+                    Plugin.Instance?.Note($"{Companion.NameOf(c)}'s journal moved off its network data (it was sent to every player with each step)");
+                }
+                else if (online.Contains(b.MasterName) && Time.time - b.OfferedAt > 10f)
+                {
+                    b.OfferedAt = Time.time;
+                    Invoke(ZRoutedRpc.Everybody, RpcOffer, string.Join(Field.ToString(), Head(b), journal, tally, missions));
+                }
             }
 
-            if (Time.time >= _nextSave) { _nextSave = Time.time + 5f; SaveProfiles(me); }
+            if (me != null && Time.time >= _nextSave) { _nextSave = Time.time + 5f; SaveProfiles(me); }
+        }
+
+        /// <summary>An old book joined with this one, not replacing it (a player still on an older version may have written it): entries
+        /// it lacks added, each count the higher of the two, its missions if it has any.</summary>
+        private static void Join(BookData b, string journal, string tally, string missions)
+        {
+            var old = new BookData();
+            Fill(old, journal, tally, missions);
+            var known = new HashSet<string>(old.Entries);
+            List<string> entries = old.Entries.Concat(b.Entries.Where(e => !known.Contains(e))).ToList();
+            b.Entries.Clear();
+            b.Entries.AddRange(entries.Skip(Math.Max(0, entries.Count - Journal.MaxEntries)));
+            foreach (var kv in old.Tally) b.Tally[kv.Key] = Math.Max(kv.Value, b.Tally.TryGetValue(kv.Key, out int had) ? had : 0);
+            if (old.Missions != "") b.Missions = old.Missions;
+            b.Fresh = b.Dirty = true;
+        }
+
+        private static void ClearOld(ZDO z) { z.Set(OldEntriesKey, ""); z.Set(OldTallyKey, ""); z.Set(OldMissionsKey, ""); }
+
+        /// <summary>The old book on a ZDO, as one text (to check that what is taken off is what was offered).</summary>
+        private static int OldStamp(ZDO z) =>
+            string.Join(Field.ToString(), z.GetString(OldEntriesKey, ""), z.GetString(OldTallyKey, ""), z.GetString(OldMissionsKey, "")).GetStableHashCode();
+
+        /// <summary>Its player's game: an old book offered by the game running it, joined in; that game is told it may take it off.</summary>
+        private static void OnOffer(long sender, string payload)
+        {
+            string[] f = (payload ?? "").Split(Field);
+            if (f.Length < 4 || !ParseHead(f[0], out long id, out long master)) return;
+            if (Player.m_localPlayer == null || master == 0L || Player.m_localPlayer.GetPlayerID() != master) return;
+            if (Profile.Find(Player.m_localPlayer, id) == null) return; // (nowhere to keep it: it stays on the ZDO)
+            BookData b = Of(id, null, master);
+            Join(b, f[1], f[2], f[3]);
+            SaveProfiles(Player.m_localPlayer);   // (in the profile before the ZDO lets go of it)
+            string stamp = string.Join(Field.ToString(), f[1], f[2], f[3]).GetStableHashCode().ToString(CultureInfo.InvariantCulture);
+            Invoke(sender, RpcTaken, id.ToString(CultureInfo.InvariantCulture) + "|" + stamp);
+            Plugin.Instance?.Note($"A companion's journal ({id}) was handed over by the game running it");
+        }
+
+        /// <summary>The game running it: its player's game has the old book, so it comes off the ZDO (unless it changed since).</summary>
+        private static void OnTaken(long sender, string payload)
+        {
+            string[] f = (payload ?? "").Split('|');
+            if (f.Length < 2 || !long.TryParse(f[0], NumberStyles.Integer, CultureInfo.InvariantCulture, out long id)
+                || !int.TryParse(f[1], NumberStyles.Integer, CultureInfo.InvariantCulture, out int stamp)) return;
+            Humanoid c = Companion.All().FirstOrDefault(x => Companion.IdOf(x) == id);
+            ZDO z = Companion.Zdo(c);
+            if (z == null || !c.GetComponent<ZNetView>().IsOwner() || !HasOld(z) || OldStamp(z) != stamp) return;
+            ClearOld(z);
+            Plugin.Instance?.Note($"{Companion.NameOf(c)}'s journal moved off its network data (its player's game has it)");
         }
 
         /// <summary>Its player's game: the book into the profile (saved with the character), for one far away too.</summary>
