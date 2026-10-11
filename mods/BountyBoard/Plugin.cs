@@ -24,7 +24,7 @@ namespace BountyBoard
         public const string Guid = "com.quad.bountyboard";
         public const string OldGuid = "com.dhack.bountyboard"; // (its id until 2026-10: settings move over by themselves, see Shared/Migration.cs)
         public const string Name = "BountyBoard";
-        public const string Version = "1.3.1";
+        public const string Version = "1.4.0";
         public const string PiecePrefab = "piece_bountyboard";
 
         internal static Plugin Instance;
@@ -39,6 +39,7 @@ namespace BountyBoard
         private void Awake()
         {
             DHack.Shared.Migration.FromOldGuid(this, OldGuid); // first: before any setting is read
+            DHack.Shared.Translations.Load(this);   // translations/*.json: its words in the player's language
             // These four are used by the host's game (it decides what is posted and what it pays); players are sent its values, so the
             // menu shows the host's limits.
             Synced = new DHack.Shared.ServerSettings(Guid, Config, Logger);
@@ -69,6 +70,7 @@ namespace BountyBoard
             Unregister();
             Tracker.Destroy();
             GameUi.Destroy();
+            DHack.Shared.Translations.Unload();
             Synced?.Dispose();
         }
 
@@ -119,8 +121,8 @@ namespace BountyBoard
             catch (System.Exception e) { Debug.LogWarning(Name + ": could not build the board's model: " + e.Message); }
 
             Piece piece = go.GetComponent<Piece>();
-            piece.m_name = "Bounty Board";
-            piece.m_description = "Posts a few jobs every day: hunt creatures, slay starred ones or bring in loot, and get paid in coins. Finish more to rank up and earn more.";
+            piece.m_name = "$bountyboard_piece";
+            piece.m_description = "$bountyboard_piece_desc";
             piece.m_category = Piece.PieceCategory.Misc;
             piece.m_craftingStation = workbench;
             piece.m_resources = new[] { Req("Wood", 20), Req("LeatherScraps", 6), Req("Flint", 4) };

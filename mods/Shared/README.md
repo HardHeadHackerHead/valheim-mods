@@ -15,7 +15,9 @@ Two ways in:
 | `ServerSettings.cs` | Settings the host decides in multiplayer, with no library. Also a Claude Tools template. | most mods (their csproj) |
 | `TestCommands.cs` | The game's cheat rule for test commands that change the game. | Arena, Rainbows, SkalTavern, Ziplines |
 | `SpecialContainers.cs` | Built pieces with a chest's Container that aren't storage (the Obliterator, a Ledger Chest, the Recycler, Arena's chests, anything marked `dh_notstorage`): mods that pick or fill chests leave them alone. | AICompanion, BuildFromChests, CraftFromChests, FeedFromChests, LedgerChest, QualityOfLife |
+| `Translations.cs` | A mod's words in the player's language through the game's own translations: `translations/*.json` built into the DLL, `T("key", args)` in code, the game's Language setting, players' own corrections in `BepInEx/config/translations/<GUID>/`. Also a Claude Tools template. `tools/check_translations.py` checks the files. | every mod with `translations/English.json` (`Directory.Build.props`) |
 | `PieceReload.cs` | Build pieces that reload while you play, with nothing deleted. Also a Claude Tools template. | BountyBoard, LedgerChest, Recycler |
 
 Before adding a file: is it needed by more than one mod, small, and tested in a real mod? Say at its top why it exists, which mods use
-it and how it gets in. Code other mod makers would want goes to Claude Tools' `Templates/` too (with namespace `YourMod`).
+it and how it gets in. Code other mod makers would want goes to Claude Tools' `templates/` too (with namespace `YourMod`), in
+https://github.com/HardHeadHackerHead/valheim-claude-tools.

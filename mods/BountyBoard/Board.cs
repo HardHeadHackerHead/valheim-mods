@@ -1,4 +1,5 @@
 using UnityEngine;
+using static DHack.Shared.Translations;
 
 namespace BountyBoard
 {
@@ -32,13 +33,13 @@ namespace BountyBoard
         {
             State state = Plugin.Instance?.Current;
             int running = state?.Active.Count ?? 0, mine = Plugin.Instance?.ToClaim() ?? 0;
-            string line = mine > 0 ? $"<color=#9BE37A>{mine} reward{(mine == 1 ? "" : "s")} waiting for you</color>"
-                : running > 0 ? $"The group has {running} contract{(running == 1 ? "" : "s")} running"
-                : "New notices are posted every day";
-            return Localization.instance.Localize($"Bounty Board\n[<color=yellow><b>$KEY_Use</b></color>] Read the notices\n<size=14>{line}</size>");
+            string line = mine > 0 ? "<color=#9BE37A>" + T(mine == 1 ? "bountyboard_hover_reward" : "bountyboard_hover_rewards", mine) + "</color>"
+                : running > 0 ? T(running == 1 ? "bountyboard_hover_running" : "bountyboard_hover_running_many", running)
+                : T("bountyboard_hover_daily");
+            return Localization.instance.Localize(T("bountyboard_piece") + "\n[<color=yellow><b>$KEY_Use</b></color>] " + T("bountyboard_hover_read") + "\n<size=14>" + line + "</size>");
         }
 
-        public string GetHoverName() => "Bounty Board";
+        public string GetHoverName() => T("bountyboard_piece");
         public float GetHoverOffset() => 0f;
 
         /// <summary>The game's crafting sounds, played when you take a job or get paid.</summary>

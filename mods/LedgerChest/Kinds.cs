@@ -38,6 +38,23 @@ namespace LedgerChest
             Weapons, Bows, Shields, Armor, Trinkets, Tools, Smithing, Trophies, Other,
         };
 
+        /// <summary>
+        /// What each button says, in the player's language (the game's own word where it has one). The names above are only ids: they are
+        /// compared and never shown.
+        /// </summary>
+        private static readonly Dictionary<string, string> Words = new Dictionary<string, string>
+        {
+            { All, "$radial_all" }, { Wood, "$item_wood" }, { Stone, "$ledgerchest_kind_stone" }, { Metal, "$ledgerchest_kind_metal" },
+            { Hides, "$ledgerchest_kind_hides" }, { Drops, "$ledgerchest_kind_drops" }, { Valuables, "$ledgerchest_kind_valuables" },
+            { Meat, "$ledgerchest_kind_cooking" }, { Farming, "$ledgerchest_kind_farming" }, { Food, "$ledgerchest_kind_food" },
+            { Potions, "$ledgerchest_kind_potions" }, { Fish, "$ledgerchest_kind_fish" }, { Weapons, "$ledgerchest_kind_weapons" },
+            { Bows, "$ledgerchest_kind_bows" }, { Shields, "$ledgerchest_kind_shields" }, { Armor, "$ledgerchest_kind_armor" },
+            { Trinkets, "$ledgerchest_kind_trinkets" }, { Tools, "$ledgerchest_kind_tools" }, { Trophies, "$inventory_trophies" },
+            { Smithing, "$ledgerchest_kind_smithing" }, { Other, "$ledgerchest_kind_other" },
+        };
+
+        public static string Label(string kind) => kind != null && Words.TryGetValue(kind, out string key) ? Localization.instance.Localize(key) : kind;
+
         private static readonly Dictionary<string, int> Rank = Order.Select((k, i) => new { k, i }).ToDictionary(x => x.k, x => x.i);
         public static int RankOf(string kind) => kind != null && Rank.TryGetValue(kind, out int r) ? r : Order.Length;
 

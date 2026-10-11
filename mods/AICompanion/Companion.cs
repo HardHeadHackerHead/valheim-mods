@@ -2,6 +2,8 @@ using System.Collections.Generic;
 using System.Linq;
 using HarmonyLib;
 using UnityEngine;
+using static DHack.Shared.Translations;
+using static AICompanion.Words;
 
 namespace AICompanion
 {
@@ -55,7 +57,7 @@ namespace AICompanion
 
         public static long MasterId(Component c) => Zdo(c)?.GetLong(Keys.Master, 0L) ?? 0L;
         public static bool IsMine(Component c, Player p) => p != null && MasterId(c) == p.GetPlayerID();
-        public static string NameOf(Component c) { string n = Zdo(c)?.GetString(Keys.Name, ""); return string.IsNullOrEmpty(n) ? "Companion" : n; }
+        public static string NameOf(Component c) { string n = Zdo(c)?.GetString(Keys.Name, ""); return string.IsNullOrEmpty(n) ? T("aicompanion_companion") : n; }
         public static Order OrderOf(Component c) => (Order)(Zdo(c)?.GetInt(Keys.Order, 0) ?? 0);
         /// <summary>The style it fights with right now (what "let it decide" worked out, or the one you picked).</summary>
         public static Style StyleOf(Component c) => c is Humanoid h ? Following.Effective(h) : Chosen(c);
@@ -137,7 +139,7 @@ namespace AICompanion
         public static Humanoid Summon(Player p, string name)
         {
             GameObject prefab = Prefab.Get();
-            if (prefab == null) { Plugin.Tell("The companion could not be made (see the log)"); return null; }
+            if (prefab == null) { Plugin.Tell(T("aicompanion_companion_not_made")); return null; }
             Vector3 pos = p.transform.position - p.transform.forward * 2f + p.transform.right * 1f;
             if (ZoneSystem.instance != null && ZoneSystem.instance.GetSolidHeight(pos, out float height)) pos.y = Mathf.Max(pos.y, height);
             GameObject go = Object.Instantiate(prefab, pos, Quaternion.LookRotation(p.transform.forward));
@@ -154,7 +156,7 @@ namespace AICompanion
             zdo.Set(Keys.Protect, true);
             Dress(c);
             Journal.Started(c);
-            Journal.Add(c, $"Joined {p.GetPlayerName()}.");
+            Journal.Add(c, P("aicompanion_companion_joined", p.GetPlayerName()));
             p.m_customData["dhc_name"] = NameOf(c);
             Profile.Save(p, Profile.Of(c)); // who it is, so it can wake in its bed after falling
             Plugin.Instance?.Note($"{p.GetPlayerName()} summoned the companion {NameOf(c)} at {pos:F0}");
@@ -169,8 +171,8 @@ namespace AICompanion
         {
             Container gear = c.GetComponent<Container>();
             ZNetView view = c.GetComponent<ZNetView>();
-            if (gear != null && !Containers.Take(gear)) { why = "Someone has its gear open."; return false; } // (what is really in its bag, before it is checked)
-            if (gear != null && gear.GetInventory().NrOfItems() > 0) { why = "Take its gear first (Open its inventory)"; return false; }
+            if (gear != null && !Containers.Take(gear)) { why = P("aicompanion_companion_gear_open"); return false; } // (what is really in its bag, before it is checked)
+            if (gear != null && gear.GetInventory().NrOfItems() > 0) { why = P("aicompanion_companion_take_gear_first"); return false; }
             if (!view.IsOwner()) view.ClaimOwnership();
             Plugin.Instance?.Note($"The companion {NameOf(c)} was sent home");
             if (Player.m_localPlayer != null) Profile.Forget(Player.m_localPlayer, IdOf(c));
@@ -301,10 +303,10 @@ namespace AICompanion
         public static bool Take(Humanoid c, Player p, ItemDrop.ItemData item, out string why)
         {
             why = null;
-            if (!Write(c, _ => { })) { why = "Someone has its gear open."; return false; }
+            if (!Write(c, _ => { })) { why = P("aicompanion_companion_gear_open"); return false; }
             Inventory mine = p.GetInventory(), its = c.GetInventory();
             if (!its.ContainsItem(item)) return false;
-            if (!mine.CanAddItem(item)) { why = "Your inventory is full."; return false; }
+            if (!mine.CanAddItem(item)) { why = P("aicompanion_companion_your_inventory_full"); return false; }
             if (c.IsItemEquiped(item)) c.UnequipItem(item, false);
             item.m_equipped = false;
             mine.MoveItemToThis(its, item);
@@ -317,10 +319,10 @@ namespace AICompanion
         {
             why = null;
             if (Gear.IsGear(item)) return Gear.Put(c, p, item, out why);
-            if (!Write(c, _ => { })) { why = "Someone has its gear open."; return false; }
+            if (!Write(c, _ => { })) { why = P("aicompanion_companion_gear_open"); return false; }
             Inventory mine = p.GetInventory(), its = c.GetInventory();
             if (!mine.ContainsItem(item)) return false;
-            if (!its.CanAddItem(item)) { why = $"{NameOf(c)}'s bag is full."; return false; }
+            if (!its.CanAddItem(item)) { why = P("aicompanion_companion_bag_full", NameOf(c)); return false; }
             if (p.IsItemEquiped(item)) p.UnequipItem(item, false);
             item.m_equipped = false;
             its.MoveItemToThis(mine, item);

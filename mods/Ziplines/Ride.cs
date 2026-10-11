@@ -1,5 +1,6 @@
 using HarmonyLib;
 using UnityEngine;
+using static DHack.Shared.Translations;
 
 namespace Ziplines
 {
@@ -40,15 +41,15 @@ namespace Ziplines
         {
             Plugin.Log.LogInfo($"Ride asked for: active {Active}, dead {player.IsDead()}, attached {player.IsAttached()}, building {player.InPlaceMode()}, swimming {player.IsSwimming()}");
             ItemDrop.ItemData axe = Grip.FindAxe(player);
-            if (Plugin.NeedAxe.Value && axe == null && !Active) { player.Message(MessageHud.MessageType.Center, "You need an axe to ride: hook it over the rope and hang from its handle."); return; }
+            if (Plugin.NeedAxe.Value && axe == null && !Active) { player.Message(MessageHud.MessageType.Center, T("ziplines_need_axe")); return; }
             if (Active) { Plugin.Log.LogInfo("  already riding (a ride that did not end?)"); return; }
             if (player.IsDead() || player.IsAttached() || player.InPlaceMode() || player.IsSwimming())
             {
-                player.Message(MessageHud.MessageType.Center, player.InPlaceMode() ? "Put your hammer away to ride." : "You cannot ride just now.");
+                player.Message(MessageHud.MessageType.Center, player.InPlaceMode() ? T("ziplines_hammer_away") : T("ziplines_cannot_ride"));
                 return;
             }
             _a = Line.Anchor(from); _b = toAnchor;
-            if (_a.y - _b.y < 0.5f) { player.Message(MessageHud.MessageType.Center, "A zipline only runs downhill: ride this one from its other end."); return; }
+            if (_a.y - _b.y < 0.5f) { player.Message(MessageHud.MessageType.Center, T("ziplines_downhill_only")); return; }
             string why = Line.Clearance(_a, _b, from, to);
             if (why != null) { Plugin.Log.LogInfo("  refused: " + why); player.Message(MessageHud.MessageType.Center, why); return; }
             Plugin.Log.LogInfo($"  riding {Vector3.Distance(_a, _b):0} m");

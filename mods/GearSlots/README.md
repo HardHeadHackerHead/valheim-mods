@@ -7,7 +7,7 @@
 
 **Equipment slots and quick slots: extra inventory slots for what you wear, eat and use (armor, cape, ammo, shield, food, quickslots), in a Gear panel next to your inventory.**
 
-![version: 1.2.2](https://img.shields.io/badge/version-1.2.2-3b6e8f?style=flat-square)  ![multiplayer: only who wants it](https://img.shields.io/badge/multiplayer-only%20who%20wants%20it-7a5c2e?style=flat-square)  ![made with: Claude Code](https://img.shields.io/badge/made%20with-Claude%20Code-c26a3d?style=flat-square)
+![version: 1.3.0](https://img.shields.io/badge/version-1.3.0-3b6e8f?style=flat-square)  ![multiplayer: only who wants it](https://img.shields.io/badge/multiplayer-only%20who%20wants%20it-7a5c2e?style=flat-square)  ![made with: Claude Code](https://img.shields.io/badge/made%20with-Claude%20Code-c26a3d?style=flat-square)
 
 <!-- GITHUB-ONLY -->[Thunderstore](https://thunderstore.io/c/valheim/p/Quads_Lab/Quads_Gear_Slots/)  ·  <!-- END GITHUB-ONLY -->[Source code](https://github.com/HardHeadHackerHead/valheim-mods/tree/main/mods/GearSlots)  ·  [Report a bug](https://github.com/HardHeadHackerHead/valheim-mods/issues/new?template=bug.yml&title=%5BQuad%27s%20Gear%20Slots%5D%20)  ·  [Discord](https://discord.gg/EwTjQxEZPy)
 
@@ -72,6 +72,12 @@ Found a clash with another mod? [Tell us](https://github.com/HardHeadHackerHead/
 Nothing is shared: the slots are rows of your own inventory.
 <!-- END HAND-WRITTEN: multiplayer -->
 
+## 🌍 Languages
+
+**English, Русский (Russian), Deutsch (German), 简体中文 (Chinese), Português do Brasil (Portuguese), Español (Spanish), Français (French), Polski (Polish), Türkçe (Turkish).** It follows the game's own language setting.
+
+The translations were made with AI, so a few words may be off. To correct one, or to add your language, put a file in `BepInEx/config/translations/com.quad.gearslots/` named after the game's name for the language (`German.json`, `Italian.json`, `Japanese.json`...) with only the lines you change, copied from [English.json](https://github.com/HardHeadHackerHead/valheim-mods/blob/main/mods/GearSlots/translations/English.json) (it wins over the built-in one). Or [tell us](https://github.com/HardHeadHackerHead/valheim-mods/issues/new?template=bug.yml&title=%5BQuad%27s%20Gear%20Slots%5D%20Translation%3A%20) the better words and we'll put them in for everyone.
+
 ## ⚙️ Settings
 
 In `BepInEx/config/com.quad.gearslots.cfg`, made the first time the game runs with the mod. r2modman and Thunderstore Mod Manager edit it under **Config editor**.<!-- GITHUB-ONLY --> With our mod manager: **F7**, then **Mod settings**.<!-- END GITHUB-ONLY -->
@@ -129,8 +135,8 @@ and tested in our own world, with **bobisme** as our tester.
 
 ## 📜 Recent changes
 
+- **1.3.0** Now in your language: English, Russian, German, Chinese (Simplified), Portuguese (Brazil), Spanish, French, Polish and Turkish, following the game's own Language setting. The game's own names are used for its things (items, creatures, lands, stations). The translations were made with AI: to correct a line, or add a language, put a file in BepInEx/config/translations/com.quad.gearslots/ named after the game's name for the language (German.json...) with only the lines you change, copied from translations/English.json on GitHub. Its notes about the game's keys name them as the game's Controls settings do.
 - **1.2.2** A clearer page: what it does, who needs it in multiplayer, how it gets on with other mods, and where to report a bug. The game itself is unchanged.
 - **1.2.1** A new id, com.quad.gearslots (it was com.dhack.gearslots): your settings move over by themselves the first time it starts, and the old settings file is kept as a backup. Restart the game after this update. If an old copy is still installed beside it, this one stands down and says which file to delete, so the two never both run. The DLL now says it was made with AI, as Thunderstore asks.
-- Fix: next to other mods that change the inventory size, items were dropped on the ground at every spawn: with ValheimPlus at 7 to 9 rows everything in its extra rows, and with BetterArchery's quiver your armour row. The game now sizes the inventory as it does without this mod (with every other mod's changes), and the gear rows move to just under whatever height that gives, so with ValheimPlus you keep all its rows and the gear slots sit below them. Where the gear rows are is saved with your character. With a mod that keeps its own slots in the same cells (ExtraSlots, Equipment and Quick Slots, AzuExtendedPlayerInventory, Extended Player Inventory, ComfyQuickSlots, or BetterArchery with its quiver on) the gear slots now switch off: what was in them moves into your bag, and you are told in chat. The Gear panel's title is now in the game's own title lettering, with the braided line under it.
 
 <!-- GITHUB-ONLY -->[Every change](CHANGELOG.txt)<!-- END GITHUB-ONLY --><!-- THUNDERSTORE-ONLY: Every change is on the Changelog tab. -->

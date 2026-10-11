@@ -22,7 +22,7 @@ namespace Arena
         public const string Guid = "com.quad.arena";
         public const string OldGuid = "com.dhack.arena"; // (its id until 2026-10: settings move over by themselves, see Shared/Migration.cs)
         public const string Name = "Arena";
-        public const string Version = "0.3.3";
+        public const string Version = "0.4.0";
 
         internal static Plugin Instance;
         internal static ManualLogSource Log;
@@ -37,6 +37,7 @@ namespace Arena
         private void Awake()
         {
             DHack.Shared.Migration.FromOldGuid(this, OldGuid); // first: before any setting is read
+            DHack.Shared.Translations.Load(this);   // translations/*.json: its words in the player's language
             Instance = this;
             Log = Logger;
             Synced = new DHack.Shared.ServerSettings(Guid, Config, Logger);
@@ -103,6 +104,7 @@ namespace Arena
             Tools.Unregister();
             Things.Unregister();
             Synced?.Dispose();
+            DHack.Shared.Translations.Unload();
             if (Instance == this) Instance = null;
         }
     }

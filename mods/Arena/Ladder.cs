@@ -3,18 +3,20 @@ using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
 using UnityEngine;
+using static DHack.Shared.Translations;
 
 namespace Arena
 {
     /// <summary>
     /// What you have won, kept on your character (its custom data, saved with it), and the Hall of Champions: one champion for each contest
     /// (the best run of the Long Road, the Champion Bout, the Endless Horde and Today's Trial in this world), kept as a world key (so everyone
-    /// sees the same, and the Hall of Fame shows them as statues).
+    /// sees the same, and the Hall of Fame shows them as statues). A champion's run is kept as Words, so each player reads it in their own
+    /// language (and in words too, for an older Arena; entries it wrote have only those words, shown as they are).
     /// </summary>
     internal static class Ladder
     {
         private const string Prefix = "dh_arena_", HallKey = "dharenahall";
-        private static readonly string[] Titles = { "Pit Rat", "Brawler", "Pit Fighter", "Gladiator", "Champion of the Pit", "Hero of the Arena", "Legend of the Arena" };
+        // the titles are arena_rank_0 to 6: Pit Rat, Brawler, Pit Fighter, Gladiator, Champion of the Pit, Hero of the Arena, Legend of the Arena
         private static readonly int[] TitleAt = { 0, 1, 3, 8, 15, 25, 40 };
 
         internal static int Get(string key)
@@ -38,13 +40,13 @@ namespace Arena
         {
             int wins = Wins, i = 0;
             for (int k = 0; k < TitleAt.Length; k++) if (wins >= TitleAt[k]) i = k;
-            return Titles[i];
+            return T($"arena_rank_{i}");
         }
 
         /// <summary>The next title and the wins it needs (null at the top).</summary>
         internal static string Next()
         {
-            for (int k = 0; k < TitleAt.Length; k++) if (Wins < TitleAt[k]) return $"{Titles[k]} at {TitleAt[k]} wins";
+            for (int k = 0; k < TitleAt.Length; k++) if (Wins < TitleAt[k]) return T("arena_next_rank", T($"arena_rank_{k}"), TitleAt[k]);
             return null;
         }
 
@@ -55,11 +57,17 @@ namespace Arena
 
         // ---- the Hall of Champions -----------------------------------------------------------------------------------------
 
-        internal struct Entry { public string Name, What, Look, Kind; public int Score; }
+        internal struct Entry
+        {
+            public string Name, What, Look, Kind, Said;
+            public int Score;
+            /// <summary>The run, in the player's language (an entry from an older Arena: its words as they are).</summary>
+            public string Run => string.IsNullOrEmpty(Said) ? What : Words.Show(Said);
+        }
 
         /// <summary>The contests with a champion each, in the order of the plinths.</summary>
         internal static readonly string[] Kinds = { "road", "champion", "endless", "trial" };
-        internal static readonly string[] KindTitles = { "The Long Road", "Champion Bout", "The Endless Horde", "Today's Trial" };
+        internal static string KindTitle(int i) => T($"arena_kind_{Kinds[i]}");
 
         /// <summary>The champion of a contest, if it has one.</summary>
         internal static bool Champion(string kind, out Entry entry)
@@ -70,7 +78,8 @@ namespace Arena
         }
 
         // The hall is a world key (saved with the world, known to all): its entries written as hex, as world keys are lower-cased.
-        // (Entries from before there was a champion for each contest have no contest and are left out.)
+        // (Entries from before there was a champion for each contest have no contest and are left out. The run's Words, a sixth field, came
+        // later: an older Arena reads the first five.)
         internal static List<Entry> Hall()
         {
             var list = new List<Entry>();
@@ -82,20 +91,21 @@ namespace Arena
                 string[] f = line.Split('|');
                 if (f.Length < 5 || !int.TryParse(f[2], NumberStyles.Integer, CultureInfo.InvariantCulture, out int score) || !Kinds.Contains(f[4])) continue;
                 if (list.Any(e => e.Kind == f[4])) continue;
-                list.Add(new Entry { Name = f[0], What = f[1], Score = score, Look = f[3], Kind = f[4] });
+                list.Add(new Entry { Name = f[0], What = f[1], Score = score, Look = f[3], Kind = f[4], Said = f.Length > 5 ? f[5] : "" });
             }
             return list;
         }
 
-        /// <summary>Makes a run the champion of its contest if it beats the one there (or there is none). True when it did.</summary>
-        internal static bool Enter(string kind, string name, string what, int score, string look = "")
+        /// <summary>Makes a run (as Words) the champion of its contest if it beats the one there (or there is none). True when it did.</summary>
+        internal static bool Enter(string kind, string name, string said, int score, string look = "")
         {
             if (ZoneSystem.instance == null || score <= 0 || !Kinds.Contains(kind)) return false;
             List<Entry> list = Hall();
             if (list.Any(e => e.Kind == kind && e.Score >= score)) return false;
             list.RemoveAll(e => e.Kind == kind);
-            list.Add(new Entry { Name = Clean(name), What = Clean(what), Score = score, Look = Clean(look), Kind = kind });
-            string text = string.Join("\n", list.Select(e => e.Name + "|" + e.What + "|" + e.Score.ToString(CultureInfo.InvariantCulture) + "|" + (e.Look ?? "") + "|" + e.Kind));
+            list.Add(new Entry { Name = Clean(name), What = Clean(Words.Show(said)), Score = score, Look = Clean(look), Kind = kind, Said = Clean(said) });
+            string text = string.Join("\n", list.Select(e => e.Name + "|" + e.What + "|" + e.Score.ToString(CultureInfo.InvariantCulture) + "|" + (e.Look ?? "") + "|" + e.Kind
+                                                            + (string.IsNullOrEmpty(e.Said) ? "" : "|" + e.Said)));
             ZoneSystem.instance.SetGlobalKey(HallKey + " " + ToHex(text));
             return true;
         }

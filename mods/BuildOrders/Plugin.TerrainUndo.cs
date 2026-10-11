@@ -5,6 +5,7 @@ using System.Linq;
 using HarmonyLib;
 using Newtonsoft.Json.Linq;
 using UnityEngine;
+using static DHack.Shared.Translations;
 
 namespace BuildOrders
 {
@@ -266,7 +267,7 @@ namespace BuildOrders
                         MakePending(path, doc, key);
                         Logger.LogInfo($"Ground under '{key}' is not loaded: put back once you are near it");
                     }
-                    return "The ground there goes back as it was the next time you are near it";
+                    return T("buildorders_ground_later");
                 }
 
                 // pieces of the plan that still stand: keep the level ground under them
@@ -286,10 +287,10 @@ namespace BuildOrders
                     {
                         // just taken down, but the pieces are someone else's and go when their game says so: look again in a moment
                         if (!pending) MakePending(path, doc, key);
-                        return "The ground goes back as it was once the pieces are down";
+                        return T("buildorders_ground_after_down");
                     }
                     File.Delete(path);
-                    return $"Kept the levelled ground: {built} piece(s) of it are already built";
+                    return T("buildorders_ground_kept_built", built);
                 }
 
                 // levelled by a version that did not note what it left: nothing can tell whether the ground was changed since, so it stays
@@ -297,7 +298,7 @@ namespace BuildOrders
                 {
                     File.Delete(path);
                     Logger.LogInfo($"Ground under '{key}' kept level: it was levelled by an older BuildOrders, which did not note what it changed");
-                    return "Kept the levelled ground (levelled by an older version: it cannot tell what changed there since)";
+                    return T("buildorders_ground_kept_old");
                 }
 
                 int restored = 0, underPieces = 0, changedSince = 0;
@@ -353,9 +354,8 @@ namespace BuildOrders
                 File.Delete(path);
                 Logger.LogInfo($"Ground under '{key}' put back as it was ({restored} ground points; kept level: {underPieces} by pieces, {changedSince} changed since)");
                 restoredAny = restored > 0;
-                string kept = underPieces > 0 ? " (except next to buildings standing there)" : changedSince > 0 ? " (except where it was dug or levelled since)" : "";
-                if (restored > 0) return "The ground is back as it was before levelling" + kept;
-                return underPieces + changedSince > 0 ? "Kept the levelled ground: buildings stand on it, or it was worked since" : null;
+                if (restored > 0) return T(underPieces > 0 ? "buildorders_ground_back_buildings" : changedSince > 0 ? "buildorders_ground_back_worked" : "buildorders_ground_back");
+                return underPieces + changedSince > 0 ? T("buildorders_ground_kept_worked") : null;
             }
             catch (Exception e) { Logger.LogWarning("Could not put the ground back: " + e.Message); return null; }
         }
@@ -370,7 +370,7 @@ namespace BuildOrders
                 try { key = (string)JObject.Parse(File.ReadAllText(path))["plan"] ?? ""; }
                 catch (Exception) { continue; }
                 RestoreTerrainFile(path, key, false, out bool restored);
-                if (restored) Player.m_localPlayer?.Message(MessageHud.MessageType.TopLeft, $"The ground under \"{TitleOf(key)}\" is back as it was before levelling");
+                if (restored) Player.m_localPlayer?.Message(MessageHud.MessageType.TopLeft, T("buildorders_ground_back_named", ShownTitle(TitleOf(key))));
             }
         }
 
@@ -406,7 +406,7 @@ namespace BuildOrders
                     _recordPlans.Remove(path);
                     if (dir == PlanRecordDir) { try { File.Delete(path); } catch (Exception) { } continue; }
                     RestoreTerrainFile(path, key, false, out bool restored);
-                    if (restored) Player.m_localPlayer?.Message(MessageHud.MessageType.TopLeft, $"\"{TitleOf(key)}\" was removed: the ground under it is back as it was");
+                    if (restored) Player.m_localPlayer?.Message(MessageHud.MessageType.TopLeft, T("buildorders_ground_back_removed", ShownTitle(TitleOf(key))));
                 }
             }
         }

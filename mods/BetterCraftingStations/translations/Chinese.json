@@ -1,0 +1,20 @@
+{
+  "bettercraftingstations_all": "全部 {0}",
+  "bettercraftingstations_chip": "{0} {1}",
+  "bettercraftingstations_can_craft": "可制作",
+  "bettercraftingstations_type_weapons": "武器",
+  "bettercraftingstations_type_armor": "护甲",
+  "bettercraftingstations_type_tools": "工具",
+  "bettercraftingstations_type_ammo": "弹药",
+  "bettercraftingstations_type_food": "食物",
+  "bettercraftingstations_type_potions": "药剂",
+  "bettercraftingstations_type_materials": "材料",
+  "bettercraftingstations_type_other": "其他",
+  "bettercraftingstations_tier_wood": "木材与燧石",
+  "bettercraftingstations_tier_bronze": "青铜",
+  "bettercraftingstations_tier_iron": "铁",
+  "bettercraftingstations_tier_silver": "银",
+  "bettercraftingstations_tier_blackmetal": "黑金属",
+  "bettercraftingstations_tier_mistlands": "迷雾之地",
+  "bettercraftingstations_tier_ashlands": "灰烬之地"
+}

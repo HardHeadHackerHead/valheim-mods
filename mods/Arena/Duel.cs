@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Linq;
 using HarmonyLib;
 using UnityEngine;
+using static DHack.Shared.Translations;
 
 namespace Arena
 {
@@ -87,7 +88,7 @@ namespace Arena
         private static string NameOf(long owner)
         {
             Player p = Player.GetAllPlayers().FirstOrDefault(x => x != null && x.GetOwner() == owner);
-            return p != null ? p.GetPlayerName() : "your opponent";
+            return p != null ? p.GetPlayerName() : T("arena_your_opponent");
         }
 
         // ---- challenging --------------------------------------------------------------------------------------------------
@@ -96,10 +97,10 @@ namespace Arena
         internal static string Challenge(Player other, int wager, Vector3 at)
         {
             Player me = Player.m_localPlayer;
-            if (me == null || other == null) return "Not now.";
-            if (Active || Contest.Active) return "You are already in a fight.";
-            if (Net.RemoteFight) return Net.BusyText + ". Wait for the ring to be free.";
-            if (me.GetInventory().CountItems("$item_coins") < wager) return "You have not got the coins for that wager.";
+            if (me == null || other == null) return T("arena_not_now");
+            if (Active || Contest.Active) return T("arena_already_fighting");
+            if (Net.RemoteFight) return T("arena_busy_wait_ring", Net.BusyText);
+            if (me.GetInventory().CountItems("$item_coins") < wager) return T("arena_no_coins_wager");
             _outTo = other.GetOwner(); _outWager = wager; _outAt = at; _outUntil = Time.unscaledTime + 30f;
             var pkg = new ZPackage();
             pkg.Write(wager); pkg.Write(me.GetPlayerName()); pkg.Write(at);
@@ -113,7 +114,7 @@ namespace Arena
             if (Player.m_localPlayer == null) return;
             if (Active || Contest.Active || HasIncoming || Net.RemoteFight) { Reply(sender, false); return; }   // (one fight in the ring at a time)
             _inFrom = sender; _inName = name; _inWager = wager; _inAt = at; _inUntil = Time.unscaledTime + 30f;
-            Player.m_localPlayer.Message(MessageHud.MessageType.Center, name + " challenges you to a duel!");
+            Player.m_localPlayer.Message(MessageHud.MessageType.Center, T("arena_challenges_you", name));
             Window.Open(Window.Context.Master, null, 1);
         }
 
@@ -127,11 +128,11 @@ namespace Arena
         internal static string Accept()
         {
             Player me = Player.m_localPlayer;
-            if (me == null || !HasIncoming) return "That challenge has run out.";
-            if (Active || Contest.Active) return "You are already in a fight.";
-            if (Net.RemoteFight) { Decline(); return Net.BusyText + ": the ring is taken."; }
-            if (me.GetInventory().CountItems("$item_coins") < _inWager) { Decline(); return "You have not got the coins for that wager."; }
-            if (Travel.Distance(me.transform.position) > 90f) return "Come to the arena first.";
+            if (me == null || !HasIncoming) return T("arena_challenge_expired");
+            if (Active || Contest.Active) return T("arena_already_fighting");
+            if (Net.RemoteFight) { Decline(); return T("arena_busy_taken", Net.BusyText); }
+            if (me.GetInventory().CountItems("$item_coins") < _inWager) { Decline(); return T("arena_no_coins_wager"); }
+            if (Travel.Distance(me.transform.position) > 90f) return T("arena_come_first");
             long from = _inFrom; string name = _inName; int wager = _inWager; Vector3 at = _inAt;
             _inFrom = 0L;
             Reply(from, true);
@@ -152,7 +153,7 @@ namespace Arena
             Player me = Player.m_localPlayer;
             if (me == null || sender != _outTo || Time.unscaledTime > _outUntil) return;
             _outTo = 0L;
-            if (!accepted) { Hud.Say(NameOf(sender) + " did not take the challenge."); return; }
+            if (!accepted) { Hud.Say(T("arena_challenge_refused", NameOf(sender))); return; }
             if (Active || Contest.Active || Net.RemoteFight || me.GetInventory().CountItems("$item_coins") < _outWager) { End(sender, false, "cancel"); return; }
             Begin(sender, NameOf(sender), _outWager, _outAt);
         }
@@ -171,7 +172,7 @@ namespace Arena
             Crowd.Gong();
             Scenery.OpenGate(Scenery.MainGrate, 90f);
             Net.Door(90f);   // (for the watchers too)
-            Hud.Shout("DUEL!", "You against " + name + (wager > 0 ? "   -   " + wager + " coins each" : "") + ". Walk into the ring: you will be taken to your side.", 5f);
+            Hud.Shout(T("arena_call_duel"), wager > 0 ? T("arena_duel_begin_wager", name, wager) : T("arena_duel_begin", name), 5f);
         }
 
         internal static void Tick(float dt)
@@ -191,7 +192,7 @@ namespace Arena
                 {
                     _placed = true;
                     Place(me);
-                    Hud.Say("Wait for " + _opponentName + " to come in");
+                    Hud.Say(T("arena_duel_wait", _opponentName));
                 }
                 if (_placed) Hold(me);
                 if (_placed && them != null && Site.OnFloor(them.transform.position, -1f))
@@ -199,14 +200,14 @@ namespace Arena
                     Scenery.CloseGate(Scenery.MainGrate);
                     Net.Door(0f);
                     _phase = PhaseKind.Countdown; _timer = 5.5f; _count = 6;
-                    Hud.Shout("DUEL!", "You against " + _opponentName + (_wager > 0 ? "   -   " + _wager * 2 + " coins in the pot" : ""), 3.5f);
+                    Hud.Shout(T("arena_call_duel"), _wager > 0 ? T("arena_duel_vs_pot", _opponentName, _wager * 2) : T("arena_duel_vs", _opponentName), 3.5f);
                     Crowd.Gong();
                 }
                 else if (_timer <= 0f)
                 {
                     if (_wager > 0) Contest.Give("Coins", _wager, me);
                     End(_opponent, false, "cancel");
-                    Finish(null, "Not both in the ring in time: the duel is off, and your wager is back.");
+                    Finish(null, T("arena_duel_timeout"));
                 }
                 return;
             }
@@ -224,14 +225,14 @@ namespace Arena
                     _pvpSet = true;
                     me.SetPVP(true);
                     _phase = PhaseKind.Fighting;
-                    Hud.Count("FIGHT!");
+                    Hud.Count(T("arena_fight"));
                     Crowd.Cheer();
                 }
                 return;
             }
 
             // PvP stays on for the fight (switched off in the inventory, it is put straight back)
-            if (!me.IsPVPEnabled()) { me.SetPVP(true); Hud.Say("PvP stays on until the duel is over"); }
+            if (!me.IsPVPEnabled()) { me.SetPVP(true); Hud.Say(T("arena_pvp_stays")); }
 
             if (!Player.GetAllPlayers().Any(p => p != null && p.GetOwner() == _opponent)) _missing += dt; else _missing = 0f;
             // gone without a word (their game crashed or was killed): their wager was never really paid, so only yours comes back. (One who
@@ -239,13 +240,13 @@ namespace Arena
             if (_missing > 8f)
             {
                 if (_wager > 0) Contest.Give("Coins", _wager, me);
-                Finish(null, "Your opponent is gone: the duel is off, and your wager is back.");
+                Finish(null, T("arena_duel_gone"));
                 return;
             }
             if (!Site.OnFloor(me.transform.position, 1.5f))
             {
                 _outside += dt;
-                if (_outside > 6f) { End(_opponent, true, "forfeit"); Finish(false, "You left the ring."); }
+                if (_outside > 6f) { End(_opponent, true, "forfeit"); Finish(false, T("arena_duel_left")); }
             }
             else _outside = Mathf.Max(0f, _outside - dt);
         }
@@ -286,7 +287,7 @@ namespace Arena
             if (_phase != PhaseKind.Fighting || _ending) return;
             _ending = true;
             End(_opponent, true, "beaten");
-            Finish(false, "You were beaten.");
+            Finish(false, T("arena_duel_beaten"));
         }
 
         private static void End(long to, bool theyWin, string reason)
@@ -304,11 +305,11 @@ namespace Arena
             {
                 Player me = Player.m_localPlayer;
                 if (me != null && _wager > 0) Contest.Give("Coins", _wager, me);   // (their game could not take its half: yours comes back)
-                Finish(null, "The duel was called off.");
+                Finish(null, T("arena_duel_called_off"));
                 return;
             }
             _ending = true;
-            Finish(iWin, iWin ? (reason == "forfeit" ? _opponentName + " left the ring." : _opponentName + " is beaten.") : "You were beaten.");
+            Finish(iWin, iWin ? T(reason == "forfeit" ? "arena_duel_they_left" : "arena_duel_they_beaten", _opponentName) : T("arena_duel_beaten"));
         }
 
         private static void Finish(bool? win, string why)
@@ -329,16 +330,16 @@ namespace Arena
                     int pot = _wager * 2, cut = pot / 10;
                     if (pot - cut > 0) Contest.Give("Coins", pot - cut, me);
                     Ladder.Add("duelwins", 1);
-                    Hud.Shout("YOU WIN!", why + (pot > 0 ? "   -   " + (pot - cut) + " coins" : ""), 5f);
+                    Hud.Shout(T("arena_call_you_win"), why + (pot > 0 ? "   -   " + T("arena_coins", pot - cut) : ""), 5f);
                     Crowd.Roar(); Crowd.Horn();
                 }
                 else if (win == false)
                 {
                     Ladder.Add("duellosses", 1);
-                    Hud.Shout("DEFEATED", why, 4f);
+                    Hud.Shout(T("arena_call_defeated"), why, 4f);
                     Crowd.Boo();
                 }
-                else Hud.Shout("DUEL OFF", why, 3f);
+                else Hud.Shout(T("arena_call_duel_off"), why, 3f);
             }
             _closeAt = Time.time + 6f;
         }

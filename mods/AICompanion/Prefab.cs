@@ -80,7 +80,7 @@ namespace AICompanion
                 h.m_backstabHitEffects = original.m_backstabHitEffects;
                 h.m_deathEffects = original.m_deathEffects;
             }
-            h.m_name = "Companion";
+            h.m_name = "$aicompanion_companion"; // (translated by the game: translations/*.json)
             h.m_group = "dhack_companion";
             h.m_faction = Character.Faction.Players;
             h.m_health = Plugin.BaseHealth.Value; // food adds to it (Food)
@@ -124,7 +124,7 @@ namespace AICompanion
             // Its gear lives in a chest-like inventory (saved with it, opened with the game's own chest screen); the humanoid uses that same
             // inventory (Patches: Container_Awake), so what you put in is what it can wear and wield.
             Container gear = go.AddComponent<Container>();
-            gear.m_name = "Companion";
+            gear.m_name = "$aicompanion_companion"; // (its inventory's name: Gear.IsCompanion)
             gear.m_width = Gear.Width; gear.m_height = Gear.Rows; // its bag (four rows) and its gear slots (two: Gear)
             gear.m_privacy = Container.PrivacySetting.Public;
             gear.m_checkGuardStone = false;

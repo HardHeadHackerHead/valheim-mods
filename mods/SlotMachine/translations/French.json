@@ -1,0 +1,20 @@
+{
+  "slotmachine_piece": "Fortune d'Odin",
+  "slotmachine_piece_desc": "Une machine à sous. Mettez des piastres, tirez le levier, et trois rouleaux tournent. Trois symboles identiques font gagner, et les gains tombent dans le plateau.",
+  "slotmachine_pull": "Tirer le levier ({0} piastres)",
+  "slotmachine_change_bet": "Changer la mise",
+  "slotmachine_bet": "Mise : {0} piastres",
+  "slotmachine_still_turning": "Les rouleaux tournent encore",
+  "slotmachine_need_coins": "Il vous faut {0} piastres pour jouer",
+  "slotmachine_no_luck": "Pas de chance. On rejoue ?",
+  "slotmachine_win": "Vous gagnez {0} piastres !",
+  "slotmachine_jackpot": "JACKPOT ! {0} piastres",
+  "slotmachine_paid_owed": "La Fortune d'Odin vous a versé vos gains : {0} piastres",
+  "slotmachine_pays": "{0} {1} x{2}",
+  "slotmachine_coin": "Piastre",
+  "slotmachine_boar": "Sanglier",
+  "slotmachine_horn": "Corne",
+  "slotmachine_axe": "Hache",
+  "slotmachine_raven": "Corbeau",
+  "slotmachine_valknut": "Valknut"
+}

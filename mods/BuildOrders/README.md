@@ -7,7 +7,7 @@
 
 **Shared ghost build orders and blueprints, a build planner for your party: plan pieces (or import a blueprint) for everyone, then build them by walking up and pressing E.**
 
-![version: 1.13.0](https://img.shields.io/badge/version-1.13.0-3b6e8f?style=flat-square)  ![multiplayer: only who wants it](https://img.shields.io/badge/multiplayer-only%20who%20wants%20it-7a5c2e?style=flat-square)  ![made with: Claude Code](https://img.shields.io/badge/made%20with-Claude%20Code-c26a3d?style=flat-square)
+![version: 1.14.0](https://img.shields.io/badge/version-1.14.0-3b6e8f?style=flat-square)  ![multiplayer: only who wants it](https://img.shields.io/badge/multiplayer-only%20who%20wants%20it-7a5c2e?style=flat-square)  ![made with: Claude Code](https://img.shields.io/badge/made%20with-Claude%20Code-c26a3d?style=flat-square)
 
 <!-- GITHUB-ONLY -->[Thunderstore](https://thunderstore.io/c/valheim/p/Quads_Lab/Quads_Build_Orders/)  ·  <!-- END GITHUB-ONLY -->[Source code](https://github.com/HardHeadHackerHead/valheim-mods/tree/main/mods/BuildOrders)  ·  [Report a bug](https://github.com/HardHeadHackerHead/valheim-mods/issues/new?template=bug.yml&title=%5BQuad%27s%20Build%20Orders%5D%20)  ·  [Discord](https://discord.gg/EwTjQxEZPy)
 
@@ -84,7 +84,7 @@ Fetching materials: with the hammer out and a piece selected, a hint appears whe
 
 - [Quad's Build From Chests](https://thunderstore.io/c/valheim/p/Quads_Lab/Quads_Build_From_Chests/): ghosts are paid from nearby chests, and the fetch key takes one piece's worth out of them.
 - [Quad's Companion](https://thunderstore.io/c/valheim/p/Quads_Lab/Quads_Companion/): a companion can build your plans near its home.
-- [Quad's AI Mod Toolkit](https://github.com/HardHeadHackerHead/valheim-mods/tree/main/mods/ClaudeTools): an AI assistant can design blueprints, place them, photograph and check them.
+- [Claude Tools](https://github.com/HardHeadHackerHead/valheim-claude-tools): an AI assistant can design blueprints, place them, photograph and check them.
 - Other mods can add to it through its planning API ([docs/buildorders-api.md](../../docs/buildorders-api.md)).
 <!-- END HAND-WRITTEN: other-mods -->
 
@@ -99,6 +99,12 @@ Ghosts are drawn on each player's own game, not built into the world: players wi
 
 **The host decides:** the Build all radius and reach. While you play on their world their values replace yours (your file isn't changed); a host without the mod leaves everyone their own.
 <!-- END HAND-WRITTEN: multiplayer -->
+
+## 🌍 Languages
+
+**English, Русский (Russian), Deutsch (German), 简体中文 (Chinese), Português do Brasil (Portuguese), Español (Spanish), Français (French), Polski (Polish), Türkçe (Turkish).** It follows the game's own language setting.
+
+The translations were made with AI, so a few words may be off. To correct one, or to add your language, put a file in `BepInEx/config/translations/com.quad.buildorders/` named after the game's name for the language (`German.json`, `Italian.json`, `Japanese.json`...) with only the lines you change, copied from [English.json](https://github.com/HardHeadHackerHead/valheim-mods/blob/main/mods/BuildOrders/translations/English.json) (it wins over the built-in one). Or [tell us](https://github.com/HardHeadHackerHead/valheim-mods/issues/new?template=bug.yml&title=%5BQuad%27s%20Build%20Orders%5D%20Translation%3A%20) the better words and we'll put them in for everyone.
 
 ## ⚙️ Settings
 
@@ -183,8 +189,8 @@ and tested in our own world, with **bobisme** as our tester.
 
 ## 📜 Recent changes
 
+- **1.14.0** Now in your language: English, Russian, German, Chinese (Simplified), Portuguese (Brazil), Spanish, French, Polish and Turkish, following the game's own Language setting. The game's own names are used for its things (items, creatures, lands, stations). The translations were made with AI: to correct a line, or add a language, put a file in BepInEx/config/translations/com.quad.buildorders/ named after the game's name for the language (German.json...) with only the lines you change, copied from translations/English.json on GitHub. Blueprint and plan names are kept as they are; only what is shown is translated, so old plans load as before. The Bridge piece's name is translated too, so the game may tell you about it once as a new piece. Fixed: the hold-E text on the build prompt spilled past its bar.
 - **1.13.0** The Plans window (F11), the bridge options and all the help on screen are now built from the game's own interface: the crafting panel's wood, tabs and buttons, the game's slider for settings, the inventory's item cells and tooltips for materials, and the game's fonts. The help (materials, banners, the build prompt with its hold-E bar, the fetch hint) is part of the HUD now, so it hides with it and follows your interface scale; the bridge options sit at the side so the bridge stays in view.
 - **1.12.2** A clearer page: what it does, who needs it in multiplayer, how it gets on with other mods, and where to report a bug. The game itself is unchanged.
-- **1.12.1** A new id, com.quad.buildorders (it was com.dhack.buildorders): your settings move over by themselves the first time it starts, and the old settings file is kept as a backup. Restart the game after this update. If an old copy is still installed beside it, this one stands down and says which file to delete, so the two never both run. The DLL now says it was made with AI, as Thunderstore asks.
 
 <!-- GITHUB-ONLY -->[Every change](CHANGELOG.txt)<!-- END GITHUB-ONLY --><!-- THUNDERSTORE-ONLY: Every change is on the Changelog tab. -->

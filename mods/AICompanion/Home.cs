@@ -2,6 +2,8 @@ using System.Collections.Generic;
 using System.Linq;
 using HarmonyLib;
 using UnityEngine;
+using static DHack.Shared.Translations;
+using static AICompanion.Words;
 
 namespace AICompanion
 {
@@ -55,15 +57,18 @@ namespace AICompanion
             {
                 Claim(bed); z.Set(HomeKey, 0L); z.Set(HomeName, "");
                 Companion.Write(c, cz => cz.Set(Keys.HasBed, false));
-                Plugin.Tell($"{Companion.NameOf(c)} no longer sleeps here");
+                Plugin.Tell(T("aicompanion_home_no_longer_sleeps", Companion.NameOf(c)));
                 return;
             }
             long owner = z.GetLong(ZDOVars.s_owner, 0L);
-            if (owner != 0L) { Plugin.Tell($"That bed is {z.GetString(ZDOVars.s_ownerName, "someone")}'s. Give {Companion.NameOf(c)} a bed nobody sleeps in."); return; }
-            if (z.GetLong(HomeKey, 0L) != 0L) { Plugin.Tell($"That bed is {z.GetString(HomeName, "another companion")}'s"); return; }
+            if (owner != 0L) { Plugin.Tell(T("aicompanion_home_bed_players", Named(z.GetString(ZDOVars.s_ownerName, ""), "aicompanion_home_someone"), Companion.NameOf(c))); return; }
+            if (z.GetLong(HomeKey, 0L) != 0L) { Plugin.Tell(T("aicompanion_home_bed_others", Named(z.GetString(HomeName, ""), "aicompanion_home_another_companion"))); return; }
             GiveBed(bed, c);
-            Plugin.Tell($"This is {Companion.NameOf(c)}'s bed now: {Companion.NameOf(c)} wakes here after falling");
+            Plugin.Tell(T("aicompanion_home_bed_now", Companion.NameOf(c)));
         }
+
+        /// <summary>A name saved on a bed or chest, or (none saved) the words for someone.</summary>
+        internal static string Named(string name, string key) => string.IsNullOrEmpty(name) ? T(key) : name;
 
         private static bool FreeBed(Bed b) { ZDO z = Companion.Zdo(b); return z != null && z.GetLong(ZDOVars.s_owner, 0L) == 0L && z.GetLong(HomeKey, 0L) == 0L; }
 
@@ -95,14 +100,15 @@ namespace AICompanion
         {
             ZDO z = Companion.Zdo(c);
             if (z == null) return null;
-            var took = new List<string>();
+            string bedFar = null;   // the bed it took: how far (for its words)
+            int chestsTaken = 0;
             Vector3 from = c.transform.position;
             Bed bed = null;
             if (!z.GetBool(Keys.HasBed, false))
             {
                 bed = Object.FindObjectsOfType<Bed>().Where(b => FreeBed(b) && Vector3.Distance(b.transform.position, from) < 40f)
                             .OrderBy(b => Vector3.Distance(b.transform.position, from)).FirstOrDefault();
-                if (bed != null) { GiveBed(bed, c); took.Add($"the free bed {Vector3.Distance(bed.transform.position, from):0} m from here"); }
+                if (bed != null) { GiveBed(bed, c); bedFar = Vector3.Distance(bed.transform.position, from).ToString("0"); }
             }
             else bed = BedOf(c);
             if (bed != null && Chests(c).Count == 0)
@@ -112,9 +118,11 @@ namespace AICompanion
                     .Where(x => IsChest(x) && IdOn(x) == 0L && !Containers.InUse(x) && x.GetInventory().NrOfItems() == 0 && Vector3.Distance(x.transform.position, at) < 8f)
                     .OrderBy(x => Vector3.Distance(x.transform.position, at)).Take(2).ToList();
                 foreach (Container ch in empty) GiveChest(ch, c);
-                if (empty.Count > 0) took.Add(empty.Count == 1 ? "the empty chest beside it" : "the two empty chests beside it");
+                chestsTaken = empty.Count;
             }
-            return took.Count == 0 ? null : $"I've taken {string.Join(" and ", took)}. Change them in my Home tab.";
+            // what it took, in its own words (packed text: said to its player, maybe on another game)
+            if (bedFar == null) return chestsTaken == 0 ? null : P(chestsTaken == 1 ? "aicompanion_home_took_chest" : "aicompanion_home_took_chests");
+            return chestsTaken == 0 ? P("aicompanion_home_took_bed", bedFar) : P(chestsTaken == 1 ? "aicompanion_home_took_bed_chest" : "aicompanion_home_took_bed_chests", bedFar);
         }
 
         // ---- the two orders ----------------------------------------------------------------------------------
@@ -125,7 +133,7 @@ namespace AICompanion
             bool ok = Companion.Write(c, z => z.Set(Keys.Order, (int)Order.Follow));
             if (!ok) return false;
             BrainState st = Brain.Get(c);
-            if (manual) { st.ManualOrderAt = Time.time; st.Outing = false; st.Remember("you called it to come with you"); Errands.ForTheRoad(st); }
+            if (manual) { st.ManualOrderAt = Time.time; st.Outing = false; st.Remember(P("aicompanion_home_remember_called")); Errands.ForTheRoad(st); }
             return true;
         }
 
@@ -146,10 +154,10 @@ namespace AICompanion
             st.Outing = false;
             st.NextArmoryLook = 0f; // a look through your chests for better gear, once it is back
             st.SortWhenHome = true; // what it brought back goes into your chests when it is there (Work.SortHome)
-            if (manual) { st.ManualOrderAt = Time.time; st.Remember("you sent it home"); }
+            if (manual) { st.ManualOrderAt = Time.time; st.Remember(P("aicompanion_home_remember_sent_home")); }
             bool bed = Companion.Zdo(c).GetBool(Keys.HasBed, false);
             if (setUp != null) Talk.Tell(c, setUp);
-            else if (!bed && !quiet) Talk.Tell(c, "There's no free bed near here, so I'll live around this spot. Give me a bed in my Home tab and I'll make it my home.", "nobed", 10f);
+            else if (!bed && !quiet) Talk.Tell(c, P("aicompanion_home_no_free_bed"), "nobed", 10f);
             return true;
         }
 
@@ -157,16 +165,17 @@ namespace AICompanion
         public static void ToggleAll(Player p)
         {
             var near = Companion.All().Where(c => Companion.IsMine(c, p) && !c.IsDead() && Vector3.Distance(c.transform.position, p.transform.position) < 100f).ToList();
-            if (near.Count == 0) { Plugin.Tell("None of your companions is near. Go to them, or summon one (tap " + Plugin.MenuKey.Value + ")."); return; }
+            if (near.Count == 0) { Plugin.Tell(T("aicompanion_home_none_near", Plugin.MenuKey.Value)); return; }
             bool home = near.Any(c => Companion.OrderOf(c) == Order.Follow);
             foreach (Humanoid c in near)
             {
-                if (home) { if (GoHome(c, true)) Talk.Say(c, "Heading home."); }
-                else if (Follow(c)) Talk.Say(c, "Right behind you.");
+                if (home) { if (GoHome(c, true)) Talk.Say(c, P("aicompanion_home_say_heading_home")); }
+                else if (Follow(c)) Talk.Say(c, P("aicompanion_home_say_behind_you"));
             }
-            string names = string.Join(" and ", near.Select(Companion.NameOf));
-            Plugin.Tell(home ? $"{names} {(near.Count == 1 ? "goes" : "go")} home. Hold {Plugin.MenuKey.Value} again to call {(near.Count == 1 ? "them" : "them all")} back."
-                             : $"{names} {(near.Count == 1 ? "comes" : "come")} with you");
+            string names = near.Select(Companion.NameOf).Aggregate((a, b) => T("aicompanion_home_and", a, b));
+            bool one = near.Count == 1;
+            Plugin.Tell(home ? T(one ? "aicompanion_home_go_home_one" : "aicompanion_home_go_home_many", names, Plugin.MenuKey.Value)
+                             : T(one ? "aicompanion_home_come_one" : "aicompanion_home_come_many", names));
         }
 
         /// <summary>E on a chest while assigning: it becomes one of the companion's chests, or stops being one.</summary>
@@ -175,14 +184,15 @@ namespace AICompanion
             ZDO z = Companion.Zdo(chest);
             long id = Companion.IdOf(c);
             if (z == null) return;
-            if (Containers.InUse(chest)) { Plugin.Tell("Someone has that chest open"); return; }
+            if (Containers.InUse(chest)) { Plugin.Tell(T("aicompanion_home_chest_open")); return; }
             bool mine = z.GetLong(HomeKey, 0L) == id;
-            if (!mine && z.GetLong(HomeKey, 0L) != 0L) { Plugin.Tell($"That chest is {z.GetString(HomeName, "another companion")}'s"); return; }
+            if (!mine && z.GetLong(HomeKey, 0L) != 0L) { Plugin.Tell(T("aicompanion_home_chest_others", Named(z.GetString(HomeName, ""), "aicompanion_home_another_companion"))); return; }
             Claim(chest);
             z.Set(HomeKey, mine ? 0L : id);
             z.Set(HomeName, mine ? "" : Companion.NameOf(c));
             _chestCache.Clear();
-            Plugin.Tell(mine ? $"{Companion.NameOf(c)} no longer uses this chest" : $"{Companion.NameOf(c)} keeps things in this chest now ({Chests(c).Count} chest{(Chests(c).Count == 1 ? "" : "s")})");
+            int count = Chests(c).Count;
+            Plugin.Tell(mine ? T("aicompanion_home_chest_let_go", Companion.NameOf(c)) : T(count == 1 ? "aicompanion_home_chest_taken_one" : "aicompanion_home_chest_taken_many", Companion.NameOf(c), count));
         }
 
         /// <summary>
@@ -215,7 +225,7 @@ namespace AICompanion
             int items = chest.GetInventory()?.NrOfItems() ?? 0;
             Plugin.Instance?.Note($"{Companion.NameOf(c)} let go of the {what} at {chest.transform.position:F0}: it is not a chest to keep things in ({items} stacks left in it)");
             if (Player.m_localPlayer != null && Companion.IsMine(c, Player.m_localPlayer))
-                Plugin.Tell($"{Companion.NameOf(c)} no longer keeps things in the {what}{(items > 0 ? ": what is in it is still there" : "")}");
+                Plugin.Tell(T(items > 0 ? "aicompanion_home_not_storage_items" : "aicompanion_home_not_storage", Companion.NameOf(c), what));
         }
 
         // ---- finding its things ------------------------------------------------------------------------------
@@ -249,8 +259,8 @@ namespace AICompanion
         {
             if (AssignFor != null)
             {
-                if (AssignFor == null || AssignFor.IsDead() || Input.GetKeyDown(KeyCode.Escape) || Plugin.MenuKey.Value.IsDown()) StopAssign("Done assigning");
-                else if (Time.time >= _nextHint) { _nextHint = Time.time + 6f; Plugin.Tell($"Assigning for {Companion.NameOf(AssignFor)}: E on a bed or a chest gives it (E again takes it back). {Plugin.MenuKey.Value} or Esc when done."); }
+                if (AssignFor == null || AssignFor.IsDead() || Input.GetKeyDown(KeyCode.Escape) || Plugin.MenuKey.Value.IsDown()) StopAssign(T("aicompanion_home_done_assigning"));
+                else if (Time.time >= _nextHint) { _nextHint = Time.time + 6f; Plugin.Tell(T("aicompanion_home_assigning", Companion.NameOf(AssignFor), Plugin.MenuKey.Value)); }
             }
             if (Time.time < _nextTick) return;
             _nextTick = Time.time + 1f;
@@ -334,15 +344,13 @@ namespace AICompanion
             Companion.Zdo(c)?.Set(Grave.HasKey, prof.HasGrave);
             prof.Dead = false;
             Profile.Save(p, prof);
-            string where = prof.HasBed ? $"in {(prof.Model == 1 ? "her" : "his")} bed" : "beside you";
-            Plugin.Tell($"{prof.Name} wakes up {where}");
+            string where = prof.HasBed ? $"in {(prof.Model == 1 ? "her" : "his")} bed" : "beside you";   // (for the log)
+            Plugin.Tell(T(!prof.HasBed ? "aicompanion_home_wakes_beside" : prof.Model == 1 ? "aicompanion_home_wakes_bed_her" : "aicompanion_home_wakes_bed_his", prof.Name));
             Brain.Get(c).WokeAt = Time.time; // up after a fall: careful for a while (Tactics.Careful)
             if (prof.HasGrave)
             {
-                float far = Vector3.Distance(prof.DiedPos, pos);
                 bool atHome = prof.HasBed && Vector3.Distance(prof.DiedPos, Work.Center(c)) < Work.RadiusOf(c) + 10f; // (Grave: it fetches those itself)
-                Talk.Tell(c, atHome ? "I'm up. I'll go and get my things from my tombstone."
-                    : $"I'm up. My things are in my tombstone {far:0} m {Work.Compass(prof.DiedPos - pos)} of here (the skull on your map). Point me at it when we're there, or open it near me, and I'll take them back.", "woke", 0.5f);
+                Talk.Tell(c, atHome ? P("aicompanion_home_up_get_things") : P("aicompanion_home_up_things_far", Remote.FromHere(prof.DiedPos - pos)), "woke", 0.5f);
             }
             Plugin.Instance?.Note($"{prof.Name} woke {where} at {pos:F0}");
             return c;
@@ -356,7 +364,7 @@ namespace AICompanion
             foreach (Profile prof in want.Values)
             {
                 if (!BedPins.TryGetValue(prof.Id, out Minimap.PinData pin) || pin == null)
-                    BedPins[prof.Id] = pin = Minimap.instance.AddPin(prof.Bed, Minimap.PinType.Bed, $"{prof.Name}'s bed", false, false, 0L);
+                    BedPins[prof.Id] = pin = Minimap.instance.AddPin(prof.Bed, Minimap.PinType.Bed, T("aicompanion_home_bed_of", prof.Name), false, false, 0L);
                 pin.m_pos = prof.Bed;
             }
         }
@@ -380,7 +388,7 @@ namespace AICompanion
             if (repeat) return true;
             if (Home.AssignFor != null) { Home.ToggleBed(__instance, Home.AssignFor); __result = true; return false; }
             if (Home.IdOn(__instance) == 0L) return true;
-            Plugin.Tell($"This is {Companion.Zdo(__instance).GetString(Home.HomeName, "a companion")}'s bed");
+            Plugin.Tell(T("aicompanion_home_this_bed_of", Home.Named(Companion.Zdo(__instance).GetString(Home.HomeName, ""), "aicompanion_home_a_companion")));
             __result = true;
             return false;
         }
@@ -391,8 +399,8 @@ namespace AICompanion
     {
         private static void Postfix(Bed __instance, ref string __result)
         {
-            if (Home.AssignFor != null) { __result += $"\n<color=#7fe0c8>[E] {(Home.IdOn(__instance) == Companion.IdOf(Home.AssignFor) ? "Take back from" : "Give to")} {Companion.NameOf(Home.AssignFor)}</color>"; return; }
-            if (Home.IdOn(__instance) != 0L) __result = $"{Companion.Zdo(__instance).GetString(Home.HomeName, "A companion")}'s bed";
+            if (Home.AssignFor != null) { __result += "\n<color=#7fe0c8>[E] " + T(Home.IdOn(__instance) == Companion.IdOf(Home.AssignFor) ? "aicompanion_home_take_back_from" : "aicompanion_home_give_to", Companion.NameOf(Home.AssignFor)) + "</color>"; return; }
+            if (Home.IdOn(__instance) != 0L) __result = T("aicompanion_home_bed_of", Home.Named(Companion.Zdo(__instance).GetString(Home.HomeName, ""), "aicompanion_home_a_companion_start"));
         }
     }
 
@@ -407,7 +415,7 @@ namespace AICompanion
             if (hold || Home.AssignFor == null) return true;
             if (Home.NotStorage(__instance) && __instance.GetComponentInParent<Piece>() != null)
             {
-                Plugin.Tell($"{Companion.NameOf(Home.AssignFor)} can't keep things in that: it isn't a storage chest");
+                Plugin.Tell(T("aicompanion_home_not_a_chest", Companion.NameOf(Home.AssignFor)));
                 __result = true;
                 return false;
             }
@@ -424,8 +432,8 @@ namespace AICompanion
         private static void Postfix(Container __instance, ref string __result)
         {
             if (!Home.IsChest(__instance)) return;
-            if (Home.AssignFor != null) { __result += $"\n<color=#7fe0c8>[E] {(Home.IdOn(__instance) == Companion.IdOf(Home.AssignFor) ? "Take back from" : "Give to")} {Companion.NameOf(Home.AssignFor)}</color>"; return; }
-            if (Home.IdOn(__instance) != 0L) __result += $"\n<color=#7fe0c8>{Companion.Zdo(__instance).GetString(Home.HomeName, "A companion")}'s chest</color>";
+            if (Home.AssignFor != null) { __result += "\n<color=#7fe0c8>[E] " + T(Home.IdOn(__instance) == Companion.IdOf(Home.AssignFor) ? "aicompanion_home_take_back_from" : "aicompanion_home_give_to", Companion.NameOf(Home.AssignFor)) + "</color>"; return; }
+            if (Home.IdOn(__instance) != 0L) __result += "\n<color=#7fe0c8>" + T("aicompanion_home_chest_of", Home.Named(Companion.Zdo(__instance).GetString(Home.HomeName, ""), "aicompanion_home_a_companion_start")) + "</color>";
         }
     }
 }

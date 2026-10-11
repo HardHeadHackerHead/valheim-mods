@@ -1,0 +1,20 @@
+{
+  "slotmachine_piece": "Fortuna Odyna",
+  "slotmachine_piece_desc": "Automat do gry. Wrzuć monety, pociągnij dźwignię, a trzy bębny się zakręcą. Trzy takie same wygrywają, a wygrana wypada na tackę.",
+  "slotmachine_pull": "Pociągnij dźwignię (monety: {0})",
+  "slotmachine_change_bet": "Zmień stawkę",
+  "slotmachine_bet": "Stawka: {0} mon.",
+  "slotmachine_still_turning": "Bębny wciąż się kręcą",
+  "slotmachine_need_coins": "Aby zagrać, potrzebujesz monet: {0}",
+  "slotmachine_no_luck": "Brak szczęścia. Jeszcze raz?",
+  "slotmachine_win": "Wygrywasz! Monety: {0}",
+  "slotmachine_jackpot": "JACKPOT! Monety: {0}",
+  "slotmachine_paid_owed": "Fortuna Odyna wypłaciła twoją wygraną: {0} mon.",
+  "slotmachine_pays": "{1} ×{0}: ×{2}",
+  "slotmachine_coin": "Moneta",
+  "slotmachine_boar": "Dzik",
+  "slotmachine_horn": "Róg",
+  "slotmachine_axe": "Topór",
+  "slotmachine_raven": "Kruk",
+  "slotmachine_valknut": "Valknut"
+}

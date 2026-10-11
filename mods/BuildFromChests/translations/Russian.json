@@ -1,0 +1,5 @@
+{
+  "buildfromchests_chat_reloaded": "{0} v{1} перезагружен | {2}, радиус {3} м",
+  "buildfromchests_short": "В сундуках больше не хватает: {0}",
+  "buildfromchests_have": "У вас {0}  (инвентарь {1}, сундуки {2})"
+}

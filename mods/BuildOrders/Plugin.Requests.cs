@@ -339,7 +339,7 @@ namespace BuildOrders
             }
             BridgeDesign d = PlanBridge(player, from, to, o);
             output(new JObject { ["bridge"] = LastPlacedTitle(), ["length"] = Math.Round(d.Length, 1), ["pieces"] = d.Entries.Count,
-                ["parts"] = new JObject(d.Entries.GroupBy(e => e.Prefab).OrderByDescending(g => g.Count()).Select(g => new JProperty(g.Key, g.Count()))), ["warnings"] = new JArray(d.Warnings), ["from"] = Vec(from), ["to"] = Vec(to) });
+                ["parts"] = new JObject(d.Entries.GroupBy(e => e.Prefab).OrderByDescending(g => g.Count()).Select(g => new JProperty(g.Key, g.Count()))), ["warnings"] = new JArray(d.Warnings.Select(w => w.English)), ["from"] = Vec(from), ["to"] = Vec(to) });
             return null;
         }
 

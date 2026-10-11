@@ -2,6 +2,7 @@ using System.Collections.Generic;
 using System.Linq;
 using TMPro;
 using UnityEngine;
+using static DHack.Shared.Translations;
 
 namespace Recycler
 {
@@ -94,6 +95,9 @@ namespace Recycler
             return sb.ToString();
         }
 
+        /// <summary>A number in gold inside a translated line: the line's {0} is the number alone, so each language puts "%" where it goes.</summary>
+        private static string Gold(int n) => $"<color=#ffd27a>{n}</color>";
+
         private static bool Valuable => _selected != null && Plugin.ConfirmValuable.Value && Calc.Valuable(_selected);
         private static bool Confirming => Valuable && _confirmFor == _selected && Time.unscaledTime < _confirmUntil;
 
@@ -116,7 +120,7 @@ namespace Recycler
             // backpack that still holds things).
             if (!player.GetInventory().RemoveItem(item) || player.GetInventory().ContainsItem(item))
             {
-                player.Message(MessageHud.MessageType.Center, $"{name} can't be recycled right now (another mod keeps it)");
+                player.Message(MessageHud.MessageType.Center, T("recycler_kept", name));
                 Refresh(player);
                 return;
             }
@@ -132,7 +136,7 @@ namespace Recycler
             _station.MarkWorking();
             RecyclerStation.PlayEffects(_station.transform.position + Vector3.up);
             if (Plugin.ShowMessages.Value)
-                player.Message(MessageHud.MessageType.TopLeft, said.Count > 0 ? $"Recycled {name}: {string.Join(", ", said)}" : $"Recycled {name}, but nothing came back");
+                player.Message(MessageHud.MessageType.TopLeft, said.Count > 0 ? T("recycler_recycled", name, string.Join(", ", said)) : T("recycler_recycled_nothing", name));
 
             _selected = null; _quote = null; _confirmFor = null;
             Refresh(player);
@@ -165,9 +169,9 @@ namespace Recycler
             Transform w = _window;
 
             // title, the braid under it, and the share this Recycler returns
-            GameUi.Label(w, "Recycler", new Vector2(Pad, -20f), new Vector2(300f, 44f), 34f, GameUi.Warm, GameUi.Norse);
+            GameUi.Label(w, T("recycler_piece"), new Vector2(Pad, -20f), new Vector2(300f, 44f), 34f, GameUi.Warm, GameUi.Norse);
             int presses = RecyclerPress.CountNear(_station.transform.position);
-            GameUi.Label(w, $"Returns <color=#ffd27a>{Calc.Percent(_station)}%</color> of the materials\n<size=80%><color=#bdb7a9>Presses nearby: {presses} of 2</color></size>",
+            GameUi.Label(w, T("recycler_returns", Gold(Calc.Percent(_station))) + "\n<size=80%><color=#bdb7a9>" + T("recycler_presses_near", presses) + "</color></size>",
                 new Vector2(-Pad, -22f), new Vector2(360f, 50f), 19f, GameUi.Text, GameUi.Sans, TextAlignmentOptions.TopRight, new Vector2(1f, 1f));
             GameUi.Braid(w, new Vector2(0f, -76f), W - Pad * 2f);
 
@@ -179,13 +183,12 @@ namespace Recycler
 
         private static void DrawList(Transform w)
         {
-            GameUi.Label(w, "Your gear", new Vector2(Pad, -94f), new Vector2(ListW, 28f), 20f, GameUi.Dim, GameUi.Serif);
+            GameUi.Label(w, T("recycler_your_gear"), new Vector2(Pad, -94f), new Vector2(ListW, 28f), 20f, GameUi.Dim, GameUi.Serif);
             RectTransform box = GameUi.Box(w, new Vector2(Pad - 6f, -124f), new Vector2(ListW, H - 124f - Pad));
             _content = GameUi.Scroll(box, 8f);
             if (Rows.Count == 0)
             {
-                GameUi.Label(_content, "Nothing in your inventory can be recycled.\n\n<size=85%><color=#bdb7a9>Weapons, armor and tools you could craft can be. " +
-                                   "Items locked with L are kept out.</color></size>", new Vector2(12f, -12f), new Vector2(ListW - 40f, 160f), 19f, GameUi.Text);
+                GameUi.Label(_content, T("recycler_nothing") + "\n\n<size=85%><color=#bdb7a9>" + T("recycler_nothing_hint") + "</color></size>", new Vector2(12f, -12f), new Vector2(ListW - 40f, 160f), 19f, GameUi.Text);
                 return;
             }
             float space = GameUi.CellSpace;
@@ -204,8 +207,7 @@ namespace Recycler
             float x = Pad + ListW + 16f, width = W - x - Pad, y = -94f;
             if (_selected == null || _quote == null)
             {
-                GameUi.Label(w, "Pick a piece of gear on the left to see what it gives back.\n\n<size=85%><color=#bdb7a9>A Recycler Press within 8 m raises the share; " +
-                            "up to two count.</color></size>", new Vector2(x, y), new Vector2(width, 200f), 19f, GameUi.Text);
+                GameUi.Label(w, T("recycler_pick") + "\n\n<size=85%><color=#bdb7a9>" + T("recycler_pick_hint") + "</color></size>", new Vector2(x, y), new Vector2(width, 200f), 19f, GameUi.Text);
                 return;
             }
 
@@ -219,10 +221,10 @@ namespace Recycler
             }
             Line(Localization.instance.Localize(_selected.m_shared.m_name), 28f, GameUi.Warm, GameUi.Norse, 4f);
             var notes = new List<string>();
-            if (_selected.m_shared.m_maxQuality > 1) notes.Add($"Quality {_selected.m_quality}");
-            if (_selected.m_equipped) notes.Add("equipped");
+            if (_selected.m_shared.m_maxQuality > 1) notes.Add(T("recycler_quality", _selected.m_quality));
+            if (_selected.m_equipped) notes.Add(T("recycler_equipped"));
             if (notes.Count > 0) Line(string.Join("  ·  ", notes), 17f, GameUi.Dim, GameUi.Sans, 8f);
-            Line($"You get back about <color=#ffd27a>{_quote.Percent}%</color> of its materials:", 19f, GameUi.Text, GameUi.Sans, 10f);
+            Line(T("recycler_get_back", Gold(_quote.Percent)), 19f, GameUi.Text, GameUi.Sans, 10f);
 
             float space = GameUi.CellSpace;
             foreach (Calc.Entry e in _quote.Entries.Take(5))
@@ -232,16 +234,16 @@ namespace Recycler
                 GameUi.Label(w, Localization.instance.Localize(e.Res.m_itemData.m_shared.m_name), new Vector2(x + space, y - 18f), new Vector2(width - space, 30f), 20f, GameUi.Text);
                 y -= space;
             }
-            if (_quote.Entries.Count > 5) GameUi.Label(w, $"and {_quote.Entries.Count - 5} more", new Vector2(x, y), new Vector2(width, 24f), 17f, GameUi.Dim);
+            if (_quote.Entries.Count > 5) GameUi.Label(w, T("recycler_more", _quote.Entries.Count - 5), new Vector2(x, y), new Vector2(width, 24f), 17f, GameUi.Dim);
 
             // what stands in the way, or what recycling it would cost, above the button
             string warning = _quote.Blocked ?? (!Valuable ? null
-                : _selected.m_equipped ? "This item is equipped. Recycling destroys it."
-                : _selected.m_quality >= 2 ? "This item has been upgraded. Recycling destroys it."
-                : "This item carries other mods' data (enchantments, a bag's contents). Recycling destroys it.");
+                : _selected.m_equipped ? T("recycler_warn_equipped")
+                : _selected.m_quality >= 2 ? T("recycler_warn_upgraded")
+                : T("recycler_warn_moddata"));
             if (warning != null) GameUi.Label(w, warning, new Vector2(x, -(H - Pad - 112f)), new Vector2(width, 56f), 18f, GameUi.Warn, GameUi.Sans, TextAlignmentOptions.BottomLeft);
 
-            string label = Confirming ? "Yes, recycle it" : Valuable ? "Recycle…" : "Recycle";
+            string label = Confirming ? T("recycler_button_confirm") : Valuable ? T("recycler_button_ask") : T("recycler_button");
             var button = GameUi.Button(w, label, new Vector2(x, -(H - Pad - 48f)), new Vector2(width, 48f), () =>
             {
                 if (Valuable && !Confirming) { _confirmFor = _selected; _confirmUntil = Time.unscaledTime + 5f; }

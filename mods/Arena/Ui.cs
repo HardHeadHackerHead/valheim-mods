@@ -144,6 +144,15 @@ namespace Arena
             return t;
         }
 
+        /// <summary>A one-line label whose words shrink a little to fit, rather than spill (some languages run longer than English).</summary>
+        internal static TMP_Text Fit(TMP_Text t)
+        {
+            t.textWrappingMode = TextWrappingModes.NoWrap;
+            t.fontSizeMax = t.fontSize; t.fontSizeMin = t.fontSize * 0.7f;
+            t.enableAutoSizing = true;
+            return t;
+        }
+
         /// <summary>A plain button (the inventory's "Take all").</summary>
         internal static Button Button(Transform parent, string text, Vector2 pos, Vector2 size, Action click, bool enabled = true)
         {
@@ -201,7 +210,8 @@ namespace Arena
             }
             label.text = text;
             label.fontSize = fontSize;
-            label.enableAutoSizing = false;
+            label.fontSizeMax = fontSize; label.fontSizeMin = fontSize * 0.7f;
+            label.enableAutoSizing = true;   // (a longer language's words shrink a little to fit the button)
             label.enableWordWrapping = false;
             label.overflowMode = TextOverflowModes.Ellipsis;
             var lr = (RectTransform)label.transform;

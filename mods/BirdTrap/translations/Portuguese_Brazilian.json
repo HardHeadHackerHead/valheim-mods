@@ -1,0 +1,19 @@
+{
+  "birdtrap_piece": "Armadilha de Pássaros",
+  "birdtrap_piece_desc": "Uma caixa de ripas com uma porta que cai, apoiada num graveto. Coloque frutinhas ou sementes como isca e deixe-a a céu aberto: depois de um tempo um pássaro entra, a porta cai, e você pode depená-lo para pegar penas.",
+  "birdtrap_full": "Não cabe mais isca",
+  "birdtrap_need_bait": "Você precisa de frutinhas ou sementes como isca",
+  "birdtrap_baited": "Isca colocada: {0} ({1}/{2})",
+  "birdtrap_gone": "O pássaro já foi embora",
+  "birdtrap_caught": "Uma gaivota foi pega!",
+  "birdtrap_hover_pluck": "Depenar para pegar penas e soltar",
+  "birdtrap_no_bait": "Sem isca: pássaros não vêm a uma armadilha vazia",
+  "birdtrap_roof": "Pássaros não vêm para debaixo de um telhado",
+  "birdtrap_night": "Os pássaros estão dormindo: um virá de manhã",
+  "birdtrap_soon": "Armada. Um pássaro deve vir em cerca de {0} min",
+  "birdtrap_any_moment": "Armada. Um pássaro deve vir a qualquer momento",
+  "birdtrap_bait_state": "Isca: {0}/{1}  ·  {2}",
+  "birdtrap_hover_add": "Colocar isca (frutinhas ou sementes)",
+  "birdtrap_hover_fill": "Encher de isca",
+  "birdtrap_plucked": "Você depena a gaivota e a solta: {0} penas"
+}

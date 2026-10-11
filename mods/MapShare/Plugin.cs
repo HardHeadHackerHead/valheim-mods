@@ -7,6 +7,7 @@ using BepInEx;
 using BepInEx.Configuration;
 using HarmonyLib;
 using UnityEngine;
+using static DHack.Shared.Translations;
 
 namespace MapShare
 {
@@ -23,7 +24,7 @@ namespace MapShare
         public const string Guid = "com.quad.mapshare";
         public const string OldGuid = "com.dhack.mapshare"; // (its id until 2026-10: settings move over by themselves, see Shared/Migration.cs)
         public const string Name = "MapShare";
-        public const string Version = "1.1.2";
+        public const string Version = "1.1.3";
 
         private const string RpcCells = "DHack_MapCells";   // newly explored cells
         private const string RpcHello = "DHack_MapHello";   // "I just joined: send me the map"
@@ -46,6 +47,7 @@ namespace MapShare
         private void Awake()
         {
             DHack.Shared.Migration.FromOldGuid(this, OldGuid); // first: before any setting is read
+            DHack.Shared.Translations.Load(this);   // translations/*.json: its words in the player's language
             Instance = this;
             _send = Config.Bind("General", "ShareMyMap", true, "Send the parts of the map you uncover to the other players in the world.");
             _receive = Config.Bind("General", "ReceiveSharedMap", true, "Show the parts of the map other players uncover on your own map.");
@@ -61,11 +63,12 @@ namespace MapShare
             Logger.LogInfo($"{Name} {Version} loaded");
 
             if (Player.m_localPlayer != null && Chat.instance != null) // a hot reload while in a world
-                Chat.instance.AddString("[Mod]", $"{Name} v{Version} reloaded", Talker.Type.Normal);
+                Chat.instance.AddString("[Mod]", T("mapshare_chat_reloaded", Name, Version), Talker.Type.Normal);
         }
 
         private void OnDestroy()
         {
+            DHack.Shared.Translations.Unload();
             _harmony?.UnpatchSelf();
             UnregisterRpc();
             Pending.Clear();

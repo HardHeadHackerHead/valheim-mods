@@ -5,6 +5,7 @@ using System.Linq;
 using TMPro;
 using UnityEngine;
 using Object = UnityEngine.Object;
+using static DHack.Shared.Translations;
 
 namespace Arena
 {
@@ -321,7 +322,7 @@ namespace Arena
         {
             if (_hall == null) return;
             List<Ladder.Entry> hall = Ladder.Hall();
-            string key = string.Join(";", hall.Select(e => e.Kind + e.Name + e.Score + e.Look));
+            string key = string.Join(";", hall.Select(e => e.Kind + e.Name + e.Score + e.Look)) + Localization.instance?.GetSelectedLanguage();   // (and again in another language)
             if (key == _hallShown) return;
             _hallShown = key;
             foreach (Transform child in _hall.transform) Object.Destroy(child.gameObject);
@@ -351,11 +352,11 @@ namespace Arena
                         // a pose with both feet on the ground (some emotes jump), set down on the plinth's top
                         if (stone != null) Figures.Petrify(statue, stone, new[] { "flex", "point", "thumbsup", "challenge" }[(Mathf.Abs(champ.Name.GetHashCode()) + i) % 4], spot.position.y);
                     }
-                    Text(spot, $"<b>{champ.Name}</b>\n<size=55%>{champ.What}  ·  {champ.Score}</size>", new Vector3(0f, down + 0.35f, face), new Color(1f, 0.82f, 0.35f), 1.6f);
+                    Text(spot, $"<b>{champ.Name}</b>\n<size=55%>{champ.Run}  ·  {champ.Score}</size>", new Vector3(0f, down + 0.35f, face), new Color(1f, 0.82f, 0.35f), 1.6f);
                 }
-                else Text(spot, "<i>Unclaimed</i>", new Vector3(0f, down + 0.35f, face), new Color(0.62f, 0.6f, 0.57f), 1.6f);
+                else Text(spot, "<i>" + T("arena_unclaimed") + "</i>", new Vector3(0f, down + 0.35f, face), new Color(0.62f, 0.6f, 0.57f), 1.6f);
                 // which contest's champion stands here
-                Text(spot, "<smallcaps>Champion of</smallcaps>\n" + (i < Ladder.KindTitles.Length ? Ladder.KindTitles[i] : ""), new Vector3(0f, down - 0.45f, face), new Color(0.9f, 0.72f, 0.3f), 1.5f);
+                Text(spot, "<smallcaps>" + T("arena_champion_of") + "</smallcaps>\n" + (i < Ladder.Kinds.Length ? Ladder.KindTitle(i) : ""), new Vector3(0f, down - 0.45f, face), new Color(0.9f, 0.72f, 0.3f), 1.5f);
             }
         }
 
@@ -396,10 +397,10 @@ namespace Arena
         public string GetHoverText()
         {
             string busy = Net.Busy ? $"\n<color=#e8a060>{Net.BusyText}</color>" : "";
-            return Localization.instance.Localize("The Arena Master\n[<color=yellow><b>$KEY_Use</b></color>] \"Step up, challenger!\"") + busy;
+            return Localization.instance.Localize("$arena_master\n[<color=yellow><b>$KEY_Use</b></color>] $arena_master_hover") + busy;
         }
 
-        public string GetHoverName() => "The Arena Master";
+        public string GetHoverName() => T("arena_master");
         public float GetHoverOffset() => 0f;
         public bool Interact(Humanoid user, bool hold, bool alt)
         {

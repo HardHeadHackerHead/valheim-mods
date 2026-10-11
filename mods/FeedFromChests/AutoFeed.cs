@@ -2,6 +2,7 @@ using System.Collections.Generic;
 using System.Linq;
 using HarmonyLib;
 using UnityEngine;
+using static DHack.Shared.Translations;
 
 namespace FeedFromChests
 {
@@ -331,10 +332,10 @@ namespace FeedFromChests
         /// <summary>One line: "Inside: 4 Tin Ore, 2 Copper Ore   Fuel 8/20   Ready: 3 Tin".</summary>
         public static string InsideLine(Inside i)
         {
-            string contents = i.Queue.Count > 0 ? string.Join(", ", i.Queue.Select(q => $"{q.Value} {NameOf(q.Key)}").ToArray()) : "nothing loaded";
-            string line = "Inside: " + contents;
-            if (i.MaxFuel > 0) line += $"   Fuel {Mathf.Floor(i.Fuel):0}/{i.MaxFuel}";
-            if (i.Ready > 0) line += $"   Ready: {i.Ready} {i.ReadyName}";
+            string contents = i.Queue.Count > 0 ? string.Join(", ", i.Queue.Select(q => T("feedfromchests_amount", q.Value, NameOf(q.Key))).ToArray()) : T("feedfromchests_nothing_loaded");
+            string line = T("feedfromchests_inside_line", contents);
+            if (i.MaxFuel > 0) line += "   " + T("feedfromchests_fuel_level", Mathf.Floor(i.Fuel).ToString("0"), i.MaxFuel);
+            if (i.Ready > 0) line += "   " + T("feedfromchests_ready", i.Ready, i.ReadyName);
             return line;
         }
 
@@ -349,10 +350,14 @@ namespace FeedFromChests
             {
                 _hoverFor = smelter;
                 _hoverAt = Time.unscaledTime;
-                _hoverText = $"\n<size=14>{InsideLine(Look(smelter))}</size>\n<size=14>Auto-feed from chests: {(Read(smelter).On ? "<color=#8fe388>ON</color>" : "off")}</size>";
+                _hoverText = $"\n<size=14>{InsideLine(Look(smelter))}</size>\n<size=14>" + T("feedfromchests_hover_auto", OnOff(Read(smelter).On)) + "</size>";
             }
             return _hoverText;
         }
+
+        /// <summary>"ON" in green or "off", in the game's own words for them (for hover texts).</summary>
+        public static string OnOff(bool on) => on ? "<color=#8fe388>" + Localization.instance.Localize("$hud_on").ToUpperInvariant() + "</color>"
+                                                  : Localization.instance.Localize("$hud_off").ToLowerInvariant();
     }
 
     public partial class Plugin

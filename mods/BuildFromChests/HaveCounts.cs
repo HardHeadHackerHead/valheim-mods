@@ -2,6 +2,7 @@ using System;
 using HarmonyLib;
 using TMPro;
 using UnityEngine;
+using static DHack.Shared.Translations;
 
 namespace BuildFromChests
 {
@@ -43,7 +44,7 @@ namespace BuildFromChests
             // The game rewrites the tooltip every frame, so add our line after it has.
             UITooltip tooltip = elementRoot.GetComponent<UITooltip>();
             if (tooltip != null && !string.IsNullOrEmpty(tooltip.m_text))
-                tooltip.m_text += $"\nYou have {total}  (inventory {inInventory}, chests {inChests})";
+                tooltip.m_text += "\n" + T("buildfromchests_have", total, inInventory, inChests);
         }
 
         internal static void Hide(Transform elementRoot)

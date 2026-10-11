@@ -1,4 +1,5 @@
 using HarmonyLib;
+using static DHack.Shared.Translations;
 
 namespace BuildFromChests
 {
@@ -53,7 +54,7 @@ namespace BuildFromChests
 
             string missing = ChestScanner.FindShortfall(__instance.GetInventory(), piece.m_resources);
             if (missing == null) return true;
-            __instance.Message(MessageHud.MessageType.Center, $"Not enough {Localization.instance.Localize(missing)} in the chests any more");
+            __instance.Message(MessageHud.MessageType.Center, T("buildfromchests_short", Localization.instance.Localize(missing)));
             __result = false;
             return false;
         }

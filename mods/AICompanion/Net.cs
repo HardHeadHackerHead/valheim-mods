@@ -5,6 +5,7 @@ using System.Globalization;
 using System.Linq;
 using HarmonyLib;
 using UnityEngine;
+using static DHack.Shared.Translations;
 
 namespace AICompanion
 {
@@ -20,7 +21,7 @@ namespace AICompanion
         private const string RpcStats = "DHack_CompanionStats", RpcFallen = "DHack_CompanionFallen", RpcCleared = "DHack_CompanionGearTaken", RpcSays = "DHack_CompanionSays";
         private const string RpcWhereIs = "DHack_CompanionWhereIs", RpcWhereIsAnswer = "DHack_CompanionWhereIsAnswer";
         public const string CrateKey = "dhc_fallen";
-        private const string MarkerSuffix = " fell here";
+        private const string MarkerKey = "aicompanion_net_marker";   // "{0} fell here": the words on a fallen companion's map marker
 
         private class Seen { public string Line; public float At; public string Master; }
         private class Fallen { public string Name, Master; public Vector3 Pos; public float At; public long Id, MasterId; }
@@ -242,9 +243,18 @@ namespace AICompanion
                 foreach (Fallen f in RecentlyFallen.Where(f => online.Contains(f.Master)))
                     lines.Add(string.Join("|", (-Math.Abs((long)(f.Name + f.Master).GetStableHashCode())).ToString(CultureInfo.InvariantCulture), Clean(f.Name), Clean(f.Master),
                         "0", "1", F(f.Pos.x), F(f.Pos.y), F(f.Pos.z), "fallen", "0", "1", "", "-"));
-                return string.Join("\n", lines);
+                return string.Join("\n", lines.Select(ShowStatus));
             }
             catch (Exception) { return ""; }
+        }
+
+        /// <summary>A line's status (packed text, from this game or another: Words) in this player's language, for PartyHud and the pins.</summary>
+        private static string ShowStatus(string line)
+        {
+            string[] f = line.Split('|');
+            if (f.Length < 9 || !Words.Packed(f[8])) return line;
+            f[8] = Clean(Words.Show(f[8]));
+            return string.Join("|", f);
         }
 
         // ---- markers where a companion fell ---------------------------------------------------------------
@@ -277,14 +287,14 @@ namespace AICompanion
             if (lost)
             {
                 if (Player.m_localPlayer != null)
-                    Player.m_localPlayer.Message(MessageHud.MessageType.TopLeft, $"{(f[1] != Player.m_localPlayer.GetPlayerName() ? f[1] + "'s companion " : "")}{f[0]} lost a fight at home while nobody was there: their things are in their tombstone (marked on your map)");
+                    Player.m_localPlayer.Message(MessageHud.MessageType.TopLeft, f[1] != Player.m_localPlayer.GetPlayerName() ? T("aicompanion_net_lost_fight_other", f[1], f[0]) : T("aicompanion_net_lost_fight", f[0]));
                 return;
             }
             RecentlyFallen.RemoveAll(x => x.Name == f[0] && x.Master == f[1]);
             RecentlyFallen.Add(new Fallen { Name = f[0], Master = f[1], Pos = pos, At = Time.time,
                 Id = f.Length >= 7 && long.TryParse(f[5], out long fid) ? fid : 0L, MasterId = f.Length >= 7 && long.TryParse(f[6], out long fm) ? fm : 0L });
             if (Player.m_localPlayer != null && f[1] != Player.m_localPlayer.GetPlayerName())
-                Player.m_localPlayer.Message(MessageHud.MessageType.TopLeft, $"{f[1]}'s companion {f[0]} has fallen (marked on your map)");
+                Player.m_localPlayer.Message(MessageHud.MessageType.TopLeft, T("aicompanion_net_fallen_other", f[1], f[0]));
         }
 
         private static void OnCleared(long sender, string payload)
@@ -297,13 +307,34 @@ namespace AICompanion
         private static readonly AccessTools.FieldRef<Minimap, List<Minimap.PinData>> Pins = AccessTools.FieldRefAccess<Minimap, List<Minimap.PinData>>("m_pins");
 
         private static IEnumerable<Minimap.PinData> Markers() =>
-            Minimap.instance == null ? Enumerable.Empty<Minimap.PinData>() : Pins(Minimap.instance).Where(p => p.m_type == Minimap.PinType.Death && p.m_name != null && p.m_name.EndsWith(MarkerSuffix));
+            Minimap.instance == null ? Enumerable.Empty<Minimap.PinData>() : Pins(Minimap.instance).Where(p => p.m_type == Minimap.PinType.Death && IsMarker(p.m_name, out _));
+
+        /// <summary>
+        /// A fallen companion's marker, and its companion's name: its words in English (older versions, and English players) or in this
+        /// player's language ("{0} fell here", split at the name). A marker saved in another language is not recognised (it stays on the map).
+        /// </summary>
+        private static bool IsMarker(string pin, out string name)
+        {
+            name = null;
+            if (string.IsNullOrEmpty(pin)) return false;
+            foreach (string template in new[] { Words.English(Words.P(MarkerKey, "\u0000")), T(MarkerKey, "\u0000") })
+            {
+                int at = template.IndexOf('\u0000');
+                if (at < 0) continue;
+                string before = template.Substring(0, at), after = template.Substring(at + 1);
+                if (before.Length + after.Length == 0 || pin.Length <= before.Length + after.Length) continue;
+                if (!pin.StartsWith(before, StringComparison.Ordinal) || !pin.EndsWith(after, StringComparison.Ordinal)) continue;
+                name = pin.Substring(before.Length, pin.Length - before.Length - after.Length);
+                return true;
+            }
+            return false;
+        }
 
         private static void AddMarker(Vector3 pos, string name)
         {
             if (Minimap.instance == null) return;
             if (Markers().Any(p => Vector3.Distance(p.m_pos, pos) < 4f)) return;
-            Minimap.instance.AddPin(pos, Minimap.PinType.Death, name + MarkerSuffix, true, false, 0L); // saved with this player's map of the world
+            Minimap.instance.AddPin(pos, Minimap.PinType.Death, T(MarkerKey, name), true, false, 0L); // saved with this player's map of the world
         }
 
         private static void RemoveMarkersNear(Vector3 pos, float within = 4f)
@@ -347,7 +378,7 @@ namespace AICompanion
             yield return new WaitForSeconds(10f); // let them finish loading in
             foreach (Minimap.PinData pin in Markers().ToList())
             {
-                string name = pin.m_name.Substring(0, pin.m_name.Length - MarkerSuffix.Length);
+                if (!IsMarker(pin.m_name, out string name)) continue;
                 Send(RpcFallen, string.Join("|", Clean(name), "", F(pin.m_pos.x), F(pin.m_pos.y), F(pin.m_pos.z)));
             }
             foreach (Fallen f in RecentlyFallen.Where(x => x.Id != 0L))

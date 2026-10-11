@@ -1,0 +1,8 @@
+{
+  "partyhud_header": "队伍  ·  {0}",
+  "partyhud_distance": "{0} 米",
+  "partyhud_fallen": "已倒下",
+  "partyhud_dead": "死亡",
+  "partyhud_no_data": "无数据",
+  "partyhud_fallen_status": "已倒下：物品在坟墓里（地图上的骷髅）"
+}

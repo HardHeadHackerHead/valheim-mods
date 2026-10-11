@@ -1,0 +1,8 @@
+{
+  "partyhud_header": "GRUP  ·  {0}",
+  "partyhud_distance": "{0} m",
+  "partyhud_fallen": "DÜŞTÜ",
+  "partyhud_dead": "ÖLÜ",
+  "partyhud_no_data": "veri yok",
+  "partyhud_fallen_status": "düştü: eşyaları mezarda (haritada kafatası)"
+}

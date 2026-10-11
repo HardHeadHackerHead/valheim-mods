@@ -94,8 +94,7 @@ namespace AICompanion
         public static bool Feared(Humanoid me, Character c)
         {
             var tally = Journal.Tally(me);
-            string name = Localization.instance.Localize(c.m_name);
-            return (tally.TryGetValue("killedby:" + name, out int k) && k > 0) || (tally.TryGetValue("hurtby:" + name, out int h) && h > me.GetMaxHealth() * 2f);
+            return Journal.Tallied(tally, "killedby:", c.m_name) > 0 || Journal.Tallied(tally, "hurtby:", c.m_name) > me.GetMaxHealth() * 2f;
         }
 
         /// <summary>One of its blows is a big part of its health (a quarter or more), or it is feared: hit and run against it.</summary>
@@ -138,7 +137,7 @@ namespace AICompanion
 
         // ---- meads -----------------------------------------------------------------------------------------
 
-        /// <summary>A mead it carries whose effect fits, and that is not on it already: drunk. True if it drank.</summary>
+        /// <summary>A mead it carries whose effect fits, and that is not on it already: drunk. True if it drank. <paramref name="what"/>: the key of "drank a ... mead".</summary>
         private static bool Drink(Humanoid h, Func<SE_Stats, bool> fits, string what, BrainState st)
         {
             SEMan seman = h.GetSEMan();
@@ -149,8 +148,8 @@ namespace AICompanion
                 seman.AddStatusEffect(se, true);
                 h.m_consumeItemEffects.Create(h.transform.position, Quaternion.identity);
                 h.GetInventory().RemoveOneItem(item);
-                st.Remember($"drank {what}");
-                Activity.Log(h, $"drank {Localization.instance.Localize(item.m_shared.m_name)} ({what})");
+                st.Remember(Words.P(what));
+                Activity.Log(h, $"drank {Localization.instance.Localize(item.m_shared.m_name)}");
                 return true;
             }
             return false;
@@ -166,15 +165,15 @@ namespace AICompanion
             st.NextMeadLook = Time.time + 1f;
             Humanoid me = st.Body;
             SEMan seman = me.GetSEMan();
-            if (Stamina.Get(me) < Stamina.Max(me) * 0.2f && Drink(me, se => se.m_staminaUpFront > 0f || se.m_staminaOverTime > 0f, "a stamina mead", st)) return;
-            if (Eitr.Max(me) > 0f && Companion.IsStaff(me.GetCurrentWeapon()) && Eitr.Get(me) < Eitr.Max(me) * 0.2f && Drink(me, se => se.m_eitrUpFront > 0f || se.m_eitrOverTime > 0f, "an eitr mead", st)) return;
+            if (Stamina.Get(me) < Stamina.Max(me) * 0.2f && Drink(me, se => se.m_staminaUpFront > 0f || se.m_staminaOverTime > 0f, "aicompanion_tactics_drank_stamina", st)) return;
+            if (Eitr.Max(me) > 0f && Companion.IsStaff(me.GetCurrentWeapon()) && Eitr.Get(me) < Eitr.Max(me) * 0.2f && Drink(me, se => se.m_eitrUpFront > 0f || se.m_eitrOverTime > 0f, "aicompanion_tactics_drank_eitr", st)) return;
             string boss = st.Enemies.FirstOrDefault(e => e != null && e.IsBoss())?.m_name ?? "";
             bool poison = seman.GetStatusEffects().Any(s => s is SE_Poison) || boss.Contains("bonemass");
             bool fire = seman.GetStatusEffects().Any(s => s is SE_Burning) || boss.Contains("yagluth") || boss.Contains("fader");
             bool frost = seman.HaveStatusEffect(SEMan.s_statusEffectFrost) || seman.HaveStatusEffect(SEMan.s_statusEffectFreezing) || boss.Contains("dragon");
-            if (poison && Drink(me, se => Resists(se, HitData.DamageType.Poison), "a poison resistance mead", st)) return;
-            if (fire && Drink(me, se => Resists(se, HitData.DamageType.Fire), "a fire resistance mead", st)) return;
-            if (frost) Drink(me, se => Resists(se, HitData.DamageType.Frost), "a frost resistance mead", st);
+            if (poison && Drink(me, se => Resists(se, HitData.DamageType.Poison), "aicompanion_tactics_drank_poison", st)) return;
+            if (fire && Drink(me, se => Resists(se, HitData.DamageType.Fire), "aicompanion_tactics_drank_fire", st)) return;
+            if (frost) Drink(me, se => Resists(se, HitData.DamageType.Frost), "aicompanion_tactics_drank_frost", st);
         }
 
         // ---- the dodge -------------------------------------------------------------------------------------

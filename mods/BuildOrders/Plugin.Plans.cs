@@ -4,6 +4,7 @@ using System.IO;
 using System.Linq;
 using Newtonsoft.Json.Linq;
 using UnityEngine;
+using static DHack.Shared.Translations;
 
 namespace BuildOrders
 {
@@ -19,8 +20,9 @@ namespace BuildOrders
         internal class PlanInfo
         {
             public string Key;     // the orders' "By": "Blueprint: <name>" or a player's name
-            public string Title;
+            public string Title;   // the blueprint's name, or "Planned by <player>" (English: it is data, given to Claude Tools and kept by Move)
             public bool IsBlueprint;
+            public string Shown => IsBlueprint ? ShownTitle(Title) : T("buildorders_planned_by", Who(Key));   // the title on the screen
             public List<Order> Orders = new List<Order>();
             public Vector3 Centre;
             public float Distance;
@@ -34,7 +36,7 @@ namespace BuildOrders
             {
                 var plan = new PlanInfo { Key = group.Key, Orders = group.ToList() };
                 plan.IsBlueprint = plan.Key.StartsWith(BlueprintPrefix);
-                plan.Title = plan.IsBlueprint ? plan.Key.Substring(BlueprintPrefix.Length) : "Planned by " + (plan.Key.Length > 0 ? plan.Key : "someone");
+                plan.Title = plan.IsBlueprint ? plan.Key.Substring(BlueprintPrefix.Length) : PlannedByTitle + (plan.Key.Length > 0 ? plan.Key : "someone");
                 Vector3 sum = Vector3.zero;
                 foreach (Order o in plan.Orders) sum += o.Pos;
                 plan.Centre = sum / Mathf.Max(1, plan.Orders.Count);
@@ -43,6 +45,21 @@ namespace BuildOrders
             }
             return list.OrderBy(p => p.Distance).ToList();
         }
+
+        /// <summary>
+        /// A plan's name on the screen. Players' blueprint names are shown as they are; the names the mod gives ("Bridge", "Bridge 2", a moved
+        /// hand plan's "Planned by Bob") are kept in English in the orders, the records and other players' games, and translated here.
+        /// </summary>
+        internal static string ShownTitle(string title)
+        {
+            if (string.IsNullOrEmpty(title)) return title;
+            if (title == BridgeTitle) return T("buildorders_bridge");
+            if (title.StartsWith(BridgeTitle + " ") && int.TryParse(title.Substring(BridgeTitle.Length + 1), out int n)) return T("buildorders_bridge") + " " + n;
+            if (title.StartsWith(PlannedByTitle)) return T("buildorders_planned_by", title.Substring(PlannedByTitle.Length));
+            return title;
+        }
+
+        private const string PlannedByTitle = "Planned by ";
 
         /// <param name="takeDownBuilt">also take down the pieces already built from it, giving their materials back</param>
         internal int RemovePlan(string key, bool takeDownBuilt = false)
@@ -59,7 +76,7 @@ namespace BuildOrders
             JObject record = haveUndo ? null : ReadPlanRecord(key);
             string placer = record != null ? (string)record["by"] : null;
             if (record != null && (bool?)record["levelled"] == true && !string.IsNullOrEmpty(placer) && placer != me?.GetPlayerName())
-                ground = $"Only {placer}'s game can put the ground under it back: it does so the next time they are near it";
+                ground = T("buildorders_ground_placer", placer);
             if (ground != null) Player.m_localPlayer?.Message(MessageHud.MessageType.TopLeft, ground);
             var ids = _orders.Values.Where(o => (o.By ?? "") == key).Select(o => o.Id).ToList();
             foreach (string id in ids) RemoveOrder(id, broadcast: true, save: false);
@@ -184,8 +201,8 @@ namespace BuildOrders
             RecordPlan(by);
             if (unknown.Count > 0) Logger.LogWarning($"Blueprint '{title}': skipped pieces that cannot be built: {string.Join(", ", unknown.ToArray())}");
             Logger.LogInfo($"Blueprint '{title}': {added} build orders placed at {anchor} turned {yaw:0}° ({skipped} skipped)");
-            player.Message(MessageHud.MessageType.Center, $"\"{title}\": {added} pieces planned" + (skipped > 0 ? $" ({skipped} skipped)" : ""));
-            player.Message(MessageHud.MessageType.TopLeft, $"Wrong spot? {_blueprintKey.Value} > Placed plans: Move or Remove it");
+            player.Message(MessageHud.MessageType.Center, skipped > 0 ? T("buildorders_planned_skipped", ShownTitle(title), added, skipped) : T("buildorders_planned_pieces", ShownTitle(title), added));
+            player.Message(MessageHud.MessageType.TopLeft, T("buildorders_wrong_spot", _blueprintKey.Value));
             RememberImport(title, file ?? "", new Vector3(anchor.x, baseY - offsetY, anchor.z), yaw, added, offsetY);
             return added;
         }
@@ -248,7 +265,7 @@ namespace BuildOrders
                 if (Input.GetKeyDown(KeyCode.PageUp)) pl.OffsetY += fine ? 0.1f : 0.5f;
                 if (Input.GetKeyDown(KeyCode.PageDown)) pl.OffsetY -= fine ? 0.1f : 0.5f;
                 if (Input.GetKeyDown(KeyCode.Home)) { pl.OffsetY = 0f; }
-                if (Input.GetMouseButtonDown(1)) { CancelPlacement(); player.Message(MessageHud.MessageType.TopLeft, "Placement cancelled"); return; }
+                if (Input.GetMouseButtonDown(1)) { CancelPlacement(); player.Message(MessageHud.MessageType.TopLeft, T("buildorders_placement_cancelled")); return; }
                 if ((Input.GetMouseButtonDown(0) || Input.GetKeyDown(KeyCode.Return) || Input.GetKeyDown(KeyCode.KeypadEnter)) && pl.HaveAnchor)
                 {
                     ConfirmPlacement(player);
@@ -317,7 +334,7 @@ namespace BuildOrders
             float baseY = ZoneSystem.instance.GetGroundHeight(anchor) + offset;
             RememberPendingLevel(title, file, entries, anchor, yaw, offset, baseY); // kept until its ghosts are placed, even if you leave first
             StartPlanLevel((JObject)_pendingLevels.Last);
-            player.Message(MessageHud.MessageType.TopLeft, $"Levelling the ground for \"{title}\": its ghosts appear when it is done");
+            player.Message(MessageHud.MessageType.TopLeft, T("buildorders_levelling_for", ShownTitle(title)));
             return entries.Count;
         }
 
@@ -333,10 +350,10 @@ namespace BuildOrders
         internal void StartMove(Player player, PlanInfo plan)
         {
             if (IsAddonGhostPlan(plan.Key))
-            { player.Message(MessageHud.MessageType.TopLeft, "Draw a new shape with its add-on tool instead of moving it as a levelled blueprint."); return; }
+            { player.Message(MessageHud.MessageType.TopLeft, T("buildorders_addon_move")); return; }
             List<Entry> entries = PlanEntries(plan, out Vector3 _, out float yaw, out float offset);
             StartPlacement(plan.Title, null, entries, yaw, offset, plan.Key);
-            player.Message(MessageHud.MessageType.TopLeft, $"Moving \"{plan.Title}\": look where it should go and click");
+            player.Message(MessageHud.MessageType.TopLeft, T("buildorders_moving", plan.Shown));
         }
 
         /// <summary>Level the ground under a plan that is already placed (to its floor level).</summary>
@@ -374,11 +391,11 @@ namespace BuildOrders
         private Line[] PlacementBannerLines()
         {
             Placement pl = _placing;
-            string loading = pl.Spawned < pl.Entries.Count ? $"   (showing {pl.Spawned}/{pl.Entries.Count})" : "";
+            string loading = pl.Spawned < pl.Entries.Count ? "   " + T("buildorders_placing_showing", pl.Spawned, pl.Entries.Count) : "";
             return new[]
             {
-                new Line($"Placing \"{pl.Title}\"   turned {pl.Yaw:0}°   height {pl.OffsetY:+0.0;-0.0;0} m{loading}", 19f, GameUi.Good),
-                new Line("Look where it goes   ·   Wheel: turn (Shift: fine)   ·   R: 90°   ·   PgUp/PgDn: height   ·   Click: place   ·   Right-click / Esc: cancel", 16f, GameUi.Text),
+                new Line(T("buildorders_placing", ShownTitle(pl.Title), pl.Yaw.ToString("0"), pl.OffsetY.ToString("+0.0;-0.0;0")) + loading, 19f, GameUi.Good),
+                new Line(T("buildorders_placing_help"), 16f, GameUi.Text),
                 new Line(LevelBannerText(pl), 16f, GameUi.Gold),
             };
         }

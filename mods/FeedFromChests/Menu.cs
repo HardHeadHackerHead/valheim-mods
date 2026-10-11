@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using TMPro;
 using UnityEngine;
+using static DHack.Shared.Translations;
 
 namespace FeedFromChests
 {
@@ -58,8 +59,8 @@ namespace FeedFromChests
             _station = info;
             _status = "";
             Mark("opened the menu");
-            _stationTitle = (info.Component is CookingStation ? "" : "Add to ") + Localization.instance.Localize(info.Title);
-            _subtitle = $"Uses your inventory first, then chests within {_radius.Value:0} m. The station's own limits still apply.";
+            _stationTitle = info.Component is CookingStation ? Localization.instance.Localize(info.Title) : T("feedfromchests_add_to", Localization.instance.Localize(info.Title));
+            _subtitle = T("feedfromchests_subtitle", _radius.Value.ToString("0"));
             _supportsAuto = _stationAuto.Value && AutoFeed.Supported(info);
             _autoItems = BuildAutoItems(info);
             _auto = _supportsAuto ? AutoFeed.Read(info.Component) : new AutoSetting();
@@ -69,7 +70,7 @@ namespace FeedFromChests
             Logger.LogInfo($"Menu for '{info.Title}': {_rows.Count} item(s) available, {_station.Inputs.Count} input(s), fuel={(_station.Fuel != null ? "yes" : "no")}, auto-feed={(_supportsAuto ? (_auto.On ? "on" : "off") : "n/a")}");
             if (_rows.Count == 0 && !_supportsAuto)
             {
-                player.Message(MessageHud.MessageType.Center, "Nothing to add: no item this takes in your inventory or nearby chests");
+                player.Message(MessageHud.MessageType.Center, T("feedfromchests_nothing_to_add"));
                 _station = null;
                 return;
             }
@@ -161,7 +162,7 @@ namespace FeedFromChests
             }
             AutoFeed.Write(_station.Component, setting);
             _auto = setting;
-            _status = setting.On ? "Auto-feed is on" : "Auto-feed is off";
+            _status = setting.On ? T("feedfromchests_auto_is_on") : T("feedfromchests_auto_is_off");
         }
 
         private bool _autoEverSet; // this station already has saved settings (so we do not overwrite what someone chose)
@@ -200,7 +201,7 @@ namespace FeedFromChests
             setting.Output = !setting.Output;
             AutoFeed.Write(_station.Component, setting);
             _auto = setting;
-            _status = setting.Output ? "What it makes goes into chests" : "What it makes drops on the ground";
+            _status = setting.Output ? T("feedfromchests_output_chests") : T("feedfromchests_output_ground");
         }
 
         private void ToggleTakeOff()
@@ -210,7 +211,7 @@ namespace FeedFromChests
             setting.TakeOff = !setting.TakeOff;
             AutoFeed.Write(_station.Component, setting);
             _auto = setting;
-            _status = setting.TakeOff ? "Done food comes off by itself" : "Done food stays on (and can burn)";
+            _status = setting.TakeOff ? T("feedfromchests_takeoff_on") : T("feedfromchests_takeoff_off");
         }
 
         private void ToggleAutoItem(string name)
@@ -260,8 +261,8 @@ namespace FeedFromChests
                     IsFuel = _station.Fuel != null && drop == _station.Fuel,
                     InInventory = inventory.CountItems(name), InChests = Chests.Count(chests, name),
                 };
-                row.Title = row.Display + (row.IsFuel ? "  <size=80%><color=#bdb7a9>(fuel)</color></size>" : "");
-                row.CountsText = $"In your inventory: {row.InInventory}\nIn chests: {row.InChests}";
+                row.Title = row.Display + (row.IsFuel ? "  <size=80%><color=#bdb7a9>" + T("feedfromchests_fuel_tag") + "</color></size>" : "");
+                row.CountsText = T("feedfromchests_in_inventory", row.InInventory) + "\n" + T("feedfromchests_in_chests", row.InChests);
                 if (row.InInventory + row.InChests > 0) rows.Add(row);
             }
             // Things to add first, fuel after; each group from the lesser item to the greater (wood, fine wood, core wood...).
@@ -276,7 +277,7 @@ namespace FeedFromChests
 
             Mark($"Add 1 {row.Display}");
             bool ok = AddOne(player, _station, row.Drop, row.IsFuel);
-            _status = ok ? $"Added 1 {row.Display}" : $"Couldn't add {row.Display} (full, or not accepted right now)";
+            _status = ok ? T("feedfromchests_added_one", row.Display) : T("feedfromchests_couldnt_add", row.Display);
             RefreshRows(player);
             if (_rows.Count == 0) CloseMenu();
         }
@@ -331,6 +332,14 @@ namespace FeedFromChests
             }
         }
 
+        /// <summary>A small button whose word may be longer in another language: the word shrinks to fit rather than run over the edge.</summary>
+        private static UnityEngine.UI.Button Squeeze(UnityEngine.UI.Button b)
+        {
+            TMP_Text label = GameUi.Label(b);
+            if (label != null) { label.fontSizeMax = label.fontSize; label.fontSizeMin = 11f; label.enableAutoSizing = true; }
+            return b;
+        }
+
         /// <summary>Sizes a wrapping text to the height it needs and returns that height (so what comes under it starts below it).</summary>
         private static float Fit(TMP_Text t, float width)
         {
@@ -344,7 +353,7 @@ namespace FeedFromChests
 
         private Row RowNamed(string name) => _rows.FirstOrDefault(r => r.Name == name);
         private static int Total(Row row) => row != null ? row.InInventory + row.InChests : 0;
-        private static string Shown(int value, bool offWhenZero) => value == 0 && offWhenZero ? "off" : value.ToString();
+        private static string Shown(int value, bool offWhenZero) => value == 0 && offWhenZero ? Localization.instance.Localize("$hud_off") : value.ToString();
 
         /// <summary>A click's action, run in Update with the local player (never from the click itself).</summary>
         private void Later(Action<Player> act) => _pending = () => { Player p = Player.m_localPlayer; if (p != null) act(p); };
@@ -383,10 +392,10 @@ namespace FeedFromChests
             float w = _supportsAuto ? Pad * 2f + ColW * 2f + ColGap : Pad * 2f + ColW, h = _supportsAuto ? 740f : 600f;
             _window = GameUi.Window(WindowName, new Vector2(w, h));
             Transform win = _window;
-            TMP_Text title = GameUi.Label(win, _stationTitle, new Vector2(Pad, -20f), new Vector2(w - Pad * 2f - 130f, 44f), 34f, GameUi.Warm, GameUi.Norse);
+            TMP_Text title = GameUi.Label(win, _stationTitle, new Vector2(Pad, -20f), new Vector2(w - Pad * 2f - 130f, 60f), 34f, GameUi.Warm, GameUi.Norse);   // (60: "..." hides a taller Chinese line)
             title.enableWordWrapping = false;
             title.overflowMode = TextOverflowModes.Ellipsis;
-            GameUi.Button(win, "Close", new Vector2(w - Pad - 110f, -24f), new Vector2(110f, 40f), () => _pending = CloseMenu);
+            GameUi.Button(win, Localization.instance.Localize("$menu_close"), new Vector2(w - Pad - 110f, -24f), new Vector2(110f, 40f), () => _pending = CloseMenu);
             GameUi.Braid(win, new Vector2(0f, -76f), w - Pad * 2f);
 
             DrawAddColumn(win, Pad, h);
@@ -407,7 +416,7 @@ namespace FeedFromChests
 
             if (_rows.Count == 0)
             {
-                TMP_Text none = GameUi.Label(_addList, "Nothing to add by hand right now: none of what this takes is in your inventory or the nearby chests.",
+                TMP_Text none = GameUi.Label(_addList, T("feedfromchests_nothing_by_hand"),
                     new Vector2(8f, -8f), new Vector2(cw - 16f, 40f), 17f, GameUi.Dim);
                 _addList.sizeDelta = new Vector2(cw, Fit(none, cw - 16f) + 16f);
             }
@@ -415,19 +424,19 @@ namespace FeedFromChests
             {
                 // one line per item: the inventory's own cell (the game's tooltip; the number is how many you and the chests have), its name
                 // and counts, Add 1 and Fill
-                float space = GameUi.CellSpace, bw = 74f, ry = 4f, tx = 4f + 64f + 12f, textW = cw - tx - bw * 2f - 14f;
+                float space = GameUi.CellSpace, bw = 84f, ry = 4f, tx = 4f + 64f + 12f, textW = cw - tx - bw * 2f - 14f;
                 foreach (Row row in _rows)
                 {
                     Row r = row;
                     string name = row.Name;
                     InventoryElement cell = GameUi.Cell(_addList, new Vector2(4f, -ry), row.Drop.m_itemData, Total(row).ToString(), false, null);
                     Live(cell.m_amount, () => Total(RowNamed(name)).ToString());
-                    TMP_Text t = GameUi.Label(_addList, row.Title, new Vector2(tx, -ry - 4f), new Vector2(textW, 26f), 19f, GameUi.Text);
+                    TMP_Text t = GameUi.Label(_addList, row.Title, new Vector2(tx, -ry - 4f), new Vector2(textW, 34f), 19f, GameUi.Text);
                     t.enableWordWrapping = false;
                     t.overflowMode = TextOverflowModes.Ellipsis;
                     Live(GameUi.Label(_addList, row.CountsText, new Vector2(tx, -ry - 28f), new Vector2(textW, 38f), 14f, GameUi.Dim), () => RowNamed(name)?.CountsText ?? "");
-                    GameUi.Button(_addList, "Add 1", new Vector2(cw - bw * 2f - 6f, -ry - 12f), new Vector2(bw, 40f), () => Later(p => AddOneFromMenu(p, r)), !_filling, 17f);
-                    var fill = GameUi.Button(_addList, "Fill", new Vector2(cw - bw, -ry - 12f), new Vector2(bw, 40f), () => Later(p => FillFromMenu(p, r)), !_filling, 17f);
+                    Squeeze(GameUi.Button(_addList, T("feedfromchests_add_one"), new Vector2(cw - bw * 2f - 6f, -ry - 12f), new Vector2(bw, 40f), () => Later(p => AddOneFromMenu(p, r)), !_filling, 17f));
+                    var fill = Squeeze(GameUi.Button(_addList, T("feedfromchests_fill"), new Vector2(cw - bw, -ry - 12f), new Vector2(bw, 40f), () => Later(p => FillFromMenu(p, r)), !_filling, 17f));
                     if (!_filling) GameUi.Label(fill).color = GameUi.Gold;
                     ry += space;
                 }
@@ -438,7 +447,7 @@ namespace FeedFromChests
             float by = h - Pad - 50f;
             Live(GameUi.Label(win, _status, new Vector2(x, -by), new Vector2(ColW - 196f, 50f), 15f, GameUi.Dim, null, TextAlignmentOptions.MidlineLeft), () => _status);
             bool any = !_filling && _rows.Count > 0;
-            var all = GameUi.Button(win, "Fill station", new Vector2(x + ColW - 184f, -by), new Vector2(184f, 48f), () => Later(FillStation), any, 19f);
+            var all = GameUi.Button(win, T("feedfromchests_fill_station"), new Vector2(x + ColW - 184f, -by), new Vector2(184f, 48f), () => Later(FillStation), any, 19f);
             if (any) GameUi.Label(all).color = GameUi.Gold;
         }
 
@@ -478,12 +487,12 @@ namespace FeedFromChests
             // what is in it right now
             if (IsFermenter)
             {
-                Heading("In the barrel");
+                Heading(T("feedfromchests_in_barrel"));
                 Live(Line(_fermentLine, 16f, GameUi.Text, 10f), () => _fermentLine, true);
             }
             else if (IsCooking)
             {
-                Heading("On the station");
+                Heading(T("feedfromchests_on_station"));
                 for (int i = 0; i < _cookLines.Count; i++)
                 {
                     int k = i;
@@ -493,8 +502,8 @@ namespace FeedFromChests
             }
             else
             {
-                Heading("Inside");
-                if (_inside.Queue.Count == 0) Line("Nothing is loaded.", 16f, GameUi.Dim, 4f);
+                Heading(T("feedfromchests_inside"));
+                if (_inside.Queue.Count == 0) Line(T("feedfromchests_nothing_loaded_menu"), 16f, GameUi.Dim, 4f);
                 else
                 {
                     // each ore waiting: its icon and "4 Copper ore", as many on a line as fit
@@ -522,10 +531,10 @@ namespace FeedFromChests
             y += 20f;
 
             // auto-feed itself
-            OnOff("Auto-feed from chests", _auto.On, ToggleAuto);
+            OnOff(T("feedfromchests_auto_toggle"), _auto.On, ToggleAuto);
             Line(_auto.On
-                ? $"Keeps this stocked from chests within {_autoRadius.Value:0} m, by itself. It only uses the items switched on below, plain ones first."
-                : "Turn on to keep this stocked from nearby chests without pressing anything. You choose which items it may use.", 15f, GameUi.Dim, 12f);
+                ? T("feedfromchests_auto_on_help", _autoRadius.Value.ToString("0"))
+                : T("feedfromchests_auto_off_help"), 15f, GameUi.Dim, 12f);
 
             if (_plan.Target) Number(_plan.TargetLabel, () => _auto.Target, true, _plan.TargetHelp, AdjustTarget);
             if (_plan.Reserve) Number(_plan.ReserveLabel, () => _auto.Reserve, false, _plan.ReserveHelp, AdjustReserve);
@@ -533,31 +542,31 @@ namespace FeedFromChests
 
             if (IsFermenter)
             {
-                OnOff("Taps itself when ready", _auto.TakeOff, ToggleTakeOff);
-                Line("When the mead is ready it comes out by itself (and with auto-load on, the next base goes straight in).", 15f, GameUi.Dim, 12f);
+                OnOff(T("feedfromchests_taps_toggle"), _auto.TakeOff, ToggleTakeOff);
+                Line(T("feedfromchests_taps_help"), 15f, GameUi.Dim, 12f);
             }
             if (IsCooking)
             {
-                OnOff("Done food comes off by itself", _auto.TakeOff, ToggleTakeOff);
+                OnOff(T("feedfromchests_takeoff_on"), _auto.TakeOff, ToggleTakeOff);
                 Line(_takeOffCooked.Value
-                    ? "The moment something is done it comes off, so it never burns: into a chest (below), or it slides off the side of the spit towards you."
-                    : "Switched off for every station in the config (Cooking, TakeOffCooked).", 15f, GameUi.Dim, 12f);
+                    ? T("feedfromchests_takeoff_help")
+                    : T("feedfromchests_takeoff_config_off"), 15f, GameUi.Dim, 12f);
             }
-            OnOff(IsCooking ? "Done food goes into chests" : IsFermenter ? "Mead goes into chests" : "What it makes goes into chests", _auto.Output, ToggleOutput);
+            OnOff(IsCooking ? T("feedfromchests_output_food") : IsFermenter ? T("feedfromchests_output_mead") : T("feedfromchests_output_chests"), _auto.Output, ToggleOutput);
             Line(IsFermenter
-                ? "Goes to a chest assigned to that mead or to Potions (K), or one that already holds it. With none, it drops as usual."
+                ? T("feedfromchests_output_mead_help")
                 : IsCooking
-                ? "Goes to the chests assigned to that food or to Food (the chest assign menu, K), nearest first. With none, it slides off the spit."
-                : "Goes to the chests assigned to that item (the chest assign menu, K), nearest first. With none assigned it drops on the ground as usual.", 15f, GameUi.Dim, 12f);
+                ? T("feedfromchests_output_food_help")
+                : T("feedfromchests_output_help"), 15f, GameUi.Dim, 12f);
 
             // the items it may use: one switch each, two to a line
-            Line("Items it may use", 17f, GameUi.Text, 6f);
+            Line(T("feedfromchests_items_may_use"), 17f, GameUi.Text, 6f);
             float iw = (cw - 6f) / 2f;
             for (int i = 0; i < _autoItems.Count; i++)
             {
                 AutoItem item = _autoItems[i];
                 string name = item.Name;
-                GameUi.Toggle(c, item.Display + (item.IsFuel ? " (fuel)" : ""), _auto.Allowed.Contains(name), new Vector2(4f + i % 2 * (iw + 6f), -y - i / 2 * 44f),
+                GameUi.Toggle(c, item.Display + (item.IsFuel ? " " + T("feedfromchests_fuel_tag") : ""), _auto.Allowed.Contains(name), new Vector2(4f + i % 2 * (iw + 6f), -y - i / 2 * 44f),
                     new Vector2(iw, 40f), () => _pending = () => ToggleAutoItem(name), 15f, item.Drop.m_itemData.GetIcon());
             }
             y += (_autoItems.Count + 1) / 2 * 44f + 6f;
@@ -565,7 +574,7 @@ namespace FeedFromChests
             // for each item switched on: how many the chests hold against the limits, so it is clear why it is or is not being fed; and a
             // warning if the fuel is off (the smelter would run out and stop)
             if (FuelSwitchedOff)
-                Line($"{Localization.instance.Localize(_station.Fuel.m_itemData.m_shared.m_name)} is off, so this will run out of fuel and stop.", 15f, GameUi.Warn, 4f);
+                Line(T("feedfromchests_fuel_off_warn", Localization.instance.Localize(_station.Fuel.m_itemData.m_shared.m_name)), 15f, GameUi.Warn, 4f);
             for (int i = 0; i < _limitLines.Count; i++)
             {
                 int k = i;
@@ -577,7 +586,7 @@ namespace FeedFromChests
         private string QueueText(string prefab)
         {
             foreach (KeyValuePair<string, int> q in _inside.Queue)
-                if (q.Key == prefab) return $"{q.Value} {AutoFeed.NameOf(q.Key)}";
+                if (q.Key == prefab) return T("feedfromchests_amount", q.Value, AutoFeed.NameOf(q.Key));
             return "";
         }
 
@@ -585,9 +594,9 @@ namespace FeedFromChests
         private string InsideStatus()
         {
             AutoFeed.Inside i = _inside;
-            string status = $"Loaded {i.QueueSize}/{i.MaxOre}";
-            if (i.MaxFuel > 0) status += $"   ·   Fuel {Mathf.Floor(i.Fuel):0}/{i.MaxFuel}";
-            if (i.Ready > 0) status += $"   ·   Ready to collect: {i.Ready} {i.ReadyName}";
+            string status = T("feedfromchests_loaded", i.QueueSize, i.MaxOre);
+            if (i.MaxFuel > 0) status += "   ·   " + T("feedfromchests_fuel_level", Mathf.Floor(i.Fuel).ToString("0"), i.MaxFuel);
+            if (i.Ready > 0) status += "   ·   " + T("feedfromchests_ready_collect", i.Ready, i.ReadyName);
             return status;
         }
     }

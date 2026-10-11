@@ -3,13 +3,14 @@ using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
 using UnityEngine;
+using static AICompanion.Words;
 
 namespace AICompanion
 {
     /// <summary>One thing it set out to do: make a piece of gear, or upgrade one.</summary>
     internal class Mission
     {
-        public string Key = "", What = "", Status = "active", Why = "";  // Status: active, done, dropped
+        public string Key = "", What = "", Status = "active", Why = "";  // Status: active, done, dropped. What, Why: packed text (Words.P; plain English in older saves)
         public int Day, StartCost, Cost;                                 // the game day it began; how much it lacked then, and now
     }
 
@@ -109,9 +110,9 @@ namespace AICompanion
                     // It has all it needs: it makes it at the station (Upgrades) in a moment. Unless that does not happen for a long while.
                     if (st.MissionReadySince == 0f) st.MissionReadySince = Time.time;
                     if (Time.time - st.MissionReadySince < 600f) return;
-                    Drop(st, list, cur, "it had everything but could not get it made (could it not reach the station?)");
+                    Drop(st, list, cur, P("aicompanion_missions_no_station"));
                 }
-                else Drop(st, list, cur, g == null ? "there is nothing it can do toward it from here any more" : "it cannot be done from here any more (the station or the piece is gone)");
+                else Drop(st, list, cur, g == null ? P("aicompanion_missions_nothing_to_do") : P("aicompanion_missions_gone"));
                 st.MissionReadySince = 0f;
                 cur = null;
             }
@@ -121,8 +122,8 @@ namespace AICompanion
                 cur = new Mission { Key = key, What = g.What, Day = Journal.Day, StartCost = Mathf.Max(1, g.Cost), Cost = g.Cost };
                 list.Add(cur);
                 st.MissionSince = Time.time; st.MissionBest = g.Cost; st.MissionAskSince = 0f;
-                Journal.Add(me, $"Set itself a mission: {(g.Item != null ? "upgrade its " : "make a ")}{g.What}.");
-                Talk.Mention(me, $"New mission: {g.What}.", "mission:" + key, 30f);
+                Journal.Add(me, P(g.Item != null ? "aicompanion_missions_set_upgrade" : "aicompanion_missions_set_make", g.What));
+                Talk.Mention(me, P("aicompanion_missions_new", g.What), "mission:" + key, 30f);
                 Save(me, list);
                 return;
             }
@@ -135,17 +136,17 @@ namespace AICompanion
             bool otherOwn = others.Any(o => o != g && o.Ask.Count == 0 && !Blocked(st, KeyOf(o)));
             if (g.Ask.Count > 0) { if (st.MissionAskSince == 0f) st.MissionAskSince = Time.time; } else st.MissionAskSince = 0f;
             if (st.MissionAskSince > 0f && Time.time - st.MissionAskSince > 1200f && otherOwn)
-                Drop(st, list, cur, $"it waited a long time for {string.Join(" and ", g.Ask)}, which it cannot get itself");
+                Drop(st, list, cur, P("aicompanion_missions_waited", Goals.And(g.Ask)));
             else if (Time.time - st.MissionSince > 1800f && otherOwn)
-                Drop(st, list, cur, "it made no headway for a long while");
+                Drop(st, list, cur, P("aicompanion_missions_no_headway"));
             else Save(me, list);
         }
 
         private static void Finish(BrainState st, List<Mission> list, Mission m)
         {
-            m.Status = "done"; m.Cost = 0; m.Why = $"day {Journal.Day}";
-            Journal.Add(st.Body, $"Mission done: {m.What}.");
-            Talk.Mention(st.Body, $"Done: {m.What}!", "missiondone:" + m.Key, 10f);
+            m.Status = "done"; m.Cost = 0; m.Why = P("aicompanion_missions_day", Journal.Day);
+            Journal.Add(st.Body, P("aicompanion_missions_done_journal", m.What));
+            Talk.Mention(st.Body, P("aicompanion_missions_done_say", m.What), "missiondone:" + m.Key, 10f);
             st.MissionSince = 0f;
             Save(st.Body, list);
         }
@@ -154,8 +155,8 @@ namespace AICompanion
         {
             m.Status = "dropped"; m.Why = why;
             st.DroppedUntil[m.Key] = Time.time + 3600f;
-            Journal.Add(st.Body, $"Gave up on its mission ({m.What}): {why}.");
-            Talk.Mention(st.Body, $"I'm giving up on the {m.What} for now: {why}.", "missiondrop:" + m.Key, 30f);
+            Journal.Add(st.Body, P("aicompanion_missions_gave_up_journal", m.What, why));
+            Talk.Mention(st.Body, P("aicompanion_missions_gave_up_say", m.What, why), "missiondrop:" + m.Key, 30f);
             st.MissionSince = 0f;
             st.NextUpgradeLook = 0f; // (a new one at once)
             Save(st.Body, list);

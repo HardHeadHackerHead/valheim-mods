@@ -3,6 +3,8 @@ using System.Collections.Generic;
 using System.Linq;
 using HarmonyLib;
 using UnityEngine;
+using static AICompanion.Words;
+using static DHack.Shared.Translations;
 
 namespace AICompanion
 {
@@ -22,7 +24,7 @@ namespace AICompanion
             bool night = EnvMan.instance != null && EnvMan.IsNight();
             if (!night || Companion.OrderOf(me) != Order.Gather || !Companion.Zdo(me).GetBool(Keys.HasBed, false) || Food.Meals(me).Count == 0 && !me.GetInventory().GetAllItems().Any(Food.IsFood) && me.GetHealthPercentage() < 0.5f)
             {
-                if (st.Asleep) Wake(st, "it is morning");
+                if (st.Asleep) Wake(st, P("aicompanion_chores_wake_morning"));
                 return false;
             }
             Bed bed = st.SleepBed != null ? st.SleepBed : st.SleepBed = Home.BedOf(me);
@@ -40,7 +42,7 @@ namespace AICompanion
             {
                 float d = Vector3.Distance(at, me.transform.position);
                 moveTo(at, 0.6f, d > 8f);
-                Brain.Status(st, "going to bed");
+                Brain.Status(st, P("aicompanion_chores_status_going_to_bed"));
                 return true;
             }
             stop();
@@ -50,7 +52,7 @@ namespace AICompanion
             Anim(me)?.SetBool("attach_bed", true);
             Rigidbody body = me.GetComponent<Rigidbody>();
             if (body != null) { body.linearVelocity = Vector3.zero; body.isKinematic = true; }
-            st.Remember("went to bed");
+            st.Remember(P("aicompanion_chores_went_to_bed"));
             Hold(st, bed);
             return true;
         }
@@ -63,9 +65,10 @@ namespace AICompanion
             Rigidbody body = me.GetComponent<Rigidbody>();
             if (body != null) { body.position = spot.position; body.rotation = spot.rotation; } // (held: a kinematic body has no velocity to clear)
             Anim(me)?.SetBool("attach_bed", true); // kept up: anything that resets its animator must not stand it up in bed (free when already set)
-            Brain.Status(st, "sleeping");
+            Brain.Status(st, P("aicompanion_chores_status_sleeping"));
         }
 
+        /// <summary>Gets it out of bed. <paramref name="why"/>: packed text (Words.P), shown in its "Recently".</summary>
         public static void Wake(BrainState st, string why)
         {
             Humanoid me = st.Body;
@@ -81,7 +84,7 @@ namespace AICompanion
             else if (st.BedFrom != Vector3.zero && st.SleepBed != null && Vector3.Distance(st.BedFrom, st.SleepBed.GetSpawnPoint()) < 5f) me.transform.position = st.BedFrom;
             else if (st.SleepBed != null) me.transform.position = st.SleepBed.GetSpawnPoint() + st.SleepBed.transform.forward * 1f;
             st.BedFrom = Vector3.zero;
-            st.Remember($"got up ({why})");
+            st.Remember(P("aicompanion_chores_got_up", why));
         }
 
         private static float _nextOffBed;
@@ -102,7 +105,7 @@ namespace AICompanion
             me.transform.position = down.Value;
             Rigidbody body = me.GetComponent<Rigidbody>();
             if (body != null) { body.position = down.Value; body.linearVelocity = Vector3.zero; }
-            st.Remember("hopped down off the bed");
+            st.Remember(P("aicompanion_chores_hopped_off_bed"));
         }
 
         /// <summary>
@@ -141,10 +144,10 @@ namespace AICompanion
         public static void Toggle(BrainState st, Vagon cart)
         {
             Humanoid me = st.Body;
-            if (st.Cart == cart && cart.IsAttached(me)) { cart.Interact(me, false, false); st.Cart = null; Talk.Say(me, "Letting go of the cart."); return; }
+            if (st.Cart == cart && cart.IsAttached(me)) { cart.Interact(me, false, false); st.Cart = null; Talk.Say(me, P("aicompanion_chores_cart_let_go")); return; }
             st.Cart = cart;
             st.CartSince = Time.time;
-            Talk.Say(me, "I'll pull the cart.");
+            Talk.Say(me, P("aicompanion_chores_cart_pull"));
         }
 
         /// <summary>True while it is getting hitched up (it walks to the cart and takes hold). Hitched, the rest of its behaviour goes on.</summary>
@@ -154,16 +157,16 @@ namespace AICompanion
             Vagon cart = st.Cart;
             if (cart == null) return false;
             if (cart.IsAttached(me)) { st.CartSince = Time.time; return false; }
-            if (Time.time - st.CartSince > 30f) { st.Cart = null; Talk.Say(me, "I couldn't get hold of the cart."); return false; }
+            if (Time.time - st.CartSince > 30f) { st.Cart = null; Talk.Say(me, P("aicompanion_chores_cart_failed")); return false; }
             Vector3 hitch = cart.m_attachPoint.position - cart.m_attachOffset;
             float d = Vector3.Distance(hitch, me.transform.position);
-            if (d > 1.2f) { moveTo(hitch, 0.4f, d > 6f); Brain.Status(st, "going to the cart"); return true; }
+            if (d > 1.2f) { moveTo(hitch, 0.4f, d > 6f); Brain.Status(st, P("aicompanion_chores_status_to_cart")); return true; }
             stop();
             me.transform.position = hitch;
             Rigidbody body = me.GetComponent<Rigidbody>();
             if (body != null) { body.position = hitch; body.linearVelocity = Vector3.zero; }
             if (Time.time - st.CartAsked > 1.5f) { st.CartAsked = Time.time; cart.Interact(me, false, false); }
-            Brain.Status(st, "hitching up the cart");
+            Brain.Status(st, P("aicompanion_chores_status_hitching"));
             return true;
         }
     }
@@ -207,7 +210,7 @@ namespace AICompanion
                 if (chest.GetInventory().AddItem(item)) { inv.RemoveItem(item); back += n; }
                 else item.m_customData[Tag] = string.Join(",", f); // no room: it keeps it marked
             }
-            if (back > 0) { Companion.SaveBag(me); st.Remember($"put back {back} food it borrowed from your chest"); }
+            if (back > 0) { Companion.SaveBag(me); st.Remember(P("aicompanion_chores_put_back_food", back)); }
             return back;
         }
     }
@@ -229,19 +232,19 @@ namespace AICompanion
                 {
                     // Only the game running it can change its bag (a change anywhere else is not saved, and the next save there wipes it): a
                     // friend's game takes it over first, its bag loaded fresh. And out of your inventory before into its bag, so never both.
-                    if (!Companion.Write(c, _ => { })) { p.Message(MessageHud.MessageType.Center, $"Someone has {Companion.NameOf(c)}'s gear open"); return false; }
+                    if (!Companion.Write(c, _ => { })) { p.Message(MessageHud.MessageType.Center, T("aicompanion_chores_gear_open", Companion.NameOf(c))); return false; }
                     ItemDrop.ItemData copy = item.Clone();
                     copy.m_stack = 1;
-                    if (!c.GetInventory().CanAddItem(copy)) { p.Message(MessageHud.MessageType.Center, $"{Companion.NameOf(c)} has no room"); return false; }
+                    if (!c.GetInventory().CanAddItem(copy)) { p.Message(MessageHud.MessageType.Center, T("aicompanion_chores_no_room", Companion.NameOf(c))); return false; }
                     if (!p.GetInventory().RemoveItem(item, 1)) return false;
-                    if (!c.GetInventory().AddItem(copy)) { p.GetInventory().AddItem(copy); p.Message(MessageHud.MessageType.Center, $"{Companion.NameOf(c)} has no room"); return false; }
+                    if (!c.GetInventory().AddItem(copy)) { p.GetInventory().AddItem(copy); p.Message(MessageHud.MessageType.Center, T("aicompanion_chores_no_room", Companion.NameOf(c))); return false; }
                     Companion.SaveBag(c);
-                    Talk.Say(c, Food.IsFood(item) ? "Thanks! I'll eat that." : "Thanks, I'll keep that for a bad moment.");
+                    Talk.Say(c, Food.IsFood(item) ? P("aicompanion_chores_thanks_food") : P("aicompanion_chores_thanks_potion"));
                     Idle.Queue(Brain.Get(c), "thumbsup", 0.3f, p);
                     return false;
                 }
                 // Not food or a potion: nothing happens (a hotbar key must never hand over gear by accident; its gear and bag are given from the menu or your inventory beside it).
-                p.Message(MessageHud.MessageType.Center, $"Only food and potions can be given this way. To give {Companion.NameOf(c)} gear, open your inventory next to it (Tab).");
+                p.Message(MessageHud.MessageType.Center, T("aicompanion_chores_only_food", Companion.NameOf(c)));
                 __result = false;
             }
             catch (Exception e) { Plugin.Instance?.Warn("Giving to the companion: " + e.Message); }

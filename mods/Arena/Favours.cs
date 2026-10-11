@@ -2,6 +2,7 @@ using System.Collections.Generic;
 using System.Linq;
 using HarmonyLib;
 using UnityEngine;
+using static DHack.Shared.Translations;
 
 namespace Arena
 {
@@ -45,7 +46,7 @@ namespace Arena
             else if (f >= 55f) { Throw(1); _nextGift = Time.time + Random.Range(45f, 60f); }
             else if (f <= 10f && Contest.Fighting)
             {
-                if (Crowd.Throw("RottenMeat", 1)) Hud.Call("THE CROWD PELTS YOU!", "Rotten meat. Win them back", false);
+                if (Crowd.Throw("RottenMeat", 1)) Hud.Call(T("arena_call_pelt"), T("arena_call_pelt_sub"), false);
                 _nextGift = Time.time + Random.Range(25f, 40f);
             }
             else _nextGift = Time.time + 5f;
@@ -71,19 +72,19 @@ namespace Arena
                 {
                     var best = level >= 2 ? menu.Take(Mathf.Max(1, menu.Count / 2)).ToList() : menu;
                     var meal = best[Random.Range(0, best.Count)];
-                    options.Add((meal.Prefab, 1, "A fresh " + Contest.ItemName(meal.Prefab).ToLowerInvariant()));
+                    options.Add((meal.Prefab, 1, T("arena_gift_fresh", Words.Lower(Contest.ItemName(meal.Prefab)))));
                 }
                 int mead = Mathf.Clamp(land + (level >= 2 ? 1 : 0), 0, HealthMeads.Length - 1);
-                options.Add((HealthMeads[mead], 1, "A healing mead"));
-                options.Add((StaminaMeads[mead], 1, "A stamina mead"));
+                options.Add((HealthMeads[mead], 1, T("arena_gift_healing")));
+                options.Add((StaminaMeads[mead], 1, T("arena_gift_stamina")));
                 if (level >= 3)
                 {
                     string boost = Boosts[Random.Range(0, Boosts.Length)];
                     options.Add((boost, 1, Contest.ItemName(boost)));
                     options.Add((boost, 1, Contest.ItemName(boost)));
-                    if (land == 2) options.Add(("MeadPoisonResist", 1, "A poison resistance mead"));
-                    if (land == 3) options.Add(("MeadFrostResist", 1, "A frost resistance mead"));
-                    if (land == 6) options.Add(("BarleyWine", 1, "A fire resistance barley wine"));
+                    if (land == 2) options.Add(("MeadPoisonResist", 1, T("arena_gift_poison")));
+                    if (land == 3) options.Add(("MeadFrostResist", 1, T("arena_gift_frost")));
+                    if (land == 6) options.Add(("BarleyWine", 1, T("arena_gift_fire")));
                 }
             }
             if (arms && level >= 2)
@@ -91,9 +92,9 @@ namespace Arena
                 if (player.GetInventory().GetAllItems().Any(i => i.m_shared.m_itemType == ItemDrop.ItemData.ItemType.Bow))
                 {
                     string arrows = Kit.ArrowFor(land);
-                    if (arrows != null) options.Add((arrows, 30, "A quiver of arrows"));
+                    if (arrows != null) options.Add((arrows, 30, T("arena_gift_arrows")));
                 }
-                foreach (string bomb in Bombs[land]) options.Add((bomb, 2, "Bombs"));
+                foreach (string bomb in Bombs[land]) options.Add((bomb, 2, T("arena_gift_bombs")));
             }
             // the big one, on the arena's steel: an upgrade for something you wear (then you need not buy it)
             if (Contest.Lent && level >= 2 && _steelLand != land && Random.value < (level >= 3 ? 0.25f : 0.1f) && Armoury.Random(player, Contest.Style, Rules.Fists, Kit.CrowdLoan) is var up && up != null)
@@ -102,16 +103,16 @@ namespace Arena
                 if (Crowd.Throw(u.Prefab, 1, d => { d.m_itemData.m_quality = u.Quality; d.m_itemData.m_durability = d.m_itemData.GetMaxDurability(); d.m_itemData.m_customData[Kit.LoanKey] = Kit.CrowdLoan; }))
                 {
                     _steelLand = land;
-                    Net.Shout("THE CROWD THROWS YOU GEAR!", "An upgrade: " + Contest.ItemName(u.Prefab) + "! Pick it up and put it on", 3f);
+                    Net.Shout(Words.Line("arena_call_gear"), Words.Line("arena_call_gear_sub", Words.Item(u.Prefab)), 3f);
                     Net.Sound("roar");
                     return;
                 }
             }
             options.RemoveAll(o => !Roster.Has(o.Prefab));
-            if (options.Count == 0) options.Add(("Coins", Random.Range(8, 20) * (level + land), "Coins"));
+            if (options.Count == 0) options.Add(("Coins", Random.Range(8, 20) * (level + land), Contest.ItemName("Coins")));
             var gift = options[Random.Range(0, options.Count)];
             if (Crowd.Throw(gift.Prefab, gift.Amount))
-                Hud.Call(level >= 3 ? "THE CROWD SHOWERS YOU!" : "A GIFT FROM THE CROWD!", gift.Call, false);
+                Hud.Call(T(level >= 3 ? "arena_call_shower" : "arena_call_gift"), gift.Call, false);
         }
 
         // ---- the crowd's chants -----------------------------------------------------------------------------------------------------
@@ -121,10 +122,8 @@ namespace Arena
         private static string _emote = "", _call = "";
         private static float _until, _nextDemand;
 
-        private static readonly (string Emote, string Call)[] Calls =
-        {
-            ("flex", "FLEX!"), ("roar", "ROAR!"), ("dance", "DANCE!"), ("bow", "TAKE A BOW!"), ("challenge", "CHALLENGE THEM!"), ("headbang", "HEADBANG!"), ("cheer", "CHEER WITH US!"),
-        };
+        // the emotes the crowd chants for (the chant: arena_chant_<emote>)
+        private static readonly string[] Calls = { "flex", "roar", "dance", "bow", "challenge", "headbang", "cheer" };
 
         private static void TickDemand()
         {
@@ -139,13 +138,14 @@ namespace Arena
             float r = Random.value;
             if (!foes || r < 0.45f)
             {
-                var c = Calls[Random.Range(0, Calls.Length)];
-                _demand = Demand.Emote; _emote = c.Emote; _call = c.Call; _until = Time.time + 10f;
+                string c = Calls[Random.Range(0, Calls.Length)];
+                _demand = Demand.Emote; _emote = c; _call = "arena_chant_" + c; _until = Time.time + 10f;
             }
-            else if (r < 0.7f) { _demand = Demand.Kill; _call = "A KILL! NOW!"; _until = Time.time + 10f; }
-            else if (r < 0.87f) { _demand = Demand.Parry; _call = "A PERFECT PARRY!"; _until = Time.time + 15f; }
-            else { _demand = Demand.Untouched; _call = "NOT A SCRATCH!"; _until = Time.time + 12f; }
-            Net.Shout("THE CROWD CHANTS: " + _call, _demand == Demand.Emote ? "Give them what they want (your emotes, T)" : _demand == Demand.Untouched ? "Don't get hit" : "Quickly!", 3f);
+            else if (r < 0.7f) { _demand = Demand.Kill; _call = "arena_chant_kill"; _until = Time.time + 10f; }
+            else if (r < 0.87f) { _demand = Demand.Parry; _call = "arena_chant_parry"; _until = Time.time + 15f; }
+            else { _demand = Demand.Untouched; _call = "arena_chant_untouched"; _until = Time.time + 12f; }
+            Net.Shout(Words.Line("arena_call_chant", Words.Word(_call)),
+                      Words.Line(_demand == Demand.Emote ? "arena_call_chant_emote" : _demand == Demand.Untouched ? "arena_call_chant_untouched" : "arena_call_chant_quick"), 3f);
             Net.Sound("horn");
         }
 
@@ -154,7 +154,7 @@ namespace Arena
             _demand = Demand.None;
             _nextDemand = Time.time + Random.Range(35f, 55f);
             Crowd.Gain(15f, true);
-            Net.Shout("THE CROWD LOVES IT!", "", 2.5f);
+            Net.Shout(Words.Line("arena_call_loves_it"), "", 2.5f);
             Net.Sound("roar");
             Throw(Crowd.Favour >= 75f ? 3 : 2);
         }
@@ -165,14 +165,14 @@ namespace Arena
             _nextDemand = Time.time + Random.Range(35f, 55f);
             Crowd.Hurt(6f);
             Net.Sound("boo");
-            Hud.Call("The crowd is disappointed", "", false);
+            Hud.Call(T("arena_call_disappointed"), "", false);
         }
 
         /// <summary>The chant on, and how long is left (seconds below zero: none).</summary>
         internal static string DemandLabel(out float seconds)
         {
             seconds = _demand == Demand.None ? -1f : _until - Time.time;
-            return _demand == Demand.None ? "" : "The crowd chants: " + _call;
+            return _demand == Demand.None ? "" : T("arena_timer_chant", T(_call));
         }
 
         internal static void OnKill() { if (_demand == Demand.Kill) Answered(); }
@@ -202,22 +202,22 @@ namespace Arena
                 {
                     _pitied = true;
                     Crowd.Throw(HealthMeads[Mathf.Clamp(Contest.Tier, 0, HealthMeads.Length - 1)], 1);
-                    Hud.Call("THE CROWD TAKES PITY ON YOU", "Just this once", false);
+                    Hud.Call(T("arena_call_pity"), T("arena_call_pity_sub"), false);
                     return;
                 }
                 Crowd.Hurt(4f);
                 Crowd.Mirror("laugh");
-                Hud.Call("The crowd laughs at you", "", false);
+                Hud.Call(T("arena_call_laughs"), "", false);
                 return;
             }
-            if (seen) { Hud.Call("They have seen that one", "Show them something new", false); return; }
+            if (seen) { Hud.Call(T("arena_call_seen"), T("arena_call_seen_sub"), false); return; }
             float gain = 4f;
             string call = null;
-            if (Contest.Fighting && Contest.FoeWithin(player.transform.position, 8f)) { gain *= 2.5f; call = "SHOWBOAT!"; }
-            else if (Time.time - Contest.LastKillTime < 4f && (emote == "bow" || emote == "flex" || emote == "roar" || emote == "challenge")) { gain *= 1.8f; call = "WHAT A SHOW!"; }
+            if (Contest.Fighting && Contest.FoeWithin(player.transform.position, 8f)) { gain *= 2.5f; call = T("arena_call_showboat"); }
+            else if (Time.time - Contest.LastKillTime < 4f && (emote == "bow" || emote == "flex" || emote == "roar" || emote == "challenge")) { gain *= 1.8f; call = T("arena_call_what_a_show"); }
             Crowd.Gain(gain, false);
             Crowd.Mirror(emote);
-            if (call != null) Hud.Call(call, "The crowd eats it up", false);
+            if (call != null) Hud.Call(call, T("arena_call_eats_it_up"), false);
         }
     }
 

@@ -1,0 +1,11 @@
+{
+  "craftfromchests_chat_loaded": "{0} v{1} załadowany | {2}, zasięg {3} m | kompilacja {4}",
+  "craftfromchests_chat_reloaded": "{0} v{1} przeładowany | {2}, zasięg {3} m | kompilacja {4}",
+  "craftfromchests_loaded": "{0} załadowany",
+  "craftfromchests_reloaded": "{0} przeładowany",
+  "craftfromchests_short": "W skrzyniach brakuje już: {0}",
+  "craftfromchests_have": "Masz {0}  (ekwipunek {1}, skrzynie {2})",
+  "craftfromchests_lines": "Linie skrzyń: {0}",
+  "craftfromchests_range": "Zasięg: {0} m",
+  "craftfromchests_server_range": "Tutaj zasięg ustala serwer"
+}

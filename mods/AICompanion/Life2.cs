@@ -3,6 +3,8 @@ using System.Collections.Generic;
 using System.Linq;
 using HarmonyLib;
 using UnityEngine;
+using static DHack.Shared.Translations;
+using static AICompanion.Words;
 
 namespace AICompanion
 {
@@ -35,8 +37,8 @@ namespace AICompanion
                 grave.Interact(user, false, false); // look inside, take what you like; it collects the rest itself when it wakes
                 return false;
             }
-            if (!Containers.Take(grave)) { p.Message(MessageHud.MessageType.Center, "Someone has it open"); return false; }
-            if (!Companion.Write(owner, _ => { })) { p.Message(MessageHud.MessageType.Center, $"Someone is going through {Companion.NameOf(owner)}'s things"); return false; }
+            if (!Containers.Take(grave)) { p.Message(MessageHud.MessageType.Center, T("aicompanion_life2_tomb_open")); return false; }
+            if (!Companion.Write(owner, _ => { })) { p.Message(MessageHud.MessageType.Center, T("aicompanion_life2_things_busy", Companion.NameOf(owner))); return false; }
             Inventory its = grave.GetInventory(), theirs = owner.GetInventory();
             int gave = 0, left = 0;
             foreach (ItemDrop.ItemData item in its.GetAllItems().ToList())
@@ -47,8 +49,8 @@ namespace AICompanion
             if (left == 0) { Companion.Write(owner, cz => cz.Set(HasKey, false)); Net.Recovered(tomb.transform.position); }
             BrainState st = Brain.Get(owner);
             st.NextGear = 0f;
-            st.Remember($"you gave it its things back from its tombstone ({gave})");
-            p.Message(MessageHud.MessageType.Center, left == 0 ? $"Gave {Companion.NameOf(owner)} their things back" : $"Gave {Companion.NameOf(owner)} {gave} things back; {left} did not fit");
+            st.Remember(P("aicompanion_life2_remember_given_back", gave));
+            p.Message(MessageHud.MessageType.Center, left == 0 ? T("aicompanion_life2_gave_back", Companion.NameOf(owner)) : T("aicompanion_life2_gave_back_some", Companion.NameOf(owner), gave, left));
             Plugin.Instance?.Note($"{p.GetPlayerName()} gave {Companion.NameOf(owner)} {gave} item stacks back from its tombstone ({left} left)");
             return false;
         }
@@ -149,7 +151,7 @@ namespace AICompanion
                 if (Has(me) && Vector3.Distance(Pos(me), me.transform.position) < 30f && Find(me) == null)
                 {
                     Companion.Write(me, z => z.Set(HasKey, false)); // its last one is gone (someone emptied it)
-                    st.Remember("its tombstone is gone (someone emptied it)");
+                    st.Remember(P("aicompanion_life2_remember_tomb_gone"));
                 }
                 tomb = Next(st);
                 if (tomb == null) { st.GraveOn = null; st.NextGraveLook = Time.time + 5f; return false; }
@@ -166,10 +168,10 @@ namespace AICompanion
                     st.GraveBest = float.MaxValue;
                     st.GraveOrdered = null; st.GraveOn = null;
                     st.NextGraveLook = Time.time + 30f;
-                    st.Remember("could not find a way to its tombstone; it tries again soon");
+                    st.Remember(P("aicompanion_life2_remember_no_way_tomb"));
                     return false;
                 }
-                if (!stuck) { moveTo(tomb.transform.position, 1.5f, d > 6f); Brain.Status(st, "going to get its things back from its tombstone"); return true; }
+                if (!stuck) { moveTo(tomb.transform.position, 1.5f, d > 6f); Brain.Status(st, P("aicompanion_life2_status_to_tomb")); return true; }
             }
             st.GraveBest = float.MaxValue;
             stop();
@@ -186,10 +188,10 @@ namespace AICompanion
             if (st.GraveOrdered == tomb) st.GraveOrdered = null;
             if (left == 0) { st.GraveOn = null; Net.Recovered(tomb.transform.position); } // (the next one is looked for afresh; its skull off the map)
             st.NextGear = 0f; // wear it again now
-            st.Remember(left == 0 ? $"got all its things back from its tombstone ({took})" : $"took {took} things from its tombstone; {left} did not fit");
+            st.Remember(left == 0 ? P("aicompanion_life2_remember_got_all", took) : P("aicompanion_life2_remember_got_some", took, left));
             Plugin.Instance?.Note($"{Companion.NameOf(me)} took {took} item stacks back from its tombstone ({left} left)");
             int more = left == 0 ? Next(st) is TombStone n && n != tomb ? 1 : 0 : 0;
-            Talk.Mention(me, more > 0 ? "Got those back. There's another one of mine around here." : "Got my things back from my tombstone.");
+            Talk.Mention(me, more > 0 ? P("aicompanion_life2_say_another_tomb") : P("aicompanion_life2_say_got_things"));
             st.NextGraveLook = Time.time + (left > 0 ? 30f : 2f);
             return false;
         }
@@ -251,9 +253,9 @@ namespace AICompanion
                 if (d == null || Vector3.Distance(d.transform.position, at) > 2.2f || !Wants(me, d) || !inv.CanAddItem(d.m_itemData)) continue;
                 if (Carry.Weight(me) + d.m_itemData.GetWeight() > Carry.Max(me)) continue;
                 if (!d.CanPickup(false)) { d.RequestOwn(); continue; }
-                string name = Localization.instance.Localize(d.m_itemData.m_shared.m_name);
+                string token = d.m_itemData.m_shared.m_name;   // (counted by the item's $token: the menu shows it in the player's language)
                 int n = d.m_itemData.m_stack;
-                if (me.Pickup(d.gameObject, false, false)) { st.Gathered[name] = (st.Gathered.TryGetValue(name, out int had) ? had : 0) + n; Activity.Log(me, $"picked up {n} {name} on the way"); }
+                if (me.Pickup(d.gameObject, false, false)) { st.Gathered[token] = (st.Gathered.TryGetValue(token, out int had) ? had : 0) + n; Activity.Log(me, $"picked up {n} {Localization.instance.Localize(token)} on the way"); }
             }
         }
 
@@ -331,11 +333,11 @@ namespace AICompanion
             }
             if (next == null) { st.LootSpots.RemoveAll(s => Time.time - s.At > 20f); return false; } // (many creatures drop their loot from the body a few seconds after they die: it waits for it)
             if (Carry.Weight(me) + next.m_itemData.GetWeight() > Carry.Max(me)) { st.LootDrops.RemoveAll(kv => kv.Key == next); return false; } // too heavy to carry more
-            if (best > 1.2f) { moveTo(next.transform.position, 0.5f, best > 6f); Brain.Status(st, "picking up the loot"); return true; }
+            if (best > 1.2f) { moveTo(next.transform.position, 0.5f, best > 6f); Brain.Status(st, P("aicompanion_life2_status_loot")); return true; }
             if (!next.CanPickup(false)) { next.RequestOwn(); return true; }
-            string name = Localization.instance.Localize(next.m_itemData.m_shared.m_name);
+            string token = next.m_itemData.m_shared.m_name;
             int n = next.m_itemData.m_stack;
-            if (me.Pickup(next.gameObject, false, false)) { st.Remember($"picked up {n} {name}"); st.Gathered[name] = (st.Gathered.TryGetValue(name, out int had) ? had : 0) + n; }
+            if (me.Pickup(next.gameObject, false, false)) { st.Remember(P("aicompanion_life2_remember_picked_up", n, token)); st.Gathered[token] = (st.Gathered.TryGetValue(token, out int had) ? had : 0) + n; }
             st.LootDrops.RemoveAll(kv => kv.Key == next);
             return true;
         }
@@ -406,7 +408,7 @@ namespace AICompanion
                 added++;
             }
             if (added == 0) return;
-            st.Remember($"put {added} {Localization.instance.Localize(name).ToLowerInvariant()} on the fire");
+            st.Remember(P("aicompanion_life2_remember_fuel", added, Words.Low(name)));
         }
     }
 
@@ -504,7 +506,7 @@ namespace AICompanion
                 ItemDrop.ItemData raw = me.GetInventory().GetAllItems().FirstOrDefault(i => Raw(s, i));
                 if (raw != null && s.UseItem(me, raw))
                 {
-                    st.Remember($"put {Localization.instance.Localize(raw.m_shared.m_name)} on to cook");
+                    st.Remember(P("aicompanion_life2_remember_cooking", raw.m_shared.m_name));
                     Skill.Raise(me, s.m_skill != Skills.SkillType.None ? s.m_skill : Skills.SkillType.Cooking, 0.4f);
                     return true;
                 }
@@ -535,7 +537,7 @@ namespace AICompanion
                 {
                     bool was = IsRested(c);
                     Until[c] = Time.time + Duration;
-                    if (!was) Brain.Get(c)?.Remember("rested by the fire");
+                    if (!was) Brain.Get(c)?.Remember(P("aicompanion_life2_remember_rested"));
                 }
             }
             else Sheltered.Remove(c);
@@ -610,7 +612,7 @@ namespace AICompanion
         private static void Postfix(TombStone __instance, ref string __result)
         {
             if ((Companion.Zdo(__instance)?.GetLong(Grave.OfKey, 0L) ?? 0L) != 0L)
-                __result += "\n<size=14>A companion's things: [E] gives them back to it (it also comes for them itself)</size>";
+                __result += "\n<size=14>" + T("aicompanion_life2_tomb_hover") + "</size>";
         }
     }
 

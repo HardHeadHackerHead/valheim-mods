@@ -2,6 +2,7 @@ using System.Collections.Generic;
 using System.Linq;
 using HarmonyLib;
 using UnityEngine;
+using static DHack.Shared.Translations;
 
 namespace CigarSmoking
 {
@@ -28,10 +29,12 @@ namespace CigarSmoking
 
         internal static CraftingStation TableStation;
 
-        internal static SE_Smoking EffectFor(string itemSharedName)
+        /// <summary>The effect of a cigar, found by its prefab (or its name's key: the words change with the language).</summary>
+        internal static SE_Smoking EffectFor(ItemDrop.ItemData item)
         {
+            string prefab = item.m_dropPrefab != null ? item.m_dropPrefab.name : null;
             for (int i = 0; i < Types.All.Length; i++)
-                if (Types.All[i].Display == itemSharedName && i < Effects.Count) return Effects[i];
+                if ((Types.All[i].Prefab == prefab || Types.All[i].Display == item.m_shared.m_name) && i < Effects.Count) return Effects[i];
             return null;
         }
 
@@ -68,7 +71,7 @@ namespace CigarSmoking
             if (player.GetInventory().AddItem(data)) return;
             // it did not all fit: m_stack is now what is left over
             ItemDrop.DropItem(data, Mathf.Max(1, data.m_stack), player.transform.position + player.transform.forward * 0.8f + Vector3.up, Quaternion.identity);
-            player.Message(MessageHud.MessageType.Center, "Your bag is full: the rest is on the ground");
+            player.Message(MessageHud.MessageType.Center, T("cigarsmoking_bag_full"));
         }
 
         /// <summary>Puts items on the ground as one stack (what a broken rack or barrel held).</summary>

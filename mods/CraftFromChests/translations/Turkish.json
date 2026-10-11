@@ -1,0 +1,11 @@
+{
+  "craftfromchests_chat_loaded": "{0} v{1} yüklendi | {2}, yarıçap {3} m | derleme {4}",
+  "craftfromchests_chat_reloaded": "{0} v{1} yeniden yüklendi | {2}, yarıçap {3} m | derleme {4}",
+  "craftfromchests_loaded": "{0} yüklendi",
+  "craftfromchests_reloaded": "{0} yeniden yüklendi",
+  "craftfromchests_short": "Sandıklarda artık yeterli {0} yok",
+  "craftfromchests_have": "Sende {0} var  (envanter {1}, sandıklar {2})",
+  "craftfromchests_lines": "Sandık çizgileri: {0}",
+  "craftfromchests_range": "Menzil: {0} m",
+  "craftfromchests_server_range": "Burada menzili sunucu belirler"
+}

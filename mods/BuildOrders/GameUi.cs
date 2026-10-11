@@ -270,7 +270,9 @@ namespace BuildOrders
             }
             label.text = text;
             label.fontSize = fontSize;
-            label.enableAutoSizing = false;
+            label.enableAutoSizing = true;   // a longer word in another language shrinks a little to fit, rather than end in "…"
+            label.fontSizeMax = fontSize;
+            label.fontSizeMin = Mathf.Max(10f, fontSize * 0.75f);
             label.enableWordWrapping = false;
             label.overflowMode = TextOverflowModes.Ellipsis;
             var lr = (RectTransform)label.transform;
@@ -443,7 +445,13 @@ namespace BuildOrders
         internal static TMP_Text Line(Transform parent, string text, Vector2 pos, float width, float fontSize, Color color, TMP_FontAsset font = null,
                                       TextAlignmentOptions align = TextAlignmentOptions.TopLeft, Vector2? anchor = null)
         {
-            TMP_Text t = Label(parent, text, pos, new Vector2(width, fontSize * 1.35f), fontSize, color, font, align, anchor);
+            // The box is taller than the line: "..." (Ellipsis) hides a line taller than its box, and Chinese, Japanese and Korean come from
+            // the game's fallback font, whose lines are taller than its own fonts'. A box grown for them keeps the text where it was: a centred
+            // line stays centred, a bottom one at the bottom.
+            float line = fontSize * 1.35f, box = fontSize * 1.8f;
+            int v = (int)align & 0xFF00;
+            if (v != 0x0100) pos.y += v == 0x0400 ? box - line : (box - line) / 2f;   // (0x0100 top, 0x0400 bottom, the rest centred)
+            TMP_Text t = Label(parent, text, pos, new Vector2(width, box), fontSize, color, font, align, anchor);
             t.enableWordWrapping = false;
             t.overflowMode = TextOverflowModes.Ellipsis;
             return t;

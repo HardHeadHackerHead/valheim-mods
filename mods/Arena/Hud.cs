@@ -1,6 +1,7 @@
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
+using static DHack.Shared.Translations;
 
 namespace Arena
 {
@@ -28,7 +29,7 @@ namespace Arena
         {
             MessageHud m = MessageHud.instance;
             if (m == null) return;
-            if (!Plugin.Announcer.Value) { Say(text + (string.IsNullOrEmpty(sub) ? "" : ": " + sub)); return; }
+            if (!Plugin.Announcer.Value) { Say(string.IsNullOrEmpty(sub) ? text : T("arena_call_and_sub", text, sub)); return; }
             if (big && Time.time - _lastBig > 2.5f)
             {
                 _lastBig = Time.time;
@@ -38,8 +39,8 @@ namespace Arena
             else m.ShowMessage(MessageHud.MessageType.Center, string.IsNullOrEmpty(sub) ? text : text + "\n<size=70%>" + sub + "</size>");
         }
 
-        /// <summary>As the contest and the network call it: long calls are big ones.</summary>
-        internal static void Shout(string text, string sub = "", float seconds = 4f) => Call(text, sub, seconds >= 3.5f);
+        /// <summary>As the contest and the network call it: long calls are big ones. The call itself in capitals.</summary>
+        internal static void Shout(string text, string sub = "", float seconds = 4f) => Call(Words.Upper(text), sub, seconds >= 3.5f);
 
         /// <summary>The countdown number, in the middle of the screen.</summary>
         internal static void Count(string text) => MessageHud.instance?.ShowMessage(MessageHud.MessageType.Center, "<size=150%>" + text + "</size>");
@@ -109,18 +110,18 @@ namespace Arena
                 _fast?.SetValue(f); _slow?.SetValue(f);
                 Color c = Color.Lerp(new Color(0.75f, 0.25f, 0.15f), new Color(1f, 0.8f, 0.3f), f);
                 _fast?.SetColor(c);
-                if (_name != null) _name.text = "The Crowd: " + Crowd.Mood;
-                string state = Contest.Phase == Contest.PhaseKind.Ready ? "Walk through the gate into the ring"
-                             : Contest.Phase == Contest.PhaseKind.Countdown ? "Get ready"
-                             : Contest.Phase == Contest.PhaseKind.Arming ? "Arm yourself"
-                             : Contest.Phase == Contest.PhaseKind.Victory ? "<color=#ffd27a>VICTORY!</color>"
-                             : Contest.Phase == Contest.PhaseKind.Break ? $"Catch your breath  ·  {key} twice: take your purse and leave"
-                             : Contest.FoesLeft + (Contest.FoesLeft == 1 ? " foe left" : " foes left");
-                string round = Contest.Endless ? "Wave " + Mathf.Max(1, Contest.Round)
-                             : Contest.Kind == Contest.KindOf.Road ? $"{Roster.TierNames[Contest.Tier]}, round {Contest.LandRound} of 3"
-                             : Contest.Rounds > 1 ? $"Round {Mathf.Max(1, Contest.Round)} of {Contest.Rounds}" : "Champion Bout";
-                string clock = Rules.Timed && Contest.Fighting ? $"  ·  <color={(Contest.RoundLeft < 10f ? "#ff7a5a" : "#ffffff")}>{Mathf.CeilToInt(Mathf.Max(0f, Contest.RoundLeft))}s</color>" : "";
-                if (_info != null) _info.text = $"{round}  ·  {state}{clock}  ·  <color=#ffd27a>Purse: {Contest.PurseText()}</color>";
+                if (_name != null) _name.text = T("arena_hud_crowd", Crowd.Mood);
+                string state = Contest.Phase == Contest.PhaseKind.Ready ? T("arena_walk_in")
+                             : Contest.Phase == Contest.PhaseKind.Countdown ? T("arena_get_ready")
+                             : Contest.Phase == Contest.PhaseKind.Arming ? T("arena_arm_yourself")
+                             : Contest.Phase == Contest.PhaseKind.Victory ? "<color=#ffd27a>" + T("arena_victory") + "</color>"
+                             : Contest.Phase == Contest.PhaseKind.Break ? T("arena_hud_break", key)
+                             : T(Contest.FoesLeft == 1 ? "arena_foe_left" : "arena_foes_left", Contest.FoesLeft);
+                string round = Contest.Endless ? T("arena_wave", Mathf.Max(1, Contest.Round))
+                             : Contest.Kind == Contest.KindOf.Road ? T("arena_hud_land_round", Roster.LandName(Contest.Tier), Contest.LandRound)
+                             : Contest.Rounds > 1 ? T("arena_round_of", Mathf.Max(1, Contest.Round), Contest.Rounds) : T("arena_kind_champion");
+                string clock = Rules.Timed && Contest.Fighting ? $"  ·  <color={(Contest.RoundLeft < 10f ? "#ff7a5a" : "#ffffff")}>{T("arena_seconds", Mathf.CeilToInt(Mathf.Max(0f, Contest.RoundLeft)))}</color>" : "";
+                if (_info != null) _info.text = $"{round}  ·  {state}{clock}  ·  <color=#ffd27a>{T("arena_hud_purse", Contest.PurseText())}</color>";
                 if (_clock != null)
                 {
                     string what = Contest.TimerLabel(out float left);
@@ -142,7 +143,7 @@ namespace Arena
                 if (_name != null) _name.text = Duel.OpponentName;
                 if (_clock != null) _clock.text = "";
                 float mine = me != null && me.GetMaxHealth() > 0f ? me.GetHealth() / me.GetMaxHealth() : 0f;
-                if (_info != null) _info.text = $"Duel  ·  you {Mathf.RoundToInt(mine * 100f)}%  ·  the first to a fifth loses" + (Duel.Wager > 0 ? $"  ·  <color=#ffd27a>{Duel.Wager * 2 - Duel.Wager * 2 / 10} coins to the winner</color>" : "");
+                if (_info != null) _info.text = T("arena_hud_duel", Mathf.RoundToInt(mine * 100f)) + (Duel.Wager > 0 ? $"  ·  <color=#ffd27a>{T("arena_hud_duel_pot", Duel.Wager * 2 - Duel.Wager * 2 / 10)}</color>" : "");
             }
         }
 

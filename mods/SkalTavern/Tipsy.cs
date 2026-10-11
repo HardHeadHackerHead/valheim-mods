@@ -1,4 +1,5 @@
 using UnityEngine;
+using static DHack.Shared.Translations;
 
 namespace SkalTavern
 {
@@ -16,6 +17,19 @@ namespace SkalTavern
 
         public static string Stage(float level) => level < 12f ? "Warm" : level < 35f ? "Merry" : level < 60f ? "Tipsy" : level < 85f ? "Drunk" : "Sloshed";
 
+        /// <summary>The stage's name in the player's language (Stage stays English: it is compared, and the skal command reports it).</summary>
+        public static string StageName(float level)
+        {
+            switch (Stage(level))
+            {
+                case "Warm": return T("skaltavern_stage_warm");
+                case "Merry": return T("skaltavern_stage_merry");
+                case "Tipsy": return T("skaltavern_stage_tipsy");
+                case "Drunk": return T("skaltavern_stage_drunk");
+                default: return T("skaltavern_stage_sloshed");
+            }
+        }
+
         public static void Drink(float amount)
         {
             Player player = Player.m_localPlayer;
@@ -27,7 +41,7 @@ namespace SkalTavern
             _peak = Mathf.Max(_peak, Level);
             SEMan sem = player.GetSEMan();
             if (!sem.HaveStatusEffect(Drinks.TipsyHash)) sem.AddStatusEffect(Drinks.TipsyHash, false);
-            if (Stage(before) != Stage(Level)) player.Message(MessageHud.MessageType.TopLeft, Stage(Level) + (Level >= 60f ? "..." : ""));
+            if (Stage(before) != Stage(Level)) player.Message(MessageHud.MessageType.TopLeft, StageName(Level) + (Level >= 60f ? "..." : ""));
         }
 
         /// <summary>Every frame: sobering up, and what too much does.</summary>
@@ -51,7 +65,7 @@ namespace SkalTavern
                 if (Plugin.HangoverOn.Value && _peak >= 55f)
                 {
                     sem.AddStatusEffect(Drinks.HangoverHash, true);
-                    player.Message(MessageHud.MessageType.Center, "You are sober, and your head knows it.");
+                    player.Message(MessageHud.MessageType.Center, T("skaltavern_sober_hangover"));
                 }
                 _peak = 0f;
                 return;
@@ -62,7 +76,7 @@ namespace SkalTavern
                 Puke(player);   // (and down you go)
                 Level = Mathf.Min(Level, 62f);
                 player.Stagger(-player.transform.forward);
-                player.Message(MessageHud.MessageType.Center, "The floor comes up to meet you.");
+                player.Message(MessageHud.MessageType.Center, T("skaltavern_pass_out"));
             }
             else if (Level >= 88f && Time.time >= _nextPuke)
             {
@@ -87,7 +101,7 @@ namespace SkalTavern
             SEMan sem = player.GetSEMan();
             if (!sem.HaveStatusEffect(PukeHash)) sem.AddStatusEffect(PukeHash, true);
             Level = Mathf.Max(0f, Level - 14f);
-            player.Message(MessageHud.MessageType.TopLeft, "You throw up.");
+            player.Message(MessageHud.MessageType.TopLeft, T("skaltavern_puke"));
         }
 
         public static void Clear()
@@ -146,10 +160,10 @@ namespace SkalTavern
             if (level >= 35f) m_mods.Add(new HitData.DamageModPair { m_type = HitData.DamageType.Frost, m_modifier = HitData.DamageModifier.Resistant });
         }
 
-        public override string GetIconText() => Tipsy.Stage(Tipsy.Level);
+        public override string GetIconText() => Tipsy.StageName(Tipsy.Level);
 
         public override string GetTooltipString() =>
-            Tipsy.Stage(Tipsy.Level) + "\nThe more you drink the more the world sways. A little warms you and gives some stamina; too much slows you down and knocks you over.";
+            Tipsy.StageName(Tipsy.Level) + "\n" + T("skaltavern_tipsy_tooltip");
     }
 
     /// <summary>A few minutes of a sore head after a big night.</summary>
@@ -163,6 +177,6 @@ namespace SkalTavern
             base.Setup(character);
         }
 
-        public override string GetTooltipString() => "A sore head. Stamina and health come back slower for a few minutes.";
+        public override string GetTooltipString() => T("skaltavern_hangover_tooltip");
     }
 }

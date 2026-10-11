@@ -1,0 +1,8 @@
+{
+  "partyhud_header": "GROUPE  ·  {0}",
+  "partyhud_distance": "{0} m",
+  "partyhud_fallen": "TOMBÉ",
+  "partyhud_dead": "MORT",
+  "partyhud_no_data": "aucune donnée",
+  "partyhud_fallen_status": "tombé : ses affaires dans une tombe (crâne sur la carte)"
+}

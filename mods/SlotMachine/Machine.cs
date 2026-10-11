@@ -2,6 +2,7 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
+using static DHack.Shared.Translations;
 
 namespace SlotMachine
 {
@@ -55,7 +56,7 @@ namespace SlotMachine
                 if (inv.CanAddItem(prefab, n)) inv.AddItem(prefab, n);
                 else Instantiate(prefab, me.transform.position + Vector3.up, Quaternion.identity).GetComponent<ItemDrop>().SetStack(n);
             }
-            me.Message(MessageHud.MessageType.TopLeft, "Odin's Fortune paid your winnings: " + total + " coins");
+            me.Message(MessageHud.MessageType.TopLeft, T("slotmachine_paid_owed", total));
         }
 
         private void OnDestroy()
@@ -105,7 +106,7 @@ namespace SlotMachine
             if (alt)
             {
                 Plugin.NextBet();
-                player.Message(MessageHud.MessageType.TopLeft, "Bet: " + Plugin.Bet.Value + " coins");
+                player.Message(MessageHud.MessageType.TopLeft, T("slotmachine_bet", Plugin.Bet.Value));
                 return true;
             }
             Pull(player);
@@ -118,12 +119,12 @@ namespace SlotMachine
         {
             ZDO zdo = Zdo;
             if (zdo == null) return;
-            if (Spinning) { player.Message(MessageHud.MessageType.Center, "The reels are still turning"); return; }
+            if (Spinning) { player.Message(MessageHud.MessageType.Center, T("slotmachine_still_turning")); return; }
 
             int bet = Plugin.Bet.Value;
             if (player.GetInventory().CountItems("$item_coins") < bet)
             {
-                player.Message(MessageHud.MessageType.Center, "You need " + bet + " coins to play");
+                player.Message(MessageHud.MessageType.Center, T("slotmachine_need_coins", bet));
                 return;
             }
             player.GetInventory().RemoveItem("$item_coins", bet);
@@ -145,12 +146,13 @@ namespace SlotMachine
 
         public string GetHoverText()
         {
-            string bet = Plugin.Bet.Value.ToString();
             return Localization.instance.Localize(
-                $"Odin's Fortune\n[<color=yellow><b>$KEY_Use</b></color>] Pull the lever ({bet} coins)\n[<color=yellow><b>$KEY_AltPlace</b></color> + <color=yellow><b>$KEY_Use</b></color>] Change the bet\n<size=13>{Payout.Summary()}</size>");
+                T("slotmachine_piece") + "\n[<color=yellow><b>$KEY_Use</b></color>] " + T("slotmachine_pull", Plugin.Bet.Value) +
+                "\n[<color=yellow><b>$KEY_AltPlace</b></color> + <color=yellow><b>$KEY_Use</b></color>] " + T("slotmachine_change_bet") +
+                "\n<size=13>" + Payout.Summary() + "</size>");
         }
 
-        public string GetHoverName() => "Odin's Fortune";
+        public string GetHoverName() => T("slotmachine_piece");
         public float GetHoverOffset() => 0f;
 
         // ---- the show ----
@@ -213,11 +215,11 @@ namespace SlotMachine
             Player me = Player.m_localPlayer;
             if (pay <= 0)
             {
-                if (me != null) me.Message(MessageHud.MessageType.TopLeft, "No luck. Try again?");
+                if (me != null) me.Message(MessageHud.MessageType.TopLeft, T("slotmachine_no_luck"));
                 return;
             }
             bool jackpot = Payout.IsJackpot(cells);
-            if (me != null) me.Message(MessageHud.MessageType.Center, jackpot ? "JACKPOT! " + pay + " coins" : "You win " + pay + " coins!");
+            if (me != null) me.Message(MessageHud.MessageType.Center, T(jackpot ? "slotmachine_jackpot" : "slotmachine_win", pay));
             Effect(true);
             StartCoroutine(Spit(pay));
         }

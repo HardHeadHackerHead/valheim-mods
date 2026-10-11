@@ -136,8 +136,8 @@ namespace Ziplines
             box.size = new Vector3(0.36f, Height, 0.36f);
 
             Piece piece = go.GetComponent<Piece>();
-            piece.m_name = "Zipline Post";
-            piece.m_description = "A tall post with a pulley on top. Build two, press E on one and then on the other to run a rope between them, then press E to ride it.";
+            piece.m_name = "$ziplines_post";
+            piece.m_description = "$ziplines_post_desc";
             try { piece.m_icon = Icon(); }
             catch (System.Exception e) { Plugin.Log.LogWarning("Could not draw the Zipline Post's build-menu picture: " + e.Message); }
             piece.m_category = Piece.PieceCategory.Misc;

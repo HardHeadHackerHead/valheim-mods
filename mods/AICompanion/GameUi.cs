@@ -299,7 +299,10 @@ namespace AICompanion
             }
             label.text = text;
             label.fontSize = fontSize;
-            label.enableAutoSizing = false;
+            // a longer word (German, Russian) shrinks a little to fit rather than being cut short
+            label.enableAutoSizing = true;
+            label.fontSizeMax = fontSize;
+            label.fontSizeMin = Mathf.Max(10f, fontSize * 0.7f);
             label.enableWordWrapping = false;
             label.overflowMode = TextOverflowModes.Ellipsis;
             var lr = (RectTransform)label.transform;

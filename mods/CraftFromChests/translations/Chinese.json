@@ -1,0 +1,11 @@
+{
+  "craftfromchests_chat_loaded": "{0} v{1} 已加载 | {2}，半径 {3} 米 | 构建于 {4}",
+  "craftfromchests_chat_reloaded": "{0} v{1} 已重新加载 | {2}，半径 {3} 米 | 构建于 {4}",
+  "craftfromchests_loaded": "{0} 已加载",
+  "craftfromchests_reloaded": "{0} 已重新加载",
+  "craftfromchests_short": "箱子里的{0}已经不够了",
+  "craftfromchests_have": "你有 {0}（物品栏 {1}，箱子 {2}）",
+  "craftfromchests_lines": "箱子连线：{0}",
+  "craftfromchests_range": "范围：{0}米",
+  "craftfromchests_server_range": "此处的范围由服务器决定"
+}

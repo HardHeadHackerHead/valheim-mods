@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
 using UnityEngine;
+using static DHack.Shared.Translations;
 
 namespace BountyBoard
 {
@@ -96,8 +97,9 @@ namespace BountyBoard
     {
         // The boss you have to have beaten for each tier (tier 0 is always open). More bosses beaten means harder contracts and better pay.
         private static readonly string[] TierKeys = { "", "defeated_eikthyr", "defeated_gdking", "defeated_bonemass", "defeated_dragon", "defeated_goblinking", "defeated_queen" };
-        internal static readonly string[] TierNames = { "Meadows", "Black Forest", "Swamp", "Mountain", "Plains", "Mistlands", "Ashlands" };
-        internal static readonly string[] StarNames = { "", "Standard", "Hard", "Brutal" };
+        // (the game's own biome names, and our words: each player's game puts them in their language)
+        internal static readonly string[] TierNames = { "$biome_meadows", "$biome_blackforest", "$biome_swamp", "$biome_mountain", "$biome_plains", "$biome_mistlands", "$biome_ashlands" };
+        internal static readonly string[] StarNames = { "", "$bountyboard_star_standard", "$bountyboard_star_hard", "$bountyboard_star_brutal" };
 
         private class Hunt { public string Prefab; public int Min, Max, Value; public Hunt(string p, int min, int max, int v) { Prefab = p; Min = min; Max = max; Value = v; } }
         private class Gather { public string Item; public int Min, Max, Value; public Gather(string i, int min, int max, int v) { Item = i; Min = min; Max = max; Value = v; } }
@@ -254,7 +256,7 @@ namespace BountyBoard
         // ---- rank (the whole group's) ----
 
         internal static readonly int[] RankAt = { 0, 5, 15, 30, 60, 100 };
-        internal static readonly string[] RankName = { "Newcomers", "Hunters", "Trackers", "Slayers", "Wardens", "Legends" };
+        internal static readonly string[] RankName = { "$bountyboard_rank_newcomers", "$bountyboard_rank_hunters", "$bountyboard_rank_trackers", "$bountyboard_rank_slayers", "$bountyboard_rank_wardens", "$bountyboard_rank_legends" };
         internal static readonly int[] RankBonus = { 0, 5, 10, 15, 20, 25 };
 
         internal static int Rank(int total)
@@ -275,19 +277,24 @@ namespace BountyBoard
             return drop != null ? drop.m_itemData.m_shared.m_name : itemPrefab;
         }
 
+        /// <summary>A tier's land, in the player's language.</summary>
+        internal static string TierName(int tier) => Localization.instance.Localize(TierNames[Mathf.Clamp(tier, 0, TierNames.Length - 1)]);
+
         internal static string TargetName(Bounty b)
         {
             if (b.Kind == Kind.Gather) return Localization.instance.Localize(ItemName(b.Target));
-            if (b.Kind == Kind.Sweep) return "creatures of the " + TierNames[Mathf.Clamp(int.Parse(b.Target), 0, TierNames.Length - 1)];
+            if (b.Kind == Kind.Sweep) return T("bountyboard_sweep_target", TierName(int.Parse(b.Target)));
             GameObject go = ZNetScene.instance != null ? ZNetScene.instance.GetPrefab(b.Target) : null;
             Character c = go != null ? go.GetComponent<Character>() : null;
             return c != null ? Localization.instance.Localize(c.m_name) : b.Target;
         }
 
+        /// <summary>What a contract asks, made on each player's screen from what it is (kind, count, prefab or tier): never sent as words.</summary>
         internal static string Describe(Bounty b)
         {
-            string verb = b.Kind == Kind.Gather ? "Bring" : b.Kind == Kind.Elite ? "Slay starred" : b.Kind == Kind.Sweep ? "Clear out" : "Hunt";
-            return verb + "  " + b.Count + " × " + TargetName(b);
+            if (b.Kind == Kind.Sweep) return T("bountyboard_sweep", b.Count, TierName(int.Parse(b.Target)));
+            string key = b.Kind == Kind.Gather ? "bountyboard_gather" : b.Kind == Kind.Elite ? "bountyboard_elite" : "bountyboard_hunt";
+            return T(key, b.Count, TargetName(b));
         }
     }
 }

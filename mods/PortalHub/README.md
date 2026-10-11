@@ -7,7 +7,7 @@
 
 **A portal network: press E on a portal and pick where it goes from a list. No more matching portal names to teleport where you want.**
 
-![version: 1.3.0](https://img.shields.io/badge/version-1.3.0-3b6e8f?style=flat-square)  ![multiplayer: everyone + host](https://img.shields.io/badge/multiplayer-everyone%20%2B%20host-7a5c2e?style=flat-square)  ![made with: Claude Code](https://img.shields.io/badge/made%20with-Claude%20Code-c26a3d?style=flat-square)
+![version: 1.4.0](https://img.shields.io/badge/version-1.4.0-3b6e8f?style=flat-square)  ![multiplayer: everyone + host](https://img.shields.io/badge/multiplayer-everyone%20%2B%20host-7a5c2e?style=flat-square)  ![made with: Claude Code](https://img.shields.io/badge/made%20with-Claude%20Code-c26a3d?style=flat-square)
 
 <!-- GITHUB-ONLY -->[Thunderstore](https://thunderstore.io/c/valheim/p/Quads_Lab/Quads_Portal_Hub/)  ·  <!-- END GITHUB-ONLY -->[Source code](https://github.com/HardHeadHackerHead/valheim-mods/tree/main/mods/PortalHub)  ·  [Report a bug](https://github.com/HardHeadHackerHead/valheim-mods/issues/new?template=bug.yml&title=%5BQuad%27s%20Portal%20Hub%5D%20)  ·  [Discord](https://discord.gg/EwTjQxEZPy)
 
@@ -66,6 +66,12 @@ The host keeps the portal list and the links, and checks wards before relinking 
 **The host decides:** whether the menu is on and whether warded portals are hidden. While you play on their world their values replace yours (your file isn't changed); a host without the mod leaves everyone their own.
 <!-- END HAND-WRITTEN: multiplayer -->
 
+## 🌍 Languages
+
+**English, Русский (Russian), Deutsch (German), 简体中文 (Chinese), Português do Brasil (Portuguese), Español (Spanish), Français (French), Polski (Polish), Türkçe (Turkish).** It follows the game's own language setting.
+
+The translations were made with AI, so a few words may be off. To correct one, or to add your language, put a file in `BepInEx/config/translations/com.quad.portalhub/` named after the game's name for the language (`German.json`, `Italian.json`, `Japanese.json`...) with only the lines you change, copied from [English.json](https://github.com/HardHeadHackerHead/valheim-mods/blob/main/mods/PortalHub/translations/English.json) (it wins over the built-in one). Or [tell us](https://github.com/HardHeadHackerHead/valheim-mods/issues/new?template=bug.yml&title=%5BQuad%27s%20Portal%20Hub%5D%20Translation%3A%20) the better words and we'll put them in for everyone.
+
 ## ⚙️ Settings
 
 In `BepInEx/config/com.quad.portalhub.cfg`, made the first time the game runs with the mod. r2modman and Thunderstore Mod Manager edit it under **Config editor**.<!-- GITHUB-ONLY --> With our mod manager: **F7**, then **Mod settings**.<!-- END GITHUB-ONLY -->
@@ -110,8 +116,8 @@ and tested in our own world, with **bobisme** as our tester.
 
 ## 📜 Recent changes
 
+- **1.4.0** Now in your language: English, Russian, German, Chinese (Simplified), Portuguese (Brazil), Spanish, French, Polish and Turkish, following the game's own Language setting. The game's own names are used for its things (items, creatures, lands, stations). The translations were made with AI: to correct a line, or add a language, put a file in BepInEx/config/translations/com.quad.portalhub/ named after the game's name for the language (German.json...) with only the lines you change, copied from translations/English.json on GitHub. The host's two refusals (a portal in someone's ward, a one-way link) reach each player in their own language. Players on a server should update together: a player on an older version sees those two as a key name. The narrow buttons on each portal's row shrink their words to fit.
 - **1.3.0** The portal menu now looks like part of the game: the crafting screen's wood panel, the game's buttons, fonts and scrollbar, and the game's own text boxes for the name and search (E and Tab type in them). Long portal lists scroll smoothly. E or Tab closes the menu as they close a chest, and the E that closes it no longer opens it again. The link lines on the big map are part of the map now: they stay under the portal icons and move and hide with it.
 - **1.2.2** A clearer page: what it does, who needs it in multiplayer, how it gets on with other mods, and where to report a bug. The game itself is unchanged.
-- **1.2.1** A new id, com.quad.portalhub (it was com.dhack.portalhub): your settings move over by themselves the first time it starts, and the old settings file is kept as a backup. Restart the game after this update. If an old copy is still installed beside it, this one stands down and says which file to delete, so the two never both run. The DLL now says it was made with AI, as Thunderstore asks.
 
 <!-- GITHUB-ONLY -->[Every change](CHANGELOG.txt)<!-- END GITHUB-ONLY --><!-- THUNDERSTORE-ONLY: Every change is on the Changelog tab. -->

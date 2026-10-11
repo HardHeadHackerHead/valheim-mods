@@ -7,6 +7,7 @@ using BepInEx.Configuration;
 using HarmonyLib;
 using Newtonsoft.Json.Linq;
 using UnityEngine;
+using static DHack.Shared.Translations;
 
 namespace BuildOrders
 {
@@ -34,7 +35,9 @@ namespace BuildOrders
             public int Next, Done, Skipped, Pass = 1;
             public bool Running, Finished;
             public float Worst;                   // how far the ground was off at the last check
-            public string Status = "";
+            public Said State;                    // what it is doing: Shown on the screen, Status (English) in Claude Tools' answers
+            public string Status => State?.English ?? "";
+            public string Shown => State?.Shown ?? "";
             public System.Action OnDone;
             public Vector3 Anchor;
             public float Yaw, Target;
@@ -149,7 +152,7 @@ namespace BuildOrders
 
         internal void StopLevel(string key)
         {
-            if (_levelJobs.TryGetValue(key, out LevelJob job)) { job.Running = false; job.Interrupted = false; job.Status = "stopped"; }
+            if (_levelJobs.TryGetValue(key, out LevelJob job)) { job.Running = false; job.Interrupted = false; job.State = new Said("buildorders_level_stopped"); }
         }
 
         internal void ResumeLevel(string key)
@@ -172,7 +175,7 @@ namespace BuildOrders
             if (!TerrainAccess())
             {
                 // this game version's ground can't be written: the plan goes down on the ground as it is
-                job.Running = false; job.Finished = true; job.Next = job.Points.Count; job.Status = "the ground can't be levelled in this game version";
+                job.Running = false; job.Finished = true; job.Next = job.Points.Count; job.State = new Said("buildorders_level_unsupported");
                 System.Action placeAnyway = job.OnDone;
                 job.OnDone = null;
                 placeAnyway?.Invoke();
@@ -184,15 +187,15 @@ namespace BuildOrders
             while (Current())
             {
                 Player p = Player.m_localPlayer;
-                if (p == null || p.IsDead()) { job.Running = false; job.Interrupted = true; job.Status = "stopped: carries on when you are back"; yield break; }
+                if (p == null || p.IsDead()) { job.Running = false; job.Interrupted = true; job.State = new Said("buildorders_level_interrupted"); yield break; }
                 Vector3 flat = job.Anchor - p.transform.position; flat.y = 0f;
                 if (flat.magnitude <= 60f && AreaReady(job.Points)) break;
-                job.Status = flat.magnitude <= 60f ? "waiting for everything around it to load (come closer)" : "paused: walk back within 60 m";
+                job.State = new Said(flat.magnitude <= 60f ? "buildorders_level_loading" : "buildorders_level_paused");
                 yield return new WaitForSeconds(1f);
             }
             if (!Current()) yield break;
 
-            job.Status = "levelling";
+            job.State = new Said("buildorders_level_levelling");
             var maps = new List<Heightmap>();
             foreach (Vector3 pt in job.Points) Heightmap.FindHeightmap(pt, LevelBlend + 2f, maps);
             var wardCache = new Dictionary<long, bool>();
@@ -258,7 +261,7 @@ namespace BuildOrders
             GameObject paint = PaintPrefab();
             if (paint != null)
             {
-                job.Status = "painting";
+                job.State = new Said("buildorders_level_painting");
                 int n = 0;
                 TerrainOp stroke = paint.GetComponent<TerrainOp>();
                 int r = Mathf.CeilToInt(stroke != null ? stroke.GetRadius() : 3f);
@@ -291,8 +294,8 @@ namespace BuildOrders
             job.Finished = true;
             job.Running = false;
             Logger.LogInfo($"Levelling '{job.Title}' finished: {changed} ground points set, ground within {job.Worst:0.00} m" + (blocked > 0 ? $", {blocked} points warded, not allowed or by a building" : ""));
-            job.Status = blocked > 0 ? "done (some ground is warded, not allowed or by a building)" : "done";
-            Player.m_localPlayer?.Message(MessageHud.MessageType.TopLeft, $"Ground levelled for \"{job.Title}\"");
+            job.State = new Said(blocked > 0 ? "buildorders_level_done_some" : "buildorders_level_done");
+            Player.m_localPlayer?.Message(MessageHud.MessageType.TopLeft, T("buildorders_ground_levelled", ShownTitle(job.Title)));
             System.Action done = job.OnDone;
             job.OnDone = null;
             done?.Invoke();
@@ -429,16 +432,16 @@ namespace BuildOrders
 
         private string LevelBannerText(Placement pl)
         {
-            if (pl.Strokes == 0) return "The ground here is already level";
-            string limit = pl.Cut > TerrainLimit || pl.Fill > TerrainLimit ? $"   ·   more than {TerrainLimit:0} m: the game cannot move ground that far, find flatter ground" : "";
-            return $"The ground is levelled when you place it: cutting up to {pl.Cut:0.0} m, filling up to {pl.Fill:0.0} m{limit}";
+            if (pl.Strokes == 0) return T("buildorders_level_flat");
+            string limit = pl.Cut > TerrainLimit || pl.Fill > TerrainLimit ? "   ·   " + T("buildorders_level_too_far", TerrainLimit.ToString("0")) : "";
+            return T("buildorders_level_info", pl.Cut.ToString("0.0"), pl.Fill.ToString("0.0")) + limit;
         }
 
         /// <summary>The bar shown while the ground is being levelled (on the HUD: see Panel.cs).</summary>
         private Line[] LevelBannerLines()
         {
             LevelJob job = ActiveLevelJob;
-            return new[] { new Line($"Levelling \"{job.Title}\"   {(job.OnDone != null ? "(the ghosts appear when it is done)   " : "")}{job.Next}/{job.Points.Count}   {job.Status}   ({_blueprintKey.Value}: stop it in Placed plans)", 17f, GameUi.Gold) };
+            return new[] { new Line(T(job.OnDone != null ? "buildorders_level_banner_ghosts" : "buildorders_level_banner", ShownTitle(job.Title), job.Next, job.Points.Count, job.Shown, _blueprintKey.Value), 17f, GameUi.Gold) };
         }
     }
 }

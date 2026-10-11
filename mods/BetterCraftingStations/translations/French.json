@@ -1,0 +1,20 @@
+{
+  "bettercraftingstations_all": "Tout {0}",
+  "bettercraftingstations_chip": "{0} {1}",
+  "bettercraftingstations_can_craft": "Réalisable",
+  "bettercraftingstations_type_weapons": "Armes",
+  "bettercraftingstations_type_armor": "Armures",
+  "bettercraftingstations_type_tools": "Outils",
+  "bettercraftingstations_type_ammo": "Munitions",
+  "bettercraftingstations_type_food": "Nourriture",
+  "bettercraftingstations_type_potions": "Potions",
+  "bettercraftingstations_type_materials": "Matériaux",
+  "bettercraftingstations_type_other": "Autres",
+  "bettercraftingstations_tier_wood": "Bois et silex",
+  "bettercraftingstations_tier_bronze": "Bronze",
+  "bettercraftingstations_tier_iron": "Fer",
+  "bettercraftingstations_tier_silver": "Argent",
+  "bettercraftingstations_tier_blackmetal": "Sombracier",
+  "bettercraftingstations_tier_mistlands": "Terres brumeuses",
+  "bettercraftingstations_tier_ashlands": "Terres de cendres"
+}

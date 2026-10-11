@@ -211,7 +211,10 @@ namespace PortalHub
 
         private void OnMsg(long sender, string text) => Tell(text);
 
-        /// <summary>Host: a message to the player who asked for something.</summary>
+        /// <summary>
+        /// Host: a message to the player who asked for something. It is sent as a translation key ($portalhub_...), and each player's game (MessageHud)
+        /// shows it in their own language. (A host with an older PortalHub sends English sentences: those are shown as they come.)
+        /// </summary>
         private static void TellPlayer(long to, string text)
         {
             if (to == ZDOMan.GetSessionID()) Instance?.Tell(text);
@@ -226,7 +229,7 @@ namespace PortalHub
             ZDO portal = ResolvePortal(f[0]);
             if (portal == null) return;
             long who = CharacterOf(sender);
-            if (!MayUse(portal.GetPosition(), who)) { TellPlayer(sender, "That portal is in someone else's protected area"); return; }
+            if (!MayUse(portal.GetPosition(), who)) { TellPlayer(sender, "$portalhub_msg_warded"); return; }
 
             bool unlink = string.IsNullOrEmpty(f[1]);
             ZDO target = null;
@@ -236,7 +239,7 @@ namespace PortalHub
                 target = ResolvePortal(f[1]);
                 if (target == null || target == portal) return;
                 targetOk = MayUse(target.GetPosition(), who);
-                if (!targetOk && Instance != null && Instance.HideWarded) { TellPlayer(sender, "That portal is in someone else's protected area"); return; }
+                if (!targetOk && Instance != null && Instance.HideWarded) { TellPlayer(sender, "$portalhub_msg_warded"); return; }
             }
 
             SetDest(portal, unlink ? "" : EnsurePid(target));
@@ -244,7 +247,7 @@ namespace PortalHub
             {
                 // linking it back changes the other portal: only where this player may (someone else's base keeps its own portal's link)
                 if (targetOk) SetDest(target, EnsurePid(portal));
-                else TellPlayer(sender, "Linked one way only: the other portal is in someone else's protected area, so it was left as it is");
+                else TellPlayer(sender, "$portalhub_msg_one_way");
             }
             if (unlink) Connect(portal, ZDOID.None); // the game's own name matching takes over again on its next pass
             ApplyDestinations();

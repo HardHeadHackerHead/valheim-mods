@@ -1,0 +1,20 @@
+{
+  "slotmachine_piece": "奥丁的财富",
+  "slotmachine_piece_desc": "一台老虎机。投入货币，拉下拉杆，三个转轮就会转动。三个相同即可中奖，奖金会从托盘里掉出来。",
+  "slotmachine_pull": "拉下拉杆（{0} 货币）",
+  "slotmachine_change_bet": "更改赌注",
+  "slotmachine_bet": "赌注：{0} 货币",
+  "slotmachine_still_turning": "转轮还在转动",
+  "slotmachine_need_coins": "你需要 {0} 货币才能玩",
+  "slotmachine_no_luck": "运气不佳。再来一次？",
+  "slotmachine_win": "你赢了 {0} 货币！",
+  "slotmachine_jackpot": "头奖！{0} 货币",
+  "slotmachine_paid_owed": "奥丁的财富已支付你的奖金：{0} 货币",
+  "slotmachine_pays": "{0}个{1} {2}倍",
+  "slotmachine_coin": "货币",
+  "slotmachine_boar": "鬓猪",
+  "slotmachine_horn": "号角",
+  "slotmachine_axe": "斧头",
+  "slotmachine_raven": "渡鸦",
+  "slotmachine_valknut": "瓦尔克纳特"
+}

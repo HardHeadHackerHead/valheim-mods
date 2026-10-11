@@ -21,7 +21,7 @@ namespace QualityOfLife
         public const string Guid = "com.quad.qualityoflife";
         public const string OldGuid = "com.dhack.qualityoflife"; // (its id until 2026-10: settings move over by themselves, see Shared/Migration.cs)
         public const string Name = "QualityOfLife";
-        public const string Version = "1.12.0";
+        public const string Version = "1.13.0";
 
         private ConfigEntry<bool> _quickSetEnabled, _showBadges, _hammerEnabled, _showMessages;
         private ConfigEntry<KeyboardShortcut> _quickSetKey, _hammerKey;
@@ -32,6 +32,7 @@ namespace QualityOfLife
         private void Awake()
         {
             DHack.Shared.Migration.FromOldGuid(this, OldGuid); // first: before any setting is read
+            DHack.Shared.Translations.Load(this);   // translations/*.json: its words in the player's language
             Instance = this;
             Synced = new DHack.Shared.ServerSettings(Guid, Config, Logger);
             _showMessages = Config.Bind("General", "ShowMessages", true, "Show a short message in the top-left when something happens.");
@@ -89,6 +90,7 @@ namespace QualityOfLife
             if (Instance == this) Instance = null;
             RestoreCamera();
             ClearShipPins();
+            DHack.Shared.Translations.Unload();
             _harmony?.UnpatchSelf();
             Synced?.Dispose();
         }

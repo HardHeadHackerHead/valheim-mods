@@ -2,6 +2,7 @@ using System.Collections.Generic;
 using System.Linq;
 using HarmonyLib;
 using UnityEngine;
+using static DHack.Shared.Translations;
 
 namespace Arena
 {
@@ -23,14 +24,17 @@ namespace Arena
         internal static string TextOf(bool fists, bool noFood, bool hard, bool timed)
         {
             var parts = new List<string>();
-            if (fists) parts.Add("bare fists");
-            if (noFood) parts.Add("no food");
-            if (hard) parts.Add("hard");
-            if (timed) parts.Add("against the clock");
-            return parts.Count == 0 ? "no extra rules" : string.Join(", ", parts);
+            if (fists) parts.Add(T("arena_rule_fists"));
+            if (noFood) parts.Add(T("arena_rule_nofood"));
+            if (hard) parts.Add(T("arena_rule_hard"));
+            if (timed) parts.Add(T("arena_rule_timed"));
+            return parts.Count == 0 ? T("arena_rule_none") : string.Join(", ", parts);
         }
 
         internal static string Text() => TextOf(Fists, NoFood, Hard, Timed);
+
+        /// <summary>The rules for the log.</summary>
+        internal static string Names() => (Fists ? "fists " : "") + (NoFood ? "nofood " : "") + (Hard ? "hard " : "") + (Timed ? "timed" : "");
 
         internal static void Set(bool fists, bool noFood, bool hard, bool timed) { Fists = fists; NoFood = noFood; Hard = hard; Timed = timed; }
 
@@ -70,7 +74,7 @@ namespace Arena
         {
             if (!Contest.Active || !Rules.Fists || __instance != Player.m_localPlayer || !Rules.IsWeapon(item)) return true;
             __result = false;
-            Hud.Say("Bare fists: no weapons in this contest.");
+            Hud.Say(T("arena_say_fists"));
             return false;
         }
     }
@@ -83,7 +87,7 @@ namespace Arena
         {
             if (!Contest.Active || !Rules.NoFood || __instance != Player.m_localPlayer) return true;
             __result = false;
-            Hud.Say("No food or drink in this contest.");
+            Hud.Say(T("arena_say_nofood"));
             return false;
         }
     }

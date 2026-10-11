@@ -15,7 +15,7 @@ namespace SkalTavern
     {
         internal class Def
         {
-            public string Prefab, Display, Flavour;
+            public string Prefab, Display, Flavour;   // the words: "$keys" in translations/*.json
             public float Amount;          // how much drunker one makes you (0 to 100 is sober to very drunk)
             public Color Liquid;
             public int Makes;
@@ -25,17 +25,17 @@ namespace SkalTavern
         /// <summary>The drinks, weakest first. What they cost grows with how far into the game you are.</summary>
         internal static readonly Def[] All =
         {
-            new Def { Prefab = "dh_drink_ale", Display = "Tankard of Ale", Amount = 14f, Liquid = new Color(0.89f, 0.74f, 0.30f), Makes = 2,
-                      Flavour = "Cold, golden and honest. A tankard warms you and puts a spring in your step.",
+            new Def { Prefab = "dh_drink_ale", Display = "$skaltavern_ale", Amount = 14f, Liquid = new Color(0.89f, 0.74f, 0.30f), Makes = 2,
+                      Flavour = "$skaltavern_ale_desc",
                       Cost = new[] { ("Barley", 3), ("Honey", 1) } },
-            new Def { Prefab = "dh_drink_honeymead", Display = "Honey Mead", Amount = 22f, Liquid = new Color(0.95f, 0.58f, 0.10f), Makes = 2,
-                      Flavour = "Sweet, strong and dangerous. The skalds swear it carries songs.",
+            new Def { Prefab = "dh_drink_honeymead", Display = "$skaltavern_honeymead", Amount = 22f, Liquid = new Color(0.95f, 0.58f, 0.10f), Makes = 2,
+                      Flavour = "$skaltavern_honeymead_desc",
                       Cost = new[] { ("Honey", 4), ("Raspberry", 2) } },
-            new Def { Prefab = "dh_drink_wine", Display = "Blueberry Wine", Amount = 20f, Liquid = new Color(0.40f, 0.10f, 0.34f), Makes = 2,
-                      Flavour = "Dark and sharp, pressed from the berries of the Black Forest. Sneaks up on you.",
+            new Def { Prefab = "dh_drink_wine", Display = "$skaltavern_wine", Amount = 20f, Liquid = new Color(0.40f, 0.10f, 0.34f), Makes = 2,
+                      Flavour = "$skaltavern_wine_desc",
                       Cost = new[] { ("Blueberries", 4), ("Honey", 1) } },
-            new Def { Prefab = "dh_drink_skaldmead", Display = "Skaldic Mead", Amount = 34f, Liquid = new Color(0.97f, 0.80f, 0.20f), Makes = 2,
-                      Flavour = "Cloudberry mead brewed for feast nights on the plains. Two of these and the longhouse starts to spin.",
+            new Def { Prefab = "dh_drink_skaldmead", Display = "$skaltavern_skaldmead", Amount = 34f, Liquid = new Color(0.97f, 0.80f, 0.20f), Makes = 2,
+                      Flavour = "$skaltavern_skaldmead_desc",
                       Cost = new[] { ("Honey", 5), ("Cloudberry", 3) } },
         };
 
@@ -185,11 +185,11 @@ namespace SkalTavern
             }
 
             var tipsy = ScriptableObject.CreateInstance<SE_Tipsy>();
-            tipsy.name = "SE_SkalTipsy"; tipsy.m_name = "Tipsy"; tipsy.m_icon = Tint(_mug, new Color(0.9f, 0.6f, 0.2f));
+            tipsy.name = "SE_SkalTipsy"; tipsy.m_name = "$skaltavern_tipsy"; tipsy.m_icon = Tint(_mug, new Color(0.9f, 0.6f, 0.2f));
             var hangover = ScriptableObject.CreateInstance<SE_Hangover>();
-            hangover.name = "SE_SkalHangover"; hangover.m_name = "Hangover"; hangover.m_icon = Tint(_mug, new Color(0.45f, 0.5f, 0.4f));
+            hangover.name = "SE_SkalHangover"; hangover.m_name = "$skaltavern_hangover"; hangover.m_icon = Tint(_mug, new Color(0.45f, 0.5f, 0.4f));
             var skal = ScriptableObject.CreateInstance<SE_Skal>();
-            skal.name = "SE_SkalBuff"; skal.m_name = "Skal!"; skal.m_icon = Tint(_mug, new Color(1f, 0.85f, 0.3f));
+            skal.name = "SE_SkalBuff"; skal.m_name = "$skaltavern_skal"; skal.m_icon = Tint(_mug, new Color(1f, 0.85f, 0.3f));
             Effects.Add(tipsy); Effects.Add(hangover); Effects.Add(skal);
             return true;
         }
@@ -212,7 +212,7 @@ namespace SkalTavern
             ItemDrop drop = go.GetComponent<ItemDrop>();
             ItemDrop.ItemData.SharedData s = drop.m_itemData.m_shared;
             s.m_name = d.Display;
-            s.m_description = d.Flavour + "\n\nGetting drunk: a little warms you and gives some stamina; more makes the world sway; too much and you fall.";
+            s.m_description = d.Flavour + "\n\n$skaltavern_drink_note";   // (the game translates each $key in it)
             s.m_itemType = ItemDrop.ItemData.ItemType.Consumable;
             s.m_icons = new[] { icon };
             s.m_maxStackSize = 10;

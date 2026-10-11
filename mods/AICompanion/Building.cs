@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
 using UnityEngine;
+using static AICompanion.Words;
 
 namespace AICompanion
 {
@@ -89,8 +90,9 @@ namespace AICompanion
         private static Dictionary<string, int> Missing(Dictionary<string, int> have, Dictionary<string, int> needs) =>
             needs.Where(kv => !have.TryGetValue(kv.Key, out int n) || n < kv.Value).ToDictionary(kv => kv.Key, kv => kv.Value - (have.TryGetValue(kv.Key, out int n2) ? n2 : 0));
 
+        /// <summary>"4 wood, 2 stone" (packed text: each player's game names the items).</summary>
         private static string Say(Dictionary<string, int> items) =>
-            string.Join(", ", items.Select(kv => $"{kv.Value} {Localization.instance.Localize(kv.Key).ToLowerInvariant()}"));
+            string.Join(", ", items.Select(kv => P("aicompanion_building_amount", kv.Value, Low(kv.Key))));
 
         /// <summary>The chests it may take materials from: its own, then yours near home (the duty is your ask to build, so yours are open to it).</summary>
         private static readonly Dictionary<long, KeyValuePair<float, List<Container>>> SourceCache = new Dictionary<long, KeyValuePair<float, List<Container>>>();
@@ -126,7 +128,7 @@ namespace AICompanion
             Humanoid me = st.Body;
             Goal prevGoal = st.PlanGoal;   // (worked out every twenty seconds, not every look)
             st.PlanGoal = null;
-            if (!Available) { st.BuildNote = st.WorkNote = "BuildOrders is not installed"; return null; }
+            if (!Available) { st.BuildNote = st.WorkNote = P("aicompanion_building_not_installed"); return null; }
             Vector3 center = Work.Center(me);
             if (Time.time >= st.NextBuildLook)
             {
@@ -136,7 +138,7 @@ namespace AICompanion
             List<Cand> cands = st.BuildList.Where(c => !(st.BuildSkip.TryGetValue(c.Id, out float until) && until > Time.time)).ToList();
             if (cands.Count == 0)
             {
-                st.BuildNote = st.WorkNote = Pending(me) > 0 ? Explain(st) : "no plans near home";
+                st.BuildNote = st.WorkNote = Pending(me) > 0 ? Explain(st) : P("aicompanion_building_no_plans");
                 return null;
             }
             st.BuildKeep.Clear();
@@ -147,8 +149,8 @@ namespace AICompanion
                 Mending.MakeHammer(st);
                 if (Mending.Hammer(me) == null)
                 {
-                    Talk.Tell(me, "I need a hammer to build your plans. Give me one, or the wood and stone to make one.", "nohammer2", 30f);
-                    st.BuildNote = st.WorkNote = "needs a hammer to build";
+                    Talk.Tell(me, P("aicompanion_building_need_hammer"), "nohammer2", 30f);
+                    st.BuildNote = st.WorkNote = P("aicompanion_building_needs_hammer");
                     return null;
                 }
             }
@@ -197,17 +199,17 @@ namespace AICompanion
                 else { st.PlanGoal = Short(st, missing, sources); st.PlanGoalAt = Time.time; }
                 if (st.PlanGoal != null && st.PlanGoal.Raw.Count > 0)
                 {
-                    st.BuildNote = st.WorkNote = $"getting {st.PlanGoal.RawText()} for your plan";
-                    Talk.Mention(me, $"Your plan needs {Say(missing)} more than I have. I'll go and get {st.PlanGoal.RawText()}.", "planget", 600f);
+                    st.BuildNote = st.WorkNote = P("aicompanion_building_getting", st.PlanGoal.RawText());
+                    Talk.Mention(me, P("aicompanion_building_going_to_get", Say(missing), st.PlanGoal.RawText()), "planget", 600f);
                 }
-                else st.BuildNote = st.WorkNote = missing.Count > 0 ? $"your plan needs {Say(missing)} more" : "nothing to build with";
+                else st.BuildNote = st.WorkNote = missing.Count > 0 ? P("aicompanion_building_needs_more", Say(missing)) : P("aicompanion_building_nothing");
                 if (st.PlanGoal != null && st.PlanGoal.Ask.Count > 0)
-                    Talk.Tell(me, $"For your plan I need {string.Join(" and ", st.PlanGoal.Ask)}, and I can't get that myself. Put some in a chest near home, or give it to me.", "planask", 600f);
+                    Talk.Tell(me, P("aicompanion_building_ask", Goals.And(st.PlanGoal.Ask)), "planask", 600f);
                 return null;
             }
             Container chest = sources.Where(c => c.GetInventory().GetAllItems().Any(i => want.ContainsKey(i.m_shared.m_name)) && !Skipped(st, c))
                                      .OrderBy(c => Vector3.Distance(c.transform.position, me.transform.position)).FirstOrDefault(c => Brain.CanReach(me, c.transform.position));
-            if (chest == null) { st.BuildNote = st.WorkNote = "the materials for its plans are in chests it cannot get to"; return null; }
+            if (chest == null) { st.BuildNote = st.WorkNote = P("aicompanion_building_unreachable"); return null; }
             st.BuildWant = want;
             return Work.New(Work.Kind.Supply, chest, Job.None);
         }
@@ -218,7 +220,7 @@ namespace AICompanion
             if (missing.Count == 0) return null;
             Humanoid me = st.Body;
             var items = missing.Select(kv => new KeyValuePair<ItemDrop, int>(ItemByName(kv.Key)?.GetComponent<ItemDrop>(), kv.Value));
-            return Goals.ForNeeds(me, Work.Center(me), Work.RadiusOf(me), st, items, sources, "plan");
+            return Goals.ForNeeds(me, Work.Center(me), Work.RadiusOf(me), st, items, sources, P("aicompanion_building_plan_what"));
         }
 
         /// <summary>
@@ -249,16 +251,16 @@ namespace AICompanion
                 {
                     string[] f = line.Split('|');
                     if (f.Length < 3) continue;
-                    if (f[0] == "unlocked") parts.Add($"{f[1]} need pieces you have not unlocked yet ({f[2]})");
-                    else if (f[0] == "station") parts.Add($"{f[1]} need a {f[2]} built near them");
-                    else if (f[0] == "protected") parts.Add($"{f[1]} are on protected ground");
+                    if (f[0] == "unlocked") parts.Add(P("aicompanion_building_blocked_unlocked", f[1], f[2]));
+                    else if (f[0] == "station") parts.Add(P("aicompanion_building_blocked_station", f[1], f[2]));
+                    else if (f[0] == "protected") parts.Add(P("aicompanion_building_blocked_protected", f[1]));
                 }
             }
             catch (Exception) { }
             string why = parts.Count > 0 ? string.Join("; ", parts)
-                       : "none of it will stand yet (what holds it up cannot be built: the ground under it may need levelling first)";
-            Talk.Tell(me, $"I can't build your plan yet: {why}.", "planblock", 600f);
-            return "your plan is stuck: " + why;
+                       : P("aicompanion_building_blocked_ground");
+            Talk.Tell(me, P("aicompanion_building_cant_build", why), "planblock", 600f);
+            return P("aicompanion_building_stuck", why);
         }
 
         private static bool Skipped(BrainState st, Component c) => st.Skipped.TryGetValue(c.gameObject.GetInstanceID(), out float until) && Time.time < until;
@@ -312,7 +314,7 @@ namespace AICompanion
             if (took.Count == 0) { st.Skipped[chest.gameObject.GetInstanceID()] = Time.time + 300f; return; }
             Companion.SaveBag(me);
             st.NextBuildLook = 0f;
-            st.Remember($"took {Say(took)} for building from {(Home.IdOn(chest) == 0L ? "your" : "its")} chest");
+            st.Remember(P(Home.IdOn(chest) == 0L ? "aicompanion_building_took_yours" : "aicompanion_building_took_its", Say(took)));
         }
 
         /// <summary>It was close enough with the materials in its bag: the piece goes up, and it pays for it. False when it did not.</summary>
@@ -324,18 +326,18 @@ namespace AICompanion
             if (needs == null || !Covers(bag, needs)) return false; // (the materials went somewhere else on the way)
             bool ok;
             try { ok = PlaceFn(t.BuildId); } catch (Exception e) { Plugin.Instance?.Warn("Building a plan piece: " + e.Message); ok = false; }
-            if (!ok) { st.BuildSkip[t.BuildId] = Time.time + 600f; st.Remember($"could not build {Localization.instance.Localize(PieceOf(t.BuildPrefab)?.m_name ?? t.BuildPrefab)}: left for later"); return false; }
+            if (!ok) { st.BuildSkip[t.BuildId] = Time.time + 600f; st.Remember(P("aicompanion_building_could_not", PieceOf(t.BuildPrefab)?.m_name ?? t.BuildPrefab)); return false; }
             foreach (var kv in needs) me.GetInventory().RemoveItem(kv.Key, kv.Value);
             Companion.SaveBag(me);
             int n = Journal.Count(me, "built");
             st.Built++;
             st.BuildList.RemoveAll(c => c.Id == t.BuildId);
             st.NextBuildLook = Time.time + 0.3f;
-            string name = Localization.instance.Localize(PieceOf(t.BuildPrefab)?.m_name ?? t.BuildPrefab).ToLowerInvariant();
-            if (st.Built == 1) Talk.Mention(me, "Started on your plan.", "buildstart", 600f);
-            if (n % 10 == 1 || Pending(me) <= 1) st.Remember($"built {name} (it has put up {n} piece{(n == 1 ? "" : "s")} of your plans)");
+            string name = Low(PieceOf(t.BuildPrefab)?.m_name ?? t.BuildPrefab);
+            if (st.Built == 1) Talk.Mention(me, P("aicompanion_building_started"), "buildstart", 600f);
+            if (n % 10 == 1 || Pending(me) <= 1) st.Remember(P(n == 1 ? "aicompanion_building_built_one" : "aicompanion_building_built_many", name, n));
             Counted.Remove(Companion.IdOf(me));
-            if (Pending(me) <= 0) Talk.Mention(me, "Your plan is finished!", "builddone", 60f);
+            if (Pending(me) <= 0) Talk.Mention(me, P("aicompanion_building_finished"), "builddone", 60f);
             return true;
         }
 
@@ -350,14 +352,14 @@ namespace AICompanion
         /// <summary>
         /// Catching up (CatchUp): in the time it had, pieces of your plans put up one after another (a piece takes about thirty seconds of its
         /// time, with the walk), paid from its bag and the chests, as it would build them, until its time is down to "floor" (what is kept for its
-        /// other duties). How many it built, and what it ran short of.
+        /// other duties). How many it built, and what it ran short of (packed text).
         /// </summary>
         public static int CatchUp(BrainState st, ref float budget, float floor, out string shortOf)
         {
             Humanoid me = st.Body;
             shortOf = null;
             if (!Available || Pending(me) == 0) return 0;
-            if (Mending.Hammer(me) == null) { Mending.MakeHammer(st); if (Mending.Hammer(me) == null) { shortOf = "a hammer"; return 0; } }
+            if (Mending.Hammer(me) == null) { Mending.MakeHammer(st); if (Mending.Hammer(me) == null) { shortOf = P("aicompanion_building_a_hammer"); return 0; } }
             Vector3 center = Work.Center(me);
             int built = 0;
             // A batch at a time, in the order BuildOrders gives (each piece after what holds it up, as Build all does): asking again after every

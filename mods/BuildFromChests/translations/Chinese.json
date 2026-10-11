@@ -1,0 +1,5 @@
+{
+  "buildfromchests_chat_reloaded": "{0} v{1} 已重新加载 | {2}，半径 {3} 米",
+  "buildfromchests_short": "箱子里的{0}已经不够了",
+  "buildfromchests_have": "你有 {0}（物品栏 {1}，箱子 {2}）"
+}

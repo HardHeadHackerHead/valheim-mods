@@ -21,7 +21,7 @@ namespace SlotMachine
         public const string Guid = "com.quad.slotmachine";
         public const string OldGuid = "com.dhack.slotmachine"; // (its id until 2026-10: settings move over by themselves, see Shared/Migration.cs)
         public const string Name = "SlotMachine";
-        public const string Version = "1.1.2";
+        public const string Version = "1.2.0";
         public const string PiecePrefab = "piece_slotmachine";
 
         internal static ConfigEntry<int> Bet, PayoutPercent;
@@ -34,6 +34,7 @@ namespace SlotMachine
         private void Awake()
         {
             DHack.Shared.Migration.FromOldGuid(this, OldGuid); // first: before any setting is read
+            DHack.Shared.Translations.Load(this);   // translations/*.json: its words in the player's language
             Synced = new DHack.Shared.ServerSettings(Guid, Config, Logger);
             Bet = Config.Bind("Play", "Bet", 10, new ConfigDescription("Coins per pull (change it at the machine with the alternate-use key + use).", new AcceptableValueList<int>(Bets)));
             PayoutPercent = Synced.Add(Config.Bind("Play", "PayoutPercent", 100, new ConfigDescription("Scales every prize (100 = standard, which returns about 93% over time; 50 = half the prizes; above 107 the machine pays out more than goes in). In multiplayer the server's value applies.", new AcceptableValueRange<int>(10, 300))));
@@ -51,6 +52,7 @@ namespace SlotMachine
             _harmony?.UnpatchSelf();
             Unregister();
             Synced?.Dispose();
+            DHack.Shared.Translations.Unload();
         }
 
         internal static void NextBet()
@@ -102,8 +104,8 @@ namespace SlotMachine
             ModelBuilder.Build(go.transform, ModelData.Parts, go.layer);
 
             Piece piece = go.GetComponent<Piece>();
-            piece.m_name = "Odin's Fortune";
-            piece.m_description = "A slot machine. Put coins in, pull the lever, and three reels spin. Three alike pay out, and the winnings come out of the tray.";
+            piece.m_name = "$slotmachine_piece";
+            piece.m_description = "$slotmachine_piece_desc";
             piece.m_category = Piece.PieceCategory.Misc;
             piece.m_craftingStation = workbench;
             piece.m_resources = new[] { Req("FineWood", 15), Req("Bronze", 8), Req("Stone", 10) }.Where(r => r.m_resItem != null).ToArray();

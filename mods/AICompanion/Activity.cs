@@ -24,6 +24,7 @@ namespace AICompanion
         public static void Log(Humanoid c, string text)
         {
             if (c == null || string.IsNullOrEmpty(text)) return;
+            text = Words.English(text);   // (its words in English here, whatever the player's language)
             long id = Companion.IdOf(c);
             string line = $"{DateTime.Now:HH:mm:ss} {text}";
             if (!Lines.TryGetValue(id, out List<string> list)) Lines[id] = list = new List<string>();

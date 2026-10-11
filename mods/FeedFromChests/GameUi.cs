@@ -298,7 +298,7 @@ namespace FeedFromChests
         /// </summary>
         internal static Button Toggle(Transform parent, string text, bool on, Vector2 pos, Vector2 size, Action click, float fontSize = 17f, Sprite icon = null)
         {
-            Button b = Button(parent, text + (on ? ": On" : ": Off"), pos, size, click, true, fontSize);
+            Button b = Button(parent, text + ": " + Localization.instance.Localize(on ? "$hud_on" : "$hud_off"), pos, size, click, true, fontSize);
             TMP_Text label = Label(b);
             label.color = on ? Gold : Text;
             if (icon != null)

@@ -12,14 +12,13 @@ namespace CigarSmoking
 
             foreach (Strain s in Strains.All)
             {
-                string name = s.Display + " Tobacco";
-                MakeItem(source, s.Seeds, name + " Seeds", "Seeds of the " + s.Display.ToLower() + " tobacco plant. Sow them in cultivated soil with the cultivator.",
+                MakeItem(source, s.Seeds, s.Key("seeds"), s.Key("seeds_desc"),
                          ItemDrop.ItemData.ItemType.Material, 50, 0.05f, 3, Icons.Get("seeds_" + s.Id), "seeds_" + s.Id);
-                MakeItem(source, s.Fresh, name + " Leaf", "A big green " + s.Display.ToLower() + " leaf, fresh from the plant and bitter. Hang it on a drying rack.",
+                MakeItem(source, s.Fresh, s.Key("leaf"), s.Key("leaf_desc"),
                          ItemDrop.ItemData.ItemType.Material, 50, 0.1f, 4, Icons.Get("leaf_" + s.Id + "_fresh"), "leaf_" + s.Id + "_fresh");
-                MakeItem(source, s.Dried, "Dried " + s.Display + " Leaf", "A " + s.Display.ToLower() + " leaf dried on the rack until it is golden and brittle. Pack it in a curing barrel to age it, or roll it as it is.",
+                MakeItem(source, s.Dried, s.Key("dried"), s.Key("dried_desc"),
                          ItemDrop.ItemData.ItemType.Material, 50, 0.1f, 8, Icons.Get("leaf_" + s.Id + "_dried"), "leaf_" + s.Id + "_dried");
-                MakeItem(source, s.Aged, "Aged " + s.Display + " Leaf", "A " + s.Display.ToLower() + " leaf cured in the barrel until it is dark, oily and smooth. The wrapper and filler of a fine cigar.",
+                MakeItem(source, s.Aged, s.Key("aged"), s.Key("aged_desc"),
                          ItemDrop.ItemData.ItemType.Material, 50, 0.1f, 14, Icons.Get("leaf_" + s.Id + "_aged"), "leaf_" + s.Id + "_aged");
             }
 

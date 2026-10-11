@@ -51,11 +51,11 @@ namespace BuildOrders
         /// </summary>
         public static List<string> Free(string owner, IEnumerable<KeyValuePair<KeyCode, string>> keys)
         {
-            var told = new List<string>();
+            var told = new List<Said>();
             ZInput input = ZInput.instance;
-            if (input == null) return told;
+            if (input == null) return new List<string>();
             var buttons = AccessTools.Field(typeof(ZInput), "m_buttons")?.GetValue(input) as Dictionary<string, ZInput.ButtonDef>;
-            if (buttons == null) return told;
+            if (buttons == null) return new List<string>();
 
             string record = "DHack.FreedGameKeys." + owner;
             var done = new HashSet<string>(PlayerPrefs.GetString(record, "").Split(new[] { '|' }, StringSplitOptions.RemoveEmptyEntries));
@@ -78,7 +78,7 @@ namespace BuildOrders
                     def.Rebind("");
                     done.Add(mark);
                     changed = true;
-                    told.Add($"{owner}: {kv.Key} is used for {kv.Value}, so the game's \"{Nice(def.Name)}\" key was unbound (bind it to another key in Settings, Controls)");
+                    told.Add(new Said("buildorders_key_unbound", owner, kv.Key, kv.Value, Nice(def.Name)));
                 }
             }
             if (changed)
@@ -86,9 +86,9 @@ namespace BuildOrders
                 input.Save();
                 PlayerPrefs.SetString(record, string.Join("|", done.ToArray()));
                 PlayerPrefs.Save();
-                foreach (string line in told) Debug.Log("[" + owner + "] " + line);
+                foreach (Said line in told) Debug.Log("[" + owner + "] " + line.English);
             }
-            return told;
+            return told.Select(line => line.Shown).ToList();
         }
 
         /// <summary>
@@ -97,11 +97,11 @@ namespace BuildOrders
         /// </summary>
         public static List<string> GiveBack(string owner, IEnumerable<KeyCode> inUse)
         {
-            var told = new List<string>();
+            var told = new List<Said>();
             ZInput input = ZInput.instance;
-            if (input == null) return told;
+            if (input == null) return new List<string>();
             var buttons = AccessTools.Field(typeof(ZInput), "m_buttons")?.GetValue(input) as Dictionary<string, ZInput.ButtonDef>;
-            if (buttons == null) return told;
+            if (buttons == null) return new List<string>();
             string record = "DHack.FreedGameKeys." + owner;
             var done = new HashSet<string>(PlayerPrefs.GetString(record, "").Split(new[] { '|' }, StringSplitOptions.RemoveEmptyEntries));
             var used = new HashSet<string>(inUse.Select(PathOf).Where(p => p != null).Select(p => p.ToLowerInvariant()));
@@ -116,30 +116,31 @@ namespace BuildOrders
                 changed = true;
                 if (!buttons.TryGetValue(action, out ZInput.ButtonDef def) || def == null || !string.IsNullOrEmpty(def.GetActionPath())) continue; // bound to something since: the player's choice
                 def.Rebind(path);
-                told.Add($"{owner}: the game's \"{Nice(action)}\" key is back on {path.Substring(path.IndexOf('/') + 1).ToUpperInvariant()} (the mod no longer uses that key)");
+                told.Add(new Said("buildorders_key_back", owner, Nice(action), path.Substring(path.IndexOf('/') + 1).ToUpperInvariant()));
             }
             if (changed)
             {
                 input.Save();
                 PlayerPrefs.SetString(record, string.Join("|", done.ToArray()));
                 PlayerPrefs.Save();
-                foreach (string line in told) Debug.Log("[" + owner + "] " + line);
+                foreach (Said line in told) Debug.Log("[" + owner + "] " + line.English);
             }
-            return told;
+            return told.Select(line => line.Shown).ToList();
         }
 
-        private static string Nice(string name)
+        /// <summary>A game action's name, as Settings, Controls calls it (a key: the game words it in the player's language).</summary>
+        private static Said Nice(string name)
         {
             switch (name)
             {
-                case "AutoPickup": return "Auto pickup";
-                case "ToggleWalk": return "Walk";
-                case "AutoRun": return "Auto run";
-                case "OpenRadial": return "Radial menu";
-                case "TabLeft": return "Previous tab";
-                case "OpenEmote": return "Emotes";
-                case "GP": return "Forsaken power";
-                default: return name;
+                case "AutoPickup": return new Said("buildorders_key_autopickup");
+                case "ToggleWalk": return new Said("buildorders_key_walk");
+                case "AutoRun": return new Said("buildorders_key_autorun");
+                case "OpenRadial": return new Said("buildorders_key_radial");
+                case "TabLeft": return new Said("buildorders_key_tableft");
+                case "OpenEmote": return new Said("buildorders_key_emotes");
+                case "GP": return new Said("buildorders_key_power");
+                default: return new Said(name);
             }
         }
     }

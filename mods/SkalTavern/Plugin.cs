@@ -22,7 +22,7 @@ namespace SkalTavern
         public const string Guid = "com.quad.skaltavern";
         public const string OldGuid = "com.dhack.skaltavern"; // (its id until 2026-10: settings move over by themselves, see Shared/Migration.cs)
         public const string Name = "SkalTavern";
-        public const string Version = "0.3.3";
+        public const string Version = "0.4.0";
 
         internal static Plugin Instance;
         internal static ManualLogSource Log;
@@ -38,6 +38,7 @@ namespace SkalTavern
         private void Awake()
         {
             DHack.Shared.Migration.FromOldGuid(this, OldGuid); // first: before any setting is read
+            DHack.Shared.Translations.Load(this);   // translations/*.json: its words in the player's language
             Instance = this;
             Log = Logger;
             AwakeFrame = Time.frameCount;
@@ -93,6 +94,7 @@ namespace SkalTavern
             Fx.Reset();
             Drinks.Unregister();
             Synced?.Dispose();
+            DHack.Shared.Translations.Unload();
             if (Instance == this) Instance = null;
         }
     }

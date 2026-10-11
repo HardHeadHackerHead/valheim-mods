@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using System.Linq;
+using static DHack.Shared.Translations;
 
 namespace QualityOfLife
 {
@@ -22,7 +23,7 @@ namespace QualityOfLife
             ItemDrop.ItemData hammer = player.GetInventory().GetAllItems().FirstOrDefault(IsHammer);
             if (hammer == null)
             {
-                Tell(player, "You don't have a hammer.");
+                Tell(player, T("qualityoflife_no_hammer"));
                 return;
             }
 
@@ -30,20 +31,20 @@ namespace QualityOfLife
             {
                 // Into construction mode: remember what we had, then take out the hammer.
                 _hammerBefore = EquippedNow(player);
-                Run(Equip(player, new List<ItemDrop.ItemData> { hammer }, null, "Construction mode"));
+                Run(Equip(player, new List<ItemDrop.ItemData> { hammer }, null, T("qualityoflife_build_mode")));
             }
             else if (_hammerBefore != null)
             {
                 // Out of it: put back what we were holding (anything already on, like armor, is left alone).
                 List<ItemDrop.ItemData> back = _hammerBefore.Where(i => i != hammer && player.GetInventory().ContainsItem(i)).ToList();
                 _hammerBefore = null;
-                Run(Equip(player, back, new List<ItemDrop.ItemData> { hammer }, "Construction mode off"));
+                Run(Equip(player, back, new List<ItemDrop.ItemData> { hammer }, T("qualityoflife_build_mode_off")));
             }
             else
             {
                 // We never saw what you had before (e.g. you equipped the hammer yourself): just put it away.
                 player.UnequipItem(hammer);
-                Tell(player, "Construction mode off");
+                Tell(player, T("qualityoflife_build_mode_off"));
             }
         }
     }

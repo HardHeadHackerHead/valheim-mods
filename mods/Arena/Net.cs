@@ -2,6 +2,7 @@ using System;
 using System.Collections;
 using HarmonyLib;
 using UnityEngine;
+using static DHack.Shared.Translations;
 
 namespace Arena
 {
@@ -20,7 +21,7 @@ namespace Arena
         private static float _nextState, _remoteAt;
         private static long _remoteFrom;
 
-        // what another player's fight looks like (for the spectators)
+        // what another player's fight looks like (for the spectators); its title as Words make it
         internal static string RemoteName = "", RemoteTitle = "";
         internal static int RemoteRound, RemoteRounds, RemoteFoes;
         internal static float RemoteFavour;
@@ -30,7 +31,7 @@ namespace Arena
         /// <summary>Someone else is fighting in the arena (heard from in the last few seconds).</summary>
         internal static bool RemoteFight => Time.time - _remoteAt < 6f && _remoteFrom != 0L;
         internal static bool Busy => Contest.Active || Duel.Active || RemoteFight;
-        internal static string BusyText => Contest.Active ? "You are fighting" : RemoteFight ? $"{RemoteName} is fighting: {RemoteTitle}" : "A duel is on";
+        internal static string BusyText => Contest.Active ? T("arena_busy_you") : RemoteFight ? T("arena_busy_remote", RemoteName, Words.Show(RemoteTitle)) : T("arena_busy_duel");
 
         private static bool NearArena(Vector3 p) => Site.Known && new Vector2(p.x - Site.Origin.x, p.z - Site.Origin.z).magnitude < Near;
         private static bool MeNear => Player.m_localPlayer != null && NearArena(Player.m_localPlayer.transform.position);
@@ -51,10 +52,13 @@ namespace Arena
                 // (a duel says so too: no contest or other duel may start in the ring while it is on)
                 _nextState = Time.time + 2f;
                 var pkg = new ZPackage();
+                // (the title in Words, after the rest: an older Arena reads as far as the favour, and finds no title in the old place)
                 pkg.Write(Player.m_localPlayer != null ? Player.m_localPlayer.GetPlayerName() : "");
-                if (Contest.Active) { pkg.Write(Contest.Title); pkg.Write(Contest.Round); pkg.Write(Contest.Rounds); pkg.Write(Contest.FoesLeft); }
-                else { pkg.Write("a duel with " + Duel.OpponentName); pkg.Write(0); pkg.Write(0); pkg.Write(0); }
+                pkg.Write("");
+                if (Contest.Active) { pkg.Write(Contest.Round); pkg.Write(Contest.Rounds); pkg.Write(Contest.FoesLeft); }
+                else { pkg.Write(0); pkg.Write(0); pkg.Write(0); }
                 pkg.Write(Crowd.Favour);
+                pkg.Write(Contest.Active ? Contest.TitleLine : Words.Line("arena_title_duel", Duel.OpponentName));
                 Send(RpcState, pkg);
             }
             // a fight we were watching has ended: the crowd goes home
@@ -82,6 +86,7 @@ namespace Arena
         {
             if (sender == ZDOMan.GetSessionID() || Duel.Involves(sender)) return;
             RemoteName = pkg.ReadString(); RemoteTitle = pkg.ReadString(); RemoteRound = pkg.ReadInt(); RemoteRounds = pkg.ReadInt(); RemoteFoes = pkg.ReadInt(); RemoteFavour = pkg.ReadSingle();
+            if (pkg.GetPos() < pkg.Size()) RemoteTitle = pkg.ReadString();   // (from an older Arena: its English title, as it is)
             _remoteFrom = sender; _remoteAt = Time.time;
             if (MeNear && !Contest.Active && !Duel.Active)
             {
@@ -92,7 +97,9 @@ namespace Arena
 
         // ---- events: a call, a sound, a grate, the cover ---------------------------------------------------------------------
 
-        internal enum Kind { Shout = 1, Sound = 2, Gate = 3, Props = 4, Fireworks = 5, Celebrate = 6, Door = 7, Effect = 8 }
+        // (Shout: a call in words, from an older Arena; Say: a call in Words, each game showing it in its player's language. An older Arena
+        // ignores a kind it does not know.)
+        internal enum Kind { Shout = 1, Sound = 2, Gate = 3, Props = 4, Fireworks = 5, Celebrate = 6, Door = 7, Effect = 8, Say = 9 }
 
         /// <summary>Does it here and tells the players near the arena.</summary>
         internal static void Event(Kind kind, string a, string b = "", float f = 0f)
@@ -116,6 +123,7 @@ namespace Arena
             switch (kind)
             {
                 case Kind.Shout: Hud.Shout(a, b, f > 0f ? f : 4f); break;
+                case Kind.Say: Hud.Shout(Words.Show(a), Words.Show(b), f > 0f ? f : 4f); break;
                 case Kind.Sound: Crowd.Play(a); break;
                 case Kind.Gate: if (int.TryParse(a, out int g)) { if (f > 0f) Scenery.OpenGate(g, f); else Scenery.CloseGate(g); } break;
                 case Kind.Props: if (string.IsNullOrEmpty(a)) Scenery.ClearProps(); else Scenery.ShowProps(a); break;
@@ -140,7 +148,8 @@ namespace Arena
 
         private static readonly System.Collections.Generic.HashSet<string> ShowEffects = new System.Collections.Generic.HashSet<string> { "fx_fireball_staff_explosion", "fx_fireskeleton_nova" };
 
-        internal static void Shout(string text, string sub = "", float seconds = 4f) => Event(Kind.Shout, text, sub, seconds);
+        /// <summary>The announcer, to everyone near the arena: the call and the line under it as Words (Words.Line, Words.Then).</summary>
+        internal static void Shout(string text, string sub = "", float seconds = 4f) => Event(Kind.Say, text, sub, seconds);
         internal static void Sound(string name) => Event(Kind.Sound, name);
         internal static void Gate(int index, float seconds) => Event(Kind.Gate, index.ToString(), "", seconds);
         internal static void Props(string set) => Event(Kind.Props, set ?? "");

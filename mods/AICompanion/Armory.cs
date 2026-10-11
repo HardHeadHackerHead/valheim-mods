@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
+using static AICompanion.Words;
 
 namespace AICompanion
 {
@@ -85,7 +86,7 @@ namespace AICompanion
 
         /// <summary>
         /// At a chest of yours: takes what beats its gear, wears it, and puts back in the chest what it replaced. What it changed ("bronze
-        /// helmet for its leather helmet, ..."), or null.
+        /// helmet for its leather helmet, ..."; packed text), or null.
         /// </summary>
         public static string TakeFrom(BrainState st, Container chest, bool force = false)
         {
@@ -97,7 +98,7 @@ namespace AICompanion
             foreach (ItemDrop.ItemData pick in Picks(me, chest))
             {
                 if (!its.ContainsItem(pick)) continue;
-                if (mine.GetEmptySlots() == 0) { Talk.Tell(me, "There's better gear in your chest, but my bag is full.", "armoryfull", 60f); break; }
+                if (mine.GetEmptySlots() == 0) { Talk.Tell(me, P("aicompanion_armory_bag_full"), "armoryfull", 60f); break; }
                 Gear.Slot slot = Gear.All.First(s => Gear.Fits(s, pick) && Kinds.Contains(s.Kind) && (s.Kind != GearKind.Weapon || !Gear.IsTool(pick)));
                 ItemDrop.ItemData old = Gear.In(me, slot); // (what it replaces: back to your chest, unless it moves to its spare slot)
                 pick.m_equipped = false;
@@ -111,7 +112,7 @@ namespace AICompanion
                     old.m_equipped = false;
                     its.MoveItemToThis(mine, old); // the one it replaced, back where the new one was
                     string oldName = NameOf(old);
-                    changes.Add(its.ContainsItem(old) ? $"{name} for its {oldName}" : $"{name} (its {oldName} stays in its bag: the chest is full)");
+                    changes.Add(its.ContainsItem(old) ? P("aicompanion_armory_swapped", name, oldName) : P("aicompanion_armory_swapped_kept", name, oldName));
                 }
                 else changes.Add(name);
             }
@@ -119,15 +120,15 @@ namespace AICompanion
             Companion.Maintain(me, false); // wear it now
             Companion.SaveBag(me);
             string list = string.Join(", ", changes);
-            st.Remember($"took better gear from your chest: {list}");
-            Talk.Say(me, $"Found better gear in your chest: {list}.");
-            Plugin.Instance?.Note($"{Companion.NameOf(me)} took better gear from the chest at {chest.transform.position:F0}: {list}");
+            st.Remember(P("aicompanion_armory_took", list));
+            Talk.Say(me, P("aicompanion_armory_found", list));
+            Plugin.Instance?.Note($"{Companion.NameOf(me)} took better gear from the chest at {chest.transform.position:F0}: {Words.English(list)}");
             return list;
         }
 
-        /// <summary>An item's name with its level when it has been upgraded ("club (level 2)"), so a swap of two of the same reads right.</summary>
+        /// <summary>An item's name with its level when it has been upgraded ("club (level 2)"), so a swap of two of the same reads right (packed text).</summary>
         private static string NameOf(ItemDrop.ItemData i) =>
-            Localization.instance.Localize(i.m_shared.m_name).ToLowerInvariant() + (i.m_shared.m_maxQuality > 1 ? $" (level {i.m_quality})" : "");
+            i.m_shared.m_maxQuality > 1 ? P("aicompanion_armory_item_level", Low(i.m_shared.m_name), i.m_quality) : P("aicompanion_armory_item", Low(i.m_shared.m_name));
 
         /// <summary>While you were away (its area not loaded): the same, straight from your chests near home, without the walk.</summary>
         public static string CatchUp(BrainState st, Vector3 center, float radius)

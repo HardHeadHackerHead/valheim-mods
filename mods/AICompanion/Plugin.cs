@@ -21,7 +21,7 @@ namespace AICompanion
         public const string Guid = "com.quad.aicompanion";
         public const string OldGuid = "com.dhack.aicompanion"; // (its id until 2026-10: settings move over by themselves, see Shared/Migration.cs)
         public const string Name = "AICompanion";
-        public const string Version = "0.23.0";
+        public const string Version = "0.24.0";
 
         internal static Plugin Instance;
         internal static ConfigEntry<bool> ShowDecisions;
@@ -57,6 +57,7 @@ namespace AICompanion
         private void Awake()
         {
             DHack.Shared.Migration.FromOldGuid(this, OldGuid); // first: before any setting is read
+            DHack.Shared.Translations.Load(this);   // translations/*.json: its words in the player's language (Words.cs)
             Instance = this;
             Synced = new DHack.Shared.ServerSettings(Guid, Config, Logger);
             // Only a few settings in the mod's own file (and the mod manager): the menu and command keys, how many companions, and life while you
@@ -93,7 +94,7 @@ namespace AICompanion
 
             Logger.LogInfo($"{Name} {Version} loaded (menu: {MenuKey.Value}, commands: {CommandKey.Value})");
             if (Player.m_localPlayer != null && Chat.instance != null)
-                Chat.instance.AddString("[Mod]", $"{Name} v{Version} reloaded", Talker.Type.Normal);
+                Chat.instance.AddString("[Mod]", DHack.Shared.Translations.T("aicompanion_plugin_reloaded", Name, Version), Talker.Type.Normal);
         }
 
         /// <summary>
@@ -144,6 +145,7 @@ namespace AICompanion
             Defense.Forget();
             Banter.Forget();
             Marks.Forget();
+            Words.Forget();
             BagPanel.Destroy();
             Container_Load_Companion.Forget();
             _harmony?.UnpatchSelf();
@@ -151,6 +153,7 @@ namespace AICompanion
             DestroyMenuResources();
             Synced?.Dispose();
             SyncedMore?.Dispose();
+            DHack.Shared.Translations.Unload();
             if (Instance == this) Instance = null;
         }
 
@@ -203,7 +206,7 @@ namespace AICompanion
 
         internal static void Tell(string text)
         {
-            if (Player.m_localPlayer != null) Player.m_localPlayer.Message(MessageHud.MessageType.TopLeft, text);
+            if (Player.m_localPlayer != null) Player.m_localPlayer.Message(MessageHud.MessageType.TopLeft, Words.Show(text));
         }
 
         internal static string Mask(string key) =>

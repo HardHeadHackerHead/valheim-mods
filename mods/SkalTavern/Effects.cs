@@ -3,6 +3,7 @@ using System.Linq;
 using HarmonyLib;
 using UnityEngine;
 using UnityEngine.PostProcessing;
+using static DHack.Shared.Translations;
 
 namespace SkalTavern
 {
@@ -237,7 +238,7 @@ namespace SkalTavern
                 {
                     _nextHiccup = t + Mathf.Lerp(30f, 11f, Fx.F(28f, 100f)) * Random.Range(0.7f, 1.3f);
                     Fx.Kick = Random.value < 0.5f ? 1f : -1f;
-                    player.Message(MessageHud.MessageType.TopLeft, Random.value < 0.5f ? "*hic*" : "*hic!*");
+                    player.Message(MessageHud.MessageType.TopLeft, T(Random.value < 0.5f ? "skaltavern_hic" : "skaltavern_hic2"));
                 }
             }
 

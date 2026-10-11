@@ -1,0 +1,19 @@
+{
+  "birdtrap_piece": "Bird Trap",
+  "birdtrap_piece_desc": "A slatted box with a drop-door on a prop stick. Bait it with berries or seeds and leave it under the open sky: in a while a bird hops in, the door drops, and you can pluck it for feathers.",
+  "birdtrap_full": "It holds all the bait it can",
+  "birdtrap_need_bait": "You need berries or seeds for bait",
+  "birdtrap_baited": "Baited with {0} ({1}/{2})",
+  "birdtrap_gone": "The bird is already gone",
+  "birdtrap_caught": "A gull is caught!",
+  "birdtrap_hover_pluck": "Pluck it for feathers and let it go",
+  "birdtrap_no_bait": "No bait: birds won't come to an empty trap",
+  "birdtrap_roof": "Birds won't come under a roof",
+  "birdtrap_night": "Birds are roosting for the night: one will come in the morning",
+  "birdtrap_soon": "Set. A bird should come in about {0} min",
+  "birdtrap_any_moment": "Set. A bird should come any moment",
+  "birdtrap_bait_state": "Bait: {0}/{1}  ·  {2}",
+  "birdtrap_hover_add": "Add bait (berries or seeds)",
+  "birdtrap_hover_fill": "Fill it with bait",
+  "birdtrap_plucked": "You pluck the gull and let it go: {0} feathers"
+}

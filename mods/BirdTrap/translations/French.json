@@ -1,0 +1,19 @@
+{
+  "birdtrap_piece": "Piège à oiseaux",
+  "birdtrap_piece_desc": "Une caisse à claire-voie avec une trappe tenue par un bâton. Appâtez-la avec des baies ou des graines et laissez-la à ciel ouvert : au bout d'un moment, un oiseau entre, la trappe tombe, et vous pouvez le plumer pour ses plumes.",
+  "birdtrap_full": "Il ne peut pas contenir plus d'appât",
+  "birdtrap_need_bait": "Il vous faut des baies ou des graines comme appât",
+  "birdtrap_baited": "Appâté avec : {0} ({1}/{2})",
+  "birdtrap_gone": "L'oiseau est déjà parti",
+  "birdtrap_caught": "Une mouette est prise !",
+  "birdtrap_hover_pluck": "La plumer et la relâcher",
+  "birdtrap_no_bait": "Pas d'appât : les oiseaux ne viennent pas dans un piège vide",
+  "birdtrap_roof": "Les oiseaux ne viennent pas sous un toit",
+  "birdtrap_night": "Les oiseaux dorment : l'un d'eux viendra au matin",
+  "birdtrap_soon": "Armé. Un oiseau devrait venir dans {0} min environ",
+  "birdtrap_any_moment": "Armé. Un oiseau devrait venir d'un instant à l'autre",
+  "birdtrap_bait_state": "Appât : {0}/{1}  ·  {2}",
+  "birdtrap_hover_add": "Ajouter de l'appât (baies ou graines)",
+  "birdtrap_hover_fill": "Le remplir d'appât",
+  "birdtrap_plucked": "Vous plumez la mouette et la relâchez : {0} plumes"
+}

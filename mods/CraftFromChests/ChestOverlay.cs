@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
+using static DHack.Shared.Translations;
 
 namespace CraftFromChests
 {
@@ -71,9 +72,9 @@ namespace CraftFromChests
                 try
                 {
                     _linesButton = CreateButton(gui, "CFC_LineToggle", ToggleLines,
-                        () => Plugin.ShowLines.Value ? "Chest lines: ON" : "Chest lines: OFF");
+                        () => T("craftfromchests_lines", Localization.instance.Localize(Plugin.ShowLines.Value ? "$hud_on" : "$hud_off").ToUpperInvariant()));
                     _rangeButton = CreateButton(gui, "CFC_RangeToggle", CycleRange,
-                        () => $"Range: {Plugin.Radius.Value:0.#}m");
+                        () => T("craftfromchests_range", Plugin.Radius.Value.ToString("0.#")));
                 }
                 catch (Exception e)
                 {
@@ -133,10 +134,20 @@ namespace CraftFromChests
             button.targetGraphic = image;
             button.onClick.AddListener(onClick);
 
+            // Longer words (German, Russian) shrink to fit on one line instead of spilling out of the button.
+            TMP_Text[] tmp = clone.GetComponentsInChildren<TMP_Text>(true);
+            foreach (TMP_Text t in tmp)
+            {
+                t.fontSizeMax = t.fontSize;
+                t.fontSizeMin = t.fontSize * 0.6f;
+                t.enableAutoSizing = true;
+                t.textWrappingMode = TextWrappingModes.NoWrap;
+            }
+
             return new ModButton
             {
                 Root = clone,
-                Tmp = clone.GetComponentsInChildren<TMP_Text>(true),
+                Tmp = tmp,
                 Legacy = clone.GetComponentsInChildren<Text>(true),
                 Label = label,
             };
@@ -165,7 +176,7 @@ namespace CraftFromChests
         {
             if (Plugin.Synced != null && Plugin.Synced.FromServer) // on a server with the mod, its range applies to everyone
             {
-                Player.m_localPlayer?.Message(MessageHud.MessageType.TopLeft, "The server decides the range here");
+                Player.m_localPlayer?.Message(MessageHud.MessageType.TopLeft, T("craftfromchests_server_range"));
                 return;
             }
             float current = Plugin.Radius.Value;

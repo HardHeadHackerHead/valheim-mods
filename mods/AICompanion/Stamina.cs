@@ -183,7 +183,7 @@ namespace AICompanion
                 if (Vector3.Distance(c.transform.position, __instance.transform.position) > 10f) continue;
                 c.GetSEMan().AddStatusEffect(se.NameHash(), true, 0, 0f, -1);
                 Plugin.Instance?.Note($"{Companion.NameOf(c)} shares {__instance.GetPlayerName()}'s power: {Localization.instance.Localize(se.m_name)}");
-                Brain.Get(c)?.Remember("blessed by " + Localization.instance.Localize(se.m_name));
+                Brain.Get(c)?.Remember(Words.P("aicompanion_stamina_blessed", se.m_name));
             }
         }
     }

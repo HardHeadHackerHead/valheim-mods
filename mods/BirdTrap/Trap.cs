@@ -1,5 +1,6 @@
 using System.Linq;
 using UnityEngine;
+using static DHack.Shared.Translations;
 
 namespace BirdTrap
 {
@@ -211,7 +212,7 @@ namespace BirdTrap
             }
 
             int bait = zdo.GetInt(KeyBait, 0), max = Plugin.MaxBait.Value;
-            if (bait >= max) { player.Message(MessageHud.MessageType.Center, "It holds all the bait it can"); return true; }
+            if (bait >= max) { player.Message(MessageHud.MessageType.Center, T("birdtrap_full")); return true; }
             if (_baitSent.Count > 0 && Time.time - _baitSentAt < 5f) return true; // (still waiting for the owner's answer)
             _baitSent.Clear(); // (no answer came: the owner left, and that bait went with it, as the game's own fermenter does)
             Inventory inv = player.GetInventory();
@@ -224,7 +225,7 @@ namespace BirdTrap
                 inv.RemoveItem(food, 1);
                 if (!alt) break; // one at a time; the alternate use fills it
             }
-            if (sent.Count == 0) { player.Message(MessageHud.MessageType.Center, "You need berries or seeds for bait"); return true; }
+            if (sent.Count == 0) { player.Message(MessageHud.MessageType.Center, T("birdtrap_need_bait")); return true; }
             _baitSent.AddRange(sent);
             _baitSentAt = Time.time;
             _nview.InvokeRPC(RpcBait, string.Join(",", sent.ToArray()));
@@ -264,8 +265,8 @@ namespace BirdTrap
             ZDO zdo = Zdo;
             int now = zdo != null ? zdo.GetInt(KeyBait, 0) : taken, max = Plugin.MaxBait.Value;
             GameObject usedPrefab = ZNetScene.instance != null ? ZNetScene.instance.GetPrefab(used) : null;
-            string name = usedPrefab != null ? Localization.instance.Localize(usedPrefab.GetComponent<ItemDrop>().m_itemData.m_shared.m_name).ToLowerInvariant() : used;
-            player.Message(MessageHud.MessageType.Center, taken > 0 ? $"Baited with {name} ({Mathf.Max(now, taken)}/{max})" : "It holds all the bait it can");
+            string name = usedPrefab != null ? Localization.instance.Localize(usedPrefab.GetComponent<ItemDrop>().m_itemData.m_shared.m_name) : used;   // (as the game writes it: lower case would be wrong for German nouns)
+            player.Message(MessageHud.MessageType.Center, taken > 0 ? T("birdtrap_baited", name, Mathf.Max(now, taken), max) : T("birdtrap_full"));
         }
 
         /// <summary>The owner: someone plucks the bird. Only the first asker gets it (the bird is gone before the answer goes out).</summary>
@@ -283,7 +284,7 @@ namespace BirdTrap
         {
             Player player = Player.m_localPlayer;
             if (player == null) return;
-            if (n <= 0) { player.Message(MessageHud.MessageType.Center, "The bird is already gone"); return; }
+            if (n <= 0) { player.Message(MessageHud.MessageType.Center, T("birdtrap_gone")); return; }
             Pluck(player, n);
         }
 
@@ -294,33 +295,33 @@ namespace BirdTrap
             return Interact(user, false, false);
         }
 
-        public string GetHoverName() => "Bird Trap";
+        public string GetHoverName() => T("birdtrap_piece");
         public float GetHoverOffset() => 0f;
 
         public string GetHoverText()
         {
             ZDO zdo = Zdo;
-            if (zdo == null) return "Bird Trap";
+            if (zdo == null) return T("birdtrap_piece");
             int bait = zdo.GetInt(KeyBait, 0), max = Plugin.MaxBait.Value;
-            string text = "Bird Trap";
+            string text = T("birdtrap_piece");
             if (zdo.GetBool(KeyBird, false))
-                text += "\n<color=#9BE37A>A gull is caught!</color>\n[<color=yellow><b>$KEY_Use</b></color>] Pluck it for feathers and let it go";
+                text += "\n<color=#9BE37A>" + T("birdtrap_caught") + "</color>\n[<color=yellow><b>$KEY_Use</b></color>] " + T("birdtrap_hover_pluck");
             else
             {
                 string state;
-                if (bait <= 0) state = "No bait: birds won't come to an empty trap";
+                if (bait <= 0) state = T("birdtrap_no_bait");
                 else
                 {
                     string why = zdo.GetString(KeyWhy, "");
                     double left = (double)zdo.GetLong(KeyNext, 0L) - (ZNet.instance != null ? ZNet.instance.GetTimeSeconds() : 0.0);
-                    state = why == "roof" ? "<color=#E8B04B>Birds won't come under a roof</color>"
-                          : why == "night" ? "Birds are roosting for the night: one will come in the morning"
-                          : left > 60.0 ? $"Set. A bird should come in about {Mathf.CeilToInt((float)(left / 60.0))} min"
-                          : "Set. A bird should come any moment";
+                    state = why == "roof" ? "<color=#E8B04B>" + T("birdtrap_roof") + "</color>"
+                          : why == "night" ? T("birdtrap_night")
+                          : left > 60.0 ? T("birdtrap_soon", Mathf.CeilToInt((float)(left / 60.0)))
+                          : T("birdtrap_any_moment");
                 }
-                text += $"\nBait: {bait}/{max}  ·  {state}";
+                text += "\n" + T("birdtrap_bait_state", bait, max, state);
                 if (bait < max)
-                    text += "\n[<color=yellow><b>$KEY_Use</b></color>] Add bait (berries or seeds)\n[<color=yellow><b>$KEY_AltPlace + $KEY_Use</b></color>] Fill it with bait";
+                    text += "\n[<color=yellow><b>$KEY_Use</b></color>] " + T("birdtrap_hover_add") + "\n[<color=yellow><b>$KEY_AltPlace + $KEY_Use</b></color>] " + T("birdtrap_hover_fill");
             }
             return Localization.instance.Localize(text);
         }
@@ -337,7 +338,7 @@ namespace BirdTrap
                 if (inv.CanAddItem(feathers, n)) inv.AddItem(feathers, n);
                 else Instantiate(feathers, transform.position + Vector3.up * 0.9f, Quaternion.identity).GetComponent<ItemDrop>().SetStack(n); // full: at your feet
             }
-            player.Message(MessageHud.MessageType.Center, $"You pluck the gull and let it go: {n} feathers");
+            player.Message(MessageHud.MessageType.Center, T("birdtrap_plucked", n));
             FlyAway();
         }
 

@@ -1,0 +1,20 @@
+{
+  "bettercraftingstations_all": "All {0}",
+  "bettercraftingstations_chip": "{0} {1}",
+  "bettercraftingstations_can_craft": "Can craft",
+  "bettercraftingstations_type_weapons": "Weapons",
+  "bettercraftingstations_type_armor": "Armor",
+  "bettercraftingstations_type_tools": "Tools",
+  "bettercraftingstations_type_ammo": "Ammo",
+  "bettercraftingstations_type_food": "Food",
+  "bettercraftingstations_type_potions": "Potions",
+  "bettercraftingstations_type_materials": "Materials",
+  "bettercraftingstations_type_other": "Other",
+  "bettercraftingstations_tier_wood": "Wood & flint",
+  "bettercraftingstations_tier_bronze": "Bronze",
+  "bettercraftingstations_tier_iron": "Iron",
+  "bettercraftingstations_tier_silver": "Silver",
+  "bettercraftingstations_tier_blackmetal": "Black metal",
+  "bettercraftingstations_tier_mistlands": "Mistlands",
+  "bettercraftingstations_tier_ashlands": "Ashlands"
+}

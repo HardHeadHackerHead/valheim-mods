@@ -7,7 +7,7 @@
 
 **Build a Recycler and turn old weapons, armor and tools back into a share of their materials: recycle, salvage and reclaim the gear you've outgrown.**
 
-![version: 1.2.1](https://img.shields.io/badge/version-1.2.1-3b6e8f?style=flat-square)  ![multiplayer: everyone + host](https://img.shields.io/badge/multiplayer-everyone%20%2B%20host-7a5c2e?style=flat-square)  ![made with: Claude Code](https://img.shields.io/badge/made%20with-Claude%20Code-c26a3d?style=flat-square)
+![version: 1.3.0](https://img.shields.io/badge/version-1.3.0-3b6e8f?style=flat-square)  ![multiplayer: everyone + host](https://img.shields.io/badge/multiplayer-everyone%20%2B%20host-7a5c2e?style=flat-square)  ![made with: Claude Code](https://img.shields.io/badge/made%20with-Claude%20Code-c26a3d?style=flat-square)
 
 <!-- GITHUB-ONLY -->[Thunderstore](https://thunderstore.io/c/valheim/p/Quads_Lab/Quads_Recycler/)  ·  <!-- END GITHUB-ONLY -->[Source code](https://github.com/HardHeadHackerHead/valheim-mods/tree/main/mods/Recycler)  ·  [Report a bug](https://github.com/HardHeadHackerHead/valheim-mods/issues/new?template=bug.yml&title=%5BQuad%27s%20Recycler%5D%20)  ·  [Discord](https://discord.gg/EwTjQxEZPy)
 
@@ -62,6 +62,12 @@ Found a clash with another mod? [Tell us](https://github.com/HardHeadHackerHead/
 **The host decides:** the share returned, Press bonuses, chance rounding, the crafting-station rule and which gear can be recycled. While you play on their world their values replace yours (your file isn't changed); a host without the mod leaves everyone their own.
 <!-- END HAND-WRITTEN: multiplayer -->
 
+## 🌍 Languages
+
+**English, Русский (Russian), Deutsch (German), 简体中文 (Chinese), Português do Brasil (Portuguese), Español (Spanish), Français (French), Polski (Polish), Türkçe (Turkish).** It follows the game's own language setting.
+
+The translations were made with AI, so a few words may be off. To correct one, or to add your language, put a file in `BepInEx/config/translations/com.quad.recycler/` named after the game's name for the language (`German.json`, `Italian.json`, `Japanese.json`...) with only the lines you change, copied from [English.json](https://github.com/HardHeadHackerHead/valheim-mods/blob/main/mods/Recycler/translations/English.json) (it wins over the built-in one). Or [tell us](https://github.com/HardHeadHackerHead/valheim-mods/issues/new?template=bug.yml&title=%5BQuad%27s%20Recycler%5D%20Translation%3A%20) the better words and we'll put them in for everyone.
+
 ## ⚙️ Settings
 
 In `BepInEx/config/com.quad.recycler.cfg`, made the first time the game runs with the mod. r2modman and Thunderstore Mod Manager edit it under **Config editor**.<!-- GITHUB-ONLY --> With our mod manager: **F7**, then **Mod settings**.<!-- END GITHUB-ONLY -->
@@ -109,8 +115,8 @@ and tested in our own world, with **bobisme** as our tester.
 
 ## 📜 Recent changes
 
+- **1.3.0** Now in your language: English, Russian, German, Chinese (Simplified), Portuguese (Brazil), Spanish, French, Polish and Turkish, following the game's own Language setting. The game's own names are used for its things (items, creatures, lands, stations). The translations were made with AI: to correct a line, or add a language, put a file in BepInEx/config/translations/com.quad.recycler/ named after the game's name for the language (German.json...) with only the lines you change, copied from translations/English.json on GitHub. The Recycler and the Press have translated names and hover texts too.
 - **1.2.1** Tab no longer opens your inventory under the Recycler's window (it closes the window, as it closes a chest), and the chat and map keys stay quiet while it's open.
 - **1.2.0** The Recycler's window is now part of the game's look: the crafting screen's wood panel and title, your gear in the inventory's own cells (icons, durability, quality, what you wear, the game's tooltips), the materials you get back in cells with their amounts, and the game's own button. E closes it again, as it does a chest.
-- **1.1.2** A clearer page: what it does, who needs it in multiplayer, how it gets on with other mods, and where to report a bug. The game itself is unchanged.
 
 <!-- GITHUB-ONLY -->[Every change](CHANGELOG.txt)<!-- END GITHUB-ONLY --><!-- THUNDERSTORE-ONLY: Every change is on the Changelog tab. -->

@@ -1,0 +1,11 @@
+{
+  "craftfromchests_chat_loaded": "{0} v{1} loaded | {2}, radius {3}m | built {4}",
+  "craftfromchests_chat_reloaded": "{0} v{1} reloaded | {2}, radius {3}m | built {4}",
+  "craftfromchests_loaded": "{0} loaded",
+  "craftfromchests_reloaded": "{0} reloaded",
+  "craftfromchests_short": "Not enough {0} in the chests any more",
+  "craftfromchests_have": "You have {0}  (inventory {1}, chests {2})",
+  "craftfromchests_lines": "Chest lines: {0}",
+  "craftfromchests_range": "Range: {0}m",
+  "craftfromchests_server_range": "The server decides the range here"
+}

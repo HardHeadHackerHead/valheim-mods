@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
 using Object = UnityEngine.Object;
+using static DHack.Shared.Translations;
 
 namespace Arena
 {
@@ -30,7 +31,8 @@ namespace Arena
 
         internal static PhaseKind Phase;
         internal static KindOf Kind;
-        internal static string Title = "";
+        internal static string Title = "";   // (in English, for the log; TitleLine, in Words, is what other players are told)
+        internal static string TitleLine = "";
         internal static int Round, Rounds, Tier, Stake, Fee;
         internal static int Style;   // (the kind of weapon on the arena's steel: Kit.Styles; it changes if you buy another kind)
         internal static bool Daily;
@@ -82,10 +84,10 @@ namespace Arena
             string key = Plugin.YieldKey.Value.ToString();
             switch (Phase)
             {
-                case PhaseKind.Ready: return "Walk through the gate into the ring";
-                case PhaseKind.Arming: return Show.ChestEmptied ? "Put it on and eat: here they come" : "Your gear and meals are in the chest in the middle of the ring: take them, put them on, eat";
-                case PhaseKind.Break: return Lent ? (Show.ArmourerStanding ? "Open your reward, see the Armourer by the gate" : "Pick up your coins: the next round") + $"  ·  or {key} twice to take your coins and leave"
-                                                  : $"The next round  ·  or {key} twice to take your purse and leave";
+                case PhaseKind.Ready: return T("arena_walk_in");
+                case PhaseKind.Arming: return Show.ChestEmptied ? T("arena_timer_arming_done") : T("arena_timer_arming");
+                case PhaseKind.Break: return Lent ? T(Show.ArmourerStanding ? "arena_timer_break_armourer" : "arena_timer_break_coins") + "  ·  " + T("arena_timer_leave_coins", key)
+                                                  : T("arena_timer_next_round") + "  ·  " + T("arena_timer_leave_purse", key);
                 default: seconds = -1f; return "";
             }
         }
@@ -105,7 +107,10 @@ namespace Arena
         /// <summary>The round within the land (1 to 3) on the Long Road or in a trial.</summary>
         internal static int LandRound => (Mathf.Max(1, Round) - 1) % 3 + 1;
 
-        internal static string KindName(KindOf kind) => kind == KindOf.Road ? "The Long Road" : kind == KindOf.Champion ? "Champion Bout" : kind == KindOf.Endless ? "The Endless Horde" : "Today's Trial";
+        internal static string KindName(KindOf kind) => T(KindKey(kind));
+        internal static string KindKey(KindOf kind) => "arena_kind_" + KindWord(kind);
+        /// <summary>The contest's word, as the Hall keeps it ("road", "champion"...).</summary>
+        private static string KindWord(KindOf kind) => kind == KindOf.Road ? "road" : kind == KindOf.Champion ? "champion" : kind == KindOf.Endless ? "endless" : "trial";
 
         /// <summary>What it costs to enter (nothing for a character's first fight).</summary>
         internal static int FeeFor(KindOf kind, int tier)
@@ -138,19 +143,19 @@ namespace Arena
         internal static string Start(KindOf kind, int tier, int style, bool fists, bool noFood, bool hard, bool timed, int stake, bool daily)
         {
             Player player = Player.m_localPlayer;
-            if (player == null || !Site.Known || !Scenery.Built) return "The arena is not ready yet.";
-            if (Active) return "A contest is already on.";
-            if (Duel.Active) return "You are in a duel.";
-            if (Net.RemoteFight) return Net.BusyText + ". Wait your turn, or watch from the stands.";
+            if (player == null || !Site.Known || !Scenery.Built) return T("arena_not_ready");
+            if (Active) return T("arena_contest_on");
+            if (Duel.Active) return T("arena_in_duel");
+            if (Net.RemoteFight) return T("arena_busy_wait", Net.BusyText);
             if (kind == KindOf.Road) tier = 0;
             tier = Mathf.Clamp(tier, 0, Roster.TierNames.Length - 1);
-            if (Roster.Pool(tier).Count == 0) return "The Arena Master has no one for that land in this game.";
+            if (Roster.Pool(tier).Count == 0) return T("arena_no_one");
             if (kind == KindOf.Endless || kind == KindOf.Road) stake = 0;
             bool lent = kind == KindOf.Road || kind == KindOf.Trial;
-            if (lent && Kit.Stowed(player)) return "The Arena Master still holds your things from your last fight: they come back in a moment.";
+            if (lent && Kit.Stowed(player)) return T("arena_still_held");
             Inventory inv = player.GetInventory();
             int fee = FeeFor(kind, tier);
-            if (inv.CountItems("$item_coins") < fee + stake) return stake > 0 ? $"You have not got the coins: {fee} to enter and {stake} to stake." : $"You have not got the {fee} coins to enter.";
+            if (inv.CountItems("$item_coins") < fee + stake) return stake > 0 ? T("arena_no_coins_stake", fee, stake) : T("arena_no_coins", fee);
 
             if (fee + stake > 0) inv.RemoveItem("$item_coins", fee + stake);
             Stake = stake; Fee = fee; Daily = daily;
@@ -158,7 +163,8 @@ namespace Arena
             Style = style < 0 ? UnityEngine.Random.Range(0, Kit.Styles.Length) : Mathf.Clamp(style, 0, Kit.Styles.Length - 1);   // (below 0: the armourer's pick)
             Rules.Set(fists, noFood, hard, timed);
             Rounds = kind == KindOf.Road ? 3 * Roster.TierNames.Length : kind == KindOf.Trial ? 3 : kind == KindOf.Champion ? 1 : 0;
-            Title = kind == KindOf.Road ? "The Long Road" : KindName(kind) + " - " + Roster.TierNames[Tier];
+            Title = kind == KindOf.Road ? "The Long Road" : kind + " - " + Roster.TierNames[Tier];
+            TitleLine = kind == KindOf.Road ? Words.Line(KindKey(kind)) : Words.Line("arena_title", Words.Word(KindKey(kind)), Words.Land(Tier));
             Round = 0; _kills = 0; _combo = 0; _outside = 0f; _knockedOut = false; _closeAt = 0f; _yieldAt = 0f;
             _purseCoins = 0f; _peak = 0f; _stowed = false; _look = "";
             Mats.Clear(); Trophies.Clear();
@@ -171,12 +177,12 @@ namespace Arena
             Favours.Reset();
             Net.Gate(Scenery.MainGrate, ReadySeconds);
             Net.Door(ReadySeconds);   // (the main gate opens for you)
-            Net.Shout("TO THE RING!", "Walk through the gate and into the ring, " + player.GetPlayerName() + ". The crowd is waiting.", 6f);
+            Net.Shout(Words.Line("arena_call_to_ring"), Words.Line("arena_call_to_ring_sub", player.GetPlayerName()), 6f);
             Phase = PhaseKind.Ready;
             _timer = ReadySeconds; _count = 4;
-            if (lent) Hud.Say("At the ring the Arena Master takes what you carry, and the arena arms and feeds you. You get it all back when you come out.");
-            Hud.Say("Play to the crowd: kills, parries, emotes (T) and answering their chants. When they are excited they throw you food, meads and better" + (lent ? " (the arena's meals are leftovers: you will need it)." : "."));
-            Plugin.Log.LogInfo($"Contest started: {Title}, rules {Rules.Text()}, fee {fee}, stake {stake}" + (lent ? $", {Kit.Styles[Style]}" : ""));
+            if (lent) Hud.Say(T("arena_say_lent"));
+            Hud.Say(T(lent ? "arena_say_play_lent" : "arena_say_play"));
+            Plugin.Log.LogInfo($"Contest started: {Title}, rules {Rules.Names()}, fee {fee}, stake {stake}" + (lent ? $", {Kit.Styles[Style]}" : ""));
             return null;
         }
 
@@ -205,7 +211,7 @@ namespace Arena
                 bool between = Phase == PhaseKind.Break || Phase == PhaseKind.Arming;
                 if (_yieldAt > 0f && Time.time - _yieldAt < 3f) { End(between ? Outcome.CashOut : Outcome.Yield); return; }
                 _yieldAt = Time.time;
-                Hud.Say(Lent ? "Press again to leave with the coins you carry" : between ? "Press again to take your purse and leave" : "Press again to give up (you keep half your purse)");
+                Hud.Say(T(Lent ? "arena_say_yield_coins" : between ? "arena_say_yield_purse" : "arena_say_yield_half"));
             }
 
             if (Phase == PhaseKind.Ready)
@@ -218,7 +224,7 @@ namespace Arena
                     if (Lent)
                     {
                         // your things to the Arena Master; the arena's steel and meals to you
-                        if (!Kit.Stow(player)) { End(Outcome.Aborted); Hud.Say("The Arena Master could not take your things: the contest is off, and your coins are back."); return; }
+                        if (!Kit.Stow(player)) { End(Outcome.Aborted); Hud.Say(T("arena_say_stow_failed")); return; }
                         _stowed = true;
                         player.ClearFood();   // (what you ate outside went with your things: you fight on the arena's meals)
                     }
@@ -226,24 +232,25 @@ namespace Arena
                     player.Heal(player.GetMaxHealth(), true);
                     player.AddStamina(player.GetMaxStamina());
                     _look = Figures.LookOf(player);
-                    string intro = KindName(Kind).ToUpperInvariant() + "!";
+                    string intro = Words.Line("arena_call_intro", Words.Word(KindKey(Kind)));
                     Net.Sound("gong");
                     if (Lent)
                     {
                         // the armourer's chest rises in the middle of the ring: get your gear on and eat before the clock runs out
                         Show.PopChest(Show.Armoury, Kit.Outfit(Tier, Style, Rules.Fists, !Rules.NoFood));
-                        Net.Shout(intro, Lines.Welcome(player.GetPlayerName()) + "   Arm yourself from the chest in the middle of the ring!", 5f);
+                        Net.Shout(intro, Words.Then(Lines.Welcome(player.GetPlayerName()), Words.Line("arena_call_arm")), 5f);
                         Phase = PhaseKind.Arming;
                         _timer = 40f;
                     }
                     else
                     {
-                        Net.Shout(intro, Lines.Welcome(player.GetPlayerName()) + "   (" + Rules.Text() + (Stake > 0 ? ", " + Stake + " coins on themselves" : "") + ")", 5f);
+                        string rules = Words.Rules(Rules.Fists, Rules.NoFood, Rules.Hard, Rules.Timed);
+                        Net.Shout(intro, Words.Then(Lines.Welcome(player.GetPlayerName()), Stake > 0 ? Words.Line("arena_call_rules_stake", rules, Stake) : Words.Line("arena_call_rules", rules)), 5f);
                         Phase = PhaseKind.Countdown;
                         _timer = 5f; _count = 4;
                     }
                 }
-                else if (_timer <= 0f) { End(Outcome.Aborted); Hud.Say("You did not come into the ring: the contest is off, and your coins are back."); }
+                else if (_timer <= 0f) { End(Outcome.Aborted); Hud.Say(T("arena_say_no_show")); }
                 return;
             }
 
@@ -251,7 +258,7 @@ namespace Arena
             if (!Site.OnFloor(player.transform.position, 1.5f))
             {
                 _outside += dt;
-                if (Time.time - _lastWarn > 1f) { _lastWarn = Time.time; Hud.Say("Get back in the ring! " + Mathf.CeilToInt(8f - _outside)); }
+                if (Time.time - _lastWarn > 1f) { _lastWarn = Time.time; Hud.Say(T("arena_say_get_back", Mathf.CeilToInt(8f - _outside))); }
                 if (_outside > 8f) { End(Outcome.LeftRing); return; }
             }
             else _outside = Mathf.Max(0f, _outside - dt * 2f);
@@ -267,7 +274,7 @@ namespace Arena
                     _timer -= dt;
                     int n = Mathf.CeilToInt(_timer);
                     if (n < _count && n >= 1 && n <= 3) { _count = n; Hud.Count(n.ToString()); }
-                    if (_timer <= 0f) { Hud.Count("FIGHT!"); Net.Sound("cheer"); BeginRound(1); }
+                    if (_timer <= 0f) { Hud.Count(T("arena_fight")); Net.Sound("cheer"); BeginRound(1); }
                     break;
                 case PhaseKind.Spawning:
                 case PhaseKind.Fighting:
@@ -282,7 +289,7 @@ namespace Arena
                     {
                         float before = _roundLeft;
                         _roundLeft -= dt;
-                        if (before > 10f && _roundLeft <= 10f) Net.Shout("TEN SECONDS!", "", 1.5f);
+                        if (before > 10f && _roundLeft <= 10f) Net.Shout(Words.Line("arena_call_ten_seconds"), "", 1.5f);
                         if (_roundLeft <= 0f) { End(Outcome.TimeUp); return; }
                     }
                     if (Phase == PhaseKind.Fighting && Foes.All(f => f.Counted) && Queue.Count == 0) RoundCleared(player);
@@ -354,10 +361,11 @@ namespace Arena
             _roundLeft = Rules.RoundSeconds + (champion ? 30f : 0f);
             Phase = PhaseKind.Spawning;
             _spawnTimer = 1.4f;
-            string land = Roster.TierNames[Tier].ToUpperInvariant();
-            string head = Kind == KindOf.Champion ? "THE CHAMPION!" : Kind == KindOf.Endless ? "WAVE " + n
-                        : champion ? (Kind == KindOf.Road ? "THE CHAMPION OF THE " + land + "!" : "FINAL ROUND!") : (Kind == KindOf.Road ? land + ": ROUND " + (step + 1) : "ROUND " + n);
-            string sub = champion && Kind != KindOf.Champion ? "A champion comes with them!" : Lines.RoundCall(Queue.Count);
+            string land = Words.Land(Tier);
+            string head = Kind == KindOf.Champion ? Words.Line("arena_call_the_champion") : Kind == KindOf.Endless ? Words.Line("arena_call_wave", n)
+                        : champion ? (Kind == KindOf.Road ? Words.Line("arena_call_champion_of", land) : Words.Line("arena_call_final_round"))
+                        : (Kind == KindOf.Road ? Words.Line("arena_call_land_round", land, step + 1) : Words.Line("arena_call_round", n));
+            string sub = champion && Kind != KindOf.Champion ? Words.Line("arena_call_champion_comes") : Lines.RoundCall(Queue.Count);
             Net.Shout(head, sub, 3.5f);
             Net.Sound("gong");
             if (n > 1) Net.Sound("cheer");
@@ -367,7 +375,7 @@ namespace Arena
         {
             int step = (Round - 1) % 3;
             float units = Lands ? 0.7f + 0.4f * step : Kind == KindOf.Endless ? 0.5f + 0.15f * Round : 3f;
-            if (!_hurtThisRound) { Crowd.Gain(12f, false); Net.Shout("FLAWLESS!", "Not a scratch on you", 2.2f); }
+            if (!_hurtThisRound) { Crowd.Gain(12f, false); Net.Shout(Words.Line("arena_call_flawless"), Words.Line("arena_call_flawless_sub"), 2.2f); }
             if (!Lent) AddToPurse(units);   // (on the arena's steel the fighters drop coins instead)
             if (Kind == KindOf.Endless) Ladder.Best("bestwave" + Tier, Round);
             else if (Kind == KindOf.Road) Ladder.Best("road", Round);
@@ -404,18 +412,19 @@ namespace Arena
                     Show.Armourer(true);
                 }
                 Net.Sound("roar");
-                Net.Shout("THE " + Roster.TierNames[Tier].ToUpperInvariant() + " IS BEATEN!", $"On to the {Roster.TierNames[next]}! Open your reward, see the Armourer by the gate"
-                          + $"   -   {Plugin.YieldKey.Value} twice to take your coins and leave", 7f);
+                Net.Shout(Words.Line("arena_call_land_beaten", Words.Land(Tier)),
+                          Words.Then(Words.Line("arena_call_on_to", Words.Land(next)), Words.Dash, Words.Line("arena_call_leave_coins", Plugin.YieldKey.Value.ToString())), 7f);
                 _timer = 50f;
                 return;
             }
             if (Lent)
             {
-                Net.Shout("ROUND " + Round + " CLEARED!", $"Pick up your coins   -   {Plugin.YieldKey.Value} twice to take them and leave", 4.5f);
+                Net.Shout(Words.Line("arena_call_round_cleared", Round), Words.Then(Words.Line("arena_call_pick_up_coins"), Words.Dash, Words.Line("arena_call_leave_them", Plugin.YieldKey.Value.ToString())), 4.5f);
                 player.Heal(player.GetMaxHealth() * 0.3f, true);
                 return;
             }
-            Net.Shout((Kind == KindOf.Endless ? "WAVE " : "ROUND ") + Round + " CLEARED!", $"Your purse: {PurseText()}   -   {Plugin.YieldKey.Value} twice to take it and leave", 4.5f);
+            Net.Shout(Words.Line(Kind == KindOf.Endless ? "arena_call_wave_cleared" : "arena_call_round_cleared", Round),
+                      Words.Then(Words.Line("arena_call_your_purse", Words.Purse(PurseData())), Words.Dash, Words.Line("arena_call_leave_it", Plugin.YieldKey.Value.ToString())), 4.5f);
             player.Heal(player.GetMaxHealth() * 0.3f, true);
         }
 
@@ -430,10 +439,33 @@ namespace Arena
 
         internal static string PurseText()
         {
-            if (Lent) return (Player.m_localPlayer != null ? Player.m_localPlayer.GetInventory().CountItems("$item_coins") : 0) + " coins in your bag";
-            string s = PurseCoins + " coins";
-            foreach (var m in Mats) if (Mathf.FloorToInt(m.Value) > 0) s += ", " + Mathf.FloorToInt(m.Value) + " " + ItemName(m.Key);
+            if (Lent) return T("arena_purse_bag", Player.m_localPlayer != null ? Player.m_localPlayer.GetInventory().CountItems("$item_coins") : 0);
+            return PurseText(PurseData());
+        }
+
+        /// <summary>The purse as data, "coins;Prefab*n,...", for the watchers to put into words (PurseText).</summary>
+        private static string PurseData() =>
+            PurseCoins.ToString(System.Globalization.CultureInfo.InvariantCulture) + ";"
+            + string.Join(",", Mats.Where(m => Mathf.FloorToInt(m.Value) > 0).Select(m => m.Key + "*" + Mathf.FloorToInt(m.Value).ToString(System.Globalization.CultureInfo.InvariantCulture)));
+
+        internal static string PurseText(string data)
+        {
+            string[] f = data.Split(';');
+            string s = T("arena_coins", f[0]);
+            if (f.Length > 1) foreach (var m in Counted(f[1])) s += ", " + T("arena_prize_item", m.Amount, ItemName(m.Prefab));
             return s;
+        }
+
+        /// <summary>"Prefab*n,Prefab" (no count: one).</summary>
+        private static IEnumerable<(string Prefab, int Amount)> Counted(string list)
+        {
+            foreach (string part in list.Split(new[] { ',' }, StringSplitOptions.RemoveEmptyEntries))
+            {
+                int star = part.IndexOf('*');
+                if (star < 0) { yield return (part, 1); continue; }
+                int.TryParse(part.Substring(star + 1), System.Globalization.NumberStyles.Integer, System.Globalization.CultureInfo.InvariantCulture, out int n);
+                yield return (part.Substring(0, star), n);
+            }
         }
 
         internal static string ItemName(string prefab)
@@ -468,7 +500,7 @@ namespace Arena
             if (foe.Char != null)
             {
                 foe.Char.SetLevel(item.Level);
-                if (!string.IsNullOrEmpty(item.Name)) foe.Char.m_name = item.Name;
+                if (!string.IsNullOrEmpty(item.Name)) foe.Char.m_name = Words.Show(item.Name);
             }
             go.GetComponent<CharacterDrop>()?.SetDropsEnabled(false);          // the prize is the arena's, not the creature's
             MonsterAI ai = go.GetComponent<MonsterAI>();
@@ -493,7 +525,7 @@ namespace Arena
             if (item.Champion)
             {
                 // the champion's entrance: a fanfare, a burst of fire at its gate, and the crowd on its feet
-                Net.Shout(item.Name.ToUpperInvariant(), Roster.Origin(Tier) + "... a champion of the pit!", 4f);
+                Net.Shout(item.Name, Words.Line(Roster.Origin(Tier)), 4f);
                 Net.Sound("horn"); Net.Sound("roar");
                 Net.Effect("fx_fireball_staff_explosion", at + Vector3.up * 1.2f);
                 Net.Effect("fx_fireskeleton_nova", at);
@@ -546,13 +578,13 @@ namespace Arena
             {
                 string trophy = !Lent && Tier <= Roster.Beaten() ? Roster.Trophy(f.Prefab) : null;
                 if (trophy != null) Trophies.Add(trophy);
-                Net.Shout("THE CHAMPION FALLS!", Lines.ChampionDown(), 3f);
+                Net.Shout(Words.Line("arena_call_champion_falls"), Lines.ChampionDown(), 3f);
                 Net.Sound("roar");
             }
-            else if (close) Net.Shout("CLOSE CALL!", "The crowd is on its feet", 1.8f);
-            else if (_combo == 2) Net.Shout("DOUBLE!", "", 1.5f);
-            else if (_combo == 3) Net.Shout("TRIPLE!", "", 1.5f);
-            else if (_combo >= 5) Net.Shout("UNSTOPPABLE!", _combo + " in a row", 1.8f);
+            else if (close) Net.Shout(Words.Line("arena_call_close"), Words.Line("arena_call_close_sub"), 1.8f);
+            else if (_combo == 2) Net.Shout(Words.Line("arena_call_double"), "", 1.5f);
+            else if (_combo == 3) Net.Shout(Words.Line("arena_call_triple"), "", 1.5f);
+            else if (_combo >= 5) Net.Shout(Words.Line("arena_call_unstoppable"), Words.Line("arena_call_in_a_row", _combo), 1.8f);
         }
 
         /// <summary>The local player blocked a blow in a contest (a perfect parry is worth more to the crowd).</summary>
@@ -561,7 +593,7 @@ namespace Arena
             if (!Fighting) return;
             Favours.OnParry(perfect);
             Crowd.Gain(perfect ? 6f : 1f, perfect);
-            if (perfect && Time.time - _lastParryShout > 4f) { _lastParryShout = Time.time; Net.Shout("PARRY!", "", 1.2f); }
+            if (perfect && Time.time - _lastParryShout > 4f) { _lastParryShout = Time.time; Net.Shout(Words.Line("arena_call_parry"), "", 1.2f); }
         }
 
         /// <summary>The local player was hurt in a contest: the crowd likes it less, and the round is not flawless.</summary>
@@ -648,11 +680,12 @@ namespace Arena
         {
             _timer -= dt;
             float t = Time.time - _victoryAt;
-            string name = player.GetPlayerName().ToUpperInvariant();
+            string name = player.GetPlayerName();
             if (_victoryStep == 0 && t > 4f)
             {
                 _victoryStep = 1;
-                Net.Shout(_crowned ? "CHAMPION OF " + KindName(Kind).Replace("The ", "THE ").ToUpperInvariant() + "!" : name + " TRIUMPHS!", $"The crowd chants your name, {player.GetPlayerName()}!" + (_crowned ? " Your statue will stand in the Hall of Fame." : ""), 5f);
+                Net.Shout(_crowned ? Words.Line("arena_call_crowned_" + KindWord(Kind)) : Words.Line("arena_call_triumphs", name),
+                          Words.Line(_crowned ? "arena_call_chants_name_statue" : "arena_call_chants_name", name), 5f);
                 Net.Sound("horn");
             }
             if (_victoryStep == 1 && t > 7f)
@@ -660,14 +693,14 @@ namespace Arena
                 _victoryStep = 2;
                 Show.PopChest(Show.Prize, PrizeItems);
                 Net.Sound("roar");
-                Hud.Say("Your prize is in the chest in the middle of the ring");
+                Hud.Say(T("arena_say_prize_chest"));
             }
             if (_victoryStep == 2 && t > 11f)
             {
                 _victoryStep = 3;
                 Net.Gate(Scenery.MainGrate, 120f);
                 Net.Door(120f);
-                Net.Shout("TAKE A BOW!", "Open your prize, then walk out through the main gate when you are ready", 3f);
+                Net.Shout(Words.Line("arena_call_take_a_bow"), Words.Line("arena_call_take_a_bow_sub"), 3f);
                 Net.Fireworks(12, 9f);
             }
             if (Time.time > _nextChant) { _nextChant = Time.time + UnityEngine.Random.Range(7f, 10f); Net.Sound(UnityEngine.Random.value < 0.5f ? "horn" : "cheer"); }
@@ -756,45 +789,62 @@ namespace Arena
 
             // (after a win the prize goes in the prize chest that rises in the ring)
             void Hand(string prefab, int amount) { if (_toChest) PrizeItems.Add((prefab, amount, 1, null)); else Give(prefab, amount, player); }
-            var lines = new List<string>();
             if (coins + stakeBack > 0) Hand("Coins", coins + stakeBack);
-            if (coins > 0) lines.Add(coins + (Lent ? " coins for the win" : " coins"));
-            if (Lent && carried > 0 && outcome != Outcome.Died) lines.Add(carried + " coins you picked up");
+            var things = new List<string>();   // (materials "Prefab*n", trophies "Prefab")
             foreach (var m in Mats)
             {
                 int n = Mathf.FloorToInt(m.Value * share);
                 if (n <= 0) continue;
                 Hand(m.Key, n);
-                lines.Add(n + " " + ItemName(m.Key));
+                things.Add(m.Key + "*" + n.ToString(System.Globalization.CultureInfo.InvariantCulture));
             }
-            foreach (string trophy in trophies) { Hand(trophy, 1); lines.Add(ItemName(trophy)); }
-            if (stakeBack > 0) lines.Add((win ? "your stake doubled: " : "your stake back: ") + stakeBack);
-            if (dailyBonus) lines.Add("today's bonus");
-            string prize = lines.Count > 0 ? string.Join(", ", lines) : "nothing";
+            foreach (string trophy in trophies) { Hand(trophy, 1); things.Add(trophy); }
+            // the prize as data, for each game to put into words (PrizeText): coins;on the arena's steel;coins picked up;stake back;won;today's bonus;things
+            string data = string.Join(";", new[] { coins, Lent ? 1 : 0, Lent && outcome != Outcome.Died ? carried : 0, stakeBack, win ? 1 : 0, dailyBonus ? 1 : 0 }
+                                               .Select(v => v.ToString(System.Globalization.CultureInfo.InvariantCulture))) + ";" + string.Join(",", things);
+            string prize = Words.Prize(data);
 
             // the Hall of Champions at this arena
             int score = coins + (Lent && outcome != Outcome.Died ? carried : 0) + _kills * 5 + (win ? 150 : 0) + Mathf.RoundToInt(_peak) + Round * 20;
-            string what = Kind == KindOf.Road ? (win ? "The Long Road, to the very end" : $"The Long Road, to the {Roster.TierNames[Tier]} (round {Round} of {Rounds})")
-                        : (Kind == KindOf.Endless ? "Endless, wave " + Round : Kind == KindOf.Trial ? "Trial, round " + Round : "Champion Bout") + " (" + Roster.TierNames[Tier] + ")";
-            string kindKey = Kind == KindOf.Road ? "road" : Kind == KindOf.Champion ? "champion" : Kind == KindOf.Endless ? "endless" : "trial";
-            bool crowned = _crowned = outcome != Outcome.Aborted && outcome != Outcome.CalledOff && Ladder.Enter(kindKey, player.GetPlayerName(), what, score, _look);   // (as they fought: their statue wears it)
-            string hall = crowned ? $"   -   the new Champion of {KindName(Kind).Replace("The ", "the ")}!" : "";
+            // (the run as Words: the Hall shows it in each reader's language)
+            string what = Kind == KindOf.Road ? (win ? Words.Line("arena_run_road_end") : Words.Line("arena_run_road", Words.Land(Tier), Round, Rounds))
+                        : Words.Line(Kind == KindOf.Endless ? "arena_run_endless" : Kind == KindOf.Trial ? "arena_run_trial" : "arena_run_champion", Words.Land(Tier), Round);
+            bool crowned = _crowned = outcome != Outcome.Aborted && outcome != Outcome.CalledOff && Ladder.Enter(KindWord(Kind), player.GetPlayerName(), what, score, _look);   // (as they fought: their statue wears it)
+            string hall = crowned ? Words.Then(Words.Dash, Words.Line("arena_call_new_champion_" + KindWord(Kind))) : "";
             if (crowned) Net.Sound("roar");
 
+            string half = Words.Line("arena_call_half_purse", prize);
             switch (outcome)
             {
-                case Outcome.Win: Net.Shout("VICTORY!", Lines.Victory() + "   " + prize + hall, 7f); break;
-                case Outcome.CashOut: Net.Shout("YOU TAKE YOUR PURSE", prize + hall, 6f); break;
-                case Outcome.Died: Net.Shout("YOU HAVE FALLEN", Lent ? "Your purse is lost. The Arena Master gives your things back when you rise, and anything else you won waits in your tombstone in the forecourt." : "Your purse is lost. Your tombstone waits in the forecourt, by the Hall of Fame.", 7f); break;
-                case Outcome.TimeUp: Net.Shout("TIME!", "Half your purse: " + prize, 5f); break;
-                case Outcome.LeftRing: Net.Shout("YOU LEFT THE RING", "Half your purse: " + prize, 5f); break;
-                case Outcome.Yield: Net.Shout("YOU YIELD", "Half your purse: " + prize, 5f); break;
-                case Outcome.Carried: Net.Shout("CARRIED OUT", "Half your purse: " + prize, 5f); break;
-                case Outcome.CalledOff: Net.Shout("CALLED OFF", "The Arena Master has no one to send in: " + prize, 5f); break;
+                case Outcome.Win: Net.Shout(Words.Line("arena_call_victory"), Words.Then(Lines.Victory(), prize, hall), 7f); break;
+                case Outcome.CashOut: Net.Shout(Words.Line("arena_call_cash_out"), Words.Then(prize, hall), 6f); break;
+                case Outcome.Died: Net.Shout(Words.Line("arena_call_fallen"), Words.Line(Lent ? "arena_call_fallen_lent" : "arena_call_fallen_own"), 7f); break;
+                case Outcome.TimeUp: Net.Shout(Words.Line("arena_call_time"), half, 5f); break;
+                case Outcome.LeftRing: Net.Shout(Words.Line("arena_call_left_ring"), half, 5f); break;
+                case Outcome.Yield: Net.Shout(Words.Line("arena_call_yield"), half, 5f); break;
+                case Outcome.Carried: Net.Shout(Words.Line("arena_call_carried"), half, 5f); break;
+                case Outcome.CalledOff: Net.Shout(Words.Line("arena_call_called_off"), Words.Line("arena_call_no_one", prize), 5f); break;
                 default: break;
             }
-            if (outcome != Outcome.Aborted && outcome != Outcome.Died && !_toChest) player.Message(MessageHud.MessageType.Center, "Prize: " + prize);
-            Plugin.Log.LogInfo($"Contest ended: {outcome}, {_kills} kills, prize {prize}, score {score}");
+            if (outcome != Outcome.Aborted && outcome != Outcome.Died && !_toChest) player.Message(MessageHud.MessageType.Center, T("arena_prize", PrizeText(data)));
+            Plugin.Log.LogInfo($"Contest ended: {outcome}, {_kills} kills, prize {data}, score {score}");
+        }
+
+        /// <summary>The prize in words, from its data (Pay).</summary>
+        internal static string PrizeText(string data)
+        {
+            string[] f = data.Split(';');
+            if (f.Length < 7) return data;
+            var n = new int[6];
+            for (int i = 0; i < 6; i++) int.TryParse(f[i], System.Globalization.NumberStyles.Integer, System.Globalization.CultureInfo.InvariantCulture, out n[i]);
+            bool lent = n[1] == 1, win = n[4] == 1, daily = n[5] == 1;
+            var lines = new List<string>();
+            if (n[0] > 0) lines.Add(T(lent ? "arena_prize_coins_win" : "arena_coins", n[0]));
+            if (n[2] > 0) lines.Add(T("arena_prize_picked_up", n[2]));
+            foreach (var thing in Counted(f[6])) lines.Add(thing.Prefab.StartsWith("Trophy") ? ItemName(thing.Prefab) : T("arena_prize_item", thing.Amount, ItemName(thing.Prefab)));
+            if (n[3] > 0) lines.Add(T(win ? "arena_prize_stake_doubled" : "arena_prize_stake_back", n[3]));
+            if (daily) lines.Add(T("arena_prize_daily"));
+            return lines.Count > 0 ? string.Join(", ", lines) : T("arena_prize_nothing");
         }
 
         internal static void Give(string prefab, int amount, Player player)
@@ -836,19 +886,19 @@ namespace Arena
             Vector3 to = Site.World(Layout.Arrival.Pos + new Vector3(0f, 0.3f, 3f));
             to.y = Mathf.Max(to.y, Site.Ground(to, Site.Origin.y) + 0.3f);
             p.TeleportTo(to, Site.Turn * Quaternion.Euler(0f, 180f, 0f), false);
-            p.Message(MessageHud.MessageType.Center, "The Arena Master's guards show you out: the ring is for those who have taken up a challenge");
+            p.Message(MessageHud.MessageType.Center, T("arena_guards"));
             Plugin.Log.LogInfo("Someone on the fighting floor without a challenge was shown out to the forecourt");
         }
     }
 
-    /// <summary>What the announcer says, a few ways each so it does not repeat itself.</summary>
+    /// <summary>What the announcer says, a few ways each so it does not repeat itself: one picked here, as Words (each game in its own language).</summary>
     internal static class Lines
     {
-        private static string One(params string[] lines) => lines[UnityEngine.Random.Range(0, lines.Length)];
+        private static string One(string key, params object[] args) => Words.Line(key + "_" + UnityEngine.Random.Range(1, 5), args);
 
-        internal static string Welcome(string name) => One($"Give it up for {name}!", $"{name} steps into the ring!", $"The crowd roars for {name}!", $"Here comes {name}! Will they survive?");
-        internal static string RoundCall(int count) => One($"{count} challengers enter the ring", $"{count} of them! Show them no mercy", $"Here they come: {count} of them", $"{count} foes. The crowd wants blood");
-        internal static string ChampionDown() => One("What a fight!", "The crowd goes wild!", "Nobody saw that coming!", "A new legend is born!");
-        internal static string Victory() => One("The crowd chants your name!", "What a performance!", "A champion of the pit!", "Odin himself is watching!");
+        internal static string Welcome(string name) => One("arena_welcome", name);
+        internal static string RoundCall(int count) => One("arena_round_call", count);
+        internal static string ChampionDown() => One("arena_champion_down");
+        internal static string Victory() => One("arena_victory_line");
     }
 }

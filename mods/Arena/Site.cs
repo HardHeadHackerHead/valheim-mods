@@ -4,6 +4,7 @@ using System.Globalization;
 using System.Linq;
 using HarmonyLib;
 using UnityEngine;
+using static DHack.Shared.Translations;
 
 namespace Arena
 {
@@ -77,7 +78,7 @@ namespace Arena
         private static void Pin()
         {
             if (!Plugin.MapPin.Value || Minimap.instance == null || _pin != null) return;
-            _pin = Minimap.instance.AddPin(Origin, Minimap.PinType.Icon3, "The Arena", false, false, 0L);
+            _pin = Minimap.instance.AddPin(Origin, Minimap.PinType.Icon3, T("arena_name"), false, false, 0L);
         }
 
         internal static void Unpin()

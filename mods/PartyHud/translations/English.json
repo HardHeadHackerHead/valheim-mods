@@ -1,0 +1,8 @@
+{
+  "partyhud_header": "PARTY  ·  {0}",
+  "partyhud_distance": "{0} m",
+  "partyhud_fallen": "FALLEN",
+  "partyhud_dead": "DEAD",
+  "partyhud_no_data": "no data",
+  "partyhud_fallen_status": "fallen: its things in a tombstone (skull on the map)"
+}

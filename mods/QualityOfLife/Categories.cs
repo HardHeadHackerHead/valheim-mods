@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using static DHack.Shared.Translations;
 
 namespace QualityOfLife
 {
@@ -33,23 +34,24 @@ namespace QualityOfLife
             Weapons, BowsAmmo, Shields, Armor, Trinkets, Tools, Food, Potions, Fish, Trophies, Ores, Metals, Materials, Misc,
         };
 
-        public static readonly Dictionary<string, string> Help = new Dictionary<string, string>
+        /// <summary>
+        /// The names above are what chests save (their assignments, "C=Food,Tools"), so they never change: what a player reads is each one's
+        /// words in their language, made where it is shown (qualityoflife_cat_food and qualityoflife_cat_food_help in translations/).
+        /// </summary>
+        private static readonly Dictionary<string, string> Keys = new Dictionary<string, string>
         {
-            { Weapons, "Swords, axes, maces, spears, atgeirs, torches" },
-            { BowsAmmo, "Bows, crossbows and all arrows and bolts" },
-            { Shields, "Round shields, tower shields, bucklers" },
-            { Armor, "Helmets, chest and leg armor, capes" },
-            { Trinkets, "Belts, rings, trinkets and other worn extras" },
-            { Tools, "Pickaxes, hammers, hoes, cultivators, fishing rods" },
-            { Food, "Anything you eat for health and stamina" },
-            { Potions, "Meads, potions and drinks" },
-            { Fish, "Raw fish" },
-            { Trophies, "Boss and creature trophies" },
-            { Ores, "Raw ore and scrap: copper ore, tin ore, iron scrap, silver ore, black metal scrap, flametal ore" },
-            { Metals, "Refined bars: copper, tin, bronze, iron, silver, black metal, flametal" },
-            { Materials, "Wood, stone, hides, leather, resin, flint and the like" },
-            { Misc, "Anything that fits nowhere else" },
+            { Weapons, "weapons" }, { BowsAmmo, "bows" }, { Shields, "shields" }, { Armor, "armor" }, { Trinkets, "trinkets" },
+            { Tools, "tools" }, { Food, "food" }, { Potions, "potions" }, { Fish, "fish" }, { Trophies, "trophies" },
+            { Ores, "ores" }, { Metals, "metals" }, { Materials, "materials" }, { Misc, "misc" },
         };
+
+        private const string CatKey = "qualityoflife_cat_";
+
+        /// <summary>A category's name in the player's language.</summary>
+        public static string Display(string category) => Keys.TryGetValue(category, out string key) ? T(CatKey + key) : category;
+
+        /// <summary>What a category holds, in the player's language.</summary>
+        public static string HelpOf(string category) => Keys.TryGetValue(category, out string key) ? T(CatKey + key + "_help") : "";
 
         // The refined metals, by the game's item names (without the "$item_" prefix). Raw ore and scrap are recognised by their endings.
         private static readonly HashSet<string> MetalBars = new HashSet<string>

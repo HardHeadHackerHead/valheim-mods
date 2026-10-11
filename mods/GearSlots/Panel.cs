@@ -3,6 +3,7 @@ using HarmonyLib;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
+using static DHack.Shared.Translations;
 
 namespace GearSlots
 {
@@ -40,6 +41,7 @@ namespace GearSlots
             bool show = Plugin.Instance.ShowPanel;
             EnsurePanel(gui, elements[0]);
             _panel.gameObject.SetActive(show);
+            if (_title != null) _title.text = T("gearslots_title");   // (the language can change while it shows)
 
             float pitch = grid.m_elementSpace;
             Vector2 cell = elements[0].GetElementRectTransform() != null ? elements[0].GetElementRectTransform().rect.size : new Vector2(pitch - 6f, pitch - 6f);
@@ -83,14 +85,16 @@ namespace GearSlots
                 // The slot's name, written faintly in the empty cell.
                 if (!Labels.TryGetValue(slot, out TMP_Text label) || label == null)
                 {
-                    Labels[slot] = label = MakeLabel(rt, slot.Label, el.m_amount);
+                    Labels[slot] = label = MakeLabel(rt, slot.Name, el.m_amount);
                     label.fontSize = 11f;
+                    label.enableAutoSizing = true; label.fontSizeMin = 7f; label.fontSizeMax = 11f;   // (longer words in some languages)
                     label.alignment = TextAlignmentOptions.Bottom;
                     AddSilhouette(rt, slot, rt.rect.size);
                 }
                 Transform icon = rt.Find("GearSlotsIcon");
                 if (icon != null) icon.gameObject.SetActive(Layout.ItemIn(inv, slot) == null);
                 if (label.transform.parent != rt) label.transform.SetParent(rt, false);
+                label.text = slot.Name;   // (the language can change while it shows)
                 label.enabled = Layout.ItemIn(inv, slot) == null;
             }
 
@@ -128,7 +132,7 @@ namespace GearSlots
 
             // The title as the game writes its window titles: Norse, warm gold, with the braided line under it.
             TMP_Text norse = Find<TMP_Text>(gui, "root/Crafting/topic");
-            _title = MakeLabel(_panel, "Gear", norse != null ? norse : sample.m_amount);
+            _title = MakeLabel(_panel, T("gearslots_title"), norse != null ? norse : sample.m_amount);
             _title.fontSize = norse != null ? 20f : 17f;
             _title.color = norse != null ? TitleColor : Gold;
             _title.alignment = TextAlignmentOptions.TopLeft;

@@ -51,7 +51,7 @@ namespace PortalHub
         {
             ClearPins(map);
             foreach (PortalInfo p in Portals)
-                _pins[p.Id] = map.AddPin(p.Pos, Minimap.PinType.Icon3, string.IsNullOrWhiteSpace(p.Name) ? "Portal" : p.Name, false, false);
+                _pins[p.Id] = map.AddPin(p.Pos, Minimap.PinType.Icon3, string.IsNullOrWhiteSpace(p.Name) ? Localization.instance.Localize("$piece_portal") : p.Name, false, false);
         }
 
         private void ClearPins(Minimap map)

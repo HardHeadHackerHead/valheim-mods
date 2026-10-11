@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
+using static DHack.Shared.Translations;
 
 namespace Ziplines
 {
@@ -98,7 +99,7 @@ namespace Ziplines
 
         // ---- looking at it ------------------------------------------------------------------------------------------------
 
-        public string GetHoverName() => "Zipline Post";
+        public string GetHoverName() => T("ziplines_post");
 
         public float GetHoverOffset() => 0f;
 
@@ -110,17 +111,18 @@ namespace Ziplines
             {
                 Vector3 far = PartnerAnchor;
                 float length = Vector3.Distance(Line.Anchor(this), far), drop = Line.Anchor(this).y - far.y;
-                string far0 = length >= 1000f ? $"{length / 1000f:0.0} km" : $"{length:0} m";
-                text = drop >= 0.5f ? $"Zipline Post\n{use} Ride to the other post ({far0}, {drop:0} m down)\n{alt} Take the line down"
-                                    : $"Zipline Post\nThe bottom of a line: it only runs downhill, so ride it from the other post ({far0}, {-drop:0} m up)\n{alt} Take the line down";
+                string far0 = length >= 1000f ? T("ziplines_km", (length / 1000f).ToString("0.0")) : T("ziplines_metres", length.ToString("0"));
+                string down = $"\n{alt} {T("ziplines_hover_take_down")}";
+                text = drop >= 0.5f ? $"{T("ziplines_post")}\n{use} {T("ziplines_hover_ride", far0, drop.ToString("0"))}{down}"
+                                    : $"{T("ziplines_post")}\n{T("ziplines_hover_bottom", far0, (-drop).ToString("0"))}{down}";
             }
-            else if (ToId != 0L) text = $"Zipline Post\nThis line has lost its other end\n{alt} Take the line down";
+            else if (ToId != 0L) text = $"{T("ziplines_post")}\n{T("ziplines_hover_lost")}\n{alt} {T("ziplines_hover_take_down")}";
             else
             {
                 ZDO pending = PendingZdo();
-                if (pending == null) text = $"Zipline Post\n{use} Start a line here";
-                else if (pending == Zdo()) text = $"Zipline Post\n{use} Cancel the line";
-                else text = $"Zipline Post\n{use} Run the line here ({Vector3.Distance(_pendingAnchor, Line.Anchor(this)):0} m from the other post)";
+                if (pending == null) text = $"{T("ziplines_post")}\n{use} {T("ziplines_hover_start")}";
+                else if (pending == Zdo()) text = $"{T("ziplines_post")}\n{use} {T("ziplines_hover_cancel")}";
+                else text = $"{T("ziplines_post")}\n{use} {T("ziplines_hover_run", Vector3.Distance(_pendingAnchor, Line.Anchor(this)).ToString("0"))}";
             }
             return Localization.instance.Localize(text);
         }
@@ -137,11 +139,11 @@ namespace Ziplines
 
             if (HasLine)
             {
-                if (Line.Anchor(this).y - PartnerAnchor.y < 0.5f) { player.Message(MessageHud.MessageType.Center, "A zipline only runs downhill: ride this one from its other end."); return true; }
+                if (Line.Anchor(this).y - PartnerAnchor.y < 0.5f) { player.Message(MessageHud.MessageType.Center, T("ziplines_downhill_only")); return true; }
                 Ride.Start(player, this, PartnerAnchor, Partner);
                 return true;
             }
-            if (ToId != 0L) { player.Message(MessageHud.MessageType.Center, "This line has lost its other end: take it down (Shift+E) and run it again."); return true; }
+            if (ToId != 0L) { player.Message(MessageHud.MessageType.Center, T("ziplines_lost_end")); return true; }
 
             ZDO zdo = Zdo();
             if (zdo == null) return true;
@@ -150,12 +152,12 @@ namespace Ziplines
             ZDO pending = PendingZdo();
             if (pending == null)
             {
-                if (zdo.GetLong(IdKey, 0L) == 0L) { player.Message(MessageHud.MessageType.Center, "This post is not ready yet: try again in a moment."); return true; }
+                if (zdo.GetLong(IdKey, 0L) == 0L) { player.Message(MessageHud.MessageType.Center, T("ziplines_not_ready")); return true; }
                 _pendingZdo = zdo.m_uid; _pendingId = zdo.GetLong(IdKey, 0L); _pendingAnchor = Line.Anchor(this); _pendingAt = Time.time;
-                player.Message(MessageHud.MessageType.Center, "Line started: go to the other post and press E on it.");
+                player.Message(MessageHud.MessageType.Center, T("ziplines_started"));
                 return true;
             }
-            if (pending == zdo) { _pendingZdo = ZDOID.None; player.Message(MessageHud.MessageType.Center, "Line cancelled."); return true; }
+            if (pending == zdo) { _pendingZdo = ZDOID.None; player.Message(MessageHud.MessageType.Center, T("ziplines_cancelled")); return true; }
             if (Join(player, pending, _pendingId, _pendingAnchor, this)) _pendingZdo = ZDOID.None;
             return true;
         }
@@ -168,13 +170,13 @@ namespace Ziplines
         {
             Vector3 hereAnchor = Line.Anchor(here);
             float length = Vector3.Distance(hereAnchor, farAnchor);
-            if (here.ToId != 0L) { player.Message(MessageHud.MessageType.Center, "This post already has a line."); return false; }
-            if (length < 8f) { player.Message(MessageHud.MessageType.Center, "These posts are too close together for a line (8 m at least)."); return false; }
-            if (length > Plugin.MaxLength.Value) { player.Message(MessageHud.MessageType.Center, $"Too far: a line can be {Plugin.MaxLength.Value:0} m long at most, this one would be {length:0} m."); return false; }
+            if (here.ToId != 0L) { player.Message(MessageHud.MessageType.Center, T("ziplines_has_line")); return false; }
+            if (length < 8f) { player.Message(MessageHud.MessageType.Center, T("ziplines_too_close")); return false; }
+            if (length > Plugin.MaxLength.Value) { player.Message(MessageHud.MessageType.Center, T("ziplines_too_far", Plugin.MaxLength.Value.ToString("0"), length.ToString("0"))); return false; }
             Post farPost = All.FirstOrDefault(p => p != null && p.Id == farId);
             // it must fall: the higher post is where you ride from
             float fall = Mathf.Abs(farAnchor.y - hereAnchor.y), needed = Mathf.Max(2f, length * Plugin.MinSlope.Value);
-            if (fall < needed) { player.Message(MessageHud.MessageType.Center, $"A line has to run downhill: one post must be at least {needed:0} m higher than the other for {length:0} m (it is {fall:0} m). Build one on higher ground."); return false; }
+            if (fall < needed) { player.Message(MessageHud.MessageType.Center, T("ziplines_too_flat", needed.ToString("0"), length.ToString("0"), fall.ToString("0"))); return false; }
             Vector3 top = farAnchor.y >= hereAnchor.y ? farAnchor : hereAnchor, bottom = farAnchor.y >= hereAnchor.y ? hereAnchor : farAnchor;
             string why = Line.Clearance(top, bottom, farPost, here);
             if (why != null) { player.Message(MessageHud.MessageType.Center, why); return false; }
@@ -189,7 +191,7 @@ namespace Ziplines
             if (farPost != null && !farPost._view.IsOwner()) farPost._view.ClaimOwnership();
             else if (farPost == null) farZdo.SetOwner(ZDOMan.GetSessionID());
             farZdo.Set(ToKey, hereId); farZdo.Set(ToPosKey, hereAnchor);
-            player.Message(MessageHud.MessageType.Center, $"A line {length:0} m long runs between the posts. Press E on either one to ride it.");
+            player.Message(MessageHud.MessageType.Center, T("ziplines_joined", length.ToString("0")));
             return true;
         }
 
@@ -197,7 +199,7 @@ namespace Ziplines
         internal static bool Join(Player player, Post a, Post b)
         {
             ZDO za = a.Zdo(), zb = b.Zdo();
-            if (za == null || zb == null || a.Id == 0L || b.Id == 0L) { player.Message(MessageHud.MessageType.Center, "A post is not ready yet."); return false; }
+            if (za == null || zb == null || a.Id == 0L || b.Id == 0L) { player.Message(MessageHud.MessageType.Center, T("ziplines_post_not_ready")); return false; }
             return Join(player, za, a.Id, Line.Anchor(a), b);
         }
 
@@ -223,7 +225,7 @@ namespace Ziplines
                 // the far post is not loaded: still known to the game by its saved data, so it is freed too
                 foreach (ZDO z in FarPosts(far)) { z.SetOwner(ZDOMan.GetSessionID()); z.Set(ToKey, 0L); z.Set(ToPosKey, Vector3.zero); }
             }
-            player.Message(MessageHud.MessageType.Center, "The line is down.");
+            player.Message(MessageHud.MessageType.Center, T("ziplines_down"));
         }
 
         /// <summary>The saved data of the post with this id, if the game has it (loaded or not).</summary>

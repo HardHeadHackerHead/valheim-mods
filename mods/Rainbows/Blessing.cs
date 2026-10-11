@@ -1,4 +1,5 @@
 using UnityEngine;
+using static DHack.Shared.Translations;
 
 namespace Rainbows
 {
@@ -18,11 +19,11 @@ namespace Rainbows
             {
                 _effect = ScriptableObject.CreateInstance<SE_Rainbow>();
                 _effect.name = EffectName;
-                _effect.m_name = "Rainbow's Blessing";
+                _effect.m_name = "$rainbows_blessing";
                 _effect.m_icon = _icon = MakeIcon(false);
                 _double = ScriptableObject.CreateInstance<SE_DoubleRainbow>();
                 _double.name = DoubleName;
-                _double.m_name = "Double Rainbow's Blessing";
+                _double.m_name = "$rainbows_double_blessing";
                 _double.m_icon = _doubleIcon = MakeIcon(true);
             }
             foreach (SE_Rainbow e in new[] { _effect, _double })
@@ -98,7 +99,7 @@ namespace Rainbows
     public class SE_Rainbow : SE_Stats
     {
         protected virtual float Strength => 1f;
-        protected virtual string Lead => "Seen a rainbow.";
+        protected virtual string Lead => T("rainbows_seen");
 
         public override void Setup(Character character)
         {
@@ -111,13 +112,13 @@ namespace Rainbows
         }
 
         public override string GetTooltipString() =>
-            $"{Lead}\nStamina comes back {30 * Strength:0}% faster, health {20 * Strength:0}% faster, and running and jumping cost {20 * Strength:0}% less stamina.";
+            Lead + "\n" + T("rainbows_tooltip", (30 * Strength).ToString("0"), (20 * Strength).ToString("0"), (20 * Strength).ToString("0"));
     }
 
     /// <summary>Double Rainbow's Blessing: the same, half as strong again.</summary>
     public class SE_DoubleRainbow : SE_Rainbow
     {
         protected override float Strength => 1.5f;
-        protected override string Lead => "A double rainbow!";
+        protected override string Lead => T("rainbows_double");
     }
 }

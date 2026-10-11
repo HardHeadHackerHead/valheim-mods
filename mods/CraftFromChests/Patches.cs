@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using HarmonyLib;
+using static DHack.Shared.Translations;
 
 namespace CraftFromChests
 {
@@ -10,7 +11,7 @@ namespace CraftFromChests
     {
         private static void Postfix(Player __instance)
         {
-            if (__instance == Player.m_localPlayer) Plugin.Announce("loaded");
+            if (__instance == Player.m_localPlayer) Plugin.Announce(false);
         }
     }
 
@@ -92,7 +93,7 @@ namespace CraftFromChests
             string missing = ChestScanner.FindShortfall(player.GetInventory(), needs);
             if (missing != null)
             {
-                player.Message(MessageHud.MessageType.Center, $"Not enough {Localization.instance.Localize(missing)} in the chests any more");
+                player.Message(MessageHud.MessageType.Center, T("craftfromchests_short", Localization.instance.Localize(missing)));
                 return false;
             }
             ChestScanner.Consuming = true;

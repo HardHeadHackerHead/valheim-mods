@@ -2,6 +2,7 @@ using System.Collections.Generic;
 using System.Linq;
 using HarmonyLib;
 using UnityEngine;
+using static DHack.Shared.Translations;
 
 namespace FeedFromChests
 {
@@ -85,11 +86,12 @@ namespace FeedFromChests
         public static string HoverLine(Beehive h, bool collecting)
         {
             string status;
-            if (!BiomeOk(h)) status = "<color=#ff9a66>Bees don't live in this biome</color> (Meadows, Black Forest or Plains only)";
-            else if (Cover(h) >= h.m_maxCover) status = $"<color=#ff9a66>Too covered: {Cover(h):P0}</color> (needs under {h.m_maxCover:P0}: move it out from under roofs and trees)";
-            else if (Honey(h) >= h.m_maxHoney) status = "<color=#ffc066>Full: it stops making honey until it is emptied</color>";
-            else status = $"Next honey in {Mathf.CeilToInt(NextIn(h) / 60f)} min (one every {h.m_secPerUnit / 60f:0} min, up to {h.m_maxHoney})";
-            return $"\n<size=14>{status}" + (collecting ? "\nHoney goes into a chest assigned to it or to Food (K), or one that already has honey" : "") + "</size>";
+            if (!BiomeOk(h)) status = "<color=#ff9a66>" + T("feedfromchests_hive_biome") + "</color> " + T("feedfromchests_hive_biome_hint");
+            else if (Cover(h) >= h.m_maxCover) status = "<color=#ff9a66>" + T("feedfromchests_hive_covered", Mathf.RoundToInt(Cover(h) * 100f)) + "</color> " +
+                                                        T("feedfromchests_hive_covered_hint", Mathf.RoundToInt(h.m_maxCover * 100f));
+            else if (Honey(h) >= h.m_maxHoney) status = "<color=#ffc066>" + T("feedfromchests_hive_full") + "</color>";
+            else status = T("feedfromchests_hive_next", Mathf.CeilToInt(NextIn(h) / 60f), (h.m_secPerUnit / 60f).ToString("0"), h.m_maxHoney);
+            return $"\n<size=14>{status}" + (collecting ? "\n" + T("feedfromchests_hive_collect") : "") + "</size>";
         }
     }
 

@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using static DHack.Shared.Translations;
 
 namespace SlotMachine
 {
@@ -10,7 +11,7 @@ namespace SlotMachine
     /// </summary>
     internal static class Payout
     {
-        internal static readonly string[] Names = { "Coin", "Boar", "Horn", "Axe", "Raven", "Valknut" };
+        internal static readonly string[] Names = { "slotmachine_coin", "slotmachine_boar", "slotmachine_horn", "slotmachine_axe", "slotmachine_raven", "slotmachine_valknut" };   // keys in translations/*.json
         private static readonly int[] Weight = { 7, 5, 4, 2, 1, 1 };            // chance of each symbol on a reel (out of 20)
         private static readonly int[] Three = { 5, 10, 16, 40, 100, 300 };      // pay for three alike, times the bet
         private static readonly int[] Pair = { 1, 0, 0, 0, 5, 10 };             // pay for exactly two alike
@@ -50,6 +51,10 @@ namespace SlotMachine
 
         /// <summary>One line for the hover text: the best wins.</summary>
         internal static string Summary() =>
-            $"3 Valknut {Three[5]}x  ·  3 Raven {Three[4]}x  ·  3 Axe {Three[3]}x  ·  3 Horn {Three[2]}x\n3 Boar {Three[1]}x  ·  3 Coin {Three[0]}x  ·  2 Valknut {Pair[5]}x  ·  2 Raven {Pair[4]}x  ·  2 Coin {Pair[0]}x";
+            Pays(3, 5, Three[5]) + "  ·  " + Pays(3, 4, Three[4]) + "  ·  " + Pays(3, 3, Three[3]) + "  ·  " + Pays(3, 2, Three[2]) + "\n" +
+            Pays(3, 1, Three[1]) + "  ·  " + Pays(3, 0, Three[0]) + "  ·  " + Pays(2, 5, Pair[5]) + "  ·  " + Pays(2, 4, Pair[4]) + "  ·  " + Pays(2, 0, Pair[0]);
+
+        /// <summary>"3 Valknut 300x": how many of a symbol, and what they pay (times the bet).</summary>
+        private static string Pays(int count, int symbol, int times) => T("slotmachine_pays", count, T(Names[symbol]), times);
     }
 }

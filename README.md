@@ -9,6 +9,9 @@ Craft and build from chests. Bring a viking companion on your adventures. Plan b
 ![C#](https://img.shields.io/badge/made%20with-C%23-68217a?style=flat-square)
 [![License: MIT](https://img.shields.io/badge/license-MIT-green?style=flat-square)](LICENSE)
 [![Mod Manager](https://img.shields.io/badge/get%20them%20with-the%20mod%20manager-f2c75c?style=flat-square)](https://github.com/HardHeadHackerHead/valheim-mod-manager)
+![Languages](https://img.shields.io/badge/languages-9-4c7a3d?style=flat-square)
+
+In your language: English · Русский · Deutsch · 简体中文 · Português do Brasil · Español · Français · Polski · Türkçe
 
 </div>
 
@@ -227,12 +230,12 @@ Odin's Fortune: build a slot machine, put coins in, pull the lever and watch thr
 <tr>
 <td valign="top">
 
-### 🤖 ClaudeTools
-<img src="dist/ClaudeTools.cover.png" alt="ClaudeTools" width="100%">
+### 🤖 Claude Tools
+<img src="https://raw.githubusercontent.com/HardHeadHackerHead/valheim-claude-tools/main/mods/ClaudeTools/cover.png" alt="Claude Tools" width="100%">
 
-Lets an AI assistant like [Claude Code](https://claude.com/claude-code) see your game and help, through a **request mailbox** of files on your computer: pictures from any angle, ground surveys, your status, inventory, what is nearby and what you look at, the chests around you and what each is assigned, the mods running and their settings, the log, a message on screen or a pin on your map. Other mods add their own commands (BuildOrders: place, check and photograph blueprints). No network port; it never moves your character. Off until you switch requests on.
+Everything you need to make Valheim mods with an AI assistant like [Claude Code](https://claude.com/claude-code), and an assistant that can see your game: pictures from any angle, your status, inventory, chests and mods, a pre-release check, clash reports, safe reloading, skills and templates. Our other mods add their own commands to it (BuildOrders: place, check and photograph blueprints). No network port; off until you switch requests on.
 
-**[More: how it works, settings and screenshots →](mods/ClaudeTools/README.md)**
+**It has its own repo now: [valheim-claude-tools →](https://github.com/HardHeadHackerHead/valheim-claude-tools)** (install it from the F7 mod manager, where it is an approved source)
 
 </td>
 <td valign="top">
@@ -388,7 +391,7 @@ real. Everyone in the world needs it, and restart after installing.
 | **F11** | BuildOrders | Plans window: place blueprints with a preview, move or remove placed plans, build settings |
 | Hammer → **Bridge** | BuildOrders | Click where a bridge starts, walk across, click where it ends: a wooden bridge to build, posts down to the riverbed |
 | Wheel / **R** / **PgUp** **PgDn** / click | BuildOrders | While placing a blueprint: turn it / turn 90° / raise or lower it / place it (right-click or Esc cancels); the ground under it is levelled when placed |
-| **F12** / **Ctrl+F12** | ClaudeTools | Save a screenshot / survey the ground around where you look, for the AI assistant |
+| **F12** / **Ctrl+F12** | [Claude Tools](https://github.com/HardHeadHackerHead/valheim-claude-tools) | Save a screenshot / survey the ground around where you look, for the AI assistant |
 | **F8** | PartyHud | Show or hide the party panel |
 
 Every key and setting is configurable in `BepInEx/config`.
@@ -399,7 +402,7 @@ BuildOrders can place whole structures from **blueprint** files, and the repo sh
 material and cost of every building piece, the game's structural-support rules, a stability checker and a worked example. The first time you
 play with BuildOrders it writes all of that, with a `CLAUDE.md` guide, into `BepInEx/blueprints`. Start [Claude Code](https://claude.com/claude-code)
 in that folder, ask for a fort, a house or a bridge, then open the Plans window (**F11**) in game, pick it and put its green preview where you want it. You still build every piece with real materials.
-It can check that a design will stand and draw previews with the game's real shapes. With the **ClaudeTools** mod (and its requests switched on) it can also look at your world, place the blueprint where you are looking, check it and photograph it from every side.
+It can check that a design will stand and draw previews with the game's real shapes. With the **[Claude Tools](https://github.com/HardHeadHackerHead/valheim-claude-tools)** mod (and its requests switched on) it can also look at your world, place the blueprint where you are looking, check it and photograph it from every side.
 Details are in [`tools/blueprints`](tools/blueprints).
 
 ## 🛡️ Playing fair

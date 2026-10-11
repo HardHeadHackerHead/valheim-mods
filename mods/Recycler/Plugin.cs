@@ -22,7 +22,7 @@ namespace Recycler
         public const string Guid = "com.quad.recycler";
         public const string OldGuid = "com.dhack.recycler"; // (its id until 2026-10: settings move over by themselves, see Shared/Migration.cs)
         public const string Name = "Recycler";
-        public const string Version = "1.2.1";
+        public const string Version = "1.3.0";
         public const string RecyclerPrefab = "piece_recycler";
         public const string PressPrefab = "piece_recycler_press";
 
@@ -38,6 +38,7 @@ namespace Recycler
         private void Awake()
         {
             DHack.Shared.Migration.FromOldGuid(this, OldGuid); // first: before any setting is read
+            DHack.Shared.Translations.Load(this);   // translations/*.json: its words in the player's language
             // What it gives back and what it takes are the server's to decide in multiplayer; the rest (asking twice, messages) is each player's.
             Synced = new DHack.Shared.ServerSettings(Guid, Config, Logger);
             const string server = " In multiplayer the server's value applies.";
@@ -63,6 +64,7 @@ namespace Recycler
         {
             Window.Close();
             GameUi.Destroy();
+            DHack.Shared.Translations.Unload();
             _harmony?.UnpatchSelf();
             Synced?.Dispose();
             Unregister();
@@ -88,10 +90,10 @@ namespace Recycler
                 Material mat = source.GetComponentInChildren<Renderer>(true).sharedMaterial;
                 Look.Harvest(scene, mat); // the game's own wood, stone and metal materials
 
-                Prefabs.Add(Make(RecyclerPrefab, source, mat, "Recycler", "Turns old gear back into a share of its crafting materials. Presses nearby raise the share.",
+                Prefabs.Add(Make(RecyclerPrefab, source, mat, "$recycler_piece", "$recycler_piece_desc",
                     true, Model.RecyclerHitCenter, Model.RecyclerHitSize, typeof(RecyclerStation),
                     Req("FineWood", 10), Req("Bronze", 8), Req("Stone", 10)));
-                Prefabs.Add(Make(PressPrefab, source, mat, "Recycler Press", "Place within 8 m of a Recycler to raise the share it returns. Up to two count.",
+                Prefabs.Add(Make(PressPrefab, source, mat, "$recycler_press", "$recycler_press_desc",
                     false, Model.PressHitCenter, Model.PressHitSize, typeof(RecyclerPress),
                     Req("Iron", 15), Req("Bronze", 10), Req("Stone", 10)));
             }

@@ -1,5 +1,6 @@
 using System.Linq;
 using UnityEngine;
+using static AICompanion.Words;
 
 namespace AICompanion
 {
@@ -44,7 +45,7 @@ namespace AICompanion
                 if (st.MasterWasHome && youFromHome > radius + 15f && Vector3.Distance(me.transform.position, master.transform.position) < 150f && Time.time - st.ManualOrderAt > 300f)
                 {
                     st.MasterWasHome = false;
-                    if (Home.Follow(me, false)) { st.Outing = true; Talk.Tell(me, "Coming with you!", "autofollow", 1f); st.Remember("you headed out: it came along"); }
+                    if (Home.Follow(me, false)) { st.Outing = true; Talk.Tell(me, P("aicompanion_following_coming"), "autofollow", 1f); st.Remember(P("aicompanion_following_came_along")); }
                 }
                 return;
             }
@@ -55,7 +56,7 @@ namespace AICompanion
             if (st.HomeSince == 0f) { st.HomeSince = Time.time; return; }
             if (Time.time - st.HomeSince < 10f) return;
             st.HomeSince = 0f;
-            if (Home.GoHome(me, true, false)) { Talk.Tell(me, "Home again. I'll put my things away.", "autohome", 1f); st.Remember("back home with you: it lives here again"); st.MasterWasHome = true; }
+            if (Home.GoHome(me, true, false)) { Talk.Tell(me, P("aicompanion_following_home_again"), "autohome", 1f); st.Remember(P("aicompanion_following_lives_here_again")); st.MasterWasHome = true; }
         }
 
         /// <summary>The style it fights with right now: the one you picked, or what "let it decide" worked out.</summary>
@@ -94,17 +95,17 @@ namespace AICompanion
             if (!me.InInterior() && st.LastLand != biome.ToString())
             {
                 st.LastLand = biome.ToString();
-                if (Journal.Place(me, BiomeName(biome), false)) Banter.NewLand(me, BiomeName(biome));
+                if (Journal.Place(me, BiomeToken(biome), false, OldBiomeWord(biome))) Banter.NewLand(me, BiomeToken(biome));
             }
             float threat = CatchUp.ThreatOf(biome), power = CatchUp.Power(me);
             bool outmatched = power < threat * 0.9f;
             if (outmatched && !st.Outmatched)
             {
                 ItemDrop.ItemData weapon = Companion.BestMelee(me) ?? Companion.BestRanged(me);
-                string place = BiomeName(biome);
-                Talk.Tell(me, $"This {place} is too much for my gear ({(weapon != null ? Localization.instance.Localize(weapon.m_shared.m_name).ToLowerInvariant() : "no weapon")}, {Companion.Armor(me):0} armour). " +
-                              "I'll stay close and only defend us. Better gear would let me fight here.", "outmatched:" + biome, 10f);
-                st.Remember($"outmatched in the {place}: defending only");
+                string place = BiomeToken(biome);
+                Talk.Tell(me, P("aicompanion_following_outmatched", place, weapon != null ? Low(weapon.m_shared.m_name) : P("aicompanion_following_no_weapon"), $"{Companion.Armor(me):0}"),
+                          "outmatched:" + biome, 10f);
+                st.Remember(P("aicompanion_following_outmatched_note", place));
             }
             st.Outmatched = outmatched;
 
@@ -114,9 +115,9 @@ namespace AICompanion
             bool hurt = me.GetHealthPercentage() < 0.4f;
             st.DefendOnly = outmatched || st.Doing != Doing.Fighting;
             st.AutoStyle = outmatched || hurt ? Style.Defensive : Style.Balanced;
-            st.AutoNote = outmatched ? $"defending only: the {BiomeName(biome)} is too much for its gear"
-                        : st.Doing == Doing.Mining ? "helping you mine" : st.Doing == Doing.Chopping ? "helping you chop"
-                        : st.Doing == Doing.Fighting ? "fighting beside you" : "";
+            st.AutoNote = outmatched ? P("aicompanion_following_auto_outmatched", BiomeToken(biome))
+                        : st.Doing == Doing.Mining ? P("aicompanion_following_auto_mine") : st.Doing == Doing.Chopping ? P("aicompanion_following_auto_chop")
+                        : st.Doing == Doing.Fighting ? P("aicompanion_following_auto_fight") : "";   // (packed text: Words.P)
         }
 
         private static Doing Read(Humanoid me, Player p)
@@ -131,7 +132,11 @@ namespace AICompanion
             return Doing.Travelling;
         }
 
-        private static string BiomeName(Heightmap.Biome b) => b switch
+        /// <summary>The land's name as the game's token ("$biome_blackforest"): each player's game names it in their language.</summary>
+        private static string BiomeToken(Heightmap.Biome b) => "$biome_" + b.ToString().ToLowerInvariant();
+
+        /// <summary>The word its journal's tally used for a land before 0.24 ("place:forest"), so a land seen then still counts.</summary>
+        private static string OldBiomeWord(Heightmap.Biome b) => b switch
         {
             Heightmap.Biome.BlackForest => "forest",
             Heightmap.Biome.Swamp => "swamp",

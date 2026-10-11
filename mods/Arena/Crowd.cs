@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 using Object = UnityEngine.Object;
+using static DHack.Shared.Translations;
 
 namespace Arena
 {
@@ -27,7 +28,7 @@ namespace Arena
         internal static bool IsOpen => _open;
 
         internal static string Mood =>
-            Favour < 15f ? "Bored" : Favour < 35f ? "Restless" : Favour < 55f ? "Watching" : Favour < 75f ? "Excited" : Favour < 90f ? "Roaring" : "Ecstatic";
+            T(Favour < 15f ? "arena_mood_bored" : Favour < 35f ? "arena_mood_restless" : Favour < 55f ? "arena_mood_watching" : Favour < 75f ? "arena_mood_excited" : Favour < 90f ? "arena_mood_roaring" : "arena_mood_ecstatic");
 
         // ---- the stands ----------------------------------------------------------------------------------------------------
 
@@ -94,7 +95,7 @@ namespace Arena
             if (Contest.Fighting && Time.time - _lastAction > 16f)
             {
                 Favour = Mathf.Max(0f, Favour - dt * 0.6f);
-                if (Favour < 10f && Time.time - _lastBoo > 18f) { _lastBoo = Time.time; Boo(); Hud.Call("BOOO!", "The crowd is bored. Fight!", false); }
+                if (Favour < 10f && Time.time - _lastBoo > 18f) { _lastBoo = Time.time; Boo(); Hud.Call(T("arena_call_boo"), T("arena_call_boo_sub"), false); }
             }
 
             // what they throw you, and what they chant for (Favours.cs)

@@ -26,7 +26,7 @@ namespace PortalHub
         public const string Guid = "com.quad.portalhub";
         public const string OldGuid = "com.dhack.portalhub"; // (its id until 2026-10: settings move over by themselves, see Shared/Migration.cs)
         public const string Name = "PortalHub";
-        public const string Version = "1.3.0";
+        public const string Version = "1.4.0";
 
         internal static Plugin Instance;
         internal static DHack.Shared.ServerSettings Synced;   // the settings the server decides in multiplayer
@@ -62,6 +62,7 @@ namespace PortalHub
         private void Awake()
         {
             DHack.Shared.Migration.FromOldGuid(this, OldGuid); // first: before any setting is read
+            DHack.Shared.Translations.Load(this);   // translations/*.json: its words in the player's language
             Instance = this;
             Synced = new DHack.Shared.ServerSettings(Guid, Config, Logger);
             _enabled = Synced.Add(Config.Bind("General", "Enabled", true, "Use the portal menu when you press E on a portal. (Off: portals work like in the base game.) In multiplayer the server's value applies."));
@@ -92,6 +93,7 @@ namespace PortalHub
             UnregisterRpc();
             _harmony?.UnpatchSelf();
             Synced?.Dispose();
+            DHack.Shared.Translations.Unload();
             if (Instance == this) Instance = null;
         }
 

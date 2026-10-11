@@ -31,8 +31,12 @@ ABOUT = os.path.join(os.path.dirname(__file__), "about.md")
 THUNDERSTORE_TEAM = "Quads_Lab"  # our team on Thunderstore: each mod is its own package there
 REPO = "https://github.com/HardHeadHackerHead/valheim-mods"
 MANAGER = "https://github.com/HardHeadHackerHead/valheim-mod-manager"
-NOT_ON_THUNDERSTORE = {"ClaudeTools"}  # (rejected there: it downloads other mods' DLLs and loads mods from memory; GitHub and F7 only)
+NOT_ON_THUNDERSTORE = set()  # mods that are GitHub and F7 only (Claude Tools was, before it moved to its own repo, valheim-claude-tools)
 PARTS = ["screenshots", "how-to-use", "other-mods", "multiplayer"]
+# the languages our mods ship (the game's names: every language with 2%+ of Valheim's players), as a player reads their own
+LANGUAGES = {"English": "English", "Russian": "Русский (Russian)", "German": "Deutsch (German)", "Chinese": "简体中文 (Chinese)",
+             "Portuguese_Brazilian": "Português do Brasil (Portuguese)", "Spanish": "Español (Spanish)", "French": "Français (French)",
+             "Polish": "Polski (Polish)", "Turkish": "Türkçe (Turkish)"}
 GH_ONLY, GH_END = "<!-- GITHUB-ONLY -->", "<!-- END GITHUB-ONLY -->"
 COMMITTED = "--committed" in sys.argv
 
@@ -304,6 +308,19 @@ def page(folder, cards, keys, who, default_who, about):
     if restart and "restart" not in needs.lower():
         out += [restart, ""]
     out += block("multiplayer", hand.get("multiplayer", ""))
+
+    # the languages it speaks: its translations/*.json (Shared/Translations.cs), in the order of how many players use them
+    tr = os.path.join(d, "translations")
+    langs = [l for l in LANGUAGES if os.path.exists(os.path.join(tr, l + ".json"))] if os.path.isdir(tr) else []
+    if len(langs) > 1:
+        english = "%s/blob/main/mods/%s/translations/English.json" % (REPO, folder)
+        fix = "%s/issues/new?template=bug.yml&title=%s" % (REPO, quote("[%s] Translation: " % title))
+        out += ["## 🌍 Languages", "",
+                "**%s.** It follows the game's own language setting." % ", ".join(LANGUAGES[l] for l in langs), "",
+                "The translations were made with AI, so a few words may be off. To correct one, or to add your language, put a file in "
+                "`BepInEx/config/translations/%s/` named after the game's name for the language (`German.json`, `Italian.json`, "
+                "`Japanese.json`...) with only the lines you change, copied from [English.json](%s) " % (guid or folder, english) +
+                "(it wins over the built-in one). Or [tell us](%s) the better words and we'll put them in for everyone." % fix, ""]
 
     sets = None
     if guid and os.path.isdir(GAME_CONFIG):

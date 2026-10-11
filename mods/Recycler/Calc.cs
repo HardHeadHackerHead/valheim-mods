@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using UnityEngine;
+using static DHack.Shared.Translations;
 
 namespace Recycler
 {
@@ -86,15 +87,15 @@ namespace Recycler
         {
             var quote = new Quote { Percent = Percent(station) };
             Recipe recipe = RecipeOf(item);
-            if (recipe == null) { quote.Blocked = "This can't be recycled."; return quote; }
+            if (recipe == null) { quote.Blocked = T("recycler_cant"); return quote; }
 
             if (Plugin.RequireStation.Value && recipe.m_craftingStation != null)
             {
                 string stationName = Localization.instance.Localize(recipe.m_craftingStation.m_name);
                 CraftingStation near = CraftingStation.HaveBuildStationInRange(recipe.m_craftingStation.m_name, station.transform.position);
-                if (near == null) { quote.Blocked = $"Needs a {stationName} nearby."; return quote; }
+                if (near == null) { quote.Blocked = T("recycler_needs_station", stationName); return quote; }
                 int need = recipe.GetRequiredStationLevel(1);
-                if (near.GetLevel() < need) { quote.Blocked = $"Needs the {stationName} at level {need}."; return quote; }
+                if (near.GetLevel() < need) { quote.Blocked = T("recycler_needs_level", stationName, need); return quote; }
             }
 
 
@@ -113,7 +114,7 @@ namespace Recycler
                 if (max <= 0) continue;
                 quote.Entries.Add(new Entry { Res = req.m_resItem, Expected = expected, Min = min, Max = max });
             }
-            if (quote.Entries.Count == 0) quote.Blocked = "Too little material to get anything back.";
+            if (quote.Entries.Count == 0) quote.Blocked = T("recycler_too_little");
             return quote;
         }
 

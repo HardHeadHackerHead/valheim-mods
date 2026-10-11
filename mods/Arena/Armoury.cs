@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
+using static DHack.Shared.Translations;
 
 namespace Arena
 {
@@ -13,7 +14,7 @@ namespace Arena
     internal static class Armoury
     {
         internal enum Slot { Weapon, Shield, Helmet, Chest, Legs }
-        internal static readonly string[] SlotNames = { "Weapon", "Shield", "Helmet", "Chest", "Legs" };
+        internal static readonly string[] SlotWords = { "weapon", "shield", "helmet", "chest", "legs" };   // (arena_upgrade_weapon...)
 
         // what an upgrade to a land's piece costs, by land, steeper and steeper; a shield is cheaper, armour in between
         private static readonly int[] Base = { 20, 80, 200, 400, 700, 1100, 1600 };
@@ -74,7 +75,7 @@ namespace Arena
         internal static string Name(Player player, Slot slot, int style)
         {
             int t = TierOf(player, slot, style);
-            if (t < 0) return "none";
+            if (t < 0) return T("arena_slot_none");
             string[] list = List(slot, style);
             return Contest.ItemName(PrefabOf(list[t])) + (QualityOf(list[t]) > 2 ? " ★" + QualityOf(list[t]) : "");
         }
@@ -200,8 +201,8 @@ namespace Arena
         internal static readonly Dictionary<Trader.TradeItem, Armoury.Slot> Upgrades = new Dictionary<Trader.TradeItem, Armoury.Slot>();
         internal static readonly Dictionary<Trader.TradeItem, (int Style, int Tier, int Quality)> Switches = new Dictionary<Trader.TradeItem, (int, int, int)>();
 
-        public string GetHoverText() => Localization.instance.Localize("The Armourer\n[<color=yellow><b>$KEY_Use</b></color>] Upgrades, fresh food and meads\n[<color=yellow><b>$KEY_AltPlace + $KEY_Use</b></color>] Bring them on!");
-        public string GetHoverName() => "The Armourer";
+        public string GetHoverText() => Localization.instance.Localize("$arena_armourer\n[<color=yellow><b>$KEY_Use</b></color>] $arena_armourer_wares\n[<color=yellow><b>$KEY_AltPlace + $KEY_Use</b></color>] $arena_armourer_ready");
+        public string GetHoverName() => T("arena_armourer");
         public float GetHoverOffset() => 0f;
 
         public bool Interact(Humanoid user, bool hold, bool alt)
@@ -214,8 +215,8 @@ namespace Arena
                 go.transform.SetParent(transform, false);
                 _trader = go.AddComponent<Trader>();
                 _trader.enabled = false;
-                _trader.m_name = "The Armourer";
             }
+            _trader.m_name = T("arena_armourer");
             Restock(_trader);
             StoreGui.instance?.Show(_trader);
             return true;
@@ -242,7 +243,7 @@ namespace Arena
                 ItemDrop.ItemData shown = drop.m_itemData.Clone();
                 shown.m_quality = Mathf.Clamp(quality, 1, shown.m_shared.m_maxQuality);
                 var item = Item(drop, 1, Armoury.Price(slot, tier),
-                    $"<color=orange>Upgrade, {Armoury.SlotNames[(int)slot].ToLowerInvariant()}</color>: replaces your {Armoury.Name(me, slot, style)}, and is put on at once. Lent, like all the arena's gear.\n\n" + shown.GetTooltip(1));
+                    T("arena_upgrade_tip", "<color=orange>" + T($"arena_upgrade_{Armoury.SlotWords[(int)slot]}") + "</color>", Armoury.Name(me, slot, style)) + "\n\n" + shown.GetTooltip(1));
                 trader.m_items.Add(item);
                 Upgrades[item] = slot;
             }
@@ -261,7 +262,7 @@ namespace Arena
                     ItemDrop.ItemData shown = drop.m_itemData.Clone();
                     shown.m_quality = Mathf.Clamp(quality, 1, shown.m_shared.m_maxQuality);
                     var item = Item(drop, 1, Armoury.SwitchPrice(now),
-                        $"<color=orange>Fight with {(other == 4 ? "a bow (with arrows and a knife)" : "a " + Kit.Styles[other].ToLowerInvariant())}</color>: as good as your {Armoury.Name(me, Armoury.Slot.Weapon, style)}, and from now on your weapon upgrades are of this kind.\n\n" + shown.GetTooltip(1));
+                        T("arena_switch_tip", "<color=orange>" + T($"arena_fight_with_{other}") + "</color>", Armoury.Name(me, Armoury.Slot.Weapon, style)) + "\n\n" + shown.GetTooltip(1));
                     trader.m_items.Add(item);
                     Switches[item] = (other, now, quality);
                 }
@@ -278,7 +279,7 @@ namespace Arena
         private static void Add(Trader trader, string prefab, int stack, int price)
         {
             ItemDrop drop = ZNetScene.instance.GetPrefab(prefab)?.GetComponent<ItemDrop>();
-            if (drop != null) trader.m_items.Add(Item(drop, stack, price, Kit.Keeps(prefab, Contest.Tier) ? "" : "<color=orange>Lent</color>: from a land your world has not reached, it goes back when the fight is over.\n\n" + drop.m_itemData.GetTooltip(stack)));
+            if (drop != null) trader.m_items.Add(Item(drop, stack, price, Kit.Keeps(prefab, Contest.Tier) ? "" : T("arena_lent_tip", "<color=orange>" + T("arena_lent") + "</color>") + "\n\n" + drop.m_itemData.GetTooltip(stack)));
         }
 
         private static Trader.TradeItem Item(ItemDrop drop, int stack, int price, string tooltip) =>

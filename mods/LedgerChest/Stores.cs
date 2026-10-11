@@ -4,6 +4,7 @@ using System.Linq;
 using System.Reflection;
 using HarmonyLib;
 using UnityEngine;
+using static DHack.Shared.Translations;
 
 namespace LedgerChest
 {
@@ -72,7 +73,7 @@ namespace LedgerChest
                         string name = Localization.instance.Localize(item.m_shared.m_name);
                         lines[key] = line = new Line
                         {
-                            Key = key, Name = gear && item.m_quality > 1 ? $"{name} (level {item.m_quality})" : name, Icon = item.GetIcon(),
+                            Key = key, Name = gear && item.m_quality > 1 ? T("ledgerchest_level", name, item.m_quality) : name, Icon = item.GetIcon(),
                             MaxStack = Mathf.Max(1, item.m_shared.m_maxStackSize), Kind = Kinds.Of(item.m_shared),
                         };
                     }
@@ -190,7 +191,7 @@ namespace LedgerChest
                     moved += n;
                 }
                 total += moved;
-                if (moved > 0) sent.Add($"{moved} {Localization.instance.Localize(name)} to a chest {Vector3.Distance(to.transform.position, ledger.transform.position):0} m away");
+                if (moved > 0) sent.Add(T("ledgerchest_to_chest", moved, Localization.instance.Localize(name), Vector3.Distance(to.transform.position, ledger.transform.position).ToString("0")));
             }
             return total;
         }
@@ -227,8 +228,8 @@ namespace LedgerChest
                     if (n <= 0) break;
                     back += n;
                 }
-                if (back > 0) refused.Add($"{back} {name}");
-                if (from.ContainsItem(item) && item.m_stack > 0) kept.Add($"{item.m_stack} {name}"); // no room with you either
+                if (back > 0) refused.Add(T("ledgerchest_amount", back, name));
+                if (from.ContainsItem(item) && item.m_stack > 0) kept.Add(T("ledgerchest_amount", item.m_stack, name)); // no room with you either
             }
             int Everywhere(string n) => Total(n) + yours.CountItems(n);
             foreach (var kv in before)

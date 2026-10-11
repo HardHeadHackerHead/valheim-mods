@@ -1,0 +1,20 @@
+{
+  "slotmachine_piece": "Fortuna de Odin",
+  "slotmachine_piece_desc": "Um caça-níqueis. Coloque moedas, puxe a alavanca e três rolos giram. Três iguais pagam, e o prêmio sai pela bandeja.",
+  "slotmachine_pull": "Puxar a alavanca ({0} moedas)",
+  "slotmachine_change_bet": "Mudar a aposta",
+  "slotmachine_bet": "Aposta: {0} moedas",
+  "slotmachine_still_turning": "Os rolos ainda estão girando",
+  "slotmachine_need_coins": "Você precisa de {0} moedas para jogar",
+  "slotmachine_no_luck": "Sem sorte. Tentar de novo?",
+  "slotmachine_win": "Você ganhou {0} moedas!",
+  "slotmachine_jackpot": "JACKPOT! {0} moedas",
+  "slotmachine_paid_owed": "A Fortuna de Odin pagou seu prêmio: {0} moedas",
+  "slotmachine_pays": "{0} {1} {2}x",
+  "slotmachine_coin": "Moeda",
+  "slotmachine_boar": "Javali",
+  "slotmachine_horn": "Chifre",
+  "slotmachine_axe": "Machado",
+  "slotmachine_raven": "Corvo",
+  "slotmachine_valknut": "Valknut"
+}

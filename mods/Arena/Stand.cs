@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
+using static DHack.Shared.Translations;
 
 namespace Arena
 {
@@ -15,21 +16,21 @@ namespace Arena
         public string GetHoverText()
         {
             if (Arrival)
-                return Localization.instance.Localize("Arena Waystone\n[<color=yellow><b>$KEY_Use</b></color>] Travel home, or go up to the stands");
-            string where = Site.Known ? $"{Travel.Distance(transform.position) / 1000f:0.0} km away" : "the arena is still being found";
+                return Localization.instance.Localize("$arena_waystone\n[<color=yellow><b>$KEY_Use</b></color>] $arena_hover_home");
+            string where = Site.Known ? T("arena_km_away", (Travel.Distance(transform.position) / 1000f).ToString("0.0")) : T("arena_being_found");
             string busy = Net.RemoteFight ? $"\n<color=#e8a060>{Net.BusyText}</color>" : "";
-            string best = Ladder.Champion("road", out Ladder.Entry champ) ? $"\n<color=#e8c060>Champion of the Long Road: {champ.Name}</color>" : "";
-            return Localization.instance.Localize($"Arena Waystone\n[<color=yellow><b>$KEY_Use</b></color>] Travel to the Arena ({where})") + busy + best;
+            string best = Ladder.Champion("road", out Ladder.Entry champ) ? $"\n<color=#e8c060>{T("arena_hover_road_champion", champ.Name)}</color>" : "";
+            return Localization.instance.Localize("$arena_waystone\n[<color=yellow><b>$KEY_Use</b></color>] ") + T("arena_hover_travel", where) + busy + best;
         }
 
-        public string GetHoverName() => "Arena Waystone";
+        public string GetHoverName() => T("arena_waystone");
 
         public float GetHoverOffset() => 0f;
 
         public bool Interact(Humanoid user, bool hold, bool alt)
         {
             if (hold || user != Player.m_localPlayer) return false;
-            if (Contest.Active || Duel.Active) { Hud.Say("Not in the middle of a fight."); return true; }
+            if (Contest.Active || Duel.Active) { Hud.Say(T("arena_not_in_fight")); return true; }
             Window.Open(Arrival ? Window.Context.Arrival : Window.Context.Waystone, this);
             return true;
         }

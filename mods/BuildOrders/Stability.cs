@@ -297,7 +297,7 @@ namespace BuildOrders
             if (Input.GetKeyDown(_stabilityKey.Value) && !TypingOrMenuOpen())
             {
                 _stabilityToggle = !_stabilityToggle;
-                player.Message(MessageHud.MessageType.TopLeft, _stabilityToggle ? "Stability colours shown on the ghosts" : "Stability colours hidden");
+                player.Message(MessageHud.MessageType.TopLeft, DHack.Shared.Translations.T(_stabilityToggle ? "buildorders_stab_shown" : "buildorders_stab_hidden"));
             }
 
             bool show = _stabilityToggle || (_stabilityInPlan.Value && PlanKeyHeld);

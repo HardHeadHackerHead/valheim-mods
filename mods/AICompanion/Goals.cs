@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
+using static AICompanion.Words;
 
 namespace AICompanion
 {
@@ -12,21 +13,24 @@ namespace AICompanion
     /// </summary>
     internal class Goal
     {
-        public string What = "";                    // "bronze helmet", "bronze axe (level 2)"
+        public string What = "";                    // "bronze helmet", "bronze axe (level 2)" (packed text, Words.P)
         public ItemDrop.ItemData Item;              // upgrading this
         public Recipe Recipe;                       // or making this
         public CraftingStation Station;
         public readonly Dictionary<string, int> Raw = new Dictionary<string, int>();       // item prefab name -> how many to gather
-        public readonly Dictionary<string, string> Names = new Dictionary<string, string>(); // item prefab name -> its name in the game
-        public readonly List<string> Ask = new List<string>();                           // "2 troll hide" it cannot get itself
+        public readonly Dictionary<string, string> Names = new Dictionary<string, string>(); // item prefab name -> its m_name ("$item_copperore")
+        public readonly List<string> Ask = new List<string>();                           // "2 troll hide" it cannot get itself (packed text)
         public readonly List<KeyValuePair<Recipe, CraftingStation>> Steps = new List<KeyValuePair<Recipe, CraftingStation>>(); // materials to make on the way
-        public readonly HashSet<string> Smelt = new HashSet<string>();                   // bars that need a smelter ("copper")
+        public readonly HashSet<string> Smelt = new HashSet<string>();                   // bars that need a smelter, by m_name ("$item_copper")
         public int Cost;                                                                 // how much is missing (to pick the nearest goal)
 
         public bool Wants(string prefab) => prefab != null && Raw.ContainsKey(prefab);
 
-        /// <summary>"4 copper ore, 2 tin ore"</summary>
-        public string RawText() => string.Join(", ", Raw.Select(kv => $"{kv.Value} {Names[kv.Key]}"));
+        /// <summary>"4 copper ore, 2 tin ore" (packed text)</summary>
+        public string RawText() => string.Join(", ", Raw.Select(kv => P("aicompanion_goals_amount", kv.Value, Low(Names[kv.Key]))));
+
+        /// <summary>The names of what it gathers for it, each a packed "copper ore" (for And / Or).</summary>
+        public IEnumerable<string> Things() => Names.Values.Select(Goals.Thing);
     }
 
     internal static class Goals
@@ -161,7 +165,7 @@ namespace AICompanion
                 int next = item.m_quality + 1;
                 CraftingStation at = stations.FirstOrDefault(s => s.m_name == r.m_craftingStation.m_name && s.GetLevel() >= r.GetRequiredStationLevel(next));
                 if (at == null) continue;
-                var g = new Goal { Item = item, Station = at, What = $"{Loc(item.m_shared.m_name)} (level {next})" };
+                var g = new Goal { Item = item, Station = at, What = P("aicompanion_goals_upgrade_what", Low(item.m_shared.m_name), next) };
                 if (Build(me, chests, stations, g, r, next)) { if (me.IsItemEquiped(item)) g.Cost -= 1; goals.Add(g); }
             }
             foreach (Recipe r in ObjectDB.instance.m_recipes)
@@ -170,7 +174,7 @@ namespace AICompanion
                 if (r.m_item.m_itemData.m_shared.m_itemType == ItemDrop.ItemData.ItemType.Ammo) continue; // arrows are made when it has the things (Upgrades), never a goal
                 CraftingStation at = r.m_craftingStation == null ? null : stations.FirstOrDefault(s => s.m_name == r.m_craftingStation.m_name && s.GetLevel() >= Mathf.Max(1, r.m_minStationLevel));
                 if (at == null && r.m_craftingStation != null) continue; // (no station needed: made anywhere)
-                var g = new Goal { Recipe = r, Station = at, What = Loc(r.m_item.m_itemData.m_shared.m_name) };
+                var g = new Goal { Recipe = r, Station = at, What = P("aicompanion_goals_make_what", Low(r.m_item.m_itemData.m_shared.m_name)) };
                 if (Build(me, chests, stations, g, r, 1)) goals.Add(g);
             }
             // Its mission first, while it is still among them (it sticks to what it set out to do); never one it gave up within the hour.
@@ -229,12 +233,12 @@ namespace AICompanion
             if (CanGather(me, prefab))
             {
                 g.Raw[prefab] = (g.Raw.TryGetValue(prefab, out int had) ? had : 0) + need;
-                g.Names[prefab] = Loc(item.m_itemData.m_shared.m_name);
+                g.Names[prefab] = item.m_itemData.m_shared.m_name;
                 return;
             }
             if (depth < 3 && _smeltedFrom.TryGetValue(prefab, out ItemDrop ore))
             {
-                g.Smelt.Add(Loc(item.m_itemData.m_shared.m_name));
+                g.Smelt.Add(item.m_itemData.m_shared.m_name);
                 Expand(me, chests, stations, g, ore, need, depth + 1);
                 return;
             }
@@ -247,7 +251,7 @@ namespace AICompanion
                 if (!g.Steps.Any(s => s.Key == made)) g.Steps.Add(new KeyValuePair<Recipe, CraftingStation>(made, at));
                 return;
             }
-            g.Ask.Add($"{need} {Loc(item.m_itemData.m_shared.m_name)}");
+            g.Ask.Add(P("aicompanion_goals_amount", need, Low(item.m_itemData.m_shared.m_name)));
             g.Cost += 100;
         }
 
@@ -273,15 +277,29 @@ namespace AICompanion
             if (st.GoalSaid != g.What)
             {
                 st.GoalSaid = g.What;
-                string need = g.Raw.Count > 0 ? $" I still need {g.RawText()}." : "";
-                string smelt = g.Smelt.Count > 0 ? $" ({string.Join(" and ", g.Smelt)} need{(g.Smelt.Count == 1 ? "s" : "")} a smelter: I'll put the ore in my chest.)" : "";
-                Talk.Mention(me, $"I'm working toward a {g.What}.{need}{smelt}", "goal:" + g.What, 30f); // (its menu shows it: not for chat)
-                st.Remember($"working toward a {g.What}");
+                string need = g.Raw.Count > 0 ? " " + P("aicompanion_goals_still_need", g.RawText()) : "";
+                string smelt = g.Smelt.Count > 0 ? " " + P(g.Smelt.Count == 1 ? "aicompanion_goals_smelter_one" : "aicompanion_goals_smelter_many", And(g.Smelt.Select(Thing))) : "";
+                Talk.Mention(me, P("aicompanion_goals_working_toward", g.What) + need + smelt, "goal:" + g.What, 30f); // (its menu shows it: not for chat)
+                st.Remember(P("aicompanion_goals_remember_working", g.What));
             }
             if (g.Ask.Count > 0)
-                Talk.Tell(me, $"For my {g.What} I need {string.Join(" and ", g.Ask)}, and I can't get that myself. Do you have any? Put it in my chest or give it to me.", "ask:" + g.What, 60f);
+                Talk.Tell(me, P("aicompanion_goals_ask", g.What, And(g.Ask)), "ask:" + g.What, 60f);
         }
 
-        private static string Loc(string s) => Localization.instance.Localize(s).ToLowerInvariant();
+        /// <summary>A thing's name ("$item_copper") as packed text, in lower case mid-sentence: "copper".</summary>
+        public static string Thing(string token) => P("aicompanion_goals_thing", Low(token));
+
+        /// <summary>"copper, tin and iron" (packed text); the items are packed text themselves.</summary>
+        public static string And(IEnumerable<string> items) => Join(items, "aicompanion_goals_and");
+
+        /// <summary>"copper, tin or iron" (packed text).</summary>
+        public static string Or(IEnumerable<string> items) => Join(items, "aicompanion_goals_or");
+
+        private static string Join(IEnumerable<string> items, string key)
+        {
+            List<string> list = items.ToList();
+            if (list.Count <= 1) return list.FirstOrDefault() ?? "";
+            return P(key, string.Join(", ", list.Take(list.Count - 1)), list[list.Count - 1]);
+        }
     }
 }

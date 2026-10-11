@@ -2,6 +2,7 @@ using System.Collections.Generic;
 using System.Linq;
 using HarmonyLib;
 using UnityEngine;
+using static DHack.Shared.Translations;
 
 namespace FeedFromChests
 {
@@ -44,14 +45,15 @@ namespace FeedFromChests
             State state = StateOf(f, out double seconds);
             ZDO zdo = Zdo(f);
             Fermenter.ItemConversion c = zdo != null ? f.m_conversion.FirstOrDefault(x => x.m_from != null && x.m_from.gameObject.name.GetStableHashCode() == zdo.GetInt(ZDOVars.s_content)) : null;
-            string roof = CanFerment(f) ? "" : "   <color=#ff9a66>needs a roof and walls round it to ferment</color>";
+            string roof = CanFerment(f) ? "" : "   <color=#ff9a66>" + T("feedfromchests_needs_roof") + "</color>";
             switch (state)
             {
-                case State.Empty: return "Empty" + roof;
-                case State.Ready: return c != null ? $"Ready: {c.m_producedItems} {Localization.instance.Localize(c.m_to.m_itemData.m_shared.m_name)}" : "Ready";
+                case State.Empty: return T("feedfromchests_empty") + roof;
+                case State.Ready: return c != null ? T("feedfromchests_ready", c.m_producedItems, Localization.instance.Localize(c.m_to.m_itemData.m_shared.m_name)) : T("feedfromchests_ready_alone");
                 default:
-                    string name = c != null ? Localization.instance.Localize(c.m_from.m_itemData.m_shared.m_name) : "mead base";
-                    return $"{name}: {Mathf.Clamp01((float)(seconds / f.m_fermentationDuration)) * 100f:0}% (about {Mathf.CeilToInt((float)((f.m_fermentationDuration - seconds) / 60.0))} min left)" + roof;
+                    string name = c != null ? Localization.instance.Localize(c.m_from.m_itemData.m_shared.m_name) : T("feedfromchests_mead_base");
+                    return T("feedfromchests_fermenting", name, (Mathf.Clamp01((float)(seconds / f.m_fermentationDuration)) * 100f).ToString("0"),
+                             Mathf.CeilToInt((float)((f.m_fermentationDuration - seconds) / 60.0))) + roof;
             }
         }
 
@@ -161,7 +163,7 @@ namespace FeedFromChests
             Plugin plugin = Plugin.Instance;
             if (plugin == null || string.IsNullOrEmpty(__result) || !plugin.AutoEnabled) return;
             AutoSetting s = AutoFeed.Read(__instance);
-            __result += $"\n<size=14>{Ferment.Line(__instance)}\nAuto-load from chests: {(s.On ? "<color=#8fe388>ON</color>" : "off")}, taps itself when ready: {(s.TakeOff ? "<color=#8fe388>ON</color>" : "off")}</size>";
+            __result += $"\n<size=14>{Ferment.Line(__instance)}\n" + T("feedfromchests_ferment_hover", AutoFeed.OnOff(s.On), AutoFeed.OnOff(s.TakeOff)) + "</size>";
         }
     }
 }

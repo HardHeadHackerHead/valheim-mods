@@ -1,4 +1,5 @@
 using UnityEngine;
+using static DHack.Shared.Translations;
 
 namespace Ziplines
 {
@@ -37,11 +38,11 @@ namespace Ziplines
                 }
                 catch (System.Exception) { /* (ground the game cannot tell us about: the land itself is used) */ }
                 if (t > 0.06f && t < 0.94f && ground > float.MinValue && p.y - hang < ground + 0.25f)
-                    return $"The line would drag along the ground {length * t:0} m from here. Make the posts higher, or the line shorter.";
+                    return T("ziplines_drag", (length * t).ToString("0"));
                 if (Physics.Linecast(previous, p, out RaycastHit hit, mask, QueryTriggerInteraction.Ignore))
                 {
                     bool mine = hit.collider.GetComponentInParent<Post>() is Post post && (post == ignoreA || post == ignoreB);
-                    if (!mine) return $"Something is in the way {length * t:0} m along the line ({Describe(hit.collider)}).";
+                    if (!mine) return T("ziplines_in_way", (length * t).ToString("0"), Describe(hit.collider));
                 }
                 previous = p;
             }
@@ -51,8 +52,8 @@ namespace Ziplines
         private static string Describe(Collider c)
         {
             Piece piece = c.GetComponentInParent<Piece>();
-            if (piece != null) return Localization.instance.Localize(piece.m_name).ToLowerInvariant();
-            return c.GetComponentInParent<TreeBase>() != null || c.GetComponentInParent<TreeLog>() != null ? "a tree" : c.name.ToLowerInvariant().Contains("terrain") ? "the ground" : "a rock or a tree";
+            if (piece != null) return Localization.instance.Localize(piece.m_name);   // (as the game writes it: lower case would be wrong for German nouns)
+            return c.GetComponentInParent<TreeBase>() != null || c.GetComponentInParent<TreeLog>() != null ? T("ziplines_a_tree") : c.name.ToLowerInvariant().Contains("terrain") ? T("ziplines_the_ground") : T("ziplines_rock_or_tree");
         }
     }
 }

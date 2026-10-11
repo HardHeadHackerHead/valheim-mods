@@ -76,7 +76,7 @@ namespace BuildOrders
             _stabilityDirty = true;
             Save();
             Send("A|" + Encode(order));
-            player.Message(MessageHud.MessageType.TopLeft, $"Planned: {PieceName(prefab)}  ({_orders.Count} order(s))");
+            player.Message(MessageHud.MessageType.TopLeft, DHack.Shared.Translations.T("buildorders_planned", PieceName(prefab), _orders.Count));
             return true;
         }
 

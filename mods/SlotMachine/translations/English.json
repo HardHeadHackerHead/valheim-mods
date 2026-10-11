@@ -1,0 +1,20 @@
+{
+  "slotmachine_piece": "Odin's Fortune",
+  "slotmachine_piece_desc": "A slot machine. Put coins in, pull the lever, and three reels spin. Three alike pay out, and the winnings come out of the tray.",
+  "slotmachine_pull": "Pull the lever ({0} coins)",
+  "slotmachine_change_bet": "Change the bet",
+  "slotmachine_bet": "Bet: {0} coins",
+  "slotmachine_still_turning": "The reels are still turning",
+  "slotmachine_need_coins": "You need {0} coins to play",
+  "slotmachine_no_luck": "No luck. Try again?",
+  "slotmachine_win": "You win {0} coins!",
+  "slotmachine_jackpot": "JACKPOT! {0} coins",
+  "slotmachine_paid_owed": "Odin's Fortune paid your winnings: {0} coins",
+  "slotmachine_pays": "{0} {1} {2}x",
+  "slotmachine_coin": "Coin",
+  "slotmachine_boar": "Boar",
+  "slotmachine_horn": "Horn",
+  "slotmachine_axe": "Axe",
+  "slotmachine_raven": "Raven",
+  "slotmachine_valknut": "Valknut"
+}

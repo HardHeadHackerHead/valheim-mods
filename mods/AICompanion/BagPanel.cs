@@ -4,6 +4,7 @@ using HarmonyLib;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
+using static DHack.Shared.Translations;
 
 namespace AICompanion
 {
@@ -37,7 +38,7 @@ namespace AICompanion
                 if (!_panel.gameObject.activeSelf) _panel.gameObject.SetActive(true);
                 if (_shown != c) { _shown = c; _placedFor = Vector2.zero; }
                 _grid.UpdateInventory(c.GetInventory(), null, DragItem(gui));
-                if (_name != null) _name.text = $"{Companion.NameOf(c)}'s bag and gear";
+                if (_name != null) _name.text = T("aicompanion_bagpanel_title", Companion.NameOf(c));
                 if (_weight != null) _weight.text = $"{Carry.Weight(c):0}/{Carry.Max(c):0}";
                 var size = new Vector2(Screen.width, Screen.height);
                 if (_placedFor != size) { Place(gui); _placedFor = size; }
@@ -113,7 +114,7 @@ namespace AICompanion
         {
             Player p = Player.m_localPlayer;
             if (item == null || p == null || _shown == null) return;
-            if (!Companion.Take(_shown, p, item, out string why) && why != null) p.Message(MessageHud.MessageType.Center, why);
+            if (!Companion.Take(_shown, p, item, out string why) && why != null) p.Message(MessageHud.MessageType.Center, Words.Show(why));
         }
 
         /// <summary>Right of your inventory (top aligned, past its armour and weight readout), or under the crafting panel when that would overlap it.</summary>
@@ -177,8 +178,8 @@ namespace AICompanion
             Player p = Player.m_localPlayer;
             if (mod != InventoryGrid.Modifier.Move || item == null || c == null || p == null || Open(__instance) != null || DragGo(__instance) != null) return true;
             string why;
-            if (BagPanel.IsBagGrid(grid)) { if (!Companion.Take(c, p, item, out why) && why != null) p.Message(MessageHud.MessageType.Center, why); return false; }
-            if (grid == __instance.m_playerGrid) { if (!Companion.Give(c, p, item, out why) && why != null) p.Message(MessageHud.MessageType.Center, why); return false; }
+            if (BagPanel.IsBagGrid(grid)) { if (!Companion.Take(c, p, item, out why) && why != null) p.Message(MessageHud.MessageType.Center, Words.Show(why)); return false; }
+            if (grid == __instance.m_playerGrid) { if (!Companion.Give(c, p, item, out why) && why != null) p.Message(MessageHud.MessageType.Center, Words.Show(why)); return false; }
             return true;
         }
     }

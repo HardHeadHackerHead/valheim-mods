@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using HarmonyLib;
 using UnityEngine;
+using static DHack.Shared.Translations;
 
 namespace PortalHub
 {
@@ -43,8 +44,8 @@ namespace PortalHub
             if (dest.Length == 0) return;
 
             PortalInfo target = plugin.Find(dest);
-            string name = target != null ? (string.IsNullOrWhiteSpace(target.Name) ? "an unnamed portal" : target.Name) : "another portal";
-            __result += "\n<color=#F2C75A>Goes to:</color> " + name;
+            string name = target != null ? (string.IsNullOrWhiteSpace(target.Name) ? T("portalhub_hover_unnamed") : target.Name) : T("portalhub_hover_another");
+            __result += "\n<color=#F2C75A>" + T("portalhub_hover_goes_to") + "</color> " + name;
         }
     }
 

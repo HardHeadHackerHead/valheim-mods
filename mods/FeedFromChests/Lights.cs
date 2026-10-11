@@ -98,7 +98,8 @@ namespace FeedFromChests
         {
             Plugin plugin = Plugin.Instance;
             if (plugin == null || string.IsNullOrEmpty(__result) || !plugin.RefuelsItself(__instance)) return;
-            __result += $"\n<size=14>Refuels itself with {Localization.instance.Localize(__instance.m_fuelItem.m_itemData.m_shared.m_name)} from chests within {plugin.FeedRadius:0} m</size>";
+            __result += "\n<size=14>" + DHack.Shared.Translations.T("feedfromchests_refuels", Localization.instance.Localize(__instance.m_fuelItem.m_itemData.m_shared.m_name),
+                plugin.FeedRadius.ToString("0")) + "</size>";
         }
     }
 }

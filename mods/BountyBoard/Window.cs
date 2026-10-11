@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using TMPro;
 using UnityEngine;
+using static DHack.Shared.Translations;
 
 namespace BountyBoard
 {
@@ -73,7 +74,7 @@ namespace BountyBoard
             State s = plugin?.Current;
             Player p = Player.m_localPlayer;
             var sb = new System.Text.StringBuilder();
-            sb.Append(_tab).Append('|').Append(Plugin.ShowTracker.Value).Append('|').Append(Plugin.MaxActive.Value).Append('|').Append(Toasting ? _toast : "");
+            sb.Append(Localization.instance.GetSelectedLanguage()).Append('|').Append(_tab).Append('|').Append(Plugin.ShowTracker.Value).Append('|').Append(Plugin.MaxActive.Value).Append('|').Append(Toasting ? _toast : "");
             sb.Append('|').Append(s == null ? (Time.unscaledTime - _openedAt > 3f ? "silent" : "asking") : s.Total.ToString());
             if (s != null && p != null)
             {
@@ -97,7 +98,7 @@ namespace BountyBoard
 
             _window = GameUi.Window("BountyBoardWindow", new Vector2(W, H));
             Transform w = _window;
-            GameUi.Label(w, "Bounty Board", new Vector2(Pad, -20f), new Vector2(360f, 44f), 34f, GameUi.Warm, GameUi.Norse);
+            GameUi.Label(w, T("bountyboard_piece"), new Vector2(Pad, -20f), new Vector2(360f, 44f), 34f, GameUi.Warm, GameUi.Norse);
             GameUi.Braid(w, new Vector2(0f, -76f), W - Pad * 2f);
 
             Plugin plugin = Plugin.Instance;
@@ -106,20 +107,22 @@ namespace BountyBoard
             if (state == null || player == null)
             {
                 GameUi.Label(w, Time.unscaledTime - _openedAt > 3f
-                        ? "The host's game is not answering.\n\n<size=85%><color=#bdb7a9>BountyBoard has to be installed on the host too: it keeps the group's contracts.</color></size>"
-                        : "Reading the board...", new Vector2(Pad, -100f), new Vector2(W - Pad * 2f, 160f), 20f, GameUi.Text);
+                        ? T("bountyboard_no_answer") + "\n\n<size=85%><color=#bdb7a9>" + T("bountyboard_no_answer_hint") + "</color></size>"
+                        : T("bountyboard_reading"), new Vector2(Pad, -100f), new Vector2(W - Pad * 2f, 160f), 20f, GameUi.Text);
                 return;
             }
 
             // the group's standing, top right
             int rank = Rules.Rank(state.Total);
-            string next = rank + 1 < Rules.RankAt.Length ? $"  ·  next rank at {Rules.RankAt[rank + 1]}" : "";
-            GameUi.Label(w, $"Your group: <color=#ffd27a>{Rules.RankName[rank]}</color>\n<size=80%><color=#bdb7a9>{state.Total} done  ·  +{Rules.RankBonus[rank]}% on rewards{next}</color></size>",
+            string next = rank + 1 < Rules.RankAt.Length ? "  ·  " + T("bountyboard_next_rank", Rules.RankAt[rank + 1]) : "";
+            string rankName = "<color=#ffd27a>" + Localization.instance.Localize(Rules.RankName[rank]) + "</color>";
+            GameUi.Label(w, T("bountyboard_your_group", rankName) + "\n<size=80%><color=#bdb7a9>" + T("bountyboard_done_count", state.Total) + "  ·  " +
+                            T("bountyboard_rank_bonus", Rules.RankBonus[rank]) + next + "</color></size>",
                 new Vector2(-Pad, -22f), new Vector2(420f, 50f), 19f, GameUi.Text, GameUi.Sans, TextAlignmentOptions.TopRight, new Vector2(1f, 1f));
 
             // tabs
             int toClaim = plugin.ToClaim();
-            string[] tabs = { $"Notices ({state.Posted.Count})", $"Running ({state.Active.Count}/{Plugin.MaxActive.Value})", $"Rewards ({toClaim})" };
+            string[] tabs = { T("bountyboard_tab_notices", state.Posted.Count), T("bountyboard_tab_running", state.Active.Count, Plugin.MaxActive.Value), T("bountyboard_tab_rewards", toClaim) };
             float tabW = (W - Pad * 2f - 16f) / 3f;
             for (int i = 0; i < 3; i++)
             {
@@ -141,48 +144,48 @@ namespace BountyBoard
             if (_tab == 0)
             {
                 bool full = state.Active.Count >= Plugin.MaxActive.Value;
-                if (state.Posted.Count == 0) Note("Nothing is posted yet. Check back tomorrow.");
-                if (full && state.Posted.Count > 0) Note($"The group is already on {Plugin.MaxActive.Value} contracts. Finish one before taking another.");
+                if (state.Posted.Count == 0) Note(T("bountyboard_none_posted"));
+                if (full && state.Posted.Count > 0) Note(T("bountyboard_full", Plugin.MaxActive.Value));
                 foreach (Bounty b in state.Posted)
                 {
                     bool taken = state.Active.Any(a => a.Id == b.Id), finished = state.Done.Any(d => d.Id == b.Id);
                     Bounty bounty = b;
-                    Card(state, b, 0, ref y, cardW, finished ? "Done" : taken ? "Taken" : "Take it", !finished && !taken && !full, false,
-                        () => { plugin.Take(bounty); Toast("Taken for the whole group."); });
+                    Card(state, b, 0, ref y, cardW, finished ? T("bountyboard_button_done") : taken ? T("bountyboard_button_taken") : T("bountyboard_button_take"), !finished && !taken && !full, false,
+                        () => { plugin.Take(bounty); Toast(T("bountyboard_toast_taken")); });
                 }
             }
             else if (_tab == 1)
             {
-                if (state.Active.Count == 0) Note("No contracts are running. Take one from the notices.");
+                if (state.Active.Count == 0) Note(T("bountyboard_none_running"));
                 foreach (Bounty b in state.Active.ToList())
                 {
                     bool gather = b.Kind == Kind.Gather;
                     int have = gather ? Mathf.Min(player.GetInventory().CountItems(Rules.ItemName(b.Target)), b.Count - b.Progress) : 0;
                     Bounty bounty = b;
-                    RectTransform card = Card(state, b, b.Progress, ref y, cardW, gather ? (have > 0 ? $"Hand in {have}" : "Hand in") : "Hunting", gather && have > 0, gather && have > 0,
-                        () => { int n = plugin.HandIn(bounty); if (n > 0) Toast("Handed in " + n + "."); });
+                    RectTransform card = Card(state, b, b.Progress, ref y, cardW, gather ? (have > 0 ? T("bountyboard_button_hand_in_n", have) : T("bountyboard_button_hand_in")) : T("bountyboard_button_hunting"), gather && have > 0, gather && have > 0,
+                        () => { int n = plugin.HandIn(bounty); if (n > 0) Toast(T("bountyboard_toast_handed", n)); });
                     if (b.Progress == 0)
-                        GameUi.Button(card, "Give back", new Vector2(cardW - ButtonW - 14f, -58f), new Vector2(ButtonW, 32f), () => _pending = () => plugin.Abandon(bounty), true, 15f);
+                        GameUi.Button(card, T("bountyboard_button_give_back"), new Vector2(cardW - ButtonW - 14f, -58f), new Vector2(ButtonW, 32f), () => _pending = () => plugin.Abandon(bounty), true, 15f);
                 }
             }
             else
             {
                 List<Bounty> mine = state.Done.Where(plugin.Claimable).ToList();
-                if (mine.Count == 0) Note("Nothing to collect. Finished contracts show up here until you take your reward.");
+                if (mine.Count == 0) Note(T("bountyboard_none_to_collect"));
                 foreach (Bounty b in mine)
                 {
                     Bounty bounty = b;
-                    Card(state, b, b.Count, ref y, cardW, "Collect", true, true, () => plugin.Claim(bounty));
+                    Card(state, b, b.Count, ref y, cardW, T("bountyboard_button_collect"), true, true, () => plugin.Claim(bounty));
                 }
             }
             _list.sizeDelta = new Vector2(_list.sizeDelta.x, Mathf.Max(0f, y - CardGap));   // (no gap after the last card: it would scroll for nothing)
             _list.anchoredPosition = new Vector2(0f, Mathf.Clamp(scrolled, 0f, Mathf.Max(0f, y)));
 
             // bottom: what just happened (or a tip), and the switch for the contracts on your screen
-            GameUi.Label(w, Toasting ? _toast : "Kills count when you land the last blow, whoever you are with.", new Vector2(Pad, -(H - 66f)),
+            GameUi.Label(w, Toasting ? _toast : T("bountyboard_tip"), new Vector2(Pad, -(H - 66f)),
                 new Vector2(W - Pad * 2f - 300f, 48f), 17f, Toasting ? GameUi.Good : GameUi.Dim);
             bool on = Plugin.ShowTracker.Value;
-            var toggle = GameUi.Button(w, on ? "Contracts on screen: On" : "Contracts on screen: Off", new Vector2(W - Pad - 284f, -(H - 72f)), new Vector2(284f, 44f),
+            var toggle = GameUi.Button(w, T("bountyboard_tracker_toggle", Localization.instance.Localize(on ? "$hud_on" : "$hud_off")), new Vector2(W - Pad - 284f, -(H - 72f)), new Vector2(284f, 44f),
                 () => _pending = () => Plugin.ShowTracker.Value = !Plugin.ShowTracker.Value, true, 17f);
             if (on) GameUi.Label(toggle).color = GameUi.Gold;
         }
@@ -195,8 +198,10 @@ namespace BountyBoard
             float textW = width - 96f - ButtonW - 30f;
 
             GameUi.Icon(card, new Vector2(14f, -20f), new Vector2(64f, 64f), IconOf(b));
-            GameUi.Label(card, Rules.Describe(b), new Vector2(92f, -10f), new Vector2(textW, 28f), 21f, GameUi.Text);
-            TMP_Text tag = GameUi.Label(card, $"{Rules.StarNames[Mathf.Clamp(b.Stars, 1, 3)]}  ·  {Rules.TierNames[Mathf.Clamp(b.Tier, 0, Rules.TierNames.Length - 1)]}",
+            TMP_Text what = GameUi.Label(card, Rules.Describe(b), new Vector2(92f, -10f), new Vector2(textW, 28f), 21f, GameUi.Text);
+            what.textWrappingMode = TextWrappingModes.NoWrap;   // (one line, smaller when a language's words run long)
+            what.enableAutoSizing = true; what.fontSizeMin = 15f; what.fontSizeMax = 21f;
+            TMP_Text tag = GameUi.Label(card, Localization.instance.Localize(Rules.StarNames[Mathf.Clamp(b.Stars, 1, 3)]) + "  ·  " + Rules.TierName(b.Tier),
                 new Vector2(92f, -42f), new Vector2(textW, 22f), 16f, StarColor(b.Stars));
             tag.enableWordWrapping = false;
 

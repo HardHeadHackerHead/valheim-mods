@@ -2,6 +2,7 @@ using System.Linq;
 using System.Collections.Generic;
 using HarmonyLib;
 using UnityEngine;
+using static DHack.Shared.Translations;
 
 namespace AICompanion
 {
@@ -110,8 +111,8 @@ namespace AICompanion
         {
             if (!Companion.Is(__instance)) return;
             string status = Companion.StatusOf(__instance);
-            __result = Localization.instance.Localize($"{Companion.NameOf(__instance)}\n[<color=yellow><b>$KEY_Use</b></color>] Menu") +
-                       (string.IsNullOrEmpty(status) ? "" : $"\n<size=14>{status}</size>");
+            __result = Localization.instance.Localize($"{Companion.NameOf(__instance)}\n[<color=yellow><b>$KEY_Use</b></color>] ") + T("aicompanion_patches_menu") +
+                       (string.IsNullOrEmpty(status) ? "" : $"\n<size=14>{Words.Show(status)}</size>");
         }
     }
 
@@ -120,7 +121,7 @@ namespace AICompanion
     {
         private static void Postfix(Container __instance, ref string __result)
         {
-            if (Companion.Is(__instance)) __result = Localization.instance.Localize($"{Companion.NameOf(__instance)}\n[<color=yellow><b>$KEY_Use</b></color>] Menu");
+            if (Companion.Is(__instance)) __result = Localization.instance.Localize($"{Companion.NameOf(__instance)}\n[<color=yellow><b>$KEY_Use</b></color>] ") + T("aicompanion_patches_menu");
         }
     }
 
@@ -156,7 +157,7 @@ namespace AICompanion
             float lost = __state - h.GetHealth();
             if (lost <= 0.05f) return;
             Character attacker = hit.GetAttacker();
-            string by = attacker != null ? Localization.instance.Localize(attacker.m_name)
+            string by = attacker != null ? attacker.m_name   // (its token, "$enemy_troll": the journal's tally and Journal.Fell)
                       : Time.time - Aoe_OnHit.LastAt < 0.5f && Aoe_OnHit.LastWhat != null ? Aoe_OnHit.LastWhat
                       : hit.m_hitType.ToString().ToLowerInvariant();
             BrainState st = Brain.Get(h);
@@ -220,25 +221,25 @@ namespace AICompanion
                 ZDO z = Companion.Zdo(killer);
                 z.Set(Keys.Kills, z.GetInt(Keys.Kills, 0) + 1);
                 BrainState ks = Brain.Get(killer as Humanoid);
-                if (ks != null) { ks.FightKills++; ks.Remember("killed " + Localization.instance.Localize(__instance.m_name)); }
+                if (ks != null) { ks.FightKills++; ks.Remember(Words.P("aicompanion_patches_killed", __instance.m_name)); }
                 Journal.Kill(killer as Humanoid, __instance);
             }
             if (!(__instance is Humanoid h) || !Companion.Is(h)) return;
             BrainState st = Brain.Get(h);
-            if (st != null && st.InCombat) { st.Taken += Mathf.Max(0f, st.LastHealth); Brain.Summarise(st, "fell"); }
+            if (st != null && st.InCombat) { st.Taken += Mathf.Max(0f, st.LastHealth); Brain.Summarise(st, true); }
             ZNetView view = h.GetComponent<ZNetView>();
             if (!view.IsOwner()) return;
             try
             {
                 int carried = h.GetInventory().NrOfItems();
-                string by = LastHit(h)?.GetAttacker() is Character k ? Localization.instance.Localize(k.m_name) : st != null && Time.time - st.LastHurtAt < 5f ? st.LastHurtBy : null;
+                string by = LastHit(h)?.GetAttacker() is Character k ? k.m_name : st != null && Time.time - st.LastHurtAt < 5f ? st.LastHurtBy : null;
                 if (by == null) // poison, fire, frost: damage over time comes with no attacker
                 {
                     StatusEffect dot = h.GetSEMan().GetStatusEffects().FirstOrDefault(se => se is SE_Poison || se is SE_Burning);
-                    by = dot != null ? Localization.instance.Localize(dot.m_name).ToLowerInvariant() : LastHit(h) != null ? LastHit(h).m_hitType.ToString().ToLowerInvariant() : "?";
+                    by = dot != null ? dot.m_name : LastHit(h) != null ? LastHit(h).m_hitType.ToString().ToLowerInvariant() : "?";
                 }
-                Plugin.Instance?.Note($"{Companion.NameOf(h)} fell at {h.transform.position:F0} (killed by {by}, carrying {carried} item stacks)");
-                if (st != null) Activity.Log(h, $"FELL at {h.transform.position:F0}, killed by {by}. " + Activity.Vitals(h, st));
+                Plugin.Instance?.Note($"{Companion.NameOf(h)} fell at {h.transform.position:F0} (killed by {Localization.instance.Localize(by)}, carrying {carried} item stacks)");
+                if (st != null) Activity.Log(h, $"FELL at {h.transform.position:F0}, killed by {Localization.instance.Localize(by)}. " + Activity.Vitals(h, st));
                 Journal.Fell(h, by, h.transform.position);
                 carried = Companion.DropGear(h);
                 Player master = Companion.Master(h);
@@ -246,7 +247,8 @@ namespace AICompanion
                 {
                     Home.MarkDead(master, Companion.IdOf(h), h.transform.position, h, carried > 0);
                     bool bed = Companion.Zdo(h).GetBool(Keys.HasBed, false);
-                    Plugin.Tell($"{Companion.NameOf(h)} has fallen. {(carried > 0 ? "Everything they had is in their tombstone (the skull on your map). " : "")}They wake {(bed ? "in their bed" : "beside you")} in {Plugin.RespawnSeconds.Value:0} s{(carried > 0 ? " and put their gear back on (or go back for it)" : "")}.");
+                    Plugin.Tell(Words.P(carried > 0 ? (bed ? "aicompanion_patches_fallen_tomb_bed" : "aicompanion_patches_fallen_tomb") : (bed ? "aicompanion_patches_fallen_bed" : "aicompanion_patches_fallen"),
+                        Companion.NameOf(h), $"{Plugin.RespawnSeconds.Value:0}"));
                 }
                 Net.AnnounceFall(h, h.transform.position, carried > 0);
             }
@@ -284,17 +286,17 @@ namespace AICompanion
             {
                 if (!Companion.IsMine(c, __instance) || Companion.OrderOf(c) != Order.Follow) continue;
                 if (Vector3.Distance(c.transform.position, __instance.transform.position) > 25f) continue;
-                if (distantTeleport && !c.IsTeleportable(false)) { Plugin.Tell($"{Companion.NameOf(c)} cannot go through: they carry something the portal refuses"); continue; }
+                if (distantTeleport && !c.IsTeleportable(false)) { Plugin.Tell(Words.P("aicompanion_patches_portal_refuses", Companion.NameOf(c))); continue; }
                 ZNetView view = c.GetComponent<ZNetView>();
                 Container gear = c.GetComponent<Container>();
-                if (gear != null && !Containers.Take(gear)) { Plugin.Tell($"{Companion.NameOf(c)} cannot come through: someone has their gear open"); continue; } // (its bag loaded fresh as it is taken over)
+                if (gear != null && !Containers.Take(gear)) { Plugin.Tell(Words.P("aicompanion_patches_portal_gear_open", Companion.NameOf(c))); continue; } // (its bag loaded fresh as it is taken over)
                 if (!view.IsOwner()) view.ClaimOwnership();
                 Vector3 to = pos - rot * Vector3.forward * 2f;
                 c.transform.position = to;
                 Rigidbody body = c.GetComponent<Rigidbody>();
                 if (body != null) { body.position = to; body.linearVelocity = Vector3.zero; }
                 view.GetZDO().SetPosition(to); // it is unloaded here at once; it appears there when you arrive
-                Brain.Get(c)?.Remember(dungeon ? "went into the dungeon with you" : pos.y > 3000f || c.transform.position.y > 3000f ? "came out with you" : "came through the portal");
+                Brain.Get(c)?.Remember(Words.P(dungeon ? "aicompanion_patches_into_dungeon" : pos.y > 3000f || c.transform.position.y > 3000f ? "aicompanion_patches_came_out" : "aicompanion_patches_through_portal"));
                 Plugin.Instance?.Note($"{Companion.NameOf(c)} goes {(dungeon ? "into the dungeon" : "through")} with {__instance.GetPlayerName()}");
                 if (dungeon) { Journal.Place(c, "dungeon", true); Banter.Dungeon(c); }
             }

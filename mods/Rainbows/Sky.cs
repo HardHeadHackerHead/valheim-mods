@@ -1,5 +1,6 @@
 using System.Linq;
 using UnityEngine;
+using static DHack.Shared.Translations;
 
 namespace Rainbows
 {
@@ -77,7 +78,7 @@ namespace Rainbows
             {
                 _blessed = true;
                 Blessing.Give(player, _double);
-                if (Plugin.Buff.Value) player.Message(MessageHud.MessageType.Center, _double ? "Double Rainbow's Blessing" : "Rainbow's Blessing");
+                if (Plugin.Buff.Value) player.Message(MessageHud.MessageType.Center, _double ? T("rainbows_double_blessing") : T("rainbows_blessing"));
             }
             Draw();
         }
@@ -98,7 +99,7 @@ namespace Rainbows
             Build();
             if (!player.InInterior())
             {
-                player.Message(MessageHud.MessageType.TopLeft, _double ? "A double rainbow!" : "A rainbow comes out.");
+                player.Message(MessageHud.MessageType.TopLeft, _double ? T("rainbows_double") : T("rainbows_comes_out"));
                 if (Plugin.Chime.Value) Chime();
             }
             Plugin.Log.LogInfo($"Rainbow: sun {SunHeight:0} degrees, rain lasted {_wetFor:0} s");

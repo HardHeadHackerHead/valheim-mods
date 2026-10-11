@@ -42,14 +42,14 @@ namespace BuildOrders
             {
                 PlansPatches.EscapeFrame = Time.frameCount;
                 CancelBridge();
-                player.Message(MessageHud.MessageType.TopLeft, "Bridge cancelled");
+                player.Message(MessageHud.MessageType.TopLeft, DHack.Shared.Translations.T("buildorders_bridge_cancelled"));
             }
             MakeBridgeKnown(player);
             UpdateBridge(player);
             if (Input.GetKeyDown(KeyCode.Escape) && (PlansWindowOpen || Placing))
             {
                 PlansPatches.EscapeFrame = Time.frameCount;
-                if (Placing) { CancelPlacement(); player.Message(MessageHud.MessageType.TopLeft, "Placement cancelled"); }
+                if (Placing) { CancelPlacement(); player.Message(MessageHud.MessageType.TopLeft, DHack.Shared.Translations.T("buildorders_placement_cancelled")); }
                 PlansWindowOpen = false;
             }
             UpdatePlacement(player);

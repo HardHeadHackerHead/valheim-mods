@@ -2,6 +2,7 @@ using BepInEx;
 using BepInEx.Configuration;
 using HarmonyLib;
 using UnityEngine;
+using static DHack.Shared.Translations;
 
 namespace BuildFromChests
 {
@@ -15,7 +16,7 @@ namespace BuildFromChests
         public const string Guid = "com.quad.buildfromchests";
         public const string OldGuid = "com.dhack.buildfromchests"; // (its id until 2026-10: settings move over by themselves, see Shared/Migration.cs)
         public const string Name = "BuildFromChests";
-        public const string Version = "1.4.3";
+        public const string Version = "1.5.0";
 
         internal static ConfigEntry<bool> Enabled;
         internal static ConfigEntry<bool> ShowHaveCounts;
@@ -28,6 +29,7 @@ namespace BuildFromChests
         private void Awake()
         {
             DHack.Shared.Migration.FromOldGuid(this, OldGuid); // first: before any setting is read
+            DHack.Shared.Translations.Load(this);   // translations/*.json: its words in the player's language
             Log = Logger;
             Synced = new DHack.Shared.ServerSettings(Guid, Config, Logger);
             ShowHaveCounts = Config.Bind("Display", "ShowHaveCounts", true,
@@ -50,7 +52,8 @@ namespace BuildFromChests
 
             // Awake with a player already in the world means this was a hot reload (F6 / ScriptEngine).
             if (Player.m_localPlayer != null && Chat.instance != null)
-                Chat.instance.AddString("[Mod]", $"{Name} v{Version} reloaded | {(Enabled.Value ? "on" : "off")}, radius {Radius.Value:0.#}m", Talker.Type.Normal);
+                Chat.instance.AddString("[Mod]", T("buildfromchests_chat_reloaded", Name, Version,
+                    Localization.instance.Localize(Enabled.Value ? "$hud_on" : "$hud_off").ToLowerInvariant(), Radius.Value.ToString("0.#")), Talker.Type.Normal);
         }
 
         private void Update() => Synced?.Update(); // notices joining and leaving a server, for the settings it decides
@@ -59,6 +62,7 @@ namespace BuildFromChests
         private void OnDestroy()
         {
             Api.Withdraw();
+            DHack.Shared.Translations.Unload();
             _harmony?.UnpatchSelf();
             Synced?.Dispose();
             ChestScanner.Suspend = false;

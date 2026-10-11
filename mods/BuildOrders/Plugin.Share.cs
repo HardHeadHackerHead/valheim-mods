@@ -6,6 +6,7 @@ using System.Text;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using UnityEngine;
+using static DHack.Shared.Translations;
 
 namespace BuildOrders
 {
@@ -41,25 +42,25 @@ namespace BuildOrders
         }
 
         /// <summary>A blueprint from a share code, made safe to keep; null (and why) if it is not one.</summary>
-        private static JObject FromCode(string code, out string error)
+        private static JObject FromCode(string code, out Said error)
         {
             error = null;
             try
             {
                 code = (code ?? "").Trim();
                 int at = code.IndexOf(CodePrefix, StringComparison.Ordinal);
-                if (at < 0) { error = "that is not a blueprint share code"; return null; }
+                if (at < 0) { error = new Said("buildorders_code_not_code"); return null; }
                 string b64 = new string(code.Substring(at + CodePrefix.Length).Where(c => !char.IsWhiteSpace(c)).ToArray());
                 byte[] packed = Convert.FromBase64String(b64);
-                if (packed.Length > MaxShareBytes) { error = "too big"; return null; }
+                if (packed.Length > MaxShareBytes) { error = new Said("buildorders_code_too_big"); return null; }
                 byte[] raw = Utils.Decompress(packed);
-                if (raw.Length > MaxShareBytes) { error = "too big"; return null; }
+                if (raw.Length > MaxShareBytes) { error = new Said("buildorders_code_too_big"); return null; }
                 JObject doc = JObject.Parse(Encoding.UTF8.GetString(raw));
-                if (!(doc["pieces"] is JArray pieces) || pieces.Count == 0) { error = "it has no pieces"; return null; }
-                if (pieces.Count > MaxPieces) { error = "it has more than " + MaxPieces + " pieces"; return null; }
+                if (!(doc["pieces"] is JArray pieces) || pieces.Count == 0) { error = new Said("buildorders_code_no_pieces"); return null; }
+                if (pieces.Count > MaxPieces) { error = new Said("buildorders_code_too_many", MaxPieces); return null; }
                 return doc;
             }
-            catch (Exception e) { error = "the code is damaged (" + e.Message + ")"; return null; }
+            catch (Exception e) { error = new Said("buildorders_code_damaged", e.Message); return null; }
         }
 
         /// <summary>What a received blueprint may do: be placed where you look, by you. Nothing else from the sender is kept.</summary>
@@ -108,9 +109,9 @@ namespace BuildOrders
                 int others = ZNet.instance != null ? ZNet.instance.GetPlayerList().Count - 1 : 0;
                 byte[] pic = PictureForSharing(file);   // the picture goes along (a share code is text only: it gets a picture made on arrival)
                 Send("B|" + me.GetPlayerName().Replace("|", "/") + "|" + code + (pic != null ? "|" + Convert.ToBase64String(pic) : ""));
-                PlansToast(others > 0 ? $"Shared \"{(string)doc["name"]}\" with {others} other player(s) here" : $"Shared \"{(string)doc["name"]}\" (nobody else is here right now)");
+                PlansToast(others > 0 ? T("buildorders_shared_with", (string)doc["name"], others) : T("buildorders_shared_alone", (string)doc["name"]));
             }
-            catch (Exception e) { PlansToast("Could not share: " + e.Message); }
+            catch (Exception e) { PlansToast(T("buildorders_could_not_share", e.Message)); }
         }
 
         private void CopyCode(string file)
@@ -120,17 +121,16 @@ namespace BuildOrders
                 JObject doc = JObject.Parse(File.ReadAllText(file));
                 string code = ToCode(Tame(doc, Player.m_localPlayer != null ? Player.m_localPlayer.GetPlayerName() : "someone"));
                 GUIUtility.systemCopyBuffer = code;
-                PlansToast(code.Length <= 2000 ? $"Share code copied ({code.Length} characters): paste it in a chat"
-                                               : $"Share code copied, but it is long ({code.Length} characters): send the file from the blueprints folder instead if the chat cuts it off");
+                PlansToast(T(code.Length <= 2000 ? "buildorders_code_copied" : "buildorders_code_copied_long", code.Length));
             }
-            catch (Exception e) { PlansToast("Could not make a share code: " + e.Message); }
+            catch (Exception e) { PlansToast(T("buildorders_could_not_code", e.Message)); }
         }
 
         private void PasteCode()
         {
-            JObject doc = FromCode(GUIUtility.systemCopyBuffer, out string error);
-            if (doc == null) { PlansToast("Nothing pasted: " + error + ". Copy a code starting with " + CodePrefix + " first"); return; }
-            string from = (string)doc["sharedBy"] ?? "a share code";
+            JObject doc = FromCode(GUIUtility.systemCopyBuffer, out Said error);
+            if (doc == null) { PlansToast(T("buildorders_nothing_pasted", error.Shown, CodePrefix)); return; }
+            string from = (string)doc["sharedBy"] ?? "";   // (no sender: the window says "from a share code")
             JObject clean = Tame(doc, from);
             try
             {
@@ -138,9 +138,9 @@ namespace BuildOrders
                 string path = FreePath(BlueprintDir, SafeFileName((string)clean["name"]));
                 File.WriteAllText(path, clean.ToString(Formatting.Indented));
                 _libraryAt = -99f;
-                PlansToast($"Added \"{clean["name"]}\" to your blueprints");
+                PlansToast(T("buildorders_added", (string)clean["name"]));
             }
-            catch (Exception e) { PlansToast("Could not save it: " + e.Message); }
+            catch (Exception e) { PlansToast(T("buildorders_could_not_save", e.Message)); }
         }
 
         // ---- receiving ----
@@ -151,15 +151,15 @@ namespace BuildOrders
             if (parts.Length < 2 || parts[0].Length == 0) return;
             string from = parts[0];
             if (from.Length > 40) from = from.Substring(0, 40);
-            JObject doc = FromCode(parts[1], out string error);
-            if (doc == null) { Logger.LogWarning($"A blueprint shared by {from} could not be read: {error}"); return; }
+            JObject doc = FromCode(parts[1], out Said error);
+            if (doc == null) { Logger.LogWarning($"A blueprint shared by {from} could not be read: {error.English}"); return; }
             JObject clean = Tame(doc, from);
             Directory.CreateDirectory(InboxDir);
             string path = FreePath(InboxDir, SafeFileName((string)clean["name"]) + "__from_" + SafeFileName(from));
             File.WriteAllText(path, clean.ToString(Formatting.Indented));
             if (parts.Length > 2) SaveSharedPicture(path, parts[2]);
             _inboxAt = -99f;
-            Player.m_localPlayer?.Message(MessageHud.MessageType.TopLeft, $"{from} shared a blueprint: \"{clean["name"]}\" ({_blueprintKey.Value} to see it)");
+            Player.m_localPlayer?.Message(MessageHud.MessageType.TopLeft, T("buildorders_shared_you", from, (string)clean["name"], _blueprintKey.Value));
             Logger.LogInfo($"{from} shared the blueprint '{clean["name"]}' ({((JArray)clean["pieces"]).Count} pieces): {path}");
         }
 
@@ -177,7 +177,7 @@ namespace BuildOrders
                         List<Entry> entries = EntriesFrom(doc["pieces"] as JArray ?? new JArray());
                         list.Add(new SharedBlueprint
                         {
-                            Path = file, Name = (string)doc["name"] ?? Path.GetFileNameWithoutExtension(file), From = (string)doc["sharedBy"] ?? "someone",
+                            Path = file, Name = (string)doc["name"] ?? Path.GetFileNameWithoutExtension(file), From = (string)doc["sharedBy"] ?? T("buildorders_someone"),
                             Pieces = entries.Count, Materials = MaterialsOf(entries.Select(e => e.Prefab)),
                         });
                         string pic = PictureFile(file);
@@ -197,9 +197,9 @@ namespace BuildOrders
                 string pic = PictureFile(s.Path);
                 if (pic != null) File.Move(pic, Path.ChangeExtension(path, Path.GetExtension(pic)));
                 _inboxAt = -99f; _libraryAt = -99f;
-                PlansToast($"Saved \"{s.Name}\" to your blueprints");
+                PlansToast(T("buildorders_saved", s.Name));
             }
-            catch (Exception e) { PlansToast("Could not save it: " + e.Message); }
+            catch (Exception e) { PlansToast(T("buildorders_could_not_save", e.Message)); }
         }
 
         private void DismissShared(SharedBlueprint s)
@@ -215,7 +215,7 @@ namespace BuildOrders
                 JObject doc = JObject.Parse(File.ReadAllText(s.Path));
                 StartPlacement(s.Name, s.Path, EntriesFrom(doc["pieces"] as JArray ?? new JArray()), player.transform.eulerAngles.y, 0f, null);
             }
-            catch (Exception e) { PlansToast("Could not read it: " + e.Message); }
+            catch (Exception e) { PlansToast(T("buildorders_could_not_read_it", e.Message)); }
         }
     }
 }

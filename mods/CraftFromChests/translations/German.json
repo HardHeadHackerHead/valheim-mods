@@ -1,0 +1,11 @@
+{
+  "craftfromchests_chat_loaded": "{0} v{1} geladen | {2}, Radius {3} m | Build {4}",
+  "craftfromchests_chat_reloaded": "{0} v{1} neu geladen | {2}, Radius {3} m | Build {4}",
+  "craftfromchests_loaded": "{0} geladen",
+  "craftfromchests_reloaded": "{0} neu geladen",
+  "craftfromchests_short": "Nicht mehr genug {0} in den Truhen",
+  "craftfromchests_have": "Du hast {0}  (Inventar {1}, Truhen {2})",
+  "craftfromchests_lines": "Truhenlinien: {0}",
+  "craftfromchests_range": "Radius: {0} m",
+  "craftfromchests_server_range": "Hier legt der Server den Radius fest"
+}

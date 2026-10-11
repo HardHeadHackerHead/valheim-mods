@@ -1,0 +1,8 @@
+{
+  "partyhud_header": "GRUPO  ·  {0}",
+  "partyhud_distance": "{0} m",
+  "partyhud_fallen": "CAÍDO",
+  "partyhud_dead": "MORTO",
+  "partyhud_no_data": "sem dados",
+  "partyhud_fallen_status": "caído: suas coisas num túmulo (caveira no mapa)"
+}

@@ -1,3 +1,5 @@
+0.3.0: Now in your language: English, Russian, German, Chinese (Simplified), Portuguese (Brazil), Spanish, French, Polish and Turkish, following the game's own Language setting. The game's own names are used for its things (items, creatures, lands, stations). The translations were made with AI: to correct a line, or add a language, put a file in BepInEx/config/translations/com.quad.ziplines/ named after the game's name for the language (German.json...) with only the lines you change, copied from translations/English.json on GitHub. A blocking piece's name keeps its capital letters (German nouns need them).
+
 0.2.3: A clearer page: what it does, who needs it in multiplayer, how it gets on with other mods, and where to report a bug. The game itself is unchanged.
 
 0.2.2: Its test command for Claude Tools (zip ...) follows the game's cheat rule: spawning, removing and riding test lines and tp work only in single player, for the host or with devcommands; status, posts and hover still work for everyone.

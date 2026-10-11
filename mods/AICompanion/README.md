@@ -7,7 +7,7 @@
 
 **A viking companion, a follower NPC who plays like a player: comes on your adventures, fights beside you, lives its own life at home, and gets better as it goes.**
 
-![version: 0.23.0](https://img.shields.io/badge/version-0.23.0-3b6e8f?style=flat-square)  ![multiplayer: everyone + host](https://img.shields.io/badge/multiplayer-everyone%20%2B%20host-7a5c2e?style=flat-square)  ![made with: Claude Code](https://img.shields.io/badge/made%20with-Claude%20Code-c26a3d?style=flat-square)
+![version: 0.24.0](https://img.shields.io/badge/version-0.24.0-3b6e8f?style=flat-square)  ![multiplayer: everyone + host](https://img.shields.io/badge/multiplayer-everyone%20%2B%20host-7a5c2e?style=flat-square)  ![made with: Claude Code](https://img.shields.io/badge/made%20with-Claude%20Code-c26a3d?style=flat-square)
 
 <!-- GITHUB-ONLY -->[Thunderstore](https://thunderstore.io/c/valheim/p/Quads_Lab/Quads_Companion/)  ·  <!-- END GITHUB-ONLY -->[Source code](https://github.com/HardHeadHackerHead/valheim-mods/tree/main/mods/AICompanion)  ·  [Report a bug](https://github.com/HardHeadHackerHead/valheim-mods/issues/new?template=bug.yml&title=%5BQuad%27s%20Companion%5D%20)  ·  [Discord](https://discord.gg/EwTjQxEZPy)
 
@@ -92,6 +92,12 @@ Each companion belongs to whoever summoned it. Everyone sees each companion's st
 **The host decides:** how many companions, what they do while you're away, respawn time, base health and stamina, when they eat, starting skill. While you play on their world their values replace yours (your file isn't changed); a host without the mod leaves everyone their own.
 <!-- END HAND-WRITTEN: multiplayer -->
 
+## 🌍 Languages
+
+**English, Русский (Russian), Deutsch (German), 简体中文 (Chinese), Português do Brasil (Portuguese), Español (Spanish), Français (French), Polski (Polish), Türkçe (Turkish).** It follows the game's own language setting.
+
+The translations were made with AI, so a few words may be off. To correct one, or to add your language, put a file in `BepInEx/config/translations/com.quad.aicompanion/` named after the game's name for the language (`German.json`, `Italian.json`, `Japanese.json`...) with only the lines you change, copied from [English.json](https://github.com/HardHeadHackerHead/valheim-mods/blob/main/mods/AICompanion/translations/English.json) (it wins over the built-in one). Or [tell us](https://github.com/HardHeadHackerHead/valheim-mods/issues/new?template=bug.yml&title=%5BQuad%27s%20Companion%5D%20Translation%3A%20) the better words and we'll put them in for everyone.
+
 ## ⚙️ Settings
 
 In `BepInEx/config/com.quad.aicompanion.cfg`, made the first time the game runs with the mod. r2modman and Thunderstore Mod Manager edit it under **Config editor**.<!-- GITHUB-ONLY --> With our mod manager: **F7**, then **Mod settings**.<!-- END GITHUB-ONLY -->
@@ -140,8 +146,8 @@ and tested in our own world, with **bobisme** as our tester.
 
 ## 📜 Recent changes
 
+- **0.24.0** Now in your language: English, Russian, German, Chinese (Simplified), Portuguese (Brazil), Spanish, French, Polish and Turkish, following the game's own Language setting. The game's own names are used for its things (items, creatures, lands, stations). The translations were made with AI: to correct a line, or add a language, put a file in BepInEx/config/translations/com.quad.aicompanion/ named after the game's name for the language (German.json...) with only the lines you change, copied from translations/English.json on GitHub. The companion's status, journal, missions and what it says are now kept as data, so each player reads them in their own language; old saves still load and show their English text. Players on a server should update together: a player on an older version sees stray characters in statuses and chat lines from a newer game. The journal's counts from before are named in your language too and join the new ones, and trees, logs and stumps go by the game's own names (a stump was called "stubbe"). Headings and status lines no longer vanish in Chinese.
 - **0.23.0** The companion menu (J, or E on your companion) now looks like part of the game: the crafting screen's wood, buttons and tabs, the inventory's own item slots with the game's tooltips, its scrollbar and fonts, and the game's own text box for names. Everything it did is still there, in the same tabs; health, stamina, timers and skills move as they change. E or J closes it, as well as Escape. Fixed: your companion no longer takes a Ledger Chest, the Obliterator or the Arena's chests as its own, or puts things in them or takes from them; one that already took one lets go of it the next time you're near its home, and says so (nothing in it is moved, so check an Obliterator beside its bed before you pull the lever).
 - **0.22.2** A clearer page: what it does, who needs it in multiplayer, which of our mods it works with, and where to report a bug. The game itself is unchanged.
-- **0.22.1** A new id, com.quad.aicompanion (it was com.dhack.aicompanion): your settings move over by themselves the first time it starts, and the old settings file is kept as a backup. Restart the game after this update. If an old copy is still installed beside it, this one stands down and says which file to delete, so the two never both run. The DLL now says it was made with AI, as Thunderstore asks.
 
 <!-- GITHUB-ONLY -->[Every change](CHANGELOG.txt)<!-- END GITHUB-ONLY --><!-- THUNDERSTORE-ONLY: Every change is on the Changelog tab. -->

@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using HarmonyLib;
 using UnityEngine;
+using static DHack.Shared.Translations;
 
 namespace SkalTavern
 {
@@ -65,7 +66,7 @@ namespace SkalTavern
             _last = Time.time;
             player.StartEmote("cheer");
             ZRoutedRpc.instance?.InvokeRoutedRPC(ZRoutedRpc.Everybody, Rpc, player.transform.position, player.GetPlayerName());
-            if (!Evaluate(player)) player.Message(MessageHud.MessageType.Center, "Skal! A toast is better with company.");
+            if (!Evaluate(player)) player.Message(MessageHud.MessageType.Center, T("skaltavern_toast_alone"));
         }
 
         /// <summary>Who you are drinking with, and the buff for it. False when there is no one.</summary>
@@ -82,9 +83,12 @@ namespace SkalTavern
 
             Partners = Mathf.Min(partners, 4);
             player.GetSEMan().AddStatusEffect(Drinks.SkalHash, true);
-            var who = near.Select(o => o.Name).ToList();
-            if (companions > 0) who.Add(companions == 1 ? "your companion" : "your companions");
-            player.Message(MessageHud.MessageType.Center, "Skal! You drink with " + string.Join(" and ", who));
+            // the players' names ("A and B and C"), then the companions: a whole sentence for each case, as languages word them differently
+            string names = near.Count > 0 ? near.Select(o => o.Name).Aggregate((a, b) => T("skaltavern_and", a, b)) : null;
+            string said = names == null ? T(companions == 1 ? "skaltavern_toast_companion" : "skaltavern_toast_companions")
+                        : companions == 0 ? T("skaltavern_toast_with", names)
+                        : T(companions == 1 ? "skaltavern_toast_with_companion" : "skaltavern_toast_with_companions", names);
+            player.Message(MessageHud.MessageType.Center, said);
             return true;
         }
     }
@@ -101,6 +105,6 @@ namespace SkalTavern
             base.Setup(character);
         }
 
-        public override string GetTooltipString() => "Skal! You raised a cup with friends: stamina and health come back faster, and more with more to drink with.";
+        public override string GetTooltipString() => T("skaltavern_skal_tooltip");
     }
 }

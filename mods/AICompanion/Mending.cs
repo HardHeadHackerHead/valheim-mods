@@ -47,7 +47,7 @@ namespace AICompanion
             Swing(me, hammer);
             p?.m_placeEffect.Create(w.transform.position, w.transform.rotation);
             int n = Journal.Count(me, "mended");
-            if (n % 10 == 1) st.Remember("repaired your base");
+            if (n % 10 == 1) st.Remember(Words.P("aicompanion_mending_repaired_base"));
             return true;
         }
 

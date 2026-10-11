@@ -19,7 +19,7 @@ namespace BetterCraftingStations
         public const string Guid = "com.quad.bettercraftingstations";
         public const string OldGuid = "com.dhack.bettercraftingstations"; // (its id until 2026-10: settings move over by themselves, see Shared/Migration.cs)
         public const string Name = "BetterCraftingStations";
-        public const string Version = "0.1.3";
+        public const string Version = "0.2.0";
 
         internal static ManualLogSource Log;
         private static ConfigEntry<bool> _enabled;
@@ -30,6 +30,7 @@ namespace BetterCraftingStations
         private void Awake()
         {
             DHack.Shared.Migration.FromOldGuid(this, OldGuid); // first: before any setting is read
+            DHack.Shared.Translations.Load(this);   // translations/*.json: its words in the player's language
             Log = Logger;
             _enabled = Config.Bind("General", "Enabled", true, "Show the filter chips above the crafting list. Off, the list is the game's own.");
             _harmony = new Harmony(Guid);
@@ -38,6 +39,7 @@ namespace BetterCraftingStations
 
         private void OnDestroy()
         {
+            DHack.Shared.Translations.Unload();
             _harmony?.UnpatchSelf();
             Bar.Destroy();
         }

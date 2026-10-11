@@ -4,6 +4,7 @@ using System.Linq;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
+using static DHack.Shared.Translations;
 
 namespace PortalHub
 {
@@ -104,7 +105,7 @@ namespace PortalHub
             if (_expectDest != null && Time.time > _expectBy)
             {
                 PortalInfo me = ThisPortal;
-                if (me == null || me.Dest != _expectDest) Tell("Nothing changed. PortalHub has to be installed on the host's game too.");
+                if (me == null || me.Dest != _expectDest) Tell(T("portalhub_nothing_changed"));
                 _expectDest = null;
             }
 
@@ -145,7 +146,7 @@ namespace PortalHub
             _rows = (_sortByName ? ordered.ThenBy(r => NameOf(r.Info), StringComparer.OrdinalIgnoreCase) : ordered.ThenBy(r => r.Distance)).ToList();
         }
 
-        private static string NameOf(PortalInfo p) => string.IsNullOrWhiteSpace(p.Name) ? "(no name) " + (int)p.Pos.x + ", " + (int)p.Pos.z : p.Name;
+        private static string NameOf(PortalInfo p) => string.IsNullOrWhiteSpace(p.Name) ? T("portalhub_no_name", (int)p.Pos.x, (int)p.Pos.z) : p.Name;
 
         private static string BiomeOf(Vector3 pos)
         {
@@ -158,7 +159,7 @@ namespace PortalHub
             catch (Exception) { return ""; }
         }
 
-        private static string Far(float metres) => metres >= 1000f ? (metres / 1000f).ToString("0.0") + " km" : (int)metres + " m";
+        private static string Far(float metres) => metres >= 1000f ? T("portalhub_km", (metres / 1000f).ToString("0.0")) : T("portalhub_metres", (int)metres);
 
         // ---- actions (run from UpdateWindow) ----
 
@@ -192,9 +193,9 @@ namespace PortalHub
             _window = GameUi.Window("PortalHubWindow", new Vector2(WinW, WinH));
             Transform w = _window;
             // the boxes: typing goes into them while the rest of the window is built again around them
-            _nameField = GameUi.InputField(w, new Vector2(Pad + 80f, -92f), new Vector2(WinW - Pad * 2f - 80f - 132f, 40f), _nameEdit, "A name for this portal", 16,
+            _nameField = GameUi.InputField(w, new Vector2(Pad + 80f, -92f), new Vector2(WinW - Pad * 2f - 80f - 132f, 40f), _nameEdit, T("portalhub_name_placeholder"), 16,
                 s => _nameEdit = s, s => _pending = SaveName, 19f);
-            _searchField = GameUi.InputField(w, new Vector2(Pad + 80f, -206f), new Vector2(WinW - Pad * 2f - 80f - 160f - 96f - 20f, 40f), "", "Search names and lands", 40,
+            _searchField = GameUi.InputField(w, new Vector2(Pad + 80f, -206f), new Vector2(WinW - Pad * 2f - 80f - 160f - 96f - 20f, 40f), "", T("portalhub_search_placeholder"), 40,
                 s => { _search = s; _scrollTop = true; }, null, 19f);
             RectTransform box = GameUi.Box(w, new Vector2(Pad - 6f, -ListTop), new Vector2(WinW - Pad * 2f + 12f, WinH - ListTop - 84f));
             _list = GameUi.Scroll(box, 8f);
@@ -232,48 +233,48 @@ namespace PortalHub
             PortalInfo goesTo = me != null && me.Dest.Length > 0 ? Find(me.Dest) : null;
 
             // title, close, the braid under them
-            GameUi.Label(c, "Portal", new Vector2(Pad, -20f), new Vector2(300f, 44f), 34f, GameUi.Warm, GameUi.Norse);
-            GameUi.Button(c, "Close", new Vector2(WinW - Pad - 120f, -24f), new Vector2(120f, 40f), () => _pending = CloseWindow);
+            GameUi.Label(c, Localization.instance.Localize("$piece_portal"), new Vector2(Pad, -20f), new Vector2(300f, 44f), 34f, GameUi.Warm, GameUi.Norse);
+            GameUi.Button(c, Localization.instance.Localize("$menu_close"), new Vector2(WinW - Pad - 120f, -24f), new Vector2(120f, 40f), () => _pending = CloseWindow);
             GameUi.Braid(c, new Vector2(0f, -76f), WinW - Pad * 2f);
 
             // its name (the box takes up to 16 letters), saved with the game's own rename
-            GameUi.Label(c, "Name", new Vector2(Pad, -100f), new Vector2(80f, 30f), 20f, GameUi.Dim, GameUi.Serif);
+            GameUi.Label(c, T("portalhub_name"), new Vector2(Pad, -100f), new Vector2(80f, 30f), 20f, GameUi.Dim, GameUi.Serif);
             bool changed = me == null || _nameEdit != me.Name;
-            Button save = GameUi.Button(c, "Save", new Vector2(WinW - Pad - 120f, -92f), new Vector2(120f, 40f), () => _pending = SaveName, changed && _portal != null);
+            Button save = GameUi.Button(c, T("portalhub_save"), new Vector2(WinW - Pad - 120f, -92f), new Vector2(120f, 40f), () => _pending = SaveName, changed && _portal != null);
             if (changed) GameUi.Label(save).color = GameUi.Gold;
 
             // where it goes now
             string status; Color color;
-            if (goesTo != null) { status = "Goes to:  " + GameUi.Plain(NameOf(goesTo)) + "  ·  " + Far(Vector3.Distance(me.Pos, goesTo.Pos)); color = GameUi.Good; }
-            else if (me != null && me.Dest.Length > 0) { status = "Goes to a portal that no longer exists."; color = GameUi.Dim; }
-            else { status = "Not linked here yet. <size=85%><color=#bdb7a9>(Without a choice, a portal still joins another with the same name.)</color></size>"; color = GameUi.Text; }
+            if (goesTo != null) { status = T("portalhub_goes_to", GameUi.Plain(NameOf(goesTo)), Far(Vector3.Distance(me.Pos, goesTo.Pos))); color = GameUi.Good; }
+            else if (me != null && me.Dest.Length > 0) { status = T("portalhub_goes_nowhere"); color = GameUi.Dim; }
+            else { status = T("portalhub_not_linked") + " <size=85%><color=#bdb7a9>" + T("portalhub_not_linked_hint") + "</color></size>"; color = GameUi.Text; }
             float statusW = WinW - Pad * 2f - 132f, y = -146f;
             TMP_Text line = GameUi.Label(c, status, new Vector2(Pad, y), new Vector2(statusW, 30f), 19f, color);
             float h = Mathf.Min(48f, line.GetPreferredValues(status, statusW, 0f).y);
             ((RectTransform)line.transform).sizeDelta = new Vector2(statusW, h);
             if (me != null && me.Dest.Length > 0)
-                GameUi.Button(c, "Unlink", new Vector2(WinW - Pad - 120f, -142f), new Vector2(120f, 36f), () => _pending = () => SetDestination(_portalId, "", false), true, 17f);
+                GameUi.Button(c, T("portalhub_unlink"), new Vector2(WinW - Pad - 120f, -142f), new Vector2(120f, 36f), () => _pending = () => SetDestination(_portalId, "", false), true, 17f);
             if (!IsServer && PortalsAt < _openedAt && Time.time - _openedAt > 3f)
-                GameUi.Label(c, "The host's game is not answering. PortalHub has to be installed on the host too.", new Vector2(Pad, y - h - 2f),
+                GameUi.Label(c, T("portalhub_host_silent"), new Vector2(Pad, y - h - 2f),
                     new Vector2(statusW, 24f), 16f, GameUi.Warn);
 
             // search and order
-            GameUi.Label(c, "Search", new Vector2(Pad, -214f), new Vector2(80f, 30f), 20f, GameUi.Dim, GameUi.Serif);
+            GameUi.Label(c, T("portalhub_search"), new Vector2(Pad, -214f), new Vector2(80f, 30f), 20f, GameUi.Dim, GameUi.Serif);
             if (_search.Length > 0)
-                GameUi.Button(c, "Clear", new Vector2(WinW - Pad - 160f - 8f - 96f, -206f), new Vector2(96f, 40f), () => _pending = () => { if (_searchField != null) _searchField.text = ""; }, true, 17f);
-            GameUi.Button(c, _sortByName ? "Order: A-Z" : "Order: nearest", new Vector2(WinW - Pad - 160f, -206f), new Vector2(160f, 40f),
+                GameUi.Button(c, T("portalhub_clear"), new Vector2(WinW - Pad - 160f - 8f - 96f, -206f), new Vector2(96f, 40f), () => _pending = () => { if (_searchField != null) _searchField.text = ""; }, true, 17f);
+            GameUi.Button(c, _sortByName ? T("portalhub_order_name") : T("portalhub_order_near"), new Vector2(WinW - Pad - 160f, -206f), new Vector2(160f, 40f),
                 () => _pending = () => { _sortByName = !_sortByName; _rowsKey = null; _scrollTop = true; }, true, 17f);
 
             // link it back too (an on/off setting: a button that says its state, gold when on)
             bool both = _linkBothWays.Value;
-            Button toggle = GameUi.Button(c, both ? "Link it back too: On" : "Link it back too: Off", new Vector2(Pad, -256f), new Vector2(260f, 40f),
+            Button toggle = GameUi.Button(c, T("portalhub_link_back") + ": " + Localization.instance.Localize(both ? "$hud_on" : "$hud_off"), new Vector2(Pad, -256f), new Vector2(260f, 40f),
                 () => _pending = () => _linkBothWays.Value = !_linkBothWays.Value, true, 17f);
             if (both) GameUi.Label(toggle).color = GameUi.Gold;
-            GameUi.Label(c, "the other portal then comes here", new Vector2(Pad + 274f, -265f), new Vector2(WinW - Pad * 2f - 274f, 26f), 17f, GameUi.Dim);
+            GameUi.Label(c, T("portalhub_link_back_hint"), new Vector2(Pad + 274f, -265f), new Vector2(WinW - Pad * 2f - 274f, 26f), 17f, GameUi.Dim);
 
             // a note under the list
-            string note = Portals.Count <= 1 ? "No other portals found yet."
-                : "Star a portal to keep it at the top. \"has a link\" means linking back would replace that portal's current link.";
+            string note = Portals.Count <= 1 ? T("portalhub_none_yet")
+                : T("portalhub_note", T("portalhub_has_link"));
             GameUi.Label(c, note, new Vector2(Pad, -(WinH - 70f)), new Vector2(WinW - Pad * 2f, 48f), 16f, GameUi.Dim);
         }
 
@@ -311,7 +312,7 @@ namespace PortalHub
             float width = _list.sizeDelta.x;
             if (_rows.Count == 0)
             {
-                string text = _search.Length > 0 ? "No match." : "Build a second portal and it will show up here.";
+                string text = _search.Length > 0 ? T("portalhub_no_match") : T("portalhub_build_second");
                 TMP_Text t = GameUi.Label(_list, text, new Vector2(10f, -10f), new Vector2(width - 20f, 30f), 19f, GameUi.Dim);
                 _list.sizeDelta = new Vector2(width, t.GetPreferredValues(text, width - 20f, 0f).y + 20f);
             }
@@ -352,27 +353,38 @@ namespace PortalHub
                 bg.raycastTarget = false;
             }
 
-            Button star = GameUi.Button(r, row.Favorite ? "Starred" : "Star", new Vector2(2f, -3f), new Vector2(78f, 34f), () => _pending = () => ToggleFavorite(id), true, 16f);
+            Button star = GameUi.Button(r, row.Favorite ? T("portalhub_starred") : T("portalhub_star"), new Vector2(2f, -3f), new Vector2(78f, 34f), () => _pending = () => ToggleFavorite(id), true, 16f);
             if (row.Favorite) GameUi.Label(star).color = GameUi.Gold;
 
             const float linkW = 86f, mapW = 64f, detailW = 176f;
             float detailX = width - linkW - 8f - mapW - 8f - detailW;
-            TMP_Text name = GameUi.Label(r, NameOf(row.Info), new Vector2(92f, -7f), new Vector2(detailX - 92f - 8f, 28f), 19f, GameUi.Text);
+            TMP_Text name = GameUi.Label(r, NameOf(row.Info), new Vector2(92f, -7f), new Vector2(detailX - 92f - 8f, 34f), 19f, GameUi.Text);
             name.richText = false;   // (a name is the player's text)
             name.enableWordWrapping = false;
             name.overflowMode = TextOverflowModes.Ellipsis;
 
             bool replaces = _linkBothWays.Value && !linked && row.Info.Dest.Length > 0 && row.Info.Dest != _portalId;
-            string detail = replaces ? "has a link" : (row.Where.Length > 0 ? row.Where + " · " : "") + Far(row.Distance);
+            string detail = replaces ? T("portalhub_has_link") : (row.Where.Length > 0 ? row.Where + " · " : "") + Far(row.Distance);
             TMP_Text where = GameUi.Label(r, detail, new Vector2(detailX, -10f), new Vector2(detailW, 24f), 16f, replaces ? GameUi.Warn : GameUi.Dim);
             where.enableWordWrapping = false;
             where.overflowMode = TextOverflowModes.Ellipsis;
 
             Vector3 pos = row.Info.Pos;
-            GameUi.Button(r, "Map", new Vector2(width - linkW - 8f - mapW, -3f), new Vector2(mapW, 34f), () => _pending = () => { CloseWindow(); ShowOnMap(pos); }, true, 16f);
-            Button link = GameUi.Button(r, linked ? "Linked" : "Link", new Vector2(width - linkW, -3f), new Vector2(linkW, 34f), () => _pending = () => Link(id), !linked, 16f);
+            Button map = GameUi.Button(r, T("portalhub_map"), new Vector2(width - linkW - 8f - mapW, -3f), new Vector2(mapW, 34f), () => _pending = () => { CloseWindow(); ShowOnMap(pos); }, true, 16f);
+            Button link = GameUi.Button(r, linked ? T("portalhub_linked") : T("portalhub_link"), new Vector2(width - linkW, -3f), new Vector2(linkW, 34f), () => _pending = () => Link(id), !linked, 16f);
             if (linked) GameUi.Label(link).color = GameUi.Gold;
+            foreach (Button b in new[] { star, map, link }) Fit(b);
             return r.gameObject;
+        }
+
+        /// <summary>A narrow row button's word shrinks to fit (a longer word in another language: "Verbunden", "Połączony") instead of "…".</summary>
+        private static void Fit(Button b)
+        {
+            TMP_Text t = GameUi.Label(b);
+            if (t == null) return;
+            t.enableAutoSizing = true;
+            t.fontSizeMax = t.fontSize;
+            t.fontSizeMin = Mathf.Max(10f, t.fontSize * 0.65f);
         }
     }
 }

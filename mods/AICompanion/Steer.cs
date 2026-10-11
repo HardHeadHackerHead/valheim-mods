@@ -60,7 +60,7 @@ namespace AICompanion
             bool youInWater = Companion.OrderOf(me) == Order.Follow && master != null && (master.IsSwimming() || master.IsAttached() || master.transform.position.y < ZoneSystem.instance.m_waterLevel);
             bool tired = Stamina.Get(me) < Stamina.Max(me) * 0.3f;
             s.AvoidWater = !youInWater || tired && !master.IsAttached();
-            if (youInWater && tired && !master.IsAttached()) Talk.Tell(me, "I'm too tired to swim that far. I'll wait on the bank.", "swim", 2f);
+            if (youInWater && tired && !master.IsAttached()) Talk.Tell(me, Words.P("aicompanion_steer_too_tired_swim"), "swim", 2f);
             Vector3 pos = me.transform.position;
             if (Time.time >= s.NextScan) { s.NextScan = Time.time + 0.3f; Scan(me, s, pos); }
             Vector3 dir = me.GetMoveDir();
@@ -111,7 +111,7 @@ namespace AICompanion
                     return;
                 }
             me.SetMoveDir(Vector3.zero); // no safe way: it waits (or, following you, hops over to you)
-            if (!st.InCombat) Brain.Status(st, "looking for a safe way round");
+            if (!st.InCombat) Brain.Status(st, Words.P("aicompanion_steer_status_safe_way"));
         }
 
         private static void Go(Humanoid me, BrainState st, Vector3 d)

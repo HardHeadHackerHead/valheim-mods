@@ -26,11 +26,15 @@ if (-not $tcli) {
     if (Test-Path $local) { $tcli = Get-Command $local } else { Write-Error "The Thunderstore CLI isn't installed: dotnet tool install -g tcli (then a new terminal)"; exit 1 }
 }
 
-$modkit = Join-Path $root "tools\ModKit\bin\Release\net48\modkit.exe"
-if (-not (Test-Path $modkit)) {
-    dotnet build (Join-Path $root "tools\ModKit") -c Release --nologo -v q
+# modkit comes from Claude Tools' repo (valheim-claude-tools, beside this one), or the copy Claude Tools writes into the game's BepInEx/claude
+$toolkit = Join-Path $root "..\valheim-claude-tools\tools\ModKit"
+$modkit = Join-Path $toolkit "bin\Release\net48\modkit.exe"
+if (-not (Test-Path $modkit) -and (Test-Path $toolkit)) {
+    dotnet build $toolkit -c Release --nologo -v q
     if ($LASTEXITCODE -ne 0) { Write-Error "modkit didn't build"; exit 1 }
 }
+if (-not (Test-Path $modkit) -and $env:VALHEIM_DIR) { $modkit = Join-Path $env:VALHEIM_DIR "BepInEx\claude\modkit\modkit.exe" }
+if (-not (Test-Path $modkit)) { Write-Error "modkit not found: clone https://github.com/HardHeadHackerHead/valheim-claude-tools beside this repo, or run the game once with Claude Tools"; exit 1 }
 
 $all = Get-ChildItem (Join-Path $root "mods") -Directory | Where-Object { Test-Path (Join-Path $_.FullName "$($_.Name).csproj") }
 $chosen = if ($Mods.Count -gt 0) { $all | Where-Object { $Mods -contains $_.Name } } else { $all }

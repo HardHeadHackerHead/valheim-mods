@@ -1,0 +1,11 @@
+{
+  "craftfromchests_chat_loaded": "{0} v{1} загружен | {2}, радиус {3} м | сборка {4}",
+  "craftfromchests_chat_reloaded": "{0} v{1} перезагружен | {2}, радиус {3} м | сборка {4}",
+  "craftfromchests_loaded": "{0} загружен",
+  "craftfromchests_reloaded": "{0} перезагружен",
+  "craftfromchests_short": "В сундуках больше не хватает: {0}",
+  "craftfromchests_have": "У вас {0}  (инвентарь {1}, сундуки {2})",
+  "craftfromchests_lines": "Линии к сундукам: {0}",
+  "craftfromchests_range": "Радиус: {0} м",
+  "craftfromchests_server_range": "Здесь радиус задаёт сервер"
+}

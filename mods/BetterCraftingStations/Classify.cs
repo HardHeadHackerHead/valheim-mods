@@ -1,5 +1,6 @@
 using System;
 using System.Linq;
+using static DHack.Shared.Translations;
 
 namespace BetterCraftingStations
 {
@@ -13,6 +14,15 @@ namespace BetterCraftingStations
 
         /// <summary>The order the type chips come in.</summary>
         public static readonly string[] TypeOrder = { Weapons, Armor, Tools, Ammo, Food, Potions, Materials, Other };
+
+        /// <summary>A type's name on its chip, in the player's language (the type itself stays English: it is what the chips compare).</summary>
+        public static string Label(string type) => T(TypeKeys[Array.IndexOf(TypeOrder, type)]);
+
+        private static readonly string[] TypeKeys =
+        {
+            "bettercraftingstations_type_weapons", "bettercraftingstations_type_armor", "bettercraftingstations_type_tools", "bettercraftingstations_type_ammo",
+            "bettercraftingstations_type_food", "bettercraftingstations_type_potions", "bettercraftingstations_type_materials", "bettercraftingstations_type_other",
+        };
 
         public static string TypeOf(Recipe r)
         {
@@ -48,7 +58,12 @@ namespace BetterCraftingStations
 
         // ---- how far into the game ----------------------------------------------------------------------------------
 
-        public static readonly string[] TierNames = { "Wood & flint", "Bronze", "Iron", "Silver", "Black metal", "Mistlands", "Ashlands" };
+        /// <summary>Each tier's name on its chip (translation keys).</summary>
+        public static readonly string[] TierNames =
+        {
+            "bettercraftingstations_tier_wood", "bettercraftingstations_tier_bronze", "bettercraftingstations_tier_iron", "bettercraftingstations_tier_silver",
+            "bettercraftingstations_tier_blackmetal", "bettercraftingstations_tier_mistlands", "bettercraftingstations_tier_ashlands",
+        };
 
         // Item names (without "$item_") that mark a tier; a recipe is of the highest tier among the things it costs.
         private static readonly string[][] Marks =

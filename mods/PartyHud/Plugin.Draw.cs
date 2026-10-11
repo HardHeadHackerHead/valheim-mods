@@ -4,6 +4,7 @@ using System.Linq;
 using System.Text;
 using TMPro;
 using UnityEngine;
+using static DHack.Shared.Translations;
 using UnityEngine.UI;
 
 namespace PartyHud
@@ -207,7 +208,7 @@ namespace PartyHud
         {
             // tall enough for a line of this size: with Ellipsis, TMP hides a whole line that is even a little taller than its box
             // (Averia's lines are about 1.3 times the font size), so a name in an 18-high box at 16 pt never showed
-            float tall = Mathf.Max(h, size * 1.4f);
+            float tall = Mathf.Max(h, size * 1.8f);   // (1.8: Chinese, Japanese and Korean come from a fallback font with taller lines)
             TextAlignmentOptions top = align == TextAlignmentOptions.Right ? TextAlignmentOptions.TopRight
                                      : align == TextAlignmentOptions.Center ? TextAlignmentOptions.Top : TextAlignmentOptions.TopLeft;
             TMP_Text t = GameUi.Label(row.Rect, "", new Vector2(x, -y + (tall - h) * 0.5f - 1f), new Vector2(w, tall), size, color, null, top);
@@ -359,20 +360,20 @@ namespace PartyHud
         /// <summary>After the members were read again (5 times a second): texts, pictures, food and buff icons.</summary>
         private void Refresh()
         {
-            GameUi.SetText(_header, $"PARTY  ·  {_members.Count(m => !m.Companion)}");
+            GameUi.SetText(_header, T("partyhud_header", _members.Count(m => !m.Companion)));
             for (int i = 0; i < _rows.Count; i++)
             {
                 Row row = _rows[i];
                 Member m = _members[i];
                 bool dead = IsDead(m);
                 GameUi.SetText(row.Name, m.Name ?? "?");
-                GameUi.SetText(row.Distance, _showDistance.Value && m.Distance >= 0f ? $"{m.Distance:0} m" : "");
+                GameUi.SetText(row.Distance, _showDistance.Value && m.Distance >= 0f ? T("partyhud_distance", m.Distance.ToString("0")) : "");
 
                 if (row.Companion)
                 {
                     if (row.Name != null) row.Name.color = dead ? GameUi.Dim : new Color(0.8f, 0.95f, 0.9f);
-                    row.Health.SetText(dead ? "FALLEN" : $"{Mathf.CeilToInt(m.Hp)} / {Mathf.CeilToInt(m.MaxHp)}");
-                    GameUi.SetText(row.Status, string.IsNullOrEmpty(m.Status) ? "" : dead ? "fallen: its things in a tombstone (skull on the map)" : m.Status);
+                    row.Health.SetText(dead ? T("partyhud_fallen") : $"{Mathf.CeilToInt(m.Hp)} / {Mathf.CeilToInt(m.MaxHp)}");
+                    GameUi.SetText(row.Status, string.IsNullOrEmpty(m.Status) ? "" : dead ? T("partyhud_fallen_status") : m.Status);
                     // its face, when the AICompanion mod has a picture of it (it takes one of companions near you); otherwise its initial
                     Texture face = null;
                     if (AppDomain.CurrentDomain.GetData("DHack.CompanionPortrait") is Func<long, Texture> faces) { try { face = faces(m.Id); } catch (Exception) { } }
@@ -381,7 +382,7 @@ namespace PartyHud
                 }
                 else
                 {
-                    row.Health.SetText(!m.HasData ? "no data" : dead ? "DEAD" : $"{Mathf.CeilToInt(m.Hp)} / {Mathf.CeilToInt(m.MaxHp)}");
+                    row.Health.SetText(!m.HasData ? T("partyhud_no_data") : dead ? T("partyhud_dead") : $"{Mathf.CeilToInt(m.Hp)} / {Mathf.CeilToInt(m.MaxHp)}");
                     if (!m.HasData) row.Health.Text.color = GameUi.Dim; else row.Health.Text.color = Color.white;
                     Texture2D picture = _showPortraits.Value ? SteamAvatars.Get(m.SteamId) : null;
                     // no picture (yet, or not on Steam): a coloured square with their initial, the colour picked from their name

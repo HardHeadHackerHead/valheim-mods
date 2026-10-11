@@ -4,6 +4,7 @@ using System.Globalization;
 using System.Linq;
 using HarmonyLib;
 using UnityEngine;
+using static AICompanion.Words;
 
 namespace AICompanion
 {
@@ -132,7 +133,7 @@ namespace AICompanion
             int moved = stack(me.GetInventory(), me.transform.position, 30f, i => Keeps(me, i) || Companion.Worn(me).Contains(i) || IsStock(st, i) && StillWanted(st, i) > 0); // (its stock, while its chests still want it)
             if (moved <= 0) return 0;
             Companion.SaveBag(me);
-            st.Remember($"sorted {moved} thing{(moved == 1 ? "" : "s")} into your chests");
+            st.Remember(P(moved == 1 ? "aicompanion_work_sorted_one" : "aicompanion_work_sorted_many", moved));
             Plugin.Instance?.Note($"{Companion.NameOf(me)} sorted {moved} items into the chests near {me.transform.position:F0} (QualityOfLife)");
             return moved;
         }
@@ -149,8 +150,8 @@ namespace AICompanion
             int moved = stack(me.GetInventory(), chest.transform.position, 20f, i => Keeps(me, i) || Companion.Worn(me).Contains(i) || IsStock(st, i) && StillWanted(st, i) > 0); // (its stock, while its chests still want it)
             if (moved <= 0) return 0;
             Companion.SaveBag(me);
-            st.Remember($"sorted {moved} thing{(moved == 1 ? "" : "s")} into your chests");
-            Talk.Mention(me, $"Sorted {moved} thing{(moved == 1 ? "" : "s")} into the right chests.");
+            st.Remember(P(moved == 1 ? "aicompanion_work_sorted_one" : "aicompanion_work_sorted_many", moved));
+            Talk.Mention(me, P(moved == 1 ? "aicompanion_work_sorted_say_one" : "aicompanion_work_sorted_say_many", moved));
             Plugin.Instance?.Note($"{Companion.NameOf(me)} sorted {moved} items into the chests near {chest.transform.position:F0} (QualityOfLife)");
             return moved;
         }
@@ -194,13 +195,17 @@ namespace AICompanion
 
         public static bool IsTool(ItemDrop.ItemData i) => i.m_shared.m_damages.m_chop > 0f || i.m_shared.m_damages.m_pickaxe > 0f;
 
-        /// <summary>What a job needs and whether it has it, for the Work tab: "Bronze axe (tier 2)" or "no axe".</summary>
+        /// <summary>What a job needs and whether it has it, for the Work tab: "Bronze axe (tier 2)" or "no axe" (packed text).</summary>
         public static string ToolFor(Humanoid h, Job job)
         {
             ItemDrop.ItemData tool = job == Job.Wood ? Axe(h) : job == Job.Stone || job == Job.Ore ? Pickaxe(h) : null;
-            if (job == Job.Forage || job == Job.Loot) return "bare hands";
-            return tool != null ? $"{Localization.instance.Localize(tool.m_shared.m_name)} (tier {tool.m_shared.m_toolTier})" : (job == Job.Wood ? "no axe" : "no pickaxe");
+            if (job == Job.Forage || job == Job.Loot) return P("aicompanion_work_tool_hands");
+            return tool != null ? P("aicompanion_work_tool_tier", tool.m_shared.m_name, tool.m_shared.m_toolTier) : P(job == Job.Wood ? "aicompanion_work_tool_no_axe" : "aicompanion_work_tool_no_pickaxe");
         }
+
+        /// <summary>The job needs a tool it does not have (ToolFor says "no axe" / "no pickaxe").</summary>
+        internal static bool ToolMissing(Humanoid h, Job job) =>
+            job != Job.Forage && job != Job.Loot && (job == Job.Wood ? Axe(h) : job == Job.Stone || job == Job.Ore ? Pickaxe(h) : null) == null;
 
         // ---- every frame while it gathers (no enemies near) ----------------------------------------------------
 
@@ -235,7 +240,7 @@ namespace AICompanion
                 if (st.Task == null && st.Duty != null && st.WorkNote != null)
                 {
                     // Nothing to gather for this duty (or no room): the next duty for a minute, looked at again straight away.
-                    if (Duties.Rest(me, st.Duty) == 1) st.Remember($"found nothing for \"{Duties.Label(st.Duty.Duty).ToLowerInvariant()}\" near home: on to the next duty");
+                    if (Duties.Rest(me, st.Duty) == 1) st.Remember(P("aicompanion_work_duty_nothing", Low(Duties.Label(st.Duty.Duty))));
                     st.NextWorkLook = Time.time + 0.2f;
                 }
             }
@@ -243,7 +248,7 @@ namespace AICompanion
             if (st.Task == null)
             {
                 if (Idle.AtHome(st, master, center, radius, moveTo, stop, lookAt)) return; // between jobs: the fire, a chair, out of the rain, a stroll
-                Go(center, moveTo, stop, me); Brain.Status(st, st.WorkNote ?? "nothing left to gather here"); return;
+                Go(center, moveTo, stop, me); Brain.Status(st, st.WorkNote ?? P("aicompanion_work_nothing_left")); return;
             }
             Execute(st, master, dt, moveTo, stop, lookAt);
         }
@@ -302,7 +307,7 @@ namespace AICompanion
             st.Task = t;
             st.Helping = false;
             st.CommandUntil = Time.time + 120f;
-            st.Remember(fromYou ? $"you pointed: {Describe(t)}" : $"next in the patch: {Describe(t)}");
+            st.Remember(P(fromYou ? "aicompanion_work_you_pointed" : "aicompanion_work_next_in_patch", Describe(t)));
             return true;
         }
 
@@ -372,7 +377,7 @@ namespace AICompanion
                 st.CommandUntil = Time.time + 120f;
                 a.Marked.AddRange(AreaTasks(st, a).Take(8).Select(t => t.Target));
                 foreach (Component c in a.Marked) { Component cc = c; Marks.Put(cc, st.Body, null, () => st.Area == a && cc != null); }
-                st.Remember("carried on with the patch you gave it");
+                st.Remember(P("aicompanion_work_patch_carried_on"));
                 return true;
             }
             catch { z.Set(AreaKey, ""); return false; }
@@ -380,7 +385,7 @@ namespace AICompanion
 
         /// <summary>
         /// Its job right now, in a line (its menu, the party panel), and how far along it is (0 to 1; -1 when that means nothing): the patch you
-        /// gave it, things you pointed at, waiting where you told it, out with you, or living at home on its mission.
+        /// gave it, things you pointed at, waiting where you told it, out with you, or living at home on its mission. Packed text.
         /// </summary>
         public static string JobText(BrainState st, out float progress)
         {
@@ -391,20 +396,21 @@ namespace AICompanion
             {
                 if (Time.time >= a.LeftAt) { a.LeftAt = Time.time + 3f; a.Left = AreaTasks(st, a).Count(); }
                 if (a.Done + a.Left > 0) progress = a.Done / (float)(a.Done + a.Left);
-                string what = a.Job == Job.Wood ? "Chopping the trees" : a.Job == Job.Forage ? "Picking the plants" : "Mining the rocks";
-                return $"{what} you pointed at: {a.Done} done, {Mathf.Max(0, a.Left)} left";
+                string key = a.Job == Job.Wood ? "aicompanion_work_job_patch_wood" : a.Job == Job.Forage ? "aicompanion_work_job_patch_forage" : "aicompanion_work_job_patch_rocks";
+                return P(key, a.Done, Mathf.Max(0, a.Left));
             }
-            if (st.PickQueue.Count > 0 || st.Task != null && st.Task.Ordered && st.Task.Kind == Kind.PickUp) return $"Picking up the things you pointed at ({st.PickQueue.Count + 1} left)";
-            if (st.Task != null && st.Task.Ordered && Time.time < st.CommandUntil) return "Doing what you pointed at: " + Describe(st.Task);
+            if (st.PickQueue.Count > 0 || st.Task != null && st.Task.Ordered && st.Task.Kind == Kind.PickUp) return P("aicompanion_work_job_picking_up", st.PickQueue.Count + 1);
+            if (st.Task != null && st.Task.Ordered && Time.time < st.CommandUntil) return P("aicompanion_work_job_pointed", Describe(st.Task));
             switch (Companion.OrderOf(me))
             {
-                case Order.Guard: return "Waiting where you told it";
-                case Order.Stay: return "Staying put";
-                case Order.Follow: return "Out with you" + (string.IsNullOrEmpty(st.AutoNote) ? "" : $" ({st.AutoNote})");
+                case Order.Guard: return P("aicompanion_work_job_guard");
+                case Order.Stay: return P("aicompanion_work_job_stay");
+                case Order.Follow: return string.IsNullOrEmpty(st.AutoNote) ? P("aicompanion_work_job_out") : P("aicompanion_work_job_out_note", st.AutoNote);
             }
             Mission m = Missions.Current(me);
             if (m != null && m.StartCost > 0) progress = Mathf.Clamp01(1f - m.Cost / (float)m.StartCost);
-            return st.Goal != null ? $"Living at home: its mission is a {st.Goal.What}" + (st.Goal.Raw.Count > 0 ? $" (still {st.Goal.RawText()})" : "") : "Living at home";
+            return st.Goal == null ? P("aicompanion_work_job_home")
+                 : st.Goal.Raw.Count > 0 ? P("aicompanion_work_job_home_mission_still", st.Goal.What, st.Goal.RawText()) : P("aicompanion_work_job_home_mission", st.Goal.What);
         }
 
         /// <summary>You stopped its job (its menu): the patch, what you pointed at, the things to pick up. It goes back to what it was doing before.</summary>
@@ -415,7 +421,7 @@ namespace AICompanion
             if (st.Task != null && st.Task.Ordered) st.Task = null;
             st.CommandUntil = 0f;
             SaveArea(st);
-            st.Remember("you stopped its job");
+            st.Remember(P("aicompanion_work_stopped_job"));
         }
 
         /// <summary>Starts a patch around the thing you pointed at (its task is already ordered). What it will work there, for showing.</summary>
@@ -445,6 +451,7 @@ namespace AICompanion
             }
         }
 
+        /// <summary>The patch is over; <paramref name="say"/> (packed text) told to its player, or null.</summary>
         public static void EndArea(BrainState st, string say)
         {
             if (st.Area == null) return;
@@ -482,7 +489,7 @@ namespace AICompanion
                 if (nearHome)
                 {
                     a.Until = Time.time + 900f;
-                    Talk.Mention(me, "My bag's full. I'll put this away and come back.", "areafull", 2f);
+                    Talk.Mention(me, P("aicompanion_work_area_full_back"), "areafull", 2f);
                     bool yoursToGive = Stows(me) && inv.GetAllItems().Any(i => YoursToGive(st, i));
                     if (yoursToGive)
                     {
@@ -495,7 +502,7 @@ namespace AICompanion
                         .OrderByDescending(c => c.GetInventory().GetAllItems().Count(i => stock.Contains(i.m_shared.m_name))).ThenBy(c => Vector3.Distance(c.transform.position, me.transform.position)).FirstOrDefault();
                     if (own != null) return Ordered(st, New(Kind.Store, own, Job.None), false);
                 }
-                EndArea(st, "My bag is full. Take some of it, or send me home to put it away.");
+                EndArea(st, P("aicompanion_work_area_full"));
                 return false;
             }
             ItemDrop drop = null;
@@ -512,14 +519,14 @@ namespace AICompanion
             Task next = AreaTasks(st, a).OrderBy(t => Vector3.Distance(t.Target.transform.position, me.transform.position) + Priority(t)).FirstOrDefault();
             if (next == null)
             {
-                EndArea(st, a.Done > 0 ? (a.Job == Job.Wood ? "That's the trees here done." : a.Job == Job.Forage ? "That's everything picked here." : "That's the rocks here done.") : null);
+                EndArea(st, a.Done > 0 ? P(a.Job == Job.Wood ? "aicompanion_work_area_done_trees" : a.Job == Job.Forage ? "aicompanion_work_area_done_picked" : "aicompanion_work_area_done_rocks") : null);
                 return false;
             }
             a.Done++;
             SaveArea(st);
             Claim(st, next);
             if (!Ordered(st, next, false)) return false;
-            Marks.Put(next.Target, me, next.Kind == Kind.Pick ? "picking this" : next.Job == Job.Wood ? "chopping this" : "mining this", () => st.Task == next && next.Target != null);
+            Marks.Put(next.Target, me, P(next.Kind == Kind.Pick ? "aicompanion_work_mark_picking" : next.Job == Job.Wood ? "aicompanion_work_mark_chopping" : "aicompanion_work_mark_mining"), () => st.Task == next && next.Target != null);
             return true;
         }
 
@@ -558,7 +565,7 @@ namespace AICompanion
                 if (t.Kind == Kind.Mend)
                     foreach (Collider col in Physics.OverlapSphere(t.Target.transform.position, 6f, LayerMask.GetMask("piece", "piece_nonsolid")))
                         if (col.GetComponentInParent<WearNTear>() is WearNTear near && near != t.Target) st.Skipped[near.gameObject.GetInstanceID()] = Time.time + 600f;
-                Skip(st, t.Target, "could not get to it");
+                Skip(st, t.Target, P("aicompanion_work_skip_cant_reach"));
                 return;
             }
 
@@ -570,10 +577,10 @@ namespace AICompanion
                     t.LastClose = Time.time;
                     var drop = (ItemDrop)t.Target;
                     if (!drop.CanPickup(false)) { drop.RequestOwn(); break; }
-                    string name = Localization.instance.Localize(drop.m_itemData.m_shared.m_name);
+                    string name = drop.m_itemData.m_shared.m_name;   // (counted by its m_name: the menu names it in each player's language)
                     int n = drop.m_itemData.m_stack;
                     if (me.Pickup(drop.gameObject, false, false)) { st.Gathered[name] = (st.Gathered.TryGetValue(name, out int had) ? had : 0) + n; }
-                    else Skip(st, drop, "no room");
+                    else Skip(st, drop, P("aicompanion_work_skip_no_room"));
                     st.Task = null;
                     break;
 
@@ -627,7 +634,7 @@ namespace AICompanion
                     bool chop = second != null && second.m_attackProjectile == null && second.m_attackType != Attack.AttackType.Projectile
                                 && (downward && low || st.SwingMissed && t.MissedRun >= 2) && !Tactics.MidCombo(me);
                     float cost = (chop ? second.m_attackStamina : tool.m_shared.m_attack?.m_attackStamina) ?? 0f;
-                    if (Stamina.Get(me) < cost + 1f) { if (chop) chop = false; else { Brain.Status(st, "catching its breath"); break; } }
+                    if (Stamina.Get(me) < cost + 1f) { if (chop) chop = false; else { Brain.Status(st, P("aicompanion_work_status_breath")); break; } }
                     if (me.GetTimeSinceLastAttack() < (chop ? 0.8f : 0.5f) && !Tactics.MidCombo(me)) break; // (mid-combo: the next swing at once, for the strong last one)
                     st.WorkSpot = at;
                     if (me.StartAttack(null, chop))
@@ -696,7 +703,7 @@ namespace AICompanion
                     if (dist > 2f) { moveTo(at, 1.2f, dist > 8f); break; }
                     t.LastClose = Time.time;
                     stop();
-                    if (Armory.TakeFrom(st, (Container)t.Target, t.Ordered) == null) Skip(st, t.Target, "nothing better in it after all", 5f);
+                    if (Armory.TakeFrom(st, (Container)t.Target, t.Ordered) == null) Skip(st, t.Target, P("aicompanion_work_skip_nothing_better"), 5f);
                     else if (t.Ordered && Armory.Find(me, Center(me), RadiusOf(me) + 20f, null, true) is Container next) { Ordered(st, New(Kind.Armory, next, Job.None), false); break; } // (sent from its menu: the round, now)
                     else st.NextArmoryLook = 0f; // straight on to the next chest with something better (the shield, the bow...)
                     st.Task = null;
@@ -731,7 +738,7 @@ namespace AICompanion
                     if (prey != null && prey.IsDead()) Loot.AddSpot(st, prey.transform.position); // its meat and hide, in a moment
                     if (prey == null || prey.IsDead()) { st.Task = null; break; }
                     if (Companion.BestRanged(me) == null && Harmless.Contains(Utils.GetPrefabName(prey.gameObject)) && Vector3.Distance(prey.transform.position, me.transform.position) > 30f)
-                    { Skip(st, prey, "it outran it", 3f); break; } // no bow: no catching a deer (a boar comes at it)
+                    { Skip(st, prey, P("aicompanion_work_skip_outran"), 3f); break; } // no bow: no catching a deer (a boar comes at it)
                     t.LastClose = Time.time;
                     st.WorkTool = Companion.BestRanged(me) ?? Companion.BestMelee(me);
                     Brain.Strike(st, prey, Time.deltaTime);
@@ -745,7 +752,8 @@ namespace AICompanion
                     st.Task = null;
                     break;
             }
-            if (st.Task != null) Brain.Status(st, Describe(st.Task) + (st.Helping ? " to help you" : st.Area != null ? $" (your patch: {st.Area.Done} done)" : st.Task.ForGoal && st.Goal != null ? $" for its {st.Goal.What}" : ""));
+            if (st.Task != null) Brain.Status(st, st.Helping ? P("aicompanion_work_status_helping", Describe(st.Task)) : st.Area != null ? P("aicompanion_work_status_patch", Describe(st.Task), st.Area.Done)
+                                                : st.Task.ForGoal && st.Goal != null ? P("aicompanion_work_status_for_goal", Describe(st.Task), st.Goal.What) : Describe(st.Task));
         }
 
         /// <summary>
@@ -757,9 +765,9 @@ namespace AICompanion
             Humanoid me = st.Body;
             float far = Flat(center, me.transform.position);
             if (far < radius + 60f || Time.time < st.TripUntil || st.Area != null) { st.TripStart = 0f; return false; } // (not while working a patch you pointed it at)
-            if (st.TripStart == 0f) { st.TripStart = Time.time; st.Task = null; st.Remember("set off home"); }
+            if (st.TripStart == 0f) { st.TripStart = Time.time; st.Task = null; st.Remember(P("aicompanion_work_set_off_home")); }
             moveTo(center, 2f, true);
-            Brain.Status(st, "heading home");
+            Brain.Status(st, P("aicompanion_work_status_heading_home"));
             if (Time.time - st.TripStart < (far > 250f ? 8f : 45f)) return true; // from an adventure far away it is home soon; nearby it walks
             st.TripStart = 0f;
             Vector3 pos = center + Vector3.up * 0.2f;
@@ -767,7 +775,7 @@ namespace AICompanion
             Rigidbody body = me.GetComponent<Rigidbody>();
             if (body != null) { body.position = pos; body.linearVelocity = Vector3.zero; }
             Companion.Zdo(me)?.SetPosition(pos);
-            st.Remember("got home");
+            st.Remember(P("aicompanion_work_got_home"));
             Plugin.Instance?.Note($"{Companion.NameOf(me)} went home to {pos:F0}");
             return true;
         }
@@ -800,7 +808,7 @@ namespace AICompanion
             if (missed && t.Closer > 0.35f)
             {
                 t.Closer = Mathf.Max(0.6f, t.Closer * 0.75f); // (not right into it: too close, it swings past)
-                st.Remember($"its swings missed the {Hoverable(t.Target)}: it steps in closer");
+                st.Remember(P("aicompanion_work_steps_closer", HoverName(t.Target)));
             }
             t.HealthAt = health;
         }
@@ -814,35 +822,58 @@ namespace AICompanion
             else stop();
         }
 
+        /// <summary>What it is doing with the task, "chopping Beech" (packed text: each player's game names the things).</summary>
         internal static string Describe(Task t)
         {
-            string what = t.Target != null ? Localization.instance.Localize(t.Target is ItemDrop d ? d.m_itemData.m_shared.m_name : t.Target is Pickable p && p.m_itemPrefab != null ? p.m_itemPrefab.GetComponent<ItemDrop>()?.m_itemData.m_shared.m_name ?? "" : Hoverable(t.Target)) : "";
+            string what = t.Target != null ? (t.Target is ItemDrop d ? d.m_itemData.m_shared.m_name : t.Target is Pickable p && p.m_itemPrefab != null ? p.m_itemPrefab.GetComponent<ItemDrop>()?.m_itemData.m_shared.m_name ?? "" : HoverName(t.Target)) : "";
             return t.Kind switch
             {
-                Kind.Hit => (t.Job == Job.Wood ? "chopping " : "mining ") + what,
-                Kind.Pick => "picking " + what,
-                Kind.PickUp => "picking up " + what,
-                Kind.Store => Home.IdOn(t.Target) == 0L ? "putting things in your chest" : "taking things to its chest",
-                Kind.Craft => $"making a {Localization.instance.Localize(t.Recipe?.m_item?.m_itemData.m_shared.m_name ?? "")} at the {Localization.instance.Localize(((CraftingStation)t.Target).m_name)}",
-                Kind.Cook => "cooking",
-                Kind.Fetch => "getting something to eat from your chest",
-                Kind.Armory => "looking in your chest for better gear",
-                Kind.Fuel => "putting wood on the fire",
-                Kind.Mend => "repairing " + Hoverable(t.Target).ToLowerInvariant(),
-                Kind.Build => "building your plan",
-                Kind.Supply => "getting materials for your plan",
-                Kind.Hunt => "hunting " + Localization.instance.Localize(((Character)t.Target)?.m_name ?? ""),
-                Kind.Upgrade => $"upgrading its {Localization.instance.Localize(t.Item?.m_shared.m_name ?? "")} at the {Localization.instance.Localize(((CraftingStation)t.Target).m_name)}",
-                _ => "gathering",
+                Kind.Hit => P(t.Job == Job.Wood ? "aicompanion_work_do_chopping" : "aicompanion_work_do_mining", what),
+                Kind.Pick => P("aicompanion_work_do_picking", what),
+                Kind.PickUp => P("aicompanion_work_do_picking_up", what),
+                Kind.Store => P(Home.IdOn(t.Target) == 0L ? "aicompanion_work_do_store_yours" : "aicompanion_work_do_store_its"),
+                Kind.Craft => P("aicompanion_work_do_making", t.Recipe?.m_item?.m_itemData.m_shared.m_name ?? "", ((CraftingStation)t.Target).m_name),
+                Kind.Cook => P("aicompanion_work_do_cooking"),
+                Kind.Fetch => P("aicompanion_work_do_fetch"),
+                Kind.Armory => P("aicompanion_work_do_armory"),
+                Kind.Fuel => P("aicompanion_work_do_fuel"),
+                Kind.Mend => P("aicompanion_work_do_repairing", Low(HoverName(t.Target))),
+                Kind.Build => P("aicompanion_work_do_building"),
+                Kind.Supply => P("aicompanion_work_do_supply"),
+                Kind.Hunt => P("aicompanion_work_do_hunting", ((Character)t.Target)?.m_name ?? ""),
+                Kind.Upgrade => P("aicompanion_work_do_upgrading", t.Item?.m_shared.m_name ?? "", ((CraftingStation)t.Target).m_name),
+                _ => P("aicompanion_work_do_gathering"),
             };
         }
 
-        private static string Hoverable(Component c)
+        /// <summary>Its name in this game's language (for the activity log).</summary>
+        private static string Hoverable(Component c) => Localization.instance.Localize(HoverName(c));
+
+        /// <summary>Its name as the game has it ("$piece_groundtorchwood"), or its prefab's ("wood torch"), for packed text (Words.P).</summary>
+        private static string HoverName(Component c)
         {
             Hoverable h = c.GetComponentInParent<Hoverable>();
             string n = h?.GetHoverName();
-            return string.IsNullOrEmpty(n) ? Utils.GetPrefabName(c.gameObject).Replace('_', ' ') : Localization.instance.Localize(n); // ("$piece_groundtorchwood": "wood torch")
+            if (!string.IsNullOrEmpty(n)) return n;
+            string prefab = Utils.GetPrefabName(c.gameObject);
+            return GameWord(prefab) ?? prefab.Replace('_', ' ');
         }
+
+        /// <summary>The game's own word for a tree, log or stump, which have no hover name ("stubbe" is a stump: "$prop_treestump").</summary>
+        private static string GameWord(string prefab)
+        {
+            string p = prefab.ToLowerInvariant();
+            if (p.Contains("stub") || p.Contains("stump")) return "$prop_treestump";
+            if (p.Contains("log")) return "$prop_treelog";
+            foreach (var (part, token) in TreeWords) if (p.Contains(part)) return token;
+            return null;
+        }
+
+        private static readonly (string, string)[] TreeWords =
+        {
+            ("yggashoot", "$prop_yggashoot"), ("ashland", "$prop_ashlandstree"), ("swamptree", "$prop_ancienttree"), ("beech", "$prop_beech"),
+            ("birch", "$prop_birch"), ("oak", "$prop_oak"), ("pine", "$prop_pine"), ("fir", "$prop_fir"),
+        };
 
         private static bool Valid(BrainState st, Task t)
         {
@@ -856,7 +887,7 @@ namespace AICompanion
         private static void Skip(BrainState st, Component target, string why, float minutes = 10f)
         {
             if (target != null) st.Skipped[target.gameObject.GetInstanceID()] = Time.time + minutes * 60f;
-            if (why != null && target != null) st.Remember($"gave up on {Hoverable(target)}: {why}");
+            if (why != null && target != null) st.Remember(P("aicompanion_work_gave_up_on", HoverName(target), why)); // (why: packed text)
             st.Task = null;
         }
 
@@ -956,7 +987,7 @@ namespace AICompanion
                                      .OrderByDescending(c => c.GetInventory().GetAllItems().Count(i => stock.Contains(i.m_shared.m_name)))
                                      .ThenBy(c => Vector3.Distance(c.transform.position, me.transform.position)).FirstOrDefault(c => Brain.CanReach(me, c.transform.position));
                 if (chest != null && stock.Count > 0) return New(Kind.Store, chest, Job.None);
-                if (full && inv.GetEmptySlots() == 0) { st.WorkNote = Stows(me) ? "its bag is full: give it a chest (Home tab) or room in yours" : "its bag is full: give it a chest (Home tab) or empty its bag"; return null; }
+                if (full && inv.GetEmptySlots() == 0) { st.WorkNote = P(Stows(me) ? "aicompanion_work_note_bag_full_yours" : "aicompanion_work_note_bag_full_own"); return null; }
             }
             // Its own chests holding what is yours (from before, or more than it keeps): a tidy now and then, what is yours to your chests.
             if (Stows(me) && Time.time >= st.NextTidy)
@@ -982,7 +1013,7 @@ namespace AICompanion
                     Container yours = YourFood(me, center, radius, c => !Skipped(st, c));
                     if (yours != null) return New(Kind.Fetch, yours, Job.None);
                 }
-                if (Food.Meals(me).Count == 0) Talk.Tell(me, "I'm out of food and there's none in my chests. I'll forage and hunt, but some cooked meat would help.", "nofood", 20f);
+                if (Food.Meals(me).Count == 0) Talk.Tell(me, P("aicompanion_work_no_food"), "nofood", 20f);
             }
             // Its food slots running low (or empty, with meals still in its belly): more from its chests, when they have some it would take.
             if (Gear.FoodShort(me) && Time.time >= st.NextRefillLook)
@@ -990,11 +1021,11 @@ namespace AICompanion
                 st.NextRefillLook = Time.time + 120f;
                 Container larder = Home.Chests(me).Where(c => !Containers.InUse(c) && !Skipped(st, c) && c.GetInventory().GetAllItems().Any(i => Gear.WantsFood(me, i)))
                                        .OrderBy(c => Vector3.Distance(c.transform.position, me.transform.position)).FirstOrDefault(c => Brain.CanReach(me, c.transform.position));
-                if (larder != null) { st.Remember("went to its chest to fill its food slots"); return New(Kind.Store, larder, Job.None); }
+                if (larder != null) { st.Remember(P("aicompanion_work_to_own_food")); return New(Kind.Store, larder, Job.None); }
                 if (UsesPantry(me)) // allowed: from your chests (food only)
                 {
                     Container yours = YourFood(me, center, radius, c => !Skipped(st, c));
-                    if (yours != null) { st.Remember("went to your chest for food for its food slots"); return New(Kind.Fetch, yours, Job.None); }
+                    if (yours != null) { st.Remember(P("aicompanion_work_to_your_food")); return New(Kind.Fetch, yours, Job.None); }
                 }
             }
 
@@ -1004,7 +1035,7 @@ namespace AICompanion
             {
                 st.NextArmoryLook = Time.time + 300f;
                 Container better = Armory.Find(me, center, radius, c => !Skipped(st, c));
-                if (better != null) { st.Remember("went to your chest for better gear"); return New(Kind.Armory, better, Job.None); }
+                if (better != null) { st.Remember(P("aicompanion_work_to_armory")); return New(Kind.Armory, better, Job.None); }
             }
 
             // Its fires: the ones under cooking stations and by its bed, topped up before they go out (wood from its bag or its chests).
@@ -1024,7 +1055,7 @@ namespace AICompanion
                 {
                     if (Mending.Hammer(me) == null) Mending.MakeHammer(st);
                     if (Mending.Hammer(me) != null) return New(Kind.Mend, damaged, Job.None);
-                    Talk.Tell(me, "Parts of the base are damaged. Give me a hammer and I'll fix them.", "nohammer", 30f);
+                    Talk.Tell(me, P("aicompanion_work_need_hammer"), "nohammer", 30f);
                 }
             }
 
@@ -1071,7 +1102,7 @@ namespace AICompanion
             {
                 CookingStation stove = Kitchen.Find(me, center, radius);
                 if (stove == null && st.Hungry && inv.GetAllItems().Any(IsCookable))
-                    Talk.Tell(me, "I have raw food but no cooking station near home to cook it on. Could you build one by a fire?", "nostove", 20f);
+                    Talk.Tell(me, P("aicompanion_work_no_stove"), "nostove", 20f);
                 if (stove != null)
                 {
                     foreach (CookingStation.ItemConversion conv in stove.m_conversion) if (conv.m_to != null) st.Wanted.Add(conv.m_to.name);
@@ -1108,9 +1139,9 @@ namespace AICompanion
                     {
                         if (Time.time >= st.TripUntil)
                         {
-                            string what = Localization.instance.Localize(prey.m_name).ToLowerInvariant();
-                            Talk.Mention(me, $"No {what} near home, so I'm going hunting for one, {Flat(prey.transform.position, center):0} m {Compass(prey.transform.position - center)} of home, for my {goal?.What}.", "hunt:" + what, 10f);
-                            st.Remember($"went hunting {what} further out");
+                            string what = Low(prey.m_name);
+                            Talk.Mention(me, P("aicompanion_work_hunt_trip", what, FromHome(prey.transform.position, center), goal?.What ?? ""), "hunt:" + prey.m_name, 10f);
+                            st.Remember(P("aicompanion_work_hunt_trip_remember", what));
                         }
                         st.TripUntil = Time.time + 180f;
                     }
@@ -1145,10 +1176,10 @@ namespace AICompanion
             if (best == null)
             {
                 var missing = new List<string>();
-                if ((jobs & Job.Wood) != 0 && axe == null) missing.Add("an axe");
-                if ((jobs & (Job.Stone | Job.Ore)) != 0 && pick == null) missing.Add("a pickaxe");
-                st.WorkNote = goal != null && goal.Raw.Count > 0 && !goalSeen ? $"looking for {string.Join(" or ", goal.Names.Values)} for its {goal.What} (none near home)"
-                            : missing.Count > 0 ? $"needs {string.Join(" and ", missing)} for its jobs" : $"nothing left to gather within {radius:0} m";
+                if ((jobs & Job.Wood) != 0 && axe == null) missing.Add(P("aicompanion_work_an_axe"));
+                if ((jobs & (Job.Stone | Job.Ore)) != 0 && pick == null) missing.Add(P("aicompanion_work_a_pickaxe"));
+                st.WorkNote = goal != null && goal.Raw.Count > 0 && !goalSeen ? P("aicompanion_work_note_looking", Goals.Or(goal.Things()), goal.What)
+                            : missing.Count > 0 ? P("aicompanion_work_note_needs_tools", Goals.And(missing)) : P("aicompanion_work_note_nothing_within", radius.ToString("0"));
             }
             // Nothing near home for its goal: a trip for it, as far as the world is loaded around you (about 170 m from home), when it is fit.
             bool searched = false;
@@ -1164,24 +1195,24 @@ namespace AICompanion
                     st.TripUntil = Time.time + 300f;
                     if (starting)
                     {
-                        Vector3 way = trip.Target.transform.position - center;
-                        string names = string.Join(" and ", goal.Names.Values);
-                        Talk.Mention(me, $"Nothing near home has {names}, so I'm going to get some, {Flat(trip.Target.transform.position, center):0} m {Compass(way)} of home.", "trip:" + goal.What, 10f);
-                        st.Remember($"set off on a trip for {names}");
-                        Journal.Trip(me, $"Went on a trip {Flat(trip.Target.transform.position, center):0} m {Compass(way)} of home for {names}.");
+                        string away = FromHome(trip.Target.transform.position, center);
+                        string names = Goals.And(goal.Things());
+                        Talk.Mention(me, P("aicompanion_work_trip_say", names, away), "trip:" + goal.What, 10f);
+                        st.Remember(P("aicompanion_work_trip_remember", names));
+                        Journal.Trip(me, P("aicompanion_work_trip_journal", away, names));
                     }
                     return trip;
                 }
-                if (Time.time < st.TripUntil) { st.TripUntil = 0f; st.Remember("came back from its trip"); } // done (or nothing more out there): home
+                if (Time.time < st.TripUntil) { st.TripUntil = 0f; st.Remember(P("aicompanion_work_trip_back")); } // done (or nothing more out there): home
             }
             if (searched && goal != null && goal.Raw.Count > 0 && !goalSeen && (!Directed(st) || planning) && !goalPrey.Any())
             {
                 // Nothing near home drops what its goal needs: those things count as "ask for them" for ten minutes, so it picks a goal it can do.
-                Talk.Tell(me, $"I can't find any {string.Join(" or ", goal.Names.Values)} around here for my {goal.What}, even further out. I'll look while you're away, or bring me some.", "far:" + goal.What, 30f);
+                Talk.Tell(me, P("aicompanion_work_cant_find", Goals.Or(goal.Things()), goal.What), "far:" + goal.What, 30f);
                 foreach (string item in goal.Raw.Keys) st.Unfindable[item] = Time.time + 600f;
                 st.NextUpgradeLook = 0f;
             }
-            if (best == null && inv.GetEmptySlots() == 0) Talk.Tell(me, "My bag is full and none of my chests has room. Give me another chest (Home tab).", "full", 15f);
+            if (best == null && inv.GetEmptySlots() == 0) Talk.Tell(me, P("aicompanion_work_bag_no_room"), "full", 15f);
             Claim(st, best);
             return best;
         }
@@ -1234,7 +1265,7 @@ namespace AICompanion
         {
             if (Time.time >= st.ClearUntil) return false;
             moveTo(st.ClearTo, 0.5f, true);
-            Brain.Status(st, "stepping clear of the falling tree");
+            Brain.Status(st, P("aicompanion_work_status_clear_tree"));
             return true;
         }
 
@@ -1321,12 +1352,16 @@ namespace AICompanion
             return best;
         }
 
+        /// <summary>Which way: "n", "ne", "e"... (the end of a direction's key).</summary>
         internal static string Compass(Vector3 way)
         {
-            string[] names = { "north", "north-east", "east", "south-east", "south", "south-west", "west", "north-west" };
+            string[] names = { "n", "ne", "e", "se", "s", "sw", "w", "nw" };
             float angle = (Mathf.Atan2(way.x, way.z) * Mathf.Rad2Deg + 360f + 22.5f) % 360f;
             return names[Mathf.FloorToInt(angle / 45f) % 8];
         }
+
+        /// <summary>"40 m north-east of home" (packed text).</summary>
+        private static string FromHome(Vector3 at, Vector3 center) => P("aicompanion_work_from_home_" + Compass(at - center), Flat(at, center).ToString("0"));
 
         /// <summary>The item prefab names something drops when worked (a tree, a rock, a plant).</summary>
         internal static IEnumerable<string> Drops(Component c)
@@ -1388,7 +1423,7 @@ namespace AICompanion
                             && c.GetInventory().GetAllItems().Any(Food.IsFood) && (!c.m_checkGuardStone || PrivateArea.CheckAccess(c.transform.position, 0f, false)))
                 .OrderBy(c => Vector3.Distance(c.transform.position, me.transform.position)).Take(6).FirstOrDefault(c => Brain.CanReach(me, c.transform.position));
 
-        /// <summary>Up to "max" of the best food in a chest of yours into its bag. What it took ("3 cooked meat"), or null.</summary>
+        /// <summary>Up to "max" of the best food in a chest of yours into its bag. What it took ("3 cooked meat", packed text), or null.</summary>
         internal static string TakeFoodFrom(Humanoid me, Container chest, int max, bool rationed = false)
         {
             if (!Containers.Take(chest)) return null; // (someone has it open; else what is really in it, before it looks)
@@ -1403,7 +1438,7 @@ namespace AICompanion
                 int carried = me.GetInventory().CountItems(food.m_shared.m_name);
                 int n = Mathf.Min(left, food.m_stack, slots ? Mathf.Max(0, 5 - carried) : left);
                 if (n <= 0) continue;
-                string name = Localization.instance.Localize(food.m_shared.m_name);
+                string name = food.m_shared.m_name;
                 if (!Move(chest, me, food, n, true)) continue;
                 took[name] = (took.TryGetValue(name, out int had) ? had : 0) + n;
                 left -= n;
@@ -1415,8 +1450,8 @@ namespace AICompanion
                 ZDO z = Companion.Zdo(me);
                 if (z != null) { int day = Journal.Day; z.Set(RationNKey, (z.GetInt(RationDayKey, -1) == day ? z.GetInt(RationNKey, 0) : 0) + took.Values.Sum()); z.Set(RationDayKey, day); }
             }
-            string list = string.Join(", ", took.Select(kv => $"{kv.Value} {kv.Key.ToLowerInvariant()}"));
-            Plugin.Instance?.Note($"{Companion.NameOf(me)} took {list} to eat from the chest at {chest.transform.position:F0}");
+            string list = string.Join(", ", took.Select(kv => P("aicompanion_work_amount", kv.Value, Low(kv.Key))));
+            Plugin.Instance?.Note($"{Companion.NameOf(me)} took {Words.English(list)} to eat from the chest at {chest.transform.position:F0}");
             return list;
         }
 
@@ -1429,15 +1464,15 @@ namespace AICompanion
             bool yours = Home.IdOn(chest) == 0L;
             if (yours && !starving && RationLeft(me) == 0)
             {
-                Skip(st, chest, "it has had its ration today", 30f);
-                Talk.Mention(me, $"I've had my share of your food today ({RationOf(me)}). I'll make do until tomorrow.", "ration", 120f);
+                Skip(st, chest, P("aicompanion_work_skip_ration"), 30f);
+                Talk.Mention(me, P("aicompanion_work_ration_said", RationOf(me)), "ration", 120f);
                 return;
             }
             string list = TakeFoodFrom(me, chest, starving ? 3 : Mathf.Clamp(9 - have, 3, 9), rationed: !starving);
-            if (list == null) { Skip(st, chest, "no room for the food", 5f); return; }
-            st.Remember($"took {list} from your chest {(starving ? "to eat" : "for its food slots")}");
-            if (starving) Talk.Tell(me, $"I had nothing to eat, so I took {list} from your chest. Thanks!");
-            else Talk.Mention(me, $"Took {list} from your chest for later.");
+            if (list == null) { Skip(st, chest, P("aicompanion_work_skip_no_room_food"), 5f); return; }
+            st.Remember(P(starving ? "aicompanion_work_took_food_to_eat" : "aicompanion_work_took_food_for_slots", list));
+            if (starving) Talk.Tell(me, P("aicompanion_work_took_food_starving", list));
+            else Talk.Mention(me, P("aicompanion_work_took_food_later", list));
         }
 
         // ---- its chests --------------------------------------------------------------------------------------
@@ -1540,7 +1575,7 @@ namespace AICompanion
         {
             Humanoid me = st.Body;
             if (chest == null || Containers.InUse(chest)) return;
-            if (chest.m_checkGuardStone && !PrivateArea.CheckAccess(chest.transform.position, 0f, false)) { Skip(st, chest, "it is behind a ward", 5f); return; }
+            if (chest.m_checkGuardStone && !PrivateArea.CheckAccess(chest.transform.position, 0f, false)) { Skip(st, chest, P("aicompanion_work_skip_ward"), 5f); return; }
             if (!Containers.Take(chest)) return; // (what is really in it, before it puts in or takes out)
             Inventory mine = me.GetInventory(), its = chest.GetInventory();
             int put = 0, took = 0, tidied = 0;
@@ -1581,7 +1616,7 @@ namespace AICompanion
             }
             if (put + took + tidied > 0)
             {
-                st.Remember(yours ? $"put away {put} things in your chest" : $"at its chest: put away {put}, took {took}" + (tidied > 0 ? $", took out {tidied} that are yours" : ""));
+                st.Remember(yours ? P("aicompanion_work_put_away_yours", put) : tidied > 0 ? P("aicompanion_work_at_its_chest_tidied", put, took, tidied) : P("aicompanion_work_at_its_chest", put, took));
                 Plugin.Instance?.Note($"{Companion.NameOf(me)} put away {put}, took {took}, took out {tidied} at {(yours ? "your" : "its")} chest {chest.transform.position:F0}");
             }
             if (tidied > 0) { st.NextDeliver = 0f; SortHome(st); } // (straight into your chests, with QualityOfLife; else on its next round)
@@ -1710,7 +1745,7 @@ namespace AICompanion
             return false;
         }
 
-        /// <summary>Make it (paying from its bag, then its chests near the station). What it made ("made a flint axe"), or null.</summary>
+        /// <summary>Make it (paying from its bag, then its chests near the station). What it made ("made a flint axe", packed text), or null.</summary>
         public static string Craft(BrainState st, Recipe r, CraftingStation station, bool forGoal = false)
         {
             Humanoid me = st.Body;
@@ -1721,15 +1756,15 @@ namespace AICompanion
             Pay(me, chests, r, 1);
             me.GetInventory().AddItem(r.m_item.gameObject.name, Mathf.Max(1, r.m_amount), 1, 0, 0L, Companion.NameOf(me), false);
             if (station != null) station.m_craftItemEffects.Create(station.transform.position, Quaternion.identity);
-            string what = Localization.instance.Localize(r.m_item.m_itemData.m_shared.m_name);
-            st.Remember($"made a {what}");
+            string token = r.m_item.m_itemData.m_shared.m_name, what = Localization.instance.Localize(token);
+            st.Remember(P("aicompanion_work_made_a", token));
             Skill.Raise(me, station != null && station.m_craftingSkill != Skills.SkillType.None ? station.m_craftingSkill : Skills.SkillType.Crafting, 1f);
             st.NextGear = 0f;
             Plugin.Instance?.Note($"{Companion.NameOf(me)} made a {what} at {(station != null ? station.transform.position : me.transform.position):F0}");
-            if (forGoal) Talk.Mention(me, $"I made {Mathf.Max(1, r.m_amount)} {what.ToLowerInvariant()} for my {Work.Aim(st)?.What}."); // (a step on the way: not for chat)
-            else Talk.Tell(me, st.Goal != null && st.Goal.Recipe == r ? $"I made my {what.ToLowerInvariant()}!" : $"I made a {what.ToLowerInvariant()}.");
-            if (!forGoal) Journal.Made(me, $"a {what.ToLowerInvariant()}");
-            return forGoal ? $"made {Mathf.Max(1, r.m_amount)} {what.ToLowerInvariant()}" : $"made a {what.ToLowerInvariant()}";
+            if (forGoal) Talk.Mention(me, P("aicompanion_work_made_for_goal", Mathf.Max(1, r.m_amount), Low(token), Work.Aim(st)?.What ?? "")); // (a step on the way: not for chat)
+            else Talk.Tell(me, P(st.Goal != null && st.Goal.Recipe == r ? "aicompanion_work_made_my" : "aicompanion_work_made_a_say", Low(token)));
+            if (!forGoal) Journal.Made(me, token);
+            return forGoal ? P("aicompanion_work_made_n", Mathf.Max(1, r.m_amount), Low(token)) : P("aicompanion_work_made_a", Low(token));
         }
 
         private static void Pay(Humanoid me, List<Container> chests, Recipe r, int quality)
@@ -1752,7 +1787,7 @@ namespace AICompanion
             }
         }
 
-        /// <summary>Upgrade it a level. What it did ("upgraded its club to level 2"), or null.</summary>
+        /// <summary>Upgrade it a level. What it did ("upgraded its club to level 2", packed text), or null.</summary>
         public static string Do(BrainState st, ItemDrop.ItemData item, CraftingStation station)
         {
             Humanoid me = st.Body;
@@ -1781,14 +1816,14 @@ namespace AICompanion
             item.m_durability = item.GetMaxDurability();
             Companion.SaveBag(me);
             station.m_craftItemEffects.Create(station.transform.position, Quaternion.identity);
-            string what = Localization.instance.Localize(item.m_shared.m_name);
-            st.Remember($"upgraded its {what} to level {next}");
+            string token = item.m_shared.m_name, what = Localization.instance.Localize(token);
+            st.Remember(P("aicompanion_work_upgraded_its", token, next));
             Skill.Raise(me, station.m_craftingSkill != Skills.SkillType.None ? station.m_craftingSkill : Skills.SkillType.Crafting, 1f);
             Plugin.Instance?.Note($"{Companion.NameOf(me)} upgraded its {what} to level {next} at {station.transform.position:F0}");
-            Talk.Tell(me, $"I upgraded my {what} to level {next}.");
-            Journal.Upgraded(me, $"its {what.ToLowerInvariant()} to level {next}");
+            Talk.Tell(me, P("aicompanion_work_upgraded_say", token, next));
+            Journal.Upgraded(me, token, next);
             Portraits.Dirty(me);
-            return $"upgraded its {what.ToLowerInvariant()} to level {next}";
+            return P("aicompanion_work_upgraded_its", Low(token), next);
         }
     }
 }

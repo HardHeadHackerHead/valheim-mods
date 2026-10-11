@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
+using static AICompanion.Words;
 
 namespace AICompanion
 {
@@ -24,7 +25,7 @@ namespace AICompanion
         {
             // Yours, however far (any the game has loaded: one far off in a part of the world nobody is near is not running anywhere).
             var mine = Companion.All().Where(c => Companion.CanCommand(c, p) && !c.IsDead()).ToList();
-            if (mine.Count == 0) { Plugin.Tell("None of your companions is close enough to be about (the game only runs them near a player)."); return; }
+            if (mine.Count == 0) { Plugin.Tell(P("aicompanion_pointing_none_near")); return; }
             Transform eye = GameCamera.instance != null ? GameCamera.instance.transform : p.transform;
             RaycastHit[] hits = Physics.RaycastAll(eye.position, eye.forward, Reach, Mask, QueryTriggerInteraction.Ignore).OrderBy(h => h.distance).ToArray();
             foreach (RaycastHit hit in hits)
@@ -35,8 +36,8 @@ namespace AICompanion
                 return;
             }
             // Nothing: back to you.
-            foreach (Humanoid c in mine) { Brain.Get(c).Area = null; if (Home.Follow(c)) Talk.Say(c, "Coming!"); }
-            Plugin.Tell(mine.Count == 1 ? $"{Companion.NameOf(mine[0])} comes back to you" : "Your companions come back to you");
+            foreach (Humanoid c in mine) { Brain.Get(c).Area = null; if (Home.Follow(c)) Talk.Say(c, P("aicompanion_talk_reply_come")); }
+            Plugin.Tell(mine.Count == 1 ? P("aicompanion_pointing_comes_back", Companion.NameOf(mine[0])) : P("aicompanion_pointing_all_come_back"));
         }
 
         /// <summary>The ground, or a floor you built: somewhere to go and wait.</summary>
@@ -60,7 +61,7 @@ namespace AICompanion
             return c != null ? c.gameObject : null;
         }
 
-        /// <summary>Why it cannot work that (no axe, too weak a pickaxe, a crop...), or null when it is nothing it works.</summary>
+        /// <summary>(Packed text, Words.P.) Why it cannot work that (no axe, too weak a pickaxe, a crop...), or null when it is nothing it works.</summary>
         private static string WhyNot(Humanoid who, GameObject go)
         {
             if (go == null || go.GetComponent<Piece>() != null) return null;
@@ -71,17 +72,17 @@ namespace AICompanion
             if (des != null)
             {
                 DropTable drops = go.GetComponent<DropOnDestroyed>()?.m_dropWhenDestroyed;
-                if (drops == null || drops.m_drops.Count == 0) return "There's nothing worth getting from that.";
+                if (drops == null || drops.m_drops.Count == 0) return P("aicompanion_pointing_nothing_worth");
                 bool wood = des.m_destructibleType == DestructibleType.Tree || des.m_damages.m_chop != HitData.DamageModifier.Immune && des.m_damages.m_pickaxe == HitData.DamageModifier.Immune;
                 if (wood) treeTier = des.m_minToolTier; else rockTier = des.m_minToolTier;
             }
-            if (treeTier >= 0) return axe == null ? "I need an axe for that. Give me one (my Gear tab)." : "My axe isn't good enough for that tree. I need a better one.";
-            if (rockTier >= 0) return pick == null ? "I need a pickaxe for that. Give me one (my Gear tab)." : "My pickaxe can't break that. I need a better one.";
+            if (treeTier >= 0) return axe == null ? P("aicompanion_pointing_need_axe") : P("aicompanion_pointing_axe_too_weak");
+            if (rockTier >= 0) return pick == null ? P("aicompanion_pointing_need_pickaxe") : P("aicompanion_pointing_pickaxe_too_weak");
             Pickable p = go.GetComponent<Pickable>();
             if (p != null)
             {
-                if (Companion.Zdo(p)?.GetBool(ZDOVars.s_picked, false) ?? false) return "There's nothing to pick there yet.";
-                return "That's a crop. I leave your fields to you.";
+                if (Companion.Zdo(p)?.GetBool(ZDOVars.s_picked, false) ?? false) return P("aicompanion_pointing_nothing_to_pick");
+                return P("aicompanion_pointing_crop");
             }
             return null;
         }
@@ -101,11 +102,11 @@ namespace AICompanion
                     st.Focus = ch;
                     st.FocusUntil = Time.time + 30f;
                     st.NextAsk = 0f;
-                    Talk.Say(c, "On it!");
+                    Talk.Say(c, P("aicompanion_pointing_on_it"));
                 }
                 BrainState first = Brain.Get(mine[0]);
-                Marks.Put(ch, mine[0], mine.Count == 1 ? "going for this" : "going for this (all of us)", () => first.Focus == ch && Time.time < first.FocusUntil && !ch.IsDead());
-                Plugin.Tell($"{(mine.Count == 1 ? Companion.NameOf(mine[0]) : "Your companions")} go for the {Localization.instance.Localize(ch.m_name)}");
+                Marks.Put(ch, mine[0], P(mine.Count == 1 ? "aicompanion_pointing_mark_going_for" : "aicompanion_pointing_mark_going_for_all"), () => first.Focus == ch && Time.time < first.FocusUntil && !ch.IsDead());
+                Plugin.Tell(mine.Count == 1 ? P("aicompanion_pointing_go_for", Companion.NameOf(mine[0]), ch.m_name) : P("aicompanion_pointing_all_go_for", ch.m_name));
                 return true;
             }
 
@@ -117,8 +118,8 @@ namespace AICompanion
             {
                 BrainState os = Brain.Get(owner);
                 Grave.Fetch(os, tomb);
-                Talk.Say(owner, "My things! I'll get them.");
-                Marks.Put(tomb, owner, "getting my things back", () => os.GraveOrdered == tomb || os.GraveOn == tomb);
+                Talk.Say(owner, P("aicompanion_pointing_my_things"));
+                Marks.Put(tomb, owner, P("aicompanion_pointing_mark_getting_things"), () => os.GraveOrdered == tomb || os.GraveOn == tomb);
                 return true;
             }
 
@@ -131,8 +132,8 @@ namespace AICompanion
             Vector3 heap = item != null ? item.transform.position : hit.point;
             if ((item != null || IsGround(hit)) && Work.OrderPickUp(w, heap, item != null ? 3f : 1.5f))
             {
-                Talk.Say(who, "I'll pick those up.");
-                Marks.PutSpot(heap, who, "picking these up", () => w.PickQueue.Count > 0 || (w.Task != null && w.Task.Kind == Work.Kind.PickUp && w.Task.Ordered));
+                Talk.Say(who, P("aicompanion_pointing_pick_those_up"));
+                Marks.PutSpot(heap, who, P("aicompanion_pointing_mark_picking_up"), () => w.PickQueue.Count > 0 || (w.Task != null && w.Task.Kind == Work.Kind.PickUp && w.Task.Ordered));
                 return true;
             }
             Activity.Log(who, $"you pointed at {Utils.GetPrefabName(go)} ({hit.collider.name}, layer {LayerMask.LayerToName(hit.collider.gameObject.layer)}, {hit.distance:0} m)");
@@ -143,7 +144,7 @@ namespace AICompanion
 
             // A cart: it pulls it (again: it lets go).
             Vagon cart = go.GetComponentInParent<Vagon>();
-            if (cart != null) { Carts.Toggle(w, cart); if (w.Cart == cart) Marks.Put(cart, who, "pulling this", () => w.Cart == cart); return true; }
+            if (cart != null) { Carts.Toggle(w, cart); if (w.Cart == cart) Marks.Put(cart, who, P("aicompanion_pointing_mark_pulling"), () => w.Cart == cart); return true; }
 
             // One of your chests: put its things there.
             Container chest = go.GetComponentInParent<Container>();
@@ -152,8 +153,8 @@ namespace AICompanion
                 bool sorts = AppDomain.CurrentDomain.GetData("DHack.QoL.StackInventory") != null; // (QualityOfLife: into the right chests around it)
                 if (Work.Ordered(w, Work.Kind.Store, chest))
                 {
-                    Talk.Say(who, sorts ? "I'll sort my things into your chests." : "I'll put my things in there.");
-                    MarkTask(w, who, sorts ? "sorting my things into the chests here" : "putting my things in here");
+                    Talk.Say(who, P(sorts ? "aicompanion_pointing_will_sort" : "aicompanion_pointing_will_put"));
+                    MarkTask(w, who, P(sorts ? "aicompanion_pointing_mark_sorting" : "aicompanion_pointing_mark_putting"));
                     return true;
                 }
             }
@@ -167,10 +168,10 @@ namespace AICompanion
                 List<Component> patch = Work.OrderArea(w, work);
                 Work.Area area = w.Area;
                 foreach (Component c in patch) { Component cc = c; Marks.Put(cc, who, null, () => w.Area == area && cc != null); }
-                string doing = work.Kind == Work.Kind.Pick ? "picking this" : work.Job == Job.Wood ? "chopping this" : "mining this";
+                string doing = P(work.Kind == Work.Kind.Pick ? "aicompanion_pointing_mark_picking" : work.Job == Job.Wood ? "aicompanion_pointing_mark_chopping" : "aicompanion_pointing_mark_mining");
                 int more = patch.Count(c => c != work.Target);
-                Talk.Say(who, more == 0 ? (work.Kind == Work.Kind.Pick ? "I'll pick that." : "On it.")
-                    : work.Kind == Work.Kind.Pick ? "I'll pick everything around here." : work.Job == Job.Wood ? "I'll chop these trees down." : "I'll mine these rocks.");
+                Talk.Say(who, P(more == 0 ? (work.Kind == Work.Kind.Pick ? "aicompanion_pointing_will_pick" : "aicompanion_pointing_on_it_calm")
+                    : work.Kind == Work.Kind.Pick ? "aicompanion_pointing_will_pick_all" : work.Job == Job.Wood ? "aicompanion_pointing_will_chop" : "aicompanion_pointing_will_mine"));
                 MarkTask(w, who, doing);
                 return true;
             }
@@ -187,9 +188,9 @@ namespace AICompanion
             if (!IsGround(hit))
             {
                 string name = Utils.GetPrefabName(go).ToLowerInvariant();
-                string what = name.Contains("rock") || name.Contains("stone") || name.Contains("boulder") ? "That rock can't be mined." : "I can't do anything with that.";
+                string what = P(name.Contains("rock") || name.Contains("stone") || name.Contains("boulder") ? "aicompanion_pointing_rock_cant" : "aicompanion_pointing_cant_do");
                 Talk.Say(who, what);
-                Plugin.Tell($"{Companion.NameOf(who)}: {what} (Point at the ground for it to wait there.)");
+                Plugin.Tell($"{Companion.NameOf(who)}: {what} " + P("aicompanion_pointing_ground_hint"));
                 return true;
             }
 
@@ -198,9 +199,9 @@ namespace AICompanion
             if (Companion.Write(who, z => { z.Set(Keys.Order, (int)Order.Guard); z.Set(Keys.Post, spot); }))
             {
                 w.ManualOrderAt = Time.time;
-                Marks.PutSpot(spot, who, "waiting here", () => who != null && Companion.OrderOf(who) == Order.Guard && Vector3.Distance(Companion.Zdo(who).GetVec3(Keys.Post, Vector3.zero), spot) < 0.5f);
-                Talk.Say(who, "I'll wait there.");
-                Plugin.Tell($"{Companion.NameOf(who)} waits there. Press {Plugin.CommandKey.Value} at the sky to call them back.");
+                Marks.PutSpot(spot, who, P("aicompanion_pointing_mark_waiting"), () => who != null && Companion.OrderOf(who) == Order.Guard && Vector3.Distance(Companion.Zdo(who).GetVec3(Keys.Post, Vector3.zero), spot) < 0.5f);
+                Talk.Say(who, P("aicompanion_pointing_will_wait"));
+                Plugin.Tell(P("aicompanion_pointing_waits_there", Companion.NameOf(who), Plugin.CommandKey.Value));
             }
             return true;
         }

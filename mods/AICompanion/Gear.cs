@@ -20,26 +20,26 @@ namespace AICompanion
     {
         public const int BagRows = 4, Rows = 6, Width = 8;
 
-        public class Slot { public GearKind Kind; public string Label; public int X, Y; }
+        public class Slot { public GearKind Kind; public string Label; public int X, Y; }   // Label: packed text (Words.P), shown with Words.Show
 
         public static readonly Slot[] All =
         {
-            new Slot { Kind = GearKind.Weapon,  Label = "Weapon",  X = 0, Y = 4 },
-            new Slot { Kind = GearKind.Spare,   Label = "Spare",   X = 1, Y = 4 },
-            new Slot { Kind = GearKind.Shield,  Label = "Shield",  X = 2, Y = 4 },
-            new Slot { Kind = GearKind.Bow,     Label = "Bow",     X = 3, Y = 4 },
-            new Slot { Kind = GearKind.Ammo,    Label = "Arrows",  X = 4, Y = 4 },
-            new Slot { Kind = GearKind.Axe,     Label = "Axe",     X = 5, Y = 4 },
-            new Slot { Kind = GearKind.Pickaxe, Label = "Pickaxe", X = 6, Y = 4 },
-            new Slot { Kind = GearKind.Hammer,  Label = "Hammer",  X = 7, Y = 4 },
-            new Slot { Kind = GearKind.Head,    Label = "Helmet",  X = 0, Y = 5 },
-            new Slot { Kind = GearKind.Chest,   Label = "Chest",   X = 1, Y = 5 },
-            new Slot { Kind = GearKind.Legs,    Label = "Legs",    X = 2, Y = 5 },
-            new Slot { Kind = GearKind.Cape,    Label = "Cape",    X = 3, Y = 5 },
-            new Slot { Kind = GearKind.Belt,    Label = "Belt",    X = 4, Y = 5 },
-            new Slot { Kind = GearKind.Food,    Label = "Food",    X = 5, Y = 5 },
-            new Slot { Kind = GearKind.Food,    Label = "Food",    X = 6, Y = 5 },
-            new Slot { Kind = GearKind.Food,    Label = "Food",    X = 7, Y = 5 },
+            new Slot { Kind = GearKind.Weapon,  Label = Words.P("aicompanion_gear_slot_weapon"),  X = 0, Y = 4 },
+            new Slot { Kind = GearKind.Spare,   Label = Words.P("aicompanion_gear_slot_spare"),   X = 1, Y = 4 },
+            new Slot { Kind = GearKind.Shield,  Label = Words.P("aicompanion_gear_slot_shield"),  X = 2, Y = 4 },
+            new Slot { Kind = GearKind.Bow,     Label = Words.P("aicompanion_gear_slot_bow"),     X = 3, Y = 4 },
+            new Slot { Kind = GearKind.Ammo,    Label = Words.P("aicompanion_gear_slot_arrows"),  X = 4, Y = 4 },
+            new Slot { Kind = GearKind.Axe,     Label = Words.P("aicompanion_gear_slot_axe"),     X = 5, Y = 4 },
+            new Slot { Kind = GearKind.Pickaxe, Label = Words.P("aicompanion_gear_slot_pickaxe"), X = 6, Y = 4 },
+            new Slot { Kind = GearKind.Hammer,  Label = Words.P("aicompanion_gear_slot_hammer"),  X = 7, Y = 4 },
+            new Slot { Kind = GearKind.Head,    Label = Words.P("aicompanion_gear_slot_helmet"),  X = 0, Y = 5 },
+            new Slot { Kind = GearKind.Chest,   Label = Words.P("aicompanion_gear_slot_chest"),   X = 1, Y = 5 },
+            new Slot { Kind = GearKind.Legs,    Label = Words.P("aicompanion_gear_slot_legs"),    X = 2, Y = 5 },
+            new Slot { Kind = GearKind.Cape,    Label = Words.P("aicompanion_gear_slot_cape"),    X = 3, Y = 5 },
+            new Slot { Kind = GearKind.Belt,    Label = Words.P("aicompanion_gear_slot_belt"),    X = 4, Y = 5 },
+            new Slot { Kind = GearKind.Food,    Label = Words.P("aicompanion_gear_slot_food"),    X = 5, Y = 5 },
+            new Slot { Kind = GearKind.Food,    Label = Words.P("aicompanion_gear_slot_food"),    X = 6, Y = 5 },
+            new Slot { Kind = GearKind.Food,    Label = Words.P("aicompanion_gear_slot_food"),    X = 7, Y = 5 },
         };
 
         /// <summary>What its worn gear resists (a wolf cape: frost...), as a player's armour does, plus its status effects (meads).</summary>
@@ -52,7 +52,7 @@ namespace AICompanion
         }
 
         /// <summary>A companion's inventory (its gear chest's): the one these rules are for.</summary>
-        public static bool IsCompanion(Inventory inv) => inv != null && inv.GetName() == "Companion";
+        public static bool IsCompanion(Inventory inv) => inv != null && (inv.GetName() == "$aicompanion_companion" || inv.GetName() == "Companion"); // (before 0.24: "Companion")
 
         public static Slot At(int x, int y) => All.FirstOrDefault(s => s.X == x && s.Y == y);
         public static bool InSlot(ItemDrop.ItemData i) => i != null && i.m_gridPos.y >= BagRows;
@@ -254,8 +254,8 @@ namespace AICompanion
             Inventory mine = p.GetInventory(), its = c.GetInventory();
             if (!mine.ContainsItem(item)) return false;
             var fits = All.Where(s => Fits(s, item)).ToList();
-            if (fits.Count == 0) { why = "That isn't gear."; return false; }
-            if (!Companion.Write(c, _ => { })) { why = "Someone is going through its things."; return false; }
+            if (fits.Count == 0) { why = Words.P("aicompanion_gear_not_gear"); return false; }
+            if (!Companion.Write(c, _ => { })) { why = Words.P("aicompanion_gear_things_busy"); return false; }
             Slot slot = fits.FirstOrDefault(s => In(c, s) == null) ?? fits[0];
             if (fits[0].Kind == GearKind.Food)
             {
@@ -263,7 +263,7 @@ namespace AICompanion
                 slot = same ?? fits.FirstOrDefault(s => In(c, s) == null);
                 if (slot == null) // its food slots are full of other food: into its bag (it moves the best into its slots itself)
                 {
-                    if (!its.CanAddItem(item)) { why = $"{Companion.NameOf(c)}'s bag is full."; return false; }
+                    if (!its.CanAddItem(item)) { why = Words.P("aicompanion_companion_bag_full", Companion.NameOf(c)); return false; }
                     its.MoveItemToThis(mine, item);
                     Companion.SaveBag(c);
                     Activity.Log(c, $"you gave it {Localization.instance.Localize(item.m_shared.m_name)} (into its bag)");
@@ -277,16 +277,16 @@ namespace AICompanion
                 old.m_equipped = false;
                 if (!ToBag(its, old))
                 {
-                    if (!mine.CanAddItem(old)) { why = $"{Companion.NameOf(c)}'s bag and yours are full."; return false; }
+                    if (!mine.CanAddItem(old)) { why = Words.P("aicompanion_gear_both_full", Companion.NameOf(c)); return false; }
                     mine.MoveItemToThis(its, old);
                 }
             }
             if (p.IsItemEquiped(item)) p.UnequipItem(item, false);
             item.m_equipped = false;
-            if (!its.MoveItemToThis(mine, item, item.m_stack, slot.X, slot.Y)) { why = "It didn't fit."; Activity.Log(c, $"could not take {Localization.instance.Localize(item.m_shared.m_name)} into its {slot.Label.ToLowerInvariant()} slot"); return false; }
+            if (!its.MoveItemToThis(mine, item, item.m_stack, slot.X, slot.Y)) { why = Words.P("aicompanion_gear_no_fit"); Activity.Log(c, $"could not take {Localization.instance.Localize(item.m_shared.m_name)} into its {Words.English(slot.Label).ToLowerInvariant()} slot"); return false; }
             Brain.Get(c).NextGear = 0f; // wear it now
             Companion.SaveBag(c);
-            Activity.Log(c, $"you gave it {Localization.instance.Localize(item.m_shared.m_name)}: into its {slot.Label.ToLowerInvariant()} slot");
+            Activity.Log(c, $"you gave it {Localization.instance.Localize(item.m_shared.m_name)}: into its {Words.English(slot.Label).ToLowerInvariant()} slot");
             return true;
         }
 
@@ -364,7 +364,7 @@ namespace AICompanion
                 if (Shifted.Add(e.GetInstanceID())) (e.transform as RectTransform).anchoredPosition += new Vector2(0f, -Gap);
                 bool empty = __instance.GetInventory().GetItemAt(slot.X, slot.Y) == null;
                 TMPro.TMP_Text label = Label(e);
-                if (label != null) { label.text = slot.Label; label.enabled = empty; }
+                if (label != null) { label.text = Words.Show(slot.Label); label.enabled = empty; }
             }
         }
 
@@ -418,7 +418,8 @@ namespace AICompanion
         private static bool Refuse(ItemDrop.ItemData item, Gear.Slot slot, out bool result)
         {
             result = false;
-            Player.m_localPlayer?.Message(MessageHud.MessageType.Center, slot == null ? "That isn't a gear slot" : $"{Localization.instance.Localize(item.m_shared.m_name)} doesn't go in the {slot.Label.ToLowerInvariant()} slot");
+            Player.m_localPlayer?.Message(MessageHud.MessageType.Center, slot == null ? DHack.Shared.Translations.T("aicompanion_gear_not_slot")
+                : DHack.Shared.Translations.T("aicompanion_gear_wrong_slot", Localization.instance.Localize(item.m_shared.m_name), Words.Mid(Words.Show(slot.Label))));
             return false;
         }
     }

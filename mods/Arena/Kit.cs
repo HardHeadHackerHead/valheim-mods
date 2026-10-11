@@ -2,6 +2,7 @@ using System.Collections.Generic;
 using System.Linq;
 using HarmonyLib;
 using UnityEngine;
+using static DHack.Shared.Translations;
 
 namespace Arena
 {
@@ -288,7 +289,7 @@ namespace Arena
                 meal.m_dropPrefab = drop.gameObject;
                 if (player.EatFood(meal)) names.Add(Localization.instance.Localize(meal.m_shared.m_name));
             }
-            if (names.Count > 0) player.Message(MessageHud.MessageType.TopLeft, "The kitchen serves: " + string.Join(", ", names));
+            if (names.Count > 0) player.Message(MessageHud.MessageType.TopLeft, T("arena_kitchen", string.Join(", ", names)));
         }
 
         /// <summary>Takes back what the arena lent (everything marked).</summary>
@@ -339,7 +340,7 @@ namespace Arena
                 dropped++;
             }
             Plugin.Log.LogInfo($"Gave back the stowed things ({inv.NrOfItems()} items now carried{(dropped > 0 ? ", " + dropped + " dropped for want of room" : "")})");
-            if (dropped > 0) player.Message(MessageHud.MessageType.Center, "Your bag is full: what you won lies at your feet");
+            if (dropped > 0) player.Message(MessageHud.MessageType.Center, T("arena_bag_full"));
         }
 
         /// <summary>Puts things right once the player is in the world and no contest is on: lent things go, stowed things come back.</summary>
@@ -350,7 +351,7 @@ namespace Arena
             Player p = Player.m_localPlayer;
             if (p == null || p.IsDead() || p.IsTeleporting() || Contest.Active) return;
             if (Time.time > _nextTidy) { _nextTidy = Time.time + 10f; Show.Tidy(); }
-            if (Stowed(p)) { Return(p); p.Message(MessageHud.MessageType.Center, "The Arena Master gives you back your things"); }
+            if (Stowed(p)) { Return(p); p.Message(MessageHud.MessageType.Center, T("arena_things_back")); }
             else if (p.GetInventory().GetAllItems().Any(IsLoan)) TakeBack(p);
         }
 
@@ -365,7 +366,7 @@ namespace Arena
         {
             if (!Kit.IsLoan(item)) return true;
             __result = false;
-            if (__instance == Player.m_localPlayer) Hud.Say("That is the arena's: it stays with you until the fight is over.");
+            if (__instance == Player.m_localPlayer) Hud.Say(T("arena_loan_stays"));
             return false;
         }
     }

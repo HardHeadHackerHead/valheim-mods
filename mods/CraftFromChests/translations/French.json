@@ -1,0 +1,11 @@
+{
+  "craftfromchests_chat_loaded": "{0} v{1} chargé | {2}, rayon {3} m | compilé {4}",
+  "craftfromchests_chat_reloaded": "{0} v{1} rechargé | {2}, rayon {3} m | compilé {4}",
+  "craftfromchests_loaded": "{0} chargé",
+  "craftfromchests_reloaded": "{0} rechargé",
+  "craftfromchests_short": "Plus assez de {0} dans les coffres",
+  "craftfromchests_have": "Vous avez {0}  (inventaire {1}, coffres {2})",
+  "craftfromchests_lines": "Lignes des coffres : {0}",
+  "craftfromchests_range": "Portée : {0} m",
+  "craftfromchests_server_range": "Ici, c'est le serveur qui fixe la portée"
+}

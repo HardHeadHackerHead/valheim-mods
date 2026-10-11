@@ -68,7 +68,7 @@ namespace AICompanion
                     all.Add(new JObject
                     {
                         ["id"] = Companion.IdOf(h).ToString(), ["name"] = Companion.NameOf(h), ["mine"] = Companion.IsMine(h, p),
-                        ["order"] = Companion.OrderOf(h).ToString(), ["status"] = Companion.StatusOf(h), ["items"] = h.GetInventory().NrOfItems(),
+                        ["order"] = Companion.OrderOf(h).ToString(), ["status"] = En(Companion.StatusOf(h)), ["items"] = h.GetInventory().NrOfItems(),
                         ["distance"] = Math.Round(Vector3.Distance(h.transform.position, p.transform.position), 1),
                         ["position"] = new JArray(Math.Round(h.transform.position.x), Math.Round(h.transform.position.y), Math.Round(h.transform.position.z)),
                     });
@@ -137,7 +137,7 @@ namespace AICompanion
                 var arr = new JArray();
                 foreach (ZDO z in list)
                     arr.Add(new JObject { ["id"] = z.GetLong(Keys.Id, 0L).ToString(), ["name"] = z.GetString(Keys.Name, "?"), ["master"] = z.GetString(Keys.MasterName, ""),
-                        ["position"] = z.GetPosition().ToString("F0"), ["health"] = z.GetFloat(ZDOVars.s_health, -1f), ["status"] = z.GetString(Keys.Status, "") });
+                        ["position"] = z.GetPosition().ToString("F0"), ["health"] = z.GetFloat(ZDOVars.s_health, -1f), ["status"] = En(z.GetString(Keys.Status, "")) });
                 output(new JObject { ["host"] = ZNet.instance != null && ZNet.instance.IsServer(), ["companions_in_world"] = arr });
                 yield break;
             }
@@ -188,7 +188,7 @@ namespace AICompanion
                 case "catchup":
                     float secs = args.Length > 1 && float.TryParse(args[1], out float sv) ? sv : 600f;
                     string failed = CatchUp.Test(Brain.Get(c), secs);
-                    output(new JObject { ["catchup_seconds"] = secs, ["error"] = failed, ["history"] = new JArray(Brain.Get(c).History.Take(2)) });
+                    output(new JObject { ["catchup_seconds"] = secs, ["error"] = failed, ["history"] = new JArray(Brain.Get(c).History.Take(2).Select(En)) });
                     yield break;
                 case "packtest":
                     var wornNow = Companion.Worn(c).ToList();
@@ -210,8 +210,8 @@ namespace AICompanion
                     Goal g = gs.Goal;
                     output(g == null ? new JObject { ["goal"] = null } : new JObject
                     {
-                        ["goal"] = g.What, ["station"] = g.Station != null ? Localization.instance.Localize(g.Station.m_name) : null, ["gather"] = g.RawText(),
-                        ["steps"] = new JArray(g.Steps.Select(s => s.Key.m_item.name)), ["smelt"] = new JArray(g.Smelt), ["ask"] = new JArray(g.Ask), ["jobs"] = Goals.JobsFor(g, out _).ToString(),
+                        ["goal"] = En(g.What), ["station"] = g.Station != null ? Localization.instance.Localize(g.Station.m_name) : null, ["gather"] = En(g.RawText()),
+                        ["steps"] = new JArray(g.Steps.Select(s => s.Key.m_item.name)), ["smelt"] = new JArray(g.Smelt.Select(En)), ["ask"] = new JArray(g.Ask.Select(En)), ["jobs"] = Goals.JobsFor(g, out _).ToString(),
                         ["recipe"] = g.Recipe != null ? g.Recipe.name + ": " + string.Join(", ", g.Recipe.m_resources.Where(q => q.m_resItem != null).Select(q => $"{q.GetAmount(1)} {q.m_resItem.name}")) : null,
                         ["recipes_for_item"] = g.Recipe != null ? new JArray(ObjectDB.instance.m_recipes.Where(r => r != null && r.m_item == g.Recipe.m_item).Select(r => $"{r.name} enabled={r.m_enabled}: " + string.Join(", ", r.m_resources.Where(q => q.m_resItem != null).Select(q => $"{q.GetAmount(1)} {q.m_resItem.name}")))) : null,
                     });
@@ -228,7 +228,7 @@ namespace AICompanion
                     BrainState st = Brain.Get(c);
                     if (st.Enemies.Count == 0) { error("no enemies near it, so there is nothing to decide"); yield break; }
                     Decision got = Brain.BuiltIn(st, Companion.Master(c));
-                    output(new JObject { ["decision"] = got.Describe(st.Label), ["note"] = got.Note });
+                    output(new JObject { ["decision"] = En(got.Describe(st.Label)), ["note"] = En(got.Note) });
                     yield break;
                 case "map":
                 {
@@ -264,7 +264,7 @@ namespace AICompanion
                     output(new JObject { ["menu"] = _tab.ToString() });
                     yield break;
                 case "send-home":
-                    if (!Companion.Dismiss(c, out string why)) { error(why); yield break; }
+                    if (!Companion.Dismiss(c, out string why)) { error(En(why)); yield break; }
                     output(new JObject { ["sent_home"] = true });
                     yield break;
             }
@@ -287,18 +287,21 @@ namespace AICompanion
                 ["owner_here"] = c.GetComponent<ZNetView>().IsOwner(),
                 ["order"] = Companion.OrderOf(c).ToString(),
                 ["style"] = $"{Companion.Chosen(c)} (fighting as {Companion.StyleOf(c)})",
-                ["status"] = Companion.StatusOf(c),
+                ["status"] = En(Companion.StatusOf(c)),
                 ["worn"] = new JArray(Companion.Worn(c).Select(i => Localization.instance.Localize(i.m_shared.m_name))),
                 ["items"] = c.GetInventory().NrOfItems(),
                 ["in_combat"] = st.InCombat,
                 ["enemies"] = new JArray(st.Enemies.Select(e => st.Label(e))),
-                ["history"] = new JArray(st.History),
-                ["goal"] = st.Goal?.What,
+                ["history"] = new JArray(st.History.Select(En)),
+                ["goal"] = En(st.Goal?.What),
                 ["hazards_near"] = Steer.HazardsNear(c),
                 ["bed"] = Companion.Zdo(c).GetBool(Keys.HasBed, false), ["chests"] = Home.Chests(c).Count,
             };
         }
     
+        /// <summary>Claude Tools' answers stay English: a companion's words (packed text, Words) in English.</summary>
+        private static string En(string s) => s == null ? null : Words.English(s);
+
         private static readonly System.Func<BaseAI, Vector3, bool> HavePath = HarmonyLib.AccessTools.MethodDelegate<System.Func<BaseAI, Vector3, bool>>(HarmonyLib.AccessTools.Method(typeof(BaseAI), "HavePath"));
 
         /// <summary>Its legs: where it means to go, how fast it goes, on the ground, a path to its task, what is in front of it.</summary>
@@ -325,20 +328,20 @@ namespace AICompanion
             {
                 ["vitals"] = Activity.Vitals(c, st),
                 ["runs_here"] = c.GetComponent<ZNetView>().IsOwner(),
-                ["status"] = st.Status,
+                ["status"] = En(st.Status),
                 ["position"] = $"{c.transform.position:F0}",
                 ["home"] = $"{center:F0}, {Vector3.Distance(center, c.transform.position):0} m away, radius {Work.RadiusOf(c)}",
                 ["bed_spot"] = Home.BedOf(c) is Bed bd ? $"{bd.GetSpawnPoint():F1}, {Vector3.Distance(bd.GetSpawnPoint(), c.transform.position):0.0} m away, safe {Steer.Safe(bd.GetSpawnPoint(), c)}, path {Brain.CanReach(c, bd.GetSpawnPoint())}" : "none",
                 ["bag_room"] = $"{c.GetInventory().GetEmptySlots()} free slots, {Carry.Weight(c):0}/{Carry.Max(c):0} kg, full {Work.BagFull(c)}, stock: {string.Join(", ", Work.StockCaps(Brain.Get(c)).Select(kv => $"{L(kv.Key)} {kv.Value}"))}",
                 ["between_jobs"] = $"{Brain.Get(c).IdlePlan}, sitting {Brain.Get(c).Sitting}, chair {(Brain.Get(c).SitChair != null)}, asleep {Brain.Get(c).Asleep}",
                 ["task"] = t == null ? null : $"{t.Kind} {(t.Target != null ? Utils.GetPrefabName(t.Target.gameObject) : "-")} at {(t.Target != null ? Vector3.Distance(t.Target.transform.position, c.transform.position) : 0f):0.0} m for {Time.time - t.Started:0} s{(t.ForGoal ? " (for goal)" : "")}",
-                ["work_note"] = st.WorkNote,
+                ["work_note"] = En(st.WorkNote),
                 ["duty"] = Duties.Configured(c) ? (st.Duty != null ? $"{st.Duty.Duty}: {Duties.Have(c, st.Duty.Duty)} of {st.Duty.Target}" : "all stocked: its own life") : "none set",
                 ["jobs"] = Work.JobsOf(c) == Job.None ? "auto: " + Work.AutoJobs(c) : Work.JobsOf(c).ToString(),
                 ["skipped"] = st.Skipped.Count(kv => kv.Value > Time.time),
                 ["in_combat"] = st.InCombat,
                 ["enemies"] = new JArray(st.Enemies.Where(e => e != null).Select(e => $"{st.Label(e)} {Vector3.Distance(e.transform.position, c.transform.position):0.0} m, {e.transform.position.y - c.transform.position.y:+0.0;-0.0} m up, radius {e.GetRadius():0.0}, seen {c.GetComponent<BaseAI>().CanSeeTarget(e)}, hp {e.GetHealth():0}/{e.GetMaxHealth():0}, targets {(Brain.TargetOf(e) != null ? L(Brain.TargetOf(e).m_name) : "-")}")),
-                ["decision"] = st.Current.Describe(st.Label) + (string.IsNullOrEmpty(st.Current.Note) ? "" : " - " + st.Current.Note),
+                ["decision"] = En(st.Current.Describe(st.Label)) + (string.IsNullOrEmpty(st.Current.Note) ? "" : " - " + En(st.Current.Note)),
                 ["rested"] = Rest.IsRested(c),
                 ["effects"] = new JArray(c.GetSEMan().GetStatusEffects().Where(se => se != null).Select(se => L(se.m_name))),
                 ["hazards_near"] = Steer.HazardsNear(c),
@@ -349,8 +352,8 @@ namespace AICompanion
                 ["chests"] = new JArray(Home.Chests(c).Select(ch => $"{Vector3.Distance(ch.transform.position, center):0} m from home: {ch.GetInventory().NrOfItems()} stacks: " + string.Join(", ", ch.GetInventory().GetAllItems().Take(12).Select(i => $"{L(i.m_shared.m_name)} x{i.m_stack}")))),
                 ["cooking_near_home"] = new JArray(Kitchen.Describe(c, center, Work.RadiusOf(c))),
                 ["stations_near_home"] = new JArray(Upgrades.StationsNear(center, Work.RadiusOf(c) + 10f).Select(s => $"{L(s.m_name)} level {s.GetLevel()}, {Vector3.Distance(s.transform.position, center):0} m from home")),
-                ["goal"] = st.Goal == null ? null : $"{st.Goal.What}: gather {st.Goal.RawText()}; ask {string.Join(", ", st.Goal.Ask)}; steps {string.Join(", ", st.Goal.Steps.Select(s => s.Key.m_item.name))}",
-                ["last_hurt"] = string.IsNullOrEmpty(st.LastHurtBy) ? null : $"{st.LastHurtBy}, {Time.time - st.LastHurtAt:0} s ago",
+                ["goal"] = st.Goal == null ? null : $"{En(st.Goal.What)}: gather {En(st.Goal.RawText())}; ask {string.Join(", ", st.Goal.Ask.Select(En))}; steps {string.Join(", ", st.Goal.Steps.Select(s => s.Key.m_item.name))}",
+                ["last_hurt"] = string.IsNullOrEmpty(st.LastHurtBy) ? null : $"{L(En(st.LastHurtBy))}, {Time.time - st.LastHurtAt:0} s ago",
                 ["activity"] = new JArray(Activity.Recent(c, lines)),
             };
             return o;

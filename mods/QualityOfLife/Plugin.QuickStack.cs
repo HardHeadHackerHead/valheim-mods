@@ -6,6 +6,7 @@ using BepInEx.Configuration;
 using HarmonyLib;
 using TMPro;
 using UnityEngine;
+using static DHack.Shared.Translations;
 
 namespace QualityOfLife
 {
@@ -87,12 +88,12 @@ namespace QualityOfLife
             if (IsKept(item))
             {
                 item.m_customData.Remove(KeepTag);
-                Tell(player, $"Unlocked: {NameOf(item)}");
+                Tell(player, T("qualityoflife_unlocked", NameOf(item)));
             }
             else
             {
                 item.m_customData[KeepTag] = "1";
-                Tell(player, $"Locked: {NameOf(item)} (won't be stacked into chests)");
+                Tell(player, T("qualityoflife_locked", NameOf(item)));
             }
         }
 
@@ -154,7 +155,7 @@ namespace QualityOfLife
         {
             // Leave out any chest someone opened or is using since the last scan, and bring the rest up to date before looking inside them.
             List<Container> chests = _stackChests.Where(c => c != null && !ContainerRegistry.Busy(c)).ToList();
-            if (chests.Count == 0) { Tell(player, _stackChests.Count > 0 ? "The chests in range are in use. Try again in a moment." : "No chest in range."); return; }
+            if (chests.Count == 0) { Tell(player, _stackChests.Count > 0 ? T("qualityoflife_chests_in_use") : T("qualityoflife_no_chest")); return; }
             foreach (Container c in chests) ContainerRegistry.Reload(c);
 
             Inventory inventory = player.GetInventory();
@@ -235,9 +236,10 @@ namespace QualityOfLife
             }
 
             string summary = moved > 0
-                ? $"Stacked {moved} item(s) into {used.Count} chest(s)" + (record.Count > 0 ? $" ({record.Select(r => Vector3.Distance(here, r.Chest.transform.position)).Min():0} m away)" : "")
-                : "Nothing to stack: no nearby chest is assigned, or holds, any of your unlocked items.";
-            if (missing > 0) summary += $"   WARNING: {missing} item(s) went missing, see the log";
+                ? (record.Count > 0 ? T("qualityoflife_stacked_away", moved, used.Count, record.Select(r => Vector3.Distance(here, r.Chest.transform.position)).Min().ToString("0"))
+                                    : T("qualityoflife_stacked", moved, used.Count))
+                : T("qualityoflife_stacked_nothing");
+            if (missing > 0) summary += "   " + T("qualityoflife_went_missing", missing);
             Tell(player, summary);
 
             if (moved > 0) PlayChestSounds(used, opening: false);
@@ -441,9 +443,7 @@ namespace QualityOfLife
 
             if (back > 0) PlayChestSounds(touched, opening: true);
 
-            Tell(player, couldNot == 0
-                ? $"Put back {back} item(s)"
-                : $"Put back {back} item(s); {couldNot} couldn't be returned (taken from the chest, chest in use, or no room)");
+            Tell(player, couldNot == 0 ? T("qualityoflife_put_back", back) : T("qualityoflife_put_back_partly", back, couldNot));
         }
 
         // ---- the buttons under your inventory ---------------------------------------------------------
@@ -470,7 +470,7 @@ namespace QualityOfLife
 
             bool undo = stack && _undo != null; // Undo appears only right after a stack that really moved something, and goes when you close the inventory
             bool sortChests = stack && AnyAssignedChest(); // only when some chest is assigned something
-            string signature = $"{sort}|{stack}|{_stackChests.Count}|{undo}|{sortChests}|{_lockKey.Value}|{beside}";
+            string signature = $"{sort}|{stack}|{_stackChests.Count}|{undo}|{sortChests}|{_lockKey.Value}|{beside}|{Localization.instance.GetSelectedLanguage()}";
             if (_underRow != null && signature == _underShown) return;
 
             DestroyUnderRow();
@@ -484,21 +484,25 @@ namespace QualityOfLife
             float x = 0f;
             void Add(string text, float width, Action<Player> act)
             {
-                GameUi.Button(_underRow, text, new Vector2(x, 0f), new Vector2(width, h), () =>
+                var b = GameUi.Button(_underRow, text, new Vector2(x, 0f), new Vector2(width, h), () =>
                 {
                     Player p = Player.m_localPlayer;
                     if (p != null) _pending = () => act(p);
                 }, true, size);
+                // a longer word in another language: the button grows to fit it
+                TMP_Text label = GameUi.Label(b);
+                float need = label != null ? Mathf.Ceil(label.GetPreferredValues(text).x) + 20f : 0f;
+                if (need > width) { width = need; ((RectTransform)b.transform).sizeDelta = new Vector2(width, h); }
                 x += width + gap;
             }
-            if (sort) Add("Sort", 70f, SortInventory);
+            if (sort) Add(T("qualityoflife_sort"), 70f, SortInventory);
             if (!stack) return;
             float hintX = x;
-            Add($"Stack to chests ({_stackChests.Count})", 180f, StackToChests);
-            if (undo) Add("Undo", 80f, UndoStack);
+            Add(T("qualityoflife_stack_button", _stackChests.Count), 180f, StackToChests);
+            if (undo) Add(T("qualityoflife_undo"), 80f, UndoStack);
             // Sort chests: everything in the chests around you goes to the chest assigned it.
-            if (sortChests) Add("Sort chests", 120f, SortChests);
-            TMP_Text hint = GameUi.Label(_underRow, $"Hover an item + {_lockKey.Value} to lock it", new Vector2(hintX, -(h + 3f)), new Vector2(300f, 18f), 13f, GameUi.Dim);
+            if (sortChests) Add(T("qualityoflife_sort_chests"), 120f, SortChests);
+            TMP_Text hint = GameUi.Label(_underRow, T("qualityoflife_lock_hint", _lockKey.Value), new Vector2(hintX, -(h + 3f)), new Vector2(300f, 18f), 13f, GameUi.Dim);
             hint.enableWordWrapping = false;
         }
 

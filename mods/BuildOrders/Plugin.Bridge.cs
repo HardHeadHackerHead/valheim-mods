@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using HarmonyLib;
 using UnityEngine;
+using static DHack.Shared.Translations;
 
 namespace BuildOrders
 {
@@ -15,6 +16,7 @@ namespace BuildOrders
     public partial class Plugin
     {
         internal const string BridgeToolPrefab = "piece_bo_bridge";
+        internal const string BridgeTitle = "Bridge";   // a bridge plan's name ("Bridge 2"...: kept in English, shown translated: see ShownTitle)
         private static GameObject _bridgeHolder, _bridgeTool;
         private static AccessTools.FieldRef<Player, GameObject> _placementGhost;
         private static bool _placementGhostLooked;
@@ -47,8 +49,8 @@ namespace BuildOrders
                 _bridgeTool = Instantiate(pole, _bridgeHolder.transform);
                 _bridgeTool.name = BridgeToolPrefab;
                 Piece piece = _bridgeTool.GetComponent<Piece>();
-                piece.m_name = "Bridge";
-                piece.m_description = "Plans a bridge: click where it starts, walk or swim across, and click where it ends; then choose its width, material, rails, roof and more, and confirm. It becomes ghosts to build, with posts down to the riverbed. Costs nothing until you build it.";
+                piece.m_name = "$buildorders_bridge";
+                piece.m_description = "$buildorders_bridge_desc";
                 piece.m_category = Piece.PieceCategory.Misc;
                 piece.m_craftingStation = null;
                 piece.m_resources = new Piece.Requirement[0];
@@ -105,11 +107,11 @@ namespace BuildOrders
             {
                 _bridgeStart = at;
                 _bridgeAt = 0f;
-                player.Message(MessageHud.MessageType.Center, "Bridge start set: walk or swim across, then click where it ends (Esc cancels)");
+                player.Message(MessageHud.MessageType.Center, T("buildorders_bridge_start"));
                 return;
             }
             BridgeDesign design = DesignBridge(_bridgeStart.Value, at, CurrentBridgeOptions());
-            if (design.Entries.Count == 0 || design.Length < 2f) { player.Message(MessageHud.MessageType.Center, "Too short for a bridge: click further away"); return; }
+            if (design.Entries.Count == 0 || design.Length < 2f) { player.Message(MessageHud.MessageType.Center, T("buildorders_bridge_short")); return; }
             // the end is set: keep the ghost there and open the options (Confirm places it)
             _bridgeEnd = at;
             _bridgeEndFixed = true;
@@ -183,14 +185,14 @@ namespace BuildOrders
         private Line[] BridgeBannerLines()
         {
             BridgeDesign d = _bridgeDesign;
-            string head = d == null ? "Bridge: aim where it should end" :
-                $"Bridge   {d.Length:0} m   ·   {d.Entries.Count} pieces   ·   " + string.Join(", ", MaterialsOf(d.Entries.Select(e => e.Prefab)).Select(kv => $"{kv.Value} {Localization.instance.Localize(kv.Key)}").ToArray());
+            string head = d == null ? T("buildorders_bridge_aim") :
+                T("buildorders_bridge_head", d.Length.ToString("0"), d.Entries.Count, string.Join(", ", MaterialsOf(d.Entries.Select(e => e.Prefab)).Select(kv => $"{kv.Value} {Localization.instance.Localize(kv.Key)}").ToArray()));
             var lines = new List<Line>
             {
                 new Line(head, 19f, GameUi.Good),
-                new Line("Walk or swim across and aim where it ends   ·   Click: plan it   ·   Esc (or another piece): cancel", 16f, GameUi.Text),
+                new Line(T("buildorders_bridge_help"), 16f, GameUi.Text),
             };
-            if (d != null && d.Warnings.Count > 0) lines.Add(new Line(string.Join("   ·   ", d.Warnings.ToArray()), 16f, GameUi.Warn));
+            if (d != null && d.Warnings.Count > 0) lines.Add(new Line(string.Join("   ·   ", d.Warnings.Select(w => w.Shown).ToArray()), 16f, GameUi.Warn));
             return lines.ToArray();
         }
 
@@ -198,8 +200,8 @@ namespace BuildOrders
 
         private string LastPlacedTitle()
         {
-            try { return LastImport(ReadImports()) ?? "Bridge"; }
-            catch (Exception) { return "Bridge"; }
+            try { return LastImport(ReadImports()) ?? BridgeTitle; }
+            catch (Exception) { return BridgeTitle; }
         }
 
         private void MarkNoLevel(string key)
@@ -241,7 +243,7 @@ namespace BuildOrders
         {
             BridgeDesign design = DesignBridge(start, end, options ?? CurrentBridgeOptions());
             if (design.Entries.Count == 0) return design;
-            PlaceEntries(player, "Bridge", null, design.Entries, start, design.Yaw, 0f, fixedBaseY: start.y);
+            PlaceEntries(player, BridgeTitle, null, design.Entries, start, design.Yaw, 0f, fixedBaseY: start.y);
             MarkNoLevel(BlueprintPrefix + LastPlacedTitle());
             _bridgeTitlesAt = -99f;
             return design;

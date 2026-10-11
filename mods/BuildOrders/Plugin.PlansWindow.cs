@@ -6,6 +6,7 @@ using System.Text;
 using Newtonsoft.Json.Linq;
 using TMPro;
 using UnityEngine;
+using static DHack.Shared.Translations;
 
 namespace BuildOrders
 {
@@ -82,7 +83,7 @@ namespace BuildOrders
             if (BridgeOptionsOpen && Instance != null)
             {
                 Instance.CancelBridge();
-                Player.m_localPlayer?.Message(MessageHud.MessageType.TopLeft, "Bridge cancelled");
+                Player.m_localPlayer?.Message(MessageHud.MessageType.TopLeft, T("buildorders_bridge_cancelled"));
             }
         }
 
@@ -94,6 +95,9 @@ namespace BuildOrders
         }
 
         private void PlansToast(string text) { _plansToast = text; _plansToastUntil = Time.unscaledTime + 4f; }
+
+        /// <summary>"from Bob" beside a shared blueprint (a pasted code with no sender says so; "a share code" is how older versions saved that).</summary>
+        private static string From(string sender) => string.IsNullOrEmpty(sender) || sender == "a share code" ? T("buildorders_from_code") : T("buildorders_from", sender);
 
         // ---- the library: blueprint files in BepInEx/blueprints ----
 
@@ -222,7 +226,7 @@ namespace BuildOrders
                 if (!GameUi.Ready())
                 {
                     PlansWindowOpen = false;
-                    player.Message(MessageHud.MessageType.TopLeft, "The Plans window could not open: the game's interface was not found where expected (see the log)");
+                    player.Message(MessageHud.MessageType.TopLeft, T("buildorders_plans_failed"));
                     return;
                 }
                 if (InventoryGui.IsVisible()) InventoryGui.instance.Hide();
@@ -265,13 +269,13 @@ namespace BuildOrders
             else if (_plansTab == 1)
             {
                 Inventory inv = player.GetInventory();
-                foreach (LevelJob j in _levelJobs.Values.Where(j => j.OnDone != null && !j.Finished)) sb.Append("|L").Append(j.Key).Append(j.Status).Append(j.Pass);
+                foreach (LevelJob j in _levelJobs.Values.Where(j => j.OnDone != null && !j.Finished)) sb.Append("|L").Append(j.Key).Append(j.Shown).Append(j.Pass);
                 foreach (PlanInfo plan in plans)
                 {
                     sb.Append("|P").Append(plan.Key).Append(',').Append(plan.Orders.Count).Append(',').Append(Mathf.RoundToInt(plan.Distance)).Append(',').Append(Compass(plan.Centre - player.transform.position));
                     sb.Append(plan.IsBlueprint && IsBridgePlan(plan.Title)).Append(IsAddonGhostPlan(plan.Key));
                     foreach (var kv in MaterialsOf(plan.Orders.Select(o => o.Prefab)).Take(4)) sb.Append(kv.Key).Append(inv.CountItems(kv.Key)).Append('/').Append(kv.Value);
-                    if (_levelJobs.TryGetValue(plan.Key, out LevelJob job)) sb.Append("|J").Append(job.Running).Append(job.Next).Append('/').Append(job.Points.Count).Append(job.Status);
+                    if (_levelJobs.TryGetValue(plan.Key, out LevelJob job)) sb.Append("|J").Append(job.Running).Append(job.Next).Append('/').Append(job.Points.Count).Append(job.Shown);
                 }
             }
             else sb.Append('|').Append(_showGhosts.Value).Append(_buildByHand.Value).Append(ClaudeToolsInstalled).Append(_selectKey.Value).Append(_removeKey.Value).Append(_toggleGhostsKey.Value).Append(_stabilityKey.Value);
@@ -290,11 +294,11 @@ namespace BuildOrders
 
             _plansWin = GameUi.Window("BuildOrdersPlans", new Vector2(PlansW, PlansH));
             Transform w = _plansWin;
-            GameUi.Label(w, "Plans and blueprints", new Vector2(PlansPad, -20f), new Vector2(420f, 44f), 34f, GameUi.Warm, GameUi.Norse);
-            GameUi.Button(w, "Close", new Vector2(PlansW - PlansPad - 110f, -24f), new Vector2(110f, 38f), () => _plansPending = () => PlansWindowOpen = false);
+            GameUi.Label(w, T("buildorders_plans_title"), new Vector2(PlansPad, -20f), new Vector2(420f, 44f), 34f, GameUi.Warm, GameUi.Norse);
+            GameUi.Button(w, Localization.instance.Localize("$menu_close"), new Vector2(PlansW - PlansPad - 110f, -24f), new Vector2(110f, 38f), () => _plansPending = () => PlansWindowOpen = false);
             GameUi.Braid(w, new Vector2(0f, -76f), PlansW - PlansPad * 2f);
 
-            string[] tabs = { "Blueprints", $"Placed plans ({plans.Count})", "Settings" };
+            string[] tabs = { T("buildorders_tab_blueprints"), T("buildorders_tab_placed", plans.Count), Localization.instance.Localize("$menu_settings") };
             float tabW = (PlansW - PlansPad * 2f - 16f) / 3f;
             for (int i = 0; i < tabs.Length; i++)
             {
@@ -307,7 +311,7 @@ namespace BuildOrders
             else SettingsTab(w);
 
             // bottom: what just happened, or the keys
-            GameUi.Label(w, Toasting ? _plansToast : $"{_planKey.Value}: plan pieces by hand with the hammer   ·   Hold E at a ghost: build everything within {_buildAllRadius.Value:0} m   ·   {_blueprintKey.Value}: this window",
+            GameUi.Label(w, Toasting ? _plansToast : T("buildorders_plans_footer", _planKey.Value, _buildAllRadius.Value.ToString("0"), _blueprintKey.Value),
                 new Vector2(PlansPad, -(PlansH - 62f)), new Vector2(PlansW - PlansPad * 2f, 44f), Toasting ? 17f : 15f, Toasting ? GameUi.Good : GameUi.Dim);
 
             if (_plansList != null) _plansList.anchoredPosition = new Vector2(0f, Mathf.Clamp(scrolled, 0f, Mathf.Max(0f, _plansList.sizeDelta.y)));
@@ -336,11 +340,10 @@ namespace BuildOrders
         {
             RefreshLibrary();
             RefreshInbox();
-            GameUi.Label(w, "Blueprints in <color=#ffd27a>BepInEx/blueprints</color>. Place one: a green preview follows where you look; turn it with the mouse wheel and click to place. " +
-                            "Share sends one to everyone playing here; a share code is the same as text for a chat.",
-                new Vector2(PlansPad, -PlansBodyTop), new Vector2(PlansW - PlansPad * 2f - 272f, 62f), 15f, GameUi.Dim);
-            GameUi.Button(w, "Paste code", new Vector2(PlansW - PlansPad - 262f, -PlansBodyTop - 2f), new Vector2(126f, 38f), () => _plansPending = PasteCode);
-            GameUi.Button(w, "Open folder", new Vector2(PlansW - PlansPad - 128f, -PlansBodyTop - 2f), new Vector2(128f, 38f), () => _plansPending = () =>
+            GameUi.Label(w, T("buildorders_library_intro", "<color=#ffd27a>BepInEx/blueprints</color>"),
+                new Vector2(PlansPad, -PlansBodyTop), new Vector2(PlansW - PlansPad * 2f - 302f, 62f), 15f, GameUi.Dim);
+            GameUi.Button(w, T("buildorders_paste_code"), new Vector2(PlansW - PlansPad - 292f, -PlansBodyTop - 2f), new Vector2(144f, 38f), () => _plansPending = PasteCode);
+            GameUi.Button(w, T("buildorders_open_folder"), new Vector2(PlansW - PlansPad - 144f, -PlansBodyTop - 2f), new Vector2(144f, 38f), () => _plansPending = () =>
             {
                 Directory.CreateDirectory(BlueprintDir);
                 Application.OpenURL("file:///" + BlueprintDir.Replace(Path.DirectorySeparatorChar, '/'));
@@ -352,7 +355,7 @@ namespace BuildOrders
             // blueprints other players shared with you
             if (_inbox.Count > 0)
             {
-                GameUi.Line(_plansList, $"Shared with you ({_inbox.Count})", new Vector2(8f, -y - 2f), cardW - 16f, 18f, GameUi.Warm);
+                GameUi.Line(_plansList, T("buildorders_shared_with_you", _inbox.Count), new Vector2(8f, -y - 2f), cardW - 16f, 18f, GameUi.Warm);
                 y += 30f;
                 foreach (SharedBlueprint s in _inbox.ToList())
                 {
@@ -361,8 +364,8 @@ namespace BuildOrders
                     RectTransform card = GameUi.Box(_plansList, new Vector2(0f, -y), new Vector2(cardW, h));
                     PictureOrNone(card, new Vector2(10f, -8f), new Vector2(112f, 64f), s.Picture);
                     float x = 134f, tw = cardW - x - 372f;
-                    GameUi.Line(card, $"{s.Name}   <color=#a8d8a0>from {s.From}</color>", new Vector2(x, -10f), tw, 18f, GameUi.Text);
-                    string pieces = $"{s.Pieces} pieces";
+                    GameUi.Line(card, $"{s.Name}   <color=#a8d8a0>{From(s.From)}</color>", new Vector2(x, -10f), tw, 18f, GameUi.Text);
+                    string pieces = Pieces(s.Pieces);
                     TMP_Text pl = GameUi.Line(card, pieces, new Vector2(x, -42f), tw, 15f, GameUi.Dim);
                     float cx = x + GameUi.Width(pl, pieces) + 14f;
                     foreach (var kv in s.Materials.Take(4))
@@ -370,29 +373,29 @@ namespace BuildOrders
                         if (cx > x + tw - 60f) break;
                         cx += Cost(card, new Vector2(cx, -38f), kv.Key, kv.Value.ToString(), GameUi.Text);
                     }
-                    var place = GameUi.Button(card, "Place", new Vector2(cardW - 364f, -21f), new Vector2(100f, 38f), () => _plansPending = () => PlaceShared(player, shared));
+                    var place = GameUi.Button(card, Localization.instance.Localize("$hud_place"), new Vector2(cardW - 364f, -21f), new Vector2(100f, 38f), () => _plansPending = () => PlaceShared(player, shared));
                     GameUi.Label(place).color = GameUi.Gold;
-                    GameUi.Button(card, "Save to library", new Vector2(cardW - 256f, -21f), new Vector2(140f, 38f), () => _plansPending = () => SaveShared(shared), true, 16f);
-                    GameUi.Button(card, "Dismiss", new Vector2(cardW - 108f, -21f), new Vector2(96f, 38f), () => _plansPending = () => DismissShared(shared), true, 16f);
+                    GameUi.Button(card, T("buildorders_save_to_library"), new Vector2(cardW - 256f, -21f), new Vector2(140f, 38f), () => _plansPending = () => SaveShared(shared), true, 16f);
+                    GameUi.Button(card, T("buildorders_dismiss"), new Vector2(cardW - 108f, -21f), new Vector2(96f, 38f), () => _plansPending = () => DismissShared(shared), true, 16f);
                     y += h + gap;
                 }
                 y += 8f;
             }
 
-            if (_library.Count == 0) y += ListNote(y, cardW, "No blueprints yet. Put blueprint files in the folder (Open folder), or paste a share code.", GameUi.Text);
+            if (_library.Count == 0) y += ListNote(y, cardW, T("buildorders_no_blueprints"), GameUi.Text);
             foreach (BlueprintFile b in _library)
             {
                 BlueprintFile bf = b;
                 const float h = 106f;
                 RectTransform card = GameUi.Box(_plansList, new Vector2(0f, -y), new Vector2(cardW, h));
                 PictureOrNone(card, new Vector2(10f, -11f), new Vector2(150f, 84f), bf.Picture);
-                float x = 172f, tw = cardW - x - 158f;
-                GameUi.Line(card, bf.Name + (bf.SharedBy != null ? $"   <color=#a8d8a0>from {bf.SharedBy}</color>" : "") + (bf.Placed ? "   <color=#8fe08f>(placed)</color>" : ""),
+                float x = 172f, tw = cardW - x - 188f;
+                GameUi.Line(card, bf.Name + (bf.SharedBy != null ? $"   <color=#a8d8a0>{From(bf.SharedBy)}</color>" : "") + (bf.Placed ? $"   <color=#8fe08f>{T("buildorders_placed")}</color>" : ""),
                     new Vector2(x, -10f), tw, 19f, GameUi.Text);
-                if (bf.Error != null) GameUi.Label(card, "Could not read: " + bf.Error, new Vector2(x, -40f), new Vector2(tw, 56f), 15f, GameUi.Warn);
+                if (bf.Error != null) GameUi.Label(card, T("buildorders_could_not_read", bf.Error), new Vector2(x, -40f), new Vector2(tw, 56f), 15f, GameUi.Warn);
                 else
                 {
-                    GameUi.Line(card, $"{bf.Pieces} pieces   ·   about {bf.Size.x:0} × {bf.Size.z:0} m, {bf.Size.y:0} m high", new Vector2(x, -40f), tw, 15f, GameUi.Dim);
+                    GameUi.Line(card, Pieces(bf.Pieces) + "   ·   " + T("buildorders_blueprint_size", bf.Size.x.ToString("0"), bf.Size.z.ToString("0"), bf.Size.y.ToString("0")), new Vector2(x, -40f), tw, 15f, GameUi.Dim);
                     float cx = x;
                     foreach (var kv in bf.Materials.Take(5))
                     {
@@ -400,17 +403,17 @@ namespace BuildOrders
                         cx += Cost(card, new Vector2(cx, -68f), kv.Key, kv.Value.ToString(), GameUi.Text, 26f);
                     }
 
-                    float bx = cardW - 142f;
-                    var place = GameUi.Button(card, "Place", new Vector2(bx, -10f), new Vector2(130f, 40f), () => _plansPending = () => PlaceBlueprint(player, bf));
+                    float bx = cardW - 172f;   // (room for the longer words of other languages)
+                    var place = GameUi.Button(card, Localization.instance.Localize("$hud_place"), new Vector2(bx, -10f), new Vector2(160f, 40f), () => _plansPending = () => PlaceBlueprint(player, bf));
                     GameUi.Label(place).color = GameUi.Gold;
                     string key = "share:" + bf.Path;
                     bool sending = Confirming(key);
-                    var share = GameUi.Button(card, sending ? "Send?" : "Share", new Vector2(bx, -58f), new Vector2(64f, 36f), () => _plansPending = () =>
+                    var share = GameUi.Button(card, T(sending ? "buildorders_send_q" : "buildorders_share"), new Vector2(bx, -58f), new Vector2(86f, 36f), () => _plansPending = () =>
                     {
                         if (Confirming(key)) { ShareWithEveryone(bf.Path); _confirmKey = null; } else AskConfirm(key);
                     }, true, 16f);
                     if (sending) GameUi.Label(share).color = GameUi.Warn;
-                    GameUi.Button(card, "Code", new Vector2(bx + 68f, -58f), new Vector2(62f, 36f), () => _plansPending = () => CopyCode(bf.Path), true, 16f);
+                    GameUi.Button(card, T("buildorders_code"), new Vector2(bx + 90f, -58f), new Vector2(70f, 36f), () => _plansPending = () => CopyCode(bf.Path), true, 16f);
                 }
                 y += h + gap;
             }
@@ -421,7 +424,7 @@ namespace BuildOrders
         {
             if (picture != null) { GameUi.Picture(card, pos, size, picture); return; }
             RectTransform none = GameUi.Box(card, pos, size);
-            GameUi.Label(none, "no picture", Vector2.zero, size, 14f, GameUi.Dim, null, TextAlignmentOptions.Center, new Vector2(0.5f, 0.5f));
+            GameUi.Label(none, T("buildorders_no_picture"), Vector2.zero, size, 14f, GameUi.Dim, null, TextAlignmentOptions.Center, new Vector2(0.5f, 0.5f));
         }
 
         private void PlaceBlueprint(Player player, BlueprintFile bf)
@@ -431,7 +434,7 @@ namespace BuildOrders
                 JObject doc = JObject.Parse(File.ReadAllText(bf.Path));
                 StartPlacement(bf.Name, bf.Path, EntriesFrom(doc["pieces"] as JArray ?? new JArray()), player.transform.eulerAngles.y, 0f, null);
             }
-            catch (Exception e) { PlansToast("Could not read " + bf.Name + ": " + e.Message); }
+            catch (Exception e) { PlansToast(T("buildorders_could_not_read_named", bf.Name, e.Message)); }
         }
 
         // ---- Placed plans ----
@@ -450,7 +453,7 @@ namespace BuildOrders
             {
                 int inside = Inside();
                 if (inside <= 0) return;
-                if (Confirming("radius")) { int n = RemoveWithin(me, _removeRadius); PlansToast($"Removed {n} ghost(s)"); _confirmKey = null; }
+                if (Confirming("radius")) { int n = RemoveWithin(me, _removeRadius); PlansToast(T("buildorders_removed_ghosts", n)); _confirmKey = null; }
                 else AskConfirm("radius");
             }, true, 17f);
             TMP_Text removeLabel = GameUi.Label(remove);
@@ -462,8 +465,8 @@ namespace BuildOrders
                 int inside = Inside();
                 if (shownRadius == _removeRadius && shownCount == inside) return;
                 shownRadius = _removeRadius; shownCount = inside;
-                radiusLabel.text = $"Remove every ghost within <color=#ffd27a>{_removeRadius:0} m</color>:";
-                removeLabel.text = confirming ? $"Click again: remove {inside}" : $"Remove ({inside})";
+                radiusLabel.text = T("buildorders_remove_within", $"<color=#ffd27a>{_removeRadius:0}</color>");
+                removeLabel.text = confirming ? T("buildorders_remove_again", inside) : T("buildorders_remove_count", inside);
             });
             top += 52f;
 
@@ -471,15 +474,15 @@ namespace BuildOrders
             foreach (LevelJob p in _levelJobs.Values.Where(j => j.OnDone != null && !j.Finished).ToList())
             {
                 LevelJob pending = p;
-                GameUi.Label(w, $"<color=#ffd27a>{pending.Title}</color>: levelling the ground ({pending.Status}, pass {pending.Pass}); its ghosts appear when it is done",
+                GameUi.Label(w, T("buildorders_level_pending", $"<color=#ffd27a>{ShownTitle(pending.Title)}</color>", pending.Shown, pending.Pass),
                     new Vector2(PlansPad, -top), new Vector2(PlansW - PlansPad * 2f - 132f, 40f), 16f, GameUi.Text);
-                var cancel = GameUi.Button(w, "Cancel", new Vector2(PlansW - PlansPad - 120f, -top), new Vector2(120f, 36f), () => _plansPending = () =>
+                var cancel = GameUi.Button(w, Localization.instance.Localize("$menu_cancel"), new Vector2(PlansW - PlansPad - 120f, -top), new Vector2(120f, 36f), () => _plansPending = () =>
                 {
                     StopLevel(pending.Key);
                     _levelJobs.Remove(pending.Key);
                     ForgetPendingLevel(pending.Key);
                     string ground = RestoreTerrain(pending.Key);
-                    PlansToast($"Cancelled \"{pending.Title}\"" + (ground != null ? ". " + ground : ""));
+                    PlansToast(T("buildorders_cancelled", ShownTitle(pending.Title)) + (ground != null ? ". " + ground : ""));
                 }, true, 16f);
                 GameUi.Label(cancel).color = GameUi.Warn;
                 top += 46f;
@@ -489,7 +492,7 @@ namespace BuildOrders
             const float gap = 8f, h = 100f;
             if (plans.Count == 0)
             {
-                y += ListNote(y, cardW, "Nothing is planned. Place a blueprint, or plan pieces by hand with the hammer.", GameUi.Text);
+                y += ListNote(y, cardW, T("buildorders_nothing_planned"), GameUi.Text);
                 _plansList.sizeDelta = new Vector2(_plansList.sizeDelta.x, y);
                 return;
             }
@@ -501,8 +504,8 @@ namespace BuildOrders
                 RectTransform card = GameUi.Box(_plansList, new Vector2(0f, -y), new Vector2(cardW, h));
                 float bx = cardW - 12f - 346f, tw = bx - 24f;
                 Vector3 dir = plan.Centre - me; dir.y = 0f;
-                GameUi.Line(card, plan.Title, new Vector2(12f, -10f), tw, 19f, plan.IsBlueprint ? GameUi.Text : GameUi.Warm);
-                GameUi.Line(card, $"{plan.Orders.Count} pieces left   ·   {plan.Distance:0} m away ({Compass(dir)})", new Vector2(12f, -38f), tw, 15f, GameUi.Dim);
+                GameUi.Line(card, plan.Shown, new Vector2(12f, -10f), tw, 19f, plan.IsBlueprint ? GameUi.Text : GameUi.Warm);
+                GameUi.Line(card, T("buildorders_plan_left", plan.Orders.Count, plan.Distance.ToString("0"), Compass(dir)), new Vector2(12f, -38f), tw, 15f, GameUi.Dim);
                 float cx = 12f;
                 foreach (var kv in MaterialsOf(plan.Orders.Select(o => o.Prefab)).Take(4))
                 {
@@ -519,44 +522,44 @@ namespace BuildOrders
                 if (Confirming(key) && _confirmBuilt > 0)
                 {
                     // part of it is built: remove just the ghosts, or take the built part down too (materials back)
-                    GameUi.Button(card, "Remove ghosts only", new Vector2(bx, -10f), new Vector2(170f, 36f), () => _plansPending = () =>
-                    { int n = RemovePlan(plan.Key); PlansToast($"Removed \"{plan.Title}\" ({n} ghosts); what is built stays"); _confirmKey = null; }, true, 15f);
+                    GameUi.Button(card, T("buildorders_remove_ghosts_only"), new Vector2(bx, -10f), new Vector2(170f, 36f), () => _plansPending = () =>
+                    { int n = RemovePlan(plan.Key); PlansToast(T("buildorders_removed_plan_kept", plan.Shown, n)); _confirmKey = null; }, true, 15f);
                     int built = _confirmBuilt;
-                    var down = GameUi.Button(card, $"Also take down {built} built", new Vector2(bx + 174f, -10f), new Vector2(172f, 36f), () => _plansPending = () =>
-                    { int n = RemovePlan(plan.Key, takeDownBuilt: true); PlansToast($"Removed \"{plan.Title}\" ({n} ghosts) and took down what was built"); _confirmKey = null; }, true, 15f);
+                    var down = GameUi.Button(card, T("buildorders_take_down_built", built), new Vector2(bx + 174f, -10f), new Vector2(172f, 36f), () => _plansPending = () =>
+                    { int n = RemovePlan(plan.Key, takeDownBuilt: true); PlansToast(T("buildorders_removed_plan_down", plan.Shown, n)); _confirmKey = null; }, true, 15f);
                     GameUi.Label(down).color = GameUi.Warn;
                 }
                 else
                 {
-                    var build = GameUi.Button(card, near ? "Build nearby" : "Too far", new Vector2(bx, -10f), new Vector2(120f, 36f), () => _plansPending = () =>
+                    var build = GameUi.Button(card, T(near ? "buildorders_build_nearby" : "buildorders_too_far"), new Vector2(bx, -10f), new Vector2(120f, 36f), () => _plansPending = () =>
                     { PlansWindowOpen = false; StartCoroutine(BuildMany(player)); }, near, 16f);
                     if (near) GameUi.Label(build).color = GameUi.Gold;
                     // shapes and bridges should not go through blueprint terrain levelling
-                    GameUi.Button(card, addon ? "(shape)" : bridge ? "(bridge)" : "Move", new Vector2(bx + 124f, -10f), new Vector2(100f, 36f),
+                    GameUi.Button(card, T(addon ? "buildorders_shape" : bridge ? "buildorders_bridge_mark" : "buildorders_move"), new Vector2(bx + 124f, -10f), new Vector2(100f, 36f),
                         () => _plansPending = () => StartMove(player, plan), !bridge && !addon, 16f);
                     bool sure = Confirming(key);
-                    var rem = GameUi.Button(card, sure ? "Click again" : "Remove", new Vector2(bx + 228f, -10f), new Vector2(118f, 36f), () => _plansPending = () =>
+                    var rem = GameUi.Button(card, sure ? T("buildorders_click_again") : Localization.instance.Localize("$menu_remove"), new Vector2(bx + 228f, -10f), new Vector2(118f, 36f), () => _plansPending = () =>
                     {
                         if (!Confirming(key)) { AskConfirm(key); _confirmBuilt = plan.IsBlueprint ? BuiltPieces(plan.Key).Count : 0; }
-                        else { int n = RemovePlan(plan.Key); PlansToast($"Removed \"{plan.Title}\" ({n} ghosts)"); _confirmKey = null; }
+                        else { int n = RemovePlan(plan.Key); PlansToast(T("buildorders_removed_plan", plan.Shown, n)); _confirmKey = null; }
                     }, true, 16f);
                     if (sure) GameUi.Label(rem).color = GameUi.Warn;
                 }
                 if (_levelJobs.TryGetValue(plan.Key, out LevelJob job) && (job.Running || job.Next < job.Points.Count))
                 {
-                    GameUi.Label(card, $"<color=#ffd27a>Levelling {job.Next}/{job.Points.Count}: {job.Status}</color>", new Vector2(bx, -52f), new Vector2(220f, 40f), 14f, GameUi.Dim);
+                    GameUi.Label(card, $"<color=#ffd27a>{T("buildorders_levelling_progress", job.Next, job.Points.Count, job.Shown)}</color>", new Vector2(bx, -52f), new Vector2(220f, 40f), 14f, GameUi.Dim);
                     bool running = job.Running;
-                    GameUi.Button(card, running ? "Stop levelling" : "Resume", new Vector2(bx + 228f, -52f), new Vector2(118f, 34f), () => _plansPending = () =>
+                    GameUi.Button(card, T(running ? "buildorders_stop_levelling" : "buildorders_resume"), new Vector2(bx + 228f, -52f), new Vector2(118f, 34f), () => _plansPending = () =>
                     { if (running) StopLevel(plan.Key); else ResumeLevel(plan.Key); }, true, 15f);
                 }
                 else
                 {
                     bool levelable = plan.IsBlueprint && !bridge && !addon;
-                    GameUi.Label(card, near ? $"Builds the ghosts within {_buildAllRadius.Value:0} m you have materials for." : $"Walk within {_buildAllRadius.Value:0} m to build it.",
+                    GameUi.Label(card, T(near ? "buildorders_builds_within" : "buildorders_walk_within", _buildAllRadius.Value.ToString("0")),
                         new Vector2(bx, -52f), new Vector2(levelable ? 220f : 346f, 40f), 14f, GameUi.Dim);
                     if (levelable)
-                        GameUi.Button(card, "Level ground", new Vector2(bx + 228f, -52f), new Vector2(118f, 34f), () => _plansPending = () =>
-                            PlansToast($"Levelling the ground under \"{plan.Title}\" ({LevelPlacedPlan(plan)} spots)"), true, 15f);
+                        GameUi.Button(card, Localization.instance.Localize("$piece_levelground"), new Vector2(bx + 228f, -52f), new Vector2(118f, 34f), () => _plansPending = () =>
+                            PlansToast(T("buildorders_levelling_toast", plan.Shown, LevelPlacedPlan(plan))), true, 15f);
                 }
                 y += h + gap;
             }
@@ -566,10 +569,10 @@ namespace BuildOrders
         private static string Compass(Vector3 dir)
         {
             dir.y = 0f;
-            if (dir.sqrMagnitude < 1f) return "here";
+            if (dir.sqrMagnitude < 1f) return T("buildorders_here");
             float a = Mathf.Repeat(Mathf.Atan2(dir.x, dir.z) * Mathf.Rad2Deg, 360f);
-            string[] names = { "north", "north-east", "east", "south-east", "south", "south-west", "west", "north-west" };
-            return names[Mathf.RoundToInt(a / 45f) % 8];
+            string[] names = { "buildorders_dir_n", "buildorders_dir_ne", "buildorders_dir_e", "buildorders_dir_se", "buildorders_dir_s", "buildorders_dir_sw", "buildorders_dir_w", "buildorders_dir_nw" };
+            return T(names[Mathf.RoundToInt(a / 45f) % 8]);
         }
 
         // ---- Settings ----
@@ -577,29 +580,27 @@ namespace BuildOrders
         private void SettingsTab(Transform w)
         {
             float cardW = PlansList(w, PlansBodyTop), y = 4f;
-            y = SettingSlider(y, cardW, "Build-all radius", "Holding E at a ghost, or Build nearby, builds every ghost this close to you.", _buildAllRadius, 4f, 64f, 1f, "0", " m");
-            y = SettingSlider(y, cardW, "Reach for E", "How close you must be to a ghost to build it with E.", _buildReach, 2f, 10f, 0.1f, "0.0", " m");
-            y = SettingSlider(y, cardW, "Ghost view distance", "Ghosts further away than this are not drawn.", _viewDistance, 20f, 200f, 1f, "0", " m");
-            y = SettingSlider(y, cardW, "Ghost opacity", "How solid the ghosts look.", _ghostOpacity, 0.05f, 0.6f, 0.01f, "0.00", "");
-            y = SettingSlider(y, cardW, "Most ghosts at once", "Big plans need more; lower it if the game slows down.", null, 50f, 2000f, 10f, "0", "", _maxGhosts);
+            y = SettingSlider(y, cardW, T("buildorders_set_radius"), T("buildorders_set_radius_help"), _buildAllRadius, 4f, 64f, 1f, "0", true);
+            y = SettingSlider(y, cardW, T("buildorders_set_reach"), T("buildorders_set_reach_help"), _buildReach, 2f, 10f, 0.1f, "0.0", true);
+            y = SettingSlider(y, cardW, T("buildorders_set_view"), T("buildorders_set_view_help"), _viewDistance, 20f, 200f, 1f, "0", true);
+            y = SettingSlider(y, cardW, T("buildorders_set_opacity"), T("buildorders_set_opacity_help"), _ghostOpacity, 0.05f, 0.6f, 0.01f, "0.00", false);
+            y = SettingSlider(y, cardW, T("buildorders_set_max"), T("buildorders_set_max_help"), null, 50f, 2000f, 10f, "0", false, _maxGhosts);
             y += 6f;
-            y = SettingToggle(y, cardW, _showGhosts, "Show ghosts", $"Hide them all for a moment (also {_toggleGhostsKey.Value}).");
-            y = SettingToggle(y, cardW, _buildByHand, "Build by pressing E", "Walk up to a ghost and press E to build it, no hammer needed.");
+            y = SettingToggle(y, cardW, _showGhosts, T("buildorders_set_show"), T("buildorders_set_show_help", _toggleGhostsKey.Value));
+            y = SettingToggle(y, cardW, _buildByHand, T("buildorders_set_by_hand"), T("buildorders_set_by_hand_help"));
             y += 6f;
-            y += ListNote(y, cardW, ClaudeToolsInstalled ? "Claude Tools is installed: an AI assistant can see your game and place blueprints for you while its requests are on (Claude Tools settings)."
-                                                         : "Install the Claude Tools mod to let an AI assistant (Claude Code in BepInEx/blueprints) see your game and place blueprints for you.", GameUi.Dim, 15f);
-            y += ListNote(y, cardW, $"Keys: {_blueprintKey.Value} this window   ·   {_planKey.Value} plan mode (hammer)   ·   {_selectKey.Value} select an aimed ghost's piece   ·   {_removeKey.Value} remove an aimed ghost (Shift: all within 8 m)   ·   " +
-                                    $"{_toggleGhostsKey.Value} show/hide ghosts   ·   {_stabilityKey.Value} stability colours", GameUi.Dim, 15f);
+            y += ListNote(y, cardW, T(ClaudeToolsInstalled ? "buildorders_claude_installed" : "buildorders_claude_install"), GameUi.Dim, 15f);
+            y += ListNote(y, cardW, T("buildorders_keys", _blueprintKey.Value, _planKey.Value, _selectKey.Value, _removeKey.Value, _toggleGhostsKey.Value, _stabilityKey.Value), GameUi.Dim, 15f);
             _plansList.sizeDelta = new Vector2(_plansList.sizeDelta.x, y);
         }
 
         /// <summary>A setting with the game's slider: its name and value, the slider beside it, what it does under them. Returns the next row's y.</summary>
         private float SettingSlider(float y, float width, string label, string help, BepInEx.Configuration.ConfigEntry<float> entry, float min, float max, float step,
-                                    string format, string unit, BepInEx.Configuration.ConfigEntry<int> intEntry = null)
+                                    string format, bool metres, BepInEx.Configuration.ConfigEntry<int> intEntry = null)
         {
             float Get() => entry != null ? entry.Value : intEntry.Value;
             void Set(float v) { if (entry != null) entry.Value = v; else intEntry.Value = Mathf.RoundToInt(v); }
-            string Text(float v) => $"{label}: <color=#ffd27a>{v.ToString(format)}{unit}</color>";
+            string Text(float v) => $"{label}: <color=#ffd27a>{(metres ? T("buildorders_m", v.ToString(format)) : v.ToString(format))}</color>";
 
             TMP_Text name = GameUi.Line(_plansList, Text(Get()), new Vector2(8f, -y), 330f, 18f, GameUi.Text);
             UnityEngine.UI.Slider slider = GameUi.Slider(_plansList, new Vector2(350f, -y + 1f), new Vector2(Mathf.Min(340f, width - 370f), 26f), min, max, Get(), step, v =>
@@ -623,7 +624,7 @@ namespace BuildOrders
         /// <summary>An on/off setting: a button that says its state (gold when on), and what it does beside it.</summary>
         private float SettingToggle(float y, float width, BepInEx.Configuration.ConfigEntry<bool> entry, string label, string help)
         {
-            var b = GameUi.Button(_plansList, $"{label}: {(entry.Value ? "On" : "Off")}", new Vector2(8f, -y), new Vector2(260f, 38f), () => _plansPending = () => entry.Value = !entry.Value, true, 16f);
+            var b = GameUi.Button(_plansList, label + ": " + Localization.instance.Localize(entry.Value ? "$hud_on" : "$hud_off"), new Vector2(8f, -y), new Vector2(260f, 38f), () => _plansPending = () => entry.Value = !entry.Value, true, 16f);
             if (entry.Value) GameUi.Label(b).color = GameUi.Gold;
             GameUi.Label(_plansList, help, new Vector2(282f, -y - 2f), new Vector2(width - 290f, 40f), 15f, GameUi.Dim);
             return y + 48f;

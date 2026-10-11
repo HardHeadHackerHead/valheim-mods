@@ -6,6 +6,7 @@ using System.IO;
 using System.Linq;
 using HarmonyLib;
 using UnityEngine;
+using static DHack.Shared.Translations;
 
 namespace BountyBoard
 {
@@ -17,8 +18,9 @@ namespace BountyBoard
     public partial class Plugin
     {
         private const string RpcReq = "DH_BB_Req", RpcState = "DH_BB_State", RpcKill = "DH_BB_Kill", RpcTake = "DH_BB_Take", RpcHand = "DH_BB_Hand",
-                             RpcClaim = "DH_BB_Claim", RpcAbandon = "DH_BB_Abandon", RpcMsg = "DH_BB_Msg", RpcReward = "DH_BB_Reward", RpcRefund = "DH_BB_Refund";
-        private static readonly string[] AllRpcs = { RpcReq, RpcState, RpcKill, RpcTake, RpcHand, RpcClaim, RpcAbandon, RpcMsg, RpcReward, RpcRefund };
+                             RpcClaim = "DH_BB_Claim", RpcAbandon = "DH_BB_Abandon", RpcMsg = "DH_BB_Msg", RpcReward = "DH_BB_Reward", RpcRefund = "DH_BB_Refund",
+                             RpcNote = "DH_BB_Note";
+        private static readonly string[] AllRpcs = { RpcReq, RpcState, RpcKill, RpcTake, RpcHand, RpcClaim, RpcAbandon, RpcMsg, RpcReward, RpcRefund, RpcNote };
 
         private ZRoutedRpc _registeredOn;
         private int _awakeFrame;
@@ -66,6 +68,7 @@ namespace BountyBoard
                 rpc.Register<string>(RpcAbandon, ServerAbandon);
                 rpc.Register<string>(RpcState, ClientState);
                 rpc.Register<string>(RpcMsg, ClientMsg);
+                rpc.Register<string>(RpcNote, ClientNote);
                 rpc.Register<string>(RpcReward, ClientReward);
                 rpc.Register<string>(RpcRefund, ClientRefund);
                 _askedAt = -999f;
@@ -119,6 +122,7 @@ namespace BountyBoard
             if (p == null) return;
             if (rpc == RpcState) p.ClientState(MyId, payload);
             else if (rpc == RpcMsg) p.ClientMsg(MyId, payload);
+            else if (rpc == RpcNote) p.ClientNote(MyId, payload);
             else if (rpc == RpcReward) p.ClientReward(MyId, payload);
             else if (rpc == RpcRefund) p.ClientRefund(MyId, payload);
         }
@@ -207,7 +211,7 @@ namespace BountyBoard
             Bounty posted = s.Posted.FirstOrDefault(b => b.Id == id);
             if (posted == null || s.Active.Count >= MaxActive.Value || s.Active.Any(a => a.Id == id) || s.Done.Any(d => d.Id == id))
             {
-                Reply(sender, RpcMsg, "center|That contract is not available.");
+                Reply(sender, RpcNote, Note("unavailable"));
                 return;
             }
             Bounty taken = posted.Copy();
@@ -215,7 +219,7 @@ namespace BountyBoard
             taken.Earned = new HashSet<long>();
             Earn(taken, CharacterOf(sender));
             s.Active.Add(taken);
-            Broadcast(RpcMsg, "top|Contract taken: " + Rules.Describe(taken));
+            Broadcast(RpcNote, Note("taken", taken));
             Changed();
         }
 
@@ -251,7 +255,7 @@ namespace BountyBoard
                 Earn(b, who);
                 any = true;
                 if (b.Progress >= b.Count) Finish(s, b);
-                else Reply(sender, RpcMsg, "top|Contract: " + Rules.TargetName(b) + " " + b.Progress + "/" + b.Count);
+                else Reply(sender, RpcNote, Note("progress", b));
             }
             if (any) Changed();
         }
@@ -269,7 +273,7 @@ namespace BountyBoard
             if (take > 0) Earn(b, CharacterOf(sender));
             if (n > take) Reply(sender, RpcRefund, b.Target + "|" + (n - take));
             if (b.Progress >= b.Count) Finish(s, b);
-            else Reply(sender, RpcMsg, "top|Handed in " + take + ". " + b.Progress + "/" + b.Count);
+            else Reply(sender, RpcNote, Note("handed", b, take));
             Changed();
         }
 
@@ -284,7 +288,7 @@ namespace BountyBoard
             s.Done.Insert(0, b);
             while (s.Done.Count > 12) s.Done.RemoveAt(s.Done.Count - 1);
             s.Total++;
-            Broadcast(RpcMsg, "center|Contract complete: " + Rules.Describe(b) + ". Collect your reward at a Bounty Board.");
+            Broadcast(RpcNote, Note("complete", b));
         }
 
         private void ServerClaim(long sender, string payload)
@@ -296,7 +300,7 @@ namespace BountyBoard
             State s = Server();
             Bounty b = s.Done.FirstOrDefault(d => d.Id == f[0]);
             if (b == null) return;
-            if (b.Earned != null && !b.Earned.Contains(player)) { Reply(sender, RpcMsg, "center|Only those who worked on that contract share its reward."); return; }
+            if (b.Earned != null && !b.Earned.Contains(player)) { Reply(sender, RpcNote, Note("notearned")); return; }
             if (!b.Claimed.Add(player)) return;
 
             int coins = Rules.WithBonus(b.Coins, s.Total);
@@ -318,6 +322,37 @@ namespace BountyBoard
             CurrentAt = Time.time;
         }
 
+        /// <summary>
+        /// A message for the players, sent as what happened (a code, the contract as data, a number), never as words: each player's game
+        /// writes it in their own language (ClientNote). Older versions sent the English sentence (RpcMsg).
+        /// </summary>
+        private static string Note(string code, Bounty b = null, int n = 0) =>
+            code + "|" + (b != null ? b.Serialize() : "") + "|" + n.ToString(CultureInfo.InvariantCulture);
+
+        private void ClientNote(long sender, string payload)
+        {
+            Player me = Player.m_localPlayer;
+            if (me == null) return;
+            int first = payload.IndexOf('|'), last = payload.LastIndexOf('|');
+            if (first < 0 || last <= first) return;
+            string code = payload.Substring(0, first);
+            Bounty b = last > first + 1 ? Bounty.Parse(payload.Substring(first + 1, last - first - 1)) : null;
+            int.TryParse(payload.Substring(last + 1), NumberStyles.Integer, CultureInfo.InvariantCulture, out int n);
+            string text = null;
+            bool center = false;
+            switch (code)
+            {
+                case "unavailable": text = T("bountyboard_msg_unavailable"); center = true; break;
+                case "notearned": text = T("bountyboard_msg_not_earned"); center = true; break;
+                case "taken": if (b != null) text = T("bountyboard_msg_taken", Rules.Describe(b)); break;
+                case "progress": if (b != null) text = T("bountyboard_msg_progress", Rules.TargetName(b), b.Progress, b.Count); break;
+                case "handed": if (b != null) text = T("bountyboard_msg_handed", n, b.Progress, b.Count); break;
+                case "complete": if (b != null) text = T("bountyboard_msg_complete", Rules.Describe(b)); center = true; break;
+            }
+            if (text != null) me.Message(center ? MessageHud.MessageType.Center : MessageHud.MessageType.TopLeft, text);
+        }
+
+        /// <summary>A message from an older host: its English sentence, shown as it is.</summary>
         private void ClientMsg(long sender, string payload)
         {
             Player me = Player.m_localPlayer;
@@ -335,15 +370,15 @@ namespace BountyBoard
             int coins = f.Length > 0 && int.TryParse(f[0], out int c) ? c : 0;
             Give(me, "Coins", coins);
             var parts = new List<string>();
-            if (coins > 0) parts.Add(coins + " coins");
+            if (coins > 0) parts.Add(T("bountyboard_amount", coins, Localization.instance.Localize("$item_coins")));
             foreach (string item in (f.Length > 1 ? f[1] : "").Split(new[] { ',' }, StringSplitOptions.RemoveEmptyEntries))
             {
                 string[] kv = item.Split(':');
                 if (kv.Length != 2 || !int.TryParse(kv[1], out int n)) continue;
                 Give(me, kv[0], n);
-                parts.Add(n + " " + Localization.instance.Localize(Rules.ItemName(kv[0])));
+                parts.Add(T("bountyboard_amount", n, Localization.instance.Localize(Rules.ItemName(kv[0]))));
             }
-            me.Message(MessageHud.MessageType.Center, "Reward: " + string.Join(", ", parts.ToArray()));
+            me.Message(MessageHud.MessageType.Center, T("bountyboard_reward", string.Join(", ", parts.ToArray())));
             BountyBoardStation.PlayEffects(me.transform.position, true);
         }
 

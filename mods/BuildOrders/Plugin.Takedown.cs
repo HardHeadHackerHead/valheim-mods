@@ -4,6 +4,7 @@ using System.IO;
 using System.Linq;
 using Newtonsoft.Json.Linq;
 using UnityEngine;
+using static DHack.Shared.Translations;
 
 namespace BuildOrders
 {
@@ -154,7 +155,7 @@ namespace BuildOrders
             if (down > 0)
             {
                 string got = string.Join(", ", refund.Select(kv => $"{kv.Value} {Localization.instance.Localize(kv.Key.GetComponent<ItemDrop>().m_itemData.m_shared.m_name)}").ToArray());
-                player.Message(MessageHud.MessageType.Center, $"Took down {down} built piece(s)" + (got.Length > 0 ? $": got back {got}" : "") + (dropped > 0 ? " (some at your feet: your bags are full)" : ""));
+                player.Message(MessageHud.MessageType.Center, (got.Length > 0 ? T("buildorders_took_down_got", down, got) : T("buildorders_took_down", down)) + (dropped > 0 ? " " + T("buildorders_took_down_feet") : ""));
                 Logger.LogInfo($"Plan '{key}': took down {down} built pieces, {left} left standing; refunded {got}");
             }
             return down;

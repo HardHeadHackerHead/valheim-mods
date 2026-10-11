@@ -5,6 +5,7 @@ using BepInEx;
 using BepInEx.Configuration;
 using HarmonyLib;
 using UnityEngine;
+using static DHack.Shared.Translations;
 
 namespace GearSlots
 {
@@ -23,7 +24,7 @@ namespace GearSlots
         public const string Guid = "com.quad.gearslots";
         public const string OldGuid = "com.dhack.gearslots"; // (its id until 2026-10: settings move over by themselves, see Shared/Migration.cs)
         public const string Name = "GearSlots";
-        public const string Version = "1.2.2";
+        public const string Version = "1.3.0";
 
         internal static Plugin Instance;
         internal static BepInEx.Logging.ManualLogSource Log;
@@ -42,6 +43,7 @@ namespace GearSlots
         private void Awake()
         {
             DHack.Shared.Migration.FromOldGuid(this, OldGuid); // first: before any setting is read
+            DHack.Shared.Translations.Load(this);   // translations/*.json: its words in the player's language
             Instance = this;
             Log = Logger;
             _showPanel = Config.Bind("General", "ShowPanel", true, "Show the Gear panel next to your inventory. (Turn off and your gear slots hide; the items stay where they are.)");
@@ -87,6 +89,7 @@ namespace GearSlots
             _harmony?.UnpatchSelf();
             Panel.Dispose(restoreCells: true);
             _hotbar.Destroy();
+            DHack.Shared.Translations.Unload();
             AppDomain.CurrentDomain.SetData("DHack.GearSlots.IsGear", null);
             if (Instance == this) { Instance = null; Log = null; }
         }
@@ -121,7 +124,7 @@ namespace GearSlots
             for (int i = 0; i < _quickKeys.Length; i++)
             {
                 KeyboardShortcut k = _quickKeys[i].Value;
-                if (k.MainKey != KeyCode.None && !k.Modifiers.Any()) keys.Add(new KeyValuePair<KeyCode, string>(k.MainKey, "quick slot " + (i + 1)));
+                if (k.MainKey != KeyCode.None && !k.Modifiers.Any()) keys.Add(new KeyValuePair<KeyCode, string>(k.MainKey, T("gearslots_quick_slot_n", i + 1)));
             }
             _keyNotes.AddRange(GameKeys.Free(Name, keys));
             _keyNotes.AddRange(GameKeys.GiveBack(Name, keys.Select(k => k.Key))); // a game key we unbound once, for a key none of ours uses any more
@@ -131,7 +134,7 @@ namespace GearSlots
             if (autoPickup != null && !(bool)autoPickup.GetValue(null) && string.IsNullOrEmpty(ZInput.instance.GetButtonDef("AutoPickup")?.GetActionPath()))
             {
                 autoPickup.SetValue(null, true);
-                _keyNotes.Add($"{Name}: auto-pickup was off and its key is unbound, so it is switched back on");
+                _keyNotes.Add(T("gearslots_autopickup_on", Name));
                 Logger.LogInfo("Auto-pickup was off and its key is unbound: switched it back on");
             }
         }
@@ -141,9 +144,9 @@ namespace GearSlots
         {
             if (_toldStandDown) return;
             _toldStandDown = true;
-            string note = $"{Name}: the gear slots are off because {Compat.StandDownFor} uses the same inventory cells.";
-            if (moved > 0) note += $" {moved} item(s) from your gear slots were moved into your bag.";
-            if (left > 0) note += $" {left} didn't fit and are still in the old gear cells: make room in your bag and log in again.";
+            string note = T("gearslots_standdown", Name, Compat.StandDownFor);
+            if (moved > 0) note += " " + T("gearslots_standdown_moved", moved);
+            if (left > 0) note += " " + T("gearslots_standdown_left", left);
             _keyNotes.Add(note);
             Logger.LogInfo(note);
             _keyNotes.AddRange(GameKeys.GiveBack(Name, new KeyCode[0])); // the quick keys are off too: the game gets back any key we took
@@ -249,7 +252,7 @@ namespace GearSlots
         {
             Slot slot = Layout.All.First(s => s.Quick == quick);
             ItemDrop.ItemData item = Layout.ItemIn(inv, slot);
-            if (item == null) { Tell(player, "Quick slot " + (quick + 1) + " is empty"); return; }
+            if (item == null) { Tell(player, T("gearslots_quick_empty", quick + 1)); return; }
             player.UseItem(inv, item, fromInventoryGui: true); // true: never "use on" whatever you are looking at
         }
 
@@ -267,7 +270,7 @@ namespace GearSlots
                 if (!wanted || !player.CanEat(item, false)) continue;
 
                 player.UseItem(inv, item, fromInventoryGui: true);
-                Tell(player, "Ate " + Localization.instance.Localize(item.m_shared.m_name));
+                Tell(player, T("gearslots_ate", Localization.instance.Localize(item.m_shared.m_name)));
                 return; // one at a time; the next tick looks again
             }
         }

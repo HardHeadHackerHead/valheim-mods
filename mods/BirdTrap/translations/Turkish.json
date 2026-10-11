@@ -1,0 +1,19 @@
+{
+  "birdtrap_piece": "Kuş Kapanı",
+  "birdtrap_piece_desc": "Bir destek çubuğuyla tutulan düşen kapaklı çıtalı bir kutu. Yem olarak meyve ya da tohum koy ve açık havada bırak: bir süre sonra içine bir kuş atlar, kapak düşer ve tüyleri için onu yolabilirsin.",
+  "birdtrap_full": "Daha fazla yem almıyor",
+  "birdtrap_need_bait": "Yem için meyve ya da tohum gerekiyor",
+  "birdtrap_baited": "Yem kondu: {0} ({1}/{2})",
+  "birdtrap_gone": "Kuş çoktan gitmiş",
+  "birdtrap_caught": "Bir martı yakalandı!",
+  "birdtrap_hover_pluck": "Tüylerini yol ve serbest bırak",
+  "birdtrap_no_bait": "Yem yok: boş bir kapana kuş gelmez",
+  "birdtrap_roof": "Kuşlar çatı altına gelmez",
+  "birdtrap_night": "Kuşlar gece tünekte: sabah bir tane gelecek",
+  "birdtrap_soon": "Kuruldu. Yaklaşık {0} dk içinde bir kuş gelmeli",
+  "birdtrap_any_moment": "Kuruldu. Her an bir kuş gelebilir",
+  "birdtrap_bait_state": "Yem: {0}/{1}  ·  {2}",
+  "birdtrap_hover_add": "Yem koy (meyve ya da tohum)",
+  "birdtrap_hover_fill": "Yemle doldur",
+  "birdtrap_plucked": "Martının tüylerini yolup onu serbest bırakıyorsun: {0} tüy"
+}

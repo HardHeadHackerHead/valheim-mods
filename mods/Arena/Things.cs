@@ -213,8 +213,8 @@ namespace Arena
             if (go.GetComponentInChildren<Collider>(true) == null) Hitbox(go, layer, new Vector3(0f, 1.5f, 0f), new Vector3(1.2f, 3f, 1.2f));
 
             Piece piece = go.GetComponent<Piece>();
-            piece.m_name = "Arena Waystone";
-            piece.m_description = "A waystone of the Arena, with burning braziers. Build it at home and press E to travel to the Arena's forecourt, where the Arena Master takes your name; the waystone there brings you back.";
+            piece.m_name = "$arena_waystone";
+            piece.m_description = "$arena_waystone_desc";
             piece.m_icon = Icon();
             piece.m_category = Piece.PieceCategory.Misc;
             piece.m_craftingStation = scene.GetPrefab("piece_workbench")?.GetComponent<CraftingStation>();

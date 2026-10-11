@@ -2,6 +2,7 @@ using BepInEx;
 using BepInEx.Configuration;
 using HarmonyLib;
 using UnityEngine;
+using static DHack.Shared.Translations;
 
 namespace CraftFromChests
 {
@@ -11,7 +12,7 @@ namespace CraftFromChests
         public const string Guid = "com.quad.craftfromchests";
         public const string OldGuid = "com.dhack.craftfromchests"; // (its id until 2026-10: settings move over by themselves, see Shared/Migration.cs)
         public const string Name = "CraftFromChests";
-        public const string Version = "1.4.3";
+        public const string Version = "1.5.0";
 
         internal static ConfigEntry<bool> Enabled;
         internal static ConfigEntry<float> Radius;
@@ -30,6 +31,7 @@ namespace CraftFromChests
         private void Awake()
         {
             DHack.Shared.Migration.FromOldGuid(this, OldGuid); // first: before any setting is read
+            DHack.Shared.Translations.Load(this);   // translations/*.json: its words in the player's language
             Log = Logger;
             Synced = new DHack.Shared.ServerSettings(Guid, Config, Logger);
             ShowHaveCounts = Config.Bind("Display", "ShowHaveCounts", true,
@@ -56,14 +58,14 @@ namespace CraftFromChests
             Logger.LogInfo($"{Name} {Version} loaded");
 
             // Awake with a player already in the world means this was a hot reload (F6 / ScriptEngine).
-            if (Player.m_localPlayer != null) Announce("reloaded");
+            if (Player.m_localPlayer != null) Announce(true);
         }
 
         /// <summary>Local-only chat line + top-left popup (not sent to other players).</summary>
-        internal static void Announce(string what)
+        internal static void Announce(bool reloaded)
         {
-            string text = $"{Name} v{Version} {what} | " +
-                          $"{(Enabled.Value ? "on" : "off")}, radius {Radius.Value:0.#}m | built {BuildTime}";
+            string onOff = Localization.instance.Localize(Enabled.Value ? "$hud_on" : "$hud_off").ToLowerInvariant();
+            string text = T(reloaded ? "craftfromchests_chat_reloaded" : "craftfromchests_chat_loaded", Name, Version, onOff, Radius.Value.ToString("0.#"), BuildTime);
             if (Chat.instance != null)
             {
                 Chat.instance.AddString("[Mod]", text, Talker.Type.Normal);
@@ -71,7 +73,7 @@ namespace CraftFromChests
                 AccessTools.Field(typeof(Chat), "m_hideTimer").SetValue(Chat.instance, 0f);
                 Chat.instance.m_chatWindow.gameObject.SetActive(true);
             }
-            if (Player.m_localPlayer != null) Player.m_localPlayer.Message(MessageHud.MessageType.TopLeft, $"{Name} {what}");
+            if (Player.m_localPlayer != null) Player.m_localPlayer.Message(MessageHud.MessageType.TopLeft, T(reloaded ? "craftfromchests_reloaded" : "craftfromchests_loaded", Name));
         }
 
         // Timestamp of the DLL, so you can tell at a glance that your newest build is the one running.
@@ -97,6 +99,7 @@ namespace CraftFromChests
         // ScriptEngine destroys the old plugin instance on reload; remove our patches so they don't stack.
         private void OnDestroy()
         {
+            DHack.Shared.Translations.Unload();
             _harmony?.UnpatchSelf();
             Synced?.Dispose();
             ChestScanner.Suspend = false;

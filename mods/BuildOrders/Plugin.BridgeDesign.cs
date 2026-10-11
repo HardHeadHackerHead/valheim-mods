@@ -64,7 +64,7 @@ namespace BuildOrders
         /// <summary>The pieces of one material.</summary>
         private class BridgeKit
         {
-            public string Name, Station;
+            public string Name, Station;   // (Name: the end of its warning's key, buildorders_warn_deep_<name>)
             public string Deck; public float DeckThickness;          // the deck's slab and how far its middle sits below the walking surface
             public bool PillarUnderEverySlab;                         // stone cannot hang off a pillar at its corner: one goes under the middle of each slab
             public string[] Posts; public float[] PostLengths;        // longest first
@@ -80,7 +80,7 @@ namespace BuildOrders
             switch (m)
             {
                 case BridgeMaterial.CoreWood:
-                    return new BridgeKit { Name = "core wood", Station = "piece_workbench", Deck = "wood_floor", Posts = new[] { "wood_pole_log_4", "wood_pole_log", "wood_pole" }, PostLengths = new[] { 4f, 2f, 1f },
+                    return new BridgeKit { Name = "corewood", Station = "piece_workbench", Deck = "wood_floor", Posts = new[] { "wood_pole_log_4", "wood_pole_log", "wood_pole" }, PostLengths = new[] { 4f, 2f, 1f },
                         TallPost = "wood_pole_log", Beam = "wood_wall_log", Roof = "wood_roof", RoofTop = "wood_roof_top", Stair = "wood_stair",
                         HalfWall = new[] { "wood_wall_log", "wood_wall_log" }, HalfWallY = new[] { 0.25f, 0.75f }, HalfWallInset = 0.3f, MaxDepth = 16f };
                 case BridgeMaterial.Darkwood:
@@ -104,7 +104,7 @@ namespace BuildOrders
         {
             public List<Entry> Entries = new List<Entry>();
             public float Yaw, Length;
-            public List<string> Warnings = new List<string>();
+            public List<Said> Warnings = new List<Said>();   // shown in the player's language, given to Claude Tools in English
         }
 
         /// <summary>The bridge from a start to an end point with these settings.</summary>
@@ -231,16 +231,16 @@ namespace BuildOrders
             // what to tell the player
             float steepest = 0f;
             for (float z = 0f; z <= length; z += 2f) steepest = Mathf.Max(steepest, Mathf.Abs(Tilt(z)));
-            if (steepest > 25f) d.Warnings.Add($"very steep ({steepest:0}°): hard to walk up (try Ends: Steps)");
-            if (deepest > kit.MaxDepth) d.Warnings.Add($"supports {deepest:0} m long: {kit.Name} may not hold that far down" + (o.Material == BridgeMaterial.Wood || o.Material == BridgeMaterial.Darkwood ? " (core wood or stone reach further)" : ""));
-            if (Deck(length * 0.5f) < water + 0.5f && arch <= 0f) d.Warnings.Add("the middle is close to the water: start or end higher up the bank, or arch it");
-            if (deepest < 0.4f && length >= 6f) d.Warnings.Add("there is no water or dip under it: is this where you meant?");
-            if (steps && stepCount == 0 && Mathf.Abs(end.y - start.y) > 0.6f) d.Warnings.Add("no steps: the lower end is in the water");
+            if (steepest > 25f) d.Warnings.Add(new Said("buildorders_warn_steep", steepest.ToString("0")));
+            if (deepest > kit.MaxDepth) d.Warnings.Add(new Said("buildorders_warn_deep_" + kit.Name, deepest.ToString("0")));
+            if (Deck(length * 0.5f) < water + 0.5f && arch <= 0f) d.Warnings.Add(new Said("buildorders_warn_low"));
+            if (deepest < 0.4f && length >= 6f) d.Warnings.Add(new Said("buildorders_warn_no_water"));
+            if (steps && stepCount == 0 && Mathf.Abs(end.y - start.y) > 0.6f) d.Warnings.Add(new Said("buildorders_warn_no_steps"));
             bool stationStart = CraftingStation.HaveBuildStationInRange(kit.Station, start) != null;
             bool stationEnd = CraftingStation.HaveBuildStationInRange(kit.Station, start + turn * new Vector3(0f, endDeck, length)) != null;
             string station = kit.Station == "piece_stonecutter" ? "stonecutter" : "workbench";
-            if (!stationStart || !stationEnd) d.Warnings.Add(stationStart ? $"no {station} near the far end: build one there to finish it" : $"needs a {station} within 20 m to build: put one by the start");
-            if (o.Material == BridgeMaterial.Stone && (o.Roof || o.Sides == BridgeSides.Rails)) d.Warnings.Add("the roof and rails of a stone bridge are wood (a workbench is needed too)");
+            if (!stationStart || !stationEnd) d.Warnings.Add(new Said((stationStart ? "buildorders_warn_far_end_" : "buildorders_warn_needs_") + station));
+            if (o.Material == BridgeMaterial.Stone && (o.Roof || o.Sides == BridgeSides.Rails)) d.Warnings.Add(new Said("buildorders_warn_stone_wood"));
             return d;
         }
     }

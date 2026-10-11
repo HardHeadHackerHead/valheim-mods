@@ -1,5 +1,6 @@
 using HarmonyLib;
 using UnityEngine;
+using static DHack.Shared.Translations;
 
 namespace GearSlots
 {
@@ -206,7 +207,7 @@ namespace GearSlots
             {
                 result = false;
                 if (Player.m_localPlayer != null)
-                    Player.m_localPlayer.Message(MessageHud.MessageType.Center, Localization.instance.Localize(item.m_shared.m_name) + " doesn't go in a " + slot.Label + " slot");
+                    Player.m_localPlayer.Message(MessageHud.MessageType.Center, T("gearslots_doesnt_fit", Localization.instance.Localize(item.m_shared.m_name), slot.Name));
                 return false;
             }
         }

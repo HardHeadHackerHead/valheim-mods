@@ -6,6 +6,7 @@ using BepInEx;
 using BepInEx.Configuration;
 using HarmonyLib;
 using UnityEngine;
+using static DHack.Shared.Translations;
 
 namespace BuildOrders
 {
@@ -24,7 +25,7 @@ namespace BuildOrders
         public const string Guid = "com.quad.buildorders";
         public const string OldGuid = "com.dhack.buildorders"; // (its id until 2026-10: settings move over by themselves, see Shared/Migration.cs)
         public const string Name = "BuildOrders";
-        public const string Version = "1.13.0";
+        public const string Version = "1.14.0";
 
         internal static Plugin Instance;
         internal static DHack.Shared.ServerSettings Synced;   // the gameplay settings the server decides in multiplayer
@@ -48,6 +49,7 @@ namespace BuildOrders
         private void Awake()
         {
             DHack.Shared.Migration.FromOldGuid(this, OldGuid); // first: before any setting is read
+            DHack.Shared.Translations.Load(this);   // translations/*.json: its words in the player's language
             Instance = this;
             Synced = new DHack.Shared.ServerSettings(Guid, Config, Logger);
             PublishHelperHooks();
@@ -95,11 +97,11 @@ namespace BuildOrders
             GameUi_EscapeCloses.Close = CloseFromEscape;
             if (ZNetScene.instance != null) RegisterBridgeTool(ZNetScene.instance);   // hot reload while in a world
 
-            Logger.LogInfo($"{Name} {Version} loaded ({PlanHint})");
+            Logger.LogInfo($"{Name} {Version} loaded ({PlanHintSaid.English})");
 
             // Awake with a player already in the world means this was a hot reload.
             if (Player.m_localPlayer != null && Chat.instance != null)
-                Chat.instance.AddString("[Mod]", $"{Name} v{Version} reloaded | {PlanHint}", Talker.Type.Normal);
+                Chat.instance.AddString("[Mod]", T("buildorders_reloaded", Name, Version, PlanHint), Talker.Type.Normal);
         }
 
         // ScriptEngine destroys this copy when mods reload: undo everything we hooked into the game.
@@ -118,6 +120,7 @@ namespace BuildOrders
             UnregisterBridgeTool();
             DestroyAllGhosts();
             Synced?.Dispose();
+            DHack.Shared.Translations.Unload();
             if (Instance == this) Instance = null;
         }
 
@@ -189,7 +192,7 @@ namespace BuildOrders
             if (Input.GetKeyDown(_toggleGhostsKey.Value) && !TypingOrMenuOpen())
             {
                 _showGhosts.Value = !_showGhosts.Value;
-                player.Message(MessageHud.MessageType.TopLeft, _showGhosts.Value ? "Build order ghosts shown" : "Build order ghosts hidden");
+                player.Message(MessageHud.MessageType.TopLeft, T(_showGhosts.Value ? "buildorders_ghosts_shown" : "buildorders_ghosts_hidden"));
             }
 
             if (Time.time >= _nextGhostUpdate)
@@ -354,13 +357,13 @@ namespace BuildOrders
                     List<Order> cluster = _orders.Values.Where(o => (o.Pos - center.Pos).sqrMagnitude <= 64f).ToList();
                     foreach (Order o in cluster) RemoveOrder(o.Id, broadcast: true, save: false);
                     SaveOrders(); // once, not once per order
-                    player.Message(MessageHud.MessageType.TopLeft, $"Removed {cluster.Count} build order(s)");
+                    player.Message(MessageHud.MessageType.TopLeft, T("buildorders_removed_orders", cluster.Count));
                 }
                 else
                 {
                     string name = PieceName(Aimed.Prefab);
                     RemoveOrder(Aimed.Id, broadcast: true);
-                    player.Message(MessageHud.MessageType.TopLeft, $"Removed build order: {name}");
+                    player.Message(MessageHud.MessageType.TopLeft, T("buildorders_removed_order", name));
                 }
             }
         }
@@ -436,7 +439,7 @@ namespace BuildOrders
                 PlanLines.Clear();
                 var plan = _orders.Values.Where(x => (x.By ?? "") == (order.By ?? "")).ToList();
                 PlanLeft = plan.Count;
-                PlanTitle = (order.By ?? "").StartsWith(BlueprintPrefix) ? order.By.Substring(BlueprintPrefix.Length) : "Planned by " + (string.IsNullOrEmpty(order.By) ? "someone" : order.By);
+                PlanTitle = (order.By ?? "").StartsWith(BlueprintPrefix) ? ShownTitle(order.By.Substring(BlueprintPrefix.Length)) : T("buildorders_planned_by", Who(order.By));
                 var totals = new Dictionary<string, HintLine>();
                 foreach (Order x in plan)
                 {
@@ -545,11 +548,13 @@ namespace BuildOrders
             }
             finally { _building = false; }
 
-            string stations = string.Join(", ", noStation.Select(kv => $"{kv.Value} need a {kv.Key} near you").ToArray());
-            string extra = (noMaterials > 0 ? $", {noMaterials} need materials" : "") + (stations.Length > 0 ? ", " + stations : "")
-                + (unsupported > 0 ? $", {unsupported} skipped: nothing supports them yet" : "") + (waited > 0 ? $", {waited} wait for what holds them up" : "");
-            player.Message(MessageHud.MessageType.Center, built > 0 ? $"Built {built} piece(s){extra}" : $"Nothing built{extra}");
-            if (stations.Length > 0) Logger.LogInfo("Build all: " + stations);
+            var said = new List<string> { built > 0 ? T("buildorders_built_many", built) : T("buildorders_built_nothing") };
+            if (noMaterials > 0) said.Add(T("buildorders_built_need_materials", noMaterials));
+            said.AddRange(noStation.Select(kv => T("buildorders_built_need_station", kv.Value, kv.Key)));
+            if (unsupported > 0) said.Add(T("buildorders_built_unsupported", unsupported));
+            if (waited > 0) said.Add(T("buildorders_built_waiting", waited));
+            player.Message(MessageHud.MessageType.Center, string.Join(", ", said.ToArray()));
+            if (noStation.Count > 0) Logger.LogInfo("Build all: " + string.Join(", ", noStation.Select(kv => $"{kv.Value} need a {kv.Key} near you").ToArray()));
             _stabilityDirty = true;
         }
 
@@ -650,11 +655,11 @@ namespace BuildOrders
             void Say(string text) { if (!quiet) player.Message(MessageHud.MessageType.Center, text); }
             Piece piece = PieceOf(order);
             string name = PieceName(order.Prefab);
-            if (piece == null) { Say("That piece isn't available"); return false; }
-            if (!player.IsRecipeKnown(piece.m_name)) { Say($"You haven't unlocked {name} yet"); return false; }
-            if (!PrivateArea.CheckAccess(order.Pos, 0f, !quiet, false)) { Say("That area is protected"); return false; }
-            if (Location.IsInsideNoBuildLocation(order.Pos)) { Say("You can't build there"); return false; }
-            if (!CanAfford(player, piece)) { Say($"Missing materials for {name}"); return false; }
+            if (piece == null) { Say(T("buildorders_not_available")); return false; }
+            if (!player.IsRecipeKnown(piece.m_name)) { Say(T("buildorders_not_unlocked", name)); return false; }
+            if (!PrivateArea.CheckAccess(order.Pos, 0f, !quiet, false)) { Say(T("buildorders_protected")); return false; }
+            if (Location.IsInsideNoBuildLocation(order.Pos)) { Say(T("buildorders_cant_build_there")); return false; }
+            if (!CanAfford(player, piece)) { Say(T("buildorders_missing_for", name)); return false; }
 
             // Pay first, then place, and only when the whole cost was really taken. Counted here, outside the game's HaveRequirements: other
             // mods (Adventure Backpacks) count extra sources only inside it, but the payment below runs outside it and never reaches them.
@@ -666,14 +671,14 @@ namespace BuildOrders
             {
                 Inventory inv = player.GetInventory();
                 var before = cost.Keys.ToDictionary(k => k, k => inv.CountItems(ItemName(k)));
-                if (cost.Any(kv => before[kv.Key] < kv.Value)) { Say($"Missing materials for {name}"); return false; }
+                if (cost.Any(kv => before[kv.Key] < kv.Value)) { Say(T("buildorders_missing_for", name)); return false; }
                 if (cost.Count > 0) player.ConsumeResources(piece.m_resources, 0);
                 foreach (var kv in cost) taken[kv.Key] = Mathf.Max(0, before[kv.Key] - inv.CountItems(ItemName(kv.Key)));
                 if (cost.Any(kv => taken[kv.Key] < kv.Value))
                 {
                     Logger.LogWarning($"Not built {name}: paying took less than it costs ({string.Join(", ", cost.Select(kv => $"{taken[kv.Key]}/{kv.Value} {kv.Key.name}").ToArray())}); what was taken is given back");
                     GiveItems(player, taken);
-                    Say($"Missing materials for {name}");
+                    Say(T("buildorders_missing_for", name));
                     return false;
                 }
                 paid = true;
@@ -683,13 +688,13 @@ namespace BuildOrders
             {
                 Logger.LogError($"Could not build {name}: {e}");
                 if (paid) GiveItems(player, taken);
-                Say($"Could not build {name} (see the BepInEx log)");
+                Say(T("buildorders_could_not_build", name));
                 return false;
             }
             finally { ForceBuildContext(false); }
 
             RemoveOrder(order.Id, broadcast: true);
-            if (!quiet) player.Message(MessageHud.MessageType.TopLeft, $"Built: {name}");
+            if (!quiet) player.Message(MessageHud.MessageType.TopLeft, T("buildorders_built_one", name));
             _stabilityDirty = true;
             return true;
         }
@@ -746,9 +751,9 @@ namespace BuildOrders
             GameObject prefab = ZNetScene.instance.GetPrefab(order.Prefab);
             Piece piece = prefab != null ? prefab.GetComponent<Piece>() : null;
             if (piece != null && player.SetSelectedPiece(piece))
-                player.Message(MessageHud.MessageType.TopLeft, $"Selected: {PieceName(order.Prefab)}");
+                player.Message(MessageHud.MessageType.TopLeft, T("buildorders_selected", PieceName(order.Prefab)));
             else
-                player.Message(MessageHud.MessageType.TopLeft, "That piece isn't in your hammer's build menu yet.");
+                player.Message(MessageHud.MessageType.TopLeft, T("buildorders_not_in_hammer"));
         }
 
         // ---- finishing orders -------------------------------------------------------------------
@@ -784,7 +789,7 @@ namespace BuildOrders
                     if (Quaternion.Angle(p.transform.rotation, o.Rot) > 25f) continue;
 
                     RemoveOrder(o.Id, broadcast: true);
-                    player.Message(MessageHud.MessageType.TopLeft, $"Build order done: {PieceName(o.Prefab)}");
+                    player.Message(MessageHud.MessageType.TopLeft, T("buildorders_order_done", PieceName(o.Prefab)));
                     break;
                 }
             }
@@ -824,9 +829,13 @@ namespace BuildOrders
             else _planMode = Input.GetKey(_planKey.Value);
 
             if (_planMode != before)
-                player.Message(MessageHud.MessageType.TopLeft, _planMode ? "Plan mode ON: placing now plans a build order" : "Plan mode off: placing builds as usual");
+                player.Message(MessageHud.MessageType.TopLeft, T(_planMode ? "buildorders_plan_on" : "buildorders_plan_off"));
         }
 
-        private string PlanHint => _planToggle.Value ? $"Press {_planKey.Value} to plan" : $"Hold {_planKey.Value} + place to plan";
+        private Said PlanHintSaid => new Said(_planToggle.Value ? "buildorders_hint_press" : "buildorders_hint_hold", _planKey.Value);
+        private string PlanHint => PlanHintSaid.Shown;
+
+        /// <summary>Who planned a hand-made plan, for the screen (the order's "By": a player's name, or empty).</summary>
+        internal static string Who(string by) => string.IsNullOrEmpty(by) ? T("buildorders_someone") : by;
     }
 }

@@ -20,7 +20,7 @@ namespace Ziplines
         public const string Guid = "com.quad.ziplines";
         public const string OldGuid = "com.dhack.ziplines"; // (its id until 2026-10: settings move over by themselves, see Shared/Migration.cs)
         public const string Name = "Ziplines";
-        public const string Version = "0.2.3";
+        public const string Version = "0.3.0";
 
         internal static Plugin Instance;
         internal static ManualLogSource Log;
@@ -34,6 +34,7 @@ namespace Ziplines
         private void Awake()
         {
             DHack.Shared.Migration.FromOldGuid(this, OldGuid); // first: before any setting is read
+            DHack.Shared.Translations.Load(this);   // translations/*.json: its words in the player's language
             Instance = this;
             Log = Logger;
             Synced = new DHack.Shared.ServerSettings(Guid, Config, Logger);
@@ -81,6 +82,7 @@ namespace Ziplines
             Post.ForgetAll();
             Things.Unregister();
             Synced?.Dispose();
+            DHack.Shared.Translations.Unload();
             if (Instance == this) Instance = null;
         }
     }

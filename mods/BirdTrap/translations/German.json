@@ -1,0 +1,19 @@
+{
+  "birdtrap_piece": "Vogelfalle",
+  "birdtrap_piece_desc": "Eine Lattenkiste mit einer Falltür auf einem Stützstock. Mit Beeren oder Samen ködern und unter freiem Himmel stehen lassen: Nach einer Weile hüpft ein Vogel hinein, die Tür fällt zu, und du kannst ihn für Federn rupfen.",
+  "birdtrap_full": "Mehr Köder passt nicht hinein",
+  "birdtrap_need_bait": "Als Köder brauchst du Beeren oder Samen",
+  "birdtrap_baited": "Mit {0} beködert ({1}/{2})",
+  "birdtrap_gone": "Der Vogel ist schon weg",
+  "birdtrap_caught": "Eine Möwe ist gefangen!",
+  "birdtrap_hover_pluck": "Für Federn rupfen und freilassen",
+  "birdtrap_no_bait": "Kein Köder: An eine leere Falle kommen keine Vögel",
+  "birdtrap_roof": "Unter ein Dach kommen keine Vögel",
+  "birdtrap_night": "Die Vögel schlafen: Am Morgen kommt einer",
+  "birdtrap_soon": "Aufgestellt. In etwa {0} Min. sollte ein Vogel kommen",
+  "birdtrap_any_moment": "Aufgestellt. Jeden Moment sollte ein Vogel kommen",
+  "birdtrap_bait_state": "Köder: {0}/{1}  ·  {2}",
+  "birdtrap_hover_add": "Köder hinzufügen (Beeren oder Samen)",
+  "birdtrap_hover_fill": "Mit Köder füllen",
+  "birdtrap_plucked": "Du rupfst die Möwe und lässt sie frei: {0} Federn"
+}

@@ -1,0 +1,20 @@
+{
+  "bettercraftingstations_all": "Alle {0}",
+  "bettercraftingstations_chip": "{0} {1}",
+  "bettercraftingstations_can_craft": "Herstellbar",
+  "bettercraftingstations_type_weapons": "Waffen",
+  "bettercraftingstations_type_armor": "Rüstung",
+  "bettercraftingstations_type_tools": "Werkzeuge",
+  "bettercraftingstations_type_ammo": "Munition",
+  "bettercraftingstations_type_food": "Essen",
+  "bettercraftingstations_type_potions": "Tränke",
+  "bettercraftingstations_type_materials": "Materialien",
+  "bettercraftingstations_type_other": "Sonstiges",
+  "bettercraftingstations_tier_wood": "Holz & Feuerstein",
+  "bettercraftingstations_tier_bronze": "Bronze",
+  "bettercraftingstations_tier_iron": "Eisen",
+  "bettercraftingstations_tier_silver": "Silber",
+  "bettercraftingstations_tier_blackmetal": "Schwarzmetall",
+  "bettercraftingstations_tier_mistlands": "Nebellande",
+  "bettercraftingstations_tier_ashlands": "Aschenlande"
+}

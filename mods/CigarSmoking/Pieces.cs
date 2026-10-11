@@ -64,11 +64,11 @@ namespace CigarSmoking
                 if (area != null) Object.DestroyImmediate(area.gameObject);   // a table is not a base
                 Reskin(table, ModelIndex.Parts("table"));
                 CraftingStation cs = table.GetComponent<CraftingStation>();
-                cs.m_name = "Cigar Rolling Table";
+                cs.m_name = "$cigarsmoking_table";
                 cs.m_icon = Icons.Get("table");
                 cs.m_craftRequireRoof = false;
                 cs.m_craftRequireFire = false;
-                SetPiece(table, "Cigar Rolling Table", "Roll cigars from cured leaf. Build a Humidor beside it for the finer cigars.", "table",
+                SetPiece(table, "$cigarsmoking_table", "$cigarsmoking_table_desc", "table",
                          Req("Wood", 10), Req("Resin", 4), Req("LeatherScraps", 4));
                 table.GetComponent<Piece>().m_craftingStation = workbench;
                 TableStation = cs;
@@ -82,7 +82,7 @@ namespace CigarSmoking
                 Reskin(humidor, ModelIndex.Parts("humidor"));
                 StationExtension ext = humidor.GetComponent<StationExtension>();
                 if (ext != null && TableStation != null) ext.m_craftingStation = TableStation;
-                SetPiece(humidor, "Humidor", "A cedar cabinet that keeps leaf and cigars at their best. Build it near a Cigar Rolling Table to roll the finer cigars.", "humidor",
+                SetPiece(humidor, "$cigarsmoking_humidor", "$cigarsmoking_humidor_desc", "humidor",
                          Req("FineWood", 10), Req("LeatherScraps", 3), Req("Resin", 3));
                 humidor.GetComponent<Piece>().m_craftingStation = TableStation;
                 HammerPieces.Add(humidor);
@@ -94,10 +94,10 @@ namespace CigarSmoking
             {
                 Object.DestroyImmediate(rack.GetComponent<Container>());
                 Reskin(rack, ModelIndex.Parts("rack"));
-                SetPiece(rack, "Tobacco Drying Rack", "Hang fresh tobacco leaves here to dry in the air.", "rack", Req("Wood", 8), Req("Resin", 2));
+                SetPiece(rack, "$cigarsmoking_rack", "$cigarsmoking_rack_desc", "rack", Req("Wood", 8), Req("Resin", 2));
                 rack.GetComponent<Piece>().m_craftingStation = workbench;
                 Curer c = rack.AddComponent<Curer>();
-                c.Title = "Tobacco Drying Rack"; c.Doing = "Drying"; c.Done = "dried"; c.Capacity = 8;
+                c.Title = "$cigarsmoking_rack"; c.Capacity = 8;
                 c.Drying = true;
                 HammerPieces.Add(rack);
             }
@@ -106,11 +106,11 @@ namespace CigarSmoking
             {
                 Object.DestroyImmediate(barrel.GetComponent<Container>());
                 Reskin(barrel, ModelIndex.Parts("barrel"));
-                SetPiece(barrel, "Tobacco Curing Barrel", "Pack dried tobacco leaves in here to age and ferment into dark, oily leaf.", "barrel",
+                SetPiece(barrel, "$cigarsmoking_barrel", "$cigarsmoking_barrel_desc", "barrel",
                          Req("Wood", 12), Req("Resin", 4), Req("LeatherScraps", 2));
                 barrel.GetComponent<Piece>().m_craftingStation = workbench;
                 Curer c = barrel.AddComponent<Curer>();
-                c.Title = "Tobacco Curing Barrel"; c.Doing = "Curing"; c.Done = "aged"; c.Capacity = 8;
+                c.Title = "$cigarsmoking_barrel"; c.Capacity = 8;
                 c.Drying = false;
                 HammerPieces.Add(barrel);
             }
@@ -133,7 +133,6 @@ namespace CigarSmoking
 
         private static void BuildPlants(ZNetScene scene, Strain s)
         {
-            string tobacco = s.Display + " Tobacco";
             ItemDrop fresh = Find(s.Fresh)?.GetComponent<ItemDrop>();
             ItemDrop seeds = Find(s.Seeds)?.GetComponent<ItemDrop>();
             object[][] mature = ModelIndex.Parts("plant_" + s.Id + "_mature");
@@ -151,7 +150,7 @@ namespace CigarSmoking
                 p.m_hideWhenPicked = null;
                 p.m_itemPrefab = fresh != null ? fresh.gameObject : null;
                 p.m_amount = 3;
-                p.m_overrideName = tobacco;
+                p.m_overrideName = s.Key("plant");
                 p.m_extraDrops = SeedDrop(seeds, 0.6f);
                 p.m_respawnTimeMinutes = 0f;
                 FitPlantCollider(ripe, s.Height);
@@ -179,7 +178,7 @@ namespace CigarSmoking
                 p.m_hideWhenPicked = model;
                 p.m_itemPrefab = fresh != null ? fresh.gameObject : null;
                 p.m_amount = 3;
-                p.m_overrideName = "Wild " + tobacco;
+                p.m_overrideName = s.Key("plant_wild");
                 p.m_extraDrops = SeedDrop(seeds, 1f);
                 p.m_respawnTimeMinutes = 300f;
                 FitPlantCollider(wild, s.Height);
@@ -195,13 +194,13 @@ namespace CigarSmoking
                 Replace(sapling.transform.Find("healthy_grown"), ModelIndex.Parts("plant_" + s.Id + "_growing"));
                 Replace(sapling.transform.Find("unhealthy_grown"), ModelIndex.Parts("plant_" + s.Id + "_growing_sick"));
                 Plant plant = sapling.GetComponent<Plant>();
-                plant.m_name = tobacco;
+                plant.m_name = s.Key("plant");
                 plant.m_grownPrefabs = ripe != null ? new[] { ripe } : new GameObject[0];
                 plant.m_growTime = Plugin.GrowMinutes.Value * 60f;
                 plant.m_growTimeMax = plant.m_growTime * 1.4f;
                 plant.m_biome = s.Plant;
                 plant.m_needCultivatedGround = true;
-                SetPiece(sapling, tobacco, "Sow " + s.Display.ToLower() + " tobacco seeds in cultivated soil. It grows tall in a few days and gives leaves and seeds.", "plant_" + s.Id,
+                SetPiece(sapling, s.Key("plant"), s.Key("plant_desc"), "plant_" + s.Id,
                          new Piece.Requirement { m_resItem = seeds, m_amount = 1, m_recover = false });
                 sapling.GetComponent<Piece>().m_category = Piece.PieceCategory.Misc;
                 CultivatorPieces.Add(sapling);

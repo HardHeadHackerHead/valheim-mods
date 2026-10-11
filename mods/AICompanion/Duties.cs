@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
 using UnityEngine;
+using static AICompanion.Words;
 
 namespace AICompanion
 {
@@ -44,8 +45,10 @@ namespace AICompanion
             public Job Jobs => Duty == Duty.Wood ? Job.Wood : Duty == Duty.Food ? Job.Forage | Job.Hunt | Job.Cook : Duty == Duty.Build ? Job.None : Job.Stone | Job.Ore;
         }
 
-        public static string Label(Duty d) => d == Duty.Wood ? "Collect wood" : d == Duty.Food ? "Hunt and forage food" : d == Duty.Build ? "Build our plans" : "Mine stone and ore";
-        public static string Unit(Duty d) => d == Duty.Wood ? "wood" : d == Duty.Food ? "good meals" : d == Duty.Build ? "pieces" : "stone and ore";
+        /// <summary>Its name in the menu (packed text: Words.Show makes the words).</summary>
+        public static string Label(Duty d) => P("aicompanion_duties_label_" + d.ToString().ToLowerInvariant());
+        /// <summary>A stockpile's size in its unit ("100 wood", "40 good meals"), packed.</summary>
+        public static string Amount(Duty d, int n) => P("aicompanion_duties_amount_" + d.ToString().ToLowerInvariant(), n);
         public static int Step(Duty d) => d == Duty.Food ? 10 : 20;
         public static int Max(Duty d) => d == Duty.Food ? 300 : 600;
         private static int Default(Duty d) => d == Duty.Food ? 60 : 100;
@@ -247,27 +250,36 @@ namespace AICompanion
 
         // ---- for its menu ---------------------------------------------------------------------------------------------
 
+        /// <summary>How the duty stands, for its menu (packed text).</summary>
         public static string Status(Humanoid me, Entry e, Entry active)
         {
-            if (!e.On) return "Off";
+            if (!e.On) return Localization.instance.Localize("$hud_off");
             if (e.Duty == Duty.Build)
             {
-                if (!Building.Available) return "Needs the BuildOrders mod";
+                if (!Building.Available) return P("aicompanion_duties_needs_buildorders");
                 int left = Building.Pending(me);
-                if (left == 0) return "No plans near home";
+                if (left == 0) return P("aicompanion_duties_no_plans");
                 Goal plan = Brain.Get(me).PlanGoal;
                 if (e == active && plan != null)
-                    return plan.Raw.Count > 0 ? $"Getting {plan.RawText()} for your plan ({left} piece{(left == 1 ? "" : "s")} left)"
-                         : plan.Ask.Count > 0 ? $"Your plan needs {string.Join(" and ", plan.Ask)} from you ({left} left)" : $"Making materials for your plan ({left} left)";
-                if (e == active) return $"Building: {left} piece{(left == 1 ? "" : "s")} left in your plans";
+                {
+                    if (plan.Raw.Count > 0) return P(left == 1 ? "aicompanion_duties_getting_one" : "aicompanion_duties_getting_many", plan.RawText(), left);
+                    if (plan.Ask.Count > 0)
+                    {
+                        string asks = plan.Ask.Count == 1 ? plan.Ask[0] : P("aicompanion_menu_and", string.Join(", ", plan.Ask.Take(plan.Ask.Count - 1)), plan.Ask[plan.Ask.Count - 1]);
+                        return P("aicompanion_duties_plan_needs", asks, left);
+                    }
+                    return P("aicompanion_duties_making", left);
+                }
+                if (e == active) return P(left == 1 ? "aicompanion_duties_building_one" : "aicompanion_duties_building_many", left);
                 string why = Brain.Get(me).BuildNote;
-                return Resting(me, e.Duty) ? $"{left} left, waiting: {(string.IsNullOrEmpty(why) ? "nothing it can build yet" : why)}" : $"Waiting its turn: {left} piece{(left == 1 ? "" : "s")} left";
+                return Resting(me, e.Duty) ? P("aicompanion_duties_left_waiting", left, string.IsNullOrEmpty(why) ? P("aicompanion_duties_nothing_to_build") : why)
+                                           : P(left == 1 ? "aicompanion_duties_turn_one" : "aicompanion_duties_turn_many", left);
             }
             int have = Have(me, e.Duty);
-            if (have >= e.Target) return $"Stocked: {have} of {e.Target}";
-            if (e == active) return $"Working on it now: {have} of {e.Target}";
-            if (Resting(me, e.Duty)) return $"Nothing to find near home just now: {have} of {e.Target}";
-            return $"Waiting its turn: {have} of {e.Target}";
+            if (have >= e.Target) return P("aicompanion_duties_stocked", have, e.Target);
+            if (e == active) return P("aicompanion_duties_working", have, e.Target);
+            if (Resting(me, e.Duty)) return P("aicompanion_duties_nothing_near", have, e.Target);
+            return P("aicompanion_duties_turn_have", have, e.Target);
         }
     }
 }

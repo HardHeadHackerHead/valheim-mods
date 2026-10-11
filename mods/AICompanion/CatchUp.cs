@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Linq;
 using HarmonyLib;
 using UnityEngine;
+using static AICompanion.Words;
 
 namespace AICompanion
 {
@@ -144,7 +145,8 @@ namespace AICompanion
         {
             Humanoid me = st.Body;
             var got = new Dictionary<string, int>();
-            var notes = new List<string>();
+            var notes = new List<string>();   // the creatures it fought off ($tokens)
+            bool full = false;                 // its bag and chests filled up
             var also = new List<string>();
             var did0 = new List<string>();   // what its duties did (for the report)
             float budget = seconds;
@@ -178,7 +180,7 @@ namespace AICompanion
                         float power = Power(me);
                         if (UnityEngine.Random.value > power / (power + threat * 0.4f))
                         {
-                            fellTo = Localization.instance.Localize(go.GetComponent<Character>()?.m_name ?? prefab);
+                            fellTo = go.GetComponent<Character>()?.m_name ?? prefab;   // (its $token: the report is made into words where it is read)
                             Fall(me, center, radius);
                             budget = 0f; // the rest of the time it was making its way back home
                             break;
@@ -188,7 +190,7 @@ namespace AICompanion
                     Wear(me, 0.03f);
                     ItemDrop.ItemData weapon = me.GetCurrentWeapon();
                     if (weapon != null) Skill.Raise(me, weapon.m_shared.m_skillType, 3f);
-                    string name = Localization.instance.Localize(go.GetComponent<Character>()?.m_name ?? prefab);
+                    string name = go.GetComponent<Character>()?.m_name ?? prefab;
                     if (!notes.Contains(name)) notes.Add(name);
                 }
             }
@@ -227,7 +229,7 @@ namespace AICompanion
             foreach (Component t in targets)
             {
                 if (budget <= 0f || done != null && done()) break;
-                if (Free(me) <= 1) { notes.Add("its bag and chests are full"); break; }
+                if (Free(me) <= 1) { full = true; break; }
                 switch (t)
                 {
                     case Pickable p when (jobs & Job.Forage) != 0 && p.m_respawnTimeMinutes > 0f && p.m_itemPrefab != null && !(Companion.Zdo(p)?.GetBool(ZDOVars.s_picked, false) ?? true)
@@ -331,7 +333,7 @@ namespace AICompanion
             string trip = fellTo == null ? AwayTrip(me, center, radius, got, ref budget) : null;
             if (trip == null && fellTo == null && planGoal != null && planGoal.Raw.Count > 0)
                 trip = AwayTrip(me, center, radius, got, ref budget, Remaining(planGoal, got)); // (what the plan still lacks after what it gathered near home)
-            if (trip != null) Journal.Trip(me, $"While you were away it {trip}.");
+            if (trip != null) Journal.Trip(me, P("aicompanion_catchup_trip_journal", trip));
 
             Stage = "storing";
             // 5. Into its chests (and its bag); then it cooks what it hunted and picked.
@@ -391,33 +393,35 @@ namespace AICompanion
 
             Stage = "report";
             // The report.
+            // (packed text, one sentence a key: its player may read it on another game, in another language)
             var did = new List<string>(did0);
-            if (builtHere > 0) did.Add($"built {builtHere} piece{(builtHere == 1 ? "" : "s")} of your plan");
-            else if (planGoal != null && planGoal.Ask.Count > 0) did.Add($"could not finish your plan: it needs {string.Join(" and ", planGoal.Ask)} that it cannot get itself");
-            else if (shortOf != null) did.Add($"could not build your plan: it needs {shortOf}");
-            if (felled > 0) did.Add($"felled {felled} tree{(felled == 1 ? "" : "s")}");
-            if (mined > 0) did.Add($"mined {mined} rock{(mined == 1 ? "" : "s")}");
-            if (picked > 0) did.Add($"picked {picked} bush{(picked == 1 ? "" : "es")}");
-            if (hunted.Count > 0) did.Add("hunted " + string.Join(", ", hunted.Select(kv => $"{kv.Value} {kv.Key}")));
-            if (fights > 0) did.Add($"fought off {fights} creature{(fights == 1 ? "" : "s")} ({string.Join(", ", notes.Where(n => !n.Contains("full")).Take(3))})");
-            if (cooked > 0) did.Add($"cooked {cooked} meal{(cooked == 1 ? "" : "s")}");
+            if (builtHere > 0) did.Add(P(builtHere == 1 ? "aicompanion_catchup_built_one" : "aicompanion_catchup_built_many", builtHere));
+            else if (planGoal != null && planGoal.Ask.Count > 0) did.Add(P("aicompanion_catchup_plan_ask", And(planGoal.Ask)));
+            else if (shortOf != null) did.Add(P("aicompanion_catchup_plan_short", shortOf));
+            if (felled > 0) did.Add(P(felled == 1 ? "aicompanion_catchup_felled_one" : "aicompanion_catchup_felled_many", felled));
+            if (mined > 0) did.Add(P(mined == 1 ? "aicompanion_catchup_mined_one" : "aicompanion_catchup_mined_many", mined));
+            if (picked > 0) did.Add(P(picked == 1 ? "aicompanion_catchup_picked_one" : "aicompanion_catchup_picked_many", picked));
+            if (hunted.Count > 0) did.Add(P("aicompanion_catchup_hunted", string.Join(", ", hunted.Select(kv => Amount(kv, true)))));
+            if (fights > 0) did.Add(P(fights == 1 ? "aicompanion_catchup_fought_one" : "aicompanion_catchup_fought_many", fights, string.Join(", ", notes.Take(3))));
+            if (cooked > 0) did.Add(P(cooked == 1 ? "aicompanion_catchup_cooked_one" : "aicompanion_catchup_cooked_many", cooked));
             if (made.Count > 0) did.Add(string.Join(", ", made));
-            if (repaired > 0) did.Add($"repaired {repaired} thing{(repaired == 1 ? "" : "s")}");
-            if (mended > 0) did.Add($"repaired {mended} damaged piece{(mended == 1 ? "" : "s")} of your base");
+            if (repaired > 0) did.Add(P(repaired == 1 ? "aicompanion_catchup_repaired_one" : "aicompanion_catchup_repaired_many", repaired));
+            if (mended > 0) did.Add(P(mended == 1 ? "aicompanion_catchup_mended_one" : "aicompanion_catchup_mended_many", mended));
             if (trip != null) did.Add(trip);
             if (did.Count == 0 && fellTo == null && fromYou == null) return;
-            string items = string.Join(", ", got.OrderByDescending(kv => kv.Value).Take(8).Select(kv => $"{kv.Value} {kv.Key}"));
-            string line = $"While you were away ({Mathf.RoundToInt(away / 60f)} min) {Companion.NameOf(me)} {(did.Count > 0 ? string.Join(", ", did) : "rested at home")}" +
-                          (items.Length > 0 ? $". Brought in: {items}" : "") + (stored < total ? " (kept the rest in their bag)" : "") +
-                          (notes.Any(n => n.Contains("full")) ? ". Their chests are full" : "") + "." +
-                          (fromYou != null ? $" Took {fromYou} from your chests to eat." : "") +
-                          (Food.Meals(me).Count == 0 && fellTo == null ? " They have nothing left to eat." : "") +
-                          (fellTo != null ? $" Then they fell to a {fellTo} and woke at home; their things are in their tombstone nearby (they will go and get them)." : "");
+            string items = string.Join(", ", got.OrderByDescending(kv => kv.Value).Take(8).Select(kv => Amount(kv, false)));
+            var parts = new List<string> { P("aicompanion_catchup_report", Mathf.RoundToInt(away / 60f), Companion.NameOf(me), did.Count > 0 ? string.Join(", ", did) : P("aicompanion_catchup_rested")) };
+            if (items.Length > 0) parts.Add(P(stored < total ? "aicompanion_catchup_brought_kept" : "aicompanion_catchup_brought", items));
+            if (full) parts.Add(P("aicompanion_catchup_chests_full"));
+            if (fromYou != null) parts.Add(P("aicompanion_catchup_took_food", fromYou));
+            if (Food.Meals(me).Count == 0 && fellTo == null) parts.Add(P("aicompanion_catchup_no_food"));
+            if (fellTo != null) parts.Add(P("aicompanion_catchup_fell", fellTo));
+            string line = string.Join(" ", parts);
             Talk.Hush = false;
             st.Remember(line);
-            Plugin.Instance?.Note(line);
+            Plugin.Instance?.Note(Words.English(line));
             Player master = Companion.Master(me);
-            if (master != null && master == Player.m_localPlayer) master.Message(MessageHud.MessageType.Center, line); // (its player not here: both were null, and equal)
+            if (master != null && master == Player.m_localPlayer) master.Message(MessageHud.MessageType.Center, Words.Show(line)); // (its player not here: both were null, and equal)
             Talk.Tell(me, line);
         }
 
@@ -478,7 +482,7 @@ namespace AICompanion
                         }
                         int n = Mathf.Max(1, kind.m_amount);
                         Add(got, item, n);
-                        string name = Localization.instance.Localize(item.GetComponent<ItemDrop>().m_itemData.m_shared.m_name).ToLowerInvariant();
+                        string name = item.GetComponent<ItemDrop>().m_itemData.m_shared.m_name;   // (its $token)
                         brought[name] = (brought.TryGetValue(name, out int had) ? had : 0) + n;
                         left -= n;
                         budget -= 20f;
@@ -489,10 +493,20 @@ namespace AICompanion
             }
             if (brought.Count == 0) return null;
             budget -= farthest * 2f / 3f; // there and back, at a walk
-            string[] names = { "north", "north-east", "east", "south-east", "south", "south-west", "west", "north-west" };
-            string dir = names[Mathf.FloorToInt(((Mathf.Atan2(farWay.x, farWay.z) * Mathf.Rad2Deg + 360f + 22.5f) % 360f) / 45f) % 8];
-            return $"went {farthest:0} m {dir} for {string.Join(", ", brought.Select(kv => $"{kv.Value} {kv.Key}"))}";
+            return P(TripKeys[Remote.Dir(farWay)], farthest.ToString("0"), string.Join(", ", brought.Select(kv => Amount(kv, true))));
         }
+
+        /// <summary>"4 wood": how many of a thing ($token), in the reader's language (lower case mid-sentence when <paramref name="low"/>).</summary>
+        private static string Amount(KeyValuePair<string, int> kv, bool low) => P("aicompanion_catchup_amount", kv.Value, low ? Words.Low(kv.Key) : kv.Key);
+
+        /// <summary>"a and b and c" (packed text).</summary>
+        private static string And(IEnumerable<string> parts) => parts.Aggregate((a, b) => P("aicompanion_home_and", a, b));
+
+        private static readonly string[] TripKeys =
+        {
+            "aicompanion_catchup_trip_n", "aicompanion_catchup_trip_ne", "aicompanion_catchup_trip_e", "aicompanion_catchup_trip_se",
+            "aicompanion_catchup_trip_s", "aicompanion_catchup_trip_sw", "aicompanion_catchup_trip_w", "aicompanion_catchup_trip_nw",
+        };
 
         private static float Hours(float seconds) => seconds / (EnvMan.instance != null ? EnvMan.instance.m_dayLengthSec / 24f : 75f); // in-game hours
 
@@ -539,7 +553,7 @@ namespace AICompanion
                 Wear(me, 0.01f);
                 if (weapon != null) Skill.Raise(me, weapon.m_shared.m_skillType, 2f);
                 budget -= 180f;
-                string name = Localization.instance.Localize(go.GetComponent<Character>()?.m_name ?? go.name).ToLowerInvariant();
+                string name = go.GetComponent<Character>()?.m_name ?? go.name;   // (its $token)
                 hunted[name] = (hunted.TryGetValue(name, out int had) ? had : 0) + 1;
             }
         }
@@ -614,7 +628,7 @@ namespace AICompanion
         private static int Free(Humanoid me) => me.GetInventory().GetEmptySlots() + Home.Chests(me).Sum(c => c.GetInventory().GetEmptySlots())
                                                 + (Work.Stows(me) ? Work.YourChests(me, Work.Center(me), Work.RadiusOf(me) + 20f).Sum(c => c.GetInventory().GetEmptySlots()) : 0);
 
-        /// <summary>Into its chests first (stacking onto what is there), then its bag. Returns how many went into chests. Translated names in the report.</summary>
+        /// <summary>Into its chests first (stacking onto what is there), then its bag. Returns how many went into chests. The items' $tokens in the report.</summary>
         private static int Store(Humanoid me, Dictionary<string, int> got)
         {
             int stored = 0;
@@ -655,7 +669,7 @@ namespace AICompanion
                     left -= added; stored += added;
                 }
                 if (left > 0) me.GetInventory().AddItem(prefab, left);
-                named[Localization.instance.Localize(drop.m_itemData.m_shared.m_name)] = kv.Value;
+                named[drop.m_itemData.m_shared.m_name] = kv.Value;   // (by $token: the report is made into words where it is read)
             }
             got.Clear();
             foreach (var kv in named) got[kv.Key] = kv.Value;

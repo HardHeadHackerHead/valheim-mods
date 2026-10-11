@@ -2,6 +2,7 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
+using static DHack.Shared.Translations;
 
 namespace QualityOfLife
 {
@@ -47,7 +48,7 @@ namespace QualityOfLife
             }
 
             _running = null;
-            Tell(player, failed.Count == 0 ? doneMessage : $"{doneMessage} (couldn't equip: {string.Join(", ", failed)})");
+            Tell(player, failed.Count == 0 ? doneMessage : T("qualityoflife_couldnt_equip", doneMessage, string.Join(", ", failed)));
         }
 
         private static int EquipOrder(ItemDrop.ItemData item)

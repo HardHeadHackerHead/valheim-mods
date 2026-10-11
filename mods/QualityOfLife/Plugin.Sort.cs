@@ -4,6 +4,7 @@ using System.Linq;
 using BepInEx.Configuration;
 using HarmonyLib;
 using UnityEngine;
+using static DHack.Shared.Translations;
 
 namespace QualityOfLife
 {
@@ -72,7 +73,7 @@ namespace QualityOfLife
 
         private void SortInventory(Player player)
         {
-            if (SlotMod() != null) { Tell(player, $"Sort is off: {SlotMod()} keeps its slots in your inventory's rows"); return; }
+            if (SlotMod() != null) { Tell(player, T("qualityoflife_sort_off", SlotMod())); return; }
             Inventory inventory = player.GetInventory();
             int rows = OrdinaryRows(inventory), width = inventory.GetWidth();
             int firstRow = _protectHotbar.Value ? 1 : 0;
@@ -80,7 +81,7 @@ namespace QualityOfLife
 
             List<ItemDrop.ItemData> items = inventory.GetAllItems()
                 .Where(i => i.m_gridPos.y >= firstRow && i.m_gridPos.y < rows).ToList();
-            if (items.Count == 0) { Tell(player, "Nothing to sort"); return; }
+            if (items.Count == 0) { Tell(player, T("qualityoflife_sort_nothing")); return; }
 
             int stacksBefore = items.Count;
             int totalBefore = inventory.GetAllItems().Sum(i => i.m_stack);
@@ -127,7 +128,7 @@ namespace QualityOfLife
             if (totalAfter != totalBefore) Logger.LogWarning($"SORT CHANGED ITEM COUNT: {totalBefore} -> {totalAfter}");
 
             int joined = stacksBefore - ordered.Count;
-            Tell(player, joined > 0 ? $"Sorted ({joined} stack{(joined == 1 ? "" : "s")} joined)" : "Sorted");
+            Tell(player, joined == 1 ? T("qualityoflife_sorted_joined_one") : joined > 0 ? T("qualityoflife_sorted_joined", joined) : T("qualityoflife_sorted"));
             Logger.LogInfo($"Sorted the inventory: {stacksBefore} stacks -> {ordered.Count}, {totalBefore} items before and {totalAfter} after");
         }
     }

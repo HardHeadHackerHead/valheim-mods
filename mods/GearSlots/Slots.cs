@@ -9,7 +9,8 @@ namespace GearSlots
     /// <summary>One extra slot. The slot is a normal cell of your real inventory, in rows below the ones you normally see.</summary>
     internal class Slot
     {
-        public string Label;
+        public string Label;  // a key ("$gearslots_slot_head"): Name is it in the player's language
+        public string Name => Localization.instance.Localize(Label);
         public Kind Kind;
         public int Col;   // column in the gear panel and in the inventory grid
         public int Row;   // 0 = first extra row, 1 = second
@@ -25,22 +26,22 @@ namespace GearSlots
 
         public static readonly Slot[] All =
         {
-            new Slot { Label = "Head",    Kind = Kind.Head,     Col = 0, Row = 0, Quick = -1, Icon = "HelmetLeather" },
-            new Slot { Label = "Chest",   Kind = Kind.Chest,    Col = 1, Row = 0, Quick = -1, Icon = "ArmorLeatherChest" },
-            new Slot { Label = "Legs",    Kind = Kind.Legs,     Col = 2, Row = 0, Quick = -1, Icon = "ArmorLeatherLegs" },
-            new Slot { Label = "Cape",    Kind = Kind.Shoulder, Col = 3, Row = 0, Quick = -1, Icon = "CapeDeerHide" },
-            new Slot { Label = "Belt",    Kind = Kind.Utility,  Col = 4, Row = 0, Quick = -1, Icon = "BeltStrength" },
-            new Slot { Label = "Trinket", Kind = Kind.Trinket,  Col = 5, Row = 0, Quick = -1 },
-            new Slot { Label = "Ammo",    Kind = Kind.Ammo,     Col = 6, Row = 0, Quick = -1, Icon = "ArrowWood" },
-            new Slot { Label = "Shield",  Kind = Kind.Shield,   Col = 7, Row = 0, Quick = -1, Icon = "ShieldWood" },
-            new Slot { Label = "Food",    Kind = Kind.Food,     Col = 0, Row = 1, Quick = -1, Icon = "CookedMeat" },
-            new Slot { Label = "Food",    Kind = Kind.Food,     Col = 1, Row = 1, Quick = -1, Icon = "CookedMeat" },
-            new Slot { Label = "Food",    Kind = Kind.Food,     Col = 2, Row = 1, Quick = -1, Icon = "CookedMeat" },
-            new Slot { Label = "Quick",   Kind = Kind.Quick,    Col = 3, Row = 1, Quick = 0 },
-            new Slot { Label = "Quick",   Kind = Kind.Quick,    Col = 4, Row = 1, Quick = 1 },
-            new Slot { Label = "Quick",   Kind = Kind.Quick,    Col = 5, Row = 1, Quick = 2 },
-            new Slot { Label = "Quick",   Kind = Kind.Quick,    Col = 6, Row = 1, Quick = 3 },
-            new Slot { Label = "Quick",   Kind = Kind.Quick,    Col = 7, Row = 1, Quick = 4 },
+            new Slot { Label = "$gearslots_slot_head",    Kind = Kind.Head,     Col = 0, Row = 0, Quick = -1, Icon = "HelmetLeather" },
+            new Slot { Label = "$gearslots_slot_chest",   Kind = Kind.Chest,    Col = 1, Row = 0, Quick = -1, Icon = "ArmorLeatherChest" },
+            new Slot { Label = "$gearslots_slot_legs",    Kind = Kind.Legs,     Col = 2, Row = 0, Quick = -1, Icon = "ArmorLeatherLegs" },
+            new Slot { Label = "$gearslots_slot_cape",    Kind = Kind.Shoulder, Col = 3, Row = 0, Quick = -1, Icon = "CapeDeerHide" },
+            new Slot { Label = "$gearslots_slot_belt",    Kind = Kind.Utility,  Col = 4, Row = 0, Quick = -1, Icon = "BeltStrength" },
+            new Slot { Label = "$gearslots_slot_trinket", Kind = Kind.Trinket,  Col = 5, Row = 0, Quick = -1 },
+            new Slot { Label = "$gearslots_slot_ammo",    Kind = Kind.Ammo,     Col = 6, Row = 0, Quick = -1, Icon = "ArrowWood" },
+            new Slot { Label = "$gearslots_slot_shield",  Kind = Kind.Shield,   Col = 7, Row = 0, Quick = -1, Icon = "ShieldWood" },
+            new Slot { Label = "$gearslots_slot_food",    Kind = Kind.Food,     Col = 0, Row = 1, Quick = -1, Icon = "CookedMeat" },
+            new Slot { Label = "$gearslots_slot_food",    Kind = Kind.Food,     Col = 1, Row = 1, Quick = -1, Icon = "CookedMeat" },
+            new Slot { Label = "$gearslots_slot_food",    Kind = Kind.Food,     Col = 2, Row = 1, Quick = -1, Icon = "CookedMeat" },
+            new Slot { Label = "$gearslots_slot_quick",   Kind = Kind.Quick,    Col = 3, Row = 1, Quick = 0 },
+            new Slot { Label = "$gearslots_slot_quick",   Kind = Kind.Quick,    Col = 4, Row = 1, Quick = 1 },
+            new Slot { Label = "$gearslots_slot_quick",   Kind = Kind.Quick,    Col = 5, Row = 1, Quick = 2 },
+            new Slot { Label = "$gearslots_slot_quick",   Kind = Kind.Quick,    Col = 6, Row = 1, Quick = 3 },
+            new Slot { Label = "$gearslots_slot_quick",   Kind = Kind.Quick,    Col = 7, Row = 1, Quick = 4 },
         };
 
         public const int QuickCount = 5;

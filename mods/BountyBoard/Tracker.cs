@@ -1,4 +1,5 @@
 using UnityEngine;
+using static DHack.Shared.Translations;
 
 namespace BountyBoard
 {
@@ -28,7 +29,7 @@ namespace BountyBoard
                         (state.Active.Count > 0 || plugin.ToClaim() > 0);
             if (!show) { Destroy(); return; }
 
-            string signature = Plugin.TrackerX.Value + "," + Plugin.TrackerY.Value + "," + Plugin.TrackerScale.Value + "|" + plugin.ToClaim();
+            string signature = Localization.instance.GetSelectedLanguage() + "," + Plugin.TrackerX.Value + "," + Plugin.TrackerY.Value + "," + Plugin.TrackerScale.Value + "|" + plugin.ToClaim();
             foreach (Bounty b in state.Active)
                 signature += "|" + b.Id + "," + b.Progress + "," + (b.Kind == Kind.Gather ? player.GetInventory().CountItems(Rules.ItemName(b.Target)) : 0);
             if (_panel != null && signature == _shown) return;
@@ -55,14 +56,14 @@ namespace BountyBoard
             _panel.name = Name;
             _panel.localScale = Vector3.one * Plugin.TrackerScale.Value;
 
-            GameUi.Label(_panel, "Group contracts", new Vector2(Pad, -Pad + 2f), new Vector2(W - Pad * 2f, 28f), 20f, GameUi.Warm, GameUi.Norse);
+            GameUi.Label(_panel, T("bountyboard_tracker_title"), new Vector2(Pad, -Pad + 2f), new Vector2(W - Pad * 2f, 28f), 20f, GameUi.Warm, GameUi.Norse);
             float y = Pad + 30f;
             foreach (Bounty b in state.Active)
             {
                 bool gather = b.Kind == Kind.Gather;
                 int have = gather ? player.GetInventory().CountItems(Rules.ItemName(b.Target)) : 0;
                 int shown = Mathf.Min(b.Count, b.Progress);
-                TMPro.TMP_Text line = GameUi.Label(_panel, Rules.Describe(b) + (gather && have > 0 ? $"  <color=#bdb7a9>(you have {have})</color>" : ""),
+                TMPro.TMP_Text line = GameUi.Label(_panel, Rules.Describe(b) + (gather && have > 0 ? "  <color=#bdb7a9>" + T("bountyboard_you_have", have) + "</color>" : ""),
                     new Vector2(Pad, -y), new Vector2(W - Pad * 2f, 24f), 16f, GameUi.Text);
                 line.enableWordWrapping = false;
                 line.overflowMode = TMPro.TextOverflowModes.Ellipsis;
@@ -71,7 +72,12 @@ namespace BountyBoard
                 y += rowH;
             }
             if (toClaim > 0)
-                GameUi.Label(_panel, toClaim + " reward" + (toClaim == 1 ? "" : "s") + " to collect at a board", new Vector2(Pad, -y), new Vector2(W - Pad * 2f, 24f), 16f, GameUi.Good);
+            {
+                string text = T(toClaim == 1 ? "bountyboard_to_collect" : "bountyboard_to_collect_many", toClaim);
+                TMPro.TMP_Text line = GameUi.Label(_panel, text, new Vector2(Pad, -y), new Vector2(W - Pad * 2f, 24f), 16f, GameUi.Good);
+                float extra = line.GetPreferredValues(text, W - Pad * 2f, 0f).y - 24f;   // (a longer language's words may take two lines)
+                if (extra > 0f) _panel.sizeDelta += new Vector2(0f, extra);
+            }
         }
     }
 }

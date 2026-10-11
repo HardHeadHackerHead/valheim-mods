@@ -1,0 +1,20 @@
+{
+  "slotmachine_piece": "Fortuna de Odín",
+  "slotmachine_piece_desc": "Una tragaperras. Echa monedas, tira de la palanca y giran tres rodillos. Tres iguales dan premio, y las ganancias salen por la bandeja.",
+  "slotmachine_pull": "Tirar de la palanca ({0} monedas)",
+  "slotmachine_change_bet": "Cambiar la apuesta",
+  "slotmachine_bet": "Apuesta: {0} monedas",
+  "slotmachine_still_turning": "Los rodillos aún están girando",
+  "slotmachine_need_coins": "Necesitas {0} monedas para jugar",
+  "slotmachine_no_luck": "Sin suerte. ¿Otra vez?",
+  "slotmachine_win": "¡Ganas {0} monedas!",
+  "slotmachine_jackpot": "¡PREMIO GORDO! {0} monedas",
+  "slotmachine_paid_owed": "La Fortuna de Odín te ha pagado las ganancias: {0} monedas",
+  "slotmachine_pays": "{0} {1} {2}x",
+  "slotmachine_coin": "Moneda",
+  "slotmachine_boar": "Jabalí",
+  "slotmachine_horn": "Cuerno",
+  "slotmachine_axe": "Hacha",
+  "slotmachine_raven": "Cuervo",
+  "slotmachine_valknut": "Valknut"
+}

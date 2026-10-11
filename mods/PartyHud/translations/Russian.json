@@ -1,0 +1,8 @@
+{
+  "partyhud_header": "ГРУППА  ·  {0}",
+  "partyhud_distance": "{0} м",
+  "partyhud_fallen": "ПАЛ",
+  "partyhud_dead": "МЁРТВ",
+  "partyhud_no_data": "нет данных",
+  "partyhud_fallen_status": "пал: вещи в могиле (череп на карте)"
+}

@@ -169,6 +169,6 @@ BuildOrders adds these commands to it, and lets the camera commands use a placed
 ## If you also work on the mods themselves
 
 Source: the `valheim-mods` repo. `mods/BuildOrders/Plugin.Blueprints.cs` (importer, piece list), `Plugin.Requests.cs` (its Claude Tools
-commands), `mods/ClaudeTools` (the mailbox, pictures, surveys), `Stability.cs` (in-game support preview). `tools/blueprints/tools/extract_pieces.py` and `extract_meshes.py` (need `pip install UnityPy`)
+commands), Claude Tools (https://github.com/HardHeadHackerHead/valheim-claude-tools: the mailbox, pictures, surveys), `Stability.cs` (in-game support preview). `tools/blueprints/tools/extract_pieces.py` and `extract_meshes.py` (need `pip install UnityPy`)
 rebuild `_pieces.json` and `_meshes` from the game's asset files without running the game. `tools/modelkit` draws previews and the
 hand-made 3D models of other mods.

@@ -2,6 +2,7 @@ using System.Collections.Generic;
 using System.Linq;
 using HarmonyLib;
 using UnityEngine;
+using static DHack.Shared.Translations;
 
 namespace FeedFromChests
 {
@@ -82,61 +83,62 @@ namespace FeedFromChests
             var plan = new LimitPlan { Kind = KindOf(info) };
             var products = info.Inputs.Select(i => ProductOf(info, i)).Where(p => p != null).Distinct().ToList();
             string product = products.Count == 1 ? Name(products[0]) : null;
-            string makes = product ?? "each thing it makes";
             string input = info.Inputs.Count == 1 ? Name(info.Inputs[0]) : null;
             string fuel = Name(info.Fuel);
             switch (plan.Kind)
             {
                 case StationKind.Kiln:
                     plan.Target = true; plan.DefaultTarget = 100;
-                    plan.TargetLabel = $"Make {makes} until the chests hold";
-                    plan.TargetHelp = $"It stops loading once your chests (and what is already in the kiln) add up to this much {makes}.";
+                    plan.TargetLabel = MakeUntil(product);
+                    plan.TargetHelp = product != null ? T("feedfromchests_kiln_target_help", product) : T("feedfromchests_kiln_target_help_each");
                     plan.Reserve = true;
-                    plan.ReserveLabel = input != null ? $"Always leave this much {input} in the chests" : "Always leave this much of each wood in the chests";
-                    plan.ReserveHelp = "Wood it will never use, for building. 0: it may use all of it (up to the target).";
+                    plan.ReserveLabel = input != null ? T("feedfromchests_leave", input) : T("feedfromchests_leave_each_wood");
+                    plan.ReserveHelp = T("feedfromchests_kiln_reserve_help");
                     break;
                 case StationKind.Smelter:
                     plan.FuelReserve = true;
-                    plan.FuelLabel = $"Always leave this much {fuel} in the chests";
-                    plan.FuelHelp = $"It smelts all the ore it is given; this only keeps some {fuel} back for other uses.";
+                    plan.FuelLabel = T("feedfromchests_leave", fuel);
+                    plan.FuelHelp = T("feedfromchests_smelter_fuel_help", fuel);
                     break;
                 case StationKind.Mill:
                     plan.Reserve = true; plan.DefaultReserve = 20;
-                    plan.ReserveLabel = $"Always leave this much {input ?? "of each crop"} in the chests";
-                    plan.ReserveHelp = "Kept back for planting, so you never grind your last seeds.";
+                    plan.ReserveLabel = input != null ? T("feedfromchests_leave", input) : T("feedfromchests_leave_each_crop");
+                    plan.ReserveHelp = T("feedfromchests_mill_reserve_help");
                     plan.Target = true;
-                    plan.TargetLabel = $"Make {makes} until the chests hold";
-                    plan.TargetHelp = "0 = no limit.";
+                    plan.TargetLabel = MakeUntil(product);
+                    plan.TargetHelp = T("feedfromchests_no_limit");
                     break;
                 case StationKind.Refinery:
                     plan.Target = true;
-                    plan.TargetLabel = $"Make {makes} until the chests hold";
-                    plan.TargetHelp = "0 = no limit.";
+                    plan.TargetLabel = MakeUntil(product);
+                    plan.TargetHelp = T("feedfromchests_no_limit");
                     plan.FuelReserve = true;
-                    plan.FuelLabel = $"Always leave this much {fuel} in the chests";
-                    plan.FuelHelp = "0 = it may use all of it.";
+                    plan.FuelLabel = T("feedfromchests_leave", fuel);
+                    plan.FuelHelp = T("feedfromchests_use_all");
                     break;
                 case StationKind.Oven:
                     plan.Target = true;
-                    plan.TargetLabel = "Bake each kind until the chests hold";
-                    plan.TargetHelp = "Counted for each kind of bread or pie on its own. 0 = no limit.";
+                    plan.TargetLabel = T("feedfromchests_oven_target");
+                    plan.TargetHelp = T("feedfromchests_oven_target_help");
                     break;
                 case StationKind.Spit:
                     plan.Target = true;
-                    plan.TargetLabel = "Cook each kind until the chests hold";
-                    plan.TargetHelp = "Counted for each cooked food on its own. 0 = cook everything.";
+                    plan.TargetLabel = T("feedfromchests_spit_target");
+                    plan.TargetHelp = T("feedfromchests_spit_target_help");
                     plan.Reserve = true;
-                    plan.ReserveLabel = "Always leave this much of each raw meat";
-                    plan.ReserveHelp = "Kept raw, for taming. 0 = cook all of it.";
+                    plan.ReserveLabel = T("feedfromchests_spit_reserve");
+                    plan.ReserveHelp = T("feedfromchests_spit_reserve_help");
                     break;
                 case StationKind.Fermenter:
                     plan.Target = true;
-                    plan.TargetLabel = "Brew each mead until the chests hold";
-                    plan.TargetHelp = "Counted for each mead on its own, so one you have plenty of is skipped. 0 = no limit.";
+                    plan.TargetLabel = T("feedfromchests_ferment_target");
+                    plan.TargetHelp = T("feedfromchests_ferment_target_help");
                     break;
             }
             return plan;
         }
+
+        private static string MakeUntil(string product) => product != null ? T("feedfromchests_make_until", product) : T("feedfromchests_make_each_until");
 
         /// <summary>How much of a product there is: in the chests within <paramref name="radius"/>, plus what is already loaded or waiting at the station.</summary>
         public static int Made(StationInfo info, ItemDrop product, float radius)
@@ -187,13 +189,14 @@ namespace FeedFromChests
             {
                 int keep = plan.FuelReserve ? setting.FuelReserve : 0;
                 bool ok = stock > keep;
-                line = $"{name} (fuel): {stock} in the chests" + (keep > 0 ? $", leaving {keep}" : "") + (ok ? "  ->  feeding" : stock == 0 ? "  ->  none in the chests" : "  ->  kept back");
+                line = (keep > 0 ? T("feedfromchests_stock_fuel_leaving", name, stock, keep) : T("feedfromchests_stock_fuel", name, stock)) +
+                       "  ->  " + (ok ? T("feedfromchests_feeding") : stock == 0 ? T("feedfromchests_none_in_chests") : T("feedfromchests_kept_back"));
                 return ok;
             }
             int reserve = plan.Reserve ? setting.Reserve : 0;
             if (stock <= reserve)
             {
-                line = $"{name}: {stock} in the chests" + (reserve > 0 ? $", leaving {reserve}" : "") + (stock == 0 ? "  ->  none in the chests" : "  ->  kept back");
+                line = Stock(name, stock, reserve) + "  ->  " + (stock == 0 ? T("feedfromchests_none_in_chests") : T("feedfromchests_kept_back"));
                 return false;
             }
             if (plan.Target && setting.Target > 0)
@@ -202,14 +205,17 @@ namespace FeedFromChests
                 int made = Made(info, product, outRadius);
                 if (made >= setting.Target)
                 {
-                    line = $"{name}: {stock} in the chests; {Name(product)}: {made} of {setting.Target}  ->  not loading (enough made)";
+                    line = T("feedfromchests_stock_made", name, stock, Name(product), made, setting.Target) + "  ->  " + T("feedfromchests_enough_made");
                     return false;
                 }
-                line = $"{name}: {stock} in the chests; {Name(product)}: {made} of {setting.Target}  ->  feeding";
+                line = T("feedfromchests_stock_made", name, stock, Name(product), made, setting.Target) + "  ->  " + T("feedfromchests_feeding");
                 return true;
             }
-            line = $"{name}: {stock} in the chests" + (reserve > 0 ? $", leaving {reserve}" : "") + "  ->  feeding";
+            line = Stock(name, stock, reserve) + "  ->  " + T("feedfromchests_feeding");
             return true;
         }
+
+        private static string Stock(string name, int stock, int reserve) =>
+            reserve > 0 ? T("feedfromchests_stock_leaving", name, stock, reserve) : T("feedfromchests_stock", name, stock);
     }
 }

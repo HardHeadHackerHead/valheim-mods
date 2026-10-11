@@ -6,6 +6,7 @@ using HarmonyLib;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
+using static DHack.Shared.Translations;
 
 namespace LedgerChest
 {
@@ -49,7 +50,7 @@ namespace LedgerChest
         private bool _dirty = true;
         private int _order;                                          // 0 by kind, 1 A to Z, 2 most first
         private string _kind = Kinds.All;                            // the category button that's down
-        private static readonly string[] OrderNames = { "By kind", "A to Z", "Most first" };
+        private static readonly string[] OrderNames = { "ledgerchest_order_kind", "ledgerchest_order_name", "ledgerchest_order_most" };   // (keys)
 
         private GameObject _panel;
         private InventoryGrid _grid;
@@ -179,7 +180,7 @@ namespace LedgerChest
         {
             var panel = (RectTransform)_panel.transform;
             float buttons = Reserve + SortW + Gap + ClearW + Gap;
-            _searchField = GameUi.TextField(panel, new Vector2(Edge, -BarTop), new Vector2(200f, BarH), "Search the chests around...", 60, 16f);
+            _searchField = GameUi.TextField(panel, new Vector2(Edge, -BarTop), new Vector2(200f, BarH), T("ledgerchest_search"), 60, 16f);
             var field = (RectTransform)_searchField.transform;
             field.anchorMax = new Vector2(1f, 1f);         // (as wide as the window, less the buttons)
             field.offsetMin = new Vector2(Edge, -BarTop - BarH);
@@ -187,15 +188,27 @@ namespace LedgerChest
             Loose(field);
             _searchField.onValueChanged.AddListener(text => _search = text ?? "");
 
-            Button clear = GameUi.Button(panel, "Clear", Vector2.zero, new Vector2(ClearW, BarH), () => { _search = ""; _searchField.text = ""; }, true, 15f);
+            Button clear = GameUi.Button(panel, T("ledgerchest_clear"), Vector2.zero, new Vector2(ClearW, BarH), () => { _search = ""; _searchField.text = ""; }, true, 15f);
+            Shrink(clear);
             Pin((RectTransform)clear.transform, new Vector2(1f, 1f), new Vector2(-(Edge + Reserve + SortW + Gap), -BarTop));
-            _sortButton = GameUi.Button(panel, OrderNames[_order], Vector2.zero, new Vector2(SortW, BarH), () =>
+            _sortButton = GameUi.Button(panel, T(OrderNames[_order]), Vector2.zero, new Vector2(SortW, BarH), () =>
             {
                 _order = (_order + 1) % OrderNames.Length;
                 _dirty = true;
-                GameUi.Label(_sortButton).text = OrderNames[_order];
+                GameUi.Label(_sortButton).text = T(OrderNames[_order]);
             }, true, 15f);
+            Shrink(_sortButton);
             Pin((RectTransform)_sortButton.transform, new Vector2(1f, 1f), new Vector2(-(Edge + Reserve), -BarTop));
+        }
+
+        /// <summary>A title-bar button's word, smaller when a language's runs long (the bar has no room to spare).</summary>
+        private static void Shrink(Button b)
+        {
+            TMP_Text label = GameUi.Label(b);
+            if (label == null) return;
+            label.enableAutoSizing = true;
+            label.fontSizeMin = 10f;
+            label.fontSizeMax = label.fontSize;
         }
 
         /// <summary>
@@ -209,7 +222,7 @@ namespace LedgerChest
             if (width < 100f) return;
             var kinds = new List<string> { Kinds.All };
             kinds.AddRange(Kinds.Order.Where(k => k == _kind || (_counts.TryGetValue(k, out int n) && n > 0)));
-            var labels = kinds.Select(k => $"{k}  {(_counts.TryGetValue(k, out int n) ? n : 0)}").ToList();
+            var labels = kinds.Select(k => $"{Kinds.Label(k)}  {(_counts.TryGetValue(k, out int n) ? n : 0)}").ToList();
             string chips = $"{width:0}|{scale:0.00}|{_kind}|{string.Join("|", labels.ToArray())}";
             if (_below == null || chips != _chipsShown)
             {
@@ -268,12 +281,13 @@ namespace LedgerChest
                 if (line != null)
                 {
                     Vector3 from = _open.transform.position;
-                    return $"{line.Name}: {line.Total} in all. " + string.Join(", ", line.Where.Take(4).Select(kv => $"{kv.Value} in a chest {Vector3.Distance(kv.Key.transform.position, from):0} m away").ToArray())
-                           + (line.Where.Count > 4 ? $" and {line.Where.Count - 4} more chests" : "");
+                    return T("ledgerchest_in_all", line.Name, line.Total) + " " +
+                           string.Join(", ", line.Where.Take(4).Select(kv => T("ledgerchest_in_chest", kv.Value, Vector3.Distance(kv.Key.transform.position, from).ToString("0"))).ToArray())
+                           + (line.Where.Count > 4 ? " " + T("ledgerchest_more_chests", line.Where.Count - 4) : "");
                 }
             }
             if (Time.unscaledTime < _noteUntil) return _note;
-            return $"{_chests.Count} chests within {Plugin.Radius.Value:0} m   <color=#bdb7a9>·   Click: pick it all up   ·   Shift-click: how many   ·   Ctrl-click: all into your bag   ·   Right-click: a stack   ·   Drop things here to put them away</color>";
+            return T("ledgerchest_chests_within", _chests.Count, Plugin.Radius.Value.ToString("0")) + "   <color=#bdb7a9>·   " + T("ledgerchest_help") + "</color>";
         }
 
         /// <summary>The copy's counterpart of something inside the game's chest window (found by its path in the window).</summary>
@@ -389,9 +403,9 @@ namespace LedgerChest
                     var sent = new List<string>();
                     int want = Mathf.Clamp(DragAmount(gui), 1, dragged.m_stack);
                     int moved = Stores.Route(_open, p, dragged, from, want, sent);
-                    Note(moved > 0 ? "Sent " + string.Join(", ", sent.Take(3).ToArray()) + (moved < want ? $". No room for the other {want - moved}." : ".")
-                                   : "No chest around here has room for it.");
-                    if (moved < want) p.Message(MessageHud.MessageType.Center, "No chest has room for " + Localization.instance.Localize(dragged.m_shared.m_name));
+                    Note(moved > 0 ? T("ledgerchest_sent", string.Join(", ", sent.Take(3).ToArray())) + (moved < want ? " " + T("ledgerchest_no_room_other", want - moved) : "")
+                                   : T("ledgerchest_no_chest_here"));
+                    if (moved < want) p.Message(MessageHud.MessageType.Center, T("ledgerchest_no_chest_room", Localization.instance.Localize(dragged.m_shared.m_name)));
                 }
                 SetupDrag.Invoke(gui, new object[] { null, null, 1 });
                 _nextScan = 0f;
@@ -427,7 +441,7 @@ namespace LedgerChest
             Line line = _carry == null ? null : _lines.FirstOrDefault(l => l.Key == _carry.Key) ?? _carry;
             Drop();
             if (line == null || p == null || amount <= 0) return;
-            if (grid == null || grid.GetInventory() != p.GetInventory()) { Note("Take it into your own inventory: from there you can put it anywhere."); return; }
+            if (grid == null || grid.GetInventory() != p.GetInventory()) { Note(T("ledgerchest_take_to_own")); return; }
             Take(line, amount, pos);
         }
 
@@ -445,9 +459,10 @@ namespace LedgerChest
             Player p = Player.m_localPlayer;
             Inventory yours = p.GetInventory();
             int moved = Stores.Take(line, want, yours, at, out int fromChests, out bool busy, out _);
-            Note(moved > 0 ? $"Took {moved} {line.Name}{(fromChests > 1 ? $" from {fromChests} chests" : "")}." + (moved < want ? busy ? " (Some is in a chest someone has open.)" : $" No room for the other {want - moved}." : "")
-                           : busy ? "That is in a chest someone has open." : "No room in your inventory.");
-            if (moved < want && !busy) p.Message(MessageHud.MessageType.Center, moved > 0 ? $"Room for only {moved}" : "No room in your inventory");
+            Note(moved > 0 ? (fromChests > 1 ? T("ledgerchest_took_from", moved, line.Name, fromChests) : T("ledgerchest_took", moved, line.Name)) +
+                             (moved < want ? " " + (busy ? T("ledgerchest_some_busy") : T("ledgerchest_no_room_other", want - moved)) : "")
+                           : busy ? T("ledgerchest_busy") : T("ledgerchest_no_room"));
+            if (moved < want && !busy) p.Message(MessageHud.MessageType.Center, moved > 0 ? T("ledgerchest_room_only", moved) : T("ledgerchest_no_room_msg"));
             _nextScan = 0f;
         }
 
@@ -457,11 +472,12 @@ namespace LedgerChest
             var kept = new List<string>();
             List<string> sent = Stores.SendOut(_open, Player.m_localPlayer, refused, kept);
             if (sent.Count == 0 && refused.Count == 0 && kept.Count == 0) return;
-            Note((sent.Count > 0 ? "Sent " + string.Join(", ", sent.Take(3).ToArray()) + (sent.Count > 3 ? $" and {sent.Count - 3} more" : "") + ". " : "")
-                 + (refused.Count > 0 ? "No chest has room for " + string.Join(", ", refused.Take(3).ToArray()) + ": back to you. " : "")
-                 + (kept.Count > 0 ? "No room anywhere for " + string.Join(", ", kept.Take(3).ToArray()) + ": it stays in the Ledger Chest." : ""));
-            if (kept.Count > 0) Player.m_localPlayer.Message(MessageHud.MessageType.Center, "No room anywhere: " + string.Join(", ", kept.Take(2).ToArray()) + " stays in the Ledger Chest");
-            else if (refused.Count > 0) Player.m_localPlayer.Message(MessageHud.MessageType.Center, "No chest has room for " + string.Join(", ", refused.Take(2).ToArray()));
+            string sentList = string.Join(", ", sent.Take(3).ToArray());
+            Note(((sent.Count > 3 ? T("ledgerchest_sent_more", sentList, sent.Count - 3) + " " : sent.Count > 0 ? T("ledgerchest_sent", sentList) + " " : "")
+                 + (refused.Count > 0 ? T("ledgerchest_back_to_you", string.Join(", ", refused.Take(3).ToArray())) + " " : "")
+                 + (kept.Count > 0 ? T("ledgerchest_stays", string.Join(", ", kept.Take(3).ToArray())) : "")).TrimEnd());
+            if (kept.Count > 0) Player.m_localPlayer.Message(MessageHud.MessageType.Center, T("ledgerchest_stays_msg", string.Join(", ", kept.Take(2).ToArray())));
+            else if (refused.Count > 0) Player.m_localPlayer.Message(MessageHud.MessageType.Center, T("ledgerchest_no_chest_room", string.Join(", ", refused.Take(2).ToArray())));
             _nextScan = 0f;
         }
 

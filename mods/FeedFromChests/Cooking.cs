@@ -2,6 +2,7 @@ using System.Collections.Generic;
 using System.Linq;
 using HarmonyLib;
 using UnityEngine;
+using static DHack.Shared.Translations;
 
 namespace FeedFromChests
 {
@@ -165,14 +166,14 @@ namespace FeedFromChests
             for (int i = 0; i < s.m_slots.Length; i++)
             {
                 Slot(s, i, out string item, out float cooked, out int status);
-                if (item.Length == 0) { lines.Add($"Slot {i + 1}: empty"); continue; }
+                if (item.Length == 0) { lines.Add(T("feedfromchests_slot_empty", i + 1)); continue; }
                 string name = AutoFeed.NameOf(item);
-                if (status == 2) { lines.Add($"Slot {i + 1}: {name} (burnt)"); continue; }
-                if (IsItemDoneM != null && (bool)IsItemDoneM.Invoke(s, new object[] { item })) { lines.Add($"Slot {i + 1}: {name}, ready"); continue; }
+                if (status == 2) { lines.Add(T("feedfromchests_slot_burnt", i + 1, name)); continue; }
+                if (IsItemDoneM != null && (bool)IsItemDoneM.Invoke(s, new object[] { item })) { lines.Add(T("feedfromchests_slot_ready", i + 1, name)); continue; }
                 float time = CookTime(s, item);
-                lines.Add(time > 0f ? $"Slot {i + 1}: {name}, cooking {Mathf.Clamp01(cooked / time) * 100f:0}%" : $"Slot {i + 1}: {name}");
+                lines.Add(time > 0f ? T("feedfromchests_slot_cooking", i + 1, name, (Mathf.Clamp01(cooked / time) * 100f).ToString("0")) : T("feedfromchests_slot", i + 1, name));
             }
-            if (s.m_useFuel) lines.Add($"Fuel {Mathf.Floor(Fuel(s)):0}/{s.m_maxFuel}");
+            if (s.m_useFuel) lines.Add(T("feedfromchests_fuel_level", Mathf.Floor(Fuel(s)).ToString("0"), s.m_maxFuel));
             return lines;
         }
 
@@ -188,8 +189,9 @@ namespace FeedFromChests
                 _hoverAt = Time.unscaledTime;
                 AutoSetting setting = AutoFeed.Read(s);
                 _hoverText = Localization.instance.Localize(
-                    $"\n<size=14>[<color=yellow><b>$KEY_Use</b></color>] menu (auto-feed {(setting.On ? "<color=#8fe388>ON</color>" : "off")}), " +
-                    $"[<color=yellow><b>$KEY_AltPlace + $KEY_Use</b></color>] put food on by hand. Done food comes off by itself: {(setting.TakeOff ? "<color=#8fe388>ON</color>" : "off")}</size>");
+                    "\n<size=14>[<color=yellow><b>$KEY_Use</b></color>] " + T("feedfromchests_cook_hover_menu", AutoFeed.OnOff(setting.On)) + ", " +
+                    "[<color=yellow><b>$KEY_AltPlace + $KEY_Use</b></color>] " + T("feedfromchests_cook_hover_hand") + " " +
+                    T("feedfromchests_cook_hover_takeoff", AutoFeed.OnOff(setting.TakeOff)) + "</size>");
             }
             return _hoverText;
         }

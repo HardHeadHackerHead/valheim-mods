@@ -1,5 +1,6 @@
 using System.Linq;
 using UnityEngine;
+using static AICompanion.Words;
 
 namespace AICompanion
 {
@@ -11,30 +12,31 @@ namespace AICompanion
     /// </summary>
     internal static class Errands
     {
+        // Label: packed text (Words.P), made into words where the menu shows it. Help: notes for us, not shown.
         public static readonly (Errand What, string Label, string Help)[] All =
         {
-            (Errand.PutAway, "Put things away", "What it carries but does not keep goes into the chests: yours by your chest rules (QualityOfLife), its stock into its own."),
-            (Errand.Restock, "Restock food", "Fills its three food slots from its chests, else yours."),
-            (Errand.BetterGear, "Check for better gear", "Looks through your chests for a better weapon, armour, shield, bow, arrows or tool, wears it and puts its old one back."),
-            (Errand.RepairGear, "Repair its gear", "Takes its worn gear to the workbench or forge that can fix it."),
-            (Errand.RepairBase, "Repair the base", "Fixes damaged walls, floors and the rest with its hammer (makes one if it has none)."),
-            (Errand.Fires, "Feed the fires", "Tops up the fires that are running low with wood."),
-            (Errand.Cook, "Cook", "Puts the raw food it carries on a cooking station near home."),
+            (Errand.PutAway, P("aicompanion_errands_put_away"), "What it carries but does not keep goes into the chests: yours by your chest rules (QualityOfLife), its stock into its own."),
+            (Errand.Restock, P("aicompanion_errands_restock"), "Fills its three food slots from its chests, else yours."),
+            (Errand.BetterGear, P("aicompanion_errands_better_gear"), "Looks through your chests for a better weapon, armour, shield, bow, arrows or tool, wears it and puts its old one back."),
+            (Errand.RepairGear, P("aicompanion_errands_repair_gear"), "Takes its worn gear to the workbench or forge that can fix it."),
+            (Errand.RepairBase, P("aicompanion_errands_repair_base"), "Fixes damaged walls, floors and the rest with its hammer (makes one if it has none)."),
+            (Errand.Fires, P("aicompanion_errands_fires"), "Tops up the fires that are running low with wood."),
+            (Errand.Cook, P("aicompanion_errands_cook"), "Puts the raw food it carries on a cooking station near home."),
         };
 
-        /// <summary>Send it. What happened, for the menu: what it is off to do, or why it cannot.</summary>
+        /// <summary>Send it. What happened, for the menu (packed text): what it is off to do, or why it cannot.</summary>
         public static string Run(BrainState st, Errand what)
         {
             Humanoid me = st?.Body;
-            if (me == null) return "It is not here.";
-            if (!Work.HasHome(me)) return "It has no home yet: give it a bed (Home tab) or set its home.";
+            if (me == null) return P("aicompanion_errands_not_here");
+            if (!Work.HasHome(me)) return P("aicompanion_errands_no_home");
             Vector3 center = Work.Center(me);
             float radius = Work.RadiusOf(me);
-            if (Vector3.Distance(center, me.transform.position) > radius + 40f) return "It is too far from home for that.";
+            if (Vector3.Distance(center, me.transform.position) > radius + 40f) return P("aicompanion_errands_too_far");
             string said = Do(st, what, center, radius, out bool going);
             if (said != null) Talk.Say(me, said);
             Activity.Log(me, $"errand ({what}): {said ?? "on its way"}");
-            return going ? $"{Companion.NameOf(me)}: {said ?? "on my way."}" : said;
+            return going ? $"{Companion.NameOf(me)}: {said ?? P("aicompanion_errands_on_my_way")}" : said;
         }
 
         private static bool Reach(Humanoid me, Component c) => c != null && Brain.CanReach(me, c.transform.position);
@@ -56,11 +58,11 @@ namespace AICompanion
             if (me.GetInventory().GetAllItems().Where(Food.IsFood).Sum(i => i.m_stack) >= 12) return null;
             Container mine = Home.Chests(me).Where(c => !Containers.InUse(c) && c.GetInventory().GetAllItems().Any(i => Gear.WantsFood(me, i)))
                                  .OrderBy(c => Vector3.Distance(c.transform.position, me.transform.position)).FirstOrDefault(c => Reach(me, c));
-            if (mine != null && Go(st, Work.Kind.Store, mine)) { Talk.Say(me, "I'll grab some food for the road."); return "food from its chest"; }
+            if (mine != null && Go(st, Work.Kind.Store, mine)) { Talk.Say(me, P("aicompanion_errands_food_for_road")); return "food from its chest"; }
             if (Work.UsesPantry(me) && Work.RationLeft(me) > 0)
             {
                 Container yours = Work.YourFood(me, center, radius + 20f);
-                if (yours != null && Go(st, Work.Kind.Fetch, yours)) { Talk.Say(me, "I'll grab some food for the road."); return "food from your chest"; }
+                if (yours != null && Go(st, Work.Kind.Fetch, yours)) { Talk.Say(me, P("aicompanion_errands_food_for_road")); return "food from your chest"; }
             }
             return null;
         }
@@ -75,55 +77,55 @@ namespace AICompanion
                 {
                     int sorted = Work.SortHome(st); // (QualityOfLife: into your chests by your rules, at once)
                     bool rest = me.GetInventory().GetAllItems().Any(i => !Work.Keeps(me, i));
-                    if (!rest) return sorted > 0 ? $"Put {sorted} things away in your chests." : "I've nothing to put away.";
+                    if (!rest) return sorted > 0 ? P("aicompanion_errands_put_away_sorted", sorted) : P("aicompanion_errands_nothing_to_put_away");
                     Container chest = Home.Chests(me).Where(c => !Containers.InUse(c) && c.GetInventory().HaveEmptySlot()).OrderBy(c => Vector3.Distance(c.transform.position, me.transform.position)).FirstOrDefault(c => Reach(me, c))
                                       ?? (Work.Stows(me) ? Work.YourChests(me, center, radius + 20f).Where(c => c.GetInventory().HaveEmptySlot()).Take(6).FirstOrDefault(c => Reach(me, c)) : null);
-                    if (chest == null) return "There's no chest with room I can get to.";
+                    if (chest == null) return P("aicompanion_errands_no_chest_room");
                     going = Go(st, Work.Kind.Store, chest);
-                    return going ? "Putting my things away." : "Someone has my things open.";
+                    return going ? P("aicompanion_errands_putting_away") : P("aicompanion_errands_things_open");
                 }
                 case Errand.Restock:
                 {
-                    if (!Gear.FoodLow(me)) return "My food slots are full.";
+                    if (!Gear.FoodLow(me)) return P("aicompanion_errands_food_full");
                     Container mine = Home.Chests(me).Where(c => !Containers.InUse(c) && c.GetInventory().GetAllItems().Any(i => Gear.WantsFood(me, i)))
                                          .OrderBy(c => Vector3.Distance(c.transform.position, me.transform.position)).FirstOrDefault(c => Reach(me, c));
-                    if (mine != null) { going = Go(st, Work.Kind.Store, mine); return "Getting food from my chest."; }
+                    if (mine != null) { going = Go(st, Work.Kind.Store, mine); return P("aicompanion_errands_food_from_mine"); }
                     Container yours = Work.YourFood(me, center, radius + 20f); // (you sent it: from your chests even with that setting off)
-                    if (yours != null) { going = Go(st, Work.Kind.Fetch, yours); return "Getting some food from your chest."; }
-                    return "There's no food in any chest I can get to.";
+                    if (yours != null) { going = Go(st, Work.Kind.Fetch, yours); return P("aicompanion_errands_food_from_yours"); }
+                    return P("aicompanion_errands_no_food");
                 }
                 case Errand.BetterGear:
                 {
                     Container chest = Armory.Find(me, center, radius + 20f, force: true);
-                    if (chest == null) return "Nothing in your chests beats what I have.";
+                    if (chest == null) return P("aicompanion_errands_nothing_better");
                     going = Go(st, Work.Kind.Armory, chest);
-                    return "Going to look at the gear in your chest.";
+                    return P("aicompanion_errands_looking_gear");
                 }
                 case Errand.RepairGear:
                     return Repair.Order(st, out going);
                 case Errand.RepairBase:
                 {
                     WearNTear damaged = Mending.Damaged(me, center, radius, c => Brain.CanReach(me, c.transform.position, 4f));
-                    if (damaged == null) return "Nothing in the base needs fixing.";
+                    if (damaged == null) return P("aicompanion_errands_nothing_to_fix");
                     if (Mending.Hammer(me) == null) Mending.MakeHammer(st);
-                    if (Mending.Hammer(me) == null) return "I need a hammer for that.";
+                    if (Mending.Hammer(me) == null) return P("aicompanion_errands_need_hammer");
                     going = Go(st, Work.Kind.Mend, damaged);
-                    return "Going round the base with my hammer.";
+                    return P("aicompanion_errands_mending");
                 }
                 case Errand.Fires:
                 {
                     Fireplace fire = Fires.Low(me, center, radius);
-                    if (fire == null) return "The fires are all well fed.";
+                    if (fire == null) return P("aicompanion_errands_fires_fed");
                     going = Go(st, Work.Kind.Fuel, fire);
-                    return "Putting wood on the fire.";
+                    return P("aicompanion_errands_fueling");
                 }
                 case Errand.Cook:
                 {
-                    if (!me.GetInventory().GetAllItems().Any(Work.IsCookable)) return "I've nothing raw to cook.";
+                    if (!me.GetInventory().GetAllItems().Any(Work.IsCookable)) return P("aicompanion_errands_nothing_raw");
                     CookingStation stove = Kitchen.Find(me, center, radius + 20f);
-                    if (stove == null) return "There's no cooking station by a fire I can use.";
+                    if (stove == null) return P("aicompanion_errands_no_stove");
                     going = Go(st, Work.Kind.Cook, stove, Job.Cook);
-                    return "Off to cook.";
+                    return P("aicompanion_errands_off_to_cook");
                 }
             }
             return null;

@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using HarmonyLib;
 using UnityEngine;
+using static DHack.Shared.Translations;
 
 namespace QualityOfLife
 {
@@ -78,7 +79,7 @@ namespace QualityOfLife
                     def.Rebind("");
                     done.Add(mark);
                     changed = true;
-                    told.Add($"{owner}: {kv.Key} is used for {kv.Value}, so the game's \"{Nice(def.Name)}\" key was unbound (bind it to another key in Settings, Controls)");
+                    told.Add(T("qualityoflife_key_unbound", owner, kv.Key, kv.Value, Nice(def.Name), Game("$menu_settings"), Game("$settings_controls")));
                 }
             }
             if (changed)
@@ -116,7 +117,7 @@ namespace QualityOfLife
                 changed = true;
                 if (!buttons.TryGetValue(action, out ZInput.ButtonDef def) || def == null || !string.IsNullOrEmpty(def.GetActionPath())) continue; // bound to something since: the player's choice
                 def.Rebind(path);
-                told.Add($"{owner}: the game's \"{Nice(action)}\" key is back on {path.Substring(path.IndexOf('/') + 1).ToUpperInvariant()} (the mod no longer uses that key)");
+                told.Add(T("qualityoflife_key_back", owner, Nice(action), path.Substring(path.IndexOf('/') + 1).ToUpperInvariant()));
             }
             if (changed)
             {
@@ -128,19 +129,22 @@ namespace QualityOfLife
             return told;
         }
 
+        /// <summary>A game action's name as the game's own Settings, Controls shows it, in the player's language.</summary>
         private static string Nice(string name)
         {
             switch (name)
             {
-                case "AutoPickup": return "Auto pickup";
-                case "ToggleWalk": return "Walk";
-                case "AutoRun": return "Auto run";
-                case "OpenRadial": return "Radial menu";
-                case "TabLeft": return "Previous tab";
-                case "OpenEmote": return "Emotes";
-                case "GP": return "Forsaken power";
+                case "AutoPickup": return Game("$settings_autopickup");
+                case "ToggleWalk": return Game("$settings_walk");
+                case "AutoRun": return Game("$settings_autorun");
+                case "OpenRadial": return Game("$settings_radial");
+                case "TabLeft": return T("qualityoflife_key_previous_tab");
+                case "OpenEmote": return Game("$radial_emotes");
+                case "GP": return Game("$settings_gp");
                 default: return name;
             }
         }
+
+        private static string Game(string key) => Localization.instance != null ? Localization.instance.Localize(key) : key;
     }
 }

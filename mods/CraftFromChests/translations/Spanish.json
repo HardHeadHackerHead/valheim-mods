@@ -1,0 +1,11 @@
+{
+  "craftfromchests_chat_loaded": "{0} v{1} cargado | {2}, radio {3} m | compilado {4}",
+  "craftfromchests_chat_reloaded": "{0} v{1} recargado | {2}, radio {3} m | compilado {4}",
+  "craftfromchests_loaded": "{0} cargado",
+  "craftfromchests_reloaded": "{0} recargado",
+  "craftfromchests_short": "Ya no hay suficiente {0} en los cofres",
+  "craftfromchests_have": "Tienes {0}  (inventario {1}, cofres {2})",
+  "craftfromchests_lines": "Líneas a cofres: {0}",
+  "craftfromchests_range": "Alcance: {0} m",
+  "craftfromchests_server_range": "Aquí el alcance lo decide el servidor"
+}

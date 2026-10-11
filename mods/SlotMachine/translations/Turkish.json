@@ -1,0 +1,20 @@
+{
+  "slotmachine_piece": "Odin'in Talihi",
+  "slotmachine_piece_desc": "Bir kumar makinesi. Sikke at, kolu çek ve üç makara dönsün. Üç aynı simge kazandırır ve kazanç tepsiden dökülür.",
+  "slotmachine_pull": "Kolu çek ({0} sikke)",
+  "slotmachine_change_bet": "Bahsi değiştir",
+  "slotmachine_bet": "Bahis: {0} sikke",
+  "slotmachine_still_turning": "Makaralar hâlâ dönüyor",
+  "slotmachine_need_coins": "Oynamak için {0} sikke gerekiyor",
+  "slotmachine_no_luck": "Şans yok. Bir daha?",
+  "slotmachine_win": "{0} sikke kazandın!",
+  "slotmachine_jackpot": "BÜYÜK İKRAMİYE! {0} sikke",
+  "slotmachine_paid_owed": "Odin'in Talihi kazancını ödedi: {0} sikke",
+  "slotmachine_pays": "{0} {1} {2}x",
+  "slotmachine_coin": "Sikke",
+  "slotmachine_boar": "Yaban Domuzu",
+  "slotmachine_horn": "Boynuz",
+  "slotmachine_axe": "Balta",
+  "slotmachine_raven": "Kuzgun",
+  "slotmachine_valknut": "Valknut"
+}

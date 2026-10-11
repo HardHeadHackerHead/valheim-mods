@@ -44,9 +44,9 @@ namespace AICompanion
 
         public static string StyleName(int hash, List<ItemDrop> styles)
         {
-            if (hash == 0) return "none";
+            if (hash == 0) return Localization.instance.Localize("$menu_none");   // (the game's own word)
             int i = styles.FindIndex(s => s.name.GetStableHashCode() == hash);
-            return i < 0 ? "?" : $"{i + 1} of {styles.Count}";
+            return i < 0 ? "?" : DHack.Shared.Translations.T("aicompanion_looks_style_of", i + 1, styles.Count);
         }
 
         // ---- changing (on the game that owns it: callers go through Companion.Write) ---------------------------

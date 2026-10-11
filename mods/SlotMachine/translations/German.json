@@ -1,0 +1,20 @@
+{
+  "slotmachine_piece": "Odins Glück",
+  "slotmachine_piece_desc": "Ein Spielautomat. Wirf Münzen ein, zieh den Hebel, und drei Walzen drehen sich. Drei Gleiche zahlen aus, und der Gewinn fällt in die Schale.",
+  "slotmachine_pull": "Hebel ziehen ({0} Münzen)",
+  "slotmachine_change_bet": "Einsatz ändern",
+  "slotmachine_bet": "Einsatz: {0} Münzen",
+  "slotmachine_still_turning": "Die Walzen drehen sich noch",
+  "slotmachine_need_coins": "Du brauchst {0} Münzen zum Spielen",
+  "slotmachine_no_luck": "Kein Glück. Noch einmal?",
+  "slotmachine_win": "Du gewinnst {0} Münzen!",
+  "slotmachine_jackpot": "JACKPOT! {0} Münzen",
+  "slotmachine_paid_owed": "Odins Glück hat deinen Gewinn ausgezahlt: {0} Münzen",
+  "slotmachine_pays": "{0}× {1} {2}-fach",
+  "slotmachine_coin": "Münze",
+  "slotmachine_boar": "Wildschwein",
+  "slotmachine_horn": "Horn",
+  "slotmachine_axe": "Axt",
+  "slotmachine_raven": "Rabe",
+  "slotmachine_valknut": "Valknut"
+}

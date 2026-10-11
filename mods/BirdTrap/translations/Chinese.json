@@ -1,0 +1,19 @@
+{
+  "birdtrap_piece": "捕鸟笼",
+  "birdtrap_piece_desc": "一个板条箱，活门由一根支棍撑着。用浆果或种子作诱饵，把它放在露天处：过一阵子会有鸟跳进去，活门落下，你就可以拔它的羽毛。",
+  "birdtrap_full": "诱饵已经放满了",
+  "birdtrap_need_bait": "你需要浆果或种子作诱饵",
+  "birdtrap_baited": "放入了诱饵：{0}（{1}/{2}）",
+  "birdtrap_gone": "鸟已经不在了",
+  "birdtrap_caught": "抓到了一只海鸥！",
+  "birdtrap_hover_pluck": "拔下羽毛后放飞",
+  "birdtrap_no_bait": "没有诱饵：鸟不会来空笼子",
+  "birdtrap_roof": "鸟不会飞到屋顶下",
+  "birdtrap_night": "鸟儿夜里在栖息：早上会来一只",
+  "birdtrap_soon": "已设好。大约 {0} 分钟后会来一只鸟",
+  "birdtrap_any_moment": "已设好。随时会来一只鸟",
+  "birdtrap_bait_state": "诱饵：{0}/{1}  ·  {2}",
+  "birdtrap_hover_add": "放入诱饵（浆果或种子）",
+  "birdtrap_hover_fill": "放满诱饵",
+  "birdtrap_plucked": "你拔下海鸥的羽毛后放飞了它：{0} 根羽毛"
+}

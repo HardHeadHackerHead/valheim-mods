@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using HarmonyLib;
 using UnityEngine;
+using static DHack.Shared.Translations;
 
 namespace QualityOfLife
 {
@@ -25,12 +26,12 @@ namespace QualityOfLife
             List<Container> chests = _stackChests.Where(c => c != null && c.GetInventory() != null && !ContainerRegistry.Busy(c)
                                                            && c.GetComponentInParent<Vagon>() == null && c.GetComponentInParent<Ship>() == null
                                                            && c.GetComponent<TombStone>() == null).ToList();
-            if (chests.Count == 0) { Tell(player, _stackChests.Count > 0 ? "The chests in range are in use. Try again in a moment." : "No chest in range."); return; }
+            if (chests.Count == 0) { Tell(player, _stackChests.Count > 0 ? T("qualityoflife_chests_in_use") : T("qualityoflife_no_chest")); return; }
 
             // Own them all and load their latest contents first: taking a chest over reloads it, which would swap the items under us mid-move.
             foreach (Container c in chests) { ContainerRegistry.TakeOwnership(c); ContainerRegistry.Reload(c); }
             var rules = chests.ToDictionary(c => c, c => ChestRules.Read(c));
-            if (rules.Values.All(r => r.IsEmpty)) { Tell(player, $"No chest in range is assigned anything yet (look at one and press {_assignKey.Value})."); return; }
+            if (rules.Values.All(r => r.IsEmpty)) { Tell(player, T("qualityoflife_none_assigned", _assignKey.Value)); return; }
 
             int Total(string itemName) => chests.Sum(c => c.GetInventory().CountItems(itemName));
             var totalsBefore = new Dictionary<string, int>();
@@ -115,10 +116,10 @@ namespace QualityOfLife
                 Logger.LogError($"SORT CHESTS CHANGED AN ITEM COUNT: {Localization.instance.Localize(kv.Key)} had {kv.Value} in the chests before and {now} after");
             }
 
-            string summary = moved > 0 ? $"Sorted {moved} item(s) into their chests ({touched.Count} chests)" : "Everything is already in its chest.";
-            if (full.Count > 0) summary += $"   No room for: {string.Join(", ", full.OrderBy(x => x).Take(4).ToArray())}{(full.Count > 4 ? "..." : "")}";
-            if (homeless.Count > 0) summary += $"   Not assigned anywhere: {homeless.Count} kind(s), left as they were";
-            if (missing > 0) summary += "   WARNING: an item count changed, see the log";
+            string summary = moved > 0 ? T("qualityoflife_sorted_chests", moved, touched.Count) : T("qualityoflife_sorted_chests_none");
+            if (full.Count > 0) summary += "   " + T("qualityoflife_no_room_for", string.Join(", ", full.OrderBy(x => x).Take(4).ToArray()) + (full.Count > 4 ? "..." : ""));
+            if (homeless.Count > 0) summary += "   " + T("qualityoflife_not_assigned", homeless.Count);
+            if (missing > 0) summary += "   " + T("qualityoflife_count_changed");
             Tell(player, summary);
 
             if (moved > 0) PlayChestSounds(touched, opening: false);

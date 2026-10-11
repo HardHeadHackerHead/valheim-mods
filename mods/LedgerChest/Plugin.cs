@@ -24,7 +24,7 @@ namespace LedgerChest
         public const string Guid = "com.quad.ledgerchest";
         public const string OldGuid = "com.dhack.ledgerchest"; // (its id until 2026-10: settings move over by themselves, see Shared/Migration.cs)
         public const string Name = "LedgerChest";
-        public const string Version = "1.1.0";
+        public const string Version = "1.2.0";
         public const string PiecePrefab = "piece_ledgerchest";
 
         internal static Plugin Instance;
@@ -37,6 +37,7 @@ namespace LedgerChest
         private void Awake()
         {
             DHack.Shared.Migration.FromOldGuid(this, OldGuid); // first: before any setting is read
+            DHack.Shared.Translations.Load(this);   // translations/*.json: its words in the player's language
             Instance = this;
             Radius = Config.Bind("Ledger", "Radius", 30f, new ConfigDescription("How far from the Ledger Chest (metres) the chests it lists can be.", new AcceptableValueRange<float>(5f, 60f)));
             Scale = Config.Bind("Ledger", "Scale", 1f, new ConfigDescription("Size of the category buttons and notes under the ledger.", new AcceptableValueRange<float>(0.6f, 2f)));
@@ -52,6 +53,7 @@ namespace LedgerChest
             Ledger.Close();
             Ledger.Destroy();
             GameUi.Destroy();
+            DHack.Shared.Translations.Unload();
             if (Instance == this) Instance = null;
             _harmony?.UnpatchSelf();
             Unregister();
@@ -150,7 +152,7 @@ namespace LedgerChest
 
             // It stays a chest (the game's own: opening, saving, multiplayer), a bigger one, with its own name.
             Container chest = go.GetComponent<Container>();
-            chest.m_name = "Ledger Chest";
+            chest.m_name = "$ledgerchest_piece";
             chest.m_width = 6;
             chest.m_height = 3;
 
@@ -177,8 +179,8 @@ namespace LedgerChest
             }
 
             Piece piece = go.GetComponent<Piece>();
-            piece.m_name = "Ledger Chest";
-            piece.m_description = "An iron-bound strongbox with the storehouse ledger on its lid. Open it to see everything in every chest around it, search it, and take what you need from whichever chest holds it.";
+            piece.m_name = "$ledgerchest_piece";
+            piece.m_description = "$ledgerchest_piece_desc";
             piece.m_category = Piece.PieceCategory.Furniture;
             piece.m_craftingStation = workbench;
             piece.m_resources = new[] { Req("Wood", 10), Req("FineWood", 4), Req("LeatherScraps", 4), Req("Resin", 2) };

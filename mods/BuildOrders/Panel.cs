@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using TMPro;
 using UnityEngine;
+using static DHack.Shared.Translations;
 
 namespace BuildOrders
 {
@@ -84,7 +85,7 @@ namespace BuildOrders
                 if (!PlansWindowOpen && !BridgeOptionsOpen && !InventoryGui.IsVisible() && (placing || _alwaysShowPanel.Value || Aimed != null))
                 {
                     if (PlanKeyHeld && placing)
-                        top = ShowBanner(wanted, "plan", top, new[] { new Line("Plan mode: clicking places a build order, not the piece" + (_planToggle.Value ? $"   ({_planKey.Value} to leave)" : ""), 18f, GameUi.Warm) });
+                        top = ShowBanner(wanted, "plan", top, new[] { new Line(T("buildorders_banner_plan") + (_planToggle.Value ? "   " + T("buildorders_banner_plan_leave", _planKey.Value) : ""), 18f, GameUi.Warm) });
                     if (_orders.Count > 0 && (placing || _alwaysShowPanel.Value)) { RefreshNeeds(); ShowNeeds(wanted, player); }
                     if (Aimed != null)
                     {
@@ -172,8 +173,8 @@ namespace BuildOrders
                 const float w = 280f, pad = 12f, row = 26f;
                 float h = pad + 30f + shown * row + (_needs.Count > shown ? 22f : 0f) + 22f + pad;
                 RectTransform box = GameUi.Box(hud, new Vector2(_panelX.Value, -_panelY.Value), new Vector2(w, h));
-                GameUi.Line(box, "Build orders", new Vector2(pad, -pad + 2f), 160f, 20f, GameUi.Warm, GameUi.Norse);
-                GameUi.Line(box, $"{_orders.Count} piece{(_orders.Count == 1 ? "" : "s")}", new Vector2(-pad, -pad + 2f), 110f, 15f, GameUi.Dim, null, TextAlignmentOptions.TopRight, new Vector2(1f, 1f));
+                GameUi.Line(box, T("buildorders_needs_title"), new Vector2(pad, -pad + 2f), 160f, 20f, GameUi.Warm, GameUi.Norse);
+                GameUi.Line(box, Pieces(_orders.Count), new Vector2(-pad, -pad + 2f), 110f, 15f, GameUi.Dim, null, TextAlignmentOptions.TopRight, new Vector2(1f, 1f));
                 float y = pad + 30f;
                 for (int i = 0; i < list.Count; i++)
                 {
@@ -183,7 +184,7 @@ namespace BuildOrders
                     GameUi.Line(box, $"{have[i]} / {n.Amount}", new Vector2(-pad, -y), 84f, 16f, have[i] >= n.Amount ? GameUi.Good : GameUi.Warn, null, TextAlignmentOptions.TopRight, new Vector2(1f, 1f));
                     y += row;
                 }
-                if (_needs.Count > shown) { GameUi.Line(box, $"+ {_needs.Count - shown} more materials", new Vector2(pad, -y), w - pad * 2f, 15f, GameUi.Dim); y += 22f; }
+                if (_needs.Count > shown) { GameUi.Line(box, T("buildorders_needs_more", _needs.Count - shown), new Vector2(pad, -y), w - pad * 2f, 15f, GameUi.Dim); y += 22f; }
                 GameUi.Line(box, PlanHint, new Vector2(pad, -y - 2f), w - pad * 2f, 15f, GameUi.Dim);
                 return box;
             });
@@ -196,17 +197,24 @@ namespace BuildOrders
             Order o = Aimed;
             var lines = new[]
             {
-                new Line($"{PieceName(o.Prefab)}   <color=#bdb7a9>planned by {(string.IsNullOrEmpty(o.By) ? "someone" : o.By)}</color>", 19f, GameUi.Warm),
-                new Line($"{Key(_selectKey.Value.ToString())} select this piece    {Key(_removeKey.Value.ToString())} remove    (Shift: whole cluster)", 16f, GameUi.Text),
+                new Line($"{PieceName(o.Prefab)}   <color=#bdb7a9>{PlannedBy(o.By)}</color>", 19f, GameUi.Warm),
+                new Line($"{Key(_selectKey.Value.ToString())} {T("buildorders_aim_select")}    {Key(_removeKey.Value.ToString())} {T("buildorders_aim_remove")}    {T("buildorders_aim_shift")}", 16f, GameUi.Text),
             };
             ShowHud(wanted, "aim", o.Id + "|" + lines[0].Text + "|" + lines[1].Text, hud => TextCard(hud, new Vector2(0.5f, 0.5f), new Vector2(0f, -90f), lines));
         }
 
         // ---- on foot, aiming at a ghost: what it costs, and E to build it ----
 
-        private string HoldText => HoldCount >= HoldAll ? $"Hold E: build all {HoldAll} pieces within {_buildAllRadius.Value:0} m"
-                                 : HoldCount > 0 ? $"Hold E: build the {HoldCount} of {HoldAll} pieces nearby you have materials for (lowest first)"
-                                 : "Hold E: nothing nearby you have the materials for yet";
+        private string HoldText => HoldCount >= HoldAll ? T("buildorders_hold_all", HoldAll, _buildAllRadius.Value.ToString("0"))
+                                 : HoldCount > 0 ? T("buildorders_hold_some", HoldCount, HoldAll)
+                                 : T("buildorders_hold_none");
+
+        /// <summary>"planned by Bob" under a ghost's name (the order's "By": a blueprint's or a player's name).</summary>
+        private static string PlannedBy(string by) => (by ?? "").StartsWith(BlueprintPrefix) ? T("buildorders_aim_planned_by_blueprint", ShownTitle(by.Substring(BlueprintPrefix.Length)))
+                                                                                     : T("buildorders_aim_planned_by", Who(by));
+
+        /// <summary>"1 piece", "5 pieces".</summary>
+        internal static string Pieces(int n) => T(n == 1 ? "buildorders_piece_one" : "buildorders_pieces", n);
 
         /// <summary>
         /// The piece's picture and name, the inventory's own cells for its materials (what you have of what it needs, orange when short, the
@@ -231,7 +239,8 @@ namespace BuildOrders
             const float pad = 16f;
             float cs = GameUi.CellSpace;
             int n = HintLines.Count;
-            float w = Mathf.Max(440f, n * cs + pad * 2f, pn * 96f + pad * 2f);
+            float holdText = HoldText.Sum(c => c >= 0x2E80 ? 14f : 7.2f);   // about how wide the hold-E line is at 14 pt (wide CJK letters count double)
+            float w = Mathf.Max(440f, n * cs + pad * 2f, pn * 96f + pad * 2f, Mathf.Min(1000f, holdText + pad * 2f + 16f));
             RectTransform box = GameUi.Box(hud, Vector2.zero, new Vector2(w, 100f));
             box.anchorMin = box.anchorMax = new Vector2(0.5f, 0.5f);
             box.pivot = new Vector2(0.5f, 1f);
@@ -240,7 +249,7 @@ namespace BuildOrders
             // the piece
             GameUi.Icon(box, new Vector2(pad, -pad + 2f), new Vector2(46f, 46f), HintPieceIcon);
             GameUi.Line(box, PieceName(o.Prefab), new Vector2(pad + 56f, -pad), w - pad * 2f - 56f, 22f, GameUi.Warm);
-            GameUi.Line(box, $"planned by {(string.IsNullOrEmpty(o.By) ? "someone" : o.By)}", new Vector2(pad + 56f, -pad - 28f), w - pad * 2f - 56f, 16f, GameUi.Dim);
+            GameUi.Line(box, PlannedBy(o.By), new Vector2(pad + 56f, -pad - 28f), w - pad * 2f - 56f, 16f, GameUi.Dim);
             float y = pad + 58f;
 
             // its materials, in the inventory's own cells
@@ -264,7 +273,7 @@ namespace BuildOrders
             // the whole plan: what it still needs altogether
             if (pn > 0)
             {
-                GameUi.Line(box, $"Whole plan \"{PlanTitle}\": {PlanLeft} pieces left", new Vector2(pad, -y), w - pad * 2f, 16f, GameUi.Text, null, TextAlignmentOptions.Top);
+                GameUi.Line(box, T("buildorders_whole_plan", PlanTitle, PlanLeft), new Vector2(pad, -y), w - pad * 2f, 16f, GameUi.Text, null, TextAlignmentOptions.Top);
                 y += 26f;
                 RectTransform row = GameUi.Rect(box, "Plan", new Vector2(0f, 1f), new Vector2(0f, 1f), new Vector2(0f, -y), new Vector2(w, 28f));
                 float x = 0f;
@@ -277,23 +286,23 @@ namespace BuildOrders
             // how well it would be supported (an estimate; the game does the real thing once it is built)
             if (stab != null)
             {
-                string text = stab.Support >= stab.Max ? "Solid: it rests on the ground"
-                            : stab.Collapses ? "Nothing supports it yet: it would fall if built now"
-                            : $"Support {stab.Percent}%";
+                string text = stab.Support >= stab.Max ? T("buildorders_stab_solid")
+                            : stab.Collapses ? T("buildorders_stab_falls")
+                            : T("buildorders_stab_support", stab.Percent);
                 GameUi.Line(box, text, new Vector2(pad, -y), w - pad * 2f, 16f, stab.Collapses ? GameUi.Warn : StabilityColor(stab), null, TextAlignmentOptions.Top);
                 y += 26f;
             }
 
             // what E does
-            string what = HintKnown && HintAffordable ? Localization.instance.Localize(Key("$KEY_Use")) + " Build it"
-                        : HintKnown ? "Missing materials" : "You haven't unlocked this piece yet";
+            string what = HintKnown && HintAffordable ? Localization.instance.Localize(Key("$KEY_Use")) + " " + T("buildorders_build_it")
+                        : HintKnown ? T("buildorders_missing") : T("buildorders_not_unlocked_this");
             GameUi.Line(box, what, new Vector2(pad, -y), w - pad * 2f, 20f, HintKnown && HintAffordable ? GameUi.Text : GameUi.Warn, null, TextAlignmentOptions.Top);
             y += 32f;
 
             // hold E for everything nearby (its fill follows the key every frame: see TickHud)
             _holdWidth = w - pad * 2f;
             RectTransform groove = GameUi.Bar(box, new Vector2(pad, -y), new Vector2(_holdWidth, 22f), 0f, GameUi.Gold,
-                                              holding ? "Keep holding to build everything nearby" : HoldText, 14f);
+                                              holding ? T("buildorders_keep_holding") : HoldText, 14f);
             _holdFill = groove.Find("Fill") as RectTransform;
             y += 22f + pad;
 
@@ -311,7 +320,7 @@ namespace BuildOrders
         {
             List<FetchLine> lines = FetchLines.Where(l => l.Short).ToList();
             if (lines.Count == 0 || !FetchTopUp) return; // (holding enough already: no panel in the way; the key still brings another piece's worth)
-            string head = $"{Key(_fetchKey.Value.ToString())} " + (FetchTopUp ? $"Fetch what one {FetchPieceName} needs from the chests" : $"Fetch another {FetchPieceName}'s worth from the chests");
+            string head = $"{Key(_fetchKey.Value.ToString())} " + T(FetchTopUp ? "buildorders_fetch_topup" : "buildorders_fetch_another", FetchPieceName);
             string signature = head + "|" + string.Join("|", lines.Select(l => l.Item + "," + l.InInventory + "," + l.Take).ToArray());
             ShowHud(wanted, "fetch", signature, hud =>
             {

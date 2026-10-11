@@ -5,6 +5,7 @@ obj/
 # Local tooling state
 .claude/*
 !.claude/skills/
+!.claude/settings.json
 .claude/skills/*
 !.claude/skills/valheim-blueprints/
 .quadflow/
@@ -19,8 +20,6 @@ __pycache__/
 # A stray folder Windows tools create at the repo root
 /%SystemDrive%/
 
-# PatchMap tool: downloaded mods (never committed)
-tools/PatchMap/cache/
 
 # Thunderstore packages (made by thunderstore.ps1 / modkit package / tcli build)
 thunderstore-build/

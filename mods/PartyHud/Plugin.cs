@@ -27,7 +27,7 @@ namespace PartyHud
         public const string Guid = "com.quad.partyhud";
         public const string OldGuid = "com.dhack.partyhud"; // (its id until 2026-10: settings move over by themselves, see Shared/Migration.cs)
         public const string Name = "PartyHud";
-        public const string Version = "1.9.0";
+        public const string Version = "1.10.0";
 
         internal static DHack.Shared.ServerSettings Synced; // settings the server decides in multiplayer
         private ConfigEntry<bool> _shareMine, _allowSharing;
@@ -65,6 +65,7 @@ namespace PartyHud
         private void Awake()
         {
             DHack.Shared.Migration.FromOldGuid(this, OldGuid); // first: before any setting is read
+            DHack.Shared.Translations.Load(this);   // translations/*.json: its words in the player's language
             _enabled = Config.Bind("General", "Enabled", true, "Show the party panel.");
             _showSelf = Config.Bind("General", "ShowSelf", true, "Include yourself in the panel.");
             _showPortraits = Config.Bind("General", "ShowPortraits", true,
@@ -110,6 +111,7 @@ namespace PartyHud
             Synced?.Dispose();
             DestroyDrawResources(); // (before the pictures it shows are destroyed)
             SteamAvatars.Clear();
+            DHack.Shared.Translations.Unload();
         }
 
         private void Update()

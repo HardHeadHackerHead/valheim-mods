@@ -5,6 +5,7 @@ using BepInEx;
 using BepInEx.Configuration;
 using HarmonyLib;
 using UnityEngine;
+using static DHack.Shared.Translations;
 
 namespace FeedFromChests
 {
@@ -24,7 +25,7 @@ namespace FeedFromChests
         public const string Guid = "com.quad.feedfromchests";
         public const string OldGuid = "com.dhack.feedfromchests"; // (its id until 2026-10: settings move over by themselves, see Shared/Migration.cs)
         public const string Name = "FeedFromChests";
-        public const string Version = "1.7.0";
+        public const string Version = "1.8.0";
 
         internal static Plugin Instance;
         internal static DHack.Shared.ServerSettings Synced; // settings the server decides in multiplayer
@@ -50,6 +51,7 @@ namespace FeedFromChests
         private void Awake()
         {
             DHack.Shared.Migration.FromOldGuid(this, OldGuid); // first: before any setting is read
+            DHack.Shared.Translations.Load(this);   // translations/*.json: its words in the player's language
             Instance = this;
             Synced = new DHack.Shared.ServerSettings(Guid, Config, Logger);
             const string server = " In multiplayer the server's value applies.";
@@ -123,6 +125,7 @@ namespace FeedFromChests
             Feed.Prepaid = null;
             ContainerRegistry.Clear();
             if (Instance == this) Instance = null;
+            DHack.Shared.Translations.Unload();
             _harmony?.UnpatchSelf();
             Synced?.Dispose();
         }
@@ -274,7 +277,7 @@ namespace FeedFromChests
                         added++;
                         if (added % 2 == 0) yield return null; // two per frame
                     }
-                    if (added > 0) parts.Add($"{added} {row.Display}");
+                    if (added > 0) parts.Add(T("feedfromchests_amount", added, row.Display));
                 }
             }
             finally
@@ -282,7 +285,7 @@ namespace FeedFromChests
                 _filling = false;
             }
 
-            _status = parts.Count > 0 ? "Filled: " + string.Join(", ", parts.ToArray()) : "Nothing more fits right now.";
+            _status = parts.Count > 0 ? T("feedfromchests_filled", string.Join(", ", parts.ToArray())) : T("feedfromchests_nothing_fits");
             if (_station == info && player != null) // (the menu may have been closed while it filled)
             {
                 RefreshRows(player);
@@ -367,7 +370,7 @@ namespace FeedFromChests
                 if (Time.unscaledTime - _lastHintAt > 30f)
                 {
                     _lastHintAt = Time.unscaledTime;
-                    player.Message(MessageHud.MessageType.TopLeft, "Tip: turn on AlwaysOpenMenu in the FeedFromChests config to get the menu (Fill, Add 1) every time");
+                    player.Message(MessageHud.MessageType.TopLeft, T("feedfromchests_tip_menu"));
                 }
             }
             else OpenMenu(player, info); // a choice to make (or you asked to always see the menu)

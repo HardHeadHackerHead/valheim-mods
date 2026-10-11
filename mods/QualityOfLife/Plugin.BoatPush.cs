@@ -1,6 +1,7 @@
 using System.Linq;
 using BepInEx.Configuration;
 using UnityEngine;
+using static DHack.Shared.Translations;
 
 namespace QualityOfLife
 {
@@ -46,7 +47,7 @@ namespace QualityOfLife
             if (TypingOrMenuOpen() || InventoryGui.IsVisible()) return;
             if (player.IsAttached() || player.GetControlledShip() != null || player.GetStandingOnShip() != null)
             {
-                if (pressed) Tell(player, "Step off the boat to push it");
+                if (pressed) Tell(player, T("qualityoflife_boat_step_off"));
                 return;
             }
 
@@ -70,7 +71,7 @@ namespace QualityOfLife
             {
                 if (pressed)
                 {
-                    Tell(player, nearest < float.MaxValue ? "Too far from the boat to push it" : "No boat nearby");
+                    Tell(player, nearest < float.MaxValue ? T("qualityoflife_boat_too_far") : T("qualityoflife_boat_none"));
                     Logger.LogInfo($"Boat push: no boat in range (ships found: {_ships.Length}, nearest hull {nearest:0.0} m, range {_pushRange.Value:0.0} m)");
                 }
                 return;

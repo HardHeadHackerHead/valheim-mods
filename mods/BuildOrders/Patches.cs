@@ -35,7 +35,7 @@ namespace BuildOrders
 
             if (__instance.GetPlacementStatus() != Player.PlacementStatus.Valid)
             {
-                __instance.Message(MessageHud.MessageType.Center, "Can't plan a piece there");
+                __instance.Message(MessageHud.MessageType.Center, DHack.Shared.Translations.T("buildorders_cant_plan_there"));
                 return false;
             }
 

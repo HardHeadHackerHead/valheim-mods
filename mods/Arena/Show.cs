@@ -53,7 +53,7 @@ namespace Arena
             if (wear != null) Object.Destroy(wear);   // (nothing breaks it in the ring)
             Container chest = go.GetComponent<Container>();
             if (chest == null) { view.Destroy(); return null; }
-            chest.m_name = kind == Armoury ? "The Armourer's Chest" : kind == Reward ? "The Round's Reward" : "Your Prize";
+            chest.m_name = kind == Armoury ? "$arena_chest_armoury" : kind == Reward ? "$arena_chest_reward" : "$arena_chest_prize";
             Inventory inv = chest.GetInventory();
             int count = 0;
             foreach (var it in items)

@@ -1,0 +1,19 @@
+{
+  "birdtrap_piece": "Pułapka na ptaki",
+  "birdtrap_piece_desc": "Skrzynka z listewek z opadającymi drzwiczkami na podpórce. Nałóż przynętę z jagód lub nasion i zostaw ją pod gołym niebem: po chwili ptak wskoczy do środka, drzwiczki opadną, a ty oskubiesz go z piór.",
+  "birdtrap_full": "Więcej przynęty się nie zmieści",
+  "birdtrap_need_bait": "Na przynętę potrzebujesz jagód lub nasion",
+  "birdtrap_baited": "Przynęta: {0} ({1}/{2})",
+  "birdtrap_gone": "Ptaka już nie ma",
+  "birdtrap_caught": "Złapano mewę!",
+  "birdtrap_hover_pluck": "Oskub z piór i wypuść",
+  "birdtrap_no_bait": "Brak przynęty: ptaki nie przylecą do pustej pułapki",
+  "birdtrap_roof": "Ptaki nie przylecą pod dach",
+  "birdtrap_night": "Ptaki śpią: jeden przyleci rano",
+  "birdtrap_soon": "Zastawiona. Ptak powinien przylecieć za około {0} min",
+  "birdtrap_any_moment": "Zastawiona. Ptak powinien przylecieć lada chwila",
+  "birdtrap_bait_state": "Przynęta: {0}/{1}  ·  {2}",
+  "birdtrap_hover_add": "Dodaj przynętę (jagody lub nasiona)",
+  "birdtrap_hover_fill": "Napełnij przynętą",
+  "birdtrap_plucked": "Oskubujesz mewę i ją wypuszczasz. Pióra: {0}"
+}

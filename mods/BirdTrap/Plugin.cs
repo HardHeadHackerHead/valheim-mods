@@ -20,7 +20,7 @@ namespace BirdTrap
         public const string Guid = "com.quad.birdtrap";
         public const string OldGuid = "com.dhack.birdtrap"; // (its id until 2026-10: settings move over by themselves, see Shared/Migration.cs)
         public const string Name = "BirdTrap";
-        public const string Version = "1.1.2";
+        public const string Version = "1.2.0";
         public const string PiecePrefab = "piece_birdtrap";
 
         internal static ConfigEntry<float> MinMinutes, MaxMinutes;
@@ -35,6 +35,7 @@ namespace BirdTrap
         private void Awake()
         {
             DHack.Shared.Migration.FromOldGuid(this, OldGuid); // first: before any setting is read
+            DHack.Shared.Translations.Load(this);   // translations/*.json: its words in the player's language
             // These decide when birds come and what they give, so they count on the game that owns the trap (usually the nearest player's);
             // in multiplayer every game uses the server's.
             Synced = new DHack.Shared.ServerSettings(Guid, Config, Logger);
@@ -87,6 +88,7 @@ namespace BirdTrap
             _harmony?.UnpatchSelf();
             Unregister();
             Synced?.Dispose();
+            DHack.Shared.Translations.Unload();
         }
 
         internal static void Register(ZNetScene scene)
@@ -156,8 +158,8 @@ namespace BirdTrap
             catch (System.Exception e) { Debug.LogWarning(Name + ": could not build the trap's model: " + e.Message); }
 
             Piece piece = go.GetComponent<Piece>();
-            piece.m_name = "Bird Trap";
-            piece.m_description = "A slatted box with a drop-door on a prop stick. Bait it with berries or seeds and leave it under the open sky: in a while a bird hops in, the door drops, and you can pluck it for feathers.";
+            piece.m_name = "$birdtrap_piece";
+            piece.m_description = "$birdtrap_piece_desc";
             piece.m_category = Piece.PieceCategory.Misc;
             piece.m_craftingStation = workbench;
             piece.m_resources = new[] { Req("Wood", 8), Req("LeatherScraps", 2) };

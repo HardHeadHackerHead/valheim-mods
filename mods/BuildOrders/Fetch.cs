@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using BepInEx.Configuration;
 using UnityEngine;
+using static DHack.Shared.Translations;
 
 namespace BuildOrders
 {
@@ -110,8 +111,8 @@ namespace BuildOrders
             }
 
             _fetchAt = 0f; // recount straight away
-            if (took.Count > 0) player.Message(MessageHud.MessageType.TopLeft, "Took from the chests: " + string.Join(", ", took.ToArray()) + (noRoom ? "  (no room for the rest)" : ""));
-            else player.Message(MessageHud.MessageType.Center, noRoom ? "No room in your inventory" : "Nothing to take from the chests");
+            if (took.Count > 0) player.Message(MessageHud.MessageType.TopLeft, T("buildorders_took", string.Join(", ", took.ToArray())) + (noRoom ? "  " + T("buildorders_took_no_room") : ""));
+            else player.Message(MessageHud.MessageType.Center, T(noRoom ? "buildorders_no_room" : "buildorders_nothing_to_take"));
         }
     }
 }

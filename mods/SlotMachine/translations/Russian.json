@@ -1,0 +1,20 @@
+{
+  "slotmachine_piece": "Удача Одина",
+  "slotmachine_piece_desc": "Игровой автомат. Бросьте монеты, потяните рычаг — и закрутятся три барабана. Три одинаковых символа приносят выигрыш, и он высыпается в лоток.",
+  "slotmachine_pull": "Потянуть рычаг (монет: {0})",
+  "slotmachine_change_bet": "Изменить ставку",
+  "slotmachine_bet": "Ставка: {0} мон.",
+  "slotmachine_still_turning": "Барабаны ещё крутятся",
+  "slotmachine_need_coins": "Чтобы играть, нужно монет: {0}",
+  "slotmachine_no_luck": "Не повезло. Ещё раз?",
+  "slotmachine_win": "Выигрыш: {0} мон.!",
+  "slotmachine_jackpot": "ДЖЕКПОТ! {0} мон.",
+  "slotmachine_paid_owed": "Удача Одина выплатила ваш выигрыш: {0} мон.",
+  "slotmachine_pays": "{1} ×{0}: ×{2}",
+  "slotmachine_coin": "Монета",
+  "slotmachine_boar": "Кабан",
+  "slotmachine_horn": "Рог",
+  "slotmachine_axe": "Топор",
+  "slotmachine_raven": "Ворон",
+  "slotmachine_valknut": "Валькнут"
+}

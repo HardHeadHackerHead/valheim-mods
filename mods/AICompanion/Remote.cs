@@ -129,16 +129,36 @@ namespace AICompanion
             return lines.GetRange(Mathf.Max(0, lines.Count - last), Mathf.Min(last, lines.Count));
         }
 
-        /// <summary>"240 m north-east of you".</summary>
+        /// <summary>"240 m north-east of you" (packed text: Words.Show makes the words).</summary>
         public static string Where(Vector3 at, Vector3 from)
         {
             Vector3 d = at - from;
             d.y = 0f;
-            if (d.magnitude < 20f) return "right here";
-            string[] dirs = { "north", "north-east", "east", "south-east", "south", "south-west", "west", "north-west" };
-            float ang = (Mathf.Atan2(d.x, d.z) * Mathf.Rad2Deg + 360f + 22.5f) % 360f;
-            return $"{d.magnitude:0} m {dirs[(int)(ang / 45f) % 8]} of you";
+            if (d.magnitude < 20f) return Words.P("aicompanion_remote_right_here");
+            return Words.P(OfYou[Dir(d)], d.magnitude.ToString("0"));
         }
+
+        /// <summary>"240 m north-east of here" (packed text).</summary>
+        public static string FromHere(Vector3 d)
+        {
+            d.y = 0f;
+            return Words.P(OfHere[Dir(d)], d.magnitude.ToString("0"));
+        }
+
+        /// <summary>Which of the eight directions (0 north, 1 north-east... 7 north-west).</summary>
+        public static int Dir(Vector3 d) => (int)(((Mathf.Atan2(d.x, d.z) * Mathf.Rad2Deg + 360f + 22.5f) % 360f) / 45f) % 8;
+
+        // one sentence each: the direction words change with the language around them
+        private static readonly string[] OfYou =
+        {
+            "aicompanion_remote_n_of_you", "aicompanion_remote_ne_of_you", "aicompanion_remote_e_of_you", "aicompanion_remote_se_of_you",
+            "aicompanion_remote_s_of_you", "aicompanion_remote_sw_of_you", "aicompanion_remote_w_of_you", "aicompanion_remote_nw_of_you",
+        };
+        private static readonly string[] OfHere =
+        {
+            "aicompanion_remote_n_of_here", "aicompanion_remote_ne_of_here", "aicompanion_remote_e_of_here", "aicompanion_remote_se_of_here",
+            "aicompanion_remote_s_of_here", "aicompanion_remote_sw_of_here", "aicompanion_remote_w_of_here", "aicompanion_remote_nw_of_here",
+        };
 
         /// <summary>
         /// Call it to you: its save goes beside you, and it comes along (it appears there in a moment, as its area loads around you).

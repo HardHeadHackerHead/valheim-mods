@@ -1,0 +1,20 @@
+{
+  "bettercraftingstations_all": "Tümü {0}",
+  "bettercraftingstations_chip": "{0} {1}",
+  "bettercraftingstations_can_craft": "Üretilebilir",
+  "bettercraftingstations_type_weapons": "Silahlar",
+  "bettercraftingstations_type_armor": "Zırh",
+  "bettercraftingstations_type_tools": "Aletler",
+  "bettercraftingstations_type_ammo": "Mühimmat",
+  "bettercraftingstations_type_food": "Yiyecek",
+  "bettercraftingstations_type_potions": "İksirler",
+  "bettercraftingstations_type_materials": "Malzemeler",
+  "bettercraftingstations_type_other": "Diğer",
+  "bettercraftingstations_tier_wood": "Odun ve çakmak taşı",
+  "bettercraftingstations_tier_bronze": "Tunç",
+  "bettercraftingstations_tier_iron": "Demir",
+  "bettercraftingstations_tier_silver": "Gümüş",
+  "bettercraftingstations_tier_blackmetal": "Karademir",
+  "bettercraftingstations_tier_mistlands": "Sisli Topraklar",
+  "bettercraftingstations_tier_ashlands": "Kül Diyarı"
+}

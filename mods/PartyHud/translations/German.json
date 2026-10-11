@@ -1,0 +1,8 @@
+{
+  "partyhud_header": "GRUPPE  ·  {0}",
+  "partyhud_distance": "{0} m",
+  "partyhud_fallen": "GEFALLEN",
+  "partyhud_dead": "TOT",
+  "partyhud_no_data": "keine Daten",
+  "partyhud_fallen_status": "gefallen: Sachen im Grab (Schädel auf der Karte)"
+}

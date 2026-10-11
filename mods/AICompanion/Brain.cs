@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using HarmonyLib;
 using UnityEngine;
+using static AICompanion.Words;
 
 namespace AICompanion
 {
@@ -19,18 +20,20 @@ namespace AICompanion
         public string Note = "";
         public float Time;
 
+        /// <summary>What it is doing, as packed text (Words.P): its status, shown to everyone in their own language.</summary>
         public string Describe(Func<Character, string> label)
         {
+            bool bow = Ranged && (Action == Tactic.Attack || Action == Tactic.DefendPlayer);
             string what = Action switch
             {
-                Tactic.Attack => "attack " + (Target != null ? label(Target) : "nearest"),
-                Tactic.DefendPlayer => "defend you",
-                Tactic.BackOff => "back off",
-                Tactic.Retreat => "fall back to you",
-                _ => "flee",
+                Tactic.Attack => Target != null ? P(bow ? "aicompanion_brain_do_attack_bow" : "aicompanion_brain_do_attack", label(Target))
+                                                : P(bow ? "aicompanion_brain_do_attack_nearest_bow" : "aicompanion_brain_do_attack_nearest"),
+                Tactic.DefendPlayer => P(bow ? "aicompanion_brain_do_defend_bow" : "aicompanion_brain_do_defend"),
+                Tactic.BackOff => P("aicompanion_brain_do_back_off"),
+                Tactic.Retreat => P("aicompanion_brain_do_fall_back"),
+                _ => P("aicompanion_brain_do_flee"),
             };
-            if (Ranged && (Action == Tactic.Attack || Action == Tactic.DefendPlayer)) what += " (bow)";
-            if (Drink) what += ", drink";
+            if (Drink) what = P("aicompanion_brain_do_drink", what);
             return what;
         }
     }
@@ -160,16 +163,18 @@ namespace AICompanion
         public int EnemyCountAtAsk;
         public string Status = "";
 
+        /// <summary>"$enemy_greyling 2": its name as the game's token (each player's game translates it) and a number.</summary>
         public string Label(Character c)
         {
             if (c == null) return "?";
             if (Labels.TryGetValue(c, out string l)) return l;
-            string name = Localization.instance.Localize(c.m_name);
+            string name = c.m_name;
             int n = 1;
             while (Labels.ContainsValue($"{name} {n}")) n++;
             return Labels[c] = $"{name} {n}";
         }
 
+        /// <summary>A line for its menu's "Recently" (packed text: Words.P) and its activity log.</summary>
         public void Remember(string line)
         {
             Activity.Log(Body, "» " + line);
@@ -459,7 +464,7 @@ namespace AICompanion
             if (Ride.Tick(st, master)) return true; // on a boat with its player: it sits and rides
             Loot.PassBy(st);                         // what is on its list, as it goes by
             if (Time.time >= st.NextGear) { st.NextGear = Time.time + 0.5f; Companion.Maintain(me, st.Current.Ranged, st.InCombat ? null : st.WorkTool, st.InCombat ? st.Current.Target : null); }
-            if (gear != null && Containers.InUse(gear)) { ai.StopMoving(); Blocking(me) = false; SetStatus(st, "waiting while you sort its gear"); return true; }
+            if (gear != null && Containers.InUse(gear)) { ai.StopMoving(); Blocking(me) = false; SetStatus(st, P("aicompanion_brain_status_gear_open")); return true; }
             if (!st.Asleep && Carts.Tick(st, (p, dd, run) => MoveTo(ai, dt, p, dd, run), () => ai.StopMoving())) return true; // getting hold of a cart
 
             if (Time.time >= st.NextEnemyScan) { st.NextEnemyScan = Time.time + 0.25f; ScanEnemies(st, master); }
@@ -469,14 +474,14 @@ namespace AICompanion
             if (Time.time >= st.NextDoorLook) { st.NextDoorLook = Time.time + 0.4f; OpenDoorAhead(me); CloseBehind(st); }
             if (Companion.OrderOf(me) != Order.Gather && !(Companion.OrderOf(me) == Order.Follow && (st.Helping || Time.time < st.CommandUntil || st.Area != null))) { st.Task = null; st.WorkTool = null; }
 
-            if (st.Enemies.Count > 0 && st.Asleep) Sleep.Wake(st, "something came");
+            if (st.Enemies.Count > 0 && st.Asleep) Sleep.Wake(st, P("aicompanion_brain_wake_something_came"));
             Character boss = st.Enemies.FirstOrDefault(e => e != null && e.IsBoss());
-            if (boss != null && st.LastBoss != boss.m_name) { st.LastBoss = boss.m_name; Banter.BossSeen(me, Localization.instance.Localize(boss.m_name)); }
+            if (boss != null && st.LastBoss != boss.m_name) { st.LastBoss = boss.m_name; Banter.BossSeen(me, boss.m_name); }
             if (st.Enemies.Count == 0)
             {
                 if (st.InCombat)
                 {
-                    st.InCombat = false; st.Labels.Clear(); Summarise(st, "fight over");
+                    st.InCombat = false; st.Labels.Clear(); Summarise(st, false);
                     if (me.GetHealthPercentage() < 0.3f) Banter.CloseFight(me);
                     else if (st.FightKills >= 3) Idle.Queue(st, "cheer", 1f); // a big fight won
                 }
@@ -494,9 +499,9 @@ namespace AICompanion
             foreach (Character e in st.Enemies)
             {
                 if (e == null) continue;
-                string foe = Localization.instance.Localize(e.m_name);
+                string foe = e.m_name;   // (its token: the fight's summary names it in each player's language)
                 if (st.FightFoes.Add(foe) && Tactics.Feared(me, e))
-                    Banter.Say(me, "feared:" + foe, 10f, $"Careful! {foe}s have hurt me badly before.", $"A {foe.ToLowerInvariant()}... I'll keep my distance this time.", $"Watch that {foe.ToLowerInvariant()}, it's dangerous.");
+                    Banter.Say(me, "feared:" + foe, 10f, P("aicompanion_brain_feared_1", foe), P("aicompanion_brain_feared_2", Low(foe)), P("aicompanion_brain_feared_3", Low(foe)));
             }
             float hp = me.GetHealth();
             if (hp < st.LastHealth) st.Taken += st.LastHealth - hp;
@@ -511,7 +516,7 @@ namespace AICompanion
         private static void Peaceful(BrainState st, Player master, float dt)
         {
             Humanoid me = st.Body;
-            if (st.Asleep && Companion.OrderOf(me) != Order.Gather) Sleep.Wake(st, "you called it"); // (come with me, at night)
+            if (st.Asleep && Companion.OrderOf(me) != Order.Gather) Sleep.Wake(st, P("aicompanion_brain_wake_called")); // (come with me, at night)
             if (MakeWay(st, dt)) return;
             if (Idle.Emoting(st, p => LookAt(st.Ai, p))) return;                                                   // a wave, a cheer: its moment
             if (Idle.Come(st, master, (p, dd, run) => MoveTo(st.Ai, dt, p, dd, run), () => st.Ai.StopMoving(), p => LookAt(st.Ai, p))) return; // you beckoned
@@ -524,11 +529,11 @@ namespace AICompanion
                 case Order.Stay:
                     st.Ai.StopMoving();
                     Idle.Waiting(st); // (after a while, it sits)
-                    SetStatus(st, st.Sitting ? "sitting here, waiting" : "staying here");
+                    SetStatus(st, P(st.Sitting ? "aicompanion_brain_status_sitting" : "aicompanion_brain_status_staying"));
                     break;
                 case Order.Gather:
                     bool sent = st.Task != null && st.Task.Ordered && Time.time < st.CommandUntil; // (an errand or something you pointed at: before bed)
-                    if (sent && st.Asleep) Sleep.Wake(st, "you sent it on an errand");
+                    if (sent && st.Asleep) Sleep.Wake(st, P("aicompanion_brain_wake_errand"));
                     if (!sent && Sleep.Tick(st, (p, dd, run) => MoveTo(st.Ai, dt, p, dd, run), () => st.Ai.StopMoving())) break; // night: in its bed
                     Work.Tick(st, master, dt, (p, dd, run) => MoveTo(st.Ai, dt, p, dd, run), () => st.Ai.StopMoving(), p => LookAt(st.Ai, p));
                     break;
@@ -536,10 +541,10 @@ namespace AICompanion
                     Vector3 post = Companion.Zdo(me).GetVec3(Keys.Post, me.transform.position);
                     if (Vector3.Distance(post, me.transform.position) > 2f) MoveTo(st.Ai, dt, post, 1f, Vector3.Distance(post, me.transform.position) > 8f);
                     else st.Ai.StopMoving();
-                    SetStatus(st, "guarding");
+                    SetStatus(st, P("aicompanion_brain_status_guarding"));
                     break;
                 default:
-                    if (master == null) { st.Ai.StopMoving(); SetStatus(st, "waiting for " + (Companion.Zdo(me).GetString(Keys.MasterName, "its friend"))); break; }
+                    if (master == null) { st.Ai.StopMoving(); { string friend = Companion.Zdo(me).GetString(Keys.MasterName, ""); SetStatus(st, string.IsNullOrEmpty(friend) ? P("aicompanion_brain_status_waiting_friend") : P("aicompanion_brain_status_waiting_for", friend)); } break; }
                     float d = Vector3.Distance(master.transform.position, me.transform.position);
                     // You pointed at something for it to do (Pointing): that first.
                     if ((Time.time < st.CommandUntil || st.Area != null) && (st.Task != null || st.PickQueue.Count > 0 || st.Area != null)) // (a patch you gave it: back to it after a fight, however long)
@@ -560,7 +565,9 @@ namespace AICompanion
                         if (Stuck(st, master, d) && master.IsOnGround() && !master.IsAttached()) { Unstick(st, master); break; }
                     }
                     else { st.Ai.StopMoving(); st.StuckFor = 0; }
-                    SetStatus(st, "following " + master.GetPlayerName() + (st.Cart != null && st.Cart.IsAttached(me) ? " (pulling the cart)" : string.IsNullOrEmpty(st.AutoNote) || Companion.Chosen(me) != Style.Auto ? "" : $" ({st.AutoNote})"));
+                    SetStatus(st, st.Cart != null && st.Cart.IsAttached(me) ? P("aicompanion_brain_status_following_cart", master.GetPlayerName())
+                        : string.IsNullOrEmpty(st.AutoNote) || Companion.Chosen(me) != Style.Auto ? P("aicompanion_brain_status_following", master.GetPlayerName())
+                        : P("aicompanion_brain_status_following_note", master.GetPlayerName(), st.AutoNote));
                     break;
             }
         }
@@ -599,19 +606,20 @@ namespace AICompanion
             }
             if (stage == 1) { me.SetMoveDir((master.transform.position - me.transform.position).normalized); me.Jump(false); return; }
             st.UnstickStage = 0;
-            TeleportBehind(me, master, "hopped over to");
+            TeleportBehind(me, master, "aicompanion_brain_hopped_over_to");
         }
 
         /// <summary>Put it on a free spot beside the player (behind, beside or in front, on the same level, nothing solid in the way).</summary>
-        internal static void TeleportBehind(Humanoid me, Player master, string how = "caught up with")
+        /// <param name="how">The key of what it did, "... {0}" ({0}: the player's name), for its "Recently" and the log.</param>
+        internal static void TeleportBehind(Humanoid me, Player master, string how = "aicompanion_brain_caught_up_with")
         {
             Vector3 pos = FreeSpotNear(master);
             me.transform.position = pos;
             Rigidbody body = me.GetComponent<Rigidbody>();
             if (body != null) { body.position = pos; body.linearVelocity = Vector3.zero; }
             Companion.Zdo(me)?.SetPosition(pos); // (its saved place too: from somewhere nobody is (its bed, after a fall), the game left it there, unloaded)
-            Get(me).Remember($"{how} {master.GetPlayerName()}");
-            Plugin.Instance?.Note($"{Companion.NameOf(me)} {how} {master.GetPlayerName()}");
+            Get(me).Remember(P(how, master.GetPlayerName()));
+            Plugin.Instance?.Note($"{Companion.NameOf(me)} {English(P(how, master.GetPlayerName()))}");
         }
 
         private static readonly int Solid = LayerMask.GetMask("Default", "static_solid", "Default_small", "piece", "vehicle");
@@ -797,15 +805,15 @@ namespace AICompanion
         {
             Humanoid me = st.Body;
             if (st.Focus != null && (st.Focus.IsDead() || Time.time > st.FocusUntil)) st.Focus = null;
-            if (st.Focus != null && st.Enemies.Contains(st.Focus) && (d.Action == Tactic.Attack || d.Action == Tactic.DefendPlayer)) { d.Action = Tactic.Attack; d.Target = st.Focus; d.Note = "you pointed at it"; }
+            if (st.Focus != null && st.Enemies.Contains(st.Focus) && (d.Action == Tactic.Attack || d.Action == Tactic.DefendPlayer)) { d.Action = Tactic.Attack; d.Target = st.Focus; d.Note = P("aicompanion_brain_note_pointed"); }
             Style style = Companion.StyleOf(me);
             float health = me.GetHealthPercentage();
             float retreat = Companion.RetreatOf(me) / 100f * (style == Style.Aggressive ? 0.5f : 1f);
             bool fighting = d.Action == Tactic.Attack || d.Action == Tactic.DefendPlayer;
             string rule = null;
-            if (health < retreat * 0.5f && d.Action != Tactic.Flee) { d.Action = Tactic.Flee; rule = $"rule: flee below {retreat * 50f:0}% health"; }
-            else if (health < retreat && fighting) { d.Action = Tactic.Retreat; rule = $"rule: fall back below {retreat * 100f:0}% health"; }
-            else if (style == Style.Passive && fighting) { d.Action = Tactic.Retreat; rule = "rule: passive, does not attack"; }
+            if (health < retreat * 0.5f && d.Action != Tactic.Flee) { d.Action = Tactic.Flee; rule = P("aicompanion_brain_rule_flee", $"{retreat * 50f:0}"); }
+            else if (health < retreat && fighting) { d.Action = Tactic.Retreat; rule = P("aicompanion_brain_rule_fall_back", $"{retreat * 100f:0}"); }
+            else if (style == Style.Passive && fighting) { d.Action = Tactic.Retreat; rule = P("aicompanion_brain_rule_passive"); }
             if (rule == null) return;
             d.Note = string.IsNullOrEmpty(d.Note) ? rule : d.Note + "; " + rule;
             if (d.Action != Tactic.Attack) d.Drink |= Companion.Potions(me) && Companion.HealingPotions(me).Count > 0;
@@ -818,12 +826,12 @@ namespace AICompanion
             st.FightDecisions++;
             bool changed = d.Action != st.Current.Action || d.Target != st.Current.Target || d.Ranged != st.Current.Ranged;
             st.Current = d;
-            if (d.Drink && Companion.Drink(st.Body)) { st.Remember("drank a healing potion"); st.Potions++; }
+            if (d.Drink && Companion.Drink(st.Body)) { st.Remember(P("aicompanion_brain_drank_potion")); st.Potions++; }
             string line = d.Describe(st.Label);
             if (changed || d.Drink) st.Remember(line + (string.IsNullOrEmpty(d.Note) ? "" : "  (" + d.Note + ")"));
             SetStatus(st, line);
             if (changed && Plugin.ShowDecisions.Value && Chat.instance != null)
-                Chat.instance.SetNpcText(st.Body.gameObject, Vector3.up * 2.3f, 25f, 2.5f, "", line, false);
+                Chat.instance.SetNpcText(st.Body.gameObject, Vector3.up * 2.3f, 25f, 2.5f, "", Words.Show(line), false);
         }
 
         /// <summary>The built-in brain: retreat when low, otherwise protect the player first (if asked) and hit the nearest.</summary>
@@ -837,23 +845,23 @@ namespace AICompanion
             d.Drink = Companion.Potions(me) && health < 0.5f && Companion.HealingPotions(me).Count > 0;
             Character nearest = st.Enemies.FirstOrDefault();
             if (style == Style.Passive) { d.Action = health < retreat ? Tactic.Flee : Tactic.Retreat; return d; }
-            if (health < retreat * 0.5f) { d.Action = Tactic.Flee; d.Note = "nearly dead"; return d; }
-            if (health < retreat) { d.Action = Tactic.Retreat; d.Note = "hurt"; return d; }
+            if (health < retreat * 0.5f) { d.Action = Tactic.Flee; d.Note = P("aicompanion_brain_note_nearly_dead"); return d; }
+            if (health < retreat) { d.Action = Tactic.Retreat; d.Note = P("aicompanion_brain_note_hurt"); return d; }
             // Something clearly too strong for it (a bear against a stone axe): it gets clear, to its home or to you. With a bow, fed and rested,
             // it may shoot from a distance instead.
             bool careful = Tactics.Careful(st);
             Character danger = st.Enemies.FirstOrDefault(e => e != null && Vector3.Distance(e.transform.position, me.transform.position) < 20f && Tactics.TooStrong(me, e));
             if (danger != null && (careful || Companion.BestRanged(me) == null || Vector3.Distance(danger.transform.position, me.transform.position) < 5f))
             {
-                string what = Localization.instance.Localize(danger.m_name);
-                d.Action = Tactic.Flee; d.Note = $"the {what.ToLowerInvariant()} is too strong for it";
-                Talk.Mention(me, $"That {what.ToLowerInvariant()} is too strong for me. I'm getting clear!", "toostrong:" + what, 3f);
+                string what = danger.m_name;
+                d.Action = Tactic.Flee; d.Note = P("aicompanion_brain_note_too_strong", Low(what));
+                Talk.Mention(me, P("aicompanion_brain_say_too_strong", Low(what)), "toostrong:" + what, 3f);
                 return d;
             }
             // Nothing eaten, or just up after a fall: it gives ground early.
-            if (careful && health < 0.6f) { d.Action = health < 0.35f ? Tactic.Flee : Tactic.Retreat; d.Note = "nothing eaten: careful"; return d; }
+            if (careful && health < 0.6f) { d.Action = health < 0.35f ? Tactic.Flee : Tactic.Retreat; d.Note = P("aicompanion_brain_note_careful"); return d; }
             if (Stamina.Get(me) < Stamina.Max(me) * 0.15f && nearest != null && Vector3.Distance(nearest.transform.position, me.transform.position) < 6f)
-            { d.Action = Tactic.BackOff; d.Note = "out of breath"; return d; }
+            { d.Action = Tactic.BackOff; d.Note = P("aicompanion_brain_note_out_of_breath"); return d; }
             d.Action = Tactic.Attack;
             d.Target = PickTarget(st, master);
             Character t = d.Target;
@@ -963,7 +971,7 @@ namespace AICompanion
                     st.LeaveAlone[like] = Time.time + 120f; // (the others in that pond, behind that fence: no better)
                 foreach (Character gone in st.LeaveAlone.Keys.Where(k => k == null).ToList()) st.LeaveAlone.Remove(gone);
                 st.Enemies.Remove(target);
-                st.Remember($"could not get at {Localization.instance.Localize(target.m_name)} (20 s without a hit): left it alone");
+                st.Remember(P("aicompanion_brain_left_alone", target.m_name));
                 if (st.Task != null && st.Task.Target == target) st.Task = null;
                 st.StallOn = null;
                 return;
@@ -1035,7 +1043,7 @@ namespace AICompanion
             if (!ranged && Tactics.Unaware(target) && !st.Enemies.Any(e => e != null && TargetOf(e) == me))
             {
                 Vector3? behind = Tactics.Behind(me, target, reach);
-                if (behind != null && Vector3.Distance(behind.Value, me.transform.position) > 0.8f) { MoveTo(st.Ai, dt, behind.Value, 0.3f, false); Skill.Doing(me, Skills.SkillType.Sneak, dt); if (st.Task == null) Brain.Status(st, "sneaking up on the " + Localization.instance.Localize(target.m_name).ToLowerInvariant()); return; } // (hunting: its job says so, or the two swap every frame)
+                if (behind != null && Vector3.Distance(behind.Value, me.transform.position) > 0.8f) { MoveTo(st.Ai, dt, behind.Value, 0.3f, false); Skill.Doing(me, Skills.SkillType.Sneak, dt); if (st.Task == null) Brain.Status(st, P("aicompanion_brain_status_sneaking", Low(target.m_name))); return; } // (hunting: its job says so, or the two swap every frame)
                 if (dist > reach) { MoveTo(st.Ai, dt, target.transform.position, reach * 0.6f, false); return; }
             }
 
@@ -1050,7 +1058,7 @@ namespace AICompanion
                 {
                     Vector3 flank = target.transform.position + Quaternion.Euler(0f, 100f * st.EvadeSide, 0f) * target.transform.forward * (target.GetRadius() + reach * 0.8f);
                     MoveTo(st.Ai, dt, flank, 0.6f, true);
-                    Brain.Status(st, "getting round to its side");
+                    Brain.Status(st, P("aicompanion_brain_status_flank"));
                     return;
                 }
             }
@@ -1058,7 +1066,7 @@ namespace AICompanion
             if (!ranged && Tactics.Pincer(me, you, target, reach) is Vector3 far && Vector3.Distance(far, me.transform.position) > 1.2f)
             {
                 MoveTo(st.Ai, dt, far, 0.5f, true);
-                if (st.Task == null) Brain.Status(st, "getting round behind the " + Localization.instance.Localize(target.m_name).ToLowerInvariant());
+                if (st.Task == null) Brain.Status(st, P("aicompanion_brain_status_behind", Low(target.m_name)));
                 return;
             }
             // A bow kites: something closing in on it, it backs off between shots, and shoots when its bow is ready and there is room (cornered,
@@ -1125,20 +1133,24 @@ namespace AICompanion
             if (threat != null && close) LookAt(st.Ai, threat.GetCenterPoint());
         }
 
-        /// <summary>One line for the log, the menu and the Debug tab: how long, damage taken and dealt, kills, decisions.</summary>
-        internal static void Summarise(BrainState st, string how)
+        /// <summary>One line for the log, the menu and the Debug tab: how long, damage taken and dealt, kills, decisions (packed text: Words.P).</summary>
+        internal static void Summarise(BrainState st, bool fell)
         {
-            string line = $"{how} after {Time.time - st.FightStart:0} s: took {st.Taken:0} damage, dealt {st.Dealt:0}, {st.FightKills} kill{(st.FightKills == 1 ? "" : "s")}, {st.FightDecisions} decisions";
+            string secs = $"{Time.time - st.FightStart:0}", kills = P(st.FightKills == 1 ? "aicompanion_brain_kills_one" : "aicompanion_brain_kills_many", st.FightKills);
+            int parries = st.Parries - st.ParriesAtStart;
+            string line = P(fell ? "aicompanion_brain_fight_fell" : "aicompanion_brain_fight_over", secs, $"{st.Taken:0}", $"{st.Dealt:0}", kills, st.FightDecisions);
             st.Remember(line);
-            Plugin.Instance?.Note($"{Companion.NameOf(st.Body)}: {line}");
-            string record = $"{DateTime.Now:HH:mm}  {how} ({Time.time - st.FightStart:0} s, vs {string.Join(", ", st.FightFoes.Take(4))}): dealt {st.Dealt:0}, took {st.Taken:0}, {st.FightKills} kill{(st.FightKills == 1 ? "" : "s")}, "
-                          + $"{st.Parries - st.ParriesAtStart} parr{(st.Parries - st.ParriesAtStart == 1 ? "y" : "ies")}, {st.Blocks - st.BlocksAtStart} blocks, {st.FightDodges} rolls, {st.Potions - st.PotionsAtStart} potions";
+            Plugin.Instance?.Note($"{Companion.NameOf(st.Body)}: {English(line)}");
+            string record = P(fell ? "aicompanion_brain_record_fell" : "aicompanion_brain_record_over", $"{DateTime.Now:HH:mm}", secs, string.Join(", ", st.FightFoes.Take(4)),
+                $"{st.Dealt:0}", $"{st.Taken:0}", kills, P(parries == 1 ? "aicompanion_brain_parries_one" : "aicompanion_brain_parries_many", parries),
+                st.Blocks - st.BlocksAtStart, st.FightDodges, st.Potions - st.PotionsAtStart);
             st.FightLog.Insert(0, record);
             if (st.FightLog.Count > 8) st.FightLog.RemoveAt(st.FightLog.Count - 1);
         }
 
         internal static void Status(BrainState st, string status) => SetStatus(st, status);
 
+        /// <summary>What it is doing (packed text: Words.P), saved on it for every player's menu and the party panel.</summary>
         private static void SetStatus(BrainState st, string status)
         {
             if (st.Status == status) return;

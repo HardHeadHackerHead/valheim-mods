@@ -1,0 +1,11 @@
+{
+  "craftfromchests_chat_loaded": "{0} v{1} carregado | {2}, raio {3} m | compilado {4}",
+  "craftfromchests_chat_reloaded": "{0} v{1} recarregado | {2}, raio {3} m | compilado {4}",
+  "craftfromchests_loaded": "{0} carregado",
+  "craftfromchests_reloaded": "{0} recarregado",
+  "craftfromchests_short": "Não há mais {0} suficiente nos baús",
+  "craftfromchests_have": "Você tem {0}  (inventário {1}, baús {2})",
+  "craftfromchests_lines": "Linhas dos baús: {0}",
+  "craftfromchests_range": "Alcance: {0} m",
+  "craftfromchests_server_range": "Aqui o alcance é definido pelo servidor"
+}

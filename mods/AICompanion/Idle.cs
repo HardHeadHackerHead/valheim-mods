@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using HarmonyLib;
 using UnityEngine;
+using static AICompanion.Words;
 
 namespace AICompanion
 {
@@ -114,8 +115,8 @@ namespace AICompanion
             st.AwaySince = 0f;
             if (!longAway || st.InCombat || st.Asleep) return;
             Queue(st, "wave", 0.4f, master);
-            Banter.Say(me, "welcome", 0f, $"Welcome back, {master.GetPlayerName()}!", "There you are!", "Good to see you again.", "Back safe, I see.");
-            st.Remember("you came back: it waved");
+            Banter.Say(me, "welcome", 0f, P("aicompanion_idle_welcome_1", master.GetPlayerName()), P("aicompanion_idle_welcome_2"), P("aicompanion_idle_welcome_3"), P("aicompanion_idle_welcome_4"));
+            st.Remember(P("aicompanion_idle_came_back"));
         }
 
         /// <summary>Your emotes (the game saves them on your character for everyone to see): it answers, within 12 m.</summary>
@@ -131,8 +132,8 @@ namespace AICompanion
             if (e == "comehere") st.ComeUntil = Time.time + 20f;
             if (!Answer.TryGetValue(e, out string reply)) return; // (sitting, resting: it sits with you, WithYou)
             Queue(st, reply, 0.7f, master);
-            if (e == "cry" || e == "despair") Banter.Say(st.Body, "cheerup", 1f, "Chin up. We'll get through this.", "Hey, it's not so bad.", "Come on, I'll cook something.");
-            st.Remember($"you did a {e}: it answered with a {reply}");
+            if (e == "cry" || e == "despair") Banter.Say(st.Body, "cheerup", 1f, P("aicompanion_idle_cheerup_1"), P("aicompanion_idle_cheerup_2"), P("aicompanion_idle_cheerup_3"));
+            st.Remember(P("aicompanion_idle_emote_answer", Low("$hud_emotes_" + e), Low("$hud_emotes_" + reply)));
         }
 
         /// <summary>You beckoned ("come here"): it comes over and stays by you for a little while, then goes back to what it was doing.</summary>
@@ -143,7 +144,7 @@ namespace AICompanion
             if (d > 40f) { st.ComeUntil = 0f; return false; }
             if (d > 2.2f) moveTo(master.transform.position, 1.6f, d > 8f);
             else { stop(); lookAt(master.GetHeadPoint()); }
-            Brain.Status(st, d > 2.2f ? "coming over to you" : "here with you");
+            Brain.Status(st, P(d > 2.2f ? "aicompanion_idle_status_coming_over" : "aicompanion_idle_status_here"));
             return true;
         }
 
@@ -234,21 +235,21 @@ namespace AICompanion
             bool sit = d < 8f && (youSit ? still > 1.5f : still > 25f && master.IsOnGround());
             if (sit)
             {
-                if (st.SitChair != null) { HoldChair(st); Brain.Status(st, "sitting with you"); return true; }
+                if (st.SitChair != null) { HoldChair(st); Brain.Status(st, P("aicompanion_idle_status_sitting_with_you")); return true; }
                 if (!st.Sitting)
                 {
                     Chair chair = youSit ? FreeChairs(you, 4f, me).FirstOrDefault() : null;
                     if (chair != null)
                     {
                         float cd = Vector3.Distance(chair.m_attachPoint.position, me.transform.position);
-                        if (cd > 1.3f) { moveTo(chair.m_attachPoint.position, 0.6f, false); Brain.Status(st, "taking a seat by you"); return true; }
-                        if (TakeChair(st, chair)) { Brain.Status(st, "sitting with you"); return true; }
+                        if (cd > 1.3f) { moveTo(chair.m_attachPoint.position, 0.6f, false); Brain.Status(st, P("aicompanion_idle_status_taking_seat")); return true; }
+                        if (TakeChair(st, chair)) { Brain.Status(st, P("aicompanion_idle_status_sitting_with_you")); return true; }
                     }
                     if (d > 3.5f) return false; // (closer first)
                 }
                 SitDown(st);
                 lookAt(master.GetHeadPoint());
-                Brain.Status(st, youSit ? "sitting with you" : "taking a rest while you look around");
+                Brain.Status(st, P(youSit ? "aicompanion_idle_status_sitting_with_you" : "aicompanion_idle_status_resting_while_you_look"));
                 return true;
             }
             if (d < 6f && still > 2f) lookAt(master.GetHeadPoint());
@@ -268,7 +269,8 @@ namespace AICompanion
         {
             Humanoid me = st.Body;
             if (Time.time >= st.IdleUntil || (st.IdlePlan != IdlePlan.None && !StillGood(st))) Pick(st, center, radius);
-            string note = st.WorkNote != null ? $" ({st.WorkNote})" : "";
+            // what it is doing, with why it has no job in brackets (its work note): packed text, Words.P
+            string With(string what) => st.WorkNote != null ? P("aicompanion_idle_with_note", what, st.WorkNote) : what;
             bool youNear = master != null && Vector3.Distance(master.transform.position, me.transform.position) < 8f;
             switch (st.IdlePlan)
             {
@@ -276,40 +278,40 @@ namespace AICompanion
                 {
                     Chair chair = st.IdleChair;
                     float d = Vector3.Distance(chair.m_attachPoint.position, me.transform.position);
-                    string name = Localization.instance.Localize(chair.m_name).ToLowerInvariant();
-                    if (st.SitChair != chair && d > 1.3f) { moveTo(chair.m_attachPoint.position, 0.6f, d > 12f); Brain.Status(st, $"going to sit on the {name}{note}"); return true; }
+                    string name = chair.m_name;
+                    if (st.SitChair != chair && d > 1.3f) { moveTo(chair.m_attachPoint.position, 0.6f, d > 12f); Brain.Status(st, With(P("aicompanion_idle_status_going_to_sit", Low(name)))); return true; }
                     if (!TakeChair(st, chair)) { st.IdlePlan = IdlePlan.None; st.IdleUntil = 0f; return true; } // (taken meanwhile: something else)
-                    Brain.Status(st, (st.IdleFire != null ? $"sitting by the fire on the {name}" : $"sitting on the {name}") + note);
+                    Brain.Status(st, With(P(st.IdleFire != null ? "aicompanion_idle_status_sitting_by_fire_on" : "aicompanion_idle_status_sitting_on", Low(name))));
                     return true;
                 }
                 case IdlePlan.Fire:
                 {
                     float d = Vector3.Distance(st.IdleAt, me.transform.position);
-                    if (!st.Sitting && d > 0.8f) { moveTo(st.IdleAt, 0.4f, d > 12f); Brain.Status(st, "going to the fire" + note); return true; }
+                    if (!st.Sitting && d > 0.8f) { moveTo(st.IdleAt, 0.4f, d > 12f); Brain.Status(st, With(P("aicompanion_idle_status_going_to_fire"))); return true; }
                     stop();
                     lookAt(st.IdleFire.transform.position + Vector3.up * 0.5f);
                     SitDown(st);
                     bool cold = EnvMan.IsCold() || EnvMan.IsWet() || me.GetSEMan().HaveStatusEffect(SEMan.s_statusEffectWet) || Evening();
-                    Brain.Status(st, (cold ? "warming itself by the fire" : "resting by the fire") + note);
+                    Brain.Status(st, With(P(cold ? "aicompanion_idle_status_warming" : "aicompanion_idle_status_resting_fire")));
                     return true;
                 }
                 case IdlePlan.Shelter:
                 {
                     float d = Vector3.Distance(st.IdleAt, me.transform.position);
-                    if (d > 0.8f) { moveTo(st.IdleAt, 0.4f, true); Brain.Status(st, "getting out of the rain" + note); return true; }
+                    if (d > 0.8f) { moveTo(st.IdleAt, 0.4f, true); Brain.Status(st, With(P("aicompanion_idle_status_getting_out_of_rain"))); return true; }
                     stop();
                     if (youNear) lookAt(master.GetHeadPoint()); else LookAround(st, lookAt);
                     if (Time.time - st.StillSince > 15f) SitDown(st);
-                    Brain.Status(st, "keeping out of the rain" + note);
+                    Brain.Status(st, With(P("aicompanion_idle_status_out_of_rain")));
                     return true;
                 }
                 case IdlePlan.Stroll:
                 {
                     float d = Vector3.Distance(st.IdleAt, me.transform.position);
-                    if (d > 1f && Time.time - st.IdleSince < 25f) { moveTo(st.IdleAt, 0.6f, false); Brain.Status(st, "taking a stroll" + note); return true; }
+                    if (d > 1f && Time.time - st.IdleSince < 25f) { moveTo(st.IdleAt, 0.6f, false); Brain.Status(st, With(P("aicompanion_idle_status_stroll"))); return true; }
                     stop();
                     if (youNear) lookAt(master.GetHeadPoint()); else LookAround(st, lookAt);
-                    Brain.Status(st, "looking about" + note);
+                    Brain.Status(st, With(P("aicompanion_idle_status_looking_about")));
                     return true;
                 }
             }

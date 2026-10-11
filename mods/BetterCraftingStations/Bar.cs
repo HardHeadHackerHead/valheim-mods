@@ -5,6 +5,7 @@ using HarmonyLib;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
+using static DHack.Shared.Translations;
 
 namespace BetterCraftingStations
 {
@@ -149,7 +150,7 @@ namespace BetterCraftingStations
 
             var typeRow = new List<(string, bool, Action)>
             {
-                ($"All {All.Count}", !Filters.Active(state), () => { state.Type = null; state.Tier = -1; state.CanCraft = false; }),
+                (T("bettercraftingstations_all", All.Count), !Filters.Active(state), () => { state.Type = null; state.Tier = -1; state.CanCraft = false; }),
             };
             var noType = new Filters.State { Tier = state.Tier, CanCraft = state.CanCraft };
             foreach (string t in typesHere)
@@ -157,9 +158,9 @@ namespace BetterCraftingStations
                 string type = t;
                 int n = Count(r => Classify.TypeOf(r) == type, noType);
                 if (n == 0 && state.Type != type) continue;
-                typeRow.Add(($"{type} {n}", state.Type == type, () => state.Type = state.Type == type ? null : type));
+                typeRow.Add((T("bettercraftingstations_chip", Classify.Label(type), n), state.Type == type, () => state.Type = state.Type == type ? null : type));
             }
-            typeRow.Add(("Can craft", state.CanCraft, () => state.CanCraft = !state.CanCraft));
+            typeRow.Add((T("bettercraftingstations_can_craft"), state.CanCraft, () => state.CanCraft = !state.CanCraft));
             rows.Add(typeRow);
 
             if (tiersHere.Count > 1)
@@ -171,7 +172,7 @@ namespace BetterCraftingStations
                     int tier = t;
                     int n = Count(r => Classify.TierOf(r) == tier, noTier);
                     if (n == 0 && state.Tier != tier) continue;
-                    tierRow.Add(($"{Classify.TierNames[tier]} {n}", state.Tier == tier, () => state.Tier = state.Tier == tier ? -1 : tier));
+                    tierRow.Add((T("bettercraftingstations_chip", T(Classify.TierNames[tier]), n), state.Tier == tier, () => state.Tier = state.Tier == tier ? -1 : tier));
                 }
                 rows.Add(tierRow);
             }
@@ -184,7 +185,7 @@ namespace BetterCraftingStations
                 float x = 0f;
                 foreach (var chip in row)
                 {
-                    float w = Mathf.Max(28f, chip.Label.Length * 6.3f + 10f);
+                    float w = Mathf.Max(28f, chip.Label.Sum(c => c >= 0x2E80 ? 2 : 1) * 6.3f + 10f);   // (Chinese letters take two widths)
                     if (x > 0f && x + w > width) { x = 0f; y += ChipHeight + Gap; }   // (the row wraps)
                     Chips.Add(MakeChip(template, chip.Label, chip.On, chip.Click, gui, x, y, w));
                     x += w + Gap;

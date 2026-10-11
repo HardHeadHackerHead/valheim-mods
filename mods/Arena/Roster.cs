@@ -1,16 +1,23 @@
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
+using static DHack.Shared.Translations;
 
 namespace Arena
 {
     /// <summary>Who you fight, and what they pay, by how far into the game you are (the bosses you have beaten, as the Bounty Board counts them).</summary>
     internal static class Roster
     {
-        internal static readonly string[] TierNames = { "Meadows", "Black Forest", "Swamp", "Mountains", "Plains", "Mistlands", "Ashlands" };
+        internal static readonly string[] TierNames = { "Meadows", "Black Forest", "Swamp", "Mountains", "Plains", "Mistlands", "Ashlands" };   // (in English: the log, commands)
+        private static readonly string[] Biomes = { "$biome_meadows", "$biome_blackforest", "$biome_swamp", "$biome_mountain", "$biome_plains", "$biome_mistlands", "$biome_ashlands" };
         private static readonly string[] BossKeys = { "defeated_eikthyr", "defeated_gdking", "defeated_bonemass", "defeated_dragon", "defeated_goblinking", "defeated_queen", "defeated_fader" };
-        private static readonly string[] Origins = { "From the green Meadows", "Out of the dark of the Black Forest", "Risen from the stinking Swamp", "Down from the frozen Mountains",
-                                                     "Across the burning Plains", "Out of the Mist", "Forged in the fires of the Ashlands" };
+
+        /// <summary>A land's name in the player's language (the game's own).</summary>
+        internal static string LandName(int tier)
+        {
+            int t = Mathf.Clamp(tier, 0, Biomes.Length - 1);
+            return Localization.instance != null ? Localization.instance.Localize(Biomes[t]) : TierNames[t];
+        }
 
         // Prefab names by tier, easiest first: those the game does not have are left out.
         private static readonly string[][] Fodder =
@@ -47,7 +54,7 @@ namespace Arena
         };
 
         private static readonly string[] FirstNames = { "Grimtooth", "Ironjaw", "Bloodaxe", "Skullsplitter", "Stormhide", "Nightmaw", "Ragnok", "Hrafn", "Thundergut", "Old Scar", "Wyrmbane", "Fenwick", "Grundr", "Ulfgar", "Morgrim", "Hakon" };
-        private static readonly string[] Epithets = { "the Mauler", "the Unbroken", "Crowd-Eater", "the Brute", "of the Pit", "Kneebreaker", "the Hungry", "the Relentless", "Bonecruncher", "the Undefeated" };
+        private const int Epithets = 10;   // (arena_epithet_0 to 9: the Mauler, the Unbroken, Crowd-Eater, the Brute, of the Pit, Kneebreaker, the Hungry, the Relentless, Bonecruncher, the Undefeated)
 
         // Materials a tier pays beside coins.
         private static readonly string[] Materials = { "Flint", "Bronze", "Iron", "Silver", "BlackMetal", "Eitr", "FlametalNew" };
@@ -90,7 +97,7 @@ namespace Arena
                 string n = c != null && Localization.instance != null ? Localization.instance.Localize(c.m_name) : p;
                 if (!names.Contains(n)) names.Add(n);
             }
-            return names.Count == 0 ? "nobody" : string.Join(", ", names);
+            return names.Count == 0 ? T("arena_nobody") : string.Join(", ", names);
         }
 
         /// <summary>A land's champions (those the game has).</summary>
@@ -154,11 +161,23 @@ namespace Arena
                 Character c = ZNetScene.instance.GetPrefab(p)?.GetComponent<Character>();
                 return c != null && Localization.instance != null ? Localization.instance.Localize(c.m_name) : p;
             }).Distinct().ToList();
-            return names.Count == 0 ? "none" : names.Count == 1 ? "a great " + names[0] : "a great " + string.Join(", ", names.Take(names.Count - 1)) + " or " + names.Last();
+            return names.Count == 0 ? T("arena_champion_none") : names.Count == 1 ? T("arena_champion_one", names[0])
+                 : T("arena_champion_list", string.Join(", ", names.Take(names.Count - 1)), names.Last());
         }
 
-        internal static string ChampionName() => FirstNames[Random.Range(0, FirstNames.Length)] + " " + Epithets[Random.Range(0, Epithets.Length)];
-        internal static string Origin(int tier) => Origins[Mathf.Clamp(tier, 0, Origins.Length - 1)];
+        /// <summary>A new champion's name, as Words (a name and an epithet, which each game puts in its own language).</summary>
+        internal static string ChampionName() => Words.Champion(Random.Range(0, FirstNames.Length), Random.Range(0, Epithets));
+
+        /// <summary>A champion's name from its Words ("first.epithet").</summary>
+        internal static string ChampionName(string code)
+        {
+            string[] f = code.Split('.');
+            if (f.Length != 2 || !int.TryParse(f[0], out int first) || !int.TryParse(f[1], out int epithet)) return code;
+            return T("arena_champion_name", FirstNames[Mathf.Clamp(first, 0, FirstNames.Length - 1)], T($"arena_epithet_{Mathf.Clamp(epithet, 0, Epithets - 1)}"));
+        }
+
+        /// <summary>Where a land's champion comes from, the announcer's line (its key).</summary>
+        internal static string Origin(int tier) => "arena_origin_" + Mathf.Clamp(tier, 0, BossKeys.Length - 1);
 
         /// <summary>The prefab for one fighter of a round: later rounds lean on the harder ones in the tier's list.</summary>
         internal static string Pick(int tier, float lean)

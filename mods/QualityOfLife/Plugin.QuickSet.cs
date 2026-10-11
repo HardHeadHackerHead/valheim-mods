@@ -4,6 +4,7 @@ using System.Linq;
 using HarmonyLib;
 using TMPro;
 using UnityEngine;
+using static DHack.Shared.Translations;
 
 namespace QualityOfLife
 {
@@ -52,12 +53,12 @@ namespace QualityOfLife
             if (IsQuick(item))
             {
                 item.m_customData.Remove(Tag);
-                Tell(player, $"Removed from quick set: {NameOf(item)}");
+                Tell(player, T("qualityoflife_quick_removed", NameOf(item)));
             }
             else
             {
                 item.m_customData[Tag] = "1";
-                Tell(player, $"Added to quick set: {NameOf(item)}");
+                Tell(player, T("qualityoflife_quick_added", NameOf(item)));
             }
         }
 
@@ -69,7 +70,7 @@ namespace QualityOfLife
             List<ItemDrop.ItemData> quick = player.GetInventory().GetAllItems().Where(IsQuick).ToList();
             if (quick.Count == 0)
             {
-                Tell(player, $"No quick items yet. Open your inventory, hover an item and press {_quickSetKey.Value}.");
+                Tell(player, T("qualityoflife_quick_none", _quickSetKey.Value));
                 return;
             }
 
@@ -78,7 +79,7 @@ namespace QualityOfLife
                 // Remember what we had on, then equip the set.
                 _quickBefore = EquippedNow(player);
                 _quickSwapped = true;
-                Run(Equip(player, quick, null, "Quick set equipped"));
+                Run(Equip(player, quick, null, T("qualityoflife_quick_equipped")));
             }
             else if (_quickSwapped && _quickBefore != null)
             {
@@ -86,11 +87,11 @@ namespace QualityOfLife
                 List<ItemDrop.ItemData> back = _quickBefore.Where(i => player.GetInventory().ContainsItem(i)).ToList();
                 List<ItemDrop.ItemData> remove = quick.Where(q => !back.Contains(q)).ToList(); // set items we didn't have before
                 _quickSwapped = false;
-                Run(Equip(player, back, remove, "Back to your previous gear"));
+                Run(Equip(player, back, remove, T("qualityoflife_quick_back")));
             }
             else
             {
-                Tell(player, "Quick set is already equipped.");
+                Tell(player, T("qualityoflife_quick_already"));
             }
         }
 
@@ -125,13 +126,14 @@ namespace QualityOfLife
             }
             string key = _quickSetKey.Value.MainKey.ToString();
             if (key.Length > 5) key = "*";
+            string keep = T("qualityoflife_badge_keep");
 
             for (int i = 0; i < elements.Count; i++)
             {
                 var cell = elements[i] as InventoryElement;
                 if (cell == null) continue;
                 Badge(cell.transform, QuickBadgeName, _quickCells.Contains(i), key, true);
-                Badge(cell.transform, KeepBadgeName, i == keepCell, "KEEP", false);
+                Badge(cell.transform, KeepBadgeName, i == keepCell, keep, false);
             }
         }
 

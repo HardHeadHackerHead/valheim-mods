@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using UnityEngine;
+using static DHack.Shared.Translations;
 
 namespace Recycler
 {
@@ -37,10 +38,10 @@ namespace Recycler
 
         public bool UseItem(Humanoid user, ItemDrop.ItemData item) => false;
 
-        public string GetHoverText() => Localization.instance.Localize(
-            $"Recycler\n[<color=yellow><b>$KEY_Use</b></color>] Recycle gear\n<size=14>Returns {Calc.Percent(this)}% of the materials (presses: {RecyclerPress.CountNear(transform.position)}/2)</size>");
+        public string GetHoverText() => Localization.instance.Localize(T("recycler_piece") + "\n[<color=yellow><b>$KEY_Use</b></color>] " + T("recycler_hover_use") +
+            "\n<size=14>" + T("recycler_hover_share", Calc.Percent(this), RecyclerPress.CountNear(transform.position)) + "</size>");
 
-        public string GetHoverName() => "Recycler";
+        public string GetHoverName() => T("recycler_piece");
         public float GetHoverOffset() => 0f;
 
         /// <summary>The game's crafting sounds and sparks, played when something is recycled.</summary>
@@ -77,8 +78,8 @@ namespace Recycler
             return Mathf.Min(n, 2);
         }
 
-        public string GetHoverText() => Localization.instance.Localize("Recycler Press\n<size=14>Raises the share returned by a Recycler within 8 m</size>");
-        public string GetHoverName() => "Recycler Press";
+        public string GetHoverText() => T("recycler_press") + "\n<size=14>" + T("recycler_press_hover") + "</size>";
+        public string GetHoverName() => T("recycler_press");
         public float GetHoverOffset() => 0f;
     }
 }

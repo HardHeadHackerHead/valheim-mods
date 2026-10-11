@@ -1,0 +1,5 @@
+{
+  "buildfromchests_chat_reloaded": "{0} v{1} recargado | {2}, radio {3} m",
+  "buildfromchests_short": "Ya no hay suficiente {0} en los cofres",
+  "buildfromchests_have": "Tienes {0}  (inventario {1}, cofres {2})"
+}

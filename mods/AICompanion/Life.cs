@@ -63,7 +63,7 @@ namespace AICompanion
             {
                 s.NextTick = Time.time + 1f;
                 foreach (Meal m in s.Meals) m.Time -= 1f * Game.m_foodRate;
-                foreach (Meal done in s.Meals.Where(m => m.Time <= 0f).ToList()) { s.Meals.Remove(done); st.Remember($"finished its {Name(done.Item)}"); }
+                foreach (Meal done in s.Meals.Where(m => m.Time <= 0f).ToList()) { s.Meals.Remove(done); st.Remember(Words.P("aicompanion_life_finished_meal", Words.Low(done.Item.m_shared.m_name))); }
                 c.SetMaxHealth(MaxHealth(c));
                 // Into its save only when something changed: a meal started or ended (or once a minute, for whoever runs it next), and its
                 // most stamina by a whole point. Each write sends its whole save, its bag too, to every player (it was every second).
@@ -92,8 +92,6 @@ namespace AICompanion
             }
             if (Time.time >= s.NextEat) { s.NextEat = Time.time + 2f; TryEat(c, s, st); }
         }
-
-        private static string Name(ItemDrop.ItemData i) => Localization.instance.Localize(i.m_shared.m_name);
 
         public const string FrugalKey = "dhc_frugal", AteDayKey = "dhc_ateday", AteNKey = "dhc_aten";
 
@@ -124,7 +122,7 @@ namespace AICompanion
             if (best.m_shared.m_consumeStatusEffect != null) c.GetSEMan().AddStatusEffect(best.m_shared.m_consumeStatusEffect, true);
             c.m_consumeItemEffects.Create(c.transform.position, Quaternion.identity);
             c.GetInventory().RemoveOneItem(best);
-            st.Remember($"ate {Name(best)}");
+            st.Remember(Words.P("aicompanion_life_ate", best.m_shared.m_name));
             ZDO ate = Companion.Zdo(c);
             if (ate != null) { int day = Journal.Day; ate.Set(AteNKey, (ate.GetInt(AteDayKey, -1) == day ? ate.GetInt(AteNKey, 0) : 0) + 1); ate.Set(AteDayKey, day); }
             s.NextTick = 0f;
@@ -234,10 +232,10 @@ namespace AICompanion
             {
                 l.Value = Mathf.Min(100f, l.Value + 1f);
                 l.Progress = 0f;
-                string skill = Localization.instance.Localize("$skill_" + type.ToString().ToLower());
-                Brain.Get(c)?.Remember($"{skill} skill: {(int)l.Value}");
+                string skill = "$skill_" + type.ToString().ToLower();   // (the game's token: each player's game names it)
+                Brain.Get(c)?.Remember(Words.P("aicompanion_life_skill_level", skill, (int)l.Value));
                 Journal.Skill(c, skill, (int)l.Value);
-                if (Companion.Master(c) == Player.m_localPlayer) Plugin.Tell($"{Companion.NameOf(c)}'s {skill} skill: {(int)l.Value}"); // (top left, out of the chat's way)
+                if (Companion.Master(c) == Player.m_localPlayer) Plugin.Tell(Words.P("aicompanion_life_skill_tell", Companion.NameOf(c), skill, (int)l.Value)); // (top left, out of the chat's way)
             }
             Companion.Zdo(c)?.Set(Key, Write(map));
         }
@@ -337,22 +335,22 @@ namespace AICompanion
 
         private static bool Scuffed(ItemDrop.ItemData i) => i.m_shared.m_useDurability && i.m_shared.m_canBeReparied && i.GetMaxDurability() > 0f && i.m_durability < i.GetMaxDurability() - 0.5f;
 
-        /// <summary>You sent it from its menu: everything it has that is worn at all, to the nearest station that can fix it. What it says.</summary>
+        /// <summary>You sent it from its menu: everything it has that is worn at all, to the nearest station that can fix it. What it says (packed text, Words.P).</summary>
         public static string Order(BrainState st, out bool going)
         {
             Humanoid me = st.Body;
             going = false;
             var worn = me.GetInventory().GetAllItems().Where(Scuffed).ToList();
-            if (worn.Count == 0) return "My gear is in good shape.";
+            if (worn.Count == 0) return Words.P("aicompanion_life_gear_fine");
             CraftingStation station = (Stations() ?? new List<CraftingStation>()).Where(s => s != null && Vector3.Distance(s.transform.position, me.transform.position) < 60f && worn.Any(i => CanRepairAt(i, s)))
                                           .OrderBy(s => Vector3.Distance(s.transform.position, me.transform.position)).FirstOrDefault();
-            if (station == null) return "There's no workbench or forge near that can fix my gear.";
+            if (station == null) return Words.P("aicompanion_life_no_station");
             st.RepairAt = station;
             st.RepairSince = Time.time;
             st.RepairAll = true;
             st.NextRepairLook = Time.time + 60f;
             going = true;
-            return $"Taking my gear to the {Localization.instance.Localize(station.m_name).ToLowerInvariant()}.";
+            return Words.P("aicompanion_life_taking_gear", Words.Low(station.m_name));
         }
 
         /// <summary>True while it is busy going to a station and repairing (the rest of its peaceful behaviour waits).</summary>
@@ -374,7 +372,7 @@ namespace AICompanion
             CraftingStation station = st.RepairAt;
             if (Time.time - st.RepairSince > 30f) { st.RepairAt = null; return false; } // could not get there
             float d = Vector3.Distance(station.transform.position, me.transform.position);
-            if (d > 2.6f) { moveTo(station.transform.position, 1.8f, d > 8f); Brain.Status(st, $"going to the {Localization.instance.Localize(station.m_name)} to repair its gear"); return true; }
+            if (d > 2.6f) { moveTo(station.transform.position, 1.8f, d > 8f); Brain.Status(st, Words.P("aicompanion_life_status_going_repair", station.m_name)); return true; }
             stop();
             var fixedItems = new List<string>();
             bool everything = st.RepairAll;
@@ -383,14 +381,14 @@ namespace AICompanion
             {
                 Skill.Raise(me, Skills.SkillType.Crafting, 1f - item.m_durability / item.GetMaxDurability()); // (as a player's repair)
                 item.m_durability = item.GetMaxDurability();
-                fixedItems.Add(Localization.instance.Localize(item.m_shared.m_name));
+                fixedItems.Add(item.m_shared.m_name);   // (tokens: each player's game names them)
             }
             if (fixedItems.Count > 0)
             {
                 Companion.SaveBag(me);
                 station.m_repairItemDoneEffects.Create(station.transform.position, Quaternion.identity);
-                st.Remember($"repaired {string.Join(", ", fixedItems)} at the {Localization.instance.Localize(station.m_name)}");
-                Plugin.Instance?.Note($"{Companion.NameOf(me)} repaired {string.Join(", ", fixedItems)}");
+                st.Remember(Words.P("aicompanion_life_repaired", string.Join(", ", fixedItems), station.m_name));
+                Plugin.Instance?.Note($"{Companion.NameOf(me)} repaired {Localization.instance.Localize(string.Join(", ", fixedItems))}");
             }
             st.RepairAt = null;
             return false;
@@ -446,7 +444,7 @@ namespace AICompanion
             Rigidbody body = me.GetComponent<Rigidbody>();
             if (body != null) { body.linearVelocity = Vector3.zero; body.isKinematic = true; body.detectCollisions = false; } // a passenger, not a weight pushing on the deck
             st.Ai.StopMoving();
-            st.Remember("boarded the boat");
+            st.Remember(Words.P("aicompanion_life_boarded"));
             Plugin.Instance?.Note($"{Companion.NameOf(me)} boarded {Utils.GetPrefabName(ship.gameObject)}{(seat != null ? " and sat down" : "")}");
         }
 
@@ -461,7 +459,7 @@ namespace AICompanion
             Rigidbody body = me.GetComponent<Rigidbody>();
             if (body != null) { body.position = pos; body.rotation = rot; } // (kinematic: no velocity to clear)
             if (st.Seat != null) Anim(me)?.SetBool(st.Seat.m_attachAnimation, true); // kept up (free when already set)
-            Brain.Status(st, "riding along");
+            Brain.Status(st, Words.P("aicompanion_life_status_riding"));
         }
 
         private static void Off(BrainState st, Player master)
@@ -472,7 +470,7 @@ namespace AICompanion
             if (body != null) { body.isKinematic = false; body.detectCollisions = true; }
             st.Riding = null;
             st.Seat = null;
-            if (master != null && master.IsOnGround()) Brain.TeleportBehind(me, master, "stepped off the boat beside");
+            if (master != null && master.IsOnGround()) Brain.TeleportBehind(me, master, "aicompanion_brain_stepped_off_boat");
         }
 
         public static void Forget()

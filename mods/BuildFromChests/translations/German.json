@@ -1,0 +1,5 @@
+{
+  "buildfromchests_chat_reloaded": "{0} v{1} neu geladen | {2}, Radius {3} m",
+  "buildfromchests_short": "Nicht mehr genug {0} in den Truhen",
+  "buildfromchests_have": "Du hast {0}  (Inventar {1}, Truhen {2})"
+}

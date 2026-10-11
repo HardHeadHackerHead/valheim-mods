@@ -1,5 +1,6 @@
 using System.Linq;
 using UnityEngine;
+using static AICompanion.Words;
 
 namespace AICompanion
 {
@@ -29,7 +30,7 @@ namespace AICompanion
                 else if (Time.time - st.MasterGoneSince > 60f && bed)
                 {
                     st.MasterGoneSince = 0f;
-                    if (Home.GoHome(me, true, false)) { st.Remember("its player left, so it went home"); Plugin.Instance?.Note($"{Companion.NameOf(me)} went home: its player left"); }
+                    if (Home.GoHome(me, true, false)) { st.Remember(P("aicompanion_needs_player_left")); Plugin.Instance?.Note($"{Companion.NameOf(me)} went home: its player left"); }
                 }
                 return;
             }
@@ -38,22 +39,23 @@ namespace AICompanion
             if ((Time.time < st.CommandUntil || st.Area != null) && (st.Task != null || st.PickQueue.Count > 0 || st.Area != null) && me.GetHealthPercentage() > 0.4f) return; // what you pointed it at first (the whole patch), then home; badly hurt: home now
 
             Inventory inv = me.GetInventory();
-            string need, topic, ask;
+            string topic, item = null;   // (each need its own sentences: "aicompanion_needs_<topic>_home", "_ask", "_went")
             ItemDrop.ItemData breaking = inv.GetAllItems().FirstOrDefault(i => (me.IsItemEquiped(i) || Work.IsTool(i)) && i.m_shared.m_useDurability && i.m_shared.m_canBeReparied
                                                                               && i.GetMaxDurability() > 0f && i.m_durability < i.GetMaxDurability() * 0.1f);
-            if (inv.GetEmptySlots() == 0 || Carry.Weight(me) > Carry.Max(me) * 0.95f) { need = "My bag is full"; topic = "bag"; ask = "Take something from it, or send me home."; }
-            else if (breaking != null) { need = $"My {Localization.instance.Localize(breaking.m_shared.m_name).ToLowerInvariant()} is about to break"; topic = "worn"; ask = "A workbench would fix it."; }
-            else if (!inv.GetAllItems().Any(Food.IsFood) && Food.Meals(me).Count == 0) { need = "I'm out of food"; topic = "food"; ask = "Give me something to eat (my Gear tab)."; }
+            if (inv.GetEmptySlots() == 0 || Carry.Weight(me) > Carry.Max(me) * 0.95f) topic = "bag";
+            else if (breaking != null) { topic = "worn"; item = Low(breaking.m_shared.m_name); }
+            else if (!inv.GetAllItems().Any(Food.IsFood) && Food.Meals(me).Count == 0) topic = "food";
             else return;
 
             bool homeNear = Work.HasHome(me) && Vector3.Distance(Work.Center(me), me.transform.position) < 200f;
             if (homeNear)
             {
                 if (!Home.GoHome(me, true, false)) return;
-                Talk.Tell(me, $"{need}, so I'm going home to sort it out. Hold {Plugin.MenuKey.Value} to call me back.", "need:" + topic, 3f);
-                st.Remember($"went home by itself ({need.ToLowerInvariant()})");
+                string key = Plugin.MenuKey.Value.ToString();
+                Talk.Tell(me, item != null ? P("aicompanion_needs_" + topic + "_home", item, key) : P("aicompanion_needs_" + topic + "_home", key), "need:" + topic, 3f);
+                st.Remember(item != null ? P("aicompanion_needs_" + topic + "_went", item) : P("aicompanion_needs_" + topic + "_went"));
             }
-            else Talk.Tell(me, $"{need}. {ask}", "need:" + topic, 5f);
+            else Talk.Tell(me, item != null ? P("aicompanion_needs_" + topic + "_ask", item) : P("aicompanion_needs_" + topic + "_ask"), "need:" + topic, 5f);
         }
     }
 }

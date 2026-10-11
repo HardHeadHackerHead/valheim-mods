@@ -1,0 +1,19 @@
+{
+  "birdtrap_piece": "Trampa para pájaros",
+  "birdtrap_piece_desc": "Una caja de listones con una trampilla sujeta por un palo. Ponle bayas o semillas como cebo y déjala a cielo abierto: al rato un pájaro entra de un salto, la trampilla cae y puedes desplumarlo para sacar plumas.",
+  "birdtrap_full": "No cabe más cebo",
+  "birdtrap_need_bait": "Necesitas bayas o semillas como cebo",
+  "birdtrap_baited": "Cebo puesto: {0} ({1}/{2})",
+  "birdtrap_gone": "El pájaro ya no está",
+  "birdtrap_caught": "¡Ha caído una gaviota!",
+  "birdtrap_hover_pluck": "Desplumarla y soltarla",
+  "birdtrap_no_bait": "Sin cebo: los pájaros no vienen a una trampa vacía",
+  "birdtrap_roof": "Los pájaros no vienen bajo un techo",
+  "birdtrap_night": "Los pájaros duermen de noche: vendrá uno por la mañana",
+  "birdtrap_soon": "Lista. Un pájaro debería venir en unos {0} min",
+  "birdtrap_any_moment": "Lista. Un pájaro debería venir en cualquier momento",
+  "birdtrap_bait_state": "Cebo: {0}/{1}  ·  {2}",
+  "birdtrap_hover_add": "Poner cebo (bayas o semillas)",
+  "birdtrap_hover_fill": "Llenarla de cebo",
+  "birdtrap_plucked": "Desplumas la gaviota y la sueltas: {0} plumas"
+}

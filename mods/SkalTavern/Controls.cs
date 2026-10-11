@@ -1,6 +1,7 @@
 using System.Text;
 using HarmonyLib;
 using UnityEngine;
+using static DHack.Shared.Translations;
 
 namespace SkalTavern
 {
@@ -43,7 +44,7 @@ namespace SkalTavern
                 {
                     _nextFlip = t + Random.Range(16f, 32f);
                     _flipUntil = t + 1.3f;
-                    __instance.Message(MessageHud.MessageType.TopLeft, "The room spins...");
+                    __instance.Message(MessageHud.MessageType.TopLeft, T("skaltavern_room_spins"));
                 }
                 if (t < _flipUntil) movedir = -movedir;
             }
