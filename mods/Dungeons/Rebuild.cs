@@ -206,6 +206,7 @@ namespace Dungeons
             int gen = zdo.GetInt(Keys.Gen) + 1;
             zdo.Set(Keys.Gen, gen);
             Sweep.Everywhere(site.Id, gen, false);
+            Strays.Around(site.EntrancePos, Dungeons.UnknownReach, 15f);   // (laid out again by then: what's left outside its new box)
             zdo.Set(Keys.Done, "");
             zdo.Set(Keys.Mechs, "");
             zdo.Set(Keys.Encounters, "");
@@ -248,8 +249,15 @@ namespace Dungeons
                 if (prefab.GetComponent<Player>() != null) continue;
                 if (prefab.GetComponent<Character>() != null)
                 {
-                    // a tame that followed someone in goes out with the loose things; the dungeon's own creatures go (they come again)
-                    if (z.GetBool(ZDOVars.s_tamed)) { Place(z, Ground(Spot(outside, right, outward, moved), outside.y), false); moved++; }
+                    // a dungeon's creature goes (they come again); a tame that followed someone in, or any creature no dungeon spawns (a
+                    // companion, another mod's), goes out with the loose things: never removed
+                    if (z.GetBool(ZDOVars.s_tamed) || !Strays.DungeonCreature(prefab.name))
+                    {
+                        Vector3 outAt = Ground(Spot(outside, right, outward, moved), outside.y);
+                        Place(z, outAt, false);
+                        Plugin.Log.LogInfo($"Dungeon {id} built again: {prefab.name} (tame, or not a dungeon's creature) moved out to its entrance, {outAt}");
+                        moved++;
+                    }
                     else if (Sweep.Destroy(z)) removed++;
                     continue;
                 }
@@ -264,11 +272,86 @@ namespace Dungeons
             if (moved > 0 || removed > 0) Plugin.Log.LogInfo($"Dungeon {id} built again: {moved} gravestones, items and tames moved out to its entrance, {removed} creatures and keys removed");
         }
 
+        // ---- a dungeon's chests (removed by a reset, a remake or a remove): what's in them goes out to the entrance
+
+        private static readonly Dictionary<string, int> OutCount = new Dictionary<string, int>();   // spots used per dungeon (spread out)
+
+        /// <summary>
+        /// The server, a dungeon chest about to be destroyed: what's in it dropped on the ground in front of its dungeon's entrance, never
+        /// where the chest stood (a reset or remake changes what's under it: dropped there it fell, and the net put it back inside). Loot
+        /// as the builder put it, untouched (Keys.LootSig), isn't given out: the dungeon makes new. The entrance gone (a remove, an
+        /// orphan): the ground under the chest. False: it can't (the chest is kept).
+        /// </summary>
+        public static bool EmptyOut(string id, ZDO chest, Inventory inv)
+        {
+            if (inv == null || inv.NrOfItems() == 0) return true;
+            int sig = chest != null ? chest.GetInt(Keys.LootSig) : 0;
+            if (sig != 0 && Builder.LootSignature(chest) == sig) { inv.RemoveAll(); return true; }
+            bool atEntrance = OutsideOf(id, out Vector3 outside, out Vector3 outward);
+            if (!atEntrance)
+            {
+                if (chest == null) return false;
+                outside = chest.GetPosition();
+                outside.y = -1000f;
+                outside = Ground(outside, -1000f);
+                outward = Vector3.forward;
+            }
+            outward.y = 0f;
+            outward = outward.sqrMagnitude < 0.01f ? Vector3.forward : outward.normalized;
+            Vector3 right = Vector3.Cross(Vector3.up, outward);
+            int i = OutCount.TryGetValue(id ?? "", out int used) ? used : 0;
+            var given = new List<string>();
+            foreach (ItemDrop.ItemData item in inv.GetAllItems().ToList())
+            {
+                if (item?.m_dropPrefab == null) continue;
+                Vector3 at = Ground(Spot(outside, right, outward, i++ % 25), outside.y);
+                ItemDrop.DropItem(item, item.m_stack, at, Quaternion.Euler(0f, UnityEngine.Random.Range(0f, 360f), 0f));
+                given.Add($"{item.m_dropPrefab.name} x{item.m_stack}");
+            }
+            OutCount[id ?? ""] = i;
+            inv.RemoveAll();
+            Plugin.Log.LogInfo($"Dungeon {id}: a chest of it removed, what was in it put on the ground {(atEntrance ? "in front of its entrance" : "under it (its entrance is gone)")} at {outside}: {string.Join(", ", given)}");
+            return true;
+        }
+
+        /// <summary>A dungeon's way out (the ground in front of its entrance) and which way is out: from its site here, else (the server)
+        /// from its entrance's saved object.</summary>
+        public static bool OutsideOf(string id, out Vector3 outside, out Vector3 outward)
+        {
+            outside = outward = Vector3.zero;
+            if (string.IsNullOrEmpty(id)) return false;
+            Site site = Dungeons.Sites.FirstOrDefault(s => !s.Gone && s.Id == id);
+            if (site != null) { outside = Dungeons.OutsidePoint(site); outward = site.EntranceRot * Vector3.forward; return true; }
+            if (ZDOMan.instance == null) return false;
+            ZDO z = Objects(ZDOMan.instance).Values.FirstOrDefault(e => e != null && Entrance.IsEntrance(e.GetPrefab()) && e.GetString(Keys.Id) == id);
+            if (z == null) return false;
+            Vector3 pos = z.GetPosition();
+            outward = z.GetRotation() * Vector3.forward;
+            outside = pos + outward * EntranceLooks.Get(Entrance.LookOf(z)).Front;
+            float ground = ZoneSystem.instance != null ? ZoneSystem.instance.GetGroundHeight(outside) : outside.y;
+            outside.y = Mathf.Max(pos.y, ground) + 0.3f;
+            return true;
+        }
+
+        /// <summary>A spot on the ground in front of a dungeon's entrance, a little apart from the last (the safety net: an item that fell
+        /// out of a dungeon goes there).</summary>
+        public static Vector3 OutsideSpot(Site site) => NextSpot(site.Id, Dungeons.OutsidePoint(site), site.EntranceRot * Vector3.forward);
+
+        /// <summary>The next spot on the ground in front of a dungeon's entrance (spread out over 25 spots).</summary>
+        internal static Vector3 NextSpot(string id, Vector3 outside, Vector3 outward)
+        {
+            outward.y = 0f;
+            outward = outward.sqrMagnitude < 0.01f ? Vector3.forward : outward.normalized;
+            int i = OutCount.TryGetValue(id ?? "", out int used) ? used : 0;
+            OutCount[id ?? ""] = i + 1;
+            return Ground(Spot(outside, Vector3.Cross(Vector3.up, outward), outward, i % 25), outside.y);
+        }
+
         private static Vector3 Spot(Vector3 outside, Vector3 right, Vector3 outward, int i) =>
             outside + right * ((i % 5) - 2) * 0.9f + outward * (i / 5) * 0.9f;
 
         /// <summary>The ground at a point (what's built there, or the terrain), never below the entrance's own height.</summary>
-        private static Vector3 Ground(Vector3 p, float atLeast)
+        internal static Vector3 Ground(Vector3 p, float atLeast)
         {
             float y = ZoneSystem.instance != null ? ZoneSystem.instance.GetGroundHeight(p) : p.y;
             if (WorldGenerator.instance != null) y = Mathf.Max(y, WorldGenerator.instance.GetHeight(p.x, p.z));
@@ -278,7 +361,7 @@ namespace Dungeons
             return new Vector3(p.x, Mathf.Max(y, atLeast - 2f) + 0.5f, p.z);
         }
 
-        private static void Place(ZDO z, Vector3 to, bool grave)
+        internal static void Place(ZDO z, Vector3 to, bool grave)
         {
             z.SetOwner(ZDOMan.GetSessionID());
             z.SetPosition(to);

@@ -36,7 +36,7 @@ Enemies and loot that fit the land
 Coming back new
 - Some in-game days after a dungeon was first entered (3, set by the server), it comes back new: its enemies, its loot and its puzzle.
 - It never happens while anyone is inside.
-- Anything you left in one of its chests is dropped on the floor first, so you don't lose it. Creatures still alive and items on the floor stay.
+- Anything you left in one of its chests is put on the ground in front of the entrance, so you don't lose it. Creatures still alive and items on the floor stay.
 
 Safe inside
 - You can't fall out of a dungeon. If you get there before it has formed (after a teleport, or a lag spike), you are held still until it has.

@@ -94,6 +94,15 @@ second) gets its inventory replaced by fresh copies of the last saved items over
 (wear, repairs) are lost, and anything holding a reference to an item (what a Humanoid has equipped) points at an old copy. AICompanion
 skips the reload on the game that owns the companion, after loading once when it takes ownership (`Container_Load_Companion`).
 
+## A container's saved contents are bytes, not a string
+
+A `Container` saves its inventory into its ZDO as a **byte array** (`Container.Save` writes `ZDOVars.s_items` with `Set(..., byte[])`).
+Read with `zdo.GetString(ZDOVars.s_items)` it is always `""`, so any check that asks "is this chest empty?" (or "is its loot still
+untouched?") from the string always says yes. Quad's Dungeons did exactly that when cleaning up chests that weren't loaded: it destroyed
+them with whatever players had left inside, and a hash of the string to spot untouched loot would have deleted touched loot on every
+reset. Read the contents with `zdo.GetByteArray(ZDOVars.s_items)` (null or empty: nothing saved), or load them into an `Inventory`, and
+test every "empty" or "untouched" check with a chest that holds something.
+
 ## Keep a moving object's ZDO small
 
 The game sends a ZDO whole (every key) to each player near it whenever its revision changes, and any `Set` that changes a value bumps it,

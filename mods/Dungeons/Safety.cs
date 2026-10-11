@@ -156,9 +156,10 @@ namespace Dungeons
             {
                 if (z.Created) continue;
                 Vector3 p = z.GetPosition();
-                if (p.y < 3000f || Transient(z.GetPrefab()) || !MustWait(p)) continue;
+                if (p.y < 3000f || Transient(z.GetPrefab()) || !MustWait(p, out bool known)) continue;
                 z.Created = true;
                 Waiting.Add(z);
+                if (!known) Strays.Held(p);   // (no dungeon known over it: the server looks, and moves it down if none is)
             }
         }
 
@@ -175,11 +176,19 @@ namespace Dungeons
         /// <summary>A saved object above 3000 m waits unless a dungeon built here covers it, or it's in one of the game's own interiors
         /// (a location in its zone), or the dungeon covering it can never be built (then it may fall to the ground beside its entrance:
         /// better than gone). Its dungeon may not be known here yet at all: its entrance's zone may load after its own.</summary>
-        private static bool MustWait(Vector3 p)
+        private static bool MustWait(Vector3 p, out bool known)
         {
             Site site = Dungeons.Covering(p);
+            known = site != null;
             if (site != null) return !site.Ready && site.Problem == null;
             return Location.GetZoneLocation(p) == null;
+        }
+
+        /// <summary>A saved object this game holds back on purpose (above 3000 m, waiting for its dungeon): not one a teleport waits for.</summary>
+        public static bool Holds(ZDO z)
+        {
+            Vector3 p = z.GetPosition();
+            return p.y >= 3000f && !Transient(z.GetPrefab()) && MustWait(p, out _);
         }
 
         // ---- what's only passing ----
@@ -189,7 +198,7 @@ namespace Dungeons
         /// <summary>A prefab that's only passing: a sound or an effect (sfx_, vfx_, fx_, or a ZSFX or TimedDestruction with nothing to keep:
         /// no item, character or gravestone), or a projectile in flight (an arrow becomes an item when it lands). Neither held back nor put
         /// back by the net: it goes by itself.</summary>
-        private static bool Transient(int prefabHash)
+        internal static bool Transient(int prefabHash)
         {
             if (TransientPrefabs.TryGetValue(prefabHash, out bool known)) return known;
             if (ZNetScene.instance == null) return false;
@@ -242,12 +251,18 @@ namespace Dungeons
                     site.Box(out Bounds box);
                     if (pos.y >= box.min.y - 1f || pos.x < box.min.x || pos.x > box.max.x || pos.z < box.min.z || pos.z > box.max.z) continue;
                     // a creature goes back into the room it fell from (the room over it), or, with none over it (it never was in the
-                    // dungeon: a spawner left outside its rooms), is taken away: never stacked at the way in
+                    // dungeon: a spawner left outside its rooms), is taken away if a dungeon could have spawned it: never stacked at the way
+                    // in. One no dungeon spawns (a companion, another mod's) or a tame goes out to the entrance instead, never removed.
                     if (view.GetComponent<Character>() != null)
                     {
                         if (RoomFloor(site, pos, out Vector3 floor)) ToMove.Add(new KeyValuePair<ZNetView, Vector3>(view, floor));
+                        else if (kv.Key.GetBool(ZDOVars.s_tamed) || !Strays.DungeonCreature(Utils.GetPrefabName(view.gameObject)))
+                            ToMove.Add(new KeyValuePair<ZNetView, Vector3>(view, Rebuild.OutsideSpot(site)));
                         else ToRemove.Add(view);
                     }
+                    // a dropped item that isn't one of the dungeon's own: out to the ground in front of its entrance, never a guessed floor
+                    // in its layout (after a remake that's another room, maybe behind a shut gate)
+                    else if (belongs.Length == 0 && view.GetComponent<ItemDrop>() != null) ToMove.Add(new KeyValuePair<ZNetView, Vector3>(view, Rebuild.OutsideSpot(site)));
                     else ToMove.Add(new KeyValuePair<ZNetView, Vector3>(view, FloorUnder(site, pos, false)));
                     break;
                 }
@@ -347,6 +362,34 @@ namespace Dungeons
         }
 
         private static void Finalizer() => Safety.LetGo();
+    }
+
+    // A teleport waits for its area to be ready (Player.UpdateTeleport: every saved object in its zone and the ones round it made): the
+    // ones Safety holds back on purpose don't count, or a teleport near a dungeon's leftovers waited for ever (a black screen). Only when
+    // every missing one is held: anything else missing still means not ready.
+    [HarmonyPatch(typeof(ZNetScene), nameof(ZNetScene.IsAreaReady))]
+    internal static class ZNetScene_IsAreaReady
+    {
+        private static readonly List<ZDO> Near = new List<ZDO>();
+
+        private static void Postfix(ZNetScene __instance, Vector3 point, ref bool __result)
+        {
+            if (__result || ZoneSystem.instance == null || ZDOMan.instance == null) return;
+            Vector2s zone = ZoneSystem.GetZone(point);
+            if (!ZoneSystem.instance.IsZoneLoaded(zone)) return;
+            Near.Clear();
+            ZDOMan.instance.FindSectorObjects(zone, new SimulationDistance(1, 0), Near);
+            bool held = false;
+            foreach (ZDO z in Near)
+            {
+                int prefab = z.GetPrefab();
+                if (prefab == 0 || __instance.GetPrefab(prefab) == null || __instance.FindInstance(z) != null) continue;
+                if (!Safety.Holds(z)) return;
+                held = true;
+            }
+            if (held) __result = true;
+            Near.Clear();
+        }
     }
 
     // Leaving the world: every dungeon built here goes, and the packs are read again for the next world (its DungeonDB).

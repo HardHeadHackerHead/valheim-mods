@@ -42,8 +42,12 @@ Read `docs/modding-pitfalls.md` too before changing the mod's code: it has the r
   pose each frame; only changes of state are sent. Whoever stands on a moving part is carried with it (`Mechs.cs`: the game's own
   ground force needs a Rigidbody and doesn't lift, so we move the character ourselves, up, down and round).
 - **Resets**: `ResetDays` in-game days (server setting, default 3; 0 never) after the dungeon was first entered, once nobody is inside,
-  the owner clears the state: saved parts removed and made again (a chest's contents dropped on the floor first), mechanisms back at their
-  start, encounters idle. Creatures still alive and dropped items stay.
+  the owner clears the state: saved parts removed and made again, mechanisms back at their start, encounters idle. Creatures still
+  alive and dropped items stay. **Chest contents** (`Rebuild.EmptyOut`): on a reset, a remake, a remove or a stale part, anything a
+  player left in a dungeon chest goes on the ground in front of the entrance, outside, spread out; never where the chest stood. Loot the
+  builder put there that nobody touched (the chest's `quaddungeon_lootsig` still matches its items) just goes: the dungeon makes new. With
+  the entrance gone (a remove, an orphan), the contents go on the ground under the chest. A chest in use, or whose contents can't be read,
+  is kept.
 - **Safety** (`Safety.cs`): log out inside and the logout point is the entrance (also if the mod is removed meanwhile). A player above a
   dungeon not built yet is held still until it is, or taken out to its entrance. Saved objects above 3000 m aren't made on a game until a
   dungeon is built under them there. What falls out anyway goes back to its floor; a gravestone to the spot it was made. Our teleports
@@ -77,8 +81,8 @@ Read `docs/modding-pitfalls.md` too before changing the mod's code: it has the r
     who blocked one.
 - **What a remake does to things inside:** dropped items and gravestones go to the ground in front of the entrance, spread out (a
   gravestone's death spot moves with it); what's on pedestals is handed back outside; tames that followed someone in go outside; the
-  dungeon's creatures and key items are removed and made again; its chests and other saved parts are removed (a chest's contents dropped
-  first) and made again. Nothing is lost and nothing falls.
+  dungeon's creatures and key items are removed and made again; its chests and other saved parts are removed (what players left in a chest
+  goes outside the entrance first) and made again. Nothing is lost and nothing falls.
 - **Multiplayer: only the server's (or host's) set counts.** When a player joins, the server sends its whole set (built in plus its config
   folder, gzipped, in 64 KB parts) unless the player's set is already the same (same hash), and the player uses exactly that set while
   connected. Players install no pack files; their own are ignored on that server and come back when they play alone or host. Until the
@@ -269,7 +273,7 @@ Each of these happened in a test. Don't undo the fix; check new work against it.
 6. **Remove and reset must reach unloaded parts.** A dungeon is bigger than what's loaded round anyone (up to 320 m), so removing only the
    loaded parts left spawners standing in the air where no room was any more, and their skeletons fell. `Sweep.cs`: the server goes
    through every ZDO by its dungeon tag; a client asks it. Orphans (parts of a dungeon whose entrance is gone) are listed and removed by
-   `dungeon orphans`, and by the host every 10 minutes. An unloaded chest that still holds something is left alone.
+   `dungeon orphans`, and by the host every 10 minutes. A chest that still holds something a player left is emptied out to the entrance first, loaded or not; one in use is left alone.
 7. **Big layouts reach beyond the loaded zones.** Two gravestones fell 5000 m in the first Shifting Halls test: the player came back from
    the side, the far end's zone loaded before the entrance's, and nothing knew a dungeon was there. Now anything saved above 3000 m waits
    until a dungeon is built under it on that game (within 480 m of an entrance not yet laid out), a dungeon stays built while its player is
@@ -337,6 +341,14 @@ Each of these happened in a test. Don't undo the fix; check new work against it.
     be part of a design.
 24. **Run the harness on every pack change.** It takes 30-60 s with the gap check (the giant ribcage alone is about 2000 boxes) and exits
     1 on any pack problem, failed seed, fault or gap finding.
+25. **Chest contents never drop where the chest stood.** A reset or a remake changes what's under a chest: its contents dropped there
+    fell, and the safety net put them back inside the dungeon. Now what a player left goes on the ground in front of the entrance, and
+    untouched builder loot is dropped silently (`Keys.LootSig`).
+26. **A chest's saved contents are bytes.** `ZDOVars.s_items` is a byte array (`Container.Save` writes bytes). Read with `GetString` it
+    is always `""`, so "is this unloaded chest empty?" always said yes: from when `Sweep.cs` went in until the fix, it destroyed unloaded
+    dungeon chests with whatever players had left in them, and the first `LootSig` check would have deleted touched loot on every reset
+    without a word. Read `s_items` with `GetByteArray` (or load the chest's `Inventory`), and test every "is it empty / untouched" check
+    with a chest that holds something.
 
 ## Not built yet
 

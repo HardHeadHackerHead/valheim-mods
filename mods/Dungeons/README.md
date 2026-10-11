@@ -7,7 +7,7 @@
 
 **Dungeons made from a seed: go in through a giant's iron door, turn the stairs and pull the levers to reach the vault, and fight enemies that fit the land outside. Each dungeon comes back new a few days later.**
 
-![version: 0.2.0](https://img.shields.io/badge/version-0.2.0-3b6e8f?style=flat-square)  ![multiplayer: only who wants it](https://img.shields.io/badge/multiplayer-only%20who%20wants%20it-7a5c2e?style=flat-square)  ![made with: Claude Code](https://img.shields.io/badge/made%20with-Claude%20Code-c26a3d?style=flat-square)
+![version: 0.2.1](https://img.shields.io/badge/version-0.2.1-3b6e8f?style=flat-square)  ![multiplayer: only who wants it](https://img.shields.io/badge/multiplayer-only%20who%20wants%20it-7a5c2e?style=flat-square)  ![made with: Claude Code](https://img.shields.io/badge/made%20with-Claude%20Code-c26a3d?style=flat-square)
 
 <!-- GITHUB-ONLY -->[Thunderstore](https://thunderstore.io/c/valheim/p/Quads_Lab/Quads_Dungeons/)  ·  <!-- END GITHUB-ONLY -->[Source code](https://github.com/HardHeadHackerHead/valheim-mods/tree/main/mods/Dungeons)  ·  [Report a bug](https://github.com/HardHeadHackerHead/valheim-mods/issues/new?template=bug.yml&title=%5BQuad%27s%20Dungeons%5D%20)  ·  [Discord](https://discord.gg/EwTjQxEZPy)
 
@@ -58,7 +58,7 @@ Dungeons don't appear in the world by themselves yet. For now, an admin or a tes
 
 - Some in-game days after a dungeon was first entered (3, set by the server), it comes back new: its enemies, its loot and its puzzle.
 - It never happens while anyone is inside.
-- Anything you left in one of its chests is dropped on the floor first, so you don't lose it. Creatures still alive and items on the floor stay.
+- Anything you left in one of its chests is put on the ground in front of the entrance, so you don't lose it. Creatures still alive and items on the floor stay.
 
 ### Safe inside
 
@@ -140,6 +140,12 @@ In `BepInEx/config/com.quad.dungeons.cfg`, made the first time the game runs wit
 |---|---|---|
 | `ResetDays` | `3` | In-game days after a dungeon is first entered before it comes back new: its enemies, loot and puzzle (only once nobody is inside). 0: never. [Synced with Server] |
 
+**2 - Pack making**
+
+| Setting | Default | What it does |
+|---|---|---|
+| `ReloadPacksOnSave` | `false` | Reload BepInEx/config/Dungeons/packs a second after a file there is saved (as `dungeon reload`), in single player or as the host. Dungeons of a changed pack are remade, unless someone is inside. For people making packs; off for play. |
+
 ## 🤖 Made with AI
 
 Made with the help of Claude (Anthropic), with Claude Code: designed, written and checked together, and tried in the game.
@@ -172,8 +178,8 @@ and tested in our own world, with **bobisme** as our tester.
 
 ## 📜 Recent changes
 
+- **0.2.1** Fixes from the first play of 0.2.0. Going through the shortcut could leave you on a black screen for good: a teleport no longer waits for things the mod holds back above a dungeon on purpose. Things left floating where no dungeon is any more (from a removed or rebuilt dungeon) are cleaned up by the server: items, gravestones and tames come down in front of the nearest entrance, the dungeon's own leftover enemies are removed, and other creatures (a companion, another mod's) are only ever moved, never removed. dungeon remove also clears the enemies its dungeon spawned, and dungeon orphans reports and removes these strays. Chests: what you left in a dungeon chest is put on the ground in front of the entrance when the dungeon resets, is rebuilt or removed (before, a chest far from every player could be destroyed with what was in it, and chest contents dropped where the chest stood could fall), and loot nobody touched is simply cleared. The cleanup now also runs on a dedicated server.
 - **0.2.0** Rooms with jobs, a boss and a map. Fight rooms: a lever or a step starts the waves, the doors lock, kill them all (an elite last) and the gate opens with an unlock sound. The Clockwork Warden: a boss room before the vault with the game's boss bar, phases at 66% and 33% (hammers that slam, gears that speed up, blocks that rise, more enemies) and a trophy. Rewards worth the climb: one roll from the vault per player, giant cogs, richer chests fitted to the land. Secret rooms behind cracked walls you break with a pickaxe or club, shown on the map once broken. A shortcut back to the entrance hall, opened from the deep end. The game's dungeon and boss music, per room and per fight. A dungeon map on M (and on the minimap) with fog of war: only rooms you've been in, stairs, gates, levers and blocks in their current state. For pack makers: triggers and actions (puzzles as data), building blocks any pack can re-theme (pedestal, brazier, push block, trap, teleporter, lock with key items, checkpoint), packs and entrance looks from BepInEx/config/Dungeons, sent by the server to every player, a version check (the server and every player need the same version), dungeon reload and dungeon respawn to try a pack without restarting, and a skill for making dungeons (skill/). Fixes: levers that look like levers and lock after one pull, E finds the lever you face, gears you can't walk through, no balcony jumps past a puzzle, a way through the giant's ribs, lanterns on chains, leftover spawners from removed dungeons swept away (dungeon orphans), and a dungeon rebuilt after a pack change moves gravestones and dropped items out to its entrance instead of letting them fall.
 - **0.1.0** First test release (the F7 feed). The Shifting Halls remade as a Giants' clockwork vault, every room our own: grausten and black marble, bronze gears that turn, chains, cold blue light, a giant's door into a hill. Enemies and loot fit the land the entrance stands in (spawners swapped, chests refilled, nothing above the land's tier to pick, break or take). Entrance looks are data (packs/looks). Layouts are made on a background thread and the game's rooms load in the background, so a dungeon appears without a stutter. dungeon remove. For now dungeons are put down with a test command (claude dungeon spawn shiftinghalls, single player, the host or devcommands).
-- **0.0.2** Steps 2 and 3: moving parts and puzzles, and the Shifting Halls. Mechanisms in the rooms (levers, pressure plates, gates and doors, platforms, turning stairs, rotating rooms) whose state is kept on the entrance and whose motion comes from the server's clock, so every player sees them in the same place; only the entrance's owner changes them (a lever's pull is checked to come from someone standing at it); what stands on a moving part goes with it; some turn by themselves on a timer; resets put them all back. The game's own lever words and sound (the Obliterator's) and its gate sounds. Real entrances: the Black Forest's burial chamber for the crypts, a black marble Dvergr gate, and a giant's door into a hill with the giant's bones around it (one saved prefab per look). Machinery's gears turn while their mechanism moves. Test commands dungeon mechs, use, set and solve; dungeon state shows the mechanisms and the solution. Gravestones and everything else saved inside never fall: anything saved above 3000 m waits until a dungeon is built under it on that game (the zone of a gravestone can load before the zone of its dungeon's entrance), a dungeon stays built while its player is inside even when its entrance's zone unloads, and whatever falls out of one anyway is put back on its floor (a gravestone at the spot it was made). dungeon bring <player>.
 
 <!-- GITHUB-ONLY -->[Every change](CHANGELOG.txt)<!-- END GITHUB-ONLY --><!-- THUNDERSTORE-ONLY: Every change is on the Changelog tab. -->

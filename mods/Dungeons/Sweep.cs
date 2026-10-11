@@ -25,7 +25,6 @@ namespace Dungeons
         private static readonly int PartGenHash = Keys.PartGen.GetStableHashCode();
         private static readonly int EncHash = MechSet.EncounterTag.GetStableHashCode();
         private static readonly AccessTools.FieldRef<ZDOMan, Dictionary<ZDOID, ZDO>> Objects = AccessTools.FieldRefAccess<ZDOMan, Dictionary<ZDOID, ZDO>>("m_objectsByID");
-        private static readonly System.Reflection.MethodInfo DropAllItems = AccessTools.Method(typeof(Container), "DropAllItems", Type.EmptyTypes);
         private static float _nextOrphans = 600f;
 
         /// <summary>The dungeon id a saved object belongs to (a part, or an encounter's creature), or "".</summary>
@@ -76,8 +75,9 @@ namespace Dungeons
                 Plugin.Log.LogInfo($"Dungeon {id}: {removed} of its saved objects removed wherever they were{(kept > 0 ? $", {kept} left (chests still holding something, or in use)" : "")}");
         }
 
-        /// <summary>Removes one saved object: loaded, as RemoveParts does (a chest emptied onto the floor first); not loaded, through ZDOMan,
-        /// unless it's a chest that holds something. False when it's left.</summary>
+        /// <summary>Removes one saved object (the server): loaded, through ZNetScene; not loaded, through ZDOMan. A chest holding something
+        /// is emptied out to its dungeon's entrance first (Rebuild.EmptyOut); one in use, or whose contents can't be read, is left. False
+        /// when it's left.</summary>
         public static bool Destroy(ZDO z)
         {
             ZNetView view = ZNetScene.instance != null ? ZNetScene.instance.FindInstance(z) : null;
@@ -89,34 +89,32 @@ namespace Dungeons
                 {
                     if (z.GetInt(ZDOVars.s_inUse) == 1) return false;
                     view.ClaimOwnership();
-                    if (chest.GetInventory().NrOfItems() > 0)
-                    {
-                        if (DropAllItems == null) return false;
-                        DropAllItems.Invoke(chest, null);
-                    }
+                    if (chest.GetInventory().NrOfItems() > 0 && !Rebuild.EmptyOut(DungeonOf(z), z, chest.GetInventory())) return false;
                 }
                 view.ClaimOwnership();
                 ZNetScene.instance.Destroy(view.gameObject);
                 return true;
             }
             Container template = prefab != null ? prefab.GetComponent<Container>() : null;
-            if (template != null && HoldsItems(z, template)) return false;
+            if (template != null)
+            {
+                Inventory saved = Saved(z, template);
+                if (saved == null) return false;   // (can't read it: kept)
+                if (saved.NrOfItems() > 0 && (z.GetInt(ZDOVars.s_inUse) == 1 || !Rebuild.EmptyOut(DungeonOf(z), z, saved))) return false;
+            }
             z.SetOwner(ZDOMan.GetSessionID());
             ZDOMan.instance.DestroyZDO(z);
             return true;
         }
 
-        private static bool HoldsItems(ZDO z, Container template)
+        /// <summary>An unloaded chest's saved contents (empty when it has none); null when they can't be read.</summary>
+        private static Inventory Saved(ZDO z, Container template)
         {
-            string saved = z.GetString(ZDOVars.s_items);
-            if (string.IsNullOrEmpty(saved)) return false;
-            try
-            {
-                var inv = new Inventory("quaddungeon_check", null, Math.Max(1, template.m_width), Math.Max(1, template.m_height));
-                inv.Load(new ZPackage(saved));
-                return inv.NrOfItems() > 0;
-            }
-            catch (Exception) { return true; }   // (can't tell: keep it)
+            var inv = new Inventory("quaddungeon_check", null, Math.Max(1, template.m_width), Math.Max(1, template.m_height));
+            byte[] saved = z.GetByteArray(ZDOVars.s_items);   // (the game keeps it as bytes, not a string)
+            if (saved == null || saved.Length == 0) return inv;
+            try { inv.Load(new ZPackage(saved)); return inv; }
+            catch (Exception) { return null; }
         }
 
         // ---- orphans
@@ -142,10 +140,12 @@ namespace Dungeons
                 if (!remove) continue;
                 if (Destroy(z)) removed++; else kept++;
             }
+            JObject strays = Strays.All(remove);   // (untagged things high up where no dungeon is: Strays.cs)
             if (remove && found > 0) Plugin.Log.LogInfo($"Orphaned dungeon objects (their entrance is gone): {removed} removed{(kept > 0 ? $", {kept} chests still holding something left" : "")}");
             return new JObject
             {
                 ["dungeonsInWorld"] = live.Count,
+                ["strays"] = strays,
                 ["orphans"] = found,
                 ["byDungeon"] = new JObject(by.Select(kv => new JProperty(kv.Key, new JObject(kv.Value.OrderByDescending(x => x.Value).Select(x => new JProperty(x.Key, x.Value)))))),
                 ["removed"] = remove ? removed : (JToken)null,
@@ -156,8 +156,9 @@ namespace Dungeons
         /// <summary>The host, every 10 minutes while a dungeon is known here: orphans removed.</summary>
         public static void Tick()
         {
-            if (ZNet.instance == null || !ZNet.instance.IsServer() || Dungeons.Sites.Count == 0 || Time.time < _nextOrphans) return;
+            if (ZNet.instance == null || !ZNet.instance.IsServer() || Time.time < _nextOrphans) return;
             _nextOrphans = Time.time + 600f;
+            if (Dungeons.Sites.Count == 0 && Dungeons.EntranceZdos().Count == 0) return;   // (a dedicated server has no sites: any entrance in the world)
             try { Orphans(true); }
             catch (Exception e) { Plugin.Log.LogWarning("Removing orphaned dungeon objects: " + e.Message); }
         }

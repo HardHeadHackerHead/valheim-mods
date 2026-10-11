@@ -239,7 +239,7 @@ namespace Dungeons
             bool fromPack = pool.Count > 0;
             if (!fromPack) pool = TableLoot(fit, vault);
             inv.RemoveAll();
-            if (pool.Count == 0) { fit.LootNotes.Add($"{label}: chest left empty (no loot fits)"); return; }
+            if (pool.Count == 0) { fit.LootNotes.Add($"{label}: chest left empty (no loot fits)"); StampLoot(chest); return; }
 
             var put = new List<string>();
             float total = pool.Sum(p => p.weight);
@@ -256,6 +256,30 @@ namespace Dungeons
             if (vault) Reward(inv, CogItem, rng.Next(1, 4), put);
             if (boss) Reward(inv, TrophyItem, 1, put);
             fit.LootNotes.Add($"{label}: chest ({lootTier}, {(fromPack ? "the pack's" : "the table's")}): {string.Join(", ", put)}");
+            StampLoot(chest);
+        }
+
+        /// <summary>A filled chest marked with what it holds as filled (Keys.LootSig = LootSignature, from its saved items, which its own
+        /// change event has just written): Runtime's Rebuild.EmptyOut gives out only what players have touched when the chest goes.</summary>
+        private static void StampLoot(Container chest)
+        {
+            ZNetView view = chest.m_rootObjectOverride != null ? chest.m_rootObjectOverride : chest.GetComponent<ZNetView>();
+            ZDO zdo = view != null ? view.GetZDO() : null;
+            if (zdo != null) zdo.Set(Keys.LootSig, LootSignature(zdo));
+        }
+
+        /// <summary>A chest's saved items as one number (a hash of its ZDO's s_items bytes, which the game keeps as a byte array, not a string);
+        /// never 0 (0: not stamped). Compare a chest's Keys.LootSig with this to tell untouched loot.</summary>
+        internal static int LootSignature(ZDO zdo)
+        {
+            byte[] items = zdo?.GetByteArray(ZDOVars.s_items);
+            if (items == null || items.Length == 0) return 1;
+            unchecked
+            {
+                int h = (int)2166136261;
+                foreach (byte b in items) h = (h ^ b) * 16777619;
+                return h == 0 ? 1 : h;
+            }
         }
 
         private static void Reward(Inventory inv, string item, int amount, List<string> put)

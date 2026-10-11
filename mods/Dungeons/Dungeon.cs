@@ -167,7 +167,6 @@ namespace Dungeons
         private static readonly HashSet<string> Warned = new HashSet<string>();
         private static readonly AccessTools.FieldRef<ZNetScene, Dictionary<ZDO, ZNetView>> Instances = AccessTools.FieldRefAccess<ZNetScene, Dictionary<ZDO, ZNetView>>("m_instances");
         private static readonly System.Reflection.FieldInfo AllLocations = AccessTools.Field(typeof(Location), "s_allLocations");
-        private static readonly System.Reflection.MethodInfo DropAllItems = AccessTools.Method(typeof(Container), "DropAllItems", Type.EmptyTypes);
 
         /// <summary>Our own id for a dungeon, saved on its entrance (a ZDOID changes every time the world loads).</summary>
         public static string NewId() => Guid.NewGuid().ToString("N").Substring(0, 12);
@@ -253,7 +252,7 @@ namespace Dungeons
 
         private static readonly List<ZDO> FoundZdos = new List<ZDO>();
 
-        private static List<ZDO> EntranceZdos()
+        internal static List<ZDO> EntranceZdos()
         {
             FoundZdos.Clear();
             foreach (string name in Entrance.PrefabNames)
@@ -473,6 +472,7 @@ namespace Dungeons
             RegisterRpcs();
             Sweep.Register();
             Rebuild.Register();
+            Strays.Register();
             Sweep.Tick();
             try { DungeonMusic.Update(); }
             catch (Exception e) { if (Warned.Add("music")) Plugin.Log.LogWarning("The dungeon's music: " + e); }
@@ -828,6 +828,7 @@ namespace Dungeons
         {
             int sig = Signature(site.Layout), gen = site.Zdo.GetInt(Keys.Gen);
             int removed = RemoveParts(site, z => z.GetInt(Keys.PartSig, 0) != sig || z.GetInt(Keys.PartGen, 0) != gen);
+            if (ChestsLeft > 0 && Time.time >= _nextChestSweep) { _nextChestSweep = Time.time + 30f; Sweep.Everywhere(site.Id, gen, false); }   // (old chests holding something: the server empties them)
             if (removed > 0) Plugin.Log.LogWarning($"Dungeon {site.Id}: {removed} saved parts of an older layout or an earlier reset removed");
         }
 
@@ -920,16 +921,23 @@ namespace Dungeons
             site.Mechs?.GiveBack();   // (triggers: what's on its pedestals dropped outside, never lost)
             int removed = RemoveParts(site);
             Sweep.Everywhere(site.Id, -1, true);   // (everything else of it, loaded or not: its parts and its encounters' creatures)
+            Strays.Around(site.EntrancePos, UnknownReach, 5f);   // (once its entrance is gone: what's left up there, untagged, moved down or removed)
             Plugin.Log.LogInfo($"Dungeon {site.Id} ({site.PackName} seed {site.Seed}) removed: its entrance and {removed} of its parts here (the rest wherever they are)");
             if (site.View != null) ZNetScene.instance.Destroy(site.View.gameObject);
             else if (site.Zdo != null) ZDOMan.instance.DestroyZDO(site.Zdo);
             return true;
         }
 
-        /// <summary>The saved objects the builder made for this dungeon (marked with its Id), loaded here: removed. A chest's contents are
-        /// dropped first (nobody loses what they put in one); one in use is left alone.</summary>
+        /// <summary>The saved objects the builder made for this dungeon (marked with its Id), loaded here: removed. A chest holding
+        /// something is left to the server's sweep, which empties it out to the entrance (Rebuild.EmptyOut): only one game ever empties a
+        /// chest (never twice), and never where it stood (a reset or remake changes the floor under it). On the server it's done here.
+        /// One in use is left alone. ChestsLeft: how many were left.</summary>
+        private static int ChestsLeft;
+        private static float _nextChestSweep;
+
         private static int RemoveParts(Site site, Func<ZDO, bool> which = null)
         {
+            ChestsLeft = 0;
             if (ZNetScene.instance == null || string.IsNullOrEmpty(site.Id)) return 0;
             var mine = Instances(ZNetScene.instance).Where(kv => kv.Value != null && kv.Key.GetString(Keys.PartOf) == site.Id && (which == null || which(kv.Key)))
                                                     .Select(kv => kv.Value).ToList();
@@ -943,11 +951,11 @@ namespace Dungeons
                 if (chest != null)
                 {
                     if (zdo.GetInt(ZDOVars.s_inUse) == 1) continue;
-                    view.ClaimOwnership();
                     if (chest.GetInventory().NrOfItems() > 0)
                     {
-                        if (DropAllItems == null) continue;   // (never destroy what we can't empty)
-                        DropAllItems.Invoke(chest, null);
+                        if (!ZNet.instance.IsServer()) { ChestsLeft++; continue; }
+                        view.ClaimOwnership();
+                        if (!Rebuild.EmptyOut(site.Id, zdo, chest.GetInventory())) continue;
                     }
                 }
                 view.ClaimOwnership();
