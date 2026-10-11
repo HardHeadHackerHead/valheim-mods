@@ -6,7 +6,7 @@ schemaVersion = "0.0.1"
 [package]
 namespace = "Quads_Lab"
 name = "Quads_Ledger_Chest"
-versionNumber = "1.0.4"
+versionNumber = "1.2.0"
 description = "A chest you build that shows everything in every chest around it, with a search: search all your chests and storage, and take anything from wherever it is."
 websiteUrl = "https://github.com/HardHeadHackerHead/valheim-mods/tree/main/mods/LedgerChest"
 containsNsfwContent = false

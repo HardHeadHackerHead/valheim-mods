@@ -6,7 +6,7 @@ schemaVersion = "0.0.1"
 [package]
 namespace = "Quads_Lab"
 name = "Quads_Ziplines"
-versionNumber = "0.2.3"
+versionNumber = "0.3.0"
 description = "Ziplines: build two posts, run a rope between them and ride it, hanging from your axe."
 websiteUrl = "https://github.com/HardHeadHackerHead/valheim-mods/tree/main/mods/Ziplines"
 containsNsfwContent = false

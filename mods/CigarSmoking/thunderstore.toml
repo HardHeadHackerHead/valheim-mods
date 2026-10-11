@@ -6,7 +6,7 @@ schemaVersion = "0.0.1"
 [package]
 namespace = "Quads_Lab"
 name = "Quads_Cigars"
-versionNumber = "0.3.2"
+versionNumber = "0.4.0"
 description = "Grow tobacco, cure it, roll your own cigars and smoke them: smoking as a real part of the game, from the wild plant to the cigar in your mouth."
 websiteUrl = "https://github.com/HardHeadHackerHead/valheim-mods/tree/main/mods/CigarSmoking"
 containsNsfwContent = false
