@@ -161,9 +161,8 @@ namespace JetSkis
             bags.transform.SetParent(root, false);
             foreach (float side in new[] { -1f, 1f })
             {
-                var bag = new GameObject(side < 0 ? "left" : "right") { layer = handles };
-                bag.transform.SetParent(bags.transform, false);
-                var bagBox = bag.AddComponent<BoxCollider>();
+                // both bags' hit boxes on the store's own object: the game only opens what is on the very object its look ray hits
+                var bagBox = bags.AddComponent<BoxCollider>();
                 bagBox.center = Model.BagCentre(side);
                 bagBox.size = new Vector3(0.2f, 0.4f, 0.36f);
             }
