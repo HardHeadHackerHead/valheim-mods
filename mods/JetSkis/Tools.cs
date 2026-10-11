@@ -34,7 +34,7 @@ namespace JetSkis
             try
             {
                 MethodInfo register = found.GetType().GetMethod("RegisterCommand", BindingFlags.Public | BindingFlags.Static);
-                register?.Invoke(null, new object[] { Plugin.Name, "jetski", "jetski status | anims [text] | spawn [metres ahead | at <x> <z>] | clear | remove | ride [far] | off | float | paint | base <attach animation> | pose on|off | tune [<key> <value>]... | bones: the rider's pose on a jet ski, for working on it",
+                register?.Invoke(null, new object[] { Plugin.Name, "jetski", "jetski status | anims [text] | spawn [metres ahead | at <x> <z>] | clear | remove | ride [far] | sit | off | float | paint | base <attach animation> | pose on|off | tune [<key> <value>]... | bones: the rider's pose on a jet ski, for working on it",
                     (Func<string[], Action<JObject>, Action<string>, IEnumerator>)Command });
             }
             catch (Exception e) { Plugin.Log.LogWarning("Could not add the jetski command to Claude Tools: " + e.Message); }
@@ -164,6 +164,17 @@ namespace JetSkis
                     return null;
                 }
 
+                case "sit":
+                {
+                    // the passenger seat of the nearest jet ski, as pressing E on it would (in reach)
+                    JetSki near = JetSki.Loaded.Where(j => j != null && j.PassengerSeat != null).OrderBy(j => Vector3.Distance(j.transform.position, me.transform.position)).FirstOrDefault();
+                    Chair seat = near != null ? near.GetComponentInChildren<Chair>() : null;
+                    if (seat == null) { error("no jet ski with a passenger seat near you"); return null; }
+                    seat.Interact(me, false, false);
+                    output(new JObject { ["sitting"] = me.IsAttached() });
+                    return null;
+                }
+
                 case "off":
                     me.StopDoodadControl();
                     if (me.IsAttached()) me.AttachStop();
@@ -196,7 +207,7 @@ namespace JetSkis
 
                 case "paint":
                 {
-                    // as Shift+E on the nearest jet ski would: its next colour
+                    // as E on the nearest jet ski's cowl would: its next colour
                     JetSki near = JetSki.Loaded.Where(j => j != null).OrderBy(j => Vector3.Distance(j.transform.position, me.transform.position)).FirstOrDefault();
                     if (near == null) { error("no jet ski loaded near you"); return null; }
                     near.NextPaint(me);

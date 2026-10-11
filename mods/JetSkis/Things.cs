@@ -156,6 +156,14 @@ namespace JetSkis
             chair.m_inShip = true;
             chair.m_detachOffset = new Vector3(0f, 0.6f, 0f);
 
+            // the cowl: look at it and press E to paint the jet ski (PaintSpot.cs)
+            var cowl = new GameObject("paint") { layer = handles };
+            cowl.transform.SetParent(root, false);
+            var cowlBox = cowl.AddComponent<BoxCollider>();
+            cowlBox.center = new Vector3(0f, 0.48f, 0.78f);
+            cowlBox.size = new Vector3(0.5f, 0.32f, 0.75f);
+            cowl.AddComponent<PaintSpot>();
+
             // the saddlebags: a small store, as the Karve's hold (its contents drop in a cargo crate if the jet ski breaks)
             var bags = new GameObject("saddlebags") { layer = handles };
             bags.transform.SetParent(root, false);

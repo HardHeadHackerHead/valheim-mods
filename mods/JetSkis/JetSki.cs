@@ -98,7 +98,7 @@ namespace JetSkis
 
         internal int PaintIndex => _nview.IsValid() ? _nview.GetZDO().GetInt(PaintKey) : 0;
 
-        /// <summary>Shift+E: the next colour (asked of the game that owns it, which saves it on the jet ski for everyone).</summary>
+        /// <summary>E on the cowl: the next colour (asked of the game that owns it, which saves it on the jet ski for everyone).</summary>
         internal void NextPaint(Player player)
         {
             if (!_nview.IsValid() || player == null) return;

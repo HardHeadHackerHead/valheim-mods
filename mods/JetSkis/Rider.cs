@@ -206,8 +206,9 @@ namespace JetSkis
         }
 
         /// <summary>
-        /// The passenger behind: leaning in a little, looking past the rider's shoulder, hands round the rider's waist (on the saddle's sides
-        /// when riding alone), feet on the pads behind the rider's.
+        /// The passenger behind, holding on: leant forward against the rider's back, head turned to the side (resting on it), arms wrapped
+        /// round the rider with the hands clasped in front of their waist and the elbows hugging their sides; feet on the pads behind the
+        /// rider's. Alone, they sit up with their hands on the saddle in front of them.
         /// </summary>
         private static void PosePassenger(Body b, JetSki ski, Body rider)
         {
@@ -216,20 +217,30 @@ namespace JetSkis
             Vector3 fwd = body.forward, up = body.up, right = body.right;
             float w = b.W;
             Ride(b, ski, up, out float steer, out float fast);
+            bool hug = rider != null && rider.Hips != null;
 
-            Turn(b.Spine1, right, 7f * w);
-            Turn(b.Spine2, right, 7f * w);
+            Turn(b.Spine1, right, (hug ? 16f : 6f) * w);
+            Turn(b.Spine2, right, (hug ? 14f : 6f) * w);
             Turn(b.Spine1, fwd, -steer * (4f + 8f * fast) * w);
-            Turn(b.Neck, right, -6f * w);
-            Turn(b.Head, up, (10f + steer * 12f) * w);   // (looking past the rider)
+            Turn(b.Neck, right, (hug ? -12f : -6f) * w);
+            Turn(b.Head, up, (hug ? 28f : 8f + steer * 12f) * w);   // (the cheek against the rider's back, or looking past them)
+            Turn(b.Head, fwd, (hug ? -8f : 0f) * w);
 
-            Vector3 waist = rider != null && rider.Hips != null ? rider.Hips.position : body.TransformPoint(new Vector3(0f, 0.85f, Model.SeatPoint.z));
             foreach (int side in new[] { -1, 1 })
             {
-                Vector3 hand = rider != null
-                    ? waist + right * side * 0.17f + up * 0.06f - fwd * 0.02f
-                    : body.TransformPoint(new Vector3(side * 0.22f, 0.7f, Model.PassengerPoint.z + 0.2f));
-                Vector3 elbow = -up * 0.6f + right * side + -fwd * 0.2f;
+                Vector3 hand, elbow;
+                if (hug)
+                {
+                    // round the rider's waist, the hands meeting in front of their belly
+                    Vector3 waist = rider.Hips.position;
+                    hand = waist + fwd * 0.15f + right * side * 0.06f + up * 0.13f;
+                    elbow = right * side - up * 0.35f - fwd * 0.2f;
+                }
+                else
+                {
+                    hand = body.TransformPoint(new Vector3(side * 0.16f, 0.76f, Model.PassengerPoint.z + 0.24f));
+                    elbow = right * side * 0.6f - up - fwd * 0.3f;
+                }
                 if (side < 0) Reach(b.LArm, b.LFore, b.LHand, hand, elbow, w);
                 else Reach(b.RArm, b.RFore, b.RHand, hand, elbow, w);
 

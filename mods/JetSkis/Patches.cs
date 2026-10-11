@@ -27,24 +27,9 @@ namespace JetSkis
             JetSki ski = JetSki.Of(__instance.m_ship);
             if (ski == null) return true;
             __result = false;
-            if (repeat || !(character is Player player) || player != Player.m_localPlayer) return false;
-            if (alt) ski.NextPaint(player);   // Shift+E: the next colour
-            else ski.Mount(player);
+            if (repeat || alt || !(character is Player player) || player != Player.m_localPlayer) return false;   // (Shift+E is other mods': Wayfinder names boats with it)
+            ski.Mount(player);
             return false;
-        }
-    }
-
-    /// <summary>The hover on a jet ski also says Shift+E paints it, and its colour now.</summary>
-    [HarmonyPatch(typeof(ShipControlls), nameof(ShipControlls.GetHoverText))]
-    internal static class ShipControlls_GetHoverText
-    {
-        private static void Postfix(ShipControlls __instance, ref string __result)
-        {
-            JetSki ski = JetSki.Of(__instance.m_ship);
-            if (ski == null) return;
-            string keys = !ZInput.IsNonClassicFunctionality() || !ZInput.IsGamepadActive() ? "$KEY_AltPlace + $KEY_Use" : "$KEY_AltKeys + $KEY_Use";   // (as the game's own item stand)
-            int paint = ((ski.PaintIndex % Effects.Paints.Length) + Effects.Paints.Length) % Effects.Paints.Length;
-            __result += Localization.instance.Localize("\n[<color=yellow><b>" + keys + "</b></color>] $jetskis_paint ($" + Effects.PaintKeys[paint] + ")");
         }
     }
 
