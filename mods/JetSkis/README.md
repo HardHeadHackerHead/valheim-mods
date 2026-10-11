@@ -46,13 +46,21 @@ Everyone in the world needs it installed.
 ## 📸 Screenshots
 
 <!-- HAND-WRITTEN: screenshots -->
-**The jet ski: a curled prow, the red cowl and iron handlebars, the leather saddle and the caged surtling core**
+**Full speed along the shore: hands on the grips, spray off the nozzle**
 
-<img src="images/1.png" alt="The jet ski" width="100%">
+<img src="images/1.png" alt="Riding a jet ski at full speed" width="100%">
 
-**Its side up close: the red band with bronze rivets, a round shield, the saddle and the core's cage**
+**From the side at dusk: the painted band's bronze rivets, a round shield, the saddle and the caged surtling core**
 
-<img src="images/2.png" alt="The jet ski's side up close" width="100%">
+<img src="images/2.png" alt="The jet ski from the side" width="100%">
+
+**From behind: the core glowing in its cage and the jet's spray on the water**
+
+<img src="images/3.png" alt="The jet ski from behind" width="100%">
+
+**Stopped on a misty morning: the curled prow, the painted cowl and the iron handlebars**
+
+<img src="images/4.png" alt="The jet ski stopped on a misty morning" width="100%">
 <!-- END HAND-WRITTEN: screenshots -->
 
 ## 🎮 How to use
