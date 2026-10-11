@@ -162,6 +162,8 @@ namespace AICompanion
         public int StuckFor;
         public int EnemyCountAtAsk;
         public string Status = "";
+        public string SavedStatus = "";                             // what its ZDO says it is doing (written at most once a second)
+        public float NextStatusSave;
 
         /// <summary>"$enemy_greyling 2": its name as the game's token (each player's game translates it) and a number.</summary>
         public string Label(Character c)
@@ -454,7 +456,8 @@ namespace AICompanion
             Container gear = me.GetComponent<Container>();
 
             if (!st.CaughtUp) CatchUp.OnArrive(st);
-            if (Companion.OrderOf(me) == Order.Gather && Time.time >= st.NextStamp) { st.NextStamp = Time.time + 5f; CatchUp.Stamp(me); }
+            if (Companion.OrderOf(me) == Order.Gather && Time.time >= st.NextStamp) { st.NextStamp = Time.time + 30f; CatchUp.Stamp(me); }
+            SaveStatus(st);
             Food.Tick(me, st);
             Activity.Tick(st);
             Following.Tick(st, master);
@@ -1156,7 +1159,25 @@ namespace AICompanion
             if (st.Status == status) return;
             st.Status = status;
             Activity.Log(st.Body, $"now: {status}  (hp {st.Body.GetHealth():0}/{st.Body.GetMaxHealth():0})");
-            Companion.Zdo(st.Body)?.Set(Keys.Status, status);
+            SaveStatus(st);
         }
+
+        /// <summary>
+        /// Its status into its ZDO, at most once a second (the latest one; Tick writes one that waited). Each write sends its whole ZDO to
+        /// every player near, and a status can flip back and forth; on this game Companion.StatusOf reads the live one.
+        /// </summary>
+        internal static void SaveStatus(BrainState st)
+        {
+            if (st.SavedStatus == st.Status || Time.time < st.NextStatusSave) return;
+            ZDO z = Companion.Zdo(st.Body);
+            if (z == null || !st.Body.GetComponent<ZNetView>().IsOwner()) return;
+            st.NextStatusSave = Time.time + 1f;
+            st.SavedStatus = st.Status;
+            z.Set(Keys.Status, st.Status);
+        }
+
+        /// <summary>The live status of one this game runs (null: not run here, read its ZDO).</summary>
+        internal static string LiveStatus(Humanoid h) =>
+            h != null && States.TryGetValue(h, out BrainState st) && st.Status != "" && h.GetComponent<ZNetView>() is ZNetView v && v.IsValid() && v.IsOwner() ? st.Status : null;
     }
 }

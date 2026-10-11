@@ -28,6 +28,7 @@ namespace AICompanion
 
         private static readonly Dictionary<long, Seen> Remote = new Dictionary<long, Seen>();
         private static readonly List<Fallen> RecentlyFallen = new List<Fallen>();
+        private static readonly Dictionary<long, KeyValuePair<string, float>> LastSent = new Dictionary<long, KeyValuePair<string, float>>(); // id -> (Gist, when)
         private static ZRoutedRpc _registeredOn;
         private static float _nextSend, _nextMarkerCheck;
         private static int _peers, _registerAfterFrame;
@@ -41,11 +42,13 @@ namespace AICompanion
         public static void Stop()
         {
             AppDomain.CurrentDomain.SetData("DHack.Companions", null);
+            Book.Stop();
             RemoveLivePins();
             Unregister();
             _registeredOn = null;
             Remote.Clear();
             RecentlyFallen.Clear();
+            LastSent.Clear();
         }
 
         public static void Update(Player me)
@@ -64,7 +67,9 @@ namespace AICompanion
                 rpc.Register<string>(RpcSays, OnSays);
                 rpc.Register<string>(RpcWhereIs, OnWhereIs);
                 rpc.Register<string>(RpcWhereIsAnswer, OnWhereIsAnswer);
+                Book.Register(rpc);
             }
+            Book.Tick();
             if (me == null) return;
 
             int peers = ZNet.instance != null ? ZNet.instance.GetPlayerList().Count : 0;
@@ -73,10 +78,18 @@ namespace AICompanion
 
             if (Time.time >= _nextSend)
             {
-                _nextSend = Time.time + 0.5f;
+                // Once a second, and only when something shows a change (or every 3 s, so it is not dropped): it goes to every player.
+                _nextSend = Time.time + 1f;
                 if (peers > 1)
                     foreach (Humanoid c in Companion.All())
-                        if (c.GetComponent<ZNetView>().IsOwner()) Send(RpcStats, StatsLine(c));
+                    {
+                        if (!c.GetComponent<ZNetView>().IsOwner()) continue;
+                        string line = StatsLine(c), gist = Gist(line);
+                        long id = Companion.IdOf(c);
+                        if (LastSent.TryGetValue(id, out var last) && last.Key == gist && Time.time - last.Value < 3f) continue;
+                        LastSent[id] = new KeyValuePair<string, float>(gist, Time.time);
+                        Send(RpcStats, line);
+                    }
             }
             if (Time.time >= _nextMarkerCheck) { _nextMarkerCheck = Time.time + 2f; CheckMarkers(me); }
             if (Time.time >= _nextPins) { _nextPins = Time.time + 0.1f; UpdatePins(); }
@@ -122,7 +135,7 @@ namespace AICompanion
         {
             if (ZRoutedRpc.instance == null) return;
             var table = AccessTools.Field(typeof(ZRoutedRpc), "m_functions").GetValue(ZRoutedRpc.instance) as IDictionary;
-            foreach (string name in new[] { RpcStats, RpcFallen, RpcCleared, RpcSays, RpcWhereIs, RpcWhereIsAnswer }) table?.Remove(name.GetStableHashCode());
+            foreach (string name in new[] { RpcStats, RpcFallen, RpcCleared, RpcSays, RpcWhereIs, RpcWhereIsAnswer }.Concat(Book.RpcNames)) table?.Remove(name.GetStableHashCode());
         }
 
         /// <summary>Ask the game hosting the world whether a companion is anywhere in it (its answer: AICompanion.Remote.Heard).</summary>
@@ -207,6 +220,36 @@ namespace AICompanion
             return string.Join(",", parts);
         }
 
+        /// <summary>What a stats line shows, less what changes all the time anyway: health and stamina to the point, place to the metre, effects and meals without their time left.</summary>
+        private static string Gist(string line)
+        {
+            string[] f = line.Split('|');
+            if (f.Length < 13) return line;
+            foreach (int i in new[] { 3, 4, 5, 6, 7, 9, 10 }) f[i] = Mathf.Round(P(f[i])).ToString(CultureInfo.InvariantCulture);
+            f[11] = string.Join(",", f[11].Split(',').Select(e => e.Split(':')[0]));
+            f[12] = string.Join(",", f[12].Split(',').Select(e => e.Split(':')[0]));
+            return string.Join("|", f);
+        }
+
+        /// <summary>A line from another game, with the time left on its effects and meals counted down since it came.</summary>
+        private static string Aged(string line, float seconds)
+        {
+            string[] f = line.Split('|');
+            if (f.Length < 13 || seconds < 0.5f) return line;
+            f[11] = string.Join(",", f[11].Split(new[] { ',' }, StringSplitOptions.RemoveEmptyEntries).Select(e => Less(e, 1, seconds)));
+            if (f[12] != "-") f[12] = string.Join(",", f[12].Split(new[] { ',' }, StringSplitOptions.RemoveEmptyEntries).Select(e => Less(e, 1, seconds)));
+            return string.Join("|", f);
+        }
+
+        /// <summary>"a:b:c" with its part number <paramref name="at"/> made smaller by <paramref name="by"/> (not below 0).</summary>
+        private static string Less(string entry, int at, float by)
+        {
+            string[] p = entry.Split(':');
+            if (p.Length <= at) return entry;
+            p[at] = F(Mathf.Max(0f, P(p[at]) - by));
+            return string.Join(":", p);
+        }
+
         private static void OnStats(long sender, string line)
         {
             string[] f = (line ?? "").Split('|');
@@ -232,12 +275,12 @@ namespace AICompanion
                     if (c.IsDead() || !online.Contains(Companion.Zdo(c).GetString(Keys.MasterName, ""))) continue;
                     long cid = Companion.IdOf(c);
                     bool runHere = c.GetComponent<ZNetView>().IsOwner();
-                    if (!runHere && Remote.TryGetValue(cid, out Seen s) && Time.time - s.At < 2f) continue; // the game that runs it knows its effects: use its line
+                    if (!runHere && Remote.TryGetValue(cid, out Seen s) && Time.time - s.At < 4f) continue; // the game that runs it knows its effects: use its line
                     lines.Add(StatsLine(c));
                     have.Add(cid);
                 }
-                foreach (var kv in Remote.Where(kv => Time.time - kv.Value.At < 5f && !have.Contains(kv.Key) && online.Contains(kv.Value.Master)))
-                    lines.Add(kv.Value.Line);
+                foreach (var kv in Remote.Where(kv => Time.time - kv.Value.At < 6f && !have.Contains(kv.Key) && online.Contains(kv.Value.Master)))
+                    lines.Add(Aged(kv.Value.Line, Time.time - kv.Value.At));
                 // (not in the first seconds: the fallen companion itself is still listed for a moment as it dies)
                 RecentlyFallen.RemoveAll(f => Time.time - f.At > 600f || (Time.time - f.At > 10f && lines.Any(l => l.Split('|')[2] == f.Master)));
                 foreach (Fallen f in RecentlyFallen.Where(f => online.Contains(f.Master)))

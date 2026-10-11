@@ -23,13 +23,12 @@ namespace AICompanion
     /// </summary>
     internal static class Missions
     {
-        public const string Key = "dhc_missions";
         private const int Keep = 12;
 
         public static List<Mission> All(Humanoid c)
         {
             var list = new List<Mission>();
-            foreach (string line in (Companion.Zdo(c)?.GetString(Key, "") ?? "").Split(new[] { '\n' }, StringSplitOptions.RemoveEmptyEntries))
+            foreach (string line in Book.Of(c).Missions.Split(new[] { '\n' }, StringSplitOptions.RemoveEmptyEntries))
             {
                 string[] f = line.Split('|');
                 if (f.Length < 7) continue;
@@ -45,7 +44,7 @@ namespace AICompanion
         {
             // the active one, and the last of the rest
             var keep = list.Where(m => m.Status == "active").Concat(list.Where(m => m.Status != "active").Reverse().Take(Keep).Reverse()).ToList();
-            Companion.Zdo(c)?.Set(Key, string.Join("\n", keep.Select(m => string.Join("|", m.Status, Clean(m.Key), Clean(m.What), m.Day, m.StartCost, m.Cost, Clean(m.Why)))));
+            if (Companion.Zdo(c) != null) Book.SetMissions(c, string.Join("\n", keep.Select(m => string.Join("|", m.Status, Clean(m.Key), Clean(m.What), m.Day, m.StartCost, m.Cost, Clean(m.Why)))));
         }
 
         public static Mission Current(Humanoid c) => All(c).LastOrDefault(m => m.Status == "active");

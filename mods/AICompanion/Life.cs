@@ -173,6 +173,9 @@ namespace AICompanion
 
         private static Dictionary<Skills.SkillType, Level> Of(Humanoid c)
         {
+            // Another game runs it: its save is the live copy (and what this game had is old by the time it runs it here again).
+            ZNetView v = c.GetComponent<ZNetView>();
+            if (v != null && v.IsValid() && !v.IsOwner()) { Levels.Remove(c); return Parse(v.GetZDO().GetString(Key, "")); }
             if (Levels.TryGetValue(c, out var map)) return map;
             foreach (Humanoid gone in Levels.Keys.Where(k => k == null).ToList()) Levels.Remove(gone);
             Levels[c] = map = Parse(Companion.Zdo(c)?.GetString(Key, "") ?? "");
@@ -197,9 +200,7 @@ namespace AICompanion
         public static float Get(Character c, Skills.SkillType type)
         {
             if (!(c is Humanoid h)) return 0f;
-            ZNetView v = h.GetComponent<ZNetView>();
-            Dictionary<Skills.SkillType, Level> map = v != null && v.IsValid() && !v.IsOwner() ? Parse(v.GetZDO().GetString(Key, "")) : Of(h);
-            return map.TryGetValue(type, out Level l) ? l.Value : Plugin.StartingSkill.Value;
+            return Of(h).TryGetValue(type, out Level l) ? l.Value : Plugin.StartingSkill.Value;
         }
 
         /// <summary>Every skill a player has (from the game's own list).</summary>
@@ -220,15 +221,21 @@ namespace AICompanion
         public static IEnumerable<KeyValuePair<Skills.SkillType, float>> All(Humanoid c) =>
             Of(c).Where(kv => kv.Value.Value >= 1f).Select(kv => new KeyValuePair<Skills.SkillType, float>(kv.Key, kv.Value.Value)).OrderByDescending(kv => kv.Value);
 
+        /// <summary>Its skills as saved ("type:level:progress,..."), as they are now.</summary>
+        public static string Text(Humanoid c) => Write(Of(c));
+
+        private static readonly Dictionary<Humanoid, float> NextSave = new Dictionary<Humanoid, float>();
+
         public static void Raise(Humanoid c, Skills.SkillType type, float factor)
         {
-            if (type == Skills.SkillType.None) return;
+            if (type == Skills.SkillType.None || Companion.Zdo(c) == null || !c.GetComponent<ZNetView>().IsOwner()) return;
             Dictionary<Skills.SkillType, Level> map = Of(c);
             if (!map.TryGetValue(type, out Level l)) map[type] = l = new Level { Value = Plugin.StartingSkill.Value };
             if (l.Value >= 100f) return;
             l.Progress += (Def(type)?.m_increseStep ?? 1f) * factor * Game.m_skillGainRate;
             float need = Mathf.Pow(Mathf.Floor(l.Value + 1f), 1.5f) * 0.5f + 0.5f; // the game's level curve
-            if (l.Progress >= need)
+            bool level = l.Progress >= need;
+            if (level)
             {
                 l.Value = Mathf.Min(100f, l.Value + 1f);
                 l.Progress = 0f;
@@ -237,7 +244,10 @@ namespace AICompanion
                 Journal.Skill(c, skill, (int)l.Value);
                 if (Companion.Master(c) == Player.m_localPlayer) Plugin.Tell(Words.P("aicompanion_life_skill_tell", Companion.NameOf(c), skill, (int)l.Value)); // (top left, out of the chat's way)
             }
-            Companion.Zdo(c)?.Set(Key, Write(map));
+            // Into its save at a new level, else every 10 s: each write sends its whole ZDO to every player near (it was every hit).
+            if (!level && NextSave.TryGetValue(c, out float next) && Time.time < next) return;
+            NextSave[c] = Time.time + 10f;
+            Companion.Zdo(c).Set(Key, Write(map));
         }
 
         /// <summary>A player's death penalty: every skill 5% lower (applied to the profile it wakes from).</summary>
@@ -263,7 +273,7 @@ namespace AICompanion
             t[type] = time;
         }
 
-        public static void Forget() { Levels.Clear(); _defs = null; Timers.Clear(); }
+        public static void Forget() { Levels.Clear(); _defs = null; Timers.Clear(); NextSave.Clear(); }
         public static void Forget(Humanoid c) => Levels.Remove(c);
     }
 

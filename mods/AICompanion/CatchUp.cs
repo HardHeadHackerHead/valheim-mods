@@ -89,7 +89,7 @@ namespace AICompanion
             ZDO z = Companion.Zdo(me);
             z.Set(Grave.HasKey, any);
             z.Set(Grave.PosKey, at);
-            z.Set(Skill.Key, Skill.AfterDeath(z.GetString(Skill.Key, "")));
+            z.Set(Skill.Key, Skill.AfterDeath(Skill.Text(me)));
             Skill.Forget(me);
             Food.Clear(me);
             if (any) Net.AnnounceFall(me, at, true, lost: true); // (it is still standing: a marker only, no waking)

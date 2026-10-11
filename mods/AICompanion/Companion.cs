@@ -66,7 +66,7 @@ namespace AICompanion
         public static int RetreatOf(Component c) => Zdo(c)?.GetInt(Keys.Retreat, 30) ?? 30;
         public static bool Potions(Component c) => Zdo(c)?.GetBool(Keys.Potions, true) ?? true;
         public static bool Protect(Component c) => Zdo(c)?.GetBool(Keys.Protect, true) ?? true;
-        public static string StatusOf(Component c) => Zdo(c)?.GetString(Keys.Status, "") ?? "";
+        public static string StatusOf(Component c) => Brain.LiveStatus(c as Humanoid) ?? Zdo(c)?.GetString(Keys.Status, "") ?? "";
 
         /// <summary>The player it serves, if that player is in the world right now.</summary>
         public static Player Master(Component c)

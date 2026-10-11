@@ -84,6 +84,15 @@ second) gets its inventory replaced by fresh copies of the last saved items over
 (wear, repairs) are lost, and anything holding a reference to an item (what a Humanoid has equipped) points at an old copy. AICompanion
 skips the reload on the game that owns the companion, after loading once when it takes ownership (`Container_Load_Companion`).
 
+## Keep a moving object's ZDO small
+
+The game sends a ZDO whole (every key) to each player near it whenever its revision changes, and any `Set` that changes a value bumps it,
+as does every position change of a moving object (`ZDO.InternalSetPosition`). Each player gets at most about 10 KB of ZDOs per send
+(`ZDOMan.SendZDOs`, 20 times a second), nearest first. AICompanion kept its journal, tally and missions on the companion's ZDO: 11-13 KB,
+resent with every step, so other creatures' updates arrived seconds late in multiplayer (0.24.0 and older). Keep big or growing data off
+anything that moves (AICompanion's `Book`: kept with its player's character, sent as small changes over routed RPCs and whole only when
+asked), and save values that change all the time (skills, stamina) every few seconds rather than on every change.
+
 ## Every prefix runs, and ScriptEngine ignores incompatibility
 
 In the HarmonyX that BepInEx ships, a prefix returning false skips only the game's method: every other mod's prefixes still run. So a

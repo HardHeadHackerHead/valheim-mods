@@ -14,8 +14,8 @@ namespace AICompanion
     /// </summary>
     internal static class Journal
     {
-        public const string EntriesKey = "dhc_journal", TallyKey = "dhc_tally", SinceKey = "dhc_since";
-        private const int MaxEntries = 150;
+        public const string SinceKey = "dhc_since";
+        public const int MaxEntries = 150;
 
         /// <summary>The in-game day now (the game's own day count).</summary>
         public static int Day => EnvMan.instance != null ? EnvMan.instance.GetDay(ZNet.instance.GetTimeSeconds()) : 0;
@@ -23,38 +23,25 @@ namespace AICompanion
         /// <summary>An entry (packed text, Words.P; it is saved, and each player reads it in their own language).</summary>
         public static void Add(Humanoid c, string text)
         {
-            ZDO z = Companion.Zdo(c);
-            if (z == null || string.IsNullOrEmpty(text) || !c.GetComponent<ZNetView>().IsOwner()) return;
-            var lines = Entries(c);
-            lines.Add($"{Day}|{text.Replace('\n', ' ').Replace('|', '/')}");
-            if (lines.Count > MaxEntries) lines.RemoveRange(0, lines.Count - MaxEntries);
-            z.Set(EntriesKey, string.Join("\n", lines));
+            if (Companion.Zdo(c) == null || string.IsNullOrEmpty(text) || !c.GetComponent<ZNetView>().IsOwner()) return;
+            Book.AddEntry(c, $"{Day}|{text.Replace('\n', ' ').Replace('|', '/')}");
             Activity.Log(c, "journal: " + text);
         }
 
-        public static List<string> Entries(Humanoid c) =>
-            (Companion.Zdo(c)?.GetString(EntriesKey, "") ?? "").Split(new[] { '\n' }, StringSplitOptions.RemoveEmptyEntries).ToList();
+        /// <summary>Its entries ("day|text"), oldest first (kept in its Book, not on its ZDO).</summary>
+        public static List<string> Entries(Humanoid c) => Book.Of(c).Entries;
 
-        public static Dictionary<string, int> Tally(Humanoid c)
-        {
-            var map = new Dictionary<string, int>();
-            foreach (string part in (Companion.Zdo(c)?.GetString(TallyKey, "") ?? "").Split(';'))
-            {
-                int eq = part.LastIndexOf('=');
-                if (eq > 0 && int.TryParse(part.Substring(eq + 1), NumberStyles.Integer, CultureInfo.InvariantCulture, out int n)) map[part.Substring(0, eq)] = n;
-            }
-            return map;
-        }
+        /// <summary>Its tally (read only).</summary>
+        public static Dictionary<string, int> Tally(Humanoid c) => Book.Of(c).Tally;
+
+        /// <summary>This game knows its whole tally (else firsts and milestones are not told: it may have done them before).</summary>
+        public static bool Known(Humanoid c) => Book.Of(c).Fresh;
 
         /// <summary>Count one more of something; the new count (1: the first time).</summary>
         public static int Count(Humanoid c, string what, int n = 1)
         {
-            ZDO z = Companion.Zdo(c);
-            if (z == null || !c.GetComponent<ZNetView>().IsOwner()) return 0;
-            var map = Tally(c);
-            map[what] = (map.TryGetValue(what, out int had) ? had : 0) + n;
-            z.Set(TallyKey, string.Join(";", map.Select(kv => $"{kv.Key.Replace(';', ',').Replace('=', '-')}={kv.Value}")));
-            return map[what];
+            if (Companion.Zdo(c) == null || !c.GetComponent<ZNetView>().IsOwner()) return 0;
+            return Book.AddCount(c, what, n);
         }
 
         /// <summary>
@@ -89,13 +76,14 @@ namespace AICompanion
                 Idle.Queue(Brain.Get(c), "cheer", 1f);
                 Banter.Say(c, "revenge:" + name, 5f, P("aicompanion_journal_revenge_1", Low(name)), P("aicompanion_journal_revenge_2"), P("aicompanion_journal_revenge_3", Low(name)));
             }
-            if (!victim.IsBoss() && n == 1) Add(c, P("aicompanion_journal_first_kill", Low(name)));
-            else if (!victim.IsBoss() && (n == 10 || n == 50 || n == 100)) Add(c, P("aicompanion_journal_nth_kill", n, Low(name)));
+            if (victim.IsBoss() || !Known(c)) return;
+            if (n == 1) Add(c, P("aicompanion_journal_first_kill", Low(name)));
+            else if (n == 10 || n == 50 || n == 100) Add(c, P("aicompanion_journal_nth_kill", n, Low(name)));
         }
 
         public static void Parried(Humanoid c, Character attacker)
         {
-            if (Count(c, "parries") == 1) Add(c, P("aicompanion_journal_first_parry", Low(attacker.m_name)));
+            if (Count(c, "parries") == 1 && Known(c)) Add(c, P("aicompanion_journal_first_parry", Low(attacker.m_name)));
         }
 
         /// <param name="by">What felled it: a creature's token ("$enemy_troll"), a damage-over-time effect's token, a kind of hit ("fall",
@@ -137,7 +125,7 @@ namespace AICompanion
         public static bool Place(Humanoid c, string place, bool dungeon, string old = null)
         {
             Count(c, "place:" + place);
-            if (Tallied(Tally(c), "place:", place, old ?? place) != 1) return false;
+            if (!Known(c) || Tallied(Tally(c), "place:", place, old ?? place) != 1) return false;
             Add(c, dungeon ? P("aicompanion_journal_dungeon") : P("aicompanion_journal_new_land", place));
             return true;
         }

@@ -43,13 +43,25 @@ namespace AICompanion
 
         public static long WorldId => ZNet.instance != null ? ZNet.instance.GetWorldUID() : 0L;
 
+        private static string _readJson;
+        private static List<Profile> _read = new List<Profile>();
+
+        /// <summary>
+        /// Every profile on the character (copies: change one and Save it). The text is read again only when it changed: it is asked for
+        /// every second, and holds each companion's journal.
+        /// </summary>
         public static List<Profile> All(Player p)
         {
-            var list = new List<Profile>();
-            if (p == null || !p.m_customData.TryGetValue(Key, out string json) || string.IsNullOrEmpty(json)) return list;
-            try { foreach (JToken t in JArray.Parse(json)) list.Add(FromJson((JObject)t)); }
-            catch (Exception e) { Plugin.Instance?.Warn("Could not read the companion profiles: " + e.Message); }
-            return list;
+            if (p == null || !p.m_customData.TryGetValue(Key, out string json) || string.IsNullOrEmpty(json)) return new List<Profile>();
+            if (!ReferenceEquals(json, _readJson) && json != _readJson)
+            {
+                var list = new List<Profile>();
+                try { foreach (JToken t in JArray.Parse(json)) list.Add(FromJson((JObject)t)); }
+                catch (Exception e) { Plugin.Instance?.Warn("Could not read the companion profiles: " + e.Message); }
+                _readJson = json;
+                _read = list;
+            }
+            return _read.Select(x => (Profile)x.MemberwiseClone()).ToList();
         }
 
         public static List<Profile> Here(Player p) => All(p).Where(x => x.World == WorldId).ToList();
@@ -78,6 +90,7 @@ namespace AICompanion
         public static Profile Of(Humanoid c)
         {
             ZDO z = Companion.Zdo(c);
+            BookData book = Book.Of(c);   // (its journal, tally and missions: not on its ZDO)
             return new Profile
             {
                 Id = Companion.IdOf(c), World = WorldId, Name = Companion.NameOf(c),
@@ -86,9 +99,9 @@ namespace AICompanion
                 Potions = z.GetBool(Keys.Potions, true), Protect = z.GetBool(Keys.Protect, true), UseJev = z.GetBool(Keys.UseJev, true),
                 Model = z.GetInt(ZDOVars.s_modelIndex, 0), Skin = z.GetVec3(ZDOVars.s_skinColor, Vector3.one), HairColor = z.GetVec3(ZDOVars.s_hairColor, Vector3.one),
                 Hair = z.GetInt(ZDOVars.s_hairItem, 0), Beard = z.GetInt(ZDOVars.s_beardItem, 0),
-                SkinT = Looks.SkinTone(c), HairT = Looks.HairTone(c), HairL = Looks.HairShade(c), Skills = z.GetString(Skill.Key, ""),
+                SkinT = Looks.SkinTone(c), HairT = Looks.HairTone(c), HairL = Looks.HairShade(c), Skills = Skill.Text(c),
                 HasBed = z.GetBool(Keys.HasBed, false), Bed = z.GetVec3(Keys.BedPos, Vector3.zero), LastSeen = c.transform.position,
-                HasGrave = z.GetBool(Grave.HasKey, false), DiedPos = z.GetVec3(Grave.PosKey, Vector3.zero), Loot = z.GetBool(AICompanion.Loot.Key, true), Friends = z.GetBool(Keys.Friends, false), Kept = z.GetString(Companion.KeptKey, ""), JournalText = z.GetString(Journal.EntriesKey, ""), TallyText = z.GetString(Journal.TallyKey, ""), Since = z.GetInt(Journal.SinceKey, -1), Pantry = z.GetBool(Work.PantryKey, false), HomeSet = z.GetBool(Work.HomeSetKey, false), HomeSpot = z.GetVec3(Work.HomeSpotKey, Vector3.zero), MissionText = z.GetString(Missions.Key, ""), DutiesText = z.GetString(Duties.Key, ""), Frugal = z.GetBool(Food.FrugalKey, true), Ration = z.GetInt(Work.RationKey, 12), DutyDest = z.GetInt(Duties.DestKey, 0), Stow = z.GetBool(Work.StowKey, true), AutoHome = z.GetBool(Following.AutoHomeKey, true), Chatty = z.GetBool(Talk.ChattyKey, true), Armory = z.GetBool(AICompanion.Armory.Key, true), PickList = z.GetInt(AICompanion.Loot.ListKey, (int)AICompanion.Loot.Default),
+                HasGrave = z.GetBool(Grave.HasKey, false), DiedPos = z.GetVec3(Grave.PosKey, Vector3.zero), Loot = z.GetBool(AICompanion.Loot.Key, true), Friends = z.GetBool(Keys.Friends, false), Kept = z.GetString(Companion.KeptKey, ""), JournalText = book.JournalText, TallyText = book.TallyText, Since = z.GetInt(Journal.SinceKey, -1), Pantry = z.GetBool(Work.PantryKey, false), HomeSet = z.GetBool(Work.HomeSetKey, false), HomeSpot = z.GetVec3(Work.HomeSpotKey, Vector3.zero), MissionText = book.Missions, DutiesText = z.GetString(Duties.Key, ""), Frugal = z.GetBool(Food.FrugalKey, true), Ration = z.GetInt(Work.RationKey, 12), DutyDest = z.GetInt(Duties.DestKey, 0), Stow = z.GetBool(Work.StowKey, true), AutoHome = z.GetBool(Following.AutoHomeKey, true), Chatty = z.GetBool(Talk.ChattyKey, true), Armory = z.GetBool(AICompanion.Armory.Key, true), PickList = z.GetInt(AICompanion.Loot.ListKey, (int)AICompanion.Loot.Default),
             };
         }
 
@@ -104,7 +117,7 @@ namespace AICompanion
             z.Set(Keys.HasBed, HasBed); z.Set(Keys.BedPos, Bed);
             z.Set(Skill.Key, Skills ?? "");
             z.Set(Grave.HasKey, HasGrave); z.Set(Grave.PosKey, DiedPos);
-            z.Set(AICompanion.Loot.Key, Loot); z.Set(Keys.Friends, Friends); z.Set(AICompanion.Loot.ListKey, PickList); z.Set(Work.PantryKey, Pantry); z.Set(Work.HomeSetKey, HomeSet); z.Set(Work.HomeSpotKey, HomeSpot); z.Set(Missions.Key, MissionText ?? ""); z.Set(Duties.Key, DutiesText ?? ""); z.Set(Food.FrugalKey, Frugal); z.Set(Work.RationKey, Ration); z.Set(Duties.DestKey, DutyDest); z.Set(Work.StowKey, Stow); z.Set(Journal.EntriesKey, JournalText ?? ""); z.Set(Journal.TallyKey, TallyText ?? ""); z.Set(Journal.SinceKey, Since); z.Set(Following.AutoHomeKey, AutoHome); z.Set(Talk.ChattyKey, Chatty); z.Set(AICompanion.Armory.Key, Armory);
+            z.Set(AICompanion.Loot.Key, Loot); z.Set(Keys.Friends, Friends); z.Set(AICompanion.Loot.ListKey, PickList); z.Set(Work.PantryKey, Pantry); z.Set(Work.HomeSetKey, HomeSet); z.Set(Work.HomeSpotKey, HomeSpot); z.Set(Duties.Key, DutiesText ?? ""); z.Set(Food.FrugalKey, Frugal); z.Set(Work.RationKey, Ration); z.Set(Duties.DestKey, DutyDest); z.Set(Work.StowKey, Stow); z.Set(Journal.SinceKey, Since); z.Set(Following.AutoHomeKey, AutoHome); z.Set(Talk.ChattyKey, Chatty); z.Set(AICompanion.Armory.Key, Armory);
             VisEquipment vis = c.GetComponent<VisEquipment>();
             if (vis == null) return;
             vis.SetModel(Model);

@@ -25,6 +25,18 @@ namespace AICompanion
         private static void Postfix() { if (ZNetScene.instance != null) Prefab.Register(ZNetScene.instance); }
     }
 
+    // ---- its book (journal, tally, missions) into its profile before the character is saved ----
+
+    [HarmonyPatch(typeof(Game), nameof(Game.SavePlayerProfile))]
+    internal static class Game_SavePlayerProfile_Book
+    {
+        private static void Prefix()
+        {
+            if (Player.m_localPlayer != null) Book.SaveProfiles(Player.m_localPlayer);
+            Book.Leaving(); // (another player's companion this game runs: what it did waits on it)
+        }
+    }
+
     // ---- the body ----
 
     // Its gear chest and its hands share one inventory.

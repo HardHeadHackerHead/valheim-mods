@@ -84,8 +84,10 @@ namespace AICompanion
                 d["id"] = args[1];
                 d["bag"] = new JArray(who.GetInventory().GetAllItems().OrderBy(i => i.m_gridPos.y).ThenBy(i => i.m_gridPos.x)
                     .Select(i => $"{Localization.instance.Localize(i.m_shared.m_name)} x{i.m_stack} q{i.m_quality} at {i.m_gridPos.x},{i.m_gridPos.y}"));
-                d["skills"] = Companion.Zdo(who).GetString(Skill.Key, "");
-                d["journal_entries"] = (Companion.Zdo(who).GetString(Journal.EntriesKey, "") ?? "").Split('\n').Length;
+                d["skills"] = Skill.Text(who);
+                d["journal_entries"] = Journal.Entries(who).Count;
+                d["journal_known"] = Journal.Known(who);
+                d["zdo_bytes"] = ZdoBytes(Companion.Zdo(who));
                 output(d);
                 yield break;
             }
@@ -301,6 +303,15 @@ namespace AICompanion
     
         /// <summary>Claude Tools' answers stay English: a companion's words (packed text, Words) in English.</summary>
         private static string En(string s) => s == null ? null : Words.English(s);
+
+        /// <summary>How big its ZDO is as the game sends it (whole, to every player near, each time anything in it changes).</summary>
+        private static int ZdoBytes(ZDO z)
+        {
+            if (z == null) return 0;
+            var pkg = new ZPackage();
+            z.Serialize(pkg);
+            return pkg.Size();
+        }
 
         private static readonly System.Func<BaseAI, Vector3, bool> HavePath = HarmonyLib.AccessTools.MethodDelegate<System.Func<BaseAI, Vector3, bool>>(HarmonyLib.AccessTools.Method(typeof(BaseAI), "HavePath"));
 

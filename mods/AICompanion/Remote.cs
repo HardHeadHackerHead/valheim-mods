@@ -124,8 +124,8 @@ namespace AICompanion
 
         public static List<string> Journal(ZDO z, int last)
         {
-            var lines = new List<string>((z.GetString(AICompanion.Journal.EntriesKey, "") ?? "").Split('\n'));
-            lines.RemoveAll(string.IsNullOrEmpty);
+            long id = z.GetLong(Keys.Id, 0L);
+            List<string> lines = Book.Of(id != 0L ? id : z.m_uid.ID, z).Entries;   // (its player's game has it; another asks for it)
             return lines.GetRange(Mathf.Max(0, lines.Count - last), Mathf.Min(last, lines.Count));
         }
 
