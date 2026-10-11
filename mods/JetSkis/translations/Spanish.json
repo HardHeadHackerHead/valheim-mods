@@ -1,0 +1,23 @@
+{
+  "jetskis_jetski": "Moto acuática",
+  "jetskis_jetski_desc": "Una barquita rápida para uno, impulsada por el fuego de un corazón de surtling en lugar del viento. Se construye sobre el agua.",
+  "jetskis_ride": "Montar",
+  "jetskis_help": "W avanzar, Shift+W a toda velocidad, S marcha atrás, A y D girar, Saltar para bajarte.",
+  "jetskis_too_far": "Acércate más a la moto acuática para subirte.",
+  "jetskis_too_heavy": "Llevas demasiado peso para montar.",
+  "jetskis_kmh": "km/h",
+  "jetskis_gear_full": "A toda velocidad",
+  "jetskis_gear_cruise": "Crucero",
+  "jetskis_gear_idle": "Ralentí",
+  "jetskis_gear_reverse": "Marcha atrás",
+  "jetskis_passenger": "Asiento del pasajero",
+  "jetskis_bags": "Alforjas",
+  "jetskis_paint": "Pintar",
+  "jetskis_paint_red": "rojo",
+  "jetskis_paint_blue": "azul",
+  "jetskis_paint_green": "verde",
+  "jetskis_paint_teal": "turquesa",
+  "jetskis_paint_purple": "morado",
+  "jetskis_paint_black": "negro",
+  "jetskis_paint_wood": "madera desnuda"
+}

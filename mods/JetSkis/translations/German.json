@@ -1,0 +1,23 @@
+{
+  "jetskis_jetski": "Jetski",
+  "jetskis_jetski_desc": "Ein schnelles kleines Boot für eine Person, angetrieben vom Feuer eines Surtling-Kerns statt vom Wind. Wird auf dem Wasser gebaut.",
+  "jetskis_ride": "Fahren",
+  "jetskis_help": "W fahren, Shift+W Vollgas, S rückwärts, A und D lenken, Springen zum Absteigen.",
+  "jetskis_too_far": "Geh näher an den Jetski, um aufzusteigen.",
+  "jetskis_too_heavy": "Du trägst zu viel, um zu fahren.",
+  "jetskis_kmh": "km/h",
+  "jetskis_gear_full": "Vollgas",
+  "jetskis_gear_cruise": "Fahrt",
+  "jetskis_gear_idle": "Leerlauf",
+  "jetskis_gear_reverse": "Rückwärts",
+  "jetskis_passenger": "Beifahrersitz",
+  "jetskis_bags": "Satteltaschen",
+  "jetskis_paint": "Bemalen",
+  "jetskis_paint_red": "rot",
+  "jetskis_paint_blue": "blau",
+  "jetskis_paint_green": "grün",
+  "jetskis_paint_teal": "türkis",
+  "jetskis_paint_purple": "lila",
+  "jetskis_paint_black": "schwarz",
+  "jetskis_paint_wood": "blankes Holz"
+}

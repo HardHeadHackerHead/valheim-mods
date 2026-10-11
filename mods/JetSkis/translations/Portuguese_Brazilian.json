@@ -1,0 +1,23 @@
+{
+  "jetskis_jetski": "Jet ski",
+  "jetskis_jetski_desc": "Um barquinho rápido para um, movido pelo fogo de um Minério de Surtling em vez do vento. Construa-o na água.",
+  "jetskis_ride": "Pilotar",
+  "jetskis_help": "W avança, Shift+W velocidade máxima, S ré, A e D viram, Pular para descer.",
+  "jetskis_too_far": "Chegue mais perto do jet ski para subir.",
+  "jetskis_too_heavy": "Você está carregando peso demais para pilotar.",
+  "jetskis_kmh": "km/h",
+  "jetskis_gear_full": "Velocidade máxima",
+  "jetskis_gear_cruise": "Cruzeiro",
+  "jetskis_gear_idle": "Ponto morto",
+  "jetskis_gear_reverse": "Ré",
+  "jetskis_passenger": "Banco do passageiro",
+  "jetskis_bags": "Alforjes",
+  "jetskis_paint": "Pintar",
+  "jetskis_paint_red": "vermelho",
+  "jetskis_paint_blue": "azul",
+  "jetskis_paint_green": "verde",
+  "jetskis_paint_teal": "turquesa",
+  "jetskis_paint_purple": "roxo",
+  "jetskis_paint_black": "preto",
+  "jetskis_paint_wood": "madeira crua"
+}

@@ -54,7 +54,7 @@ namespace JetSkis
         private static readonly Dictionary<Player, Body> Bodies = new Dictionary<Player, Body>();
         private static readonly List<Player> Gone = new List<Player>();
 
-        internal static float T(string key) => Tune.TryGetValue(key, out float v) ? v : 0f;
+        internal static float Val(string key) => Tune.TryGetValue(key, out float v) ? v : 0f;
 
         internal static void Reset()
         {
@@ -185,25 +185,25 @@ namespace JetSkis
             float w = b.W;
 
             // the hips settle onto the saddle
-            Vector3 shift = (-up * T("hipsDown") - fwd * T("hipsBack")) * w;
+            Vector3 shift = (-up * Val("hipsDown") - fwd * Val("hipsBack")) * w;
             if (shift.sqrMagnitude > 0f) b.Hips.position += shift;
 
             Ride(b, ski, up, out float steer, out float fast);
 
             // lean forward over the bars, the head back up to look ahead; into a turn, the body leans with it and the head looks where it goes
-            Turn(b.Spine1, right, T("lean") * 0.5f * w);
-            Turn(b.Spine2, right, T("lean") * 0.5f * w);
+            Turn(b.Spine1, right, Val("lean") * 0.5f * w);
+            Turn(b.Spine2, right, Val("lean") * 0.5f * w);
             Turn(b.Spine1, fwd, -steer * (4f + 8f * fast) * w);
-            Turn(b.Neck, right, -T("head") * 0.6f * w);
-            Turn(b.Head, right, -T("head") * 0.4f * w);
+            Turn(b.Neck, right, -Val("head") * 0.6f * w);
+            Turn(b.Head, right, -Val("head") * 0.4f * w);
             Turn(b.Neck, up, steer * 12f * w);
             Turn(b.Head, up, steer * 16f * w);
 
             // hands on the grips, elbows out and down
             foreach (int side in new[] { -1, 1 })
             {
-                Vector3 grip = bars.TransformPoint(new Vector3(side * (0.27f - T("gripIn")), 0f, 0f)) - fwd * T("gripBack") - up * T("gripDown");
-                Vector3 elbow = -up + right * side * T("elbowOut") - fwd * 0.3f;
+                Vector3 grip = bars.TransformPoint(new Vector3(side * (0.27f - Val("gripIn")), 0f, 0f)) - fwd * Val("gripBack") - up * Val("gripDown");
+                Vector3 elbow = -up + right * side * Val("elbowOut") - fwd * 0.3f;
                 if (side < 0) Reach(b.LArm, b.LFore, b.LHand, grip, elbow, w);
                 else Reach(b.RArm, b.RFore, b.RHand, grip, elbow, w);
             }
@@ -211,8 +211,8 @@ namespace JetSkis
             // feet on the pads, knees bent forward and splayed out round the saddle
             foreach (int side in new[] { -1, 1 })
             {
-                Vector3 foot = body.TransformPoint(new Vector3(side * T("footX"), Model.DeckHeight(side * T("footX"), T("footZ")) + T("footY"), T("footZ")));
-                Vector3 knee = fwd + right * side * T("kneeOut") + up * 0.3f;
+                Vector3 foot = body.TransformPoint(new Vector3(side * Val("footX"), Model.DeckHeight(side * Val("footX"), Val("footZ")) + Val("footY"), Val("footZ")));
+                Vector3 knee = fwd + right * side * Val("kneeOut") + up * 0.3f;
                 Vector3 toes = fwd - up * 0.25f + right * side * 0.15f;
                 if (side < 0) LegAt(b.LLeg, b.LKnee, b.LFoot, b.LToeAxis, b.LTopAxis, foot, knee, toes, up, w);
                 else LegAt(b.RLeg, b.RKnee, b.RFoot, b.RToeAxis, b.RTopAxis, foot, knee, toes, up, w);
@@ -259,8 +259,8 @@ namespace JetSkis
                 else Reach(b.RArm, b.RFore, b.RHand, hand, elbow, w);
 
                 float fz = Model.PassengerPoint.z + 0.15f, fx = side * 0.3f;
-                Vector3 foot = body.TransformPoint(new Vector3(fx, Model.DeckHeight(fx, fz) + T("footY"), fz));
-                Vector3 knee = fwd + right * side * T("kneeOut") + up * 0.3f;
+                Vector3 foot = body.TransformPoint(new Vector3(fx, Model.DeckHeight(fx, fz) + Val("footY"), fz));
+                Vector3 knee = fwd + right * side * Val("kneeOut") + up * 0.3f;
                 Vector3 toes = fwd - up * 0.25f + right * side * 0.15f;
                 if (side < 0) LegAt(b.LLeg, b.LKnee, b.LFoot, b.LToeAxis, b.LTopAxis, foot, knee, toes, up, w);
                 else LegAt(b.RLeg, b.RKnee, b.RFoot, b.RToeAxis, b.RTopAxis, foot, knee, toes, up, w);

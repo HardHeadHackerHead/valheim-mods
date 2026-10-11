@@ -1,0 +1,23 @@
+{
+  "jetskis_jetski": "摩托艇",
+  "jetskis_jetski_desc": "一艘单人小快艇，靠焰灵之核的火焰而不是风来推动。在水面上建造。",
+  "jetskis_ride": "驾驶",
+  "jetskis_help": "W 前进，Shift+W 全速，S 倒退，A 和 D 转向，跳跃下船。",
+  "jetskis_too_far": "靠近摩托艇才能爬上去。",
+  "jetskis_too_heavy": "你携带的东西太多，无法驾驶。",
+  "jetskis_kmh": "公里/时",
+  "jetskis_gear_full": "全速",
+  "jetskis_gear_cruise": "巡航",
+  "jetskis_gear_idle": "怠速",
+  "jetskis_gear_reverse": "倒退",
+  "jetskis_passenger": "乘客座位",
+  "jetskis_bags": "鞍袋",
+  "jetskis_paint": "涂装",
+  "jetskis_paint_red": "红色",
+  "jetskis_paint_blue": "蓝色",
+  "jetskis_paint_green": "绿色",
+  "jetskis_paint_teal": "青色",
+  "jetskis_paint_purple": "紫色",
+  "jetskis_paint_black": "黑色",
+  "jetskis_paint_wood": "原木色"
+}

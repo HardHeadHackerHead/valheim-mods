@@ -1,0 +1,23 @@
+{
+  "jetskis_jetski": "Skuter wodny",
+  "jetskis_jetski_desc": "Szybka łódeczka dla jednej osoby, napędzana ogniem rdzenia pomiotu Surtra zamiast wiatru. Buduje się ją na wodzie.",
+  "jetskis_ride": "Jedź",
+  "jetskis_help": "W naprzód, Shift+W pełna prędkość, S wstecz, A i D skręt, Skok, by zejść.",
+  "jetskis_too_far": "Podejdź bliżej skutera, by na niego wsiąść.",
+  "jetskis_too_heavy": "Niesiesz za dużo, by jechać.",
+  "jetskis_kmh": "km/h",
+  "jetskis_gear_full": "Pełna prędkość",
+  "jetskis_gear_cruise": "Rejs",
+  "jetskis_gear_idle": "Jałowy",
+  "jetskis_gear_reverse": "Wstecz",
+  "jetskis_passenger": "Miejsce pasażera",
+  "jetskis_bags": "Sakwy",
+  "jetskis_paint": "Pomaluj",
+  "jetskis_paint_red": "czerwony",
+  "jetskis_paint_blue": "niebieski",
+  "jetskis_paint_green": "zielony",
+  "jetskis_paint_teal": "turkusowy",
+  "jetskis_paint_purple": "fioletowy",
+  "jetskis_paint_black": "czarny",
+  "jetskis_paint_wood": "surowe drewno"
+}

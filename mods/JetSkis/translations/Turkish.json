@@ -1,0 +1,23 @@
+{
+  "jetskis_jetski": "Jet ski",
+  "jetskis_jetski_desc": "Rüzgâr yerine bir alaz çekirdeğinin ateşiyle ilerleyen, tek kişilik hızlı küçük bir tekne. Suyun üstünde inşa edilir.",
+  "jetskis_ride": "Sür",
+  "jetskis_help": "W ilerle, Shift+W tam hız, S geri, A ve D dümen, inmek için Zıpla.",
+  "jetskis_too_far": "Binmek için jet skiye yaklaş.",
+  "jetskis_too_heavy": "Sürmek için çok fazla yük taşıyorsun.",
+  "jetskis_kmh": "km/sa",
+  "jetskis_gear_full": "Tam hız",
+  "jetskis_gear_cruise": "Seyir",
+  "jetskis_gear_idle": "Rölanti",
+  "jetskis_gear_reverse": "Geri",
+  "jetskis_passenger": "Yolcu koltuğu",
+  "jetskis_bags": "Heybeler",
+  "jetskis_paint": "Boya",
+  "jetskis_paint_red": "kırmızı",
+  "jetskis_paint_blue": "mavi",
+  "jetskis_paint_green": "yeşil",
+  "jetskis_paint_teal": "turkuaz",
+  "jetskis_paint_purple": "mor",
+  "jetskis_paint_black": "siyah",
+  "jetskis_paint_wood": "çıplak ahşap"
+}

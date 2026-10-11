@@ -1,0 +1,23 @@
+{
+  "jetskis_jetski": "Jet-ski",
+  "jetskis_jetski_desc": "Un petit bateau rapide pour une personne, poussé par le feu d'un cœur de surtling au lieu du vent. Se construit sur l'eau.",
+  "jetskis_ride": "Piloter",
+  "jetskis_help": "W avancer, Shift+W pleine vitesse, S marche arrière, A et D tourner, Sauter pour descendre.",
+  "jetskis_too_far": "Approchez-vous du jet-ski pour monter dessus.",
+  "jetskis_too_heavy": "Vous portez trop de choses pour piloter.",
+  "jetskis_kmh": "km/h",
+  "jetskis_gear_full": "Pleine vitesse",
+  "jetskis_gear_cruise": "Croisière",
+  "jetskis_gear_idle": "Ralenti",
+  "jetskis_gear_reverse": "Marche arrière",
+  "jetskis_passenger": "Siège passager",
+  "jetskis_bags": "Sacoches",
+  "jetskis_paint": "Peindre",
+  "jetskis_paint_red": "rouge",
+  "jetskis_paint_blue": "bleu",
+  "jetskis_paint_green": "vert",
+  "jetskis_paint_teal": "turquoise",
+  "jetskis_paint_purple": "violet",
+  "jetskis_paint_black": "noir",
+  "jetskis_paint_wood": "bois brut"
+}

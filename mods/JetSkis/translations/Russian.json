@@ -1,0 +1,23 @@
+{
+  "jetskis_jetski": "Гидроцикл",
+  "jetskis_jetski_desc": "Быстрая лодочка на одного, которую толкает вперёд огонь ядра суртлинга, а не ветер. Стройте её на воде.",
+  "jetskis_ride": "Сесть",
+  "jetskis_help": "W — вперёд, Shift+W — полный ход, S — назад, A и D — руль, Прыжок — сойти.",
+  "jetskis_too_far": "Подойдите ближе к гидроциклу, чтобы забраться на него.",
+  "jetskis_too_heavy": "Вы несёте слишком много, чтобы ехать.",
+  "jetskis_kmh": "км/ч",
+  "jetskis_gear_full": "Полный ход",
+  "jetskis_gear_cruise": "Крейсерский",
+  "jetskis_gear_idle": "Холостой",
+  "jetskis_gear_reverse": "Задний ход",
+  "jetskis_passenger": "Место пассажира",
+  "jetskis_bags": "Седельные сумки",
+  "jetskis_paint": "Покрасить",
+  "jetskis_paint_red": "красный",
+  "jetskis_paint_blue": "синий",
+  "jetskis_paint_green": "зелёный",
+  "jetskis_paint_teal": "бирюзовый",
+  "jetskis_paint_purple": "фиолетовый",
+  "jetskis_paint_black": "чёрный",
+  "jetskis_paint_wood": "голое дерево"
+}

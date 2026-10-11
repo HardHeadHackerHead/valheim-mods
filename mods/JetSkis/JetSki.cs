@@ -31,6 +31,8 @@ namespace JetSkis
         private ZNetView _nview;
         private Rigidbody _body;
         private ShipControlls _controls;
+        private ImpactEffect _impact;
+        private const float ParkHold = 3f;   // with nobody aboard, its drift on the water dies away at this rate (a second's drift lasts a third of one)
         private Transform _model, _bars;
         private WaterVolume _waterCache, _effectsWater;
         private bool _floatSet;
@@ -149,7 +151,8 @@ namespace JetSkis
             _nview = GetComponent<ZNetView>();
             _body = GetComponent<Rigidbody>();
             _controls = _ship != null ? _ship.m_shipControlls : null;
-            _model = transform.Find(Model.BodyName);
+            _impact = GetComponent<ImpactEffect>();
+            _model =transform.Find(Model.BodyName);
             _bars = _model != null ? _model.Find(Model.BarsName) : null;
             if (_controls != null && _controls.m_attachPoint != null) _controls.m_attachPoint.localPosition = Model.SeatPoint;   // (jet skis already in the world get a moved seat too)
             _lastPos = transform.position;
@@ -282,7 +285,21 @@ namespace JetSkis
                 _ship.m_waterLevelOffset = _body.centerOfMass.y + settle - Waterline;
                 _floatSet = true;
             }
-            if (!_controls.HaveValidUser() && _ship.GetSpeedSetting() != Ship.Speed.Stop) SpeedRef(_ship) = Ship.Speed.Stop;   // nobody at the handlebars
+            bool ridden = _controls.HaveValidUser();
+            if (!ridden && _ship.GetSpeedSetting() != Ship.Speed.Stop) SpeedRef(_ship) = Ship.Speed.Stop;   // nobody at the handlebars
+
+            // left alone, it stays where it was left: the waves no longer carry it ashore, and knocks against the ground no longer wear it
+            // down (they broke jet skis left near a beach). A crash while someone rides it still hurts it.
+            if (_impact != null) _impact.m_damageToSelf = ridden;
+            if (!ridden)
+            {
+                Vector3 drift = _body.linearVelocity;
+                float hold = Mathf.Exp(-ParkHold * dt);
+                _body.linearVelocity = new Vector3(drift.x * hold, drift.y, drift.z * hold);
+                Vector3 turning = _body.angularVelocity;
+                float yawing = Vector3.Dot(turning, Vector3.up);
+                _body.angularVelocity = turning - Vector3.up * yawing * (1f - hold);
+            }
 
             Vector3 com = _body.worldCenterOfMass;
             float depth = com.y - Floating.GetWaterLevel(com, ref _waterCache) - _ship.m_waterLevelOffset;

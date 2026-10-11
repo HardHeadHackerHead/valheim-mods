@@ -6,6 +6,7 @@ Riding it
 - Hold W to go, Shift+W for full speed, S to back up; let go and it coasts to a stop. The wind doesn't matter.
 - A and D steer: the handlebars turn and come back to the middle by themselves. It turns slower when barely moving, and stays level in a hard turn.
 - Jump to get off.
+- Leave it at the shore: with nobody aboard it stays where you left it, and the waves don't wear it down.
 - You ride it like a jet ski: leaning over the bars, hands on the grips, feet on the pads, your head turning where you steer, bobbing over the waves. Everyone sees it.
 - A gauge at the bottom right shows your speed and throttle, in place of the boat's wheel in the middle of the screen.
 - Running into a friend at speed doesn't hurt them, and hopping waves barely scratches the hull.

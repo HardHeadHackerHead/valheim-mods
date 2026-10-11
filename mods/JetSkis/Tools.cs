@@ -206,6 +206,20 @@ namespace JetSkis
                     return null;
                 }
 
+                case "shove":
+                {
+                    // the nearest jet ski taken over by this game and pushed sideways (m/s): with nobody aboard, its drift should die away
+                    JetSki near = JetSki.Loaded.Where(j => j != null).OrderBy(j => Vector3.Distance(j.transform.position, me.transform.position)).FirstOrDefault();
+                    if (near == null) { error("no jet ski loaded near you"); return null; }
+                    float push = args.Length > 1 && float.TryParse(args[1], System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture, out float s) ? Mathf.Clamp(s, 0f, 10f) : 3f;
+                    near.GetComponent<ZNetView>().ClaimOwnership();
+                    Rigidbody body = near.GetComponent<Rigidbody>();
+                    body.WakeUp();
+                    body.linearVelocity += near.transform.right * push;
+                    output(new JObject { ["pushed"] = push, ["owner"] = near.GetComponent<ZNetView>().IsOwner(), ["note"] = "jetski all shows its drift" });
+                    return null;
+                }
+
                 case "paint":
                 {
                     // as E on the nearest jet ski's cowl would: its next colour
@@ -223,9 +237,13 @@ namespace JetSkis
                     foreach (JetSki j in JetSki.Loaded.Where(j => j != null))
                     {
                         Container c = j.GetComponentInChildren<Container>(true);
+                        WearNTear wear = j.GetComponent<WearNTear>();
+                        ZDO jz = j.GetComponent<ZNetView>()?.GetZDO();
                         list.Add(new JObject
                         {
                             ["at"] = new JArray(Math.Round(j.transform.position.x, 1), Math.Round(j.transform.position.y, 1), Math.Round(j.transform.position.z, 1)),
+                            ["health"] = wear != null && jz != null ? $"{Math.Round(jz.GetFloat(ZDOVars.s_health, wear.m_health), 1)} of {wear.m_health}" : null,
+                            ["drift"] = Math.Round(new Vector3(j.GetComponent<Rigidbody>().linearVelocity.x, 0f, j.GetComponent<Rigidbody>().linearVelocity.z).magnitude, 2),
                             ["rider"] = j.RiderNow()?.GetPlayerName(), ["passenger"] = j.PassengerNow()?.GetPlayerName(),
                             ["bagItems"] = c != null && c.GetInventory() != null ? c.GetInventory().NrOfItems() : -1,
                         });

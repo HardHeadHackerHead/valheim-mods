@@ -1,19 +1,19 @@
 <!-- This page is made by tools/modpages/make_pages.py from the mod's thunderstore.toml, DESCRIPTION.txt, CHANGELOG.txt,
      settings and the repo's README. Change those, or the HAND-WRITTEN parts, not the rest of this page. -->
 
-# 🌊 Quad's JetSkis
+# 🌊 Quad's Jet Skis
 
-<img src="cover.png" alt="Quad's JetSkis" width="100%">
+<img src="cover.png" alt="Quad's Jet Skis" width="100%">
 
 **A jet ski for Valheim: a fast little boat for one (and a friend), pushed along by a surtling core's fire instead of the wind.**
 
-![version: 0.2.2](https://img.shields.io/badge/version-0.2.2-3b6e8f?style=flat-square)  ![multiplayer: everyone + host](https://img.shields.io/badge/multiplayer-everyone%20%2B%20host-7a5c2e?style=flat-square)  ![made with: Claude Code](https://img.shields.io/badge/made%20with-Claude%20Code-c26a3d?style=flat-square)
+![version: 0.3.0](https://img.shields.io/badge/version-0.3.0-3b6e8f?style=flat-square)  ![multiplayer: everyone + host](https://img.shields.io/badge/multiplayer-everyone%20%2B%20host-7a5c2e?style=flat-square)  ![made with: Claude Code](https://img.shields.io/badge/made%20with-Claude%20Code-c26a3d?style=flat-square)
 
-[Source code](https://github.com/HardHeadHackerHead/valheim-mods/tree/main/mods/JetSkis)  ·  [Report a bug](https://github.com/HardHeadHackerHead/valheim-mods/issues/new?template=bug.yml&title=%5BQuad%27s%20JetSkis%5D%20)  ·  [Discord](https://discord.gg/EwTjQxEZPy)
+<!-- GITHUB-ONLY -->[Thunderstore](https://thunderstore.io/c/valheim/p/Quads_Lab/Quads_Jet_Skis/)  ·  <!-- END GITHUB-ONLY -->[Source code](https://github.com/HardHeadHackerHead/valheim-mods/tree/main/mods/JetSkis)  ·  [Report a bug](https://github.com/HardHeadHackerHead/valheim-mods/issues/new?template=bug.yml&title=%5BQuad%27s%20Jet%20Skis%5D%20)  ·  [Discord](https://discord.gg/EwTjQxEZPy)
 
 [![Join us on Discord](https://img.shields.io/badge/Join_us_on-Discord-5865F2?style=for-the-badge&logo=discord&logoColor=white)](https://discord.gg/EwTjQxEZPy)
 
-**Install:** press **F7** in the game with our [mod manager](https://github.com/HardHeadHackerHead/valheim-mod-manager), or take `JetSkis.dll` from [dist/](https://github.com/HardHeadHackerHead/valheim-mods/tree/main/dist). It isn't on Thunderstore.
+<!-- GITHUB-ONLY -->**Install:** with [r2modman](https://thunderstore.io/c/valheim/p/ebkr/r2modman/) or Thunderstore Mod Manager from [Thunderstore](https://thunderstore.io/c/valheim/p/Quads_Lab/Quads_Jet_Skis/), or press **F7** in the game with our [mod manager](https://github.com/HardHeadHackerHead/valheim-mod-manager).<!-- END GITHUB-ONLY -->
 
 ## ✨ Features
 
@@ -24,6 +24,7 @@
 - Hold W to go, Shift+W for full speed, S to back up; let go and it coasts to a stop. The wind doesn't matter.
 - A and D steer: the handlebars turn and come back to the middle by themselves. It turns slower when barely moving, and stays level in a hard turn.
 - Jump to get off.
+- Leave it at the shore: with nobody aboard it stays where you left it, and the waves don't wear it down.
 - You ride it like a jet ski: leaning over the bars, hands on the grips, feet on the pads, your head turning where you steer, bobbing over the waves. Everyone sees it.
 - A gauge at the bottom right shows your speed and throttle, in place of the boat's wheel in the middle of the screen.
 - Running into a friend at speed doesn't hurt them, and hopping waves barely scratches the hull.
@@ -72,7 +73,7 @@ Everyone in the world needs it installed.
 **Known clashes:** none known.
 <!-- END HAND-WRITTEN: other-mods -->
 
-Found a clash with another mod? [Tell us](https://github.com/HardHeadHackerHead/valheim-mods/issues/new?template=bug.yml&title=%5BQuad%27s%20JetSkis%5D%20) which one and what happened.
+Found a clash with another mod? [Tell us](https://github.com/HardHeadHackerHead/valheim-mods/issues/new?template=bug.yml&title=%5BQuad%27s%20Jet%20Skis%5D%20) which one and what happened.
 
 ## 👥 Multiplayer
 
@@ -81,6 +82,12 @@ Found a clash with another mod? [Tell us](https://github.com/HardHeadHackerHead/
 <!-- HAND-WRITTEN: multiplayer -->
 
 <!-- END HAND-WRITTEN: multiplayer -->
+
+## 🌍 Languages
+
+**English, Русский (Russian), Deutsch (German), 简体中文 (Chinese), Português do Brasil (Portuguese), Español (Spanish), Français (French), Polski (Polish), Türkçe (Turkish).** It follows the game's own language setting.
+
+The translations were made with AI, so a few words may be off. To correct one, or to add your language, put a file in `BepInEx/config/translations/com.quad.jetskis/` named after the game's name for the language (`German.json`, `Italian.json`, `Japanese.json`...) with only the lines you change, copied from [English.json](https://github.com/HardHeadHackerHead/valheim-mods/blob/main/mods/JetSkis/translations/English.json) (it wins over the built-in one). Or [tell us](https://github.com/HardHeadHackerHead/valheim-mods/issues/new?template=bug.yml&title=%5BQuad%27s%20Jet%20Skis%5D%20Translation%3A%20) the better words and we'll put them in for everyone.
 
 ## ⚙️ Settings
 
@@ -138,8 +145,8 @@ and tested in our own world, with **bobisme** as our tester.
 
 ## 📜 Recent changes
 
+- **0.3.0** In your language: Russian, German, Chinese, Portuguese, Spanish, French, Polish and Turkish (translated by AI; corrections welcome). A jet ski left alone stays where you left it: it no longer drifts ashore on the waves, and knocks against the beach no longer wear it down (jet skis left near the shore broke after a while). A crash while you ride still hurts it.
 - **0.2.2** Spray you can see: a rooster tail of water arcing out of the nozzle that grows with your speed, a curl off each side of the bow, a sheet thrown off the outside of a hard turn, and a trail of foam left on the water behind you. It's made of the game's own splash, white mist and droplets (the old spray was flat patches of foam that didn't show in the air).
 - **0.2.1** The passenger hugs the rider on every player's screen: each game now knows for sure who sits behind whom (it went by where their body was, which arrives late from another player's game), and puts other players exactly on their seats, so nobody trails behind a jet ski at speed. Both of you need 0.2.1.
-- **0.2.0** You ride it like a jet ski now: leaning over the bars with your hands on the grips and feet on the pads, your head turning where you steer and bobbing over the waves (everyone sees it). A passenger seat behind, the passenger hugging the rider. Saddlebags (8 slots, a cargo crate if it breaks): E on them, or Tab while riding. Paint it with E on the cowl (red, blue, green, teal, purple, black, bare wood). An engine sound, spray off the nozzle and in hard turns, and a core that glows brighter with the throttle. A gauge at the bottom right (speed, throttle) in place of the boat's wheel. It sits right in the water (it rode too low), and stays level in hard turns. Shift+E is left to other mods (Wayfinder names boats with it). Restart the game to see the new parts on jet skis already built.
 
 <!-- GITHUB-ONLY -->[Every change](CHANGELOG.txt)<!-- END GITHUB-ONLY --><!-- THUNDERSTORE-ONLY: Every change is on the Changelog tab. -->
