@@ -23,7 +23,7 @@ namespace JetSkis
     {
         public const string Guid = "com.quad.jetskis";
         public const string Name = "JetSkis";
-        public const string Version = "0.2.1";
+        public const string Version = "0.2.2";
 
         internal static Plugin Instance;
         internal static ManualLogSource Log;
