@@ -7,7 +7,7 @@
 
 **A buildable notice board with bounties for the whole group: quests and hunting contracts, paid in coins and the materials of the stage you have reached.**
 
-![version: 1.4.1](https://img.shields.io/badge/version-1.4.1-3b6e8f?style=flat-square)  ![multiplayer: everyone + host](https://img.shields.io/badge/multiplayer-everyone%20%2B%20host-7a5c2e?style=flat-square)  ![made with: Claude Code](https://img.shields.io/badge/made%20with-Claude%20Code-c26a3d?style=flat-square)
+![version: 1.4.2](https://img.shields.io/badge/version-1.4.2-3b6e8f?style=flat-square)  ![multiplayer: everyone + host](https://img.shields.io/badge/multiplayer-everyone%20%2B%20host-7a5c2e?style=flat-square)  ![made with: Claude Code](https://img.shields.io/badge/made%20with-Claude%20Code-c26a3d?style=flat-square)
 
 <!-- GITHUB-ONLY -->[Thunderstore](https://thunderstore.io/c/valheim/p/Quads_Lab/Quads_Bounty_Board/)  ·  <!-- END GITHUB-ONLY -->[Source code](https://github.com/HardHeadHackerHead/valheim-mods/tree/main/mods/BountyBoard)  ·  [Report a bug](https://github.com/HardHeadHackerHead/valheim-mods/issues/new?template=bug.yml&title=%5BQuad%27s%20Bounty%20Board%5D%20)  ·  [Discord](https://discord.gg/EwTjQxEZPy)
 
@@ -134,8 +134,8 @@ and tested in our own world, with **bobisme** as our tester.
 
 ## 📜 Recent changes
 
+- **1.4.2** Its build piece now also clears destroyed pieces left in the hammer's list by other mods when it registers: after a mod is reloaded at the main menu, a leftover one made every change to your bag throw an error half-way (crafting gave the item without taking the cost) until the game was restarted.
 - **1.4.1** Less network traffic in multiplayer: a kill that counts for a contract now sends the board to everyone at most once a second, not with every kill (a sweep in a big fight sent the whole board several times a second). The player who made the kill still sees their progress at once, and a finished contract goes out straight away. Older versions on the same server keep working.
 - **1.4.0** Now in your language: English, Russian, German, Chinese (Simplified), Portuguese (Brazil), Spanish, French, Polish and Turkish, following the game's own Language setting. The game's own names are used for its things (items, creatures, lands, stations). The translations were made with AI: to correct a line, or add a language, put a file in BepInEx/config/translations/com.quad.bountyboard/ named after the game's name for the language (German.json...) with only the lines you change, copied from translations/English.json on GitHub. Contracts are written on each player's screen in their own language (the saved contracts are unchanged). Players on a server should update together: a player on an older version gets no contract messages from a newer host. The reward uses the game's word for Coins.
-- **1.3.1** Tab no longer opens your inventory under the board's menu (it closes the menu, as it closes a chest), and the chat and map keys stay quiet while it's open.
 
 <!-- GITHUB-ONLY -->[Every change](CHANGELOG.txt)<!-- END GITHUB-ONLY --><!-- THUNDERSTORE-ONLY: Every change is on the Changelog tab. -->

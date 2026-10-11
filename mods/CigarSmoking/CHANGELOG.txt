@@ -1,3 +1,5 @@
+0.4.2: Fix: after reloading the mod at the main menu (the mod manager's reload, or F6), its old pieces stayed in the hammer's and the cultivator's lists after it was gone, and every change to your bag threw an error half-way: crafting gave the item without taking the cost, and picking things up could go wrong, until the game was restarted. They now come off the lists they were put on, and destroyed pieces left there by any mod are cleared when it registers.
+
 0.4.1: Fix: the trader no longer buys tobacco seeds, leaves or cigars. They were worth coins, and a field of tobacco could be grown into as many coins as you liked.
 
 0.4.0: Now in your language: English, Russian, German, Chinese (Simplified), Portuguese (Brazil), Spanish, French, Polish and Turkish, following the game's own Language setting. The game's own names are used for its things (items, creatures, lands, stations). The translations were made with AI: to correct a line, or add a language, put a file in BepInEx/config/translations/com.quad.cigarsmoking/ named after the game's name for the language (German.json...) with only the lines you change, copied from translations/English.json on GitHub.

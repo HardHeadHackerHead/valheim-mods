@@ -17,6 +17,11 @@ you are developing. So:
 - On unload, remove the `m_namedPrefabs` entry only if it still points at your own prefab, so unloading never takes out another
   copy's registration. (ScriptEngine's reload destroys the old copies first and adds the new ones a frame later, so the old
   `OnDestroy` runs before the new `Awake`.)
+- Take the piece off the build-menu list you put it on, and keep that `PieceTable` from when you registered: at the main menu (a reload
+  there) `ZNetScene.instance` and `ObjectDB.instance` can't give you the hammer, but its list lives on (it belongs to the hammer prefab).
+  A destroyed piece left on it makes `Player.UpdateKnownRecipesList` throw on every change to the player's bag, which falls between
+  `DoCrafting`'s `AddItem` and `ConsumeResources`, so every craft is free (BirdTrap, SlotMachine, Ziplines, Cigars and Arena did this
+  until 2026-10-11). Also sweep destroyed entries (`p == null`) off the list when you register.
 
 See `mods/SlotMachine/Plugin.cs` (`Register`, `Unregister` and the two patches at the bottom).
 

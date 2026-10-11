@@ -21,7 +21,7 @@ namespace SlotMachine
         public const string Guid = "com.quad.slotmachine";
         public const string OldGuid = "com.dhack.slotmachine"; // (its id until 2026-10: settings move over by themselves, see Shared/Migration.cs)
         public const string Name = "SlotMachine";
-        public const string Version = "1.2.1";
+        public const string Version = "1.2.2";
         public const string PiecePrefab = "piece_slotmachine";
 
         internal static ConfigEntry<int> Bet, PayoutPercent;
@@ -29,6 +29,9 @@ namespace SlotMachine
         private static readonly int[] Bets = { 5, 10, 25, 50, 100 };
 
         private static GameObject _holder, _prefab;
+        // The build-menu list it was put on, kept to take it off again: at the main menu (a reload there) the hammer can't be looked up,
+        // and a destroyed piece left on the list made every change to the player's bag throw, half-way through crafting (free crafts).
+        private static PieceTable _table;
         private Harmony _harmony;
 
         private void Awake()
@@ -83,7 +86,9 @@ namespace SlotMachine
             PieceTable table = hammer.GetComponent<ItemDrop>().m_itemData.m_shared.m_buildPieces;
             if (!scene.m_prefabs.Contains(_prefab)) scene.m_prefabs.Add(_prefab);
             named[_prefab.name.GetStableHashCode()] = _prefab; // lets it be placed and loaded from saves
+            table.m_pieces.RemoveAll(p => p == null);   // (destroyed pieces left by an earlier copy, ours or another mod's)
             if (!table.m_pieces.Contains(_prefab)) table.m_pieces.Add(_prefab);
+            _table = table;
         }
 
         private static GameObject Make(GameObject source, CraftingStation workbench)
@@ -143,7 +148,9 @@ namespace SlotMachine
                 if (named.TryGetValue(hash, out GameObject current) && current == _prefab) named.Remove(hash); // only our own entry
             }
             GameObject hammer = ObjectDB.instance != null ? ObjectDB.instance.GetItemPrefab("Hammer") : null;
-            if (hammer != null) hammer.GetComponent<ItemDrop>().m_itemData.m_shared.m_buildPieces.m_pieces.Remove(_prefab);
+            PieceTable table = _table ?? (hammer != null ? hammer.GetComponent<ItemDrop>().m_itemData.m_shared.m_buildPieces : null);
+            table?.m_pieces.RemoveAll(p => p == null || p == _prefab);
+            _table = null;
             _prefab = null;
             Object.Destroy(_holder);
             _holder = null;

@@ -57,14 +57,22 @@ namespace BuildOrders
                 try { piece.m_icon = BridgeIcon() ?? piece.m_icon; } catch (Exception e) { Logger.LogWarning("Bridge icon: " + e.Message); }
             }
             PieceTable table = hammer.GetComponent<ItemDrop>().m_itemData.m_shared.m_buildPieces;
+            table.m_pieces.RemoveAll(p => p == null);   // (destroyed pieces left by an earlier copy, ours or another mod's)
             if (!table.m_pieces.Contains(_bridgeTool)) table.m_pieces.Add(_bridgeTool);
+            _bridgeTable = table;
         }
+
+        private PieceTable _bridgeTable;   // the build-menu list the bridge tool was put on
 
         private void UnregisterBridgeTool()
         {
             CancelBridge();
+            // (from the list it was put on, kept: at the main menu the hammer can't be looked up, and a destroyed piece left on its list made
+            // every change to the player's bag throw, half-way through crafting)
             GameObject hammer = ObjectDB.instance != null ? ObjectDB.instance.GetItemPrefab("Hammer") : null;
-            if (hammer != null && _bridgeTool != null) hammer.GetComponent<ItemDrop>().m_itemData.m_shared.m_buildPieces.m_pieces.Remove(_bridgeTool);
+            PieceTable table = _bridgeTable ?? (hammer != null ? hammer.GetComponent<ItemDrop>().m_itemData.m_shared.m_buildPieces : null);
+            table?.m_pieces.RemoveAll(p => p == null || p == _bridgeTool);
+            _bridgeTable = null;
             if (_bridgeHolder != null) Destroy(_bridgeHolder);
             _bridgeHolder = null; _bridgeTool = null;
         }

@@ -17,6 +17,7 @@ namespace Arena
         internal const float Height = 5.9f;
 
         private static GameObject _holder, _stand;
+        private static PieceTable _table;   // the build-menu list it was put on (taken off it again at unload, from here)
         private static bool _built;
 
         private static Dictionary<int, GameObject> Named(ZNetScene scene) =>
@@ -43,7 +44,12 @@ namespace Arena
             if (!scene.m_prefabs.Contains(_stand)) scene.m_prefabs.Add(_stand);
             Named(scene)[_stand.name.GetStableHashCode()] = _stand;   // lets it be placed and loaded from saves
             PieceTable table = scene.GetPrefab("Hammer")?.GetComponent<ItemDrop>()?.m_itemData.m_shared.m_buildPieces;
-            if (table != null && !table.m_pieces.Contains(_stand)) table.m_pieces.Add(_stand);
+            if (table != null)
+            {
+                table.m_pieces.RemoveAll(p => p == null);   // (destroyed pieces left by an earlier copy, ours or another mod's)
+                if (!table.m_pieces.Contains(_stand)) table.m_pieces.Add(_stand);
+                _table = table;
+            }
             AttachToPlaced();
         }
 
@@ -69,9 +75,11 @@ namespace Arena
                 int hash = _stand.name.GetStableHashCode();
                 Dictionary<int, GameObject> named = Named(scene);
                 if (named.TryGetValue(hash, out GameObject current) && current == _stand) named.Remove(hash);   // never another copy's entry
-                PieceTable table = scene.GetPrefab("Hammer")?.GetComponent<ItemDrop>()?.m_itemData.m_shared.m_buildPieces;
-                table?.m_pieces.RemoveAll(p => p == null || p == _stand);
             }
+            // (from the list it was put on, kept: at the main menu there is no scene, and a destroyed piece left on the hammer's list made
+            // every change to the player's bag throw, half-way through crafting)
+            (_table ?? scene?.GetPrefab("Hammer")?.GetComponent<ItemDrop>()?.m_itemData.m_shared.m_buildPieces)?.m_pieces.RemoveAll(p => p == null || p == _stand);
+            _table = null;
             _stand = null;
             _built = false;
             if (_holder != null) Object.Destroy(_holder);

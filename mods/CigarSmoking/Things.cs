@@ -164,11 +164,15 @@ namespace CigarSmoking
             World.Add();
         }
 
+        private static readonly HashSet<PieceTable> Tables = new HashSet<PieceTable>();   // the build-menu lists its pieces were put on
+
         private static void AddToTable(GameObject tool, List<GameObject> pieces)
         {
             PieceTable table = tool != null ? tool.GetComponent<ItemDrop>()?.m_itemData.m_shared.m_buildPieces : null;
             if (table == null) return;
+            table.m_pieces.RemoveAll(p => p == null);   // (destroyed pieces left by an earlier copy, ours or another mod's)
             foreach (GameObject piece in pieces) if (!table.m_pieces.Contains(piece)) table.m_pieces.Add(piece);
+            Tables.Add(table);
         }
 
         internal static void Unregister()
@@ -183,12 +187,11 @@ namespace CigarSmoking
                     int hash = prefab.name.GetStableHashCode();
                     if (named.TryGetValue(hash, out GameObject current) && current == prefab) named.Remove(hash); // never another copy's entry
                 }
-                foreach (string tool in new[] { "Hammer", "Cultivator" })
-                {
-                    PieceTable table = scene.GetPrefab(tool)?.GetComponent<ItemDrop>()?.m_itemData.m_shared.m_buildPieces;
-                    if (table != null) table.m_pieces.RemoveAll(p => p == null || Made.ContainsValue(p));
-                }
             }
+            // From the lists they were put on, kept: at the main menu there is no scene to look the tools up in, and a destroyed piece left on
+            // the hammer's list made every change to the player's bag throw, half-way through crafting (free crafts).
+            foreach (PieceTable table in Tables) table.m_pieces.RemoveAll(p => p == null || Made.ContainsValue(p));
+            Tables.Clear();
             ObjectDB db = ObjectDB.instance;
             if (db != null)
             {

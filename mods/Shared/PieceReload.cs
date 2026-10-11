@@ -31,8 +31,10 @@ namespace DHack.Shared
             ((Dictionary<int, GameObject>)NamedField.GetValue(scene))[prefab.name.GetStableHashCode()] = prefab;   // lets it be placed and loaded from saves
             if (table != null)
             {
-                table.m_pieces.RemoveAll(p => p != prefab && p != null && p.name == prefab.name);
+                // an older copy of ours, and destroyed pieces left by anyone (on the list, they make every change to the player's bag throw)
+                table.m_pieces.RemoveAll(p => p == null || (p != prefab && p.name == prefab.name));
                 if (!table.m_pieces.Contains(prefab)) table.m_pieces.Add(prefab);
+                Tables.Add(table);
             }
         }
 
@@ -42,8 +44,12 @@ namespace DHack.Shared
         /// </summary>
         public static void UnloadPiece(GameObject prefab, PieceTable table)
         {
-            if (prefab != null && table != null) table.m_pieces.Remove(prefab);
+            if (prefab == null) return;
+            if (table != null) Tables.Add(table);
+            foreach (PieceTable t in Tables) t.m_pieces.Remove(prefab);   // (the lists it was put on: at the main menu table is null)
         }
+
+        private static readonly HashSet<PieceTable> Tables = new HashSet<PieceTable>();   // the build-menu lists our pieces were put on
 
         /// <summary>
         /// Give the pieces already standing in the world this copy's components, in place of an older copy's (found by type name: each

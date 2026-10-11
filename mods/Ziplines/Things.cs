@@ -17,6 +17,7 @@ namespace Ziplines
         internal const float Height = 4.2f;   // the post, from the ground to the top of its pulley block
 
         private static GameObject _holder, _post;
+        private static PieceTable _table;   // the build-menu list it was put on (taken off it again at unload, from here)
         private static bool _built;
 
         private static Dictionary<int, GameObject> Named(ZNetScene scene) =>
@@ -43,7 +44,12 @@ namespace Ziplines
             if (!scene.m_prefabs.Contains(_post)) scene.m_prefabs.Add(_post);
             Named(scene)[_post.name.GetStableHashCode()] = _post;   // lets it be placed and loaded from saves
             PieceTable table = scene.GetPrefab("Hammer")?.GetComponent<ItemDrop>()?.m_itemData.m_shared.m_buildPieces;
-            if (table != null && !table.m_pieces.Contains(_post)) table.m_pieces.Add(_post);
+            if (table != null)
+            {
+                table.m_pieces.RemoveAll(p => p == null);   // (destroyed pieces left by an earlier copy, ours or another mod's)
+                if (!table.m_pieces.Contains(_post)) table.m_pieces.Add(_post);
+                _table = table;
+            }
             AttachToPlaced();
         }
 
@@ -77,9 +83,11 @@ namespace Ziplines
                 int hash = _post.name.GetStableHashCode();
                 Dictionary<int, GameObject> named = Named(scene);
                 if (named.TryGetValue(hash, out GameObject current) && current == _post) named.Remove(hash);   // never another copy's entry
-                PieceTable table = scene.GetPrefab("Hammer")?.GetComponent<ItemDrop>()?.m_itemData.m_shared.m_buildPieces;
-                table?.m_pieces.RemoveAll(p => p == null || p == _post);
             }
+            // (from the list it was put on, kept: at the main menu there is no scene, and a destroyed piece left on the hammer's list made
+            // every change to the player's bag throw, half-way through crafting)
+            (_table ?? scene?.GetPrefab("Hammer")?.GetComponent<ItemDrop>()?.m_itemData.m_shared.m_buildPieces)?.m_pieces.RemoveAll(p => p == null || p == _post);
+            _table = null;
             _post = null;
             _built = false;
             if (_holder != null) Object.Destroy(_holder);
