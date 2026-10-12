@@ -7,7 +7,7 @@
 
 **A party HUD with party frames: health bars, stamina and distance for every player in your group, with Steam portraits and an arrow pointing to each teammate, live and at any range. A group UI for multiplayer.**
 
-![version: 1.11.1](https://img.shields.io/badge/version-1.11.1-3b6e8f?style=flat-square)  ![multiplayer: only who wants it](https://img.shields.io/badge/multiplayer-only%20who%20wants%20it-7a5c2e?style=flat-square)  ![made with: Claude Code](https://img.shields.io/badge/made%20with-Claude%20Code-c26a3d?style=flat-square)
+![version: 1.12.0](https://img.shields.io/badge/version-1.12.0-3b6e8f?style=flat-square)  ![multiplayer: only who wants it](https://img.shields.io/badge/multiplayer-only%20who%20wants%20it-7a5c2e?style=flat-square)  ![made with: Claude Code](https://img.shields.io/badge/made%20with-Claude%20Code-c26a3d?style=flat-square)
 
 <!-- GITHUB-ONLY -->[Thunderstore](https://thunderstore.io/c/valheim/p/Quads_Lab/Quads_Party_HUD/)  ·  <!-- END GITHUB-ONLY -->[Source code](https://github.com/HardHeadHackerHead/valheim-mods/tree/main/mods/PartyHud)  ·  [Report a bug](https://github.com/HardHeadHackerHead/valheim-mods/issues/new?template=bug.yml&title=%5BQuad%27s%20Party%20HUD%5D%20)  ·  [Discord](https://discord.gg/EwTjQxEZPy)
 
@@ -24,6 +24,7 @@ A party HUD: health bars, stamina and distance for every player in your group, l
 - Each player's Steam picture, name, health, stamina and distance, live, at any range.
 - Each picture has a ring that is green, amber or red by how healthy that player is, and an arrow next to their distance points the way they are, relative to where you are looking. F8 hides or shows the panel (handy for screenshots). It hides itself while menus are open.
 
+Settings apply while you play: size, width, row spacing, member text size, background opacity and transparency of the whole HUD. Anchor it to any corner using OnLeft and AnchorBottom, then adjust its edge offsets. Move the party title and change its font size separately. Optional FitToScreen and KeepOnScreen keep the panel visible on smaller screens. Choose how many players to show, compact mode, portraits, food, buffs, distance and direction arrows. While you steer a ship the panel moves out of the way of the ship display.
 - With the AICompanion mod: each player's companion shows under them (health, distance, what it is doing).
 
 ## 📸 Screenshots
@@ -45,7 +46,12 @@ A party HUD: health bars, stamina and distance for every player in your group, l
 | **F8** | Show or hide the party panel |
 
 <!-- HAND-WRITTEN: how-to-use -->
+Open **F7 ? Mod settings ? PartyHud** (or edit `BepInEx/config/com.quad.partyhud.cfg`). Changes apply while you play and are personal to each player.
 
+- **Transparency:** `Layout/Opacity` changes the wood and carved frame. `Appearance/HudOpacity` fades everything, including portraits, text and bars. Both accept 0 (clear) to 1 (solid).
+- **Placement:** `Layout/OnLeft` and `AnchorBottom` choose the corner; `OffsetX` and `OffsetY` set the gaps from those edges. `KeepOnScreen` corrects offsets that would move the panel outside the screen.
+- **Size:** `Layout/Scale` resizes everything. `Width`, `CompactWidth` and `RowSpacing` adjust the rows; `Appearance/TextScale` adjusts member text. `FitToScreen` shrinks oversized panels to fit.
+- **Party title:** `Header/OffsetX` moves it left or right and `OffsetY` moves it up or down. `FontSize` and `Width` control the title's size and room for its text. The current defaults are X 36, Y 10, font size 15 and width 76.
 <!-- END HAND-WRITTEN: how-to-use -->
 
 ## 🧩 Other mods
@@ -84,6 +90,13 @@ The translations were made with AI, so a few words may be off. To correct one, o
 
 In `BepInEx/config/com.quad.partyhud.cfg`, made the first time the game runs with the mod. r2modman and Thunderstore Mod Manager edit it under **Config editor**.<!-- GITHUB-ONLY --> With our mod manager: **F7**, then **Mod settings**.<!-- END GITHUB-ONLY -->
 
+**Appearance**
+
+| Setting | Default | What it does |
+|---|---|---|
+| `HudOpacity` | `1` | Opacity of the entire HUD, including text, portraits, icons and bars: 0 = invisible, 1 = fully visible. |
+| `TextScale` | `1` | Size of member names, distances, status text and bar numbers. Header/FontSize controls the party title separately. |
+
 **General**
 
 | Setting | Default | What it does |
@@ -100,17 +113,32 @@ In `BepInEx/config/com.quad.partyhud.cfg`, made the first time the game runs wit
 | `ShowStatusEffects` | `true` | Show each player's buffs and debuffs (food, rested, wet, poison...) as small icons under their bars. Only for players who also have this mod. |
 | `ShowCompanions` | `true` | With the AICompanion mod: show each player's companion under them (health, distance, what it is doing). |
 
+**Header**
+
+| Setting | Default | What it does |
+|---|---|---|
+| `OffsetX` | `36` | Position of the party title's text box from the panel's left edge. Smaller values move it left; larger values move it right. |
+| `OffsetY` | `10` | Position of the party title's text box from the panel's top edge. Smaller values move it up; larger values move it down. |
+| `FontSize` | `15` | Size of the party title and count before the whole HUD's Scale is applied. Long translated titles shrink to fit their text box. |
+| `Width` | `76` | Width of the party title's text box. Increase this with FontSize when a larger title needs more room. |
+
 **Layout**
 
 | Setting | Default | What it does |
 |---|---|---|
-| `OffsetX` | `10` | Gap from the right edge of the screen (UI pixels). |
-| `OffsetY` | `300` | Gap from the top of the screen (UI pixels). Raise it if it overlaps your minimap. |
-| `Scale` | `1` | Size of the panel (1 = normal, 1.25 = bigger). |
-| `AvoidShipHud` | `true` | While you are steering a ship, move the panel down so it does not cover the wind indicator and the rest of the ship display. |
-| `Compact` | `false` | A smaller, tighter panel: a small picture and thinner bars, for when you want it out of the way. |
-| `OnLeft` | `false` | Put the panel on the left edge of the screen instead of the right. |
-| `Opacity` | `0.85` | How solid the panel background is (0.2 to 1). |
+| `OffsetX` | `10` | Gap from the chosen left or right edge, in UI pixels before Scale is applied. |
+| `OffsetY` | `300` | Gap from the chosen top or bottom edge, in UI pixels before Scale is applied. |
+| `Scale` | `1` | Size of the whole HUD (1 = normal, 1.25 = bigger). |
+| `OnLeft` | `false` | Anchor the panel to the left edge instead of the right. |
+| `AnchorBottom` | `false` | Anchor the panel to the bottom edge instead of the top. OffsetY is then the gap from the bottom. |
+| `Compact` | `false` | Use smaller portraits and thinner bars. |
+| `Width` | `320` | Width of each member row in normal mode, before Scale is applied. |
+| `CompactWidth` | `252` | Width of each member row in compact mode, before Scale is applied. |
+| `RowSpacing` | `3` | Gap between member rows, in UI pixels before Scale is applied. |
+| `FitToScreen` | `true` | Shrink the HUD when necessary to fit its width and height inside the screen. |
+| `KeepOnScreen` | `true` | Keep the HUD inside the screen when an offset would push it outside. |
+| `AvoidShipHud` | `true` | Move the panel away from the ship display while you steer. |
+| `Opacity` | `0.85` | Opacity of the wood and carved frame: 0 = clear, 1 = solid. Text, portraits and bars stay visible. |
 
 **Sharing**
 
@@ -161,8 +189,8 @@ helps me make new mods and keep improving the ones you already play. It's 100% o
 
 ## 📜 Recent changes
 
+- **1.12.0** More personal HUD settings: overall transparency, fully clear backgrounds, normal and compact widths, member text size, row spacing, top or bottom placement, and the party title's own position and font size. Every setting applies while you play, with slider ranges in configuration editors. Optional screen fitting and position clamping keep large parties and offsets visible. Existing settings and the current artwork are kept.
 - **1.11.1** The party title now flows into a continuous outer frame through a curved, sloping shoulder. Rounded borders and flowing Nordic corner knots replace the rigid rectangular title tab and angular corner plates.
 - **1.11.0** A new carved Nordic party HUD: dark textured wood, bronze and gold player frames, green companion frames, larger portraits and names, framed food slots, and beveled red and gold live bars. Companion rows now share the full panel width with a dedicated status and buff band. Compact mode remains available, and tall party lists shrink to fit above the bottom of the screen. Artwork is embedded in the DLL; no separate texture install is needed.
-- **1.10.3** Settings: edits to the config file now apply while the game runs (a server owner no longer has to restart), and a server's admins can change the server's settings from their own game with Configuration Manager, where other players see them greyed out. Your config file always keeps your own values while you play on a server (saving it there could write the server's in). Players on an older version still get the server's settings.
 
 <!-- GITHUB-ONLY -->[Every change](CHANGELOG.txt)<!-- END GITHUB-ONLY --><!-- THUNDERSTORE-ONLY: Every change is on the Changelog tab. -->

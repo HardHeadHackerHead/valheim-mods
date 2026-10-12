@@ -6,7 +6,7 @@ schemaVersion = "0.0.1"
 [package]
 namespace = "Quads_Lab"
 name = "Quads_Party_HUD"
-versionNumber = "1.10.3"
+versionNumber = "1.12.0"
 description = "A party HUD with party frames: health bars, stamina and distance for every player in your group, with Steam portraits and an arrow pointing to each teammate, live and at any range. A group UI for multiplayer."
 websiteUrl = "https://github.com/HardHeadHackerHead/valheim-mods/tree/main/mods/PartyHud"
 containsNsfwContent = false

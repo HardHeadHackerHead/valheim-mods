@@ -553,17 +553,18 @@ namespace PartyHud
 
         /// <summary>
         /// A bar you update in place (health, stamina, a timer), for things that change every frame: GameUi.Bar builds a fixed one, and
-        /// building again every frame makes garbage and redraws the whole canvas. The groove is the game's sunken box (a plain dark one when
-        /// thinner than 10, where the box's sliced edges don't fit), the fill a plain colour; optionally a pale trail behind the fill (recent
+        /// building again every frame makes garbage and redraws the whole canvas. The groove has a metallic bevel and textured fill (thin
+        /// timer bars stay plain); optionally a pale trail behind the fill (recent
         /// damage, as the game's own health bar shows it) and text in the middle with a dark copy under it. Then each frame:
         /// meter.Set(fraction, trail), meter.SetColor(c), meter.SetText("78 / 78"); each only touches Unity when the value changed.
         /// </summary>
         internal static Meter LiveBar(Transform parent, Vector2 pos, Vector2 size, Color fill, bool trail = false, float fontSize = 0f)
         {
             var m = new Meter();
-            bool thick = size.y >= 10f && _sunken != null;
-            if (thick) { m.Groove = Box(parent, pos, size); m.Groove.GetComponent<Image>().raycastTarget = false; }
-            else { m.Groove = Rect(parent, "Groove", new Vector2(0f, 1f), new Vector2(0f, 1f), pos, size); Plain(m.Groove, new Color(0f, 0f, 0f, 0.6f)); }
+            bool thick = size.y >= 8f;
+            m.Groove = Rect(parent, "Groove", new Vector2(0f, 1f), new Vector2(0f, 1f), pos, size);
+            Plain(m.Groove, new Color(0.025f, 0.023f, 0.02f, 0.95f));
+            if (thick) HudSkin.Bevel(m.Groove, HudSkin.Bronze);
             float inset = thick ? 2f : size.y >= 4f ? 1f : 0f;   // (a line of 2 or 3: the fill takes its whole height)
             RectTransform inner = Stretch(m.Groove, "Inner", -inset, -inset, -inset, -inset);
             Image Fill(string name, Color color)
@@ -574,6 +575,7 @@ namespace PartyHud
             }
             if (trail) m.Trail = Fill("Trail", new Color(1f, 0.92f, 0.85f, 0.55f));
             m.Fill = Fill("Fill", fill);
+            if (thick) HudSkin.TextureFill(m.Fill);
             if (fontSize > 0f)
             {
                 foreach (bool shadow in new[] { true, false })

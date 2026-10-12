@@ -10,17 +10,17 @@ using UnityEngine.UI;
 namespace PartyHud
 {
     /// <summary>
-    /// The panel, built from the game's own interface (GameUi.cs) and part of its HUD: it hides with the HUD and scales with the player's
+    /// The panel, using embedded carved artwork and the game's fonts and icons: it hides with the HUD and scales with the player's
     /// interface scale. Rows are built again only when who is shown (or a setting) changes; the bars, texts, pictures and arrows in them are
     /// updated in place, the bars and arrows every frame.
     /// </summary>
     public partial class Plugin
     {
         private const string PanelName = "PartyHudPanel";
-        private const float PanelWidth = 252f;
+        private float PanelWidth => _compact.Value ? _compactWidth.Value : _panelWidth.Value;
 
-        private static readonly Color HealthColor = new Color(0.84f, 0.22f, 0.22f);
-        private static readonly Color StaminaColor = new Color(0.96f, 0.80f, 0.26f);
+        private static readonly Color HealthColor = new Color(0.95f, 0.13f, 0.10f);
+        private static readonly Color StaminaColor = new Color(1f, 0.77f, 0.12f);
         private static readonly Color EitrColor = new Color(0.66f, 0.46f, 0.96f);
         private static readonly Color CompanionColor = new Color(0.36f, 0.62f, 0.56f);
         private static readonly Color Grey = new Color(0.3f, 0.3f, 0.3f);
@@ -107,7 +107,11 @@ namespace PartyHud
             var sb = new StringBuilder();
             sb.Append(_compact.Value).Append(_showDistance.Value).Append(_showArrow.Value).Append(_showEffects.Value).Append(_showFood.Value)
               .Append(_onLeft.Value).Append(',').Append(_scale.Value).Append(',').Append(_opacity.Value).Append(',').Append(_offsetX.Value)
-              .Append(',').Append(_offsetY.Value);
+              .Append(',').Append(_offsetY.Value)
+              .Append(',').Append(_panelWidth.Value).Append(',').Append(_compactWidth.Value).Append(',').Append(_rowSpacing.Value)
+              .Append(',').Append(_textScale.Value).Append(',').Append(_hudOpacity.Value).Append(',').Append(_headerX.Value)
+              .Append(',').Append(_headerY.Value).Append(',').Append(_headerFontSize.Value).Append(',').Append(_headerWidth.Value).Append(',').Append(_anchorBottom.Value)
+              .Append(',').Append(_fitToScreen.Value).Append(',').Append(_keepOnScreen.Value);
             foreach (Member m in _members)
             {
                 sb.Append('|').Append(m.Id).Append(m.Companion ? 'c' : 'p').Append(m.Self ? 's' : '-').Append(m.HasData ? 'd' : '-');
@@ -138,6 +142,7 @@ namespace PartyHud
             Transform hud = GameUi.HudRoot;
             if (hud != null) foreach (Transform old in hud.Cast<Transform>().Where(t => t.name == PanelName).ToList()) Destroy(old.gameObject);
             GameUi.Destroy();
+            HudSkin.Destroy();
             _anim.Clear();
         }
 
@@ -149,25 +154,35 @@ namespace PartyHud
             Transform hud = GameUi.HudRoot;
             foreach (Transform old in hud.Cast<Transform>().Where(t => t.name == PanelName).ToList()) Destroy(old.gameObject);
 
-            var anchor = new Vector2(_onLeft.Value ? 0f : 1f, 1f);
-            _panel = GameUi.Rect(hud, PanelName, anchor, anchor, Vector2.zero, new Vector2(PanelWidth, 0f));
-            _panel.localScale = Vector3.one * Mathf.Clamp(_scale.Value, 0.5f, 2f);
+            var anchor = new Vector2(_onLeft.Value ? 0f : 1f, _anchorBottom.Value ? 0f : 1f);
+            _panel = GameUi.Rect(hud, PanelName, anchor, anchor, Vector2.zero, new Vector2(PanelWidth + 16f, 0f));
+            _panel.localScale = Vector3.one * _scale.Value;
             // its own canvas: the bars change every frame, and without one Unity rebuilds the whole HUD's meshes each time
             _panel.gameObject.AddComponent<Canvas>();
             CanvasGroup group = _panel.gameObject.AddComponent<CanvasGroup>();
+            group.alpha = _hudOpacity.Value;
             group.blocksRaycasts = false; group.interactable = false;   // (nothing to click: never take the mouse from the game)
 
-            _header = GameUi.Label(_panel, "", new Vector2(2f, 0f), new Vector2(PanelWidth, 16f), 12f, new Color(GameUi.Warm.r, GameUi.Warm.g, GameUi.Warm.b, 0.8f),
-                                   null, TextAlignmentOptions.Left);
+            // The raised shoulder and the surrounding border are one continuous piece of artwork.
+            RectTransform surround = GameUi.Stretch(_panel, "PartySurround");
+            HudSkin.Surround(surround, _opacity.Value);
+            // Centre the label within the flat shoulder, above the lower top edge.
+            // Its short line box prevents vertical centring from dropping the words into the body.
+            float headerSize = _headerFontSize.Value;
+            _header = GameUi.Label(_panel, "", new Vector2(_headerX.Value, -_headerY.Value), new Vector2(_headerWidth.Value, 18f * headerSize / 15f), headerSize, GameUi.Warm,
+                                   null, TextAlignmentOptions.Center);
+            _header.enableAutoSizing = true;
+            _header.fontSizeMin = headerSize * (2f / 3f);
+            _header.fontSizeMax = headerSize;
             _header.textWrappingMode = TextWrappingModes.NoWrap;
-            float y = 18f;
+            float y = 33f;
             foreach (Member m in _members)
             {
                 Row row = m.Companion ? BuildCompanion(m, y) : BuildPlayer(m, y);
                 _rows.Add(row);
-                y += row.Height + (m.Companion ? 5f : 7f);
+                y += row.Height + _rowSpacing.Value;
             }
-            _panel.sizeDelta = new Vector2(PanelWidth, y);
+            _panel.sizeDelta = new Vector2(PanelWidth + 16f, y + 8f);
             _built = signature;
 
             // forget the animation of people no longer shown (they fade in again when they come back)
@@ -176,19 +191,18 @@ namespace PartyHud
             Place();
         }
 
-        /// <summary>A row's frame: its container, a dark backing as solid as the Opacity setting, the game's sunken box, and an edge.</summary>
+        /// <summary>A row's carved frame, dark backing controlled by Opacity, and a live warning edge.</summary>
         private Row NewRow(string name, float y, float indent, float height, bool companion)
         {
             var row = new Row { Companion = companion, Compact = _compact.Value, Height = height };
-            row.Rect = GameUi.At(_panel, name, 0f, y, PanelWidth, height);
+            row.Rect = GameUi.At(_panel, name, 8f, y, PanelWidth, height);
             row.Group = row.Rect.gameObject.AddComponent<CanvasGroup>();
             row.Group.alpha = 0f;
-            RectTransform back = GameUi.At(row.Rect, "Backing", indent + 2f, 2f, PanelWidth - indent - 4f, height - 4f);
-            Color shade = companion ? new Color(0.05f, 0.06f, 0.055f) : new Color(0.06f, 0.05f, 0.045f);
-            GameUi.Plain(back, new Color(shade.r, shade.g, shade.b, Mathf.Clamp(_opacity.Value, 0.2f, 1f)));
-            RectTransform box = GameUi.Box(row.Rect, new Vector2(indent, 0f), new Vector2(PanelWidth - indent, height));
-            box.GetComponent<Image>().raycastTarget = false;
-            row.Edge = GameUi.Frame(box, 1.5f, 0f, Clear);
+            GameUi.Plain(GameUi.At(row.Rect, "DarkWoodBacking", indent + 1f, 1f, PanelWidth - indent - 2f, height - 2f),
+                         new Color(0.015f, 0.013f, 0.011f, _opacity.Value));
+            RectTransform box = GameUi.At(row.Rect, "CarvedPanel", indent, 0f, PanelWidth - indent, height);
+            HudSkin.Panel(box, companion, _opacity.Value);
+            row.Edge = GameUi.Frame(box, 0.8f, -2f, Clear);
             return row;
         }
 
@@ -198,14 +212,16 @@ namespace PartyHud
             RectTransform r = GameUi.At(row.Rect, "Portrait", x, y, size, size);
             row.PictureBack = GameUi.Plain(r, Grey);
             row.Initial = GameUi.Label(r, string.IsNullOrEmpty(m.Name) ? "?" : m.Name.Substring(0, 1).ToUpperInvariant(), Vector2.zero, new Vector2(size, size),
-                                       initialSize, Color.white, null, TextAlignmentOptions.Center);
+                                       initialSize * _textScale.Value, Color.white, null, TextAlignmentOptions.Center);
             row.Initial.textWrappingMode = TextWrappingModes.NoWrap;
             row.Picture = GameUi.Picture(r, Vector2.zero, new Vector2(size, size));
-            if (ring) row.Ring = GameUi.Frame(r, 2f, 1.5f, Clear);
+            HudSkin.Bevel(r, row.Companion ? CompanionColor : HudSkin.Bronze);
+            if (ring) row.Ring = GameUi.Frame(r, 0.7f, -1f, Clear);
         }
 
         private TMP_Text NameLabel(Row row, float x, float y, float w, float h, float size, Color color, TextAlignmentOptions align)
         {
+            size *= _textScale.Value;
             // tall enough for a line of this size: with Ellipsis, TMP hides a whole line that is even a little taller than its box
             // (Averia's lines are about 1.3 times the font size), so a name in an 18-high box at 16 pt never showed
             float tall = Mathf.Max(h, size * 1.8f);   // (1.8: Chinese, Japanese and Korean come from a fallback font with taller lines)
@@ -240,17 +256,24 @@ namespace PartyHud
             row.ArrowImage.enabled = false;
         }
 
+        private GameUi.Meter BuildMeter(Transform parent, Vector2 pos, Vector2 size, Color fill, bool trail = false, float fontSize = 0f) =>
+            GameUi.LiveBar(parent, pos, size, fill, trail, fontSize * _textScale.Value);
+
         private Slot BuildSlot(Row row, float x, float y, float size, bool back, float lineHeight)
         {
             var slot = new Slot();
             RectTransform cell = GameUi.At(row.Rect, "Slot", x, y, size, size);
-            if (back) slot.Back = GameUi.Plain(cell, new Color(0f, 0f, 0f, 0.55f));
+            if (back)
+            {
+                slot.Back = GameUi.Plain(cell, new Color(0f, 0f, 0f, 0.55f));
+                HudSkin.Bevel(cell, HudSkin.Bronze);
+            }
             RectTransform icon = back ? GameUi.Stretch(cell, "Icon", -0.5f, -0.5f, -0.5f, -0.5f) : GameUi.Stretch(cell, "Icon");
             slot.Icon = icon.gameObject.AddComponent<Image>();
             slot.Icon.preserveAspect = true;
             slot.Icon.raycastTarget = false;
             slot.Icon.enabled = false;
-            slot.Time = GameUi.LiveBar(row.Rect, new Vector2(x, -(y + size + 1f)), new Vector2(size, lineHeight), GameUi.Good);
+            slot.Time = BuildMeter(row.Rect, new Vector2(x, -(y + size + 1f)), new Vector2(size, lineHeight), GameUi.Good);
             slot.Time.SetActive(false);
             return slot;
         }
@@ -262,42 +285,42 @@ namespace PartyHud
             bool showEitr = ShowsEitr(m), showFood = PlayerFood(m);
             int shownEffects = PlayerEffects(m);
             // the extra band along the bottom holds the buff icons (beside the bars) and the three food slots (under the picture)
-            float band = (shownEffects > 0 || showFood) ? (compact ? (shownEffects > 0 ? 15f : 12f) : 21f) : 0f;
+            float band = (shownEffects > 0 || showFood) ? (compact ? (shownEffects > 0 ? 15f : 12f) : 24f) : 0f;
             float effectsRow = shownEffects > 0 ? (compact ? 15f : band) : 0f;
-            float height = (compact ? 38f + (showEitr ? 5f : 0f) : 62f + (showEitr ? 12f : 0f)) + band;
+            float height = (compact ? 38f + (showEitr ? 5f : 0f) : 76f + (showEitr ? 12f : 0f)) + band;
             Row row = NewRow("Player", y, 0f, height, false);
 
-            float pic = compact ? 28f : 48f, px = compact ? 5f : 7f;
+            float pic = compact ? 28f : 60f, px = compact ? 5f : 10f;
             BuildPicture(row, m, px, px, pic, compact ? 15f : 26f, true);
 
-            float bx = compact ? 40f : 63f, bw = PanelWidth - bx - 9f;
-            float ty = compact ? 2f : 3f, th = compact ? 15f : 18f;
-            row.Name = NameLabel(row, bx, ty, bw - 62f, th, compact ? 13f : 16f, m.Self ? GameUi.Gold : GameUi.Text, TextAlignmentOptions.Left);
+            float bx = compact ? 40f : 82f, bw = PanelWidth - bx - 12f;
+            float ty = compact ? 2f : 6f, th = compact ? 15f : 24f;
+            row.Name = NameLabel(row, bx, ty, (m.Self || !_showDistance.Value ? bw : bw - 66f), th, compact ? 13f : 21f, m.Self ? GameUi.Gold : GameUi.Text, TextAlignmentOptions.Left);
             if (_showDistance.Value && !m.Self)
             {
-                row.Distance = NameLabel(row, bx, ty, bw, th, compact ? 11f : 13f, GameUi.Dim, TextAlignmentOptions.Right);
-                if (_showArrow.Value) BuildArrow(row, bx + bw - 54f, compact ? 3f : 4f, 14f, compact ? 13f : 16f, new Color(0.95f, 0.85f, 0.55f));
+                row.Distance = NameLabel(row, bx, ty, bw, th, compact ? 11f : 14f, GameUi.Dim, TextAlignmentOptions.Right);
+                if (_showArrow.Value) BuildArrow(row, bx + bw - 54f, compact ? 3f : 8f, 14f, compact ? 13f : 16f, new Color(0.95f, 0.85f, 0.55f));
             }
 
-            row.Health = compact ? GameUi.LiveBar(row.Rect, new Vector2(bx, -18f), new Vector2(bw, 12f), HealthColor, true, 10f)
-                                 : GameUi.LiveBar(row.Rect, new Vector2(bx, -24f), new Vector2(bw, 18f), HealthColor, true, 13f);
-            row.Stamina = compact ? GameUi.LiveBar(row.Rect, new Vector2(bx, -32f), new Vector2(bw, 5f), StaminaColor)
-                                  : GameUi.LiveBar(row.Rect, new Vector2(bx, -45f), new Vector2(bw, 12f), StaminaColor);
+            row.Health = compact ? BuildMeter(row.Rect, new Vector2(bx, -18f), new Vector2(bw, 12f), HealthColor, true, 10f)
+                                 : BuildMeter(row.Rect, new Vector2(bx, -36f), new Vector2(bw, 18f), HealthColor, true, 13f);
+            row.Stamina = compact ? BuildMeter(row.Rect, new Vector2(bx, -32f), new Vector2(bw, 5f), StaminaColor)
+                                  : BuildMeter(row.Rect, new Vector2(bx, -60f), new Vector2(bw, 10f), StaminaColor);
             if (showEitr)
-                row.Eitr = compact ? GameUi.LiveBar(row.Rect, new Vector2(bx, -39f), new Vector2(bw, 4f), EitrColor)
-                                   : GameUi.LiveBar(row.Rect, new Vector2(bx, -60f), new Vector2(bw, 8f), EitrColor);
+                row.Eitr = compact ? BuildMeter(row.Rect, new Vector2(bx, -39f), new Vector2(bw, 4f), EitrColor)
+                                   : BuildMeter(row.Rect, new Vector2(bx, -75f), new Vector2(bw, 8f), EitrColor);
 
             // three food slots under the picture: what they are eating, with a thin line for how long each has left
             if (showFood)
             {
-                float slot = compact ? 9f : 14f, gap = compact ? 1.5f : 3f, sy = px + pic + (compact ? 3f : 4f);
+                float slot = compact ? 9f : 17f, gap = compact ? 1.5f : 4f, sy = px + pic + (compact ? 3f : 8f);
                 for (int i = 0; i < 3; i++) row.Foods.Add(BuildSlot(row, px + i * (slot + gap), sy, slot, true, 2f));
             }
 
             // their buffs and debuffs (food, rested, wet, poison...): a small icon each, with a thin line under it for the time left
             if (shownEffects > 0)
             {
-                float size = compact ? 12f : 17f, ey = height - effectsRow + (compact ? 0f : 1f);
+                float size = compact ? 12f : 19f, ey = height - effectsRow + (compact ? 0f : 1f);
                 for (int i = 0; i < shownEffects; i++)
                 {
                     float ex = (compact && !showFood ? 7f : bx) + i * (size + 3f);   // (with food slots under the picture, the buffs go beside the bars)
@@ -309,47 +332,48 @@ namespace PartyHud
         }
 
         /// <summary>
-        /// A companion's row (AICompanion mod): smaller and indented under its owner, joined to it by a thin line. Its picture (or initial),
+        /// A companion's row (AICompanion mod): green trim below its owner, indented in compact mode. Its picture (or initial),
         /// name, how far away it is and which way, health and stamina, food, buffs, and what it is doing (or that it has fallen).
         /// </summary>
         private Row BuildCompanion(Member m, float y)
         {
             bool compact = _compact.Value, food = CompanionFood(m);
-            float indent = compact ? 14f : 20f, w = PanelWidth - indent, height = compact ? 30f : (food ? 58f : 48f), px = indent;
+            float indent = compact ? 14f : 0f, height = compact ? 38f : 100f;
             Row row = NewRow("Companion", y, indent, height, true);
-
-            // the line joining it to its owner's row above
-            var line = new Color(0.55f, 0.45f, 0.25f, 0.7f);
-            float lx = indent * 0.45f;
-            GameUi.Plain(GameUi.At(row.Rect, "Line", lx, -6f, 2f, height / 2f + 7f), line);
-            GameUi.Plain(GameUi.At(row.Rect, "Line", lx, height / 2f - 1f, px - lx, 2f), line);
-
-            float pic = compact ? 20f : 36f, picY = food ? 4f : (height - pic) / 2f;
-            BuildPicture(row, m, px + 5f, picY, pic, compact ? 12f : 18f, false);
+            float px = compact ? indent + 5f : 10f, pic = compact ? 24f : 60f;
+            BuildPicture(row, m, px, compact ? 6f : 10f, pic, compact ? 12f : 26f, true);
             if (food)
-                for (int i = 0; i < 3; i++) row.Foods.Add(BuildSlot(row, px + 5f + i * 13f, picY + pic + 4f, 10f, true, 1.5f));
+                for (int i = 0; i < 3; i++) row.Foods.Add(BuildSlot(row, px + i * 21f, 78f, 17f, true, 1.5f));
 
-            float bx = px + 5f + pic + 6f, bw = px + w - 7f - bx, th = compact ? 13f : 15f;
-            row.Name = NameLabel(row, bx, 2f, bw - 58f, th, compact ? 12f : 14f, new Color(0.8f, 0.95f, 0.9f), TextAlignmentOptions.Left);
+            float bx = compact ? px + pic + 7f : 82f, bw = PanelWidth - bx - 12f;
+            float ty = compact ? 2f : 6f, th = compact ? 14f : 24f;
+            row.Name = NameLabel(row, bx, ty, _showDistance.Value ? bw - 66f : bw, th,
+                                 compact ? 12f : 21f, GameUi.Text, TextAlignmentOptions.Left);
             if (_showDistance.Value)
             {
-                row.Distance = NameLabel(row, bx, 2f, bw, th, compact ? 11f : 12f, GameUi.Dim, TextAlignmentOptions.Right);
-                if (_showArrow.Value) BuildArrow(row, bx + bw - 50f, 2f, 14f, th, new Color(0.75f, 0.95f, 0.85f));
+                row.Distance = NameLabel(row, bx, ty, bw, th, compact ? 11f : 14f, GameUi.Text, TextAlignmentOptions.Right);
+                if (_showArrow.Value) BuildArrow(row, bx + bw - 56f, compact ? 3f : 8f, 14f, th - 4f, new Color(0.75f, 0.95f, 0.85f));
             }
-            row.Health = compact ? GameUi.LiveBar(row.Rect, new Vector2(bx, -16f), new Vector2(bw, 7f), HealthColor, true)
-                                 : GameUi.LiveBar(row.Rect, new Vector2(bx, -18f), new Vector2(bw, 11f), HealthColor, true, 10f);
+            row.Health = BuildMeter(row.Rect, new Vector2(bx, compact ? -19f : -36f),
+                                       new Vector2(bw, compact ? 8f : 18f), HealthColor, true, compact ? 0f : 13f);
             if (m.MaxSt > 0f)
-                row.Stamina = compact ? GameUi.LiveBar(row.Rect, new Vector2(bx, -24f), new Vector2(bw, 4f), StaminaColor)
-                                      : GameUi.LiveBar(row.Rect, new Vector2(bx, -31f), new Vector2(bw, 5f), StaminaColor);
-
-            // its buffs (a boss power, meads...) as small icons on the right of the status line
+                row.Stamina = BuildMeter(row.Rect, new Vector2(bx, compact ? -31f : -60f),
+                                            new Vector2(bw, compact ? 4f : 10f), StaminaColor);
             int n = CompanionEffects(m);
-            float size = compact ? 10f : 12f;
+            float size = compact ? 10f : 18f;
+            // Compact buffs stay off the name/distance line and do not obscure the bars.
+            if (compact && n > 0)
+            {
+                row.Height += 16f;
+                row.Rect.sizeDelta = new Vector2(PanelWidth, row.Height);
+                row.Rect.Find("CarvedPanel").GetComponent<RectTransform>().sizeDelta = new Vector2(PanelWidth - indent, row.Height);
+                row.Rect.Find("DarkWoodBacking").GetComponent<RectTransform>().sizeDelta = new Vector2(PanelWidth - indent - 2f, row.Height - 2f);
+            }
             for (int i = 0; i < n; i++)
-                row.Effects.Add(BuildSlot(row, px + w - 6f - (i + 1) * (size + 2f), compact ? 2f : 36f, size, false, 1f));
+                row.Effects.Add(BuildSlot(row, PanelWidth - 12f - (i + 1) * (size + 3f), compact ? 39f : 78f, size, false, 1f));
             if (!compact)
             {
-                row.Status = NameLabel(row, bx, 35f, bw - n * (size + 2f), 12f, 10f, GameUi.Dim, TextAlignmentOptions.Left);
+                row.Status = NameLabel(row, bx, 77f, bw - n * (size + 3f) - 4f, 16f, 13f, GameUi.Dim, TextAlignmentOptions.Left);
                 row.Status.fontStyle = FontStyles.Italic;
             }
             return row;
@@ -371,7 +395,7 @@ namespace PartyHud
 
                 if (row.Companion)
                 {
-                    if (row.Name != null) row.Name.color = dead ? GameUi.Dim : new Color(0.8f, 0.95f, 0.9f);
+                    if (row.Name != null) row.Name.color = dead ? GameUi.Dim : GameUi.Text;
                     row.Health.SetText(dead ? T("partyhud_fallen") : $"{Mathf.CeilToInt(m.Hp)} / {Mathf.CeilToInt(m.MaxHp)}");
                     GameUi.SetText(row.Status, string.IsNullOrEmpty(m.Status) ? "" : dead ? T("partyhud_fallen_status") : m.Status);
                     // its face, when the AICompanion mod has a picture of it (it takes one of companions near you); otherwise its initial
@@ -502,11 +526,13 @@ namespace PartyHud
         private void Place()
         {
             if (_panel == null || !(_panel.parent is RectTransform parent)) return;
-            float scale = Mathf.Clamp(_scale.Value, 0.5f, 2f);
-            bool left = _onLeft.Value;
-            float x = _offsetX.Value * scale, top = _offsetY.Value * scale;
+            bool left = _onLeft.Value, bottom = _anchorBottom.Value;
+            float offsetY = _offsetY.Value;
+            LayoutGeometry.Placement Resolve() => LayoutGeometry.Resolve(parent.rect.width, parent.rect.height,
+                _panel.sizeDelta.x, _panel.sizeDelta.y, _scale.Value, _offsetX.Value, offsetY, left, bottom,
+                _fitToScreen.Value, _keepOnScreen.Value);
+            LayoutGeometry.Placement placement = Resolve();
 
-            // steering a ship: the game shows its wind and sail display on this side, so sit below it instead of covering it
             if (_avoidShipHud.Value && ShipHudBounds(out Rect ship))
             {
                 Canvas canvas = parent.GetComponentInParent<Canvas>();
@@ -515,11 +541,19 @@ namespace PartyHud
                     RectTransformUtility.ScreenPointToLocalPointInRectangle(parent, ship.max, cam, out Vector2 hi))
                 {
                     Rect area = parent.rect;
-                    float x0 = left ? area.xMin + x : area.xMax - x - PanelWidth * scale, x1 = x0 + PanelWidth * scale;
-                    if (hi.x > x0 - 8f * scale && lo.x < x1 + 8f * scale) top = Mathf.Max(top, area.yMax - lo.y + 10f * scale);
+                    float width = _panel.sizeDelta.x * placement.Scale, height = _panel.sizeDelta.y * placement.Scale;
+                    float x0 = left ? area.xMin + placement.X : area.xMax + placement.X - width;
+                    float y0 = bottom ? area.yMin + placement.Y : area.yMax + placement.Y - height;
+                    if (hi.x > x0 && lo.x < x0 + width && hi.y > y0 && lo.y < y0 + height)
+                    {
+                        float gap = bottom ? hi.y - area.yMin : area.yMax - lo.y;
+                        offsetY = Mathf.Max(offsetY, (gap + 10f * placement.Scale) / _scale.Value);
+                        placement = Resolve();
+                    }
                 }
             }
-            var pos = new Vector2(left ? x : -x, -top);
+            _panel.localScale = Vector3.one * placement.Scale;
+            var pos = new Vector2(placement.X, placement.Y);
             if ((_panel.anchoredPosition - pos).sqrMagnitude > 0.25f) _panel.anchoredPosition = pos;
         }
 

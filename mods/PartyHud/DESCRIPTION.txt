@@ -4,5 +4,5 @@ What it shows
 - Each player's Steam picture, name, health, stamina and distance, live, at any range.
 - Each picture has a ring that is green, amber or red by how healthy that player is, and an arrow next to their distance points the way they are, relative to where you are looking. F8 hides or shows the panel (handy for screenshots). It hides itself while menus are open.
 
-Settings: how many players, size, opacity, position, left or right edge, a Compact mode, and whether to show yourself, portraits, distance and the arrow. While you steer a ship the panel moves out of the way of the ship display.
+Settings apply while you play: size, width, row spacing, member text size, background opacity and transparency of the whole HUD. Anchor it to any corner using OnLeft and AnchorBottom, then adjust its edge offsets. Move the party title and change its font size separately. Optional FitToScreen and KeepOnScreen keep the panel visible on smaller screens. Choose how many players to show, compact mode, portraits, food, buffs, distance and direction arrows. While you steer a ship the panel moves out of the way of the ship display.
 - With the AICompanion mod: each player's companion shows under them (health, distance, what it is doing).

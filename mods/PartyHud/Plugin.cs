@@ -27,7 +27,7 @@ namespace PartyHud
         public const string Guid = "com.quad.partyhud";
         public const string OldGuid = "com.dhack.partyhud"; // (its id until 2026-10: settings move over by themselves, see Shared/Migration.cs)
         public const string Name = "PartyHud";
-        public const string Version = "1.10.3";
+        public const string Version = "1.12.0";
 
         internal static DHack.Shared.ServerSettings Synced; // settings the server decides in multiplayer
         private ConfigEntry<bool> _shareMine, _allowSharing;
@@ -75,17 +75,11 @@ namespace PartyHud
                 "Hide the panel while the inventory, crafting window, build menu, trader or big map is open, so it doesn't overlap them.");
             _maxRows = Config.Bind("General", "MaxPlayers", 8, "Most players to show (you first, then the rest alphabetically).");
             _toggleKey = Config.Bind("General", "ToggleKey", new KeyboardShortcut(KeyCode.F8), "Press to hide or show the panel (handy for screenshots).");
-            _offsetX = Config.Bind("Layout", "OffsetX", 10f, "Gap from the right edge of the screen (UI pixels).");
-            _offsetY = Config.Bind("Layout", "OffsetY", 300f, "Gap from the top of the screen (UI pixels). Raise it if it overlaps your minimap.");
-            _scale = Config.Bind("Layout", "Scale", 1f, "Size of the panel (1 = normal, 1.25 = bigger).");
-            _avoidShipHud = Config.Bind("Layout", "AvoidShipHud", true, "While you are steering a ship, move the panel down so it does not cover the wind indicator and the rest of the ship display.");
-            _compact = Config.Bind("Layout", "Compact", false, "A smaller, tighter panel: a small picture and thinner bars, for when you want it out of the way.");
-            _onLeft = Config.Bind("Layout", "OnLeft", false, "Put the panel on the left edge of the screen instead of the right.");
+            BindLayoutSettings();
             _showArrow = Config.Bind("General", "ShowDirectionArrow", true, "Next to each player's distance, an arrow pointing the way they are, relative to where you are looking.");
             _showFood = Config.Bind("General", "ShowFood", true, "Show three food slots under each player's picture: what they are eating and how long it has left. Only for players who also have this mod.");
             _showEffects = Config.Bind("General", "ShowStatusEffects", true, "Show each player's buffs and debuffs (food, rested, wet, poison...) as small icons under their bars. Only for players who also have this mod.");
             _showCompanions = Config.Bind("General", "ShowCompanions", true, "With the AICompanion mod: show each player's companion under them (health, distance, what it is doing).");
-            _opacity = Config.Bind("Layout", "Opacity", 0.85f, "How solid the panel background is (0.2 to 1).");
 
             Synced = new DHack.Shared.ServerSettings(Guid, Config, Logger);
             _shareMine = Config.Bind("Sharing", "ShareMyStats", true,
