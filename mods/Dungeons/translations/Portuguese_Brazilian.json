@@ -44,6 +44,8 @@
   "dungeons_map_drop": "Uma queda para o andar de baixo",
   "dungeons_lever_locked": "Travada: limpe a sala",
   "dungeons_fight_start": "As portas se fecham!",
+  "dungeons_fight_ambush": "Inimigos se aproximam!",
+  "dungeons_fight_guard": "Os guardiões do baú despertam!",
   "dungeons_fight_wave": "Onda {0} de {1}",
   "dungeons_fight_clear": "A sala está limpa",
   "dungeons_map_shortcut": "Atalho, aberto",

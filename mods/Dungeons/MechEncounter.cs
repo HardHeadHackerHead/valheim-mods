@@ -140,6 +140,24 @@ namespace Dungeons
 
         // ---- starting, ending
 
+        /// <summary>
+        /// The line a fight's start shows (every game, from its record). "The doors slam shut!" only when its start shut something that was
+        /// open (Before: each lock's state before it, 0 shut); else one that fits what it is: a chest's guardians (it starts when the chest
+        /// opens, or it's a guard with no waves), or enemies closing in. A boss fight with nothing shut: null (its banner says it).
+        /// Also for a boss intro's "$dungeons_fight_start" (BossShow.cs).
+        /// </summary>
+        internal string StartLine(Mech m, EncounterRecord r)
+        {
+            if (Slammed(r)) return T("dungeons_fight_start");
+            EncounterDef e = m.Def.Encounter;
+            if (e == null || e.Boss != null) return null;
+            if (e.StartOn == "open" || e.Waves.Count == 0) return T("dungeons_fight_guard");
+            return T("dungeons_fight_ambush");
+        }
+
+        /// <summary>Its start shut a lock that was open.</summary>
+        internal static bool Slammed(EncounterRecord r) => !string.IsNullOrEmpty(r.Before) && r.Before.Any(c => c != '0');
+
         /// <summary>The owner: start it (a wire "start", a trigger, the use command). False when it isn't idle.</summary>
         public bool StartEncounter(Mech m, string why)
         {
@@ -416,7 +434,7 @@ namespace Dungeons
                 {
                     int waves = Math.Max(1, m.Def.Encounter.Waves.Count);
                     if (boss != null) BossNotices(m, r, here, p);   // (BossShow.cs)
-                    else if (here) p.Message(MessageHud.MessageType.Center, r.Wave == 0 ? T("dungeons_fight_start") : T("dungeons_fight_wave", r.Wave + 1, waves));
+                    else if (here) p.Message(MessageHud.MessageType.Center, r.Wave == 0 ? StartLine(m, r) : T("dungeons_fight_wave", r.Wave + 1, waves));
                 }
                 else if (r.State == EncounterRecord.Cleared)
                 {

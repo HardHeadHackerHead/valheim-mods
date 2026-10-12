@@ -44,6 +44,8 @@
   "dungeons_map_drop": "Una caída a la planta de abajo",
   "dungeons_lever_locked": "Bloqueada: limpia la sala",
   "dungeons_fight_start": "¡Las puertas se cierran de golpe!",
+  "dungeons_fight_ambush": "¡Los enemigos se acercan!",
+  "dungeons_fight_guard": "¡Los guardianes del cofre despiertan!",
   "dungeons_fight_wave": "Oleada {0} de {1}",
   "dungeons_fight_clear": "La sala está despejada",
   "dungeons_map_shortcut": "Atajo, abierto",

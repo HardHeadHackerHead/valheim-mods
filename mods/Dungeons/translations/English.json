@@ -44,6 +44,8 @@
   "dungeons_map_drop": "A drop to the floor below",
   "dungeons_lever_locked": "Locked: clear the room",
   "dungeons_fight_start": "The doors slam shut!",
+  "dungeons_fight_ambush": "Enemies close in!",
+  "dungeons_fight_guard": "The chest's guardians wake!",
   "dungeons_fight_wave": "Wave {0} of {1}",
   "dungeons_fight_clear": "The room is cleared",
   "dungeons_map_shortcut": "Shortcut, open",

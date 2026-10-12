@@ -44,6 +44,8 @@
   "dungeons_map_drop": "Спуск прыжком на этаж ниже",
   "dungeons_lever_locked": "Заблокирован: очистите зал",
   "dungeons_fight_start": "Двери захлопываются!",
+  "dungeons_fight_ambush": "Враги приближаются!",
+  "dungeons_fight_guard": "Стражи сундука пробуждаются!",
   "dungeons_fight_wave": "Волна {0} из {1}",
   "dungeons_fight_clear": "Зал очищен",
   "dungeons_map_shortcut": "Короткий путь, открыт",

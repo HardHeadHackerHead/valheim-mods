@@ -144,7 +144,9 @@ def _closet_walls(c, k, lat, depth, W, D, H):
     fx, fz = side_xz(k, lat, depth - D - t.wall_t / 2)
     t.wall_panel(r, (fx, (sh.floor_y + H + top) / 2, fz), W + 2 * t.wall_t, top - sh.floor_y - H, 90 * k)
     cx, cz = side_xz(k, lat, depth - D / 2)
+    n = len(r.parts)
     t.chest(r, (cx, sh.floor_y, cz), yaw=(90 * k + 180) % 360, saved=True)
+    c.closet_parts = r.parts[n:]       # (what's inside: a stash hides it on the map until its wall is broken)
     return np.array([fx, sh.floor_y, fz])
 
 
@@ -157,6 +159,8 @@ def stash(c):
     t, r = c.theme, c.room
     front = _closet_walls(c, k, lat, depth, W, D, H)
     b = r.mech("stash", "breakable", front, (0, (90 * k) % 360, 0))
+    for p in getattr(c, "closet_parts", []):
+        p.hidden_by = "stash"                                   # (off the map until the wall is broken)
     b.pose().pose()
     b.extra["health"] = 300
     cracked(t, b, W, H)

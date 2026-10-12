@@ -90,6 +90,7 @@ namespace Dungeons
             Directory.CreateDirectory(dir);
             var shots = new JArray();
             var problems = new JArray();
+            var notLoaded = new JArray();
             _running = true;
             try
             {
@@ -97,6 +98,8 @@ namespace Dungeons
                 {
                     PlacedRoom r = site.Layout.Rooms[room];
                     List<View> list = Views(site, map, room, views);
+                    string missing = Unloaded(site, room);
+                    if (missing != null) notLoaded.Add($"{room} {r.Def.Name}: {missing}");
                     for (int k = 0; k < list.Count; k++)
                     {
                         yield return new WaitForEndOfFrame();
@@ -126,10 +129,53 @@ namespace Dungeons
                                       : "as in the game",
             };
             if (problems.Count > 0) summary["problems"] = problems;
+            if (notLoaded.Count > 0)
+            {
+                // so an empty dais isn't taken for a missing chest
+                summary["notInPictures"] = notLoaded;
+                summary["notInPicturesWhy"] = "saved parts (chests, doors...) exist only where their zone is loaded on this game, and only once the "
+                                              + "dungeon's owner has made them: stand nearer, or go in, and tour again to see them";
+            }
             try { File.WriteAllText(Path.Combine(dir, "tour.json"), new JObject { ["summary"] = summary.DeepClone(), ["shots"] = shots }.ToString(Formatting.Indented)); }
             catch (Exception) { }
             summary["shots"] = shots;
             output(summary);
+        }
+
+        private static readonly AccessTools.FieldRef<ZNetScene, Dictionary<ZDO, ZNetView>> Instances = AccessTools.FieldRefAccess<ZNetScene, Dictionary<ZDO, ZNetView>>("m_instances");
+        private static readonly int PartOf = Keys.PartOf.GetStableHashCode();
+
+        /// <summary>A room's saved parts that aren't in this game now (one of ours: its "saved" parts you'd see, not spawners), as
+        /// "2 saved parts not loaded here: Morkhalla_ChestAncient, ..." (or "not made yet" when the owner hasn't made the room's parts).
+        /// Null when all are here.</summary>
+        private static string Unloaded(Site site, int room)
+        {
+            PlacedRoom r = site.Layout.Rooms[room];
+            if (r.Def.GamePrefab != null || r.Def.Parts == null || ZNetScene.instance == null) return null;
+            var wanted = r.Def.Parts.Where(pt => pt.Saved && Visible(pt.Prefab)).ToList();
+            if (wanted.Count == 0) return null;
+            if (!site.RoomDone(room)) return $"{wanted.Count} saved parts not made yet (the dungeon's owner makes them): {string.Join(", ", wanted.Select(pt => pt.Prefab).Distinct())}";
+            // what of this dungeon is here, by prefab name and place
+            var here = new List<KeyValuePair<string, Vector3>>();
+            foreach (KeyValuePair<ZDO, ZNetView> kv in Instances(ZNetScene.instance))
+                if (kv.Value != null && kv.Key.GetString(PartOf) == site.Id)
+                    here.Add(new KeyValuePair<string, Vector3>(Utils.GetPrefabName(kv.Value.gameObject), kv.Value.transform.position));
+            int q = MapLayout.Quarter(r.Yaw);
+            var missing = new List<string>();
+            foreach (PartDef pt in wanted)
+            {
+                Vector3 at = site.Origin + r.Pos + Layouts.Turn(pt.At, q);
+                if (!here.Any(h => string.Equals(h.Key, pt.Prefab, StringComparison.OrdinalIgnoreCase) && (h.Value - at).sqrMagnitude < 2.5f * 2.5f)) missing.Add(pt.Prefab);
+            }
+            return missing.Count == 0 ? null : $"{missing.Count} saved part{(missing.Count == 1 ? "" : "s")} not loaded here: {string.Join(", ", missing.Distinct())}";
+        }
+
+        /// <summary>A saved part that shows in a picture (not a spawner, which is invisible).</summary>
+        private static bool Visible(string prefab)
+        {
+            GameObject go = ZNetScene.instance != null ? ZNetScene.instance.GetPrefab(prefab ?? "") : null;
+            if (go == null) return true;
+            return go.GetComponent<CreatureSpawner>() == null && go.GetComponent<SpawnArea>() == null && go.GetComponent<Character>() == null;
         }
 
         // ---- which rooms, which views

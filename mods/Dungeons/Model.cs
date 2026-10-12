@@ -36,6 +36,9 @@ namespace Dungeons
         // (added by triggers) a mechanism's part only: the states its own fire burns in ("lit": [1, 2]: its Fireplace's flame, light,
         // warmth and crackle, or its lights, particles and looping sounds; the model itself stays). null: always (a brazier's: lit only)
         public List<int> Lit;
+        // (added by the map, MapLayout.cs) a room's part behind a breakable wall: that breakable's mechanism id in the same room (JSON
+        // "hiddenBy": a stash's chest and dressing). The map shows nothing of it until the breakable is broken.
+        public string HiddenBy;
     }
 
     // ---- step 2: moving parts and puzzles ----
@@ -90,6 +93,8 @@ namespace Dungeons
         public List<float> SpinScale;   // (added in step 3, Runtime) its parts' Spin times this in each state ("spinScale": [1, 2.5])
         public BlockDef Block;          // (added by triggers, TriggerModel.cs) a building block's own fields (pedestal, brazier, pushblock,
                                         // trap, teleporter, lock, checkpoint), and any mechanism's reset "group"; null: none
+        public string HiddenBy;         // (added by the map, MapLayout.cs) behind a breakable in its room: that breakable's id (JSON
+                                        // "hiddenBy"); the map shows nothing of it until the breakable is broken
     }
 
     /// <summary>A room a pack can use: one of the game's (by prefab name, from DungeonDB) or one of the pack's own (a list of parts).</summary>
@@ -110,6 +115,8 @@ namespace Dungeons
         public List<Join> Inside = new List<Join>();     // which of its doorways are joined through it whatever the mechanisms do (empty: all)
         public string Music;            // (added in step 3, Runtime) the game's music while a player is in it (MusicMan's name), or null
         public List<TriggerDef> Triggers = new List<TriggerDef>();   // (added by triggers, TriggerModel.cs) its "triggers"
+        public string HiddenBy;         // (added by the map, MapLayout.cs) a secret room: the breakable in it that walls its way in (JSON
+                                        // "hiddenBy"); the map shows nothing of the room until it's broken (as a room tagged "secret")
     }
 
     /// <summary>One step of a pack's plan: a room with this tag must be on the way from the entrance, after the steps before it. A step that

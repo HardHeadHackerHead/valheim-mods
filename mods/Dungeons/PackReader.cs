@@ -240,6 +240,7 @@ namespace Dungeons
                 def.Mechs.Add(ReadMech(m, problems, $"{packName}: {def.Name}"));
             def.Inside.AddRange(Joins(r["inside"]));
             def.Music = (string)r["music"];
+            def.HiddenBy = (string)r["hiddenBy"];   // (added by the map: a secret room, off the map until this breakable breaks)
             // The pack's own say over the game's (or the defaults).
             if (r["weight"] != null) def.Weight = (float)r["weight"];
             if (r["max"] != null) def.Max = (int)r["max"];
@@ -265,6 +266,7 @@ namespace Dungeons
             Scale = p["scale"] is JArray s ? Vec(s) : Vector3.one,
             Saved = (bool?)p["saved"] ?? false,
             Spin = p["spin"] is JArray spin ? Vec(spin) : Vector3.zero,   // (a mechanism's part: degrees a second it turns while moving)
+            HiddenBy = (string)p["hiddenBy"],   // (added by the map: a part behind a breakable, kept off the map until it's broken)
         }).ToList();
 
         private static IEnumerable<Join> Joins(JToken t) => (t as JArray ?? new JArray()).OfType<JObject>().Select(j => new Join
@@ -292,6 +294,7 @@ namespace Dungeons
                 Health = (float?)m["health"] ?? 0f,
                 Pair = (string)m["pair"],
                 Deep = (bool?)m["deep"] ?? (string)m["end"] == "far",   // ("end": "far" is the same)
+                HiddenBy = (string)m["hiddenBy"],   // (added by the map: behind a breakable, off the map until it breaks)
             };
             if (m["cycleIn"] is JArray cycleIn) mech.CycleIn = cycleIn.Where(t => t.Type == JTokenType.Integer).Select(t => (int)t).ToList();
             if (m["spinScale"] is JArray spinScale) mech.SpinScale = spinScale.Where(t => t.Type == JTokenType.Integer || t.Type == JTokenType.Float).Select(t => (float)t).ToList();

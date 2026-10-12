@@ -44,6 +44,8 @@
   "dungeons_map_drop": "Alt kata atlama yeri",
   "dungeons_lever_locked": "Kilitli: odayı temizle",
   "dungeons_fight_start": "Kapılar çarparak kapanıyor!",
+  "dungeons_fight_ambush": "Düşmanlar yaklaşıyor!",
+  "dungeons_fight_guard": "Sandığın muhafızları uyanıyor!",
   "dungeons_fight_wave": "Dalga {0} / {1}",
   "dungeons_fight_clear": "Oda temizlendi",
   "dungeons_map_shortcut": "Kestirme, açık",

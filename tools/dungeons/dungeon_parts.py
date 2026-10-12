@@ -58,6 +58,7 @@ class Part:
     def __init__(self, prefab, at, euler=(0, 0, 0), scale=(1, 1, 1), saved=False):
         self.prefab, self.at, self.euler, self.scale, self.saved = prefab, np.array(at, float), np.array(euler, float), np.array(scale, float), saved
         self.spin = None                # a mechanism's part only: degrees a second about its own axes (Runtime turns it)
+        self.hidden_by = None           # a breakable's mechanism id in the same room: off the map until it is broken ("hiddenBy")
 
     def json(self):
         o = {"prefab": self.prefab, "at": r3(self.at)}
@@ -69,6 +70,8 @@ class Part:
             o["saved"] = True
         if self.spin is not None:
             o["spin"] = [int(round(v)) for v in self.spin]
+        if self.hidden_by:
+            o["hiddenBy"] = self.hidden_by
         return o
 
 

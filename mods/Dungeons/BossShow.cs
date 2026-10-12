@@ -444,7 +444,11 @@ namespace Dungeons
             if (beat.Banner && (here || dead && inside))
                 Banner(d, true, dead ? T("dungeons_boss_fallen", Localize(d.Name)) : null);
             if (!string.IsNullOrEmpty(beat.Message) && (here || dead && inside))
-                p?.Message(MessageHud.MessageType.Center, Localize(beat.Message, Localize(d.Name)));
+            {
+                // "the doors slam shut" only when the fight's start shut a lock that was open (MechEncounter's StartLine)
+                string line = beat.Message == "$dungeons_fight_start" ? StartLine(m, EncounterOf(m)) : Localize(beat.Message, Localize(d.Name));
+                if (!string.IsNullOrEmpty(line)) p?.Message(MessageHud.MessageType.Center, line);
+            }
         }
 
         /// <summary>The game's big banner (as for a land found): the boss's name and title, or a line of text.</summary>

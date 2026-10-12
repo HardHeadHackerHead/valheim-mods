@@ -536,6 +536,7 @@ namespace Dungeons
             foreach (MapThing t in found) sb.Append('|').Append((int)t.Mark).Append(Mathf.RoundToInt(t.At.x)).Append(',').Append(Mathf.RoundToInt(t.At.z));
             foreach (string won in scene.Cleared) sb.Append("|w").Append(won);
             foreach (MapLayout.Breakable b in scene.Map.Breakables) sb.Append(scene.Standing(b) ? "|b1" : "|b0");
+            foreach (MapLayout.Stash st in scene.Map.Stashes) sb.Append(scene.Recorded.Contains(st.Room + "." + st.Mech.Id) ? "|h0" : "|h1");
             foreach (MapLayout.Shortcut pair in scene.Map.Shortcuts) sb.Append(scene.Open(pair) ? "|s1" : "|s0");
             sb.Append("|c").Append(scene.MyCheckpoint);
             return sb.ToString();

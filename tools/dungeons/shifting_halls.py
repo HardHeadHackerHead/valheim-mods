@@ -878,6 +878,7 @@ def secret_room(name, size, loot_at, weight):
     r.end_cap = True
     r.extra["joinBy"] = ["in"]
     cracked_panel(r, "crack", sz / 2, -sy / 2 + 1.0, "in")
+    r.extra["hiddenBy"] = "crack"                       # (the whole room is off the map until its cracked panel is broken)
     return r
 
 

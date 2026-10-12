@@ -105,6 +105,9 @@ namespace Dungeons
                 foreach (PlacedRoom r in layout.Rooms)
                     Console.WriteLine($"room {r.Index} {r.Def.Name} floors {map.Base[r.Index] + 1}-{map.Top[r.Index] + 1}{(map.IsWall(r.Index) ? " (wall)" : "")} at {r.Pos} yaw {r.Yaw}");
             if (Environment.GetEnvironmentVariable("MAPDEBUG") != null)
+                foreach (MapLayout.Stash st in map.Stashes)
+                    Console.WriteLine($"stash {st.Room}.{st.Mech.Id} in {layout.Rooms[st.Room].Def.Name} (floors {map.Base[st.Room] + 1}-{map.Top[st.Room] + 1}): hides {st.Hidden.Count} at {string.Join(" ", st.Hidden)}");
+            if (Environment.GetEnvironmentVariable("MAPDEBUG") != null)
                 foreach (MapLayout.Breakable b in map.Breakables)
                     Console.WriteLine($"breakable {b.Room}.{b.Mech.Id} on doorway {b.Door} (floor {map.DoorFloor[b.Room][b.Door] + 1}): secret room {b.Secret} {layout.Rooms[b.Secret].Def.Name}");
             if (Environment.GetEnvironmentVariable("MAPDEBUG") != null)

@@ -44,6 +44,8 @@
   "dungeons_map_drop": "Un saut vers l'étage en dessous",
   "dungeons_lever_locked": "Verrouillé : nettoyez la salle",
   "dungeons_fight_start": "Les portes claquent !",
+  "dungeons_fight_ambush": "Des ennemis approchent !",
+  "dungeons_fight_guard": "Les gardiens du coffre s'éveillent !",
   "dungeons_fight_wave": "Vague {0} sur {1}",
   "dungeons_fight_clear": "La salle est nettoyée",
   "dungeons_map_shortcut": "Raccourci, ouvert",

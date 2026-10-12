@@ -46,6 +46,27 @@ namespace Dungeons
         /// <summary>A breakable wall still standing (no record yet: MechSet.IsBroken).</summary>
         public bool Standing(MapLayout.Breakable b) => !Recorded.Contains(b.Room + "." + b.Mech.Id);
 
+        /// <summary>A mechanism behind a stash's wall that still stands ("hiddenBy" on it): not drawn.</summary>
+        public bool Stashed(int room, MechDef m)
+        {
+            if (string.IsNullOrEmpty(m.HiddenBy)) return false;
+            foreach (MapLayout.Stash st in Map.Stashes)
+                if (st.Room == room && st.Mechs.Contains(m) && !Recorded.Contains(st.Room + "." + st.Mech.Id)) return true;
+            return false;
+        }
+
+        /// <summary>Behind a stash's wall that still stands: a thing found there (its chest) isn't drawn.</summary>
+        public bool Stashed(Vector3 p)
+        {
+            foreach (MapLayout.Stash st in Map.Stashes)
+            {
+                if (Recorded.Contains(st.Room + "." + st.Mech.Id)) continue;   // (broken)
+                foreach (Vector3 h in st.Hidden)
+                    if ((h - p).sqrMagnitude < 1.5f * 1.5f) return true;
+            }
+            return false;
+        }
+
         /// <summary>A shortcut pair open (either door has a record: MechSet.ShortcutOpen).</summary>
         public bool Open(MapLayout.Shortcut pair) => pair.Ends.Any(e => Recorded.Contains(e.Key + "." + e.Value.Id));
 
@@ -356,13 +377,13 @@ namespace Dungeons
             for (int i = 0; i < map.Boxes.Length; i++)
             {
                 if (!s.Visible(i)) continue;
-                foreach (MechDef m in map.Layout.Rooms[i].Def.Mechs) Ways(c, s, i, m, floor, icon);
+                foreach (MechDef m in map.Layout.Rooms[i].Def.Mechs) if (!s.Stashed(i, m)) Ways(c, s, i, m, floor, icon);
             }
             // the gates, then the things to use, then what was found in the world
             for (int i = 0; i < map.Boxes.Length; i++)
             {
                 if (!s.Visible(i)) continue;
-                foreach (MechDef m in map.Layout.Rooms[i].Def.Mechs) Mark(c, s, i, m, floor, icon);
+                foreach (MechDef m in map.Layout.Rooms[i].Def.Mechs) if (!s.Stashed(i, m)) Mark(c, s, i, m, floor, icon);
                 if (map.IsVault(i) && map.Base[i] == floor)
                 {
                     // the vault: gilded inside its walls, its mark a little past the middle away from its way in (the chest is in the middle)
@@ -405,14 +426,14 @@ namespace Dungeons
             }
             foreach (KeyValuePair<int, MechDef> end in map.Teleporters)
             {
-                if (!s.Visible(end.Key)) continue;
+                if (!s.Visible(end.Key) || s.Stashed(end.Key, end.Value)) continue;
                 Vector3 at = map.MechAt(end.Key, end.Value);
                 if (map.FloorOf(at.y + 0.5f) != floor) continue;
                 bool on = s.StateOf(end.Key, end.Value) != 0;
                 foreach (KeyValuePair<int, MechDef> other in map.Teleporters)
                 {
                     if (other.Key == end.Key && other.Value == end.Value) continue;
-                    if (string.IsNullOrEmpty(end.Value.Pair) || other.Value.Pair != end.Value.Pair || !s.Visible(other.Key)) continue;
+                    if (string.IsNullOrEmpty(end.Value.Pair) || other.Value.Pair != end.Value.Pair || !s.Visible(other.Key) || s.Stashed(other.Key, other.Value)) continue;
                     Vector3 there = map.MechAt(other.Key, other.Value);
                     if (map.FloorOf(there.y + 0.5f) != floor || string.CompareOrdinal(end.Key + end.Value.Id, other.Key + other.Value.Id) > 0) continue;
                     c.Dashed(s.Px(at), s.Px(there), Math.Max(1.5f, s.Ppm * 0.2f), Math.Max(3f, s.Ppm * 0.5f), Math.Max(4f, s.Ppm * 0.9f), Rune, on ? 0.7f : 0.3f);
@@ -437,7 +458,14 @@ namespace Dungeons
             {
                 if (map.FloorOf(t.At.y + 0.5f) != floor) continue;
                 bool player = t.Mark == MapMark.You || t.Mark == MapMark.Other;
-                if (!player && !NearShown(s, t.At)) continue;
+                if (!player)
+                {
+                    // a door at a shown room's doorway (it may join one not shown yet); anything else only inside a shown room (so nothing of
+                    // a secret room behind its wall), and nothing a stash's wall still hides
+                    bool door = t.Mark == MapMark.GateShut || t.Mark == MapMark.GateOpen;
+                    if (door ? !NearShown(s, t.At) : !InShown(s, t.At)) continue;
+                    if (s.Stashed(t.At)) continue;
+                }
                 var fwd = new Vector2(t.Forward.x, t.Forward.z);
                 if (t.Mark == MapMark.GateShut || t.Mark == MapMark.GateOpen)
                 {
@@ -450,6 +478,18 @@ namespace Dungeons
                 else Icon(c, t.Mark, s.Px(t.At), t.Mark == MapMark.Chest ? icon * 0.9f : icon, fwd);
             }
             if (!s.Mini) Frame(c);
+        }
+
+        /// <summary>Inside a room that shows (its box, its floor to its ceiling).</summary>
+        private static bool InShown(MapScene s, Vector3 p)
+        {
+            for (int i = 0; i < s.Map.Boxes.Length; i++)
+            {
+                if (!s.Visible(i)) continue;
+                Vector3 lo = s.Map.Boxes[i].min, hi = s.Map.Boxes[i].max;
+                if (p.x >= lo.x - 0.1f && p.x <= hi.x + 0.1f && p.z >= lo.z - 0.1f && p.z <= hi.z + 0.1f && p.y >= lo.y - 1f && p.y <= hi.y + 0.5f) return true;
+            }
+            return false;
         }
 
         /// <summary>Near a room that shows (things found in the world show only there: fog of war).</summary>

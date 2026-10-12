@@ -44,6 +44,8 @@
   "dungeons_map_drop": "可跳落到下层",
   "dungeons_lever_locked": "已锁定：清空房间",
   "dungeons_fight_start": "大门轰然关闭！",
+  "dungeons_fight_ambush": "敌人逼近了！",
+  "dungeons_fight_guard": "宝箱的守卫苏醒了！",
   "dungeons_fight_wave": "第 {0} 波，共 {1} 波",
   "dungeons_fight_clear": "房间已清空",
   "dungeons_map_shortcut": "捷径，已打开",

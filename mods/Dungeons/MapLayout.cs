@@ -37,6 +37,7 @@ namespace Dungeons
         public int[][] DoorMark;             // [room][doorway]: +1 the room leads up from it, -1 down, 2 both, 0 neither
         public readonly List<Drop> Drops = new List<Drop>();         // the pack's declared drops, one per edge dropped from
         public readonly List<Breakable> Breakables = new List<Breakable>();   // walls to break, and the secret rooms behind them
+        public readonly List<Stash> Stashes = new List<Stash>();               // walls to break in a room, and what they hide in it
         public readonly List<Shortcut> Shortcuts = new List<Shortcut>();      // shortcut doors, in pairs
         public readonly List<KeyValuePair<int, MechDef>> Bosses = new List<KeyValuePair<int, MechDef>>();   // boss fights (room, encounter)
         public readonly List<KeyValuePair<int, MechDef>> Teleporters = new List<KeyValuePair<int, MechDef>>();   // (room, teleporter)
@@ -385,6 +386,16 @@ namespace Dungeons
             public MechDef Mech;
         }
 
+        /// <summary>A breakable wall inside a room (no doorway: a closet walled up), and where the things it hides stand (dungeon frame):
+        /// the room's parts whose "hiddenBy" names it, or (a pack from before that field) its saved parts within 3 m of it.</summary>
+        internal sealed class Stash
+        {
+            public int Room;
+            public MechDef Mech;
+            public readonly List<Vector3> Hidden = new List<Vector3>();
+            public readonly List<MechDef> Mechs = new List<MechDef>();   // its room's mechanisms behind it ("hiddenBy" on a mechanism)
+        }
+
         /// <summary>A pair of shortcut doors (or a lone one): its ends, the first the one nearer the entrance (shown only once it's open).</summary>
         internal sealed class Shortcut
         {
@@ -411,10 +422,11 @@ namespace Dungeons
                     {
                         int d = Door(r.Index, m.Doorway);
                         int other = d >= 0 ? LinkRoom[r.Index][d] : -1;
+                        if (d < 0) { AddStash(r, m); continue; }
                         if (other < 0) continue;
                         // the room tagged "secret" (Shifting Halls puts the wall in the secret room's own doorway); untagged, the room across
                         // the doorway, as runtime places it
-                        int secret = PackReader.Secret(r.Def) ? r.Index : other;
+                        int secret = r.Def.HiddenBy == m.Id ? r.Index : PackReader.Secret(r.Def) ? r.Index : other;
                         Breakables.Add(new Breakable { Room = r.Index, Door = d, OtherRoom = other, OtherDoor = LinkDoor[r.Index][d], Secret = secret, Mech = m });
                     }
                     else if (IsShortcut(m)) shortcuts.Add(new KeyValuePair<int, MechDef>(r.Index, m));
@@ -446,6 +458,22 @@ namespace Dungeons
                                                                        : Layout.Rooms[a.Key].Depth.CompareTo(Layout.Rooms[b.Key].Depth));
                 Shortcuts.Add(pair);
             }
+        }
+
+        private void AddStash(PlacedRoom r, MechDef m)
+        {
+            var stash = new Stash { Room = r.Index, Mech = m };
+            int q = Quarter(r.Yaw);
+            Vector3 wall = MechAt(r.Index, m);
+            bool named = r.Def.Parts.Any(pt => pt.HiddenBy == m.Id) || r.Def.Mechs.Any(x => x.HiddenBy == m.Id);
+            foreach (MechDef x in r.Def.Mechs)
+                if (x.HiddenBy == m.Id) stash.Mechs.Add(x);
+            foreach (PartDef pt in r.Def.Parts)
+            {
+                Vector3 at = r.Pos + Layouts.Turn(pt.At, q);
+                if (named ? pt.HiddenBy == m.Id : pt.Saved && (at - wall).sqrMagnitude <= 3f * 3f) stash.Hidden.Add(at);
+            }
+            Stashes.Add(stash);
         }
 
         /// <summary>Where a shortcut or breakable shows: just inside its doorway, or where it stands. In a wall (a shortcut's door is a flat

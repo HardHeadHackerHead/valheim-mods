@@ -44,6 +44,8 @@
   "dungeons_map_drop": "Sprung ins Stockwerk darunter",
   "dungeons_lever_locked": "Gesperrt: säubere den Raum",
   "dungeons_fight_start": "Die Türen schlagen zu!",
+  "dungeons_fight_ambush": "Feinde rücken heran!",
+  "dungeons_fight_guard": "Die Wächter der Truhe erwachen!",
   "dungeons_fight_wave": "Welle {0} von {1}",
   "dungeons_fight_clear": "Der Raum ist gesäubert",
   "dungeons_map_shortcut": "Abkürzung, offen",

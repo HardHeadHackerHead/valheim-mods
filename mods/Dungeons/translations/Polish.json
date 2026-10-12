@@ -44,6 +44,8 @@
   "dungeons_map_drop": "Zeskok na piętro niżej",
   "dungeons_lever_locked": "Zablokowana: oczyść komnatę",
   "dungeons_fight_start": "Drzwi się zatrzaskują!",
+  "dungeons_fight_ambush": "Wrogowie nadciągają!",
+  "dungeons_fight_guard": "Strażnicy skrzyni budzą się!",
   "dungeons_fight_wave": "Fala {0} z {1}",
   "dungeons_fight_clear": "Komnata oczyszczona",
   "dungeons_map_shortcut": "Skrót, otwarty",
