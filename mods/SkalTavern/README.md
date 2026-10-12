@@ -45,13 +45,13 @@ Every number is in the settings: how long to sober up, how strong the sway and w
 No keys to remember. Drink as you would any drink: use it from the bag or the hotbar. Each use is one swig of the mug's four, and each swig is a toast: drink beside friends or your companions and you all get a Skål! buff.
 <!-- END HAND-WRITTEN: how-to-use -->
 
-## 🤝 Goes well with
+## 🧩 Other mods
+
+**Goes well with**
 
 | <a href="https://thunderstore.io/c/valheim/p/Quads_Lab/Quads_Cigars/"><img src="https://raw.githubusercontent.com/HardHeadHackerHead/valheim-mods/main/mods/CigarSmoking/thunderstore/icon.png" alt="Quad&#x27;s Cigars" width="256"></a> | <a href="https://thunderstore.io/c/valheim/p/Quads_Lab/Quads_Slot_Machine/"><img src="https://raw.githubusercontent.com/HardHeadHackerHead/valheim-mods/main/mods/SlotMachine/thunderstore/icon.png" alt="Quad&#x27;s Slot Machine" width="256"></a> | <a href="https://thunderstore.io/c/valheim/p/Quads_Lab/Quads_Rainbows/"><img src="https://raw.githubusercontent.com/HardHeadHackerHead/valheim-mods/main/mods/Rainbows/thunderstore/icon.png" alt="Quad&#x27;s Rainbows" width="256"></a> | <a href="https://thunderstore.io/c/valheim/p/Quads_Lab/Quads_Bird_Trap/"><img src="https://raw.githubusercontent.com/HardHeadHackerHead/valheim-mods/main/mods/BirdTrap/thunderstore/icon.png" alt="Quad&#x27;s Bird Trap" width="256"></a> |
 |:-:|:-:|:-:|:-:|
 | [Cigars](https://thunderstore.io/c/valheim/p/Quads_Lab/Quads_Cigars/) | [Slot Machine](https://thunderstore.io/c/valheim/p/Quads_Lab/Quads_Slot_Machine/) | [Rainbows](https://thunderstore.io/c/valheim/p/Quads_Lab/Quads_Rainbows/) | [Bird Trap](https://thunderstore.io/c/valheim/p/Quads_Lab/Quads_Bird_Trap/) |
-
-## 🧩 Other mods
 
 <!-- HAND-WRITTEN: other-mods -->
 **Known clashes:** none known.

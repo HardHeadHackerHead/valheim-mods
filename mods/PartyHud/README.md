@@ -7,7 +7,7 @@
 
 **A party HUD with party frames: health bars, stamina and distance for every player in your group, with Steam portraits and an arrow pointing to each teammate, live and at any range. A group UI for multiplayer.**
 
-![version: 1.11.0](https://img.shields.io/badge/version-1.11.0-3b6e8f?style=flat-square)  ![multiplayer: only who wants it](https://img.shields.io/badge/multiplayer-only%20who%20wants%20it-7a5c2e?style=flat-square)  ![made with: Claude Code](https://img.shields.io/badge/made%20with-Claude%20Code-c26a3d?style=flat-square)
+![version: 1.11.1](https://img.shields.io/badge/version-1.11.1-3b6e8f?style=flat-square)  ![multiplayer: only who wants it](https://img.shields.io/badge/multiplayer-only%20who%20wants%20it-7a5c2e?style=flat-square)  ![made with: Claude Code](https://img.shields.io/badge/made%20with-Claude%20Code-c26a3d?style=flat-square)
 
 <!-- GITHUB-ONLY -->[Thunderstore](https://thunderstore.io/c/valheim/p/Quads_Lab/Quads_Party_HUD/)  ·  <!-- END GITHUB-ONLY -->[Source code](https://github.com/HardHeadHackerHead/valheim-mods/tree/main/mods/PartyHud)  ·  [Report a bug](https://github.com/HardHeadHackerHead/valheim-mods/issues/new?template=bug.yml&title=%5BQuad%27s%20Party%20HUD%5D%20)  ·  [Discord](https://discord.gg/EwTjQxEZPy)
 
@@ -48,13 +48,13 @@ A party HUD: health bars, stamina and distance for every player in your group, l
 
 <!-- END HAND-WRITTEN: how-to-use -->
 
-## 🤝 Goes well with
+## 🧩 Other mods
+
+**Goes well with**
 
 | <a href="https://thunderstore.io/c/valheim/p/Quads_Lab/Quads_Map_Share/"><img src="https://raw.githubusercontent.com/HardHeadHackerHead/valheim-mods/main/mods/MapShare/thunderstore/icon.png" alt="Quad&#x27;s Map Share" width="256"></a> | <a href="https://thunderstore.io/c/valheim/p/Quads_Lab/Quads_Bounty_Board/"><img src="https://raw.githubusercontent.com/HardHeadHackerHead/valheim-mods/main/mods/BountyBoard/thunderstore/icon.png" alt="Quad&#x27;s Bounty Board" width="256"></a> | <a href="https://thunderstore.io/c/valheim/p/Quads_Lab/Quads_Portal_Hub/"><img src="https://raw.githubusercontent.com/HardHeadHackerHead/valheim-mods/main/mods/PortalHub/thunderstore/icon.png" alt="Quad&#x27;s Portal Hub" width="256"></a> | <a href="https://thunderstore.io/c/valheim/p/Quads_Lab/Quads_Companion/"><img src="https://raw.githubusercontent.com/HardHeadHackerHead/valheim-mods/main/mods/AICompanion/thunderstore/icon.png" alt="Quad&#x27;s Companion" width="256"></a> |
 |:-:|:-:|:-:|:-:|
 | [Map Share](https://thunderstore.io/c/valheim/p/Quads_Lab/Quads_Map_Share/) | [Bounty Board](https://thunderstore.io/c/valheim/p/Quads_Lab/Quads_Bounty_Board/) | [Portal Hub](https://thunderstore.io/c/valheim/p/Quads_Lab/Quads_Portal_Hub/) | [Companion](https://thunderstore.io/c/valheim/p/Quads_Lab/Quads_Companion/) |
-
-## 🧩 Other mods
 
 <!-- HAND-WRITTEN: other-mods -->
 **Known clashes:** none known.
@@ -161,8 +161,8 @@ helps me make new mods and keep improving the ones you already play. It's 100% o
 
 ## 📜 Recent changes
 
+- **1.11.1** The party title now flows into a continuous outer frame through a curved, sloping shoulder. Rounded borders and flowing Nordic corner knots replace the rigid rectangular title tab and angular corner plates.
 - **1.11.0** A new carved Nordic party HUD: dark textured wood, bronze and gold player frames, green companion frames, larger portraits and names, framed food slots, and beveled red and gold live bars. Companion rows now share the full panel width with a dedicated status and buff band. Compact mode remains available, and tall party lists shrink to fit above the bottom of the screen. Artwork is embedded in the DLL; no separate texture install is needed.
 - **1.10.3** Settings: edits to the config file now apply while the game runs (a server owner no longer has to restart), and a server's admins can change the server's settings from their own game with Configuration Manager, where other players see them greyed out. Your config file always keeps your own values while you play on a server (saving it there could write the server's in). Players on an older version still get the server's settings.
-- **1.10.2** Its party panel no longer fill the log with "The LiberationSans SDF Font Asset was not found": each text is given the game's font before it starts (it looked for TextMeshPro's default font, which the game doesn't have, every time a text was made). Nothing changes on screen.
 
 <!-- GITHUB-ONLY -->[Every change](CHANGELOG.txt)<!-- END GITHUB-ONLY --><!-- THUNDERSTORE-ONLY: Every change is on the Changelog tab. -->

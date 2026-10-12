@@ -51,13 +51,13 @@ A buildable bird trap: bait it with berries or seeds, leave it under the open sk
 
 <!-- END HAND-WRITTEN: how-to-use -->
 
-## 🤝 Goes well with
+## 🧩 Other mods
+
+**Goes well with**
 
 | <a href="https://thunderstore.io/c/valheim/p/Quads_Lab/Quads_Quiver/"><img src="https://raw.githubusercontent.com/HardHeadHackerHead/valheim-mods/main/mods/Quiver/thunderstore/icon.png" alt="Quad&#x27;s Quiver" width="256"></a> | <a href="https://thunderstore.io/c/valheim/p/Quads_Lab/Quads_Rainbows/"><img src="https://raw.githubusercontent.com/HardHeadHackerHead/valheim-mods/main/mods/Rainbows/thunderstore/icon.png" alt="Quad&#x27;s Rainbows" width="256"></a> | <a href="https://thunderstore.io/c/valheim/p/Quads_Lab/Quads_Skal_Tavern/"><img src="https://raw.githubusercontent.com/HardHeadHackerHead/valheim-mods/main/mods/SkalTavern/thunderstore/icon.png" alt="Quad&#x27;s Skal Tavern" width="256"></a> | <a href="https://thunderstore.io/c/valheim/p/Quads_Lab/Quads_Cigars/"><img src="https://raw.githubusercontent.com/HardHeadHackerHead/valheim-mods/main/mods/CigarSmoking/thunderstore/icon.png" alt="Quad&#x27;s Cigars" width="256"></a> |
 |:-:|:-:|:-:|:-:|
 | [Quiver](https://thunderstore.io/c/valheim/p/Quads_Lab/Quads_Quiver/) | [Rainbows](https://thunderstore.io/c/valheim/p/Quads_Lab/Quads_Rainbows/) | [Skal Tavern](https://thunderstore.io/c/valheim/p/Quads_Lab/Quads_Skal_Tavern/) | [Cigars](https://thunderstore.io/c/valheim/p/Quads_Lab/Quads_Cigars/) |
-
-## 🧩 Other mods
 
 <!-- HAND-WRITTEN: other-mods -->
 **Known clashes:** none known.

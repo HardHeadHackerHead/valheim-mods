@@ -50,13 +50,13 @@ A portal network: press E on a portal and pick where it goes from a list. No mor
   `HideWardedPortals` on (the host's choice), those portals also stay out of your list and map.
 <!-- END HAND-WRITTEN: how-to-use -->
 
-## 🤝 Goes well with
+## 🧩 Other mods
+
+**Goes well with**
 
 | <a href="https://thunderstore.io/c/valheim/p/Quads_Lab/Quads_Map_Share/"><img src="https://raw.githubusercontent.com/HardHeadHackerHead/valheim-mods/main/mods/MapShare/thunderstore/icon.png" alt="Quad&#x27;s Map Share" width="256"></a> | <a href="https://thunderstore.io/c/valheim/p/Quads_Lab/Quads_Party_HUD/"><img src="https://raw.githubusercontent.com/HardHeadHackerHead/valheim-mods/main/mods/PartyHud/thunderstore/icon.png" alt="Quad&#x27;s Party HUD" width="256"></a> | <a href="https://thunderstore.io/c/valheim/p/Quads_Lab/Quads_Ziplines/"><img src="https://raw.githubusercontent.com/HardHeadHackerHead/valheim-mods/main/mods/Ziplines/thunderstore/icon.png" alt="Quad&#x27;s Ziplines" width="256"></a> | <a href="https://thunderstore.io/c/valheim/p/Quads_Lab/Quads_Jet_Skis/"><img src="https://raw.githubusercontent.com/HardHeadHackerHead/valheim-mods/main/mods/JetSkis/thunderstore/icon.png" alt="Quad&#x27;s Jet Skis" width="256"></a> |
 |:-:|:-:|:-:|:-:|
 | [Map Share](https://thunderstore.io/c/valheim/p/Quads_Lab/Quads_Map_Share/) | [Party HUD](https://thunderstore.io/c/valheim/p/Quads_Lab/Quads_Party_HUD/) | [Ziplines](https://thunderstore.io/c/valheim/p/Quads_Lab/Quads_Ziplines/) | [Jet Skis](https://thunderstore.io/c/valheim/p/Quads_Lab/Quads_Jet_Skis/) |
-
-## 🧩 Other mods
 
 <!-- HAND-WRITTEN: other-mods -->
 **Known clashes**

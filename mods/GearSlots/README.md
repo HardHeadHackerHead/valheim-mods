@@ -46,13 +46,13 @@ Every key and option is in the settings (the manager's Mod settings tab).
 
 <!-- END HAND-WRITTEN: how-to-use -->
 
-## 🤝 Goes well with
+## 🧩 Other mods
+
+**Goes well with**
 
 | <a href="https://thunderstore.io/c/valheim/p/Quads_Lab/Quads_Quiver/"><img src="https://raw.githubusercontent.com/HardHeadHackerHead/valheim-mods/main/mods/Quiver/thunderstore/icon.png" alt="Quad&#x27;s Quiver" width="256"></a> | <a href="https://thunderstore.io/c/valheim/p/Quads_Lab/Quads_Quality_Of_Life/"><img src="https://raw.githubusercontent.com/HardHeadHackerHead/valheim-mods/main/mods/QualityOfLife/thunderstore/icon.png" alt="Quad&#x27;s Quality of Life" width="256"></a> | <a href="https://thunderstore.io/c/valheim/p/Quads_Lab/Quads_Companion/"><img src="https://raw.githubusercontent.com/HardHeadHackerHead/valheim-mods/main/mods/AICompanion/thunderstore/icon.png" alt="Quad&#x27;s Companion" width="256"></a> | <a href="https://thunderstore.io/c/valheim/p/Quads_Lab/Quads_Party_HUD/"><img src="https://raw.githubusercontent.com/HardHeadHackerHead/valheim-mods/main/mods/PartyHud/thunderstore/icon.png" alt="Quad&#x27;s Party HUD" width="256"></a> |
 |:-:|:-:|:-:|:-:|
 | [Quiver](https://thunderstore.io/c/valheim/p/Quads_Lab/Quads_Quiver/) | [Quality of Life](https://thunderstore.io/c/valheim/p/Quads_Lab/Quads_Quality_Of_Life/) | [Companion](https://thunderstore.io/c/valheim/p/Quads_Lab/Quads_Companion/) | [Party HUD](https://thunderstore.io/c/valheim/p/Quads_Lab/Quads_Party_HUD/) |
-
-## 🧩 Other mods
 
 <!-- HAND-WRITTEN: other-mods -->
 **Known clashes**

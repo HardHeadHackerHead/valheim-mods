@@ -4,8 +4,8 @@ package, which makes its links absolute):
 
     title, cover, one-line pitch, badges, links
     Features (DESCRIPTION.txt)        Screenshots (hand-written)       How to use (keys from the repo's README, hand-written notes)
-    Goes well with (related.json: our related mods' icons left to right, each one's name under it)
-    Other mods (hand-written: known clashes, "none known" until there are some)
+    Other mods: Goes well with (related.json: our related mods' icons left to right, 256 px, each one's name under it), then the
+                hand-written part (known clashes, "none known" until there are some; how it works with our other mods)
     Multiplayer (who needs it, from the repo's README; hand-written notes)            Settings (the mod's config file, or its code)
     Made with AI      Join us on Discord (community.md)      About Quads Lab (tools/modpages/about.md, the same on every page)
     Support my mods (support.md, the Buy Me a Coffee banner)      Recent changes (CHANGELOG.txt, the newest 3)
@@ -242,7 +242,7 @@ def package_of(folder):
 
 
 def related_section(folder):
-    """The 'Goes well with' row: the related mods' icons left to right (256 px, a table's top row), each one's short name under it; both link to it."""
+    """The 'Goes well with' row at the top of Other mods: the related mods' icons left to right (256 px, a table's top row), each one's short name under it; both link to it."""
     mods = [m for m in RELATED.get("related", {}).get(folder, []) if os.path.exists(os.path.join(MODS, m, "thunderstore", "icon.png"))]
     if not mods:
         return []
@@ -252,7 +252,7 @@ def related_section(folder):
         link = ("%s/tree/main/mods/%s" % (REPO, m)) if m in RELATED.get("notOnThunderstore", [])             else "https://thunderstore.io/c/valheim/p/%s/%s/" % (THUNDERSTORE_TEAM, package)
         icons.append('<a href="%s"><img src="%s" alt="%s" width="256"></a>' % (link, ICON_URL % m, html.escape(title)))
         names.append("[%s](%s)" % (re.sub(r"^Quad's ", "", title), link))
-    return ["## 🤝 Goes well with", "", "| " + " | ".join(icons) + " |", "|" + ":-:|" * len(mods), "| " + " | ".join(names) + " |", ""]
+    return ["**Goes well with**", "", "| " + " | ".join(icons) + " |", "|" + ":-:|" * len(mods), "| " + " | ".join(names) + " |", ""]
 
 
 def badge(label, value, colour):
@@ -343,8 +343,7 @@ def page(folder, cards, keys, who, default_who, about):
             out += [""]
     out += block("how-to-use", use)
 
-    out += related_section(folder)
-    out += ["## 🧩 Other mods", ""] + block("other-mods", hand.get("other-mods") or "**Known clashes:** none known.")
+    out += ["## 🧩 Other mods", ""] + related_section(folder) + block("other-mods", hand.get("other-mods") or "**Known clashes:** none known.")
     out += ["Found a clash with another mod? [Tell us](%s) which one and what happened." % bug, ""]
 
     out += ["## 👥 Multiplayer", "", "**Who needs it:** %s" % needs, ""]

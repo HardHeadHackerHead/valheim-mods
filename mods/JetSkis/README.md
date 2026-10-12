@@ -77,13 +77,13 @@ Everyone in the world needs it installed.
 
 <!-- END HAND-WRITTEN: how-to-use -->
 
-## 🤝 Goes well with
+## 🧩 Other mods
+
+**Goes well with**
 
 | <a href="https://thunderstore.io/c/valheim/p/Quads_Lab/Quads_Ziplines/"><img src="https://raw.githubusercontent.com/HardHeadHackerHead/valheim-mods/main/mods/Ziplines/thunderstore/icon.png" alt="Quad&#x27;s Ziplines" width="256"></a> | <a href="https://thunderstore.io/c/valheim/p/Quads_Lab/Quads_Portal_Hub/"><img src="https://raw.githubusercontent.com/HardHeadHackerHead/valheim-mods/main/mods/PortalHub/thunderstore/icon.png" alt="Quad&#x27;s Portal Hub" width="256"></a> | <a href="https://thunderstore.io/c/valheim/p/Quads_Lab/Quads_Parkour/"><img src="https://raw.githubusercontent.com/HardHeadHackerHead/valheim-mods/main/mods/Parkour/thunderstore/icon.png" alt="Quad&#x27;s Parkour" width="256"></a> | <a href="https://thunderstore.io/c/valheim/p/Quads_Lab/Quads_Map_Share/"><img src="https://raw.githubusercontent.com/HardHeadHackerHead/valheim-mods/main/mods/MapShare/thunderstore/icon.png" alt="Quad&#x27;s Map Share" width="256"></a> |
 |:-:|:-:|:-:|:-:|
 | [Ziplines](https://thunderstore.io/c/valheim/p/Quads_Lab/Quads_Ziplines/) | [Portal Hub](https://thunderstore.io/c/valheim/p/Quads_Lab/Quads_Portal_Hub/) | [Parkour](https://thunderstore.io/c/valheim/p/Quads_Lab/Quads_Parkour/) | [Map Share](https://thunderstore.io/c/valheim/p/Quads_Lab/Quads_Map_Share/) |
-
-## 🧩 Other mods
 
 <!-- HAND-WRITTEN: other-mods -->
 **Known clashes:** none known.

@@ -55,13 +55,13 @@ Keys are configurable. Q and B work while you are running.
 
 <!-- END HAND-WRITTEN: how-to-use -->
 
-## 🤝 Goes well with
+## 🧩 Other mods
+
+**Goes well with**
 
 | <a href="https://thunderstore.io/c/valheim/p/Quads_Lab/Quads_Craft_From_Chests/"><img src="https://raw.githubusercontent.com/HardHeadHackerHead/valheim-mods/main/mods/CraftFromChests/thunderstore/icon.png" alt="Quad&#x27;s Craft From Chests" width="256"></a> | <a href="https://thunderstore.io/c/valheim/p/Quads_Lab/Quads_Ledger_Chest/"><img src="https://raw.githubusercontent.com/HardHeadHackerHead/valheim-mods/main/mods/LedgerChest/thunderstore/icon.png" alt="Quad&#x27;s Ledger Chest" width="256"></a> | <a href="https://thunderstore.io/c/valheim/p/Quads_Lab/Quads_Gear_Slots/"><img src="https://raw.githubusercontent.com/HardHeadHackerHead/valheim-mods/main/mods/GearSlots/thunderstore/icon.png" alt="Quad&#x27;s Gear Slots" width="256"></a> | <a href="https://thunderstore.io/c/valheim/p/Quads_Lab/Quads_Quiver/"><img src="https://raw.githubusercontent.com/HardHeadHackerHead/valheim-mods/main/mods/Quiver/thunderstore/icon.png" alt="Quad&#x27;s Quiver" width="256"></a> | <a href="https://thunderstore.io/c/valheim/p/Quads_Lab/Quads_Crafting_Filters/"><img src="https://raw.githubusercontent.com/HardHeadHackerHead/valheim-mods/main/mods/BetterCraftingStations/thunderstore/icon.png" alt="Quad&#x27;s Crafting Filters" width="256"></a> |
 |:-:|:-:|:-:|:-:|:-:|
 | [Craft From Chests](https://thunderstore.io/c/valheim/p/Quads_Lab/Quads_Craft_From_Chests/) | [Ledger Chest](https://thunderstore.io/c/valheim/p/Quads_Lab/Quads_Ledger_Chest/) | [Gear Slots](https://thunderstore.io/c/valheim/p/Quads_Lab/Quads_Gear_Slots/) | [Quiver](https://thunderstore.io/c/valheim/p/Quads_Lab/Quads_Quiver/) | [Crafting Filters](https://thunderstore.io/c/valheim/p/Quads_Lab/Quads_Crafting_Filters/) |
-
-## 🧩 Other mods
 
 <!-- HAND-WRITTEN: other-mods -->
 **Known clashes**
