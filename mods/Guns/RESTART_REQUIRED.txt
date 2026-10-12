@@ -1,0 +1,1 @@
+It adds new items (the guns) and their recipes. Restart the game after updating so they register cleanly (a gun in your bag or on the ground is lost if the game starts without the mod).

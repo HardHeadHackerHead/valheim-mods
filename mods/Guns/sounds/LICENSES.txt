@@ -1,0 +1,21 @@
+The recordings in this folder are made from free sounds that their authors have released into the public domain (CC0 1.0): they may be used,
+changed and shipped with no credit and no royalty. They are credited here anyway. tools/gunsounds/build.py turns them into the files here
+(trimmed, mixed to mono, resampled to 44.1 kHz, a few pitched up or down, some laid together).
+
+shot_*.wav, loop_*.wav, tail_*.wav   The Free Firearm Sound Library, by Ben Jaszczak, Brian Nelson, Kevin Heras and Matthew Nanney (CC0)
+                    https://opengameart.org/content/the-free-firearm-sound-library
+                    (the 1911, Walther PPQ, Bersa, Smith & Wesson 642, Carl Gustav M45, PPSh, Winchester Model 12, Charles Daly, Tikka T3,
+                    Marlin 336, Winchester 1894, AR-15, Springfield 1917, Arisaka and AK-47 recordings)
+reload_pistol.wav,  Gun Reload Sounds, by SpringySpringo (CC0)
+reload_rifle.wav,   https://opengameart.org/content/gun-reload-sounds
+click_Pump_*.wav    (gunreload1, assaultriflereload1, shotguncock)
+click_Shell_*.wav,  Gun Reload Sound Effects, by BMacZero (Brian MacIntosh) (CC0)
+click_MagIn_*.wav   https://opengameart.org/content/gun-reload-sound-effects   (singlebullet1, clipload1, clipload2)
+click_Casing_*.wav, impact_*.wav  Metal Impact Sounds, by BMacZero (Brian MacIntosh) (CC0)
+                    https://opengameart.org/content/metal-impact-sounds   (clink1, clink2, clink3, thud2, thud3)
+click_Dry_*, _Rack_*, _Bolt_*, _Lever_*, _MagOut_*, _Draw_*
+                    Equipment Clicks III, by LFA (CC0)
+                    https://opengameart.org/content/equipment-clicks-iii
+                    (a bolt action rifle cocked, a stapler and a tape measure snapped)
+
+The other sounds (the revolver cylinder, the minigun's belt and motor, and the fallback for any recording that is missing) are made in code.

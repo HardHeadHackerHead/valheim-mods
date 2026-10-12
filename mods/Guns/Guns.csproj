@@ -9,8 +9,15 @@
     <Reference Include="UnityEngine.ParticleSystemModule"><HintPath>$(ManagedDir)/UnityEngine.ParticleSystemModule.dll</HintPath><Private>false</Private></Reference>
   </ItemGroup>
   <ItemGroup>
+    <!-- The real recordings (CC0, see sounds/LICENSES.txt), built by tools/gunsounds/build.py: part of the DLL, so players install only the mod. -->
+    <EmbeddedResource Include="sounds/*.wav" LogicalName="sounds/%(Filename)%(Extension)" />
+  </ItemGroup>
+  <ItemGroup>
     <!-- The gameplay settings the server decides in multiplayer (and no gun craftable on a server without the mod), and the inventory picture drawn from the gun's own model. -->
     <Compile Include="../Shared/ServerSettings.cs" Link="Shared/ServerSettings.cs" />
     <Compile Include="../Shared/Icon.cs" Link="Shared/Icon.cs" />
+    <!-- What each gun costs at the forge: a setting the server decides, and the recipes themselves. -->
+    <Compile Include="../Shared/Costs.cs" Link="Shared/Costs.cs" />
+    <Compile Include="../Shared/Content.cs" Link="Shared/Content.cs" />
   </ItemGroup>
 </Project>

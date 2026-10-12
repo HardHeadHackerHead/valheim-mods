@@ -1,53 +1,125 @@
+using System.Collections.Generic;
 using UnityEngine;
 using Object = UnityEngine.Object;
 
 namespace Guns
 {
-    /// <summary>The Machine Gun's model, put together from plain shapes: barrel along +Z, up is +Y, about 1.4 m long with the stock.</summary>
+    /// <summary>
+    /// What the gun models are made of: plain shapes put together by a Builder (barrel along +Z, up +Y, the grip hand at the origin), painted
+    /// with the game's own material in the colours below. Each gun's parts are in Models.cs.
+    /// </summary>
     internal static class Model
     {
-        private static readonly Color Steel = new Color(0.17f, 0.18f, 0.20f), Black = new Color(0.07f, 0.07f, 0.08f),
-                                       Wood = new Color(0.36f, 0.22f, 0.11f), Brass = new Color(0.62f, 0.48f, 0.20f);
+        internal static readonly Color Steel = new Color(0.17f, 0.18f, 0.20f), Black = new Color(0.07f, 0.07f, 0.08f), Poly = new Color(0.11f, 0.11f, 0.12f),
+                                       Wood = new Color(0.36f, 0.22f, 0.11f), DarkWood = new Color(0.24f, 0.14f, 0.07f), Brass = new Color(0.66f, 0.50f, 0.20f),
+                                       Nickel = new Color(0.62f, 0.64f, 0.67f), Blued = new Color(0.09f, 0.11f, 0.16f), Olive = new Color(0.20f, 0.24f, 0.16f),
+                                       Lens = new Color(0.12f, 0.28f, 0.42f), Red = new Color(0.62f, 0.10f, 0.08f);
 
-        /// <summary>Builds the model under parent; returns its bounds in its own space. A cylinder's Y scale is half its length.</summary>
-        internal static Bounds Build(Transform parent, Material baseMaterial, int layer)
+        private static readonly Dictionary<string, Material> Cache = new Dictionary<string, Material>();
+        private static readonly List<Material> Made = new List<Material>();
+
+        /// <summary>Destroys the materials the models were painted with (the models are destroyed with their holder).</summary>
+        internal static void Clear()
         {
-            var root = new GameObject("model") { layer = layer };
-            root.transform.SetParent(parent, false);
-            Part(root, baseMaterial, PrimitiveType.Cube, "receiver", new Vector3(0f, 0f, 0f), Vector3.zero, new Vector3(0.075f, 0.12f, 0.42f), Steel);
-            Part(root, baseMaterial, PrimitiveType.Cube, "rail", new Vector3(0f, 0.075f, 0.03f), Vector3.zero, new Vector3(0.035f, 0.03f, 0.34f), Black);
-            Part(root, baseMaterial, PrimitiveType.Cylinder, "shroud", new Vector3(0f, 0.01f, 0.38f), new Vector3(90f, 0f, 0f), new Vector3(0.075f, 0.18f, 0.075f), Steel);
-            Part(root, baseMaterial, PrimitiveType.Cylinder, "barrel", new Vector3(0f, 0.01f, 0.62f), new Vector3(90f, 0f, 0f), new Vector3(0.032f, 0.22f, 0.032f), Black);
-            Part(root, baseMaterial, PrimitiveType.Cylinder, "muzzle", new Vector3(0f, 0.01f, 0.86f), new Vector3(90f, 0f, 0f), new Vector3(0.05f, 0.04f, 0.05f), Black);
-            Part(root, baseMaterial, PrimitiveType.Cube, "stock", new Vector3(0f, -0.02f, -0.36f), new Vector3(-6f, 0f, 0f), new Vector3(0.06f, 0.11f, 0.30f), Wood);
-            Part(root, baseMaterial, PrimitiveType.Cube, "buttplate", new Vector3(0f, -0.035f, -0.52f), new Vector3(-6f, 0f, 0f), new Vector3(0.065f, 0.13f, 0.02f), Black);
-            Part(root, baseMaterial, PrimitiveType.Cube, "grip", new Vector3(0f, -0.13f, -0.10f), new Vector3(18f, 0f, 0f), new Vector3(0.05f, 0.15f, 0.06f), Wood);
-            Part(root, baseMaterial, PrimitiveType.Cube, "foregrip", new Vector3(0f, -0.085f, 0.32f), Vector3.zero, new Vector3(0.05f, 0.12f, 0.055f), Wood);
-            Part(root, baseMaterial, PrimitiveType.Cube, "magazine", new Vector3(0f, -0.17f, 0.10f), new Vector3(-8f, 0f, 0f), new Vector3(0.055f, 0.22f, 0.10f), Steel);
-            Part(root, baseMaterial, PrimitiveType.Cube, "sight", new Vector3(0f, 0.105f, 0.17f), Vector3.zero, new Vector3(0.015f, 0.04f, 0.015f), Black);
-            Part(root, baseMaterial, PrimitiveType.Cube, "bolt", new Vector3(0.042f, 0.03f, 0.02f), Vector3.zero, new Vector3(0.012f, 0.02f, 0.06f), Brass);
-
-            // Where the round leaves and where the casing flies out: empties, found on the model in the player's hand (Fx.Muzzle, Fx.Eject).
-            new GameObject("dh_muzzle").transform.SetParent(root.transform, false);
-            root.transform.Find("dh_muzzle").localPosition = new Vector3(0f, 0.01f, 0.91f);
-            new GameObject("dh_eject").transform.SetParent(root.transform, false);
-            root.transform.Find("dh_eject").localPosition = new Vector3(0.045f, 0.04f, 0.06f);
-            return new Bounds(new Vector3(0f, -0.08f, 0.19f), new Vector3(0.1f, 0.4f, 1.43f));   // (of the parts above, in the model's own space)
+            foreach (Material m in Made) if (m != null) Object.Destroy(m);
+            Made.Clear();
+            Cache.Clear();
         }
 
-        private static void Part(GameObject root, Material baseMaterial, PrimitiveType shape, string name, Vector3 at, Vector3 euler, Vector3 size, Color color)
+        private static Material Shared(Material baseMaterial, Renderer r, Color color, float metal, float gloss)
         {
-            GameObject p = GameObject.CreatePrimitive(shape);
-            Object.DestroyImmediate(p.GetComponent<Collider>());
-            p.name = name;
-            p.layer = root.layer;
-            p.transform.SetParent(root.transform, false);
-            p.transform.localPosition = at;
-            p.transform.localRotation = Quaternion.Euler(euler);
-            p.transform.localScale = size;
-            Paint(p, baseMaterial, color, emissive: false);
+            string key = $"{color.r:F3}/{color.g:F3}/{color.b:F3}/{metal:F2}/{gloss:F2}";
+            if (Cache.TryGetValue(key, out Material m) && m != null) return m;
+            m = baseMaterial != null ? new Material(baseMaterial) : new Material(r.sharedMaterial);
+            m.mainTexture = null;
+            if (m.HasProperty("_Color")) m.SetColor("_Color", color);
+            if (m.HasProperty("_Metallic")) m.SetFloat("_Metallic", metal);
+            if (m.HasProperty("_Glossiness")) m.SetFloat("_Glossiness", gloss);
+            Cache[key] = m;
+            Made.Add(m);
+            return m;
         }
 
+        /// <summary>Puts the model together: shapes with a position (in design coordinates, moved by the shift so the grip lands on the origin), a size and a colour.</summary>
+        internal sealed class Builder
+        {
+            internal readonly Transform Root;
+            private readonly Material _base;
+            private readonly Builder _top;
+            private readonly Vector3 _shift;          // top level only: moves every part
+            private readonly Vector3 _originInModel;  // where this group sits in the model
+            private Vector3 _min = Vector3.positiveInfinity, _max = Vector3.negativeInfinity;
+
+            internal Builder(Transform root, Material baseMaterial, Vector3 shift)
+            {
+                Root = root; _base = baseMaterial; _top = this; _shift = shift;
+            }
+
+            private Builder(Transform root, Builder parent, Vector3 originInModel)
+            {
+                Root = root; _base = parent._base; _top = parent._top; _originInModel = originInModel;
+            }
+
+            internal Bounds Bounds => new Bounds((_min + _max) * 0.5f, _max - _min);
+
+            private Vector3 At(Vector3 p) => _top == this ? p + _shift : p;
+
+            /// <summary>A part that moves or turns as one (a pump, a lever, a bolt, the barrels): at, in the design coordinates.</summary>
+            internal Builder Group(string name, Vector3 at)
+            {
+                var go = new GameObject(name) { layer = Root.gameObject.layer };
+                go.transform.SetParent(Root, false);
+                go.transform.localPosition = At(at);
+                return new Builder(go.transform, this, _originInModel + At(at));
+            }
+
+            /// <summary>An empty marking a place on the model (the muzzle, where brass comes out).</summary>
+            internal void Point(string name, Vector3 at)
+            {
+                var go = new GameObject(name) { layer = Root.gameObject.layer };
+                go.transform.SetParent(Root, false);
+                go.transform.localPosition = At(at);
+            }
+
+            internal GameObject Cube(string name, Vector3 at, Vector3 size, Color color, Vector3 euler = default, float metal = 0.4f, float gloss = 0.45f) =>
+                Shape(PrimitiveType.Cube, name, at, size, size * 0.5f, euler, color, metal, gloss);
+
+            /// <summary>A round bar: diameter and length, along Z (the barrel's way) unless the axis says 'x' or 'y'.</summary>
+            internal GameObject Tube(string name, Vector3 at, float diameter, float length, Color color, char axis = 'z', float metal = 0.4f, float gloss = 0.45f)
+            {
+                Vector3 euler = axis == 'z' ? new Vector3(90f, 0f, 0f) : axis == 'x' ? new Vector3(0f, 0f, 90f) : Vector3.zero;
+                return Shape(PrimitiveType.Cylinder, name, at, new Vector3(diameter, length * 0.5f, diameter), new Vector3(diameter, length, diameter) * 0.5f, euler, color, metal, gloss);
+            }
+
+            internal GameObject Ball(string name, Vector3 at, Vector3 size, Color color, float metal = 0.4f, float gloss = 0.45f) =>
+                Shape(PrimitiveType.Sphere, name, at, size, size * 0.5f, Vector3.zero, color, metal, gloss);
+
+            private GameObject Shape(PrimitiveType type, string name, Vector3 at, Vector3 scale, Vector3 half, Vector3 euler, Color color, float metal, float gloss)
+            {
+                GameObject p = GameObject.CreatePrimitive(type);
+                Object.DestroyImmediate(p.GetComponent<Collider>());
+                p.name = name;
+                p.layer = Root.gameObject.layer;
+                p.transform.SetParent(Root, false);
+                p.transform.localPosition = At(at);
+                Quaternion rot = Quaternion.Euler(euler);
+                p.transform.localRotation = rot;
+                p.transform.localScale = scale;
+                Renderer r = p.GetComponent<Renderer>();
+                r.sharedMaterial = Shared(_base, r, color, metal, gloss);
+                // the part's corners, in the model's space (a group sits where it was put, without turning)
+                Vector3 centre = _originInModel + At(at);
+                for (int i = 0; i < 8; i++)
+                {
+                    Vector3 corner = centre + rot * Vector3.Scale(half, new Vector3((i & 1) == 0 ? -1 : 1, (i & 2) == 0 ? -1 : 1, (i & 4) == 0 ? -1 : 1));
+                    _top._min = Vector3.Min(_top._min, corner);
+                    _top._max = Vector3.Max(_top._max, corner);
+                }
+                return p;
+            }
+        }
+
+        /// <summary>One colour on one part, with the game's material as the base: used by the effects (flashes, tracers, casings).</summary>
         internal static void Paint(GameObject part, Material baseMaterial, Color color, bool emissive, float metallic = 0.4f, float gloss = 0.45f)
         {
             Renderer r = part.GetComponent<Renderer>();

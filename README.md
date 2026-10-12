@@ -66,7 +66,7 @@ Every player installs the mods they want for themselves. A few need more than th
 | Mod | Who needs it |
 |---|---|
 | **AICompanion** | Everyone in the world, **the host too**: without it the game deletes saved companions. |
-| **Recycler, BountyBoard, SlotMachine, BirdTrap, LedgerChest, Quad's Cigars, SkalTavern, Ziplines, Arena, Jet Skis, Four Wheelers, Mountain Bikes** (new build pieces and items; the Arena's host also picks where it stands) | Everyone, and **the host above all**: a game without the mod deletes the pieces when their area loads. Restart after installing or updating them. |
+| **Recycler, BountyBoard, SlotMachine, BirdTrap, LedgerChest, Quad's Cigars, SkalTavern, Ziplines, Arena, Jet Skis, Four Wheelers, Mountain Bikes, Guns** (new build pieces and items; the Arena's host also picks where it stands) | Everyone, and **the host above all**: a game without the mod deletes the pieces when their area loads. Restart after installing or updating them. |
 | **PortalHub** | The host (it keeps the portal links), and everyone who wants the portal menu. |
 | Everything else | Only the players who want it. |
 
@@ -419,6 +419,22 @@ ground. Everyone in the world needs it.
 
 </td>
 </tr>
+<tr>
+<td valign="top">
+
+### 🔫 Guns
+<img src="dist/Guns.cover.png" alt="Guns" width="100%">
+
+Eleven firearms for the forge: a pistol, revolver, dual pistols, submachine gun, shotgun, rifle, lever action, AR-15, sniper rifle, machine gun and
+a minigun. Magazines and reloading (middle mouse, or pull the trigger on an empty gun), aiming with right mouse (a rifle comes to your shoulder, the
+sniper rifle shows a scope), recoil, brass, tracers, real recorded gunshots, and a dive instead of a roll that you can shoot through. Your hands
+hold each gun. No ammunition to craft yet. Everyone in the world needs it.
+
+**[More: how it works, settings and screenshots →](mods/Guns/README.md)**
+
+</td>
+<td valign="top"></td>
+</tr>
 </table>
 
 ## ⌨️ Keys at a glance
@@ -453,6 +469,10 @@ ground. Everyone in the world needs it.
 | **A** / **D** on a ledge | Parkour | Shimmy along the edge; let go of **W** and press it again (or **Jump**) to pull up; **Crouch** to drop |
 | **Crouch** just before landing | Parkour | From high up: roll (less fall damage) / from low, running: land in a slide |
 | Sprint + hold **Crouch** | Parkour | Slide; **Jump** out of it for a boosted leap |
+| **Attack** (hold for an automatic gun) | Guns | Fire |
+| **Block** (right mouse) | Guns | Aim: the camera zooms, the spread tightens; the sniper rifle shows its scope |
+| **Secondary attack** (middle mouse), or the trigger on an empty gun | Guns | Reload |
+| **Block** + **Jump** | Guns | A dive (forward, sideways or backward) you can shoot through, with the lighter guns |
 | **E** on a jet ski | Jet Skis | Climb on (from the water or the shore) and take the handlebars |
 | **W** / **Shift**+**W** / **S** | Jet Skis | Go / full speed / back up (let go to coast); **A** / **D** steer, **Jump** gets off |
 | **E** on a jet ski's cowl / saddlebags | Jet Skis | Paint it the next colour / open the saddlebags (**Tab** while riding opens them too) |
