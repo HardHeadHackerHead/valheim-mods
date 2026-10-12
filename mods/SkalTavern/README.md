@@ -47,12 +47,9 @@ No keys to remember. Drink as you would any drink: use it from the bag or the ho
 
 ## 🤝 Goes well with
 
-| | |
-|:-:|:--|
-| <a href="https://thunderstore.io/c/valheim/p/Quads_Lab/Quads_Cigars/"><img src="https://raw.githubusercontent.com/HardHeadHackerHead/valheim-mods/main/mods/CigarSmoking/thunderstore/icon.png" alt="Quad&#x27;s Cigars" width="48"></a> | **[Quad's Cigars](https://thunderstore.io/c/valheim/p/Quads_Lab/Quads_Cigars/)**<br>Grow, cure and smoke cigars for buffs |
-| <a href="https://thunderstore.io/c/valheim/p/Quads_Lab/Quads_Slot_Machine/"><img src="https://raw.githubusercontent.com/HardHeadHackerHead/valheim-mods/main/mods/SlotMachine/thunderstore/icon.png" alt="Quad&#x27;s Slot Machine" width="48"></a> | **[Quad's Slot Machine](https://thunderstore.io/c/valheim/p/Quads_Lab/Quads_Slot_Machine/)**<br>A viking slot machine for your coins |
-| <a href="https://thunderstore.io/c/valheim/p/Quads_Lab/Quads_Rainbows/"><img src="https://raw.githubusercontent.com/HardHeadHackerHead/valheim-mods/main/mods/Rainbows/thunderstore/icon.png" alt="Quad&#x27;s Rainbows" width="48"></a> | **[Quad's Rainbows](https://thunderstore.io/c/valheim/p/Quads_Lab/Quads_Rainbows/)**<br>Rainbows after the rain, and a blessing |
-| <a href="https://thunderstore.io/c/valheim/p/Quads_Lab/Quads_Bird_Trap/"><img src="https://raw.githubusercontent.com/HardHeadHackerHead/valheim-mods/main/mods/BirdTrap/thunderstore/icon.png" alt="Quad&#x27;s Bird Trap" width="48"></a> | **[Quad's Bird Trap](https://thunderstore.io/c/valheim/p/Quads_Lab/Quads_Bird_Trap/)**<br>Trap birds for feathers |
+| <a href="https://thunderstore.io/c/valheim/p/Quads_Lab/Quads_Cigars/"><img src="https://raw.githubusercontent.com/HardHeadHackerHead/valheim-mods/main/mods/CigarSmoking/thunderstore/icon.png" alt="Quad&#x27;s Cigars" width="64"></a> | <a href="https://thunderstore.io/c/valheim/p/Quads_Lab/Quads_Slot_Machine/"><img src="https://raw.githubusercontent.com/HardHeadHackerHead/valheim-mods/main/mods/SlotMachine/thunderstore/icon.png" alt="Quad&#x27;s Slot Machine" width="64"></a> | <a href="https://thunderstore.io/c/valheim/p/Quads_Lab/Quads_Rainbows/"><img src="https://raw.githubusercontent.com/HardHeadHackerHead/valheim-mods/main/mods/Rainbows/thunderstore/icon.png" alt="Quad&#x27;s Rainbows" width="64"></a> | <a href="https://thunderstore.io/c/valheim/p/Quads_Lab/Quads_Bird_Trap/"><img src="https://raw.githubusercontent.com/HardHeadHackerHead/valheim-mods/main/mods/BirdTrap/thunderstore/icon.png" alt="Quad&#x27;s Bird Trap" width="64"></a> |
+|:-:|:-:|:-:|:-:|
+| [Cigars](https://thunderstore.io/c/valheim/p/Quads_Lab/Quads_Cigars/) | [Slot Machine](https://thunderstore.io/c/valheim/p/Quads_Lab/Quads_Slot_Machine/) | [Rainbows](https://thunderstore.io/c/valheim/p/Quads_Lab/Quads_Rainbows/) | [Bird Trap](https://thunderstore.io/c/valheim/p/Quads_Lab/Quads_Bird_Trap/) |
 
 ## 🧩 Other mods
 

@@ -51,12 +51,9 @@ Everyone in the world needs it installed (the post is a building piece: a game w
 
 ## 🤝 Goes well with
 
-| | |
-|:-:|:--|
-| <a href="https://thunderstore.io/c/valheim/p/Quads_Lab/Quads_Parkour/"><img src="https://raw.githubusercontent.com/HardHeadHackerHead/valheim-mods/main/mods/Parkour/thunderstore/icon.png" alt="Quad&#x27;s Parkour" width="48"></a> | **[Quad's Parkour](https://thunderstore.io/c/valheim/p/Quads_Lab/Quads_Parkour/)**<br>Wall runs, wall jumps, climbing and ledges |
-| <a href="https://thunderstore.io/c/valheim/p/Quads_Lab/Quads_Jet_Skis/"><img src="https://raw.githubusercontent.com/HardHeadHackerHead/valheim-mods/main/mods/JetSkis/thunderstore/icon.png" alt="Quad&#x27;s Jet Skis" width="48"></a> | **[Quad's Jet Skis](https://thunderstore.io/c/valheim/p/Quads_Lab/Quads_Jet_Skis/)**<br>A fast jet ski for two |
-| <a href="https://thunderstore.io/c/valheim/p/Quads_Lab/Quads_Portal_Hub/"><img src="https://raw.githubusercontent.com/HardHeadHackerHead/valheim-mods/main/mods/PortalHub/thunderstore/icon.png" alt="Quad&#x27;s Portal Hub" width="48"></a> | **[Quad's Portal Hub](https://thunderstore.io/c/valheim/p/Quads_Lab/Quads_Portal_Hub/)**<br>Pick a portal's destination from a list |
-| <a href="https://thunderstore.io/c/valheim/p/Quads_Lab/Quads_Build_Orders/"><img src="https://raw.githubusercontent.com/HardHeadHackerHead/valheim-mods/main/mods/BuildOrders/thunderstore/icon.png" alt="Quad&#x27;s Build Orders" width="48"></a> | **[Quad's Build Orders](https://thunderstore.io/c/valheim/p/Quads_Lab/Quads_Build_Orders/)**<br>Shared ghost blueprints for your party |
+| <a href="https://thunderstore.io/c/valheim/p/Quads_Lab/Quads_Parkour/"><img src="https://raw.githubusercontent.com/HardHeadHackerHead/valheim-mods/main/mods/Parkour/thunderstore/icon.png" alt="Quad&#x27;s Parkour" width="64"></a> | <a href="https://thunderstore.io/c/valheim/p/Quads_Lab/Quads_Jet_Skis/"><img src="https://raw.githubusercontent.com/HardHeadHackerHead/valheim-mods/main/mods/JetSkis/thunderstore/icon.png" alt="Quad&#x27;s Jet Skis" width="64"></a> | <a href="https://thunderstore.io/c/valheim/p/Quads_Lab/Quads_Portal_Hub/"><img src="https://raw.githubusercontent.com/HardHeadHackerHead/valheim-mods/main/mods/PortalHub/thunderstore/icon.png" alt="Quad&#x27;s Portal Hub" width="64"></a> | <a href="https://thunderstore.io/c/valheim/p/Quads_Lab/Quads_Build_Orders/"><img src="https://raw.githubusercontent.com/HardHeadHackerHead/valheim-mods/main/mods/BuildOrders/thunderstore/icon.png" alt="Quad&#x27;s Build Orders" width="64"></a> |
+|:-:|:-:|:-:|:-:|
+| [Parkour](https://thunderstore.io/c/valheim/p/Quads_Lab/Quads_Parkour/) | [Jet Skis](https://thunderstore.io/c/valheim/p/Quads_Lab/Quads_Jet_Skis/) | [Portal Hub](https://thunderstore.io/c/valheim/p/Quads_Lab/Quads_Portal_Hub/) | [Build Orders](https://thunderstore.io/c/valheim/p/Quads_Lab/Quads_Build_Orders/) |
 
 ## 🧩 Other mods
 

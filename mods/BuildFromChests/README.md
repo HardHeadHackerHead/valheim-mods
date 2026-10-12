@@ -39,12 +39,9 @@ Build from chests: building with the hammer uses materials from nearby chests an
 
 ## 🤝 Goes well with
 
-| | |
-|:-:|:--|
-| <a href="https://thunderstore.io/c/valheim/p/Quads_Lab/Quads_Craft_From_Chests/"><img src="https://raw.githubusercontent.com/HardHeadHackerHead/valheim-mods/main/mods/CraftFromChests/thunderstore/icon.png" alt="Quad&#x27;s Craft From Chests" width="48"></a> | **[Quad's Craft From Chests](https://thunderstore.io/c/valheim/p/Quads_Lab/Quads_Craft_From_Chests/)**<br>Craft with materials from nearby chests |
-| <a href="https://thunderstore.io/c/valheim/p/Quads_Lab/Quads_Feed_From_Chests/"><img src="https://raw.githubusercontent.com/HardHeadHackerHead/valheim-mods/main/mods/FeedFromChests/thunderstore/icon.png" alt="Quad&#x27;s Feed From Chests" width="48"></a> | **[Quad's Feed From Chests](https://thunderstore.io/c/valheim/p/Quads_Lab/Quads_Feed_From_Chests/)**<br>Smelters, kilns and fires refill from chests |
-| <a href="https://thunderstore.io/c/valheim/p/Quads_Lab/Quads_Ledger_Chest/"><img src="https://raw.githubusercontent.com/HardHeadHackerHead/valheim-mods/main/mods/LedgerChest/thunderstore/icon.png" alt="Quad&#x27;s Ledger Chest" width="48"></a> | **[Quad's Ledger Chest](https://thunderstore.io/c/valheim/p/Quads_Lab/Quads_Ledger_Chest/)**<br>See and search every chest around you |
-| <a href="https://thunderstore.io/c/valheim/p/Quads_Lab/Quads_Build_Orders/"><img src="https://raw.githubusercontent.com/HardHeadHackerHead/valheim-mods/main/mods/BuildOrders/thunderstore/icon.png" alt="Quad&#x27;s Build Orders" width="48"></a> | **[Quad's Build Orders](https://thunderstore.io/c/valheim/p/Quads_Lab/Quads_Build_Orders/)**<br>Shared ghost blueprints for your party |
+| <a href="https://thunderstore.io/c/valheim/p/Quads_Lab/Quads_Craft_From_Chests/"><img src="https://raw.githubusercontent.com/HardHeadHackerHead/valheim-mods/main/mods/CraftFromChests/thunderstore/icon.png" alt="Quad&#x27;s Craft From Chests" width="64"></a> | <a href="https://thunderstore.io/c/valheim/p/Quads_Lab/Quads_Feed_From_Chests/"><img src="https://raw.githubusercontent.com/HardHeadHackerHead/valheim-mods/main/mods/FeedFromChests/thunderstore/icon.png" alt="Quad&#x27;s Feed From Chests" width="64"></a> | <a href="https://thunderstore.io/c/valheim/p/Quads_Lab/Quads_Ledger_Chest/"><img src="https://raw.githubusercontent.com/HardHeadHackerHead/valheim-mods/main/mods/LedgerChest/thunderstore/icon.png" alt="Quad&#x27;s Ledger Chest" width="64"></a> | <a href="https://thunderstore.io/c/valheim/p/Quads_Lab/Quads_Build_Orders/"><img src="https://raw.githubusercontent.com/HardHeadHackerHead/valheim-mods/main/mods/BuildOrders/thunderstore/icon.png" alt="Quad&#x27;s Build Orders" width="64"></a> |
+|:-:|:-:|:-:|:-:|
+| [Craft From Chests](https://thunderstore.io/c/valheim/p/Quads_Lab/Quads_Craft_From_Chests/) | [Feed From Chests](https://thunderstore.io/c/valheim/p/Quads_Lab/Quads_Feed_From_Chests/) | [Ledger Chest](https://thunderstore.io/c/valheim/p/Quads_Lab/Quads_Ledger_Chest/) | [Build Orders](https://thunderstore.io/c/valheim/p/Quads_Lab/Quads_Build_Orders/) |
 
 ## 🧩 Other mods
 

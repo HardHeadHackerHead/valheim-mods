@@ -4,7 +4,7 @@ package, which makes its links absolute):
 
     title, cover, one-line pitch, badges, links
     Features (DESCRIPTION.txt)        Screenshots (hand-written)       How to use (keys from the repo's README, hand-written notes)
-    Goes well with (related.json: a table of our related mods, each with its small icon, name and tagline)
+    Goes well with (related.json: our related mods' icons left to right, each one's name under it)
     Other mods (hand-written: known clashes, "none known" until there are some)
     Multiplayer (who needs it, from the repo's README; hand-written notes)            Settings (the mod's config file, or its code)
     Made with AI      Join us on Discord (community.md)      About Quads Lab (tools/modpages/about.md, the same on every page)
@@ -242,17 +242,17 @@ def package_of(folder):
 
 
 def related_section(folder):
-    """The 'Goes well with' table: one row per related mod, its small icon beside its name and tagline (both link to it)."""
+    """The 'Goes well with' row: the related mods' icons left to right (a table's top row), each one's short name under it; both link to it."""
     mods = [m for m in RELATED.get("related", {}).get(folder, []) if os.path.exists(os.path.join(MODS, m, "thunderstore", "icon.png"))]
     if not mods:
         return []
-    rows = ["| | |", "|:-:|:--|"]
+    icons, names = [], []
     for m in mods:
         package, title = package_of(m)
         link = ("%s/tree/main/mods/%s" % (REPO, m)) if m in RELATED.get("notOnThunderstore", [])             else "https://thunderstore.io/c/valheim/p/%s/%s/" % (THUNDERSTORE_TEAM, package)
-        icon = '<a href="%s"><img src="%s" alt="%s" width="48"></a>' % (link, ICON_URL % m, html.escape(title))
-        rows.append("| %s | **[%s](%s)**<br>%s |" % (icon, title, link, RELATED.get("taglines", {}).get(m, "")))
-    return ["## 🤝 Goes well with", ""] + rows + [""]
+        icons.append('<a href="%s"><img src="%s" alt="%s" width="64"></a>' % (link, ICON_URL % m, html.escape(title)))
+        names.append("[%s](%s)" % (re.sub(r"^Quad's ", "", title), link))
+    return ["## 🤝 Goes well with", "", "| " + " | ".join(icons) + " |", "|" + ":-:|" * len(mods), "| " + " | ".join(names) + " |", ""]
 
 
 def badge(label, value, colour):

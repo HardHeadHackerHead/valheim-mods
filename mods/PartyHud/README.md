@@ -7,7 +7,7 @@
 
 **A party HUD with party frames: health bars, stamina and distance for every player in your group, with Steam portraits and an arrow pointing to each teammate, live and at any range. A group UI for multiplayer.**
 
-![version: 1.10.3](https://img.shields.io/badge/version-1.10.3-3b6e8f?style=flat-square)  ![multiplayer: only who wants it](https://img.shields.io/badge/multiplayer-only%20who%20wants%20it-7a5c2e?style=flat-square)  ![made with: Claude Code](https://img.shields.io/badge/made%20with-Claude%20Code-c26a3d?style=flat-square)
+![version: 1.11.0](https://img.shields.io/badge/version-1.11.0-3b6e8f?style=flat-square)  ![multiplayer: only who wants it](https://img.shields.io/badge/multiplayer-only%20who%20wants%20it-7a5c2e?style=flat-square)  ![made with: Claude Code](https://img.shields.io/badge/made%20with-Claude%20Code-c26a3d?style=flat-square)
 
 <!-- GITHUB-ONLY -->[Thunderstore](https://thunderstore.io/c/valheim/p/Quads_Lab/Quads_Party_HUD/)  ·  <!-- END GITHUB-ONLY -->[Source code](https://github.com/HardHeadHackerHead/valheim-mods/tree/main/mods/PartyHud)  ·  [Report a bug](https://github.com/HardHeadHackerHead/valheim-mods/issues/new?template=bug.yml&title=%5BQuad%27s%20Party%20HUD%5D%20)  ·  [Discord](https://discord.gg/EwTjQxEZPy)
 
@@ -50,12 +50,9 @@ A party HUD: health bars, stamina and distance for every player in your group, l
 
 ## 🤝 Goes well with
 
-| | |
-|:-:|:--|
-| <a href="https://thunderstore.io/c/valheim/p/Quads_Lab/Quads_Map_Share/"><img src="https://raw.githubusercontent.com/HardHeadHackerHead/valheim-mods/main/mods/MapShare/thunderstore/icon.png" alt="Quad&#x27;s Map Share" width="48"></a> | **[Quad's Map Share](https://thunderstore.io/c/valheim/p/Quads_Lab/Quads_Map_Share/)**<br>One shared map for everyone |
-| <a href="https://thunderstore.io/c/valheim/p/Quads_Lab/Quads_Bounty_Board/"><img src="https://raw.githubusercontent.com/HardHeadHackerHead/valheim-mods/main/mods/BountyBoard/thunderstore/icon.png" alt="Quad&#x27;s Bounty Board" width="48"></a> | **[Quad's Bounty Board](https://thunderstore.io/c/valheim/p/Quads_Lab/Quads_Bounty_Board/)**<br>Group bounties and hunting contracts |
-| <a href="https://thunderstore.io/c/valheim/p/Quads_Lab/Quads_Portal_Hub/"><img src="https://raw.githubusercontent.com/HardHeadHackerHead/valheim-mods/main/mods/PortalHub/thunderstore/icon.png" alt="Quad&#x27;s Portal Hub" width="48"></a> | **[Quad's Portal Hub](https://thunderstore.io/c/valheim/p/Quads_Lab/Quads_Portal_Hub/)**<br>Pick a portal's destination from a list |
-| <a href="https://thunderstore.io/c/valheim/p/Quads_Lab/Quads_Companion/"><img src="https://raw.githubusercontent.com/HardHeadHackerHead/valheim-mods/main/mods/AICompanion/thunderstore/icon.png" alt="Quad&#x27;s Companion" width="48"></a> | **[Quad's Companion](https://thunderstore.io/c/valheim/p/Quads_Lab/Quads_Companion/)**<br>A viking companion who plays like a player |
+| <a href="https://thunderstore.io/c/valheim/p/Quads_Lab/Quads_Map_Share/"><img src="https://raw.githubusercontent.com/HardHeadHackerHead/valheim-mods/main/mods/MapShare/thunderstore/icon.png" alt="Quad&#x27;s Map Share" width="64"></a> | <a href="https://thunderstore.io/c/valheim/p/Quads_Lab/Quads_Bounty_Board/"><img src="https://raw.githubusercontent.com/HardHeadHackerHead/valheim-mods/main/mods/BountyBoard/thunderstore/icon.png" alt="Quad&#x27;s Bounty Board" width="64"></a> | <a href="https://thunderstore.io/c/valheim/p/Quads_Lab/Quads_Portal_Hub/"><img src="https://raw.githubusercontent.com/HardHeadHackerHead/valheim-mods/main/mods/PortalHub/thunderstore/icon.png" alt="Quad&#x27;s Portal Hub" width="64"></a> | <a href="https://thunderstore.io/c/valheim/p/Quads_Lab/Quads_Companion/"><img src="https://raw.githubusercontent.com/HardHeadHackerHead/valheim-mods/main/mods/AICompanion/thunderstore/icon.png" alt="Quad&#x27;s Companion" width="64"></a> |
+|:-:|:-:|:-:|:-:|
+| [Map Share](https://thunderstore.io/c/valheim/p/Quads_Lab/Quads_Map_Share/) | [Bounty Board](https://thunderstore.io/c/valheim/p/Quads_Lab/Quads_Bounty_Board/) | [Portal Hub](https://thunderstore.io/c/valheim/p/Quads_Lab/Quads_Portal_Hub/) | [Companion](https://thunderstore.io/c/valheim/p/Quads_Lab/Quads_Companion/) |
 
 ## 🧩 Other mods
 
@@ -164,8 +161,8 @@ helps me make new mods and keep improving the ones you already play. It's 100% o
 
 ## 📜 Recent changes
 
+- **1.11.0** A new carved Nordic party HUD: dark textured wood, bronze and gold player frames, green companion frames, larger portraits and names, framed food slots, and beveled red and gold live bars. Companion rows now share the full panel width with a dedicated status and buff band. Compact mode remains available, and tall party lists shrink to fit above the bottom of the screen. Artwork is embedded in the DLL; no separate texture install is needed.
 - **1.10.3** Settings: edits to the config file now apply while the game runs (a server owner no longer has to restart), and a server's admins can change the server's settings from their own game with Configuration Manager, where other players see them greyed out. Your config file always keeps your own values while you play on a server (saving it there could write the server's in). Players on an older version still get the server's settings.
 - **1.10.2** Its party panel no longer fill the log with "The LiberationSans SDF Font Asset was not found": each text is given the game's font before it starts (it looked for TextMeshPro's default font, which the game doesn't have, every time a text was made). Nothing changes on screen.
-- **1.10.1** Much less network traffic: your game now sends your health, stamina, food and buffs to the other players only when something they would see has changed (at most once a second, and every 2 seconds anyway), instead of three times a second. On a busy server that is about a third of the traffic or less, and the party panel looks the same. Works with players on older versions.
 
 <!-- GITHUB-ONLY -->[Every change](CHANGELOG.txt)<!-- END GITHUB-ONLY --><!-- THUNDERSTORE-ONLY: Every change is on the Changelog tab. -->

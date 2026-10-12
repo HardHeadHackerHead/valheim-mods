@@ -60,12 +60,9 @@ Settings let you change the bet and scale the prizes.
 
 ## 🤝 Goes well with
 
-| | |
-|:-:|:--|
-| <a href="https://thunderstore.io/c/valheim/p/Quads_Lab/Quads_Skal_Tavern/"><img src="https://raw.githubusercontent.com/HardHeadHackerHead/valheim-mods/main/mods/SkalTavern/thunderstore/icon.png" alt="Quad&#x27;s Skal Tavern" width="48"></a> | **[Quad's Skal Tavern](https://thunderstore.io/c/valheim/p/Quads_Lab/Quads_Skal_Tavern/)**<br>Ale, mead and wine that get you drunk |
-| <a href="https://thunderstore.io/c/valheim/p/Quads_Lab/Quads_Cigars/"><img src="https://raw.githubusercontent.com/HardHeadHackerHead/valheim-mods/main/mods/CigarSmoking/thunderstore/icon.png" alt="Quad&#x27;s Cigars" width="48"></a> | **[Quad's Cigars](https://thunderstore.io/c/valheim/p/Quads_Lab/Quads_Cigars/)**<br>Grow, cure and smoke cigars for buffs |
-| <a href="https://thunderstore.io/c/valheim/p/Quads_Lab/Quads_Bounty_Board/"><img src="https://raw.githubusercontent.com/HardHeadHackerHead/valheim-mods/main/mods/BountyBoard/thunderstore/icon.png" alt="Quad&#x27;s Bounty Board" width="48"></a> | **[Quad's Bounty Board](https://thunderstore.io/c/valheim/p/Quads_Lab/Quads_Bounty_Board/)**<br>Group bounties and hunting contracts |
-| <a href="https://thunderstore.io/c/valheim/p/Quads_Lab/Quads_Rainbows/"><img src="https://raw.githubusercontent.com/HardHeadHackerHead/valheim-mods/main/mods/Rainbows/thunderstore/icon.png" alt="Quad&#x27;s Rainbows" width="48"></a> | **[Quad's Rainbows](https://thunderstore.io/c/valheim/p/Quads_Lab/Quads_Rainbows/)**<br>Rainbows after the rain, and a blessing |
+| <a href="https://thunderstore.io/c/valheim/p/Quads_Lab/Quads_Skal_Tavern/"><img src="https://raw.githubusercontent.com/HardHeadHackerHead/valheim-mods/main/mods/SkalTavern/thunderstore/icon.png" alt="Quad&#x27;s Skal Tavern" width="64"></a> | <a href="https://thunderstore.io/c/valheim/p/Quads_Lab/Quads_Cigars/"><img src="https://raw.githubusercontent.com/HardHeadHackerHead/valheim-mods/main/mods/CigarSmoking/thunderstore/icon.png" alt="Quad&#x27;s Cigars" width="64"></a> | <a href="https://thunderstore.io/c/valheim/p/Quads_Lab/Quads_Bounty_Board/"><img src="https://raw.githubusercontent.com/HardHeadHackerHead/valheim-mods/main/mods/BountyBoard/thunderstore/icon.png" alt="Quad&#x27;s Bounty Board" width="64"></a> | <a href="https://thunderstore.io/c/valheim/p/Quads_Lab/Quads_Rainbows/"><img src="https://raw.githubusercontent.com/HardHeadHackerHead/valheim-mods/main/mods/Rainbows/thunderstore/icon.png" alt="Quad&#x27;s Rainbows" width="64"></a> |
+|:-:|:-:|:-:|:-:|
+| [Skal Tavern](https://thunderstore.io/c/valheim/p/Quads_Lab/Quads_Skal_Tavern/) | [Cigars](https://thunderstore.io/c/valheim/p/Quads_Lab/Quads_Cigars/) | [Bounty Board](https://thunderstore.io/c/valheim/p/Quads_Lab/Quads_Bounty_Board/) | [Rainbows](https://thunderstore.io/c/valheim/p/Quads_Lab/Quads_Rainbows/) |
 
 ## 🧩 Other mods
 
