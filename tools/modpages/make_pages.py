@@ -242,7 +242,7 @@ def package_of(folder):
 
 
 def related_section(folder):
-    """The 'Goes well with' row: the related mods' icons left to right (a table's top row), each one's short name under it; both link to it."""
+    """The 'Goes well with' row: the related mods' icons left to right (256 px, a table's top row), each one's short name under it; both link to it."""
     mods = [m for m in RELATED.get("related", {}).get(folder, []) if os.path.exists(os.path.join(MODS, m, "thunderstore", "icon.png"))]
     if not mods:
         return []
@@ -250,7 +250,7 @@ def related_section(folder):
     for m in mods:
         package, title = package_of(m)
         link = ("%s/tree/main/mods/%s" % (REPO, m)) if m in RELATED.get("notOnThunderstore", [])             else "https://thunderstore.io/c/valheim/p/%s/%s/" % (THUNDERSTORE_TEAM, package)
-        icons.append('<a href="%s"><img src="%s" alt="%s" width="64"></a>' % (link, ICON_URL % m, html.escape(title)))
+        icons.append('<a href="%s"><img src="%s" alt="%s" width="256"></a>' % (link, ICON_URL % m, html.escape(title)))
         names.append("[%s](%s)" % (re.sub(r"^Quad's ", "", title), link))
     return ["## 🤝 Goes well with", "", "| " + " | ".join(icons) + " |", "|" + ":-:|" * len(mods), "| " + " | ".join(names) + " |", ""]
 
