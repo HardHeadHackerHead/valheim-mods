@@ -381,8 +381,11 @@ namespace BuildOrders
         /// not needed any more, and the ground undo is used as removing the plan would (built pieces keep their level ground; where nothing of it
         /// was built the ground goes back). Called every few seconds while in a world.
         /// </summary>
+        private float _nextAddonSweep;
+
         private void SweepFinishedPlans()
         {
+            bool addonsLooked = false;
             var live = new HashSet<string>(_orders.Values.Select(o => o.By ?? ""));
             live.UnionWith(_levelJobs.Values.Where(j => !j.Finished).Select(j => j.Key));
             live.UnionWith(PendingLevelKeys());
@@ -401,14 +404,22 @@ namespace BuildOrders
                     }
                     if (key.Length == 0 || live.Contains(key)) continue;
                     // Add-on shells may have a cellar whose ground recovery belongs to the add-on.
-                    // Keep the piece list so a completed shell can still be taken down after F6.
-                    if (dir == PlanRecordDir && IsAddonGhostPlan(key) && BuiltPieces(key).Count > 0) continue;
+                    // Keep the piece list so a completed shell can still be taken down after F6: it goes only once nothing of it stands (seen
+                    // with its ground loaded). Looking is a search per planned piece (a 566-piece shell took 130 ms), so once a minute.
+                    if (dir == PlanRecordDir && IsAddonGhostPlan(key))
+                    {
+                        if (Time.time < _nextAddonSweep) continue;
+                        addonsLooked = true;
+                        if (AnyBuilt(key) != false) continue;
+                    }
                     _recordPlans.Remove(path);
+                    _recordPieces.Remove(path);
                     if (dir == PlanRecordDir) { try { File.Delete(path); } catch (Exception) { } continue; }
                     RestoreTerrainFile(path, key, false, out bool restored);
                     if (restored) Player.m_localPlayer?.Message(MessageHud.MessageType.TopLeft, T("buildorders_ground_back_removed", ShownTitle(TitleOf(key))));
                 }
             }
+            if (addonsLooked) _nextAddonSweep = Time.time + 60f;
         }
 
         private static string TitleOf(string key) => key.StartsWith(BlueprintPrefix) ? key.Substring(BlueprintPrefix.Length) : key;

@@ -23,6 +23,11 @@ namespace QualityOfLife
         private Dictionary<int, string> _shipKinds;   // prefab hash -> name shown on the pin
         private Sprite _shipIcon;
         private float _nextShipPinScan;
+        // The look through the world's objects, a slice each frame: all of them for every kind of ship at once took ~40 ms every second.
+        private List<KeyValuePair<int, string>> _scanKinds;   // null: not looking now
+        private int _scanKind, _scanIndex;
+        private readonly List<ZDO> _scanList = new List<ZDO>();
+        private readonly List<(ZDO zdo, int prefab, string name)> _scanFound = new List<(ZDO, int, string)>();   // (kept over frames: checked again before use)
 
         private void BindShipPins()
         {
@@ -35,9 +40,8 @@ namespace QualityOfLife
         {
             if (Minimap.instance == null || ZDOMan.instance == null || ZNetScene.instance == null) return;
             if (!_shipPins.Value) { ClearShipPins(); return; }
-            if (_shipPinsOn != Minimap.instance) { _shipPinsByZdo.Clear(); _shipPinsOn = Minimap.instance; }   // (another world: its own pins)
-            if (Time.unscaledTime < _nextShipPinScan) return;
-            _nextShipPinScan = Time.unscaledTime + 1f;
+            if (_shipPinsOn != Minimap.instance) { _shipPinsByZdo.Clear(); _shipPinsOn = Minimap.instance; _scanKinds = null; }   // (another world: its own pins)
+            if (_scanKinds == null && Time.unscaledTime < _nextShipPinScan) return;
 
             if (_shipKinds == null)
             {
@@ -52,33 +56,47 @@ namespace QualityOfLife
             }
             if (_shipIcon == null) _shipIcon = LoadShipIcon();
 
-            // every ship the world knows of (its saved object, which moves with it), by kind
-            var seen = new HashSet<(long, uint)>();
-            var list = new List<ZDO>();
-            foreach (var kind in _shipKinds)
+            // every ship the world knows of (its saved object, which moves with it), by kind: one slice of the world's objects per frame (the
+            // game's iterative search looks at up to 400 sectors a call), one kind after another; the pins move once the whole look is done
+            if (_scanKinds == null)
             {
-                list.Clear();
-                string prefabName = ZNetScene.instance.GetPrefab(kind.Key)?.name;
-                if (prefabName == null) continue;
-                int index = 0;
-                for (int guard = 0; guard < 1000 && !ZDOMan.instance.GetAllZDOsWithPrefabIterative(prefabName, list, ref index); guard++) { }
-                foreach (ZDO zdo in list)
-                {
-                    if (zdo == null || !zdo.IsValid()) continue;
-                    var key = (zdo.m_uid.UserID, zdo.m_uid.ID);
-                    seen.Add(key);
-                    Vector3 at = zdo.GetPosition();
-                    if (_shipPinsByZdo.TryGetValue(key, out Minimap.PinData pin) && PinStillThere(pin)) { pin.m_pos = at; continue; }
-                    pin = Minimap.instance.AddPin(at, _shipPinType.Value, kind.Value, false, false, 0L);
-                    if (_shipIcon != null)
-                    {
-                        pin.m_icon = _shipIcon;
-                        if (pin.m_iconElement != null) pin.m_iconElement.sprite = _shipIcon;
-                    }
-                    _shipPinsByZdo[key] = pin;
-                    Logger.LogInfo($"Ship on the map: {kind.Value} at ({at.x:0}, {at.z:0}){(_shipIcon == null ? " (no longship picture: the mod's ship.png was not found)" : "")}");
-                }
+                _scanKinds = _shipKinds.ToList();
+                _scanKind = 0; _scanIndex = 0;
+                _scanList.Clear(); _scanFound.Clear();
             }
+            while (_scanKind < _scanKinds.Count)
+            {
+                var kind = _scanKinds[_scanKind];
+                string prefabName = ZNetScene.instance.GetPrefab(kind.Key)?.name;
+                if (prefabName != null && !ZDOMan.instance.GetAllZDOsWithPrefabIterative(prefabName, _scanList, ref _scanIndex)) return; // more next frame
+                foreach (ZDO zdo in _scanList) _scanFound.Add((zdo, kind.Key, kind.Value));
+                _scanList.Clear();
+                _scanIndex = 0;
+                _scanKind++;
+                if (prefabName != null) return; // (one search a frame)
+            }
+            _scanKinds = null;
+            _nextShipPinScan = Time.unscaledTime + 1f;
+
+            var seen = new HashSet<(long, uint)>();
+            foreach (var (zdo, prefab, name) in _scanFound)
+            {
+                // (found a few frames ago: the game reuses the objects of removed things, so check it is still that ship)
+                if (zdo == null || !zdo.IsValid() || zdo.GetPrefab() != prefab) continue;
+                var key = (zdo.m_uid.UserID, zdo.m_uid.ID);
+                seen.Add(key);
+                Vector3 at = zdo.GetPosition();
+                if (_shipPinsByZdo.TryGetValue(key, out Minimap.PinData pin) && PinStillThere(pin)) { pin.m_pos = at; continue; }
+                pin = Minimap.instance.AddPin(at, _shipPinType.Value, name, false, false, 0L);
+                if (_shipIcon != null)
+                {
+                    pin.m_icon = _shipIcon;
+                    if (pin.m_iconElement != null) pin.m_iconElement.sprite = _shipIcon;
+                }
+                _shipPinsByZdo[key] = pin;
+                Logger.LogInfo($"Ship on the map: {name} at ({at.x:0}, {at.z:0}){(_shipIcon == null ? " (no longship picture: the mod's ship.png was not found)" : "")}");
+            }
+            _scanFound.Clear();
             foreach (var gone in _shipPinsByZdo.Where(kv => !seen.Contains(kv.Key)).ToList())
             {
                 Minimap.instance.RemovePin(gone.Value); // (sunk, taken apart, or out of this game's sight)
@@ -95,6 +113,7 @@ namespace QualityOfLife
         {
             if (Minimap.instance != null) foreach (Minimap.PinData pin in _shipPinsByZdo.Values) Minimap.instance.RemovePin(pin);
             _shipPinsByZdo.Clear();
+            _scanKinds = null;
         }
 
         // Texture2D.LoadImage lives in a module the build cannot reference directly, so it is called by name.

@@ -76,6 +76,46 @@ namespace BuildOrders
             }
         }
 
+        private readonly Dictionary<string, KeyValuePair<DateTime, List<KeyValuePair<string, Vector3>>>> _recordPieces =
+            new Dictionary<string, KeyValuePair<DateTime, List<KeyValuePair<string, Vector3>>>>(); // record file -> (when written, its pieces)
+
+        /// <summary>A plan record's pieces (prefab, where), read from its file once per change of it (a big shell's record is a lot of JSON).</summary>
+        private List<KeyValuePair<string, Vector3>> RecordPieces(string path)
+        {
+            DateTime written = File.GetLastWriteTimeUtc(path);
+            if (_recordPieces.TryGetValue(path, out var had) && had.Key == written) return had.Value;
+            var pieces = new List<KeyValuePair<string, Vector3>>();
+            foreach (JArray p in ((JArray)JObject.Parse(File.ReadAllText(path))["pieces"] ?? new JArray()).OfType<JArray>())
+                pieces.Add(new KeyValuePair<string, Vector3>((string)p[0], new Vector3((float)p[1], (float)p[2], (float)p[3])));
+            _recordPieces[path] = new KeyValuePair<DateTime, List<KeyValuePair<string, Vector3>>>(written, pieces);
+            return pieces;
+        }
+
+        /// <summary>
+        /// Whether anything built from a plan still stands: true at the first piece found (BuiltPieces looks for every one, a search of all
+        /// loaded pieces each). Null while its ground has not all loaded: far from you nothing can be seen there, which is not "nothing built".
+        /// </summary>
+        private bool? AnyBuilt(string key)
+        {
+            string path = PlanRecordFile(key);
+            if (!File.Exists(path)) return false;
+            List<KeyValuePair<string, Vector3>> pieces;
+            try { pieces = RecordPieces(path); }
+            catch (Exception e) { Logger.LogWarning("Could not read the plan's pieces: " + e.Message); return null; }
+            if (pieces.Count == 0) return false;
+            if (!AreaReady(pieces.Select(p => p.Value))) return null;
+            List<Order> ghosts = _orders.Values.Where(o => o.By == key).ToList();
+            var near = new List<Piece>();
+            foreach (var p in pieces)
+            {
+                if (ghosts.Any(o => o.Prefab == p.Key && (o.Pos - p.Value).sqrMagnitude < 0.04f)) continue; // still a ghost
+                near.Clear();
+                Piece.GetAllPiecesInRadius(p.Value, 0.3f, near);
+                if (near.Any(pc => pc != null && Utils.GetPrefabName(pc.gameObject) == p.Key)) return true;
+            }
+            return false;
+        }
+
         /// <summary>The real pieces built from a plan (those it planned that are no longer ghosts and now stand there).</summary>
         internal List<Piece> BuiltPieces(string key)
         {
@@ -85,10 +125,10 @@ namespace BuildOrders
             try
             {
                 var near = new List<Piece>();
-                foreach (JArray p in ((JArray)JObject.Parse(File.ReadAllText(path))["pieces"]).OfType<JArray>())
+                foreach (var p in RecordPieces(path))
                 {
-                    string prefab = (string)p[0];
-                    var pos = new Vector3((float)p[1], (float)p[2], (float)p[3]);
+                    string prefab = p.Key;
+                    Vector3 pos = p.Value;
                     if (_orders.Values.Any(o => o.By == key && o.Prefab == prefab && (o.Pos - pos).sqrMagnitude < 0.04f)) continue; // still a ghost
                     near.Clear();
                     Piece.GetAllPiecesInRadius(pos, 0.3f, near);

@@ -7,7 +7,7 @@
 
 **Shared ghost build orders and blueprints, a build planner for your party: plan pieces (or import a blueprint) for everyone, then build them by walking up and pressing E.**
 
-![version: 1.14.5](https://img.shields.io/badge/version-1.14.5-3b6e8f?style=flat-square)  ![multiplayer: only who wants it](https://img.shields.io/badge/multiplayer-only%20who%20wants%20it-7a5c2e?style=flat-square)  ![made with: Claude Code](https://img.shields.io/badge/made%20with-Claude%20Code-c26a3d?style=flat-square)
+![version: 1.14.6](https://img.shields.io/badge/version-1.14.6-3b6e8f?style=flat-square)  ![multiplayer: only who wants it](https://img.shields.io/badge/multiplayer-only%20who%20wants%20it-7a5c2e?style=flat-square)  ![made with: Claude Code](https://img.shields.io/badge/made%20with-Claude%20Code-c26a3d?style=flat-square)
 
 <!-- GITHUB-ONLY -->[Thunderstore](https://thunderstore.io/c/valheim/p/Quads_Lab/Quads_Build_Orders/)  ·  <!-- END GITHUB-ONLY -->[Source code](https://github.com/HardHeadHackerHead/valheim-mods/tree/main/mods/BuildOrders)  ·  [Report a bug](https://github.com/HardHeadHackerHead/valheim-mods/issues/new?template=bug.yml&title=%5BQuad%27s%20Build%20Orders%5D%20)  ·  [Discord](https://discord.gg/EwTjQxEZPy)
 
@@ -221,8 +221,8 @@ helps me make new mods and keep improving the ones you already play. It's 100% o
 
 ## 📜 Recent changes
 
+- **1.14.6** No more hitch every 5 seconds after building an add-on shell (Hallwright and the like). Its finished record, kept so the shell can still be taken down, was read from its file and every one of its pieces searched for every 5 seconds: 130 to 300 ms each time with a 566-piece shell. Now it is read once, stops at the first piece still standing, and is looked at once a minute. Also fixed: when you were far from a finished shell, its pieces couldn't be seen, so the record was thrown away and the shell could no longer be taken down; it now waits until the ground there has loaded.
 - **1.14.5** Settings: edits to the config file now apply while the game runs (a server owner no longer has to restart), and a server's admins can change the server's settings from their own game with Configuration Manager, where other players see them greyed out. Your config file always keeps your own values while you play on a server (saving it there could write the server's in). Players on an older version still get the server's settings.
 - **1.14.4** No more "NullReferenceException ... ShieldGenerator.OnDestroy" in the log the first time a new version is in a world: measuring every buildable piece for blueprints/_pieces.json made a copy of the shield generator that never started, and destroying it threw. Harmless, and gone now.
-- **1.14.3** Its windows no longer fill the log with "The LiberationSans SDF Font Asset was not found": each text is given the game's font before it starts (it looked for TextMeshPro's default font, which the game doesn't have, every time a text was made). Nothing changes on screen.
 
 <!-- GITHUB-ONLY -->[Every change](CHANGELOG.txt)<!-- END GITHUB-ONLY --><!-- THUNDERSTORE-ONLY: Every change is on the Changelog tab. -->
