@@ -47,5 +47,6 @@
   "ledgerchest_no_room_msg": "Envanterinde yer yok",
   "ledgerchest_back_to_you": "Hiçbir sandıkta {0} için yer yok: sana geri döndü.",
   "ledgerchest_stays": "Hiçbir yerde {0} için yer yok: Defter Sandığı'nda kalıyor.",
-  "ledgerchest_stays_msg": "Hiçbir yerde yer yok: {0} Defter Sandığı'nda kalıyor"
+  "ledgerchest_stays_msg": "Hiçbir yerde yer yok: {0} Defter Sandığı'nda kalıyor",
+  "ledgerchest_server_missing": "Ledger Chest bu sunucuda yüklü değil, bu yüzden burada Defter Sandığı yapılamaz."
 }

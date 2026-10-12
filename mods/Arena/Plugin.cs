@@ -22,11 +22,13 @@ namespace Arena
         public const string Guid = "com.quad.arena";
         public const string OldGuid = "com.dhack.arena"; // (its id until 2026-10: settings move over by themselves, see Shared/Migration.cs)
         public const string Name = "Arena";
-        public const string Version = "0.4.2";
+        public const string Version = "0.4.3";
 
         internal static Plugin Instance;
         internal static ManualLogSource Log;
-        internal static DHack.Shared.ServerSettings Synced;   // the settings the server decides in multiplayer (what a contest pays and costs, and how hard it is)
+        internal static DHack.Shared.ServerSettings Synced;   // the settings the server decides in multiplayer (what a contest pays and costs, how hard it is, what the waystone costs)
+        internal static ConfigEntry<string> WaystoneCost;
+        private static bool _tellNoServer;   // the server hasn't the mod: say so once the player is in the world
 
         internal static ConfigEntry<float> Rewards, CrowdVolume, CrowdSize, EntryFee, MealFreshness, RingHunger;
         internal static ConfigEntry<bool> RealDeath, Spectators, Announcer, Gifts, MapPin, AllTiers, RespawnAtArena;
@@ -56,6 +58,9 @@ namespace Arena
             Announcer = Config.Bind("Crowd", "Announcer", true, "The announcer's calls across the top of the screen.");
             YieldKey = Config.Bind("Arena", "YieldKey", new KeyboardShortcut(KeyCode.Backspace), "Press twice to give up a contest (you keep what you have earned so far, at a lower rate).");
             CrowdVolume = Config.Bind("Crowd", "Volume", 0.5f, new ConfigDescription("How loud the crowd is.", new AcceptableValueRange<float>(0f, 1f)));
+            WaystoneCost = Synced.Bind("Building", "WaystoneCost", Things.WaystoneDefault, "What an Arena Waystone costs to build with the hammer (at a workbench). " + DHack.Shared.Costs.Help);
+            WaystoneCost.SettingChanged += (s, e) => Things.ApplyCost();
+            Synced.ServerChanged += () => _tellNoServer = Synced.Server == DHack.Shared.ServerSettings.ServerMod.Missing;
 
             _harmony = new Harmony(Guid);
             _harmony.PatchAll(typeof(Plugin).Assembly);
@@ -71,6 +76,11 @@ namespace Arena
         {
             Synced?.Update();   // (notices joining and leaving a server, for the settings it decides)
             Tools.Update();
+            if (_tellNoServer && Player.m_localPlayer != null)
+            {
+                _tellNoServer = false;
+                Player.m_localPlayer.Message(MessageHud.MessageType.Center, "$arena_server_missing");
+            }
             Site.Tick();
             Ground.Tick();
             Net.Tick();

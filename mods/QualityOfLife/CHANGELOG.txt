@@ -1,3 +1,5 @@
+1.13.4: Settings: edits to the config file now apply while the game runs (a server owner no longer has to restart), and a server's admins can change the server's settings from their own game with Configuration Manager, where other players see them greyed out. Your config file always keeps your own values while you play on a server (saving it there could write the server's in). Players on an older version still get the server's settings. Upgrading an item at a station no longer takes off its KEEP lock or its quick-set tag (the game makes the upgraded item new, without them).
+
 1.13.3: Its windows no longer fill the log with "The LiberationSans SDF Font Asset was not found": each text is given the game's font before it starts (it looked for TextMeshPro's default font, which the game doesn't have, every time a text was made). Nothing changes on screen.
 
 1.13.2: Fix: after leaving a world for the main menu and joining one again, the ships on the map threw an error every second (in the log) and the pins of ships that were gone stayed on the map: the pins were kept by the game's object ids, which it renumbers on each join.

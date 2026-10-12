@@ -73,5 +73,6 @@
   "cigarsmoking_hover_put": "Put in leaves (up to {0}) from your bag",
   "cigarsmoking_drying_hover": "Drying {0} {1}: about {2} min to go",
   "cigarsmoking_curing_hover": "Curing {0} {1}: about {2} min to go",
-  "cigarsmoking_hover_take": "Take {0} {1}"
+  "cigarsmoking_hover_take": "Take {0} {1}",
+  "cigarsmoking_server_missing": "Quad's Cigars isn't installed on this server, so its cigars and buildings can't be made here."
 }

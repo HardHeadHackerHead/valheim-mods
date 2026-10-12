@@ -140,6 +140,9 @@ namespace AICompanion
         {
             GameObject prefab = Prefab.Get();
             if (prefab == null) { Plugin.Tell(T("aicompanion_companion_not_made")); return null; }
+            // a server without the mod would delete the companion (and the gear it carries) as soon as its area loads
+            if (Plugin.Synced != null && Plugin.Synced.Server != DHack.Shared.ServerSettings.ServerMod.NotConnected
+                && Plugin.Synced.Server != DHack.Shared.ServerSettings.ServerMod.Installed) { Plugin.Tell(T("aicompanion_server_missing")); return null; }
             Vector3 pos = p.transform.position - p.transform.forward * 2f + p.transform.right * 1f;
             if (ZoneSystem.instance != null && ZoneSystem.instance.GetSolidHeight(pos, out float height)) pos.y = Mathf.Max(pos.y, height);
             GameObject go = Object.Instantiate(prefab, pos, Quaternion.LookRotation(p.transform.forward));

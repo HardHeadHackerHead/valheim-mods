@@ -1412,8 +1412,25 @@ namespace AICompanion
             copy.m_equipped = false;
             if (loan) Loans.Mark(copy, chest); // from your chest: what it does not eat goes back there
             if (!its.RemoveItem(item, n)) return false;
-            if (!me.GetInventory().AddItem(copy)) { its.AddItem(copy); return false; } // (back where it was)
+            if (!(loan ? AddApart(me.GetInventory(), copy) : me.GetInventory().AddItem(copy))) { its.AddItem(copy); return false; } // (back where it was)
             return true;
+        }
+
+        /// <summary>
+        /// Borrowed food into a slot of its own. Added the usual way it joins a stack of the same food it already has (the game stacks by name
+        /// alone), and the mark that sends what it did not eat back to your chest would be gone. With no free slot it joins a stack after all.
+        /// </summary>
+        private static bool AddApart(Inventory bag, ItemDrop.ItemData item)
+        {
+            for (int y = 0; y < bag.GetHeight(); y++)
+                for (int x = 0; x < bag.GetWidth(); x++)
+                {
+                    if (bag.GetItemAt(x, y) != null) continue;
+                    var hand = new Inventory("loan", null, 1, 1);   // (MoveItemToThis puts a copy in exactly that slot, and takes it from here)
+                    if (!hand.AddItem(item)) return bag.AddItem(item);
+                    return bag.MoveItemToThis(hand, item, item.m_stack, x, y);
+                }
+            return bag.AddItem(item);
         }
 
         /// <summary>A chest of its player's at home (not a companion's) with food in it, that it may open (no ward against it).</summary>

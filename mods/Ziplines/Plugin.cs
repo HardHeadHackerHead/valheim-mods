@@ -20,14 +20,19 @@ namespace Ziplines
         public const string Guid = "com.quad.ziplines";
         public const string OldGuid = "com.dhack.ziplines"; // (its id until 2026-10: settings move over by themselves, see Shared/Migration.cs)
         public const string Name = "Ziplines";
-        public const string Version = "0.3.2";
+        public const string Version = "0.3.3";
 
         internal static Plugin Instance;
         internal static ManualLogSource Log;
-        internal static DHack.Shared.ServerSettings Synced;   // the gameplay settings the server decides in multiplayer
+        internal static DHack.Shared.ServerSettings Synced;   // the gameplay settings and the cost the server decides in multiplayer
 
         internal static ConfigEntry<float> MaxLength, MinSlope, TopSpeed, MinSpeed, Hang, SpeedScale, WindVolume;
         internal static ConfigEntry<bool> Wind, WideView, LongFaster, NeedAxe;
+        internal static ConfigEntry<string> Cost;
+        private static bool _tellNoServer;   // the server hasn't the mod: say so once the player is in the world
+
+        /// <summary>What a zipline post costs before anyone changes it.</summary>
+        internal const string DefaultCost = "Wood:15, Resin:4, LeatherScraps:4";
 
         private Harmony _harmony;
 
@@ -49,6 +54,9 @@ namespace Ziplines
             WindVolume = Config.Bind("Riding", "WindVolume", 0.12f, new ConfigDescription("How loud the wind is at full speed (0 to 1).", new AcceptableValueRange<float>(0f, 1f)));
             WideView = Config.Bind("Riding", "WideView", true, "The view widens as you speed up, for the feel of it.");
             Wind = Config.Bind("Riding", "WindSound", true, "The sound of the wind, rising with your speed.");
+            Cost = Synced.Bind("Building", "PostCost", DefaultCost, "What a zipline post costs to build with the hammer (at a workbench). " + DHack.Shared.Costs.Help);
+            Cost.SettingChanged += (s, e) => Things.ApplyCost();
+            Synced.ServerChanged += () => _tellNoServer = Synced.Server == DHack.Shared.ServerSettings.ServerMod.Missing;
 
             _harmony = new Harmony(Guid);
             _harmony.PatchAll(typeof(Plugin).Assembly);
@@ -70,6 +78,11 @@ namespace Ziplines
         private void Update()
         {
             Synced?.Update();
+            if (_tellNoServer && Player.m_localPlayer != null)
+            {
+                _tellNoServer = false;
+                Player.m_localPlayer.Message(MessageHud.MessageType.Center, "$ziplines_server_missing");
+            }
             Post.Network();
             Ride.Tick();
             Tools.Update();

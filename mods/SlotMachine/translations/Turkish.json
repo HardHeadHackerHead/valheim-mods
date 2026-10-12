@@ -16,5 +16,6 @@
   "slotmachine_horn": "Boynuz",
   "slotmachine_axe": "Balta",
   "slotmachine_raven": "Kuzgun",
-  "slotmachine_valknut": "Valknut"
+  "slotmachine_valknut": "Valknut",
+  "slotmachine_server_missing": "Slot Machine bu sunucuda yüklü değil, bu yüzden burada Odin'in Talihi yapılamaz."
 }

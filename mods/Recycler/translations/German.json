@@ -1,8 +1,8 @@
 {
   "recycler_piece": "Recycler",
-  "recycler_piece_desc": "Verwandelt alte Ausrüstung zurück in einen Teil ihrer Herstellungsmaterialien. Pressen in der Nähe erhöhen den Anteil.",
+  "recycler_piece_desc": "Verwandelt alte Ausrüstung zurück in {base}% ihrer Herstellungsmaterialien. Pressen in der Nähe erhöhen das auf {one}% mit einer und {two}% mit zwei.",
   "recycler_press": "Recycler-Presse",
-  "recycler_press_desc": "Innerhalb von 8 m um einen Recycler aufstellen, um den zurückgegebenen Anteil zu erhöhen. Bis zu zwei zählen.",
+  "recycler_press_desc": "Innerhalb von 8 m um einen Recycler aufstellen, um den zurückgegebenen Anteil zu erhöhen: auf {one}% mit einer Presse, {two}% mit zwei.",
   "recycler_press_hover": "Erhöht den Anteil, den ein Recycler innerhalb von 8 m zurückgibt",
   "recycler_hover_use": "Ausrüstung recyceln",
   "recycler_hover_share": "Gibt {0} % der Materialien zurück (Pressen: {1}/2)",
@@ -29,5 +29,6 @@
   "recycler_too_little": "Zu wenig Material, um etwas zurückzubekommen.",
   "recycler_kept": "{0} kann gerade nicht recycelt werden (eine andere Mod hält es fest)",
   "recycler_recycled": "{0} recycelt: {1}",
-  "recycler_recycled_nothing": "{0} recycelt, aber nichts kam zurück"
+  "recycler_recycled_nothing": "{0} recycelt, aber nichts kam zurück",
+  "recycler_server_missing": "Recycler ist auf diesem Server nicht installiert, daher können hier keine Recycler gebaut werden."
 }

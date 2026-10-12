@@ -32,5 +32,6 @@
   "skaltavern_toast_companion": "Skål! Você bebe com seu companheiro",
   "skaltavern_toast_companions": "Skål! Você bebe com seus companheiros",
   "skaltavern_toast_with_companion": "Skål! Você bebe com {0} e seu companheiro",
-  "skaltavern_toast_with_companions": "Skål! Você bebe com {0} e seus companheiros"
+  "skaltavern_toast_with_companions": "Skål! Você bebe com {0} e seus companheiros",
+  "skaltavern_server_missing": "O SkalTavern não está instalado neste servidor, então não é possível preparar suas bebidas aqui."
 }

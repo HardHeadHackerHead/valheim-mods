@@ -16,5 +16,6 @@
   "slotmachine_horn": "Horn",
   "slotmachine_axe": "Axt",
   "slotmachine_raven": "Rabe",
-  "slotmachine_valknut": "Valknut"
+  "slotmachine_valknut": "Valknut",
+  "slotmachine_server_missing": "Slot Machine ist auf diesem Server nicht installiert, daher kann hier kein Odins Glück gebaut werden."
 }

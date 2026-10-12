@@ -16,5 +16,6 @@
   "slotmachine_horn": "Róg",
   "slotmachine_axe": "Topór",
   "slotmachine_raven": "Kruk",
-  "slotmachine_valknut": "Valknut"
+  "slotmachine_valknut": "Valknut",
+  "slotmachine_server_missing": "Slot Machine nie jest zainstalowany na tym serwerze, więc nie można tu zbudować Fortuny Odyna."
 }

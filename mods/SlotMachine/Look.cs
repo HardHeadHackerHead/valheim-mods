@@ -56,7 +56,7 @@ namespace SlotMachine
                 Materials[kv.Key] = m;
             }
             // the eight faces of a reel: each one shows its own cell of the picture strip
-            Texture2D strip = Icon.LoadEmbedded("symbols.png");
+            Texture2D strip = DHack.Shared.Icon.LoadEmbedded("symbols.png");
             for (int i = 0; i < 8; i++)
             {
                 var m = new Material(basis) { color = Color.white };

@@ -16,5 +16,6 @@
   "slotmachine_horn": "Рог",
   "slotmachine_axe": "Топор",
   "slotmachine_raven": "Ворон",
-  "slotmachine_valknut": "Валькнут"
+  "slotmachine_valknut": "Валькнут",
+  "slotmachine_server_missing": "Slot Machine не установлен на этом сервере, поэтому «Удачу Одина» здесь построить нельзя."
 }

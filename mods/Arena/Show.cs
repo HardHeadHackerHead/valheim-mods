@@ -66,10 +66,8 @@ namespace Arena
                 {
                     int n = Mathf.Min(left, max);
                     left -= n;
-                    ItemDrop.ItemData item = inv.AddItem(it.Prefab, n, Mathf.Clamp(it.Quality, 1, drop.m_itemData.m_shared.m_maxQuality), 0, 0L, "The Arena", false);
+                    ItemDrop.ItemData item = KeepApart.AddMarked(inv, it.Prefab, n, it.Quality, it.Loan);   // (marked before it goes in)
                     if (item == null) { Contest.Give(it.Prefab, n + left, Player.m_localPlayer); left = 0; break; }   // (a full chest: straight to you)
-                    item.m_durability = item.GetMaxDurability();
-                    if (it.Loan != null) item.m_customData[Kit.LoanKey] = it.Loan;
                     count++;
                 }
             }

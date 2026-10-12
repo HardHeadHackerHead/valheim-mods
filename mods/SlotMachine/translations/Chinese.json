@@ -16,5 +16,6 @@
   "slotmachine_horn": "号角",
   "slotmachine_axe": "斧头",
   "slotmachine_raven": "渡鸦",
-  "slotmachine_valknut": "瓦尔克纳特"
+  "slotmachine_valknut": "瓦尔克纳特",
+  "slotmachine_server_missing": "此服务器未安装 Slot Machine，因此无法在这里建造奥丁的财富。"
 }

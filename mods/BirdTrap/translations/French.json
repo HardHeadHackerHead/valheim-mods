@@ -15,5 +15,6 @@
   "birdtrap_bait_state": "Appât : {0}/{1}  ·  {2}",
   "birdtrap_hover_add": "Ajouter de l'appât (baies ou graines)",
   "birdtrap_hover_fill": "Le remplir d'appât",
-  "birdtrap_plucked": "Vous plumez la mouette et la relâchez : {0} plumes"
+  "birdtrap_plucked": "Vous plumez la mouette et la relâchez : {0} plumes",
+  "birdtrap_server_missing": "Bird Trap n'est pas installé sur ce serveur : impossible d'y construire des pièges à oiseaux."
 }

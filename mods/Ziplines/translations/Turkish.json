@@ -29,5 +29,6 @@
   "ziplines_in_way": "Hat boyunca {0} m ötede bir şey yolu kesiyor ({1}).",
   "ziplines_a_tree": "bir ağaç",
   "ziplines_the_ground": "zemin",
-  "ziplines_rock_or_tree": "bir kaya ya da ağaç"
+  "ziplines_rock_or_tree": "bir kaya ya da ağaç",
+  "ziplines_server_missing": "Ziplines bu sunucuda yüklü değil, bu yüzden burada Zipline Direği yapılamaz."
 }

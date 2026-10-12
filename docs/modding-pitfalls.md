@@ -25,6 +25,15 @@ you are developing. So:
 
 See `mods/SlotMachine/Plugin.cs` (`Register`, `Unregister` and the two patches at the bottom).
 
+## A server without the mod deletes what a player builds with it
+
+The same deletion happens when the **server** lacks the mod: a player who has Jet Skis, on a vanilla dedicated server or with a host who
+never installed it, could build a jet ski that the server deletes the moment its area loads, saddlebags and all (checked in
+`ZNetScene.CreateObjects`: only the server destroys unknown prefabs, so a player *without* the mod on a server that has it loses nothing).
+`Shared/ServerSettings.cs` asks the server over its own connection whether it has the mod; `Synced.NeedsServer(prefab)` keeps such pieces
+(and `NeedsServer(recipe)` such items) out of the menus until it answers yes. Don't trust a routed RPC for "the server has the mod": its
+sender id is whatever the packet says. Jet Skis does this (`Things.Register`, and its "isn't installed on this server" message).
+
 ## The player's inventory height is reset on every spawn
 
 Since the trader started selling inventory rows, `Player.OnSpawned` calls `Player.SetInventorySize(rows)` with the row count saved in the

@@ -73,5 +73,6 @@
   "cigarsmoking_hover_put": "Mettre des feuilles de l'inventaire (jusqu'à {0})",
   "cigarsmoking_drying_hover": "Séchage de {0} {1} : encore {2} min environ",
   "cigarsmoking_curing_hover": "Affinage de {0} {1} : encore {2} min environ",
-  "cigarsmoking_hover_take": "Prendre {0} {1}"
+  "cigarsmoking_hover_take": "Prendre {0} {1}",
+  "cigarsmoking_server_missing": "Quad's Cigars n'est pas installé sur ce serveur : impossible d'y fabriquer ses cigares et ses constructions."
 }

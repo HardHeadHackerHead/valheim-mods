@@ -1,5 +1,6 @@
-"""Checks every mod's translations/*.json against its English.json: the same keys, the same {0} {1} placeholders, valid JSON,
-and every key the code uses (T("key") and "$key") present in English. Run: python tools/check_translations.py [Mod ...]"""
+"""Checks every mod's translations/*.json against its English.json: the same keys, the same {0} {1} and named {heal} placeholders,
+valid JSON, every key the code uses (T("key") and "$key") present in English, and every Fill(key, "name", ...) naming a key whose
+English text has {name}. Run: python tools/check_translations.py [Mod ...]"""
 import io, json, os, re, sys
 
 MODS = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'mods')
@@ -7,7 +8,8 @@ SHIPPED = ["English", "Russian", "German", "Chinese", "Portuguese_Brazilian", "S
 
 
 def placeholders(text):
-    return sorted(set(re.findall(r'\{\d+\}', text)))
+    # {0} {1} (T's arguments) and {heal} (Translations.Fill's named ones): every language keeps the same ones
+    return sorted(set(re.findall(r'\{(?:\d+|[A-Za-z_][A-Za-z0-9_]*)\}', text)))
 
 
 def check(mod):
@@ -35,15 +37,23 @@ def check(mod):
             if k not in english: problems.append(f'{lang}: "{k}" is not in English.json')
     # keys the code uses
     prefix_keys = set()
+    fills = set()
     for root, _, files in os.walk(os.path.join(MODS, mod)):
         if any(p in root for p in ('bin', 'obj', 'thunderstore')): continue
         for f in files:
             if f.endswith('.cs'):
                 src = io.open(os.path.join(root, f), encoding='utf-8').read()
                 prefix_keys |= set(re.findall(r'\bT\("([a-z0-9_]+)"', src))
+                consts = dict(re.findall(r'\bconst string (\w+) = "\$?([a-z0-9_]+)"', src))   # (a key kept in a const)
+                for lit, name, ph in re.findall(r'\bFill\(\s*(?:"\$?([a-z0-9_]+)"|(\w+))\s*,\s*"\{?([A-Za-z_][A-Za-z0-9_]*)\}?"', src):
+                    key = lit or consts.get(name)
+                    if key: fills.add((key, ph))
                 prefix_keys |= {k for k in re.findall(r'"\$([a-z0-9_]+)', src) if k in english or k.split('_')[0] == next(iter(english), '_').split('_')[0]}
     for k in sorted(prefix_keys):
         if k not in english: problems.append(f'code uses "{k}", not in English.json')
+    for k, ph in sorted(fills):
+        if k not in english: problems.append(f'Fill("{k}", "{ph}"): "{k}" is not in English.json')
+        elif '{' + ph + '}' not in english[k]: problems.append(f'Fill("{k}", "{ph}"): the English text has no {{{ph}}}')
     return problems
 
 

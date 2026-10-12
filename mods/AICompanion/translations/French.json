@@ -925,5 +925,6 @@
   "aicompanion_net_marker": "{0} a succombé ici",
   "aicompanion_net_lost_fight_other": "{1}, le compagnon de {0}, a perdu un combat à la maison en l'absence de tous : ses affaires sont dans sa tombe (indiquée sur votre carte)",
   "aicompanion_net_lost_fight": "{0} a perdu un combat à la maison en l'absence de tous : ses affaires sont dans sa tombe (indiquée sur votre carte)",
-  "aicompanion_net_fallen_other": "{1}, le compagnon de {0}, a succombé (indiqué sur votre carte)"
+  "aicompanion_net_fallen_other": "{1}, le compagnon de {0}, a succombé (indiqué sur votre carte)",
+  "aicompanion_server_missing": "AI Companion n'est pas installé sur ce serveur : aucun compagnon ne peut vous rejoindre ici."
 }

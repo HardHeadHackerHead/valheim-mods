@@ -925,5 +925,6 @@
   "aicompanion_net_marker": "{0} caiu aqui",
   "aicompanion_net_lost_fight_other": "{1}, companheiro de {0}, perdeu uma luta em casa enquanto ninguém estava lá: as coisas dele estão no túmulo (marcado no seu mapa)",
   "aicompanion_net_lost_fight": "{0} perdeu uma luta em casa enquanto ninguém estava lá: as coisas dele estão no túmulo (marcado no seu mapa)",
-  "aicompanion_net_fallen_other": "{1}, companheiro de {0}, caiu (marcado no seu mapa)"
+  "aicompanion_net_fallen_other": "{1}, companheiro de {0}, caiu (marcado no seu mapa)",
+  "aicompanion_server_missing": "O AI Companion não está instalado neste servidor, então nenhum companheiro pode se juntar a você aqui."
 }

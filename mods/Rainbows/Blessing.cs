@@ -1,9 +1,10 @@
 using UnityEngine;
+using DHack.Shared;
 using static DHack.Shared.Translations;
 
 namespace Rainbows
 {
-    /// <summary>The buff for looking up at a rainbow, and its registration with the game's status effects.</summary>
+    /// <summary>The buff for looking up at a rainbow, and its registration with the game's status effects (Shared/StatusEffects.cs).</summary>
     internal static class Blessing
     {
         public const string EffectName = "Rainbows_SE_Blessing", DoubleName = "Rainbows_SE_DoubleBlessing";   // (named after the mod: one space with every other mod's)
@@ -17,31 +18,15 @@ namespace Rainbows
             if (db == null || db.m_items.Count == 0) return;   // (the game's own lists are not loaded yet: asked again)
             if (_effect == null)
             {
-                _effect = ScriptableObject.CreateInstance<SE_Rainbow>();
-                _effect.name = EffectName;
-                _effect.m_name = "$rainbows_blessing";
-                _effect.m_icon = _icon = MakeIcon(false);
-                _double = ScriptableObject.CreateInstance<SE_DoubleRainbow>();
-                _double.name = DoubleName;
-                _double.m_name = "$rainbows_double_blessing";
-                _double.m_icon = _doubleIcon = MakeIcon(true);
+                _effect = StatusEffects.Create<SE_Rainbow>(EffectName, "$rainbows_blessing", _icon = MakeIcon(false));
+                _double = StatusEffects.Create<SE_DoubleRainbow>(DoubleName, "$rainbows_double_blessing", _doubleIcon = MakeIcon(true));
             }
-            foreach (SE_Rainbow e in new[] { _effect, _double })
-            {
-                if (db.m_StatusEffects.Contains(e)) continue;
-                db.m_StatusEffects.RemoveAll(x => x == null || x.name == e.name);
-                db.m_StatusEffects.Add(e);
-            }
+            StatusEffects.Register();   // (in ObjectDB again, and after a reload back on whoever had one, with the time they had left)
         }
 
         public static void Unregister()
         {
-            ObjectDB db = ObjectDB.instance;
-            Player player = Player.m_localPlayer;
-            if (player != null && _effect != null) { player.GetSEMan().RemoveStatusEffect(Hash, true); player.GetSEMan().RemoveStatusEffect(DoubleHash, true); }   // (a copy left in the player would point at what is destroyed below)
-            if (db != null) db.m_StatusEffects.RemoveAll(e => e == null || e == _effect || e == _double);
-            if (_effect != null) Object.Destroy(_effect);
-            if (_double != null) Object.Destroy(_double);
+            StatusEffects.Unload();   // off every character this game has (a copy left on one would point at what is destroyed), out of ObjectDB
             foreach (Sprite icon in new[] { _icon, _doubleIcon }) if (icon != null) { Object.Destroy(icon.texture); Object.Destroy(icon); }
             _effect = null; _double = null; _icon = null; _doubleIcon = null;
         }
@@ -51,14 +36,13 @@ namespace Rainbows
         {
             if (!Plugin.Buff.Value || player == null || ObjectDB.instance == null) return;
             Register();
-            SEMan sem = player.GetSEMan();
-            // (one blessing at a time; a copy left from before this mod reloaded has no icon, so it is always replaced)
-            sem.RemoveStatusEffect(Hash, true);
-            sem.RemoveStatusEffect(DoubleHash, true);
-            sem.AddStatusEffect(doubled ? DoubleHash : Hash, true);
+            // (one blessing at a time)
+            StatusEffects.Remove(player, Hash);
+            StatusEffects.Remove(player, DoubleHash);
+            StatusEffects.Apply(player, doubled ? DoubleHash : Hash);
         }
 
-        public static bool Has(Player player) => player != null && (player.GetSEMan().HaveStatusEffect(Hash) || player.GetSEMan().HaveStatusEffect(DoubleHash));
+        public static bool Has(Player player) => StatusEffects.Has(player, Hash) || StatusEffects.Has(player, DoubleHash);
 
         /// <summary>A small rainbow in a ring, drawn here so the mod needs no art.</summary>
         private static Sprite MakeIcon(bool twice)

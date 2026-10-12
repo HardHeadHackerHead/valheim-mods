@@ -47,5 +47,6 @@
   "ledgerchest_no_room_msg": "你的物品栏没有空间",
   "ledgerchest_back_to_you": "没有宝箱有空间放{0}：已退回给你。",
   "ledgerchest_stays": "哪里都放不下{0}：留在账簿宝箱里。",
-  "ledgerchest_stays_msg": "哪里都放不下：{0}留在账簿宝箱里"
+  "ledgerchest_stays_msg": "哪里都放不下：{0}留在账簿宝箱里",
+  "ledgerchest_server_missing": "此服务器未安装 Ledger Chest，因此无法在这里建造账簿宝箱。"
 }

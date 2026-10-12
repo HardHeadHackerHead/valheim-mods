@@ -22,12 +22,15 @@ namespace CigarSmoking
         public const string Guid = "com.quad.cigarsmoking";
         public const string OldGuid = "com.dhack.cigarsmoking"; // (its id until 2026-10: settings move over by themselves, see Shared/Migration.cs)
         public const string Name = "Quad's Cigars";
-        public const string Version = "0.4.2";
+        public const string Version = "0.4.3";
         public const string EffectPrefix = "SE_dh_smoking_";
 
         internal static ConfigEntry<float> Minutes, EffectStrength, GrowMinutes, DryMinutes, CureMinutes;
         internal static ConfigEntry<bool> DrawSmoke, DrawGlow;
-        internal static DHack.Shared.ServerSettings Synced;   // the gameplay settings are the server's in multiplayer
+        internal static ConfigEntry<string> TableCost, HumidorCost, RackCost, BarrelCost;
+        internal static ConfigEntry<string>[] CigarCost;   // one per cigar, in the order of Types.All
+        internal static DHack.Shared.ServerSettings Synced;   // the gameplay settings and the costs are the server's in multiplayer
+        private static bool _tellNoServer;   // the server hasn't the mod: say so once the player is in the world
 
         public const int SmokingApiVersion = 1;
         private readonly SmokingSlots _smokingSlots = new SmokingSlots();
@@ -37,6 +40,7 @@ namespace CigarSmoking
         /// <summary>Stop other registered smoking effects on this character; unrelated effects remain.</summary>
         public bool StopOtherSmoking(Character character, string keepEffectName) => _smokingSlots.StopOthers(character, keepEffectName);
         internal static Plugin Instance;
+        internal static BepInEx.Logging.ManualLogSource Log;
 
         private Harmony _harmony;
 
@@ -45,6 +49,7 @@ namespace CigarSmoking
             DHack.Shared.Migration.FromOldGuid(this, OldGuid); // first: before any setting is read
             DHack.Shared.Translations.Load(this);   // translations/*.json: its words in the player's language
             Instance = this;
+            Log = Logger;
             Synced = new DHack.Shared.ServerSettings(Guid, Config, Logger);
             Minutes = Synced.Add(Config.Bind("Smoking", "Minutes", 5f, new ConfigDescription("How long one cigar lasts (minutes). In multiplayer the server's value applies.", new AcceptableValueRange<float>(0.5f, 60f))));
             EffectStrength = Synced.Add(Config.Bind("Smoking", "EffectStrength", 100f, new ConfigDescription("How strong the cigars' bonuses are (percent of the default). 0 for none. In multiplayer the server's value applies.", new AcceptableValueRange<float>(0f, 300f))));
@@ -52,6 +57,20 @@ namespace CigarSmoking
             DrawGlow = Config.Bind("Look", "DrawGlow", true, "Give the ember a small flickering light (nice at night).");
             GrowMinutes = Synced.Add(Config.Bind("Growing", "TobaccoGrowMinutes", 25f, new ConfigDescription("How long a tobacco plant takes to grow (minutes). Applies to plants as they load. In multiplayer the server's value applies.", new AcceptableValueRange<float>(1f, 240f))));
             DryMinutes = Synced.Add(Config.Bind("Growing", "DryingMinutes", 2f, new ConfigDescription("How long a batch of leaves takes to dry on the rack (minutes). Applies to batches put in after a change. In multiplayer the server's value applies.", new AcceptableValueRange<float>(0.1f, 120f))));
+            TableCost = Synced.Bind("Building", "RollingTableCost", Things.TableDefault, "What a Cigar Rolling Table costs to build with the hammer (at a workbench). " + DHack.Shared.Costs.Help);
+            HumidorCost = Synced.Bind("Building", "HumidorCost", Things.HumidorDefault, "What a Humidor costs to build with the hammer (near a Cigar Rolling Table). " + DHack.Shared.Costs.Help);
+            RackCost = Synced.Bind("Building", "DryingRackCost", Things.RackDefault, "What a Drying Rack costs to build with the hammer (at a workbench). " + DHack.Shared.Costs.Help);
+            BarrelCost = Synced.Bind("Building", "CuringBarrelCost", Things.BarrelDefault, "What a Curing Barrel costs to build with the hammer (at a workbench). " + DHack.Shared.Costs.Help);
+            CigarCost = new ConfigEntry<string>[Types.All.Length];
+            for (int i = 0; i < CigarCost.Length; i++)
+            {
+                CigarType t = Types.All[i];
+                CigarCost[i] = Synced.Bind("Crafting", char.ToUpper(t.Id[0]) + t.Id.Substring(1) + "CigarCost", Things.CigarDefault(t),
+                    "What rolling a batch of " + t.Id + " cigars takes at the Cigar Rolling Table. " + DHack.Shared.Costs.Help);
+            }
+            foreach (ConfigEntry<string> cost in new[] { TableCost, HumidorCost, RackCost, BarrelCost }.Concat(CigarCost))
+                cost.SettingChanged += (s, e) => Things.ApplyCosts();
+            Synced.ServerChanged += () => _tellNoServer = Synced.Server == DHack.Shared.ServerSettings.ServerMod.Missing;
             CureMinutes = Synced.Add(Config.Bind("Growing", "CuringMinutes", 6f, new ConfigDescription("How long a batch of leaves takes to age in the barrel (minutes). Applies to batches put in after a change. In multiplayer the server's value applies.", new AcceptableValueRange<float>(0.1f, 240f))));
 
             _harmony = new Harmony(Guid);
@@ -61,7 +80,15 @@ namespace CigarSmoking
             Logger.LogInfo($"{Name} {Version} loaded");
         }
 
-        private void Update() => Synced?.Update();
+        private void Update()
+        {
+            Synced?.Update();
+            if (_tellNoServer && Player.m_localPlayer != null)
+            {
+                _tellNoServer = false;
+                Player.m_localPlayer.Message(MessageHud.MessageType.Center, "$cigarsmoking_server_missing");
+            }
+        }
 
         private void OnDestroy()
         {

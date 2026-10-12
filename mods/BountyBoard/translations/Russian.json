@@ -58,5 +58,6 @@
   "bountyboard_tracker_title": "Заказы группы",
   "bountyboard_you_have": "(у вас {0})",
   "bountyboard_to_collect": "Наград к получению у доски: {0}",
-  "bountyboard_to_collect_many": "Наград к получению у доски: {0}"
+  "bountyboard_to_collect_many": "Наград к получению у доски: {0}",
+  "bountyboard_server_missing": "Bounty Board не установлен на этом сервере, поэтому доски заказов здесь строить нельзя."
 }

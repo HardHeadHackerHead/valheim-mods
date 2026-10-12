@@ -7,7 +7,7 @@
 
 **Odin's Fortune: a buildable slot machine for your viking casino. Put coins in, pull the lever, and the winnings come out of the tray. Gambling with your coins (about 93% comes back), every spin seen by everyone nearby.**
 
-![version: 1.2.2](https://img.shields.io/badge/version-1.2.2-3b6e8f?style=flat-square)  ![multiplayer: everyone + host](https://img.shields.io/badge/multiplayer-everyone%20%2B%20host-7a5c2e?style=flat-square)  ![made with: Claude Code](https://img.shields.io/badge/made%20with-Claude%20Code-c26a3d?style=flat-square)
+![version: 1.2.3](https://img.shields.io/badge/version-1.2.3-3b6e8f?style=flat-square)  ![multiplayer: everyone + host](https://img.shields.io/badge/multiplayer-everyone%20%2B%20host-7a5c2e?style=flat-square)  ![made with: Claude Code](https://img.shields.io/badge/made%20with-Claude%20Code-c26a3d?style=flat-square)
 
 <!-- GITHUB-ONLY -->[Thunderstore](https://thunderstore.io/c/valheim/p/Quads_Lab/Quads_Slot_Machine/)  ·  <!-- END GITHUB-ONLY -->[Source code](https://github.com/HardHeadHackerHead/valheim-mods/tree/main/mods/SlotMachine)  ·  [Report a bug](https://github.com/HardHeadHackerHead/valheim-mods/issues/new?template=bug.yml&title=%5BQuad%27s%20Slot%20Machine%5D%20)  ·  [Discord](https://discord.gg/EwTjQxEZPy)
 
@@ -86,6 +86,12 @@ The translations were made with AI, so a few words may be off. To correct one, o
 
 In `BepInEx/config/com.quad.slotmachine.cfg`, made the first time the game runs with the mod. r2modman and Thunderstore Mod Manager edit it under **Config editor**.<!-- GITHUB-ONLY --> With our mod manager: **F7**, then **Mod settings**.<!-- END GITHUB-ONLY -->
 
+**Building**
+
+| Setting | Default | What it does |
+|---|---|---|
+| `Cost` | `FineWood:15, Bronze:8, Stone:10` | What a slot machine costs to build with the hammer (at a workbench). Item prefab names and amounts, separated by commas, like FineWood:12, BronzeNails:30 (Claude Tools' `prefabs <text>` shows exact names). A cost with a mistake in it keeps the last good one. [Synced with Server] |
+
 **Play**
 
 | Setting | Default | What it does |
@@ -135,8 +141,8 @@ helps me make new mods and keep improving the ones you already play. It's 100% o
 
 ## 📜 Recent changes
 
+- **1.2.3** On a server without Slot Machine, the slot machine is gone from the hammer, and a message says why: the server would delete a slot machine built there. Server owners can change what it costs ("Building", Cost; default 15 fine wood, 8 bronze and 10 stone, as before); in multiplayer the server's cost applies, and a cost with a mistake in it keeps the last good one. Settings: edits to the config file now apply while the game runs (a server owner no longer has to restart), and a server's admins can change the server's settings from their own game with Configuration Manager, where other players see them greyed out. Your config file always keeps your own values while you play on a server (saving it there could write the server's in). Players on an older version still get the server's settings. It counts as furniture in the game's own building records, not as storage (it was copied from a chest). It snaps by the corners of its base now, so a row of machines lines up side by side, and it lines up with floor corners and wall ends; hold the alt-place key (Shift) to place it freely.
 - **1.2.2** Fix: after reloading the mod at the main menu (the mod manager's reload, or F6), its old build piece stayed in the hammer's list after it was gone, and every change to your bag threw an error half-way: crafting gave the item without taking the cost, and picking things up could go wrong, until the game was restarted. Its piece now comes off the list it was put on, and destroyed pieces left there by any mod are cleared when it registers.
 - **1.2.1** Fix: a big win pours out of the tray a stack at a time, and if the machine unloaded, was taken down, or you logged out before the pour finished, the coins not yet out were lost. What is still to pour is now kept as owed and paid into your inventory (or at your feet) at once, and never twice. The same goes for a machine that unloads while its reels still turn: you are paid right then, not only at your next pull or logout. The bet is now counted from your own inventory only (mods that add chests to the count could let you spin without the coins), and if not all of it could be taken you get it back and the reels don't spin. If a game update breaks the machine's look, it is still registered (with the chest's look), so placed machines are never deleted. The reels are read only when they change, not every frame.
-- **1.2.0** Now in your language: English, Russian, German, Chinese (Simplified), Portuguese (Brazil), Spanish, French, Polish and Turkish, following the game's own Language setting. The game's own names are used for its things (items, creatures, lands, stations). The translations were made with AI: to correct a line, or add a language, put a file in BepInEx/config/translations/com.quad.slotmachine/ named after the game's name for the language (German.json...) with only the lines you change, copied from translations/English.json on GitHub.
 
 <!-- GITHUB-ONLY -->[Every change](CHANGELOG.txt)<!-- END GITHUB-ONLY --><!-- THUNDERSTORE-ONLY: Every change is on the Changelog tab. -->

@@ -29,5 +29,6 @@
   "ziplines_in_way": "Quelque chose gêne à {0} m le long de la tyrolienne ({1}).",
   "ziplines_a_tree": "un arbre",
   "ziplines_the_ground": "le sol",
-  "ziplines_rock_or_tree": "un rocher ou un arbre"
+  "ziplines_rock_or_tree": "un rocher ou un arbre",
+  "ziplines_server_missing": "Ziplines n'est pas installé sur ce serveur : impossible d'y construire des poteaux de tyrolienne."
 }

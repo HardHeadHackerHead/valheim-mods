@@ -25,6 +25,13 @@ namespace Ziplines
 
         internal static GameObject PostObject => _post;
 
+        /// <summary>The cost setting (the server's in multiplayer) on the piece. One that can't be read keeps the last good cost.</summary>
+        internal static void ApplyCost()
+        {
+            Piece piece = _post != null ? _post.GetComponent<Piece>() : null;
+            if (piece != null) DHack.Shared.Costs.Apply(piece, Plugin.Cost.Value, Plugin.Log);
+        }
+
         internal static void Register()
         {
             ZNetScene scene = ZNetScene.instance;
@@ -43,6 +50,7 @@ namespace Ziplines
             }
             if (!scene.m_prefabs.Contains(_post)) scene.m_prefabs.Add(_post);
             Named(scene)[_post.name.GetStableHashCode()] = _post;   // lets it be placed and loaded from saves
+            Plugin.Synced.NeedsServer(_post);   // not in the build menu on a server without the mod (it would delete the post)
             PieceTable table = scene.GetPrefab("Hammer")?.GetComponent<ItemDrop>()?.m_itemData.m_shared.m_buildPieces;
             if (table != null)
             {
@@ -143,14 +151,21 @@ namespace Ziplines
             box.center = new Vector3(0f, Height * 0.5f, 0f);
             box.size = new Vector3(0.36f, Height, 0.36f);
 
+            // one snap point, under its foot: the pole's two (1 m above and below its middle) would float the post 1 m up or sink it 1 m
+            // (its origin is at the ground). It stands on a floor's corner, a wall's top or a pole's top; nothing snaps onto its pulley
+            DHack.Shared.SnapPoints.Clear(go);
+            DHack.Shared.SnapPoints.Add(go, "bottom", Vector3.zero);
+
             Piece piece = go.GetComponent<Piece>();
             piece.m_name = "$ziplines_post";
             piece.m_description = "$ziplines_post_desc";
             try { piece.m_icon = Icon(); }
             catch (System.Exception e) { Plugin.Log.LogWarning("Could not draw the Zipline Post's build-menu picture: " + e.Message); }
             piece.m_category = Piece.PieceCategory.Misc;
+            piece.m_usage = Piece.UsageTagFlags.Transport;   // the game's build-menu tags: a way to get about
             piece.m_craftingStation = scene.GetPrefab("piece_workbench")?.GetComponent<CraftingStation>();
-            piece.m_resources = new[] { Req(scene, "Wood", 15), Req(scene, "Resin", 4), Req(scene, "LeatherScraps", 4) }.Where(r => r.m_resItem != null).ToArray();
+            // the cost setting (a server owner can change it); if neither it nor the default can be read, the source piece's stays: never free
+            if (!DHack.Shared.Costs.Apply(piece, Plugin.Cost.Value, Plugin.Log)) DHack.Shared.Costs.Apply(piece, Plugin.DefaultCost, Plugin.Log);
             go.AddComponent<Post>();
             return go;
         }
@@ -183,9 +198,6 @@ namespace Ziplines
             part.transform.localScale = scale;
             if (material != null) part.GetComponent<Renderer>().sharedMaterial = material;
         }
-
-        private static Piece.Requirement Req(ZNetScene scene, string item, int amount) =>
-            new Piece.Requirement { m_resItem = scene.GetPrefab(item)?.GetComponent<ItemDrop>(), m_amount = amount, m_recover = true };
 
         /// <summary>The build menu's picture: a post with a rope running away from its top.</summary>
         private static Sprite Icon()

@@ -24,11 +24,17 @@ namespace BountyBoard
         public const string Guid = "com.quad.bountyboard";
         public const string OldGuid = "com.dhack.bountyboard"; // (its id until 2026-10: settings move over by themselves, see Shared/Migration.cs)
         public const string Name = "BountyBoard";
-        public const string Version = "1.4.3";
+        public const string Version = "1.4.4";
         public const string PiecePrefab = "piece_bountyboard";
 
         internal static Plugin Instance;
-        internal static DHack.Shared.ServerSettings Synced;   // the settings the server decides in multiplayer
+        internal static DHack.Shared.ServerSettings Synced;   // the settings and the cost the server decides in multiplayer
+        internal static ConfigEntry<string> Cost;
+        internal static BepInEx.Logging.ManualLogSource Log;
+        private static bool _tellNoServer;   // the server hasn't the mod: say so once the player is in the world
+
+        /// <summary>What a board costs before anyone changes it.</summary>
+        internal const string DefaultCost = "Wood:20, LeatherScraps:6, Flint:4";
         internal static ConfigEntry<int> RefreshDays, NoticesPerBoard, MaxActive, RewardPercent;
         internal static ConfigEntry<bool> ShowTracker;
         internal static ConfigEntry<float> TrackerX, TrackerY, TrackerScale;
@@ -42,11 +48,15 @@ namespace BountyBoard
             DHack.Shared.Translations.Load(this);   // translations/*.json: its words in the player's language
             // These four are used by the host's game (it decides what is posted and what it pays); players are sent its values, so the
             // menu shows the host's limits.
+            Log = Logger;
             Synced = new DHack.Shared.ServerSettings(Guid, Config, Logger);
             RefreshDays = Synced.Add(Config.Bind("Notices", "DaysBetweenNewNotices", 1, new ConfigDescription("How many in-game days before the board posts new notices. In multiplayer the server's value applies.", new AcceptableValueRange<int>(1, 7))));
             NoticesPerBoard = Synced.Add(Config.Bind("Notices", "NoticesPerBoard", 5, new ConfigDescription("How many notices are posted. In multiplayer the server's value applies.", new AcceptableValueRange<int>(3, 8))));
             MaxActive = Synced.Add(Config.Bind("Contracts", "MostAtOnce", 3, new ConfigDescription("How many contracts the group can have going at once. A new one can only be taken when one is finished. In multiplayer the server's value applies.", new AcceptableValueRange<int>(1, 5))));
             RewardPercent = Synced.Add(Config.Bind("Contracts", "RewardPercent", 100, new ConfigDescription("Pay as a percentage of the standard rate (50 = half, 200 = double). In multiplayer the server's value applies.", new AcceptableValueRange<int>(10, 500))));
+            Cost = Synced.Bind("Building", "Cost", DefaultCost, "What a bounty board costs to build with the hammer (at a workbench). " + DHack.Shared.Costs.Help);
+            Cost.SettingChanged += (s, e) => ApplyCost();
+            Synced.ServerChanged += () => _tellNoServer = Synced.Server == DHack.Shared.ServerSettings.ServerMod.Missing;
             // These are yours alone.
             ShowTracker = Config.Bind("Tracker", "ShowOnScreen", false, "Show the group's contracts and their progress on your screen (also a switch in the board's menu).");
             TrackerX = Config.Bind("Tracker", "X", 14f, "Distance from the left edge of the screen (UI pixels).");
@@ -74,7 +84,16 @@ namespace BountyBoard
             Synced?.Dispose();
         }
 
-        private void Update() { Synced?.Update(); UpdateNetwork(); Window.Tick(); Tracker.Tick(); }
+        private void Update()
+        {
+            Synced?.Update();
+            if (_tellNoServer && Player.m_localPlayer != null)
+            {
+                _tellNoServer = false;
+                Player.m_localPlayer.Message(MessageHud.MessageType.Center, "$bountyboard_server_missing");
+            }
+            UpdateNetwork(); Window.Tick(); Tracker.Tick();
+        }
 
         internal static void Register(ZNetScene scene)
         {
@@ -96,8 +115,16 @@ namespace BountyBoard
 
             // registered in place of an older copy's (a hot reload while playing), and the boards already standing get this copy's code
             DHack.Shared.PieceReload.ReplacePrefab(scene, _prefab, hammer.GetComponent<ItemDrop>().m_itemData.m_shared.m_buildPieces);
+            Synced.NeedsServer(_prefab);   // not in the build menu on a server without the mod (it would delete the board)
             int swapped = DHack.Shared.PieceReload.Reattach(scene, _prefab);
             if (swapped > 0) Debug.Log($"{Name}: {swapped} board(s) in the world now run this copy");
+        }
+
+        /// <summary>The cost setting (the server's in multiplayer) on the piece. One that can't be read keeps the last good cost.</summary>
+        internal static void ApplyCost()
+        {
+            Piece piece = _prefab != null ? _prefab.GetComponent<Piece>() : null;
+            if (piece != null) DHack.Shared.Costs.Apply(piece, Cost.Value, Log);
         }
 
         private static GameObject Make(GameObject source, CraftingStation workbench)
@@ -119,14 +146,21 @@ namespace BountyBoard
 
             try { ModelBuilder.Build(go.transform, ModelData.Parts, go.layer); }
             catch (System.Exception e) { Debug.LogWarning(Name + ": could not build the board's model: " + e.Message); }
+            // snap points on the corners of its base, as far as the plinth and step reach (the chest it's copied from has none): it lines
+            // up with floor corners, wall ends and other boards
+            DHack.Shared.SnapPoints.Clear(go);
+            DHack.Shared.SnapPoints.Box(go, new Vector3(-1.36f, 0f, -0.7f), new Vector3(1.36f, 0f, 0.61f));
 
             Piece piece = go.GetComponent<Piece>();
             piece.m_name = "$bountyboard_piece";
             piece.m_description = "$bountyboard_piece_desc";
             piece.m_category = Piece.PieceCategory.Misc;
+            piece.m_usage = Piece.UsageTagFlags.Misc;   // the game's build-menu tags: a board, not the chest it's copied from
             piece.m_craftingStation = workbench;
-            piece.m_resources = new[] { Req("Wood", 20), Req("LeatherScraps", 6), Req("Flint", 4) };
-            try { piece.m_icon = Icon.Make(go); }
+            // the cost setting (a server owner can change it); if neither it nor the default can be read, the chest's: never free to build
+            if (!DHack.Shared.Costs.Apply(piece, Cost.Value, Log) && !DHack.Shared.Costs.Apply(piece, DefaultCost, Log))
+                piece.m_resources = source.GetComponent<Piece>().m_resources;
+            try { piece.m_icon = DHack.Shared.Icon.Make(go); }
             catch (System.Exception e) { Debug.LogWarning(Name + ": could not draw the build-menu picture: " + e.Message); }
             go.AddComponent<BountyBoardStation>();
             return go;
@@ -146,12 +180,6 @@ namespace BountyBoard
             Look.Clear();
         }
 
-        private static Piece.Requirement Req(string item, int amount)
-        {
-            GameObject go = ZNetScene.instance != null ? ZNetScene.instance.GetPrefab(item) : null;
-            if (go == null && ObjectDB.instance != null) go = ObjectDB.instance.GetItemPrefab(item);
-            return new Piece.Requirement { m_resItem = go != null ? go.GetComponent<ItemDrop>() : null, m_amount = amount, m_recover = true };
-        }
     }
 
     // You land the last blow on something: the host counts it for the group's contracts.

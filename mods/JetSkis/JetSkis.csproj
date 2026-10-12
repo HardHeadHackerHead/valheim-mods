@@ -10,8 +10,10 @@
     <Reference Include="UnityEngine.ParticleSystemModule"><HintPath>$(ManagedDir)/UnityEngine.ParticleSystemModule.dll</HintPath><Private>false</Private></Reference>
   </ItemGroup>
   <ItemGroup>
-    <!-- The driving settings the server decides in multiplayer, and pieces that reload while you play (shared with our other mods). -->
+    <!-- The driving settings and the cost the server decides in multiplayer (and no jet ski built on a server without the mod), and
+         pieces that reload while you play (shared with our other mods). -->
     <Compile Include="../Shared/ServerSettings.cs" Link="Shared/ServerSettings.cs" />
+    <Compile Include="../Shared/Costs.cs" Link="Shared/Costs.cs" />
     <Compile Include="../Shared/PieceReload.cs" Link="Shared/PieceReload.cs" />
   </ItemGroup>
   <ItemGroup>

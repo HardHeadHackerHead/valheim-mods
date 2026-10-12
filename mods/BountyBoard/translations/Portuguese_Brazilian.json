@@ -58,5 +58,6 @@
   "bountyboard_tracker_title": "Contratos do grupo",
   "bountyboard_you_have": "(você tem {0})",
   "bountyboard_to_collect": "{0} recompensa para pegar em um quadro",
-  "bountyboard_to_collect_many": "{0} recompensas para pegar em um quadro"
+  "bountyboard_to_collect_many": "{0} recompensas para pegar em um quadro",
+  "bountyboard_server_missing": "O Bounty Board não está instalado neste servidor, então não é possível construir quadros de recompensas aqui."
 }

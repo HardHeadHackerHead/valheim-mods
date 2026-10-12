@@ -47,5 +47,6 @@
   "ledgerchest_no_room_msg": "Brak miejsca w ekwipunku",
   "ledgerchest_back_to_you": "Żadna skrzynia nie ma miejsca na: {0}. Wraca do ciebie.",
   "ledgerchest_stays": "Nigdzie nie ma miejsca na: {0}. Zostaje w skrzyni rejestru.",
-  "ledgerchest_stays_msg": "Nigdzie nie ma miejsca: {0} zostaje w skrzyni rejestru"
+  "ledgerchest_stays_msg": "Nigdzie nie ma miejsca: {0} zostaje w skrzyni rejestru",
+  "ledgerchest_server_missing": "Ledger Chest nie jest zainstalowany na tym serwerze, więc nie można tu budować skrzyń rejestru."
 }

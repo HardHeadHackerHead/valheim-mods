@@ -389,5 +389,6 @@
   "arena_fight_with_3": "Luchar con lanza",
   "arena_fight_with_4": "Luchar con arco (con flechas y un cuchillo)",
   "arena_lent": "Prestado",
-  "arena_lent_tip": "{0}: de una tierra que tu mundo aún no ha alcanzado; se devuelve cuando acaba el combate."
+  "arena_lent_tip": "{0}: de una tierra que tu mundo aún no ha alcanzado; se devuelve cuando acaba el combate.",
+  "arena_server_missing": "Arena no está instalado en este servidor, así que aquí no se puede construir la Piedra de camino de la Arena."
 }

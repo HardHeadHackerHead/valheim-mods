@@ -47,5 +47,6 @@
   "ledgerchest_no_room_msg": "No room in your inventory",
   "ledgerchest_back_to_you": "No chest has room for {0}: back to you.",
   "ledgerchest_stays": "No room anywhere for {0}: it stays in the Ledger Chest.",
-  "ledgerchest_stays_msg": "No room anywhere: {0} stays in the Ledger Chest"
+  "ledgerchest_stays_msg": "No room anywhere: {0} stays in the Ledger Chest",
+  "ledgerchest_server_missing": "Ledger Chest isn't installed on this server, so Ledger Chests can't be built here."
 }

@@ -19,5 +19,6 @@
   "jetskis_paint_teal": "бирюзовый",
   "jetskis_paint_purple": "фиолетовый",
   "jetskis_paint_black": "чёрный",
-  "jetskis_paint_wood": "голое дерево"
+  "jetskis_paint_wood": "голое дерево",
+  "jetskis_server_missing": "Jet Skis не установлен на этом сервере, поэтому гидроциклы здесь строить нельзя."
 }

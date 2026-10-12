@@ -47,5 +47,6 @@
   "ledgerchest_no_room_msg": "Pas de place dans votre inventaire",
   "ledgerchest_back_to_you": "Aucun coffre n'a de place pour {0} : retour à vous.",
   "ledgerchest_stays": "Plus de place nulle part pour {0} : reste dans le coffre du registre.",
-  "ledgerchest_stays_msg": "Plus de place nulle part : {0} reste dans le coffre du registre"
+  "ledgerchest_stays_msg": "Plus de place nulle part : {0} reste dans le coffre du registre",
+  "ledgerchest_server_missing": "Ledger Chest n'est pas installé sur ce serveur : impossible d'y construire des coffres du registre."
 }

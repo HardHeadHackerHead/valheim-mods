@@ -1,6 +1,5 @@
 using System.Collections.Generic;
 using System.Linq;
-using HarmonyLib;
 using UnityEngine;
 
 namespace SkalTavern
@@ -10,6 +9,7 @@ namespace SkalTavern
     /// hand and on the ground, with the drink's own colour), their recipes at the cauldron, and the status effects. Built once and put where
     /// the game looks for them, and can be asked again and again: ZNetScene (needed to load dropped items from a save) and ObjectDB (needed for
     /// the inventory and crafting) wake in either order, and the game swaps the item lists when a world loads (see docs/modding-pitfalls.md).
+    /// The items and recipes go in through Shared/Content.cs (by name, again on every register), the effects through Shared/StatusEffects.cs.
     /// </summary>
     internal static class Drinks
     {
@@ -42,10 +42,9 @@ namespace SkalTavern
         internal static readonly int TipsyHash = "SE_SkalTipsy".GetStableHashCode(), HangoverHash = "SE_SkalHangover".GetStableHashCode(), SkalHash = "SE_SkalBuff".GetStableHashCode();
 
         private static GameObject _holder;
-        private static bool _items, _recipes;
+        private static bool _items;
         private static readonly Dictionary<string, GameObject> Made = new Dictionary<string, GameObject>();
         private static readonly List<GameObject> ItemPrefabs = new List<GameObject>();
-        private static readonly List<StatusEffect> Effects = new List<StatusEffect>();
         private static readonly List<Recipe> Recipes = new List<Recipe>();
         private static Sprite _mug;
 
@@ -57,9 +56,6 @@ namespace SkalTavern
             if (go == null && ObjectDB.instance != null) go = ObjectDB.instance.GetItemPrefab(name);
             return go;
         }
-
-        private static Dictionary<int, GameObject> Named(ZNetScene scene) =>
-            (Dictionary<int, GameObject>)AccessTools.Field(typeof(ZNetScene), "m_namedPrefabs").GetValue(scene);
 
         internal static void Register()
         {
@@ -79,27 +75,14 @@ namespace SkalTavern
                 _items = true;
             }
 
-            if (scene != null)
-            {
-                Dictionary<int, GameObject> named = Named(scene);
-                foreach (GameObject prefab in Made.Values)
-                {
-                    if (!scene.m_prefabs.Contains(prefab)) scene.m_prefabs.Add(prefab);
-                    named[prefab.name.GetStableHashCode()] = prefab; // lets it be dropped and loaded from saves
-                }
-            }
+            DHack.Shared.Content.Items(ItemPrefabs);   // into ZNetScene (dropped and saved ones load by name) and ObjectDB, with the drinks' effects
 
             if (db != null)
             {
-                if (!_recipes) { CraftingStation cauldron = Find("piece_cauldron")?.GetComponent<CraftingStation>(); if (cauldron != null) { BuildRecipes(cauldron); _recipes = true; } }
-                bool changed = false;
-                foreach (GameObject item in ItemPrefabs)
-                    if (!db.m_items.Contains(item)) { db.m_items.RemoveAll(i => i == null || i.name == item.name); db.m_items.Add(item); changed = true; }
-                foreach (StatusEffect effect in Effects)
-                    if (!db.m_StatusEffects.Contains(effect)) { db.m_StatusEffects.RemoveAll(e => e == null || e.name == effect.name); db.m_StatusEffects.Add(effect); changed = true; }
-                foreach (Recipe recipe in Recipes)
-                    if (!db.m_recipes.Contains(recipe)) { db.m_recipes.RemoveAll(r => r == null || r.name == recipe.name); db.m_recipes.Add(recipe); }
-                if (changed) AccessTools.Method(typeof(ObjectDB), "UpdateRegisters").Invoke(db, null);
+                DHack.Shared.StatusEffects.Register();   // the drinks' effects; after a reload, back on whoever had one, with the time left (and how drunk)
+                CraftingStation cauldron = Find("piece_cauldron")?.GetComponent<CraftingStation>();
+                if (cauldron != null) RegisterRecipes(cauldron, db);
+                foreach (Recipe recipe in Recipes) Plugin.Synced.NeedsServer(recipe);   // not craftable on a server without the mod (the drink would be lost)
             }
             if (!_rebound) Rebind();
         }
@@ -136,29 +119,10 @@ namespace SkalTavern
 
         internal static void Unregister()
         {
-            ZNetScene scene = ZNetScene.instance;
-            if (scene != null)
-            {
-                Dictionary<int, GameObject> named = Named(scene);
-                foreach (GameObject prefab in Made.Values)
-                {
-                    scene.m_prefabs.Remove(prefab);
-                    int hash = prefab.name.GetStableHashCode();
-                    if (named.TryGetValue(hash, out GameObject current) && current == prefab) named.Remove(hash); // never another copy's entry
-                }
-            }
-            ObjectDB db = ObjectDB.instance;
-            if (db != null)
-            {
-                db.m_items.RemoveAll(i => i == null || ItemPrefabs.Contains(i));
-                db.m_StatusEffects.RemoveAll(e => e == null || Effects.Contains(e));
-                db.m_recipes.RemoveAll(r => r == null || Recipes.Contains(r));
-                AccessTools.Method(typeof(ObjectDB), "UpdateRegisters").Invoke(db, null);
-            }
-            foreach (Recipe r in Recipes) Object.Destroy(r);
-            foreach (StatusEffect e in Effects) Object.Destroy(e);
-            Made.Clear(); ItemPrefabs.Clear(); Effects.Clear(); Recipes.Clear();
-            _items = _recipes = _rebound = false;
+            DHack.Shared.Content.RemoveAll();   // the items (where still these), the drinks' effects, and the recipes (destroyed)
+            DHack.Shared.StatusEffects.Unload();   // the effects: off every character here (remembered for a reloaded copy), out of ObjectDB, destroyed
+            Made.Clear(); ItemPrefabs.Clear(); Recipes.Clear(); ToldMissing.Clear();
+            _items = _rebound = false;
             if (_holder != null) Object.Destroy(_holder);
             _holder = null;
         }
@@ -174,24 +138,18 @@ namespace SkalTavern
             foreach (Def d in All)
             {
                 Sprite icon = Tint(_mug, d.Liquid);
-                var effect = ScriptableObject.CreateInstance<SE_Drink>();
-                effect.name = "SE_" + d.Prefab;
-                effect.m_name = d.Display;
-                effect.m_icon = icon;
+                // The effects keep the names they have always had (SE_dh_drink_..., SE_Skal...), not renamed after the mod: a rename changes the
+                // hash the game finds them by, and these are ours alone.
+                var effect = DHack.Shared.StatusEffects.Create<SE_Drink>("SE_" + d.Prefab, d.Display, icon);
                 effect.m_ttl = 1f;
                 effect.Amount = d.Amount / Swigs.PerMug;   // (one swig's worth: a mug is drunk in four, see Swigs.cs)
                 effect.Share = 1f / Swigs.PerMug;
-                Effects.Add(effect);
                 MakeItem(source, d, icon, effect);
             }
 
-            var tipsy = ScriptableObject.CreateInstance<SE_Tipsy>();
-            tipsy.name = "SE_SkalTipsy"; tipsy.m_name = "$skaltavern_tipsy"; tipsy.m_icon = Tint(_mug, new Color(0.9f, 0.6f, 0.2f));
-            var hangover = ScriptableObject.CreateInstance<SE_Hangover>();
-            hangover.name = "SE_SkalHangover"; hangover.m_name = "$skaltavern_hangover"; hangover.m_icon = Tint(_mug, new Color(0.45f, 0.5f, 0.4f));
-            var skal = ScriptableObject.CreateInstance<SE_Skal>();
-            skal.name = "SE_SkalBuff"; skal.m_name = "$skaltavern_skal"; skal.m_icon = Tint(_mug, new Color(1f, 0.85f, 0.3f));
-            Effects.Add(tipsy); Effects.Add(hangover); Effects.Add(skal);
+            DHack.Shared.StatusEffects.Create<SE_Tipsy>("SE_SkalTipsy", "$skaltavern_tipsy", Tint(_mug, new Color(0.9f, 0.6f, 0.2f)));
+            DHack.Shared.StatusEffects.Create<SE_Hangover>("SE_SkalHangover", "$skaltavern_hangover", Tint(_mug, new Color(0.45f, 0.5f, 0.4f)));
+            DHack.Shared.StatusEffects.Create<SE_Skal>("SE_SkalBuff", "$skaltavern_skal", Tint(_mug, new Color(1f, 0.85f, 0.3f)));
             return true;
         }
 
@@ -237,26 +195,50 @@ namespace SkalTavern
             ItemPrefabs.Add(go);
         }
 
-        private static void BuildRecipes(CraftingStation cauldron)
+        /// <summary>The drinks' recipes at the cauldron: made the first time (cost: the setting, or the default when it can't be read), put
+        /// back into ObjectDB by name every time (Shared/Content.cs). A drink whose ingredient isn't found has none (said once).</summary>
+        private static void RegisterRecipes(CraftingStation cauldron, ObjectDB db)
         {
-            foreach (Def d in All)
+            for (int i = 0; i < All.Length; i++)
             {
-                var cost = new List<Piece.Requirement>();
-                foreach ((string item, int count) in d.Cost)
+                Def d = All[i];
+                Recipe made = Recipes.Find(r => r != null && r.name == "Recipe_" + d.Prefab);
+                Piece.Requirement[] cost = made != null ? null : DefaultRequirements(d);
+                if (made == null && cost == null) continue;
+                Recipe recipe = DHack.Shared.Content.Recipe(Made[d.Prefab], cauldron, 1, d.Makes, cost, Plugin.DrinkCost[i].Value, Plugin.Log, db: db);
+                if (recipe != null && !Recipes.Contains(recipe)) Recipes.Add(recipe);
+            }
+        }
+
+        private static readonly HashSet<string> ToldMissing = new HashSet<string>();
+
+        /// <summary>What brewing a batch of this drink takes before anyone changes it, as requirements; null if an ingredient isn't found.</summary>
+        private static Piece.Requirement[] DefaultRequirements(Def d)
+        {
+            var cost = new List<Piece.Requirement>();
+            foreach ((string item, int count) in d.Cost)
+            {
+                ItemDrop drop = Find(item)?.GetComponent<ItemDrop>();
+                if (drop == null)
                 {
-                    ItemDrop drop = Find(item)?.GetComponent<ItemDrop>();
-                    if (drop == null) { Plugin.Log.LogWarning($"{d.Display}: the item {item} was not found, so it has no recipe"); cost.Clear(); break; }
-                    cost.Add(new Piece.Requirement { m_resItem = drop, m_amount = count, m_recover = false });
+                    if (ToldMissing.Add(d.Prefab)) Plugin.Log.LogWarning($"{d.Display}: the item {item} was not found, so it has no recipe");
+                    return null;
                 }
-                if (cost.Count == 0) continue;
-                Recipe recipe = ScriptableObject.CreateInstance<Recipe>();
-                recipe.name = "Recipe_" + d.Prefab;
-                recipe.m_item = Made[d.Prefab].GetComponent<ItemDrop>();
-                recipe.m_amount = d.Makes;
-                recipe.m_craftingStation = cauldron;
-                recipe.m_minStationLevel = 1;
-                recipe.m_resources = cost.ToArray();
-                Recipes.Add(recipe);
+                cost.Add(new Piece.Requirement { m_resItem = drop, m_amount = count, m_recover = false });
+            }
+            return cost.ToArray();
+        }
+
+        /// <summary>What brewing a batch of this drink takes before anyone changes it, as the cost setting writes it.</summary>
+        internal static string DefaultCost(Def d) => string.Join(", ", d.Cost.Select(c => c.Item + ":" + c.Count).ToArray());
+
+        /// <summary>The cost settings (the server's in multiplayer) on the recipes. One that can't be read keeps the last good cost.</summary>
+        internal static void ApplyCosts()
+        {
+            foreach (Recipe recipe in Recipes)
+            {
+                int i = All.ToList().FindIndex(d => "Recipe_" + d.Prefab == recipe.name);
+                if (i >= 0) DHack.Shared.Costs.Apply(recipe, Plugin.DrinkCost[i].Value, Plugin.Log);
             }
         }
 

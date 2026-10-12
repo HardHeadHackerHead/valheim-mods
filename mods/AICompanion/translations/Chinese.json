@@ -925,5 +925,6 @@
   "aicompanion_net_marker": "{0}在此倒下",
   "aicompanion_net_lost_fight_other": "{0}的同伴{1}在无人时于家中战斗失利：物品在墓碑里（已在你的地图上标记）",
   "aicompanion_net_lost_fight": "{0}在无人时于家中战斗失利：物品在墓碑里（已在你的地图上标记）",
-  "aicompanion_net_fallen_other": "{0}的同伴{1}倒下了（已在你的地图上标记）"
+  "aicompanion_net_fallen_other": "{0}的同伴{1}倒下了（已在你的地图上标记）",
+  "aicompanion_server_missing": "此服务器未安装 AI Companion，因此这里没有同伴能加入你。"
 }

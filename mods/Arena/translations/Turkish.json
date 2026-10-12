@@ -389,5 +389,6 @@
   "arena_fight_with_3": "Mızrakla dövüş",
   "arena_fight_with_4": "Yayla dövüş (oklar ve bir bıçakla)",
   "arena_lent": "Emanet",
-  "arena_lent_tip": "{0}: dünyanın henüz ulaşmadığı bir diyardan; dövüş bitince geri gider."
+  "arena_lent_tip": "{0}: dünyanın henüz ulaşmadığı bir diyardan; dövüş bitince geri gider.",
+  "arena_server_missing": "Arena bu sunucuda yüklü değil, bu yüzden burada Arena Yol Taşı yapılamaz."
 }

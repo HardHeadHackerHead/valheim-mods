@@ -7,7 +7,7 @@
 
 **A buildable bird trap for feathers: bait it with berries or seeds, leave it under the open sky, and come back to a caught gull to pluck. An early feather farm for your arrows, without hunting birds.**
 
-![version: 1.2.2](https://img.shields.io/badge/version-1.2.2-3b6e8f?style=flat-square)  ![multiplayer: everyone + host](https://img.shields.io/badge/multiplayer-everyone%20%2B%20host-7a5c2e?style=flat-square)  ![made with: Claude Code](https://img.shields.io/badge/made%20with-Claude%20Code-c26a3d?style=flat-square)
+![version: 1.2.3](https://img.shields.io/badge/version-1.2.3-3b6e8f?style=flat-square)  ![multiplayer: everyone + host](https://img.shields.io/badge/multiplayer-everyone%20%2B%20host-7a5c2e?style=flat-square)  ![made with: Claude Code](https://img.shields.io/badge/made%20with-Claude%20Code-c26a3d?style=flat-square)
 
 <!-- GITHUB-ONLY -->[Thunderstore](https://thunderstore.io/c/valheim/p/Quads_Lab/Quads_Bird_Trap/)  ·  <!-- END GITHUB-ONLY -->[Source code](https://github.com/HardHeadHackerHead/valheim-mods/tree/main/mods/BirdTrap)  ·  [Report a bug](https://github.com/HardHeadHackerHead/valheim-mods/issues/new?template=bug.yml&title=%5BQuad%27s%20Bird%20Trap%5D%20)  ·  [Discord](https://discord.gg/EwTjQxEZPy)
 
@@ -79,6 +79,12 @@ The translations were made with AI, so a few words may be off. To correct one, o
 
 In `BepInEx/config/com.quad.birdtrap.cfg`, made the first time the game runs with the mod. r2modman and Thunderstore Mod Manager edit it under **Config editor**.<!-- GITHUB-ONLY --> With our mod manager: **F7**, then **Mod settings**.<!-- END GITHUB-ONLY -->
 
+**Building**
+
+| Setting | Default | What it does |
+|---|---|---|
+| `Cost` | `Wood:8, LeatherScraps:2` | What a bird trap costs to build with the hammer (at a workbench). Item prefab names and amounts, separated by commas, like FineWood:12, BronzeNails:30 (Claude Tools' `prefabs <text>` shows exact names). A cost with a mistake in it keeps the last good one. [Synced with Server] |
+
 **Catching**
 
 | Setting | Default | What it does |
@@ -138,8 +144,8 @@ helps me make new mods and keep improving the ones you already play. It's 100% o
 
 ## 📜 Recent changes
 
+- **1.2.3** On a server without Bird Trap, the bird trap is gone from the hammer, and a message says why: the server would delete a trap built there. Server owners can change what a bird trap costs ("Building", Cost; today's cost, 8 wood and 2 leather scraps, is the default); in multiplayer the server's cost applies, and a cost with a mistake in it keeps the last good one. Settings: edits to the config file now apply while the game runs (a server owner no longer has to restart), and a server's admins can change the server's settings from their own game with Configuration Manager, where other players see them greyed out. Your config file always keeps your own values while you play on a server (saving it there could write the server's in). Players on an older version still get the server's settings. It's no longer counted as storage in the game's own building records (it was copied from a chest).
 - **1.2.2** Fix: after reloading the mod at the main menu (the mod manager's reload, or F6), its old build piece stayed in the hammer's list after it was gone, and every change to your bag threw an error half-way: crafting gave the item without taking the cost, and picking things up could go wrong, until the game was restarted. Its piece now comes off the list it was put on, and destroyed pieces left there by any mod are cleared when it registers.
 - **1.2.1** Fix: bait you put in a trap whose owner didn't answer (they left, or the trap went out of range) was lost: it now comes back to your bag after a few seconds. Fix: the bait still in a trap that is broken or removed now drops beside it, as a smelter's ore does (bait put in before this version isn't known by kind and doesn't drop).
-- **1.2.0** Now in your language: English, Russian, German, Chinese (Simplified), Portuguese (Brazil), Spanish, French, Polish and Turkish, following the game's own Language setting. The game's own names are used for its things (items, creatures, lands, stations). The translations were made with AI: to correct a line, or add a language, put a file in BepInEx/config/translations/com.quad.birdtrap/ named after the game's name for the language (German.json...) with only the lines you change, copied from translations/English.json on GitHub. The bait's name keeps its capital letters (German nouns need them).
 
 <!-- GITHUB-ONLY -->[Every change](CHANGELOG.txt)<!-- END GITHUB-ONLY --><!-- THUNDERSTORE-ONLY: Every change is on the Changelog tab. -->

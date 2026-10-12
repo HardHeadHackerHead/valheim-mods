@@ -1,5 +1,5 @@
 {
-  "parkour_skill_description": "Duvarlarda koşmak, onlardan sekmek, duvarlara koşarak tırmanmak, kenarlara tutunup çıkmak ve yere inerken yuvarlanmak. Daha uzun ve hızlı duvar koşuları, art arda daha çok duvar sekmesi, daha yüksek tırmanışlar, daha yumuşak inişler ve her hareket için daha az enerji.",
+  "parkour_skill_description": "Duvarlarda koşmak, onlardan sekmek, duvarlara koşarak tırmanmak, kenarlara tutunup çıkmak ve yere inerken yuvarlanmak. Daha uzun ve hızlı duvar koşuları, art arda daha çok duvar sekmesi, daha yüksek tırmanışlar, daha yumuşak inişler ve her hareket için daha az enerji. Yetenek 0'dan 100'e: {run0}–{run100} sn duvar koşusu, art arda {kicks0}–{kicks100} duvar sekmesi, {climb0}–{climb100} m tırmanış ve {roll0}–{roll100} m'ye kadar düşüşlerde hasarsız iniş yuvarlanması.",
   "parkour_hint_wallrun": "Duvarda koşu! Duvardan sekmek için Zıpla.",
   "parkour_hint_climb": "Duvara koşarak tırmanıyorsun: tepeye tutunmak için İleri'yi basılı tut.",
   "parkour_hint_hang": "Çıkıntıda: ileriyi bırakıp tekrar basın ya da zıplayın, yukarı çekilin; başka yöne bakıp zıplayarak kendinizi itin; A/D ile kenar boyunca ilerleyin; bırakmak için çömelin ya da geri gidin.",
@@ -10,6 +10,6 @@
   "parkour_hint_shimmy": "Sol veya sağ seni kenar boyunca ilerletir.",
   "parkour_hint_slide": "Kayma! Kaymaya devam etmek için Çömel'i basılı tut, hızınla fırlamak için Zıpla.",
   "parkour_hint_landing_slide": "Alçak bir atlayıştan inerken kayarak inmek için yere değmeden hemen önce Çömel'e bas.",
-  "skill_195522812": "Parkur",
+  "parkour_skill": "Parkur",
   "parkour_dungeon": "Burada parkur yapılamaz."
 }

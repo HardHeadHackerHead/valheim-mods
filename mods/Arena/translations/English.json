@@ -389,5 +389,6 @@
   "arena_fight_with_3": "Fight with a spear",
   "arena_fight_with_4": "Fight with a bow (with arrows and a knife)",
   "arena_lent": "Lent",
-  "arena_lent_tip": "{0}: from a land your world has not reached, it goes back when the fight is over."
+  "arena_lent_tip": "{0}: from a land your world has not reached, it goes back when the fight is over.",
+  "arena_server_missing": "Arena isn't installed on this server, so the Arena Waystone can't be built here."
 }

@@ -7,7 +7,7 @@
 
 **The Arena: a stone colosseum in your world where you fight waves of monsters and champions for the crowd, for gold and for glory, or duel your friends (PvP), like the arena in the first Fable.**
 
-![version: 0.4.2](https://img.shields.io/badge/version-0.4.2-3b6e8f?style=flat-square)  ![multiplayer: everyone + host](https://img.shields.io/badge/multiplayer-everyone%20%2B%20host-7a5c2e?style=flat-square)  ![made with: Claude Code](https://img.shields.io/badge/made%20with-Claude%20Code-c26a3d?style=flat-square)
+![version: 0.4.3](https://img.shields.io/badge/version-0.4.3-3b6e8f?style=flat-square)  ![multiplayer: everyone + host](https://img.shields.io/badge/multiplayer-everyone%20%2B%20host-7a5c2e?style=flat-square)  ![made with: Claude Code](https://img.shields.io/badge/made%20with-Claude%20Code-c26a3d?style=flat-square)
 
 <!-- GITHUB-ONLY -->[Thunderstore](https://thunderstore.io/c/valheim/p/Quads_Lab/Quads_Arena/)  ·  <!-- END GITHUB-ONLY -->[Source code](https://github.com/HardHeadHackerHead/valheim-mods/tree/main/mods/Arena)  ·  [Report a bug](https://github.com/HardHeadHackerHead/valheim-mods/issues/new?template=bug.yml&title=%5BQuad%27s%20Arena%5D%20)  ·  [Discord](https://discord.gg/EwTjQxEZPy)
 
@@ -115,6 +115,12 @@ In `BepInEx/config/com.quad.arena.cfg`, made the first time the game runs with t
 | `AllTiers` | `false` | Every land's fighters can be chosen in a Champion Bout or the Endless Horde at once (normally each opens as you beat the boss before it). For trying them out: the arena still pays metals and trophies only from lands your world has reached, today's trial stays among them, and what the crowd throws from a land your world has not reached is only lent (it goes back after the fight). In multiplayer the server's value applies. |
 | `YieldKey` | `Backspace` | Press twice to give up a contest (you keep what you have earned so far, at a lower rate). |
 
+**Building**
+
+| Setting | Default | What it does |
+|---|---|---|
+| `WaystoneCost` | `Wood:20, Stone:12, Flint:6, LeatherScraps:6, Resin:6` | What an Arena Waystone costs to build with the hammer (at a workbench). Item prefab names and amounts, separated by commas, like FineWood:12, BronzeNails:30 (Claude Tools' `prefabs <text>` shows exact names). A cost with a mistake in it keeps the last good one. [Synced with Server] |
+
 **Crowd**
 
 | Setting | Default | What it does |
@@ -169,8 +175,8 @@ helps me make new mods and keep improving the ones you already play. It's 100% o
 
 ## 📜 Recent changes
 
+- **0.4.3** On a server without Arena, the Arena Waystone is gone from the hammer, and a message says why: the server would delete one built there. Server owners can change what it costs ("Building", WaystoneCost; default 20 wood, 12 stone, 6 flint, 6 leather scraps and 6 resin, as before); in multiplayer the server's costs apply, and a cost with a mistake in it keeps the last good one. Settings: edits to the config file now apply while the game runs (a server owner no longer has to restart), and a server's admins can change the server's settings from their own game with Configuration Manager, where other players see them greyed out. Your config file always keeps your own values while you play on a server (saving it there could write the server's in). Players on an older version still get the server's settings. The waystone no longer snaps by the wooden pole's points it was copied from (1 m above and below the pole's middle), which could leave it hanging 1 m up or sunk 1 m. A mead or other item the crowd gives you to keep no longer joins the stack of ones you were lent, so it isn't taken back after the fight; lent things stay in stacks of their own, and dropping a lent stack onto your own is refused.
 - **0.4.2** Its windows no longer fill the log with "The LiberationSans SDF Font Asset was not found": each text is given the game's font before it starts (it looked for TextMeshPro's default font, which the game doesn't have, every time a text was made). Nothing changes on screen.
 - **0.4.1** Fix: after reloading the mod at the main menu (the mod manager's reload, or F6), its old build piece stayed in the hammer's list after it was gone, and every change to your bag threw an error half-way: crafting gave the item without taking the cost, and picking things up could go wrong, until the game was restarted. Its piece now comes off the list it was put on, and destroyed pieces left there by any mod are cleared when it registers.
-- **0.4.0** Now in your language: English, Russian, German, Chinese (Simplified), Portuguese (Brazil), Spanish, French, Polish and Turkish, following the game's own Language setting. The game's own names are used for its things (items, creatures, lands, stations). The translations were made with AI: to correct a line, or add a language, put a file in BepInEx/config/translations/com.quad.arena/ named after the game's name for the language (German.json...) with only the lines you change, copied from translations/English.json on GitHub. The announcer's calls and the Hall of Champions are now kept as data, so each player reads them in their own language; the hall's old records still show. Players on a server should update together: a player on an older Arena sees no announcer calls from a newer player's fight. Land names are the game's own ("Mountain").
 
 <!-- GITHUB-ONLY -->[Every change](CHANGELOG.txt)<!-- END GITHUB-ONLY --><!-- THUNDERSTORE-ONLY: Every change is on the Changelog tab. -->

@@ -58,5 +58,6 @@
   "bountyboard_tracker_title": "Group contracts",
   "bountyboard_you_have": "(you have {0})",
   "bountyboard_to_collect": "{0} reward to collect at a board",
-  "bountyboard_to_collect_many": "{0} rewards to collect at a board"
+  "bountyboard_to_collect_many": "{0} rewards to collect at a board",
+  "bountyboard_server_missing": "Bounty Board isn't installed on this server, so bounty boards can't be built here."
 }

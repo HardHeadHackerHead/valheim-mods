@@ -29,5 +29,6 @@
   "ziplines_in_way": "Há algo no caminho a {0} m ao longo da tirolesa ({1}).",
   "ziplines_a_tree": "uma árvore",
   "ziplines_the_ground": "o chão",
-  "ziplines_rock_or_tree": "uma rocha ou uma árvore"
+  "ziplines_rock_or_tree": "uma rocha ou uma árvore",
+  "ziplines_server_missing": "O Ziplines não está instalado neste servidor, então não é possível construir postes de tirolesa aqui."
 }

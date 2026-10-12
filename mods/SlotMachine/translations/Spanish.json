@@ -16,5 +16,6 @@
   "slotmachine_horn": "Cuerno",
   "slotmachine_axe": "Hacha",
   "slotmachine_raven": "Cuervo",
-  "slotmachine_valknut": "Valknut"
+  "slotmachine_valknut": "Valknut",
+  "slotmachine_server_missing": "Slot Machine no está instalado en este servidor, así que aquí no se puede construir la Fortuna de Odín."
 }

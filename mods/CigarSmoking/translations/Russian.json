@@ -73,5 +73,6 @@
   "cigarsmoking_hover_put": "Положить листья из инвентаря (до {0})",
   "cigarsmoking_drying_hover": "Сушится: {1} ×{0}, осталось около {2} мин.",
   "cigarsmoking_curing_hover": "Выдерживается: {1} ×{0}, осталось около {2} мин.",
-  "cigarsmoking_hover_take": "Взять: {1} ×{0}"
+  "cigarsmoking_hover_take": "Взять: {1} ×{0}",
+  "cigarsmoking_server_missing": "Quad's Cigars не установлен на этом сервере, поэтому его сигары и постройки здесь создавать нельзя."
 }

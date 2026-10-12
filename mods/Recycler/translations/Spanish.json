@@ -1,8 +1,8 @@
 {
   "recycler_piece": "Recicladora",
-  "recycler_piece_desc": "Convierte el equipo viejo en una parte de sus materiales de fabricación. Las prensas cercanas aumentan la parte.",
+  "recycler_piece_desc": "Convierte el equipo viejo en el {base}% de sus materiales de fabricación. Las prensas cercanas lo suben al {one}% con una y al {two}% con dos.",
   "recycler_press": "Prensa de reciclaje",
-  "recycler_press_desc": "Colócala a menos de 8 m de una Recicladora para aumentar la parte que devuelve. Cuentan hasta dos.",
+  "recycler_press_desc": "Colócala a menos de 8 m de una Recicladora para aumentar la parte que devuelve: al {one}% con una prensa, {two}% con dos.",
   "recycler_press_hover": "Aumenta la parte que devuelve una Recicladora a menos de 8 m",
   "recycler_hover_use": "Reciclar equipo",
   "recycler_hover_share": "Devuelve el {0}% de los materiales (prensas: {1}/2)",
@@ -29,5 +29,6 @@
   "recycler_too_little": "Muy poco material para recuperar algo.",
   "recycler_kept": "{0} no se puede reciclar ahora (otro mod lo retiene)",
   "recycler_recycled": "Reciclado {0}: {1}",
-  "recycler_recycled_nothing": "Reciclado {0}, pero no se recuperó nada"
+  "recycler_recycled_nothing": "Reciclado {0}, pero no se recuperó nada",
+  "recycler_server_missing": "Recycler no está instalado en este servidor, así que aquí no se pueden construir recicladoras."
 }

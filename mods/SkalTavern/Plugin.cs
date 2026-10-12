@@ -22,11 +22,13 @@ namespace SkalTavern
         public const string Guid = "com.quad.skaltavern";
         public const string OldGuid = "com.dhack.skaltavern"; // (its id until 2026-10: settings move over by themselves, see Shared/Migration.cs)
         public const string Name = "SkalTavern";
-        public const string Version = "0.5.0";
+        public const string Version = "0.5.1";
 
         internal static Plugin Instance;
         internal static ManualLogSource Log;
-        internal static DHack.Shared.ServerSettings Synced;   // the settings the server decides in multiplayer (what drinking costs you, and how long it lasts)
+        internal static DHack.Shared.ServerSettings Synced;   // the settings the server decides in multiplayer (what drinking costs you, how long it lasts, what the drinks cost to brew)
+        internal static ConfigEntry<string>[] DrinkCost;   // one per drink, in the order of Drinks.All
+        private static bool _tellNoServer;   // the server hasn't the mod: say so once the player is in the world
 
         internal static ConfigEntry<float> SoberMinutes, Sway, Drift, ToastSeconds, Strength;
         internal static ConfigEntry<bool> StumbleOn, PassOutOn, HangoverOn, ScreenFx, Muffle, StarsOn, LeanOn, HiccupsOn, SlurOn, ConfusionOn, PukeOn;
@@ -45,6 +47,15 @@ namespace SkalTavern
             const string ServerSays = " In multiplayer the server's value applies.";
             SoberMinutes = Synced.Add(Config.Bind("Drinking", "MinutesToSober", 8f, new ConfigDescription("How many minutes it takes to sober up from very drunk (100). Longer and you stay tipsy for longer." + ServerSays, new AcceptableValueRange<float>(1f, 60f))));
             Strength = Synced.Add(Config.Bind("Drinking", "EffectStrength", 100f, new ConfigDescription("How strong everything about being drunk is (percent): the picture, the sway, your steering, the sound. 0 for none, 200 for a night you will not remember." + ServerSays, new AcceptableValueRange<float>(0f, 300f))));
+            DrinkCost = new ConfigEntry<string>[Drinks.All.Length];
+            for (int i = 0; i < DrinkCost.Length; i++)
+            {
+                Drinks.Def d = Drinks.All[i];
+                DrinkCost[i] = Synced.Bind("Crafting", char.ToUpper(d.Prefab[9]) + d.Prefab.Substring(10) + "Cost", Drinks.DefaultCost(d),
+                    "What brewing a batch of " + d.Prefab.Substring(9) + " takes at the cauldron. " + DHack.Shared.Costs.Help);
+                DrinkCost[i].SettingChanged += (s, e) => Drinks.ApplyCosts();
+            }
+            Synced.ServerChanged += () => _tellNoServer = Synced.Server == DHack.Shared.ServerSettings.ServerMod.Missing;
             ScreenFx = Config.Bind("Effects", "Picture", true, "The picture changes as you get drunk: dark edges, colour fringing, blur, double vision, colours that drift.");
             Muffle = Config.Bind("Effects", "Sound", true, "Sounds go muffled and wobbly as you get drunk.");
             StarsOn = Config.Bind("Effects", "Stars", true, "Stars circle your head when you are drunk.");
@@ -71,6 +82,11 @@ namespace SkalTavern
             Synced?.Update();   // (notices joining and leaving a server, for the settings it decides)
             Toast.UpdateNetwork();
             Tools.Update();
+            if (_tellNoServer && Player.m_localPlayer != null)
+            {
+                _tellNoServer = false;
+                Player.m_localPlayer.Message(MessageHud.MessageType.Center, "$skaltavern_server_missing");
+            }
             Player player = Player.m_localPlayer;
             if (player == null) return;
             Tipsy.Tick(player, Time.deltaTime);
@@ -83,9 +99,9 @@ namespace SkalTavern
             _harmony?.UnpatchSelf();
             Toast.Unregister();
             Tools.Unregister();
+            Drinks.Unregister();   // first: its effects come off with how drunk you are (for a reloaded copy), which Tipsy.Clear then zeroes
             Tipsy.Clear();
             Fx.Reset();
-            Drinks.Unregister();
             Synced?.Dispose();
             DHack.Shared.Translations.Unload();
             if (Instance == this) Instance = null;

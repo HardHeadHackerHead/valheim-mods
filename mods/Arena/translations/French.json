@@ -389,5 +389,6 @@
   "arena_fight_with_3": "Combattre à la lance",
   "arena_fight_with_4": "Combattre à l'arc (avec des flèches et un couteau)",
   "arena_lent": "Prêté",
-  "arena_lent_tip": "{0} : d'une terre que votre monde n'a pas encore atteinte ; rendu à la fin du combat."
+  "arena_lent_tip": "{0} : d'une terre que votre monde n'a pas encore atteinte ; rendu à la fin du combat.",
+  "arena_server_missing": "Arena n'est pas installé sur ce serveur : impossible d'y construire la pierre de voyage de l'arène."
 }

@@ -29,5 +29,6 @@
   "ziplines_in_way": "Something is in the way {0} m along the line ({1}).",
   "ziplines_a_tree": "a tree",
   "ziplines_the_ground": "the ground",
-  "ziplines_rock_or_tree": "a rock or a tree"
+  "ziplines_rock_or_tree": "a rock or a tree",
+  "ziplines_server_missing": "Ziplines isn't installed on this server, so zipline posts can't be built here."
 }

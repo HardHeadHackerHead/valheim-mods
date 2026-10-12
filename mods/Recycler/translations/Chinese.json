@@ -1,8 +1,8 @@
 {
   "recycler_piece": "回收机",
-  "recycler_piece_desc": "把旧装备变回一部分制作材料。附近的压机能提高返还比例。",
+  "recycler_piece_desc": "把旧装备变回 {base}% 的制作材料。附近的压机可将返还比例提高到：一台 {one}%，两台 {two}%。",
   "recycler_press": "回收压机",
-  "recycler_press_desc": "放在回收机 8 米范围内，可提高其返还比例。最多计算两台。",
+  "recycler_press_desc": "放在回收机 8 米范围内，可提高其返还比例：一台压机 {one}%，两台 {two}%。",
   "recycler_press_hover": "提高 8 米内回收机的返还比例",
   "recycler_hover_use": "回收装备",
   "recycler_hover_share": "返还 {0}% 的材料（压机：{1}/2）",
@@ -29,5 +29,6 @@
   "recycler_too_little": "材料太少，什么也拿不回来。",
   "recycler_kept": "{0}现在无法回收（被其他模组占用）",
   "recycler_recycled": "已回收{0}：{1}",
-  "recycler_recycled_nothing": "已回收{0}，但什么也没拿回来"
+  "recycler_recycled_nothing": "已回收{0}，但什么也没拿回来",
+  "recycler_server_missing": "此服务器未安装 Recycler，因此无法在这里建造回收机。"
 }

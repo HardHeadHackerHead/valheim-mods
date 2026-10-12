@@ -1,5 +1,5 @@
 {
-  "parkour_skill_description": "Bieganie po ścianach, odbijanie się od nich, wbieganie na nie, podciąganie się na krawędzie i przewrót przy lądowaniu. Dłuższy i szybszy bieg po ścianie, więcej odbić od ścian z rzędu, wyższe wbieganie, miększe lądowanie i mniej kondycji na każdy ruch.",
+  "parkour_skill_description": "Bieganie po ścianach, odbijanie się od nich, wbieganie na nie, podciąganie się na krawędzie i przewrót przy lądowaniu. Dłuższy i szybszy bieg po ścianie, więcej odbić od ścian z rzędu, wyższe wbieganie, miększe lądowanie i mniej kondycji na każdy ruch. Od poziomu umiejętności 0 do 100: bieg po ścianie przez {run0}–{run100} s, {kicks0}–{kicks100} odbić od ścian z rzędu, wbieganie na {climb0}–{climb100} m i przewrót przy lądowaniu bez obrażeń od upadku z {roll0}–{roll100} m.",
   "parkour_hint_wallrun": "Bieg po ścianie! Skok, by odbić się od ściany.",
   "parkour_hint_climb": "Wbiegasz na ścianę: trzymaj Do przodu, by chwycić krawędź.",
   "parkour_hint_hang": "Na krawędzi: puść „do przodu” i naciśnij ponownie albo skocz, aby się podciągnąć; odwróć wzrok i skocz, aby się odbić; A/D, aby przesuwać się wzdłuż krawędzi; kucnij lub cofnij się, aby puścić.",
@@ -10,6 +10,6 @@
   "parkour_hint_shimmy": "W lewo lub w prawo przesuwa cię wzdłuż krawędzi.",
   "parkour_hint_slide": "Wślizg! Trzymaj Kucanie, by dalej się ślizgać, Skok, by wyskoczyć z rozpędem.",
   "parkour_hint_landing_slide": "Naciśnij Kucanie tuż przed lądowaniem z niskiego skoku, by wylądować we wślizgu.",
-  "skill_195522812": "Parkour",
+  "parkour_skill": "Parkour",
   "parkour_dungeon": "Tutaj nie da się uprawiać parkouru."
 }

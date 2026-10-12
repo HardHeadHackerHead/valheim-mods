@@ -58,5 +58,6 @@
   "bountyboard_tracker_title": "Zlecenia drużyny",
   "bountyboard_you_have": "(masz {0})",
   "bountyboard_to_collect": "Nagrody do odebrania przy tablicy: {0}",
-  "bountyboard_to_collect_many": "Nagrody do odebrania przy tablicy: {0}"
+  "bountyboard_to_collect_many": "Nagrody do odebrania przy tablicy: {0}",
+  "bountyboard_server_missing": "Bounty Board nie jest zainstalowany na tym serwerze, więc nie można tu budować tablic zleceń."
 }

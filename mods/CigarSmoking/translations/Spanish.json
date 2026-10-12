@@ -73,5 +73,6 @@
   "cigarsmoking_hover_put": "Meter hojas del inventario (hasta {0})",
   "cigarsmoking_drying_hover": "Secando {0} {1}: faltan unos {2} min",
   "cigarsmoking_curing_hover": "Curando {0} {1}: faltan unos {2} min",
-  "cigarsmoking_hover_take": "Coger {0} {1}"
+  "cigarsmoking_hover_take": "Coger {0} {1}",
+  "cigarsmoking_server_missing": "Quad's Cigars no está instalado en este servidor, así que aquí no se pueden hacer sus puros ni sus construcciones."
 }

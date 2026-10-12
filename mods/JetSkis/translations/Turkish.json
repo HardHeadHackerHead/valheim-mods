@@ -19,5 +19,6 @@
   "jetskis_paint_teal": "turkuaz",
   "jetskis_paint_purple": "mor",
   "jetskis_paint_black": "siyah",
-  "jetskis_paint_wood": "çıplak ahşap"
+  "jetskis_paint_wood": "çıplak ahşap",
+  "jetskis_server_missing": "Jet Skis bu sunucuda yüklü değil, bu yüzden burada jet ski yapılamaz."
 }

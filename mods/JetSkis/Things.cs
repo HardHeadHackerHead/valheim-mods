@@ -35,6 +35,7 @@ namespace JetSkis
                 _prefab = Build(scene, raft);
             }
             DHack.Shared.PieceReload.ReplacePrefab(scene, _prefab, Hammer(scene));
+            Plugin.Synced.NeedsServer(_prefab);   // not in the build menu on a server without the mod (it would delete the jet ski)
             int swapped = DHack.Shared.PieceReload.Reattach(scene, _prefab);
             if (swapped > 0) Plugin.Log.LogInfo($"{swapped} jet ski(s) in the world now run this copy");
         }
@@ -51,6 +52,13 @@ namespace JetSkis
             _prefab = null;
             _holder = null;
             Look.Clear();
+        }
+
+        /// <summary>The cost setting (the server's in multiplayer) on the piece. One that can't be read keeps the last good cost.</summary>
+        internal static void ApplyCost()
+        {
+            Piece piece = _prefab != null ? _prefab.GetComponent<Piece>() : null;
+            if (piece != null) DHack.Shared.Costs.Apply(piece, Plugin.Cost.Value, Plugin.Log);
         }
 
         private static GameObject Build(ZNetScene scene, GameObject raft)
@@ -192,12 +200,13 @@ namespace JetSkis
             Piece piece = go.GetComponent<Piece>();
             piece.m_name = "$jetskis_jetski";
             piece.m_description = "$jetskis_jetski_desc";
+            piece.m_usage = Piece.UsageTagFlags.Transport;   // the game's build-menu tags (the raft's, said outright)
             Sprite icon = Icon();
             if (icon != null) piece.m_icon = icon;
             piece.m_craftingStation = scene.GetPrefab("piece_workbench")?.GetComponent<CraftingStation>();
-            piece.m_resources = new[] { Req(scene, "FineWood", 12), Req(scene, "BronzeNails", 30), Req(scene, "SurtlingCore", 2), Req(scene, "DeerHide", 4) }
-                .Where(r => r.m_resItem != null).ToArray();
-            if (piece.m_resources.Length == 0) piece.m_resources = raft.GetComponent<Piece>().m_resources;   // never free to build
+            // the cost setting (a server owner can change it); if neither it nor the default can be read, the raft's: never free to build
+            if (!DHack.Shared.Costs.Apply(piece, Plugin.Cost.Value, Plugin.Log) && !DHack.Shared.Costs.Apply(piece, Plugin.DefaultCost, Plugin.Log))
+                piece.m_resources = raft.GetComponent<Piece>().m_resources;
 
             go.AddComponent<JetSki>();
             return go;
@@ -214,9 +223,6 @@ namespace JetSkis
             Transform t = root.Find(path);
             if (t != null) t.localPosition = at;
         }
-
-        private static Piece.Requirement Req(ZNetScene scene, string item, int amount) =>
-            new Piece.Requirement { m_resItem = scene.GetPrefab(item)?.GetComponent<ItemDrop>(), m_amount = amount, m_recover = true };
 
         // Texture2D.LoadImage lives in a module the build cannot reference directly, so it is called by name (as BirdTrap does).
         private static readonly System.Reflection.MethodInfo LoadImage =

@@ -32,5 +32,6 @@
   "skaltavern_toast_companion": "Skal! You drink with your companion",
   "skaltavern_toast_companions": "Skal! You drink with your companions",
   "skaltavern_toast_with_companion": "Skal! You drink with {0} and your companion",
-  "skaltavern_toast_with_companions": "Skal! You drink with {0} and your companions"
+  "skaltavern_toast_with_companions": "Skal! You drink with {0} and your companions",
+  "skaltavern_server_missing": "SkalTavern isn't installed on this server, so its drinks can't be brewed here."
 }

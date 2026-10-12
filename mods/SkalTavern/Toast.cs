@@ -2,6 +2,7 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using HarmonyLib;
+using DHack.Shared;
 using UnityEngine;
 using static DHack.Shared.Translations;
 
@@ -99,17 +100,27 @@ namespace SkalTavern
         }
     }
 
-    /// <summary>The toast's buff: stamina and health come back faster, more with more to drink with.</summary>
-    public class SE_Skal : SE_Stats
+    /// <summary>The toast's buff: stamina and health come back faster, more with more to drink with (carried over a reload of the mod).</summary>
+    public class SE_Skal : SE_Stats, StatusEffects.ICarry
     {
+        private int _partners;
+
         public override void Setup(Character character)
         {
             m_ttl = 300f;
-            int n = Mathf.Clamp(Toast.Partners, 1, 4);
-            m_staminaRegenMultiplier = 1f + 0.10f * n;
-            m_healthRegenMultiplier = 1f + 0.08f * n;
+            Partners(Toast.Partners);
             base.Setup(character);
         }
+
+        private void Partners(int count)
+        {
+            _partners = Mathf.Clamp(count, 1, 4);
+            m_staminaRegenMultiplier = 1f + 0.10f * _partners;
+            m_healthRegenMultiplier = 1f + 0.08f * _partners;
+        }
+
+        public float Carry => _partners;
+        public void PutBack(float carry) { if (!float.IsNaN(carry)) Partners(Mathf.RoundToInt(carry)); }
 
         public override string GetTooltipString() => T("skaltavern_skal_tooltip");
     }

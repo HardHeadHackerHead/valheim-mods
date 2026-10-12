@@ -389,5 +389,6 @@
   "arena_fight_with_3": "Walcz włócznią",
   "arena_fight_with_4": "Walcz łukiem (ze strzałami i nożem)",
   "arena_lent": "Wypożyczone",
-  "arena_lent_tip": "{0}: z krainy, do której twój świat jeszcze nie dotarł; wraca po zakończeniu walki."
+  "arena_lent_tip": "{0}: z krainy, do której twój świat jeszcze nie dotarł; wraca po zakończeniu walki.",
+  "arena_server_missing": "Arena nie jest zainstalowana na tym serwerze, więc nie można tu zbudować Kamienia podróży Areny."
 }

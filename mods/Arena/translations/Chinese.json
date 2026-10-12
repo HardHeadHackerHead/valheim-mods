@@ -389,5 +389,6 @@
   "arena_fight_with_3": "改用矛",
   "arena_fight_with_4": "改用弓（附带箭和小刀）",
   "arena_lent": "借用",
-  "arena_lent_tip": "{0}：来自你的世界尚未到达的地区，战斗结束后归还。"
+  "arena_lent_tip": "{0}：来自你的世界尚未到达的地区，战斗结束后归还。",
+  "arena_server_missing": "此服务器未安装 Arena，因此无法在这里建造竞技场路石。"
 }

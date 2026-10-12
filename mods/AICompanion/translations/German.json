@@ -925,5 +925,6 @@
   "aicompanion_net_marker": "{0} ist hier gefallen",
   "aicompanion_net_lost_fight_other": "{1}, Gefährte von {0}, hat zu Hause einen Kampf verloren, als niemand da war: Die Sachen liegen im Grab (auf deiner Karte markiert)",
   "aicompanion_net_lost_fight": "{0} hat zu Hause einen Kampf verloren, als niemand da war: Die Sachen liegen im Grab (auf deiner Karte markiert)",
-  "aicompanion_net_fallen_other": "{1}, Gefährte von {0}, ist gefallen (auf deiner Karte markiert)"
+  "aicompanion_net_fallen_other": "{1}, Gefährte von {0}, ist gefallen (auf deiner Karte markiert)",
+  "aicompanion_server_missing": "AI Companion ist auf diesem Server nicht installiert, daher kann sich dir hier kein Gefährte anschließen."
 }

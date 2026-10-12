@@ -19,5 +19,6 @@
   "jetskis_paint_teal": "turquesa",
   "jetskis_paint_purple": "morado",
   "jetskis_paint_black": "negro",
-  "jetskis_paint_wood": "madera desnuda"
+  "jetskis_paint_wood": "madera desnuda",
+  "jetskis_server_missing": "Jet Skis no está instalado en este servidor, así que aquí no se pueden construir motos acuáticas."
 }

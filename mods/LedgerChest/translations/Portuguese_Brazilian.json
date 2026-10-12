@@ -47,5 +47,6 @@
   "ledgerchest_no_room_msg": "Sem espaço no seu inventário",
   "ledgerchest_back_to_you": "Nenhum baú tem espaço para {0}: de volta para você.",
   "ledgerchest_stays": "Sem espaço em lugar nenhum para {0}: fica no Baú de Registros.",
-  "ledgerchest_stays_msg": "Sem espaço em lugar nenhum: {0} fica no Baú de Registros"
+  "ledgerchest_stays_msg": "Sem espaço em lugar nenhum: {0} fica no Baú de Registros",
+  "ledgerchest_server_missing": "O Ledger Chest não está instalado neste servidor, então não é possível construir baús de registros aqui."
 }

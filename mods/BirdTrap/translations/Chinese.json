@@ -15,5 +15,6 @@
   "birdtrap_bait_state": "诱饵：{0}/{1}  ·  {2}",
   "birdtrap_hover_add": "放入诱饵（浆果或种子）",
   "birdtrap_hover_fill": "放满诱饵",
-  "birdtrap_plucked": "你拔下海鸥的羽毛后放飞了它：{0} 根羽毛"
+  "birdtrap_plucked": "你拔下海鸥的羽毛后放飞了它：{0} 根羽毛",
+  "birdtrap_server_missing": "此服务器未安装 Bird Trap，因此无法在这里建造捕鸟笼。"
 }

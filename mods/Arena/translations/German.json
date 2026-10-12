@@ -389,5 +389,6 @@
   "arena_fight_with_3": "Mit einem Speer kämpfen",
   "arena_fight_with_4": "Mit einem Bogen kämpfen (mit Pfeilen und einem Messer)",
   "arena_lent": "Geliehen",
-  "arena_lent_tip": "{0}: aus einem Land, das deine Welt noch nicht erreicht hat; es geht zurück, wenn der Kampf vorbei ist."
+  "arena_lent_tip": "{0}: aus einem Land, das deine Welt noch nicht erreicht hat; es geht zurück, wenn der Kampf vorbei ist.",
+  "arena_server_missing": "Arena ist auf diesem Server nicht installiert, daher kann hier kein Arena-Wegstein gebaut werden."
 }

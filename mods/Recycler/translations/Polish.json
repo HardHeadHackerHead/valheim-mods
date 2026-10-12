@@ -1,8 +1,8 @@
 {
   "recycler_piece": "Recykler",
-  "recycler_piece_desc": "Zamienia stary ekwipunek z powrotem w część materiałów, z których powstał. Pobliskie prasy zwiększają tę część.",
+  "recycler_piece_desc": "Zamienia stary ekwipunek z powrotem w {base}% materiałów, z których powstał. Pobliskie prasy zwiększają to do {one}% przy jednej i {two}% przy dwóch.",
   "recycler_press": "Prasa recyklera",
-  "recycler_press_desc": "Postaw w promieniu 8 m od Recyklera, aby zwiększyć zwracaną część. Liczą się maksymalnie dwie.",
+  "recycler_press_desc": "Postaw w promieniu 8 m od Recyklera, aby zwiększyć zwracaną część: do {one}% z jedną prasą, {two}% z dwiema.",
   "recycler_press_hover": "Zwiększa część zwracaną przez Recykler w promieniu 8 m",
   "recycler_hover_use": "Przetwórz ekwipunek",
   "recycler_hover_share": "Zwraca {0}% materiałów (prasy: {1}/2)",
@@ -29,5 +29,6 @@
   "recycler_too_little": "Za mało materiału, by cokolwiek odzyskać.",
   "recycler_kept": "{0} nie można teraz przetworzyć (trzyma go inny mod)",
   "recycler_recycled": "Przetworzono {0}: {1}",
-  "recycler_recycled_nothing": "Przetworzono {0}, ale nic nie wróciło"
+  "recycler_recycled_nothing": "Przetworzono {0}, ale nic nie wróciło",
+  "recycler_server_missing": "Recycler nie jest zainstalowany na tym serwerze, więc nie można tu budować recyklerów."
 }

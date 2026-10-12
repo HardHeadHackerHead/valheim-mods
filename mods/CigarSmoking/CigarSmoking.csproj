@@ -13,5 +13,8 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="../Shared/ServerSettings.cs" Link="Shared/ServerSettings.cs" />
+    <Compile Include="../Shared/Costs.cs" Link="Shared/Costs.cs" />
+    <Compile Include="../Shared/Content.cs" Link="Shared/Content.cs" />
+    <Compile Include="../Shared/StatusEffects.cs" Link="Shared/StatusEffects.cs" />
   </ItemGroup>
 </Project>

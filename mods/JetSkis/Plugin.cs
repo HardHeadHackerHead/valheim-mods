@@ -23,14 +23,19 @@ namespace JetSkis
     {
         public const string Guid = "com.quad.jetskis";
         public const string Name = "JetSkis";
-        public const string Version = "0.3.0";
+        public const string Version = "0.3.1";
 
         internal static Plugin Instance;
         internal static ManualLogSource Log;
-        internal static DHack.Shared.ServerSettings Synced;   // how fast and how nimble is the server's in multiplayer
+        internal static DHack.Shared.ServerSettings Synced;   // how fast, how nimble and what it costs is the server's in multiplayer
+
+        /// <summary>What a jet ski costs before anyone changes it.</summary>
+        internal const string DefaultCost = "FineWood:12, BronzeNails:30, SurtlingCore:2, DeerHide:4";
 
         internal static ConfigEntry<float> Cruise, TopSpeed, Reverse, Accel, Coast, TurnRate, Grip, EngineVolume;
         internal static ConfigEntry<bool> Lean, Help;
+        internal static ConfigEntry<string> Cost;
+        private static bool _tellNoServer;   // the server hasn't the mod: say so once the player is in the world
 
         private Harmony _harmony;
 
@@ -52,6 +57,9 @@ namespace JetSkis
             Lean = Config.Bind("2 - Look", "LeanIntoTurns", true, "The jet ski (and you on it) leans into turns and lifts its nose at speed, your head turns where you steer and you bob over the waves.");
             Help = Config.Bind("2 - Look", "ShowControls", true, "Show the controls the first time you get on in a session.");
             EngineVolume = Config.Bind("2 - Look", "EngineVolume", 1f, new ConfigDescription("How loud the engine is (0 is silent, 1 as made; the game's own volume settings apply on top).", new AcceptableValueRange<float>(0f, 2f)));
+            Cost = Synced.Bind("3 - Building", "Cost", DefaultCost, "What a jet ski costs to build with the hammer (at a workbench). " + DHack.Shared.Costs.Help);
+            Cost.SettingChanged += (s, e) => Things.ApplyCost();
+            Synced.ServerChanged += () => _tellNoServer = Synced.Server == DHack.Shared.ServerSettings.ServerMod.Missing;
             Config.SaveOnConfigSet = true;
             Config.Save();
 
@@ -65,6 +73,11 @@ namespace JetSkis
         {
             Synced?.Update();
             Tools.Update();
+            if (_tellNoServer && Player.m_localPlayer != null)
+            {
+                _tellNoServer = false;
+                Player.m_localPlayer.Message(MessageHud.MessageType.Center, "$jetskis_server_missing");
+            }
         }
 
         private void LateUpdate() => Rider.Late();   // (after the animation: the riders' pose on top of it)

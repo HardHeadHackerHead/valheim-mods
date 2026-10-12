@@ -19,5 +19,6 @@
   "jetskis_paint_teal": "teal",
   "jetskis_paint_purple": "purple",
   "jetskis_paint_black": "black",
-  "jetskis_paint_wood": "bare wood"
+  "jetskis_paint_wood": "bare wood",
+  "jetskis_server_missing": "Jet Skis isn't installed on this server, so jet skis can't be built here."
 }

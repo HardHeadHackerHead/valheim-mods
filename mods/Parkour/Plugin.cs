@@ -4,7 +4,8 @@ using BepInEx.Logging;
 using HarmonyLib;
 using UnityEngine;
 
-// It only patches methods and adds a skill (nothing saved in the world, no prefabs): safe to reload in a world.
+// It only patches methods and adds a skill (nothing saved in the world, no prefabs; the skill's backup is on the character): safe to
+// reload in a world.
 [assembly: System.Reflection.AssemblyMetadata("ClaudeTools.Reload", "world")]
 
 namespace Parkour
@@ -24,7 +25,7 @@ namespace Parkour
     {
         public const string Guid = "com.quad.parkour";
         public const string Name = "Parkour";
-        public const string Version = "0.1.1";
+        public const string Version = "0.1.2";
 
         internal static Plugin Instance;
         internal static ManualLogSource Log;
@@ -104,13 +105,15 @@ namespace Parkour
 
             _harmony = new Harmony(Guid);
             _harmony.PatchAll(typeof(Plugin).Assembly);
-            Skill.Register(Player.m_localPlayer);   // a hot reload while in a world
+            Skill.Create();   // (after the translations; also puts it on the player already in the world after a hot reload)
+            Skill.Gain = SkillGain.Value;
             Logger.LogInfo($"{Name} {Version} loaded");
         }
 
         private void Update()
         {
             Synced?.Update();
+            Skill.Gain = SkillGain.Value;   // (the server's, live)
             Tools.Update();
         }
 

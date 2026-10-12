@@ -29,5 +29,6 @@
   "ziplines_in_way": "В {0} м по тросу что-то мешает ({1}).",
   "ziplines_a_tree": "дерево",
   "ziplines_the_ground": "земля",
-  "ziplines_rock_or_tree": "камень или дерево"
+  "ziplines_rock_or_tree": "камень или дерево",
+  "ziplines_server_missing": "Ziplines не установлен на этом сервере, поэтому столбы зиплайна здесь строить нельзя."
 }

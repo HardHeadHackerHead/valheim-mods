@@ -29,5 +29,6 @@
   "ziplines_in_way": "Coś stoi na drodze {0} m wzdłuż tyrolki ({1}).",
   "ziplines_a_tree": "drzewo",
   "ziplines_the_ground": "ziemia",
-  "ziplines_rock_or_tree": "skała lub drzewo"
+  "ziplines_rock_or_tree": "skała lub drzewo",
+  "ziplines_server_missing": "Ziplines nie jest zainstalowany na tym serwerze, więc nie można tu budować słupów tyrolki."
 }

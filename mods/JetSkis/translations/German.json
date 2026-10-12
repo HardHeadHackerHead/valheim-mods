@@ -19,5 +19,6 @@
   "jetskis_paint_teal": "türkis",
   "jetskis_paint_purple": "lila",
   "jetskis_paint_black": "schwarz",
-  "jetskis_paint_wood": "blankes Holz"
+  "jetskis_paint_wood": "blankes Holz",
+  "jetskis_server_missing": "Jet Skis ist auf diesem Server nicht installiert, daher können hier keine Jetskis gebaut werden."
 }

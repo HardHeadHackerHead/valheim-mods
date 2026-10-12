@@ -73,5 +73,6 @@
   "cigarsmoking_hover_put": "从物品栏放入烟叶（最多 {0} 片）",
   "cigarsmoking_drying_hover": "正在晾干 {0} 个{1}：还需约 {2} 分钟",
   "cigarsmoking_curing_hover": "正在陈化 {0} 个{1}：还需约 {2} 分钟",
-  "cigarsmoking_hover_take": "取出 {0} 个{1}"
+  "cigarsmoking_hover_take": "取出 {0} 个{1}",
+  "cigarsmoking_server_missing": "此服务器未安装 Quad's Cigars，因此无法在这里制作雪茄和建造相关建筑。"
 }

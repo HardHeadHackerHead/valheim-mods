@@ -29,5 +29,6 @@
   "ziplines_in_way": "滑索沿线 {0} 米处有东西挡路（{1}）。",
   "ziplines_a_tree": "一棵树",
   "ziplines_the_ground": "地面",
-  "ziplines_rock_or_tree": "岩石或树"
+  "ziplines_rock_or_tree": "岩石或树",
+  "ziplines_server_missing": "此服务器未安装 Ziplines，因此无法在这里建造滑索柱。"
 }

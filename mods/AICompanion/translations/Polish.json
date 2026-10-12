@@ -925,5 +925,6 @@
   "aicompanion_net_marker": "Tu poległ: {0}",
   "aicompanion_net_lost_fight_other": "Towarzysz gracza {0}, {1}, przegrał walkę w domu, gdy nikogo nie było: jego rzeczy są w jego grobie (zaznaczonym na twojej mapie)",
   "aicompanion_net_lost_fight": "{0} przegrał walkę w domu, gdy nikogo nie było: jego rzeczy są w jego grobie (zaznaczonym na twojej mapie)",
-  "aicompanion_net_fallen_other": "Towarzysz gracza {0}, {1}, poległ (zaznaczono na twojej mapie)"
+  "aicompanion_net_fallen_other": "Towarzysz gracza {0}, {1}, poległ (zaznaczono na twojej mapie)",
+  "aicompanion_server_missing": "AI Companion nie jest zainstalowany na tym serwerze, więc żaden towarzysz nie może tu do ciebie dołączyć."
 }

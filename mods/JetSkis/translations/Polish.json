@@ -19,5 +19,6 @@
   "jetskis_paint_teal": "turkusowy",
   "jetskis_paint_purple": "fioletowy",
   "jetskis_paint_black": "czarny",
-  "jetskis_paint_wood": "surowe drewno"
+  "jetskis_paint_wood": "surowe drewno",
+  "jetskis_server_missing": "Jet Skis nie jest zainstalowany na tym serwerze, więc nie można tu budować skuterów wodnych."
 }

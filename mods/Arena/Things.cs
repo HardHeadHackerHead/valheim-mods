@@ -25,6 +25,15 @@ namespace Arena
 
         internal static GameObject StandObject => _stand;
 
+        /// <summary>What a waystone costs before anyone changes it.</summary>
+        internal const string WaystoneDefault = "Wood:20, Stone:12, Flint:6, LeatherScraps:6, Resin:6";
+
+        /// <summary>The cost setting (the server's in multiplayer) on the piece. One that can't be read keeps the last good cost.</summary>
+        internal static void ApplyCost()
+        {
+            if (_stand != null) DHack.Shared.Costs.Apply(_stand.GetComponent<Piece>(), Plugin.WaystoneCost.Value, Plugin.Log);
+        }
+
         internal static void Register()
         {
             ZNetScene scene = ZNetScene.instance;
@@ -42,6 +51,7 @@ namespace Arena
                 _built = true;
             }
             if (!scene.m_prefabs.Contains(_stand)) scene.m_prefabs.Add(_stand);
+            Plugin.Synced.NeedsServer(_stand);   // not in the build menu on a server without the mod (it would delete the waystone)
             Named(scene)[_stand.name.GetStableHashCode()] = _stand;   // lets it be placed and loaded from saves
             PieceTable table = scene.GetPrefab("Hammer")?.GetComponent<ItemDrop>()?.m_itemData.m_shared.m_buildPieces;
             if (table != null)
@@ -220,13 +230,20 @@ namespace Arena
             // (something to aim at and stand on, whatever became of the look)
             if (go.GetComponentInChildren<Collider>(true) == null) Hitbox(go, layer, new Vector3(0f, 1.5f, 0f), new Vector3(1.2f, 3f, 1.2f));
 
+            // no snap points: the pole's two (1 m above and below its middle) would float the waystone 1 m up or sink it 1 m (its origin
+            // is at the ground), and a waystone that marks out an arena isn't lined up with floors and walls (nor are the game's portals)
+            DHack.Shared.SnapPoints.Clear(go);
+
             Piece piece = go.GetComponent<Piece>();
             piece.m_name = "$arena_waystone";
             piece.m_description = "$arena_waystone_desc";
             piece.m_icon = Icon();
             piece.m_category = Piece.PieceCategory.Misc;
+            piece.m_usage = Piece.UsageTagFlags.Misc;   // the game's build-menu tags: not the pole it's copied from
             piece.m_craftingStation = scene.GetPrefab("piece_workbench")?.GetComponent<CraftingStation>();
-            piece.m_resources = new[] { Req(scene, "Wood", 20), Req(scene, "Stone", 12), Req(scene, "Flint", 6), Req(scene, "LeatherScraps", 6), Req(scene, "Resin", 6) }.Where(r => r.m_resItem != null).ToArray();
+            // the cost setting (a server owner can change it); if neither it nor the default can be read, the pole's it was copied from: never free to build
+            if (!DHack.Shared.Costs.Apply(piece, Plugin.WaystoneCost.Value, Plugin.Log) && !DHack.Shared.Costs.Apply(piece, WaystoneDefault, Plugin.Log))
+                Plugin.Log.LogWarning("The Arena Waystone's cost could not be read, so it costs what the wooden pole does");
             go.AddComponent<Stand>();
             return go;
         }
@@ -291,9 +308,6 @@ namespace Arena
             box.center = centre;
             box.size = size;
         }
-
-        private static Piece.Requirement Req(ZNetScene scene, string item, int amount) =>
-            new Piece.Requirement { m_resItem = scene.GetPrefab(item)?.GetComponent<ItemDrop>(), m_amount = amount, m_recover = true };
 
         /// <summary>The build menu's picture: a red banner on a post with a skull on top.</summary>
         private static Sprite Icon()

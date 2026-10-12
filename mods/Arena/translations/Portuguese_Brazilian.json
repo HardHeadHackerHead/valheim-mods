@@ -389,5 +389,6 @@
   "arena_fight_with_3": "Lutar com uma lança",
   "arena_fight_with_4": "Lutar com um arco (com flechas e uma faca)",
   "arena_lent": "Emprestado",
-  "arena_lent_tip": "{0}: de uma terra que seu mundo ainda não alcançou; volta quando a luta acabar."
+  "arena_lent_tip": "{0}: de uma terra que seu mundo ainda não alcançou; volta quando a luta acabar.",
+  "arena_server_missing": "O Arena não está instalado neste servidor, então não é possível construir a Pedra-guia da Arena aqui."
 }

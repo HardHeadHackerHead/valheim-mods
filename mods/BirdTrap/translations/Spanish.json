@@ -15,5 +15,6 @@
   "birdtrap_bait_state": "Cebo: {0}/{1}  ·  {2}",
   "birdtrap_hover_add": "Poner cebo (bayas o semillas)",
   "birdtrap_hover_fill": "Llenarla de cebo",
-  "birdtrap_plucked": "Desplumas la gaviota y la sueltas: {0} plumas"
+  "birdtrap_plucked": "Desplumas la gaviota y la sueltas: {0} plumas",
+  "birdtrap_server_missing": "Bird Trap no está instalado en este servidor, así que aquí no se pueden construir trampas para pájaros."
 }

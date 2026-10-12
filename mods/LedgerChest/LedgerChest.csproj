@@ -7,5 +7,11 @@
     <!-- the build-menu picture (used if the game cannot draw one itself)  -->
     <EmbeddedResource Include="icon.png" LogicalName="icon.png" />
   </ItemGroup>
-  <ItemGroup><Compile Include="../Shared/SpecialContainers.cs" Link="Shared/SpecialContainers.cs" /><Compile Include="../Shared/PieceReload.cs" Link="Shared/PieceReload.cs" /></ItemGroup>
+  <ItemGroup>
+    <!-- The cost the server decides in multiplayer (and no Ledger Chest built on a server without the mod; shared with our other mods). -->
+    <Compile Include="../Shared/ServerSettings.cs" Link="Shared/ServerSettings.cs" />
+    <Compile Include="../Shared/Costs.cs" Link="Shared/Costs.cs" />
+    <Compile Include="../Shared/SpecialContainers.cs" Link="Shared/SpecialContainers.cs" /><Compile Include="../Shared/PieceReload.cs" Link="Shared/PieceReload.cs" /> <Compile Include="../Shared/Icon.cs" Link="Shared/Icon.cs" />
+    <Compile Include="../Shared/SnapPoints.cs" Link="Shared/SnapPoints.cs" />
+  </ItemGroup>
 </Project>

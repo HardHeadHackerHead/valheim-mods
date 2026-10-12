@@ -1,5 +1,5 @@
 {
-  "parkour_skill_description": "Correr pelas paredes, tomar impulso nelas, subir correndo por elas, se içar em beiradas e rolar ao aterrissar. Corridas na parede mais longas e rápidas, mais saltos de parede seguidos, subidas mais altas, aterrissagens mais suaves e menos vigor em cada movimento.",
+  "parkour_skill_description": "Correr pelas paredes, tomar impulso nelas, subir correndo por elas, se içar em beiradas e rolar ao aterrissar. Corridas na parede mais longas e rápidas, mais saltos de parede seguidos, subidas mais altas, aterrissagens mais suaves e menos vigor em cada movimento. Da habilidade 0 a 100: corridas na parede de {run0} a {run100} s, de {kicks0} a {kicks100} saltos de parede seguidos, subidas de {climb0} a {climb100} m e rolamentos ao aterrissar sem dano de queda de alturas de {roll0} a {roll100} m.",
   "parkour_hint_wallrun": "Corrida na parede! Pule para tomar impulso na parede.",
   "parkour_hint_climb": "Subindo a parede correndo: segure Para a frente para agarrar o topo.",
   "parkour_hint_hang": "Na borda: solte o avançar e aperte de novo, ou pule, para subir; olhe para longe e pule para se impulsionar; A/D para se mover pela borda; agache ou ande para trás para soltar.",
@@ -10,6 +10,6 @@
   "parkour_hint_shimmy": "Esquerda ou direita move você pela beirada.",
   "parkour_hint_slide": "Deslize! Segure Agachar para continuar deslizando, Pular para saltar com o impulso.",
   "parkour_hint_landing_slide": "Aperte Agachar logo antes de aterrissar de um salto baixo para cair deslizando.",
-  "skill_195522812": "Parkour",
+  "parkour_skill": "Parkour",
   "parkour_dungeon": "Nada de parkour aqui."
 }

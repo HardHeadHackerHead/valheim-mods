@@ -1,8 +1,8 @@
 {
   "recycler_piece": "Geri Dönüştürücü",
-  "recycler_piece_desc": "Eski teçhizatı üretim malzemelerinin bir kısmına geri dönüştürür. Yakındaki presler payı artırır.",
+  "recycler_piece_desc": "Eski teçhizatı üretim malzemelerinin %{base} kadarına geri dönüştürür. Yakındaki presler bunu biriyle %{one}, ikisiyle %{two} yapar.",
   "recycler_press": "Geri Dönüşüm Presi",
-  "recycler_press_desc": "Geri verdiği payı artırmak için bir Geri Dönüştürücünün 8 m yakınına yerleştirin. En fazla ikisi sayılır.",
+  "recycler_press_desc": "Geri verdiği payı artırmak için bir Geri Dönüştürücünün 8 m yakınına yerleştirin: bir presle %{one}, iki presle %{two}.",
   "recycler_press_hover": "8 m içindeki bir Geri Dönüştürücünün geri verdiği payı artırır",
   "recycler_hover_use": "Teçhizatı geri dönüştür",
   "recycler_hover_share": "Malzemelerin %{0} kadarını geri verir (presler: {1}/2)",
@@ -29,5 +29,6 @@
   "recycler_too_little": "Bir şey geri almak için malzeme çok az.",
   "recycler_kept": "{0} şu anda geri dönüştürülemiyor (başka bir mod tutuyor)",
   "recycler_recycled": "{0} geri dönüştürüldü: {1}",
-  "recycler_recycled_nothing": "{0} geri dönüştürüldü, ama hiçbir şey geri gelmedi"
+  "recycler_recycled_nothing": "{0} geri dönüştürüldü, ama hiçbir şey geri gelmedi",
+  "recycler_server_missing": "Recycler bu sunucuda yüklü değil, bu yüzden burada Geri Dönüştürücü yapılamaz."
 }

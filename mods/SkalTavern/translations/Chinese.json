@@ -32,5 +32,6 @@
   "skaltavern_toast_companion": "干杯！你和你的同伴一起喝",
   "skaltavern_toast_companions": "干杯！你和你的同伴们一起喝",
   "skaltavern_toast_with_companion": "干杯！你和{0}以及你的同伴一起喝",
-  "skaltavern_toast_with_companions": "干杯！你和{0}以及你的同伴们一起喝"
+  "skaltavern_toast_with_companions": "干杯！你和{0}以及你的同伴们一起喝",
+  "skaltavern_server_missing": "此服务器未安装 SkalTavern，因此无法在这里酿造其饮品。"
 }

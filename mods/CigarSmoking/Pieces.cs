@@ -49,7 +49,19 @@ namespace CigarSmoking
             piece.m_description = description;
             piece.m_icon = Icons.Get(icon);
             piece.m_category = Piece.PieceCategory.Crafting;
-            piece.m_resources = cost;
+            piece.m_usage = Piece.UsageTagFlags.Crafting;   // the game's build-menu tags: all four are for making cigars (the rack and barrel were copied from a chest)
+            if (cost.Length > 0) piece.m_resources = cost;
+        }
+
+        /// <summary>What the four buildings cost before anyone changes it (the cost settings' defaults).</summary>
+        internal const string TableDefault = "Wood:10, Resin:4, LeatherScraps:4", HumidorDefault = "FineWood:10, LeatherScraps:3, Resin:3",
+                              RackDefault = "Wood:8, Resin:2", BarrelDefault = "Wood:12, Resin:4, LeatherScraps:2";
+
+        /// <summary>Sets a building's cost from its setting; one that can't be read gives the default, and if even that can't, the copy keeps the cost of what it was made from (never free).</summary>
+        private static void Price(GameObject go, BepInEx.Configuration.ConfigEntry<string> setting, string fallback)
+        {
+            Piece piece = go.GetComponent<Piece>();
+            if (!DHack.Shared.Costs.Apply(piece, setting.Value, Plugin.Log)) DHack.Shared.Costs.Apply(piece, fallback, Plugin.Log);
         }
 
         private static void BuildPieces(ZNetScene scene)
@@ -68,8 +80,8 @@ namespace CigarSmoking
                 cs.m_icon = Icons.Get("table");
                 cs.m_craftRequireRoof = false;
                 cs.m_craftRequireFire = false;
-                SetPiece(table, "$cigarsmoking_table", "$cigarsmoking_table_desc", "table",
-                         Req("Wood", 10), Req("Resin", 4), Req("LeatherScraps", 4));
+                SetPiece(table, "$cigarsmoking_table", "$cigarsmoking_table_desc", "table");
+                Price(table, Plugin.TableCost, TableDefault);
                 table.GetComponent<Piece>().m_craftingStation = workbench;
                 TableStation = cs;
                 HammerPieces.Add(table);
@@ -82,8 +94,8 @@ namespace CigarSmoking
                 Reskin(humidor, ModelIndex.Parts("humidor"));
                 StationExtension ext = humidor.GetComponent<StationExtension>();
                 if (ext != null && TableStation != null) ext.m_craftingStation = TableStation;
-                SetPiece(humidor, "$cigarsmoking_humidor", "$cigarsmoking_humidor_desc", "humidor",
-                         Req("FineWood", 10), Req("LeatherScraps", 3), Req("Resin", 3));
+                SetPiece(humidor, "$cigarsmoking_humidor", "$cigarsmoking_humidor_desc", "humidor");
+                Price(humidor, Plugin.HumidorCost, HumidorDefault);
                 humidor.GetComponent<Piece>().m_craftingStation = TableStation;
                 HammerPieces.Add(humidor);
             }
@@ -94,7 +106,8 @@ namespace CigarSmoking
             {
                 Object.DestroyImmediate(rack.GetComponent<Container>());
                 Reskin(rack, ModelIndex.Parts("rack"));
-                SetPiece(rack, "$cigarsmoking_rack", "$cigarsmoking_rack_desc", "rack", Req("Wood", 8), Req("Resin", 2));
+                SetPiece(rack, "$cigarsmoking_rack", "$cigarsmoking_rack_desc", "rack");
+                Price(rack, Plugin.RackCost, RackDefault);
                 rack.GetComponent<Piece>().m_craftingStation = workbench;
                 Curer c = rack.AddComponent<Curer>();
                 c.Title = "$cigarsmoking_rack"; c.Capacity = 8;
@@ -106,8 +119,8 @@ namespace CigarSmoking
             {
                 Object.DestroyImmediate(barrel.GetComponent<Container>());
                 Reskin(barrel, ModelIndex.Parts("barrel"));
-                SetPiece(barrel, "$cigarsmoking_barrel", "$cigarsmoking_barrel_desc", "barrel",
-                         Req("Wood", 12), Req("Resin", 4), Req("LeatherScraps", 2));
+                SetPiece(barrel, "$cigarsmoking_barrel", "$cigarsmoking_barrel_desc", "barrel");
+                Price(barrel, Plugin.BarrelCost, BarrelDefault);
                 barrel.GetComponent<Piece>().m_craftingStation = workbench;
                 Curer c = barrel.AddComponent<Curer>();
                 c.Title = "$cigarsmoking_barrel"; c.Capacity = 8;

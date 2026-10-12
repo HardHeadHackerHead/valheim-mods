@@ -47,5 +47,6 @@
   "ledgerchest_no_room_msg": "Kein Platz in deinem Inventar",
   "ledgerchest_back_to_you": "Keine Truhe hat Platz für {0}: zurück zu dir.",
   "ledgerchest_stays": "Nirgends Platz für {0}: Es bleibt in der Hauptbuchtruhe.",
-  "ledgerchest_stays_msg": "Nirgends Platz: {0} bleibt in der Hauptbuchtruhe"
+  "ledgerchest_stays_msg": "Nirgends Platz: {0} bleibt in der Hauptbuchtruhe",
+  "ledgerchest_server_missing": "Ledger Chest ist auf diesem Server nicht installiert, daher können hier keine Hauptbuchtruhen gebaut werden."
 }

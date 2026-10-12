@@ -15,5 +15,6 @@
   "birdtrap_bait_state": "Köder: {0}/{1}  ·  {2}",
   "birdtrap_hover_add": "Köder hinzufügen (Beeren oder Samen)",
   "birdtrap_hover_fill": "Mit Köder füllen",
-  "birdtrap_plucked": "Du rupfst die Möwe und lässt sie frei: {0} Federn"
+  "birdtrap_plucked": "Du rupfst die Möwe und lässt sie frei: {0} Federn",
+  "birdtrap_server_missing": "Bird Trap ist auf diesem Server nicht installiert, daher können hier keine Vogelfallen gebaut werden."
 }

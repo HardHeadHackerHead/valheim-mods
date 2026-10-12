@@ -268,10 +268,8 @@ namespace Arena
             ItemDrop drop = go != null ? go.GetComponent<ItemDrop>() : null;
             if (drop == null) return null;
             quality = Mathf.Clamp(quality, 1, drop.m_itemData.m_shared.m_maxQuality);
-            ItemDrop.ItemData item = player.GetInventory().AddItem(prefab, Mathf.Min(amount, drop.m_itemData.m_shared.m_maxStackSize), quality, 0, 0L, "The Arena", false);
+            ItemDrop.ItemData item = KeepApart.AddMarked(player.GetInventory(), prefab, amount, quality, "1");   // (marked before it goes in)
             if (item == null) return null;
-            item.m_customData[LoanKey] = "1";
-            item.m_durability = item.GetMaxDurability();
             if (wear) player.EquipItem(item, false);
             return item;
         }

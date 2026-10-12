@@ -7,7 +7,7 @@
 
 **Jet ski (jetski) for a rider and a passenger: a fast motorboat pushed by a surtling core, not the wind. Steer it like a speedboat with WASD; saddlebag storage, paint colours, engine sound and spray. Built with the hammer, like the raft.**
 
-![version: 0.3.0](https://img.shields.io/badge/version-0.3.0-3b6e8f?style=flat-square)  ![multiplayer: everyone + host](https://img.shields.io/badge/multiplayer-everyone%20%2B%20host-7a5c2e?style=flat-square)  ![made with: Claude Code](https://img.shields.io/badge/made%20with-Claude%20Code-c26a3d?style=flat-square)
+![version: 0.3.1](https://img.shields.io/badge/version-0.3.1-3b6e8f?style=flat-square)  ![multiplayer: everyone + host](https://img.shields.io/badge/multiplayer-everyone%20%2B%20host-7a5c2e?style=flat-square)  ![made with: Claude Code](https://img.shields.io/badge/made%20with-Claude%20Code-c26a3d?style=flat-square)
 
 <!-- GITHUB-ONLY -->[Thunderstore](https://thunderstore.io/c/valheim/p/Quads_Lab/Quads_Jet_Skis/)  ·  <!-- END GITHUB-ONLY -->[Source code](https://github.com/HardHeadHackerHead/valheim-mods/tree/main/mods/JetSkis)  ·  [Report a bug](https://github.com/HardHeadHackerHead/valheim-mods/issues/new?template=bug.yml&title=%5BQuad%27s%20Jet%20Skis%5D%20)  ·  [Discord](https://discord.gg/EwTjQxEZPy)
 
@@ -123,6 +123,12 @@ In `BepInEx/config/com.quad.jetskis.cfg`, made the first time the game runs with
 | `ShowControls` | `true` | Show the controls the first time you get on in a session. |
 | `EngineVolume` | `1` | How loud the engine is (0 is silent, 1 as made; the game's own volume settings apply on top). |
 
+**3 - Building**
+
+| Setting | Default | What it does |
+|---|---|---|
+| `Cost` | `FineWood:12, BronzeNails:30, SurtlingCore:2, DeerHide:4` | What a jet ski costs to build with the hammer (at a workbench). Item prefab names and amounts, separated by commas, like FineWood:12, BronzeNails:30 (Claude Tools' `prefabs <text>` shows exact names). A cost with a mistake in it keeps the last good one. [Synced with Server] |
+
 ## 🤖 Made with AI
 
 Made with the help of Claude (Anthropic), with Claude Code: designed, written and checked together, and tried in the game.
@@ -165,8 +171,8 @@ helps me make new mods and keep improving the ones you already play. It's 100% o
 
 ## 📜 Recent changes
 
+- **0.3.1** On a server without Jet Skis, the jet ski is gone from the hammer, and a message says why: the server would delete a jet ski built there, with whatever was in its saddlebags. Server owners can change what a jet ski costs ("3 - Building", Cost); in multiplayer the server's cost applies, and a cost with a mistake in it keeps the last good one. Settings: edits to the config file now apply while the game runs (a server owner no longer has to restart), and a server's admins can change the server's settings from their own game with Configuration Manager, where other players see them greyed out. Your config file always keeps your own values while you play on a server (saving it there could write the server's in). Players on an older version still get the server's settings.
 - **0.3.0** In your language: Russian, German, Chinese, Portuguese, Spanish, French, Polish and Turkish (translated by AI; corrections welcome). A jet ski left alone stays where you left it: it no longer drifts ashore on the waves, and knocks against the beach no longer wear it down (jet skis left near the shore broke after a while). A crash while you ride still hurts it.
 - **0.2.2** Spray you can see: a rooster tail of water arcing out of the nozzle that grows with your speed, a curl off each side of the bow, a sheet thrown off the outside of a hard turn, and a trail of foam left on the water behind you. It's made of the game's own splash, white mist and droplets (the old spray was flat patches of foam that didn't show in the air).
-- **0.2.1** The passenger hugs the rider on every player's screen: each game now knows for sure who sits behind whom (it went by where their body was, which arrives late from another player's game), and puts other players exactly on their seats, so nobody trails behind a jet ski at speed. Both of you need 0.2.1.
 
 <!-- GITHUB-ONLY -->[Every change](CHANGELOG.txt)<!-- END GITHUB-ONLY --><!-- THUNDERSTORE-ONLY: Every change is on the Changelog tab. -->

@@ -15,5 +15,6 @@
   "birdtrap_bait_state": "Yem: {0}/{1}  ·  {2}",
   "birdtrap_hover_add": "Yem koy (meyve ya da tohum)",
   "birdtrap_hover_fill": "Yemle doldur",
-  "birdtrap_plucked": "Martının tüylerini yolup onu serbest bırakıyorsun: {0} tüy"
+  "birdtrap_plucked": "Martının tüylerini yolup onu serbest bırakıyorsun: {0} tüy",
+  "birdtrap_server_missing": "Bird Trap bu sunucuda yüklü değil, bu yüzden burada kuş kapanı yapılamaz."
 }

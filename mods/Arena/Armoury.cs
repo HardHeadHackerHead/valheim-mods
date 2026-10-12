@@ -151,8 +151,7 @@ namespace Arena
                 foreach (var extra in new[] { (Kit.ArrowFor(tier), 60), (Kit.Knives[Mathf.Clamp(tier, 0, Kit.Knives.Length - 1)].Split(':')[0], 1) })
                     if (extra.Item1 != null && Roster.Has(extra.Item1))
                     {
-                        ItemDrop.ItemData x = player.GetInventory().AddItem(extra.Item1, extra.Item2, 2, 0, 0L, "The Arena", false);
-                        if (x != null) x.m_customData[Kit.LoanKey] = tier.ToString();
+                        KeepApart.AddMarked(player.GetInventory(), extra.Item1, extra.Item2, 2, tier.ToString());   // (marked before it goes in)
                     }
             }
             player.EquipItem(item, false);

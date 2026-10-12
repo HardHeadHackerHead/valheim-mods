@@ -1,5 +1,5 @@
 {
-  "parkour_skill_description": "Running along walls, kicking off them, running up them, pulling yourself up onto ledges and rolling as you land. Longer and faster wall runs, more wall jumps in a row, higher climbs, softer landings and less stamina for every move.",
+  "parkour_skill_description": "Running along walls, kicking off them, running up them, pulling yourself up onto ledges and rolling as you land. Longer and faster wall runs, more wall jumps in a row, higher climbs, softer landings and less stamina for every move. From skill 0 to 100: wall runs of {run0} to {run100} s, {kicks0} to {kicks100} wall jumps in a row, climbs of {climb0} to {climb100} m, and landing rolls safe from falls of {roll0} to {roll100} m.",
   "parkour_hint_wallrun": "Wall run! Jump to kick off the wall.",
   "parkour_hint_climb": "Running up the wall: hold forward to catch the top.",
   "parkour_hint_hang": "On the ledge: let go of forward and press it again, or jump, to pull yourself up; look away and jump to kick off; A/D to move along it; crouch or backward to let go.",
@@ -10,6 +10,6 @@
   "parkour_hint_shimmy": "Left or right moves you along the edge.",
   "parkour_hint_slide": "Slide! Hold crouch to keep sliding, jump to leap out with its speed.",
   "parkour_hint_landing_slide": "Crouch just before landing from a low jump to land in a slide.",
-  "skill_195522812": "Parkour",
+  "parkour_skill": "Parkour",
   "parkour_dungeon": "No parkour in here."
 }

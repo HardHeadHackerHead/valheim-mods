@@ -25,7 +25,7 @@ namespace MapShare
         public const string Guid = "com.quad.mapshare";
         public const string OldGuid = "com.dhack.mapshare"; // (its id until 2026-10: settings move over by themselves, see Shared/Migration.cs)
         public const string Name = "MapShare";
-        public const string Version = "1.1.4";
+        public const string Version = "1.1.5";
 
         private const string RpcCells = "DHack_MapCells";   // newly explored cells
         private const string RpcHello = "DHack_MapHello";   // "I just joined: send me the map"

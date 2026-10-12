@@ -58,5 +58,6 @@
   "bountyboard_tracker_title": "Grup sözleşmeleri",
   "bountyboard_you_have": "({0} tane var)",
   "bountyboard_to_collect": "Bir panodan alınacak {0} ödül",
-  "bountyboard_to_collect_many": "Bir panodan alınacak {0} ödül"
+  "bountyboard_to_collect_many": "Bir panodan alınacak {0} ödül",
+  "bountyboard_server_missing": "Bounty Board bu sunucuda yüklü değil, bu yüzden burada ödül panosu yapılamaz."
 }

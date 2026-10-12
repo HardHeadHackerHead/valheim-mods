@@ -21,11 +21,16 @@ namespace SlotMachine
         public const string Guid = "com.quad.slotmachine";
         public const string OldGuid = "com.dhack.slotmachine"; // (its id until 2026-10: settings move over by themselves, see Shared/Migration.cs)
         public const string Name = "SlotMachine";
-        public const string Version = "1.2.2";
+        public const string Version = "1.2.3";
         public const string PiecePrefab = "piece_slotmachine";
 
         internal static ConfigEntry<int> Bet, PayoutPercent;
-        internal static DHack.Shared.ServerSettings Synced; // the prizes are the server's in multiplayer (or each player could set their own)
+        internal static ConfigEntry<string> Cost;
+        internal static BepInEx.Logging.ManualLogSource Log;
+        /// <summary>What a slot machine costs before anyone changes it.</summary>
+        internal const string DefaultCost = "FineWood:15, Bronze:8, Stone:10";
+        private static bool _tellNoServer;   // the server hasn't the mod: say so once the player is in the world
+        internal static DHack.Shared.ServerSettings Synced; // the prizes and the cost are the server's in multiplayer (or each player could set their own)
         private static readonly int[] Bets = { 5, 10, 25, 50, 100 };
 
         private static GameObject _holder, _prefab;
@@ -38,9 +43,13 @@ namespace SlotMachine
         {
             DHack.Shared.Migration.FromOldGuid(this, OldGuid); // first: before any setting is read
             DHack.Shared.Translations.Load(this);   // translations/*.json: its words in the player's language
+            Log = Logger;
             Synced = new DHack.Shared.ServerSettings(Guid, Config, Logger);
             Bet = Config.Bind("Play", "Bet", 10, new ConfigDescription("Coins per pull (change it at the machine with the alternate-use key + use).", new AcceptableValueList<int>(Bets)));
             PayoutPercent = Synced.Add(Config.Bind("Play", "PayoutPercent", 100, new ConfigDescription("Scales every prize (100 = standard, which returns about 93% over time; 50 = half the prizes; above 107 the machine pays out more than goes in). In multiplayer the server's value applies.", new AcceptableValueRange<int>(10, 300))));
+            Cost = Synced.Bind("Building", "Cost", DefaultCost, "What a slot machine costs to build with the hammer (at a workbench). " + DHack.Shared.Costs.Help);
+            Cost.SettingChanged += (s, e) => ApplyCost();
+            Synced.ServerChanged += () => _tellNoServer = Synced.Server == DHack.Shared.ServerSettings.ServerMod.Missing;
 
             _harmony = new Harmony(Guid);
             _harmony.PatchAll();
@@ -48,7 +57,15 @@ namespace SlotMachine
             Logger.LogInfo($"{Name} {Version} loaded");
         }
 
-        private void Update() => Synced?.Update(); // notices joining and leaving a server, for the settings it decides
+        private void Update()
+        {
+            Synced?.Update(); // notices joining and leaving a server, for the settings it decides
+            if (_tellNoServer && Player.m_localPlayer != null)
+            {
+                _tellNoServer = false;
+                Player.m_localPlayer.Message(MessageHud.MessageType.Center, "$slotmachine_server_missing");
+            }
+        }
 
         private void OnDestroy()
         {
@@ -89,6 +106,14 @@ namespace SlotMachine
             table.m_pieces.RemoveAll(p => p == null);   // (destroyed pieces left by an earlier copy, ours or another mod's)
             if (!table.m_pieces.Contains(_prefab)) table.m_pieces.Add(_prefab);
             _table = table;
+            Synced.NeedsServer(_prefab);   // not in the build menu on a server without the mod (it would delete the machine)
+        }
+
+        /// <summary>The cost setting (the server's in multiplayer) on the piece. One that can't be read keeps the last good cost.</summary>
+        internal static void ApplyCost()
+        {
+            Piece piece = _prefab != null ? _prefab.GetComponent<Piece>() : null;
+            if (piece != null) DHack.Shared.Costs.Apply(piece, Cost.Value, Log);
         }
 
         private static GameObject Make(GameObject source, CraftingStation workbench)
@@ -121,15 +146,22 @@ namespace SlotMachine
                 if (model != null) Object.DestroyImmediate(model.gameObject);
             }
 
+            // snap points on the corners of its base, as far as the plinth, the coin tray and the lever reach (the chest has none): a row
+            // of machines stands side by side, lever clear of the next one
+            DHack.Shared.SnapPoints.Clear(go);
+            DHack.Shared.SnapPoints.Box(go, new Vector3(-0.61f, 0f, -0.65f), new Vector3(0.69f, 0f, 0.48f));
+
             Piece piece = go.GetComponent<Piece>();
             piece.m_name = "$slotmachine_piece";
             piece.m_description = "$slotmachine_piece_desc";
             piece.m_category = Piece.PieceCategory.Misc;
+            piece.m_usage = Piece.UsageTagFlags.Furniture | Piece.UsageTagFlags.Decor;   // the game's build-menu tags: something to play, not storage like the chest it's copied from
             piece.m_craftingStation = workbench;
-            piece.m_resources = new[] { Req("FineWood", 15), Req("Bronze", 8), Req("Stone", 10) }.Where(r => r.m_resItem != null).ToArray();
+            // the cost setting (a server owner can change it); if neither it nor the default can be read, the chest's stays: never free to build
+            if (!DHack.Shared.Costs.Apply(piece, Cost.Value, Log)) DHack.Shared.Costs.Apply(piece, DefaultCost, Log);
             try
             {
-                Sprite picture = Icon.Make(go);
+                Sprite picture = DHack.Shared.Icon.Make(go);
                 if (picture != null) piece.m_icon = picture;
             }
             catch (System.Exception e) { Debug.LogWarning($"{Name}: could not draw the build-menu picture: {e.Message}"); }
@@ -155,13 +187,6 @@ namespace SlotMachine
             Object.Destroy(_holder);
             _holder = null;
             Look.Clear();
-        }
-
-        private static Piece.Requirement Req(string item, int amount)
-        {
-            GameObject go = ZNetScene.instance != null ? ZNetScene.instance.GetPrefab(item) : null;
-            if (go == null && ObjectDB.instance != null) go = ObjectDB.instance.GetItemPrefab(item);
-            return new Piece.Requirement { m_resItem = go != null ? go.GetComponent<ItemDrop>() : null, m_amount = amount, m_recover = true };
         }
     }
 

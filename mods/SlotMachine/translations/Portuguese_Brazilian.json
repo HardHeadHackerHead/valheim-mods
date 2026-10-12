@@ -16,5 +16,6 @@
   "slotmachine_horn": "Chifre",
   "slotmachine_axe": "Machado",
   "slotmachine_raven": "Corvo",
-  "slotmachine_valknut": "Valknut"
+  "slotmachine_valknut": "Valknut",
+  "slotmachine_server_missing": "O Slot Machine não está instalado neste servidor, então não é possível construir a Fortuna de Odin aqui."
 }

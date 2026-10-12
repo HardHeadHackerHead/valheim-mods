@@ -16,5 +16,6 @@
   "slotmachine_horn": "Corne",
   "slotmachine_axe": "Hache",
   "slotmachine_raven": "Corbeau",
-  "slotmachine_valknut": "Valknut"
+  "slotmachine_valknut": "Valknut",
+  "slotmachine_server_missing": "Slot Machine n'est pas installé sur ce serveur : impossible d'y construire la Fortune d'Odin."
 }

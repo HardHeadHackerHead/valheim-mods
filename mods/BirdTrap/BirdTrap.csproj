@@ -8,7 +8,8 @@
     <EmbeddedResource Include="icon.png" LogicalName="icon.png" />
   </ItemGroup>
   <ItemGroup>
-    <!-- The settings the server decides in multiplayer (shared with our other mods). -->
+    <!-- The settings and the cost the server decides in multiplayer (and no trap built on a server without the mod; shared with our other mods). -->
     <Compile Include="../Shared/ServerSettings.cs" Link="Shared/ServerSettings.cs" />
+    <Compile Include="../Shared/Costs.cs" Link="Shared/Costs.cs" /> <Compile Include="../Shared/Icon.cs" Link="Shared/Icon.cs" />
   </ItemGroup>
 </Project>

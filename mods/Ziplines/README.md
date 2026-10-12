@@ -7,7 +7,7 @@
 
 **Ziplines (zip line): build two posts, even kilometres apart, run a rope between them and ride it downhill hanging from your axe. Fast travel across valleys and down mountains, saved with the world.**
 
-![version: 0.3.2](https://img.shields.io/badge/version-0.3.2-3b6e8f?style=flat-square)  ![multiplayer: everyone + host](https://img.shields.io/badge/multiplayer-everyone%20%2B%20host-7a5c2e?style=flat-square)  ![made with: Claude Code](https://img.shields.io/badge/made%20with-Claude%20Code-c26a3d?style=flat-square)
+![version: 0.3.3](https://img.shields.io/badge/version-0.3.3-3b6e8f?style=flat-square)  ![multiplayer: everyone + host](https://img.shields.io/badge/multiplayer-everyone%20%2B%20host-7a5c2e?style=flat-square)  ![made with: Claude Code](https://img.shields.io/badge/made%20with-Claude%20Code-c26a3d?style=flat-square)
 
 <!-- GITHUB-ONLY -->[Thunderstore](https://thunderstore.io/c/valheim/p/Quads_Lab/Quads_Ziplines/)  ·  <!-- END GITHUB-ONLY -->[Source code](https://github.com/HardHeadHackerHead/valheim-mods/tree/main/mods/Ziplines)  ·  [Report a bug](https://github.com/HardHeadHackerHead/valheim-mods/issues/new?template=bug.yml&title=%5BQuad%27s%20Ziplines%5D%20)  ·  [Discord](https://discord.gg/EwTjQxEZPy)
 
@@ -79,6 +79,12 @@ The translations were made with AI, so a few words may be off. To correct one, o
 
 In `BepInEx/config/com.quad.ziplines.cfg`, made the first time the game runs with the mod. r2modman and Thunderstore Mod Manager edit it under **Config editor**.<!-- GITHUB-ONLY --> With our mod manager: **F7**, then **Mod settings**.<!-- END GITHUB-ONLY -->
 
+**Building**
+
+| Setting | Default | What it does |
+|---|---|---|
+| `PostCost` | `Wood:15, Resin:4, LeatherScraps:4` | What a zipline post costs to build with the hammer (at a workbench). Item prefab names and amounts, separated by commas, like FineWood:12, BronzeNails:30 (Claude Tools' `prefabs <text>` shows exact names). A cost with a mistake in it keeps the last good one. [Synced with Server] |
+
 **Lines**
 
 | Setting | Default | What it does |
@@ -142,8 +148,8 @@ helps me make new mods and keep improving the ones you already play. It's 100% o
 
 ## 📜 Recent changes
 
+- **0.3.3** On a server without Ziplines, the zipline post is gone from the hammer, and a message says why: the server would delete a post built there. Server owners can change what a post costs ("Building", PostCost; default 15 wood, 4 resin and 4 leather scraps, as before); in multiplayer the server's cost applies, and a cost with a mistake in it keeps the last good one. Settings: edits to the config file now apply while the game runs (a server owner no longer has to restart), and a server's admins can change the server's settings from their own game with Configuration Manager, where other players see them greyed out. Your config file always keeps your own values while you play on a server (saving it there could write the server's in). Players on an older version still get the server's settings. A post snaps by its foot now (onto a floor's corner, a wall's top or a pole's top), no longer by the wooden pole's points it was copied from (1 m above and below the pole's middle), which could leave it hanging 1 m up or sunk 1 m.
 - **0.3.2** Fix: after reloading the mod at the main menu (the mod manager's reload, or F6), its old build piece stayed in the hammer's list after it was gone, and every change to your bag threw an error half-way: crafting gave the item without taking the cost, and picking things up could go wrong, until the game was restarted. Its piece now comes off the list it was put on, and destroyed pieces left there by any mod are cleared when it registers.
 - **0.3.1** Fixes. Moving, attacking, blocking or crouching while you ride no longer drops you off the rope (only Jump lets go, as before). Logging out or the game saving while you ride now brings you back on the ground under the line, not hanging in the air to fall. Reloading the mod mid-ride sets you down on the ground instead of dropping you. Taking down a line, or running one, to a far post that isn't loaded on your game now changes that post too in multiplayer (the host does it), so no rope is left running to nowhere; the host needs this version for that.
-- **0.3.0** Now in your language: English, Russian, German, Chinese (Simplified), Portuguese (Brazil), Spanish, French, Polish and Turkish, following the game's own Language setting. The game's own names are used for its things (items, creatures, lands, stations). The translations were made with AI: to correct a line, or add a language, put a file in BepInEx/config/translations/com.quad.ziplines/ named after the game's name for the language (German.json...) with only the lines you change, copied from translations/English.json on GitHub. A blocking piece's name keeps its capital letters (German nouns need them).
 
 <!-- GITHUB-ONLY -->[Every change](CHANGELOG.txt)<!-- END GITHUB-ONLY --><!-- THUNDERSTORE-ONLY: Every change is on the Changelog tab. -->

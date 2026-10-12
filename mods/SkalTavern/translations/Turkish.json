@@ -32,5 +32,6 @@
   "skaltavern_toast_companion": "Şerefe! Yoldaşınla birlikte içiyorsun",
   "skaltavern_toast_companions": "Şerefe! Yoldaşlarınla birlikte içiyorsun",
   "skaltavern_toast_with_companion": "Şerefe! {0} ve yoldaşınla birlikte içiyorsun",
-  "skaltavern_toast_with_companions": "Şerefe! {0} ve yoldaşlarınla birlikte içiyorsun"
+  "skaltavern_toast_with_companions": "Şerefe! {0} ve yoldaşlarınla birlikte içiyorsun",
+  "skaltavern_server_missing": "SkalTavern bu sunucuda yüklü değil, bu yüzden burada içkileri yapılamaz."
 }

@@ -1,8 +1,8 @@
 {
   "recycler_piece": "Recycleur",
-  "recycler_piece_desc": "Transforme le vieil équipement en une partie de ses matériaux de fabrication. Les presses à proximité augmentent la part.",
+  "recycler_piece_desc": "Transforme le vieil équipement en {base} % de ses matériaux de fabrication. Les presses à proximité portent la part à {one} % avec une et {two} % avec deux.",
   "recycler_press": "Presse de recyclage",
-  "recycler_press_desc": "À placer à moins de 8 m d'un Recycleur pour augmenter la part qu'il rend. Jusqu'à deux comptent.",
+  "recycler_press_desc": "À placer à moins de 8 m d'un Recycleur pour augmenter la part qu'il rend : {one} % avec une presse, {two} % avec deux.",
   "recycler_press_hover": "Augmente la part rendue par un Recycleur à moins de 8 m",
   "recycler_hover_use": "Recycler de l'équipement",
   "recycler_hover_share": "Rend {0} % des matériaux (presses : {1}/2)",
@@ -29,5 +29,6 @@
   "recycler_too_little": "Trop peu de matériaux pour récupérer quoi que ce soit.",
   "recycler_kept": "{0} ne peut pas être recyclé pour l'instant (un autre mod le retient)",
   "recycler_recycled": "{0} recyclé : {1}",
-  "recycler_recycled_nothing": "{0} recyclé, mais rien n'est revenu"
+  "recycler_recycled_nothing": "{0} recyclé, mais rien n'est revenu",
+  "recycler_server_missing": "Recycler n'est pas installé sur ce serveur : impossible d'y construire des recycleurs."
 }

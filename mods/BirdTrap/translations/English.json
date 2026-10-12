@@ -15,5 +15,6 @@
   "birdtrap_bait_state": "Bait: {0}/{1}  ·  {2}",
   "birdtrap_hover_add": "Add bait (berries or seeds)",
   "birdtrap_hover_fill": "Fill it with bait",
-  "birdtrap_plucked": "You pluck the gull and let it go: {0} feathers"
+  "birdtrap_plucked": "You pluck the gull and let it go: {0} feathers",
+  "birdtrap_server_missing": "Bird Trap isn't installed on this server, so bird traps can't be built here."
 }

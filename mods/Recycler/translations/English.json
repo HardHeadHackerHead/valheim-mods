@@ -1,8 +1,8 @@
 {
   "recycler_piece": "Recycler",
-  "recycler_piece_desc": "Turns old gear back into a share of its crafting materials. Presses nearby raise the share.",
+  "recycler_piece_desc": "Turns old gear back into {base}% of its crafting materials. Presses nearby raise that to {one}% with one and {two}% with two.",
   "recycler_press": "Recycler Press",
-  "recycler_press_desc": "Place within 8 m of a Recycler to raise the share it returns. Up to two count.",
+  "recycler_press_desc": "Place within 8 m of a Recycler to raise the share it returns: to {one}% with one Press, {two}% with two.",
   "recycler_press_hover": "Raises the share returned by a Recycler within 8 m",
   "recycler_hover_use": "Recycle gear",
   "recycler_hover_share": "Returns {0}% of the materials (presses: {1}/2)",
@@ -29,5 +29,6 @@
   "recycler_too_little": "Too little material to get anything back.",
   "recycler_kept": "{0} can't be recycled right now (another mod keeps it)",
   "recycler_recycled": "Recycled {0}: {1}",
-  "recycler_recycled_nothing": "Recycled {0}, but nothing came back"
+  "recycler_recycled_nothing": "Recycled {0}, but nothing came back",
+  "recycler_server_missing": "Recycler isn't installed on this server, so recyclers can't be built here."
 }

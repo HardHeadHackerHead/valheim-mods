@@ -58,5 +58,6 @@
   "bountyboard_tracker_title": "Gruppenaufträge",
   "bountyboard_you_have": "(du hast {0})",
   "bountyboard_to_collect": "{0} Belohnung an einer Tafel abzuholen",
-  "bountyboard_to_collect_many": "{0} Belohnungen an einer Tafel abzuholen"
+  "bountyboard_to_collect_many": "{0} Belohnungen an einer Tafel abzuholen",
+  "bountyboard_server_missing": "Bounty Board ist auf diesem Server nicht installiert, daher können hier keine Kopfgeldtafeln gebaut werden."
 }

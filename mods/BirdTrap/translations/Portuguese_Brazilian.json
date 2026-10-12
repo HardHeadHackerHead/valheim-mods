@@ -15,5 +15,6 @@
   "birdtrap_bait_state": "Isca: {0}/{1}  ·  {2}",
   "birdtrap_hover_add": "Colocar isca (frutinhas ou sementes)",
   "birdtrap_hover_fill": "Encher de isca",
-  "birdtrap_plucked": "Você depena a gaivota e a solta: {0} penas"
+  "birdtrap_plucked": "Você depena a gaivota e a solta: {0} penas",
+  "birdtrap_server_missing": "O Bird Trap não está instalado neste servidor, então não é possível construir armadilhas de pássaros aqui."
 }

@@ -73,5 +73,6 @@
   "cigarsmoking_hover_put": "Colocar folhas do inventário (até {0})",
   "cigarsmoking_drying_hover": "Secando {0} {1}: faltam cerca de {2} min",
   "cigarsmoking_curing_hover": "Curando {0} {1}: faltam cerca de {2} min",
-  "cigarsmoking_hover_take": "Pegar {0} {1}"
+  "cigarsmoking_hover_take": "Pegar {0} {1}",
+  "cigarsmoking_server_missing": "O Quad's Cigars não está instalado neste servidor, então não é possível fazer seus charutos e construções aqui."
 }

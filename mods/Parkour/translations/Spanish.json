@@ -1,5 +1,5 @@
 {
-  "parkour_skill_description": "Correr por las paredes, impulsarse en ellas, subirlas a la carrera, auparse a los salientes y rodar al aterrizar. Carreras por la pared más largas y rápidas, más saltos de pared seguidos, subidas más altas, aterrizajes más suaves y menos vigor en cada movimiento.",
+  "parkour_skill_description": "Correr por las paredes, impulsarse en ellas, subirlas a la carrera, auparse a los salientes y rodar al aterrizar. Carreras por la pared más largas y rápidas, más saltos de pared seguidos, subidas más altas, aterrizajes más suaves y menos vigor en cada movimiento. De la habilidad 0 a 100: carreras por la pared de {run0} a {run100} s, de {kicks0} a {kicks100} saltos de pared seguidos, subidas de {climb0} a {climb100} m y rodadas al aterrizar sin daño por caídas de {roll0} a {roll100} m.",
   "parkour_hint_wallrun": "¡Carrera por la pared! Salta para impulsarte en la pared.",
   "parkour_hint_climb": "Subiendo la pared a la carrera: mantén Adelante para agarrar el borde.",
   "parkour_hint_hang": "En el saliente: suelta avanzar y vuelve a pulsarlo, o salta, para subir; mira hacia otro lado y salta para impulsarte; A/D para moverte por el borde; agáchate o retrocede para soltarte.",
@@ -10,6 +10,6 @@
   "parkour_hint_shimmy": "Izquierda o derecha te mueve a lo largo del borde.",
   "parkour_hint_slide": "¡Deslizamiento! Mantén Agacharse para seguir deslizándote, Saltar para salir de un salto con la velocidad.",
   "parkour_hint_landing_slide": "Pulsa Agacharse justo antes de aterrizar de un salto bajo para caer deslizándote.",
-  "skill_195522812": "Parkour",
+  "parkour_skill": "Parkour",
   "parkour_dungeon": "Aquí no se puede hacer parkour."
 }

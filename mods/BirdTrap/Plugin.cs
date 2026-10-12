@@ -20,7 +20,7 @@ namespace BirdTrap
         public const string Guid = "com.quad.birdtrap";
         public const string OldGuid = "com.dhack.birdtrap"; // (its id until 2026-10: settings move over by themselves, see Shared/Migration.cs)
         public const string Name = "BirdTrap";
-        public const string Version = "1.2.2";
+        public const string Version = "1.2.3";
         public const string PiecePrefab = "piece_birdtrap";
 
         internal static ConfigEntry<float> MinMinutes, MaxMinutes;
@@ -32,7 +32,13 @@ namespace BirdTrap
         // and a destroyed piece left on the list made every change to the player's bag throw, half-way through crafting (free crafts).
         private static PieceTable _table;
         internal static EffectList DoorShut, DoorOpen;
-        internal static DHack.Shared.ServerSettings Synced;   // the gameplay settings the server decides in multiplayer
+        internal static DHack.Shared.ServerSettings Synced;   // the gameplay settings and the cost the server decides in multiplayer
+        internal static ConfigEntry<string> Cost;
+        internal static BepInEx.Logging.ManualLogSource Log;
+        private static bool _tellNoServer;   // the server hasn't the mod: say so once the player is in the world
+
+        /// <summary>What a trap costs before anyone changes it.</summary>
+        internal const string DefaultCost = "Wood:8, LeatherScraps:2";
         private Harmony _harmony;
 
         private void Awake()
@@ -41,6 +47,7 @@ namespace BirdTrap
             DHack.Shared.Translations.Load(this);   // translations/*.json: its words in the player's language
             // These decide when birds come and what they give, so they count on the game that owns the trap (usually the nearest player's);
             // in multiplayer every game uses the server's.
+            Log = Logger;
             Synced = new DHack.Shared.ServerSettings(Guid, Config, Logger);
             MinMinutes = Synced.Add(Config.Bind("Catching", "MinutesMin", 8f, new ConfigDescription("Shortest wait (real minutes, in game time) from baiting to a bird. In multiplayer the server's value applies.", new AcceptableValueRange<float>(0.5f, 120f))));
             MaxMinutes = Synced.Add(Config.Bind("Catching", "MinutesMax", 14f, new ConfigDescription("Longest wait (real minutes, in game time) from baiting to a bird. In multiplayer the server's value applies.", new AcceptableValueRange<float>(0.5f, 240f))));
@@ -49,6 +56,9 @@ namespace BirdTrap
             RestsAtNight = Synced.Add(Config.Bind("Catching", "BirdsRoostAtNight", true, "No birds come at night: one due then comes in the morning. In multiplayer the server's value applies."));
             MinFeathers = Synced.Add(Config.Bind("Plucking", "FeathersMin", 2, new ConfigDescription("Fewest feathers a bird gives. In multiplayer the server's value applies.", new AcceptableValueRange<int>(1, 20))));
             MaxFeathers = Synced.Add(Config.Bind("Plucking", "FeathersMax", 3, new ConfigDescription("Most feathers a bird gives. In multiplayer the server's value applies.", new AcceptableValueRange<int>(1, 20))));
+            Cost = Synced.Bind("Building", "Cost", DefaultCost, "What a bird trap costs to build with the hammer (at a workbench). " + DHack.Shared.Costs.Help);
+            Cost.SettingChanged += (s, e) => ApplyCost();
+            Synced.ServerChanged += () => _tellNoServer = Synced.Server == DHack.Shared.ServerSettings.ServerMod.Missing;
 
             _harmony = new Harmony(Guid);
             _harmony.PatchAll();
@@ -63,6 +73,11 @@ namespace BirdTrap
         private void Update()
         {
             Synced?.Update();
+            if (_tellNoServer && Player.m_localPlayer != null)
+            {
+                _tellNoServer = false;
+                Player.m_localPlayer.Message(MessageHud.MessageType.Center, "$birdtrap_server_missing");
+            }
             if (Time.unscaledTime < _nextClaudeCheck) return;
             _nextClaudeCheck = Time.unscaledTime + 5f;
             BaseUnityPlugin found = BepInEx.Bootstrap.Chainloader.PluginInfos.TryGetValue("com.quad.claudetools", out PluginInfo info) ? info.Instance : null;
@@ -122,6 +137,7 @@ namespace BirdTrap
             table.m_pieces.RemoveAll(p => p == null);   // (destroyed pieces left by an earlier copy, ours or another mod's)
             if (!table.m_pieces.Contains(_prefab)) table.m_pieces.Add(_prefab);
             _table = table;
+            Synced.NeedsServer(_prefab);   // not in the build menu on a server without the mod (it would delete the trap)
             RefreshPlaced();
         }
 
@@ -140,6 +156,13 @@ namespace BirdTrap
                 if (view.GetComponent<TrapPiece>() == null) { view.gameObject.AddComponent<TrapPiece>(); n++; }
             }
             if (n > 0) Debug.Log($"[{Name}] refreshed {n} trap(s) already built");
+        }
+
+        /// <summary>The cost setting (the server's in multiplayer) on the piece. One that can't be read keeps the last good cost.</summary>
+        internal static void ApplyCost()
+        {
+            Piece piece = _prefab != null ? _prefab.GetComponent<Piece>() : null;
+            if (piece != null) DHack.Shared.Costs.Apply(piece, Cost.Value, Log);
         }
 
         private static GameObject Make(GameObject source, CraftingStation workbench)
@@ -166,9 +189,20 @@ namespace BirdTrap
             piece.m_name = "$birdtrap_piece";
             piece.m_description = "$birdtrap_piece_desc";
             piece.m_category = Piece.PieceCategory.Misc;
+            piece.m_usage = Piece.UsageTagFlags.Misc;   // the game's build-menu tags: a trap, not the chest it's copied from
             piece.m_craftingStation = workbench;
-            piece.m_resources = new[] { Req("Wood", 8), Req("LeatherScraps", 2) };
-            try { piece.m_icon = Icon.Make(go); }
+            // the cost setting (a server owner can change it); if neither it nor the default can be read, the chest's: never free to build
+            if (!DHack.Shared.Costs.Apply(piece, Cost.Value, Log) && !DHack.Shared.Costs.Apply(piece, DefaultCost, Log))
+                piece.m_resources = source.GetComponent<Piece>().m_resources;
+            try
+            {
+                // the bird perched on the door frame's crossbar, looking down at the bait (as in icon.png), seen from a little higher up
+                piece.m_icon = DHack.Shared.Icon.Make(go, new Vector3(0.55f, 0.42f, -1f), copy =>
+                {
+                    foreach (Transform t in copy.GetComponentsInChildren<Transform>(true))
+                        if (t.name == "bird") { t.localPosition = TrapPiece.PerchPos; t.localRotation = Quaternion.Euler(0f, TrapPiece.PerchYaw, 0f); }
+                });
+            }
             catch (System.Exception e) { Debug.LogWarning(Name + ": could not draw the build-menu picture: " + e.Message); }
             go.AddComponent<TrapPiece>();
             return go;
@@ -192,13 +226,6 @@ namespace BirdTrap
             Object.Destroy(_holder);
             _holder = null;
             Look.Clear();
-        }
-
-        private static Piece.Requirement Req(string item, int amount)
-        {
-            GameObject go = ZNetScene.instance != null ? ZNetScene.instance.GetPrefab(item) : null;
-            if (go == null && ObjectDB.instance != null) go = ObjectDB.instance.GetItemPrefab(item);
-            return new Piece.Requirement { m_resItem = go != null ? go.GetComponent<ItemDrop>() : null, m_amount = amount, m_recover = true };
         }
     }
 

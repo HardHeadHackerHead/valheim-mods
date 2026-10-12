@@ -7,7 +7,7 @@
 
 **Grow tobacco, cure it, roll your own cigars and smoke them for buffs: farm wild tobacco plants, dry and age the leaves, build a rolling table and a humidor, and light up. Smoking as a real part of the game, with smoke others see.**
 
-![version: 0.4.2](https://img.shields.io/badge/version-0.4.2-3b6e8f?style=flat-square)  ![multiplayer: everyone + host](https://img.shields.io/badge/multiplayer-everyone%20%2B%20host-7a5c2e?style=flat-square)  ![made with: Claude Code](https://img.shields.io/badge/made%20with-Claude%20Code-c26a3d?style=flat-square)
+![version: 0.4.3](https://img.shields.io/badge/version-0.4.3-3b6e8f?style=flat-square)  ![multiplayer: everyone + host](https://img.shields.io/badge/multiplayer-everyone%20%2B%20host-7a5c2e?style=flat-square)  ![made with: Claude Code](https://img.shields.io/badge/made%20with-Claude%20Code-c26a3d?style=flat-square)
 
 <!-- GITHUB-ONLY -->[Thunderstore](https://thunderstore.io/c/valheim/p/Quads_Lab/Quads_Cigars/)  ·  <!-- END GITHUB-ONLY -->[Source code](https://github.com/HardHeadHackerHead/valheim-mods/tree/main/mods/CigarSmoking)  ·  [Report a bug](https://github.com/HardHeadHackerHead/valheim-mods/issues/new?template=bug.yml&title=%5BQuad%27s%20Cigars%5D%20)  ·  [Discord](https://discord.gg/EwTjQxEZPy)
 
@@ -93,6 +93,24 @@ The translations were made with AI, so a few words may be off. To correct one, o
 
 In `BepInEx/config/com.quad.cigarsmoking.cfg`, made the first time the game runs with the mod. r2modman and Thunderstore Mod Manager edit it under **Config editor**.<!-- GITHUB-ONLY --> With our mod manager: **F7**, then **Mod settings**.<!-- END GITHUB-ONLY -->
 
+**Building**
+
+| Setting | Default | What it does |
+|---|---|---|
+| `RollingTableCost` | `Wood:10, Resin:4, LeatherScraps:4` | What a Cigar Rolling Table costs to build with the hammer (at a workbench). Item prefab names and amounts, separated by commas, like FineWood:12, BronzeNails:30 (Claude Tools' `prefabs <text>` shows exact names). A cost with a mistake in it keeps the last good one. [Synced with Server] |
+| `HumidorCost` | `FineWood:10, LeatherScraps:3, Resin:3` | What a Humidor costs to build with the hammer (near a Cigar Rolling Table). Item prefab names and amounts, separated by commas, like FineWood:12, BronzeNails:30 (Claude Tools' `prefabs <text>` shows exact names). A cost with a mistake in it keeps the last good one. [Synced with Server] |
+| `DryingRackCost` | `Wood:8, Resin:2` | What a Drying Rack costs to build with the hammer (at a workbench). Item prefab names and amounts, separated by commas, like FineWood:12, BronzeNails:30 (Claude Tools' `prefabs <text>` shows exact names). A cost with a mistake in it keeps the last good one. [Synced with Server] |
+| `CuringBarrelCost` | `Wood:12, Resin:4, LeatherScraps:2` | What a Curing Barrel costs to build with the hammer (at a workbench). Item prefab names and amounts, separated by commas, like FineWood:12, BronzeNails:30 (Claude Tools' `prefabs <text>` shows exact names). A cost with a mistake in it keeps the last good one. [Synced with Server] |
+
+**Crafting**
+
+| Setting | Default | What it does |
+|---|---|---|
+| `ConnecticutCigarCost` | `dh_dried_meadow:3, Resin:1` | What rolling a batch of connecticut cigars takes at the Cigar Rolling Table. Item prefab names and amounts, separated by commas, like FineWood:12, BronzeNails:30 (Claude Tools' `prefabs <text>` shows exact names). A cost with a mistake in it keeps the last good one. [Synced with Server] |
+| `MaduroCigarCost` | `dh_aged_forest:3, Honey:1, Resin:1` | What rolling a batch of maduro cigars takes at the Cigar Rolling Table. Item prefab names and amounts, separated by commas, like FineWood:12, BronzeNails:30 (Claude Tools' `prefabs <text>` shows exact names). A cost with a mistake in it keeps the last good one. [Synced with Server] |
+| `HabanoCigarCost` | `dh_aged_plains:3, Cloudberry:2, Resin:1` | What rolling a batch of habano cigars takes at the Cigar Rolling Table. Item prefab names and amounts, separated by commas, like FineWood:12, BronzeNails:30 (Claude Tools' `prefabs <text>` shows exact names). A cost with a mistake in it keeps the last good one. [Synced with Server] |
+| `CorojoCigarCost` | `dh_aged_forest:3, Thistle:2, Resin:1` | What rolling a batch of corojo cigars takes at the Cigar Rolling Table. Item prefab names and amounts, separated by commas, like FineWood:12, BronzeNails:30 (Claude Tools' `prefabs <text>` shows exact names). A cost with a mistake in it keeps the last good one. [Synced with Server] |
+
 **Growing**
 
 | Setting | Default | What it does |
@@ -157,8 +175,8 @@ helps me make new mods and keep improving the ones you already play. It's 100% o
 
 ## 📜 Recent changes
 
+- **0.4.3** On a server without Quad's Cigars, its tables, rack, barrel, saplings and cigar recipes are gone from the menus, and a message says why: the server would delete what was built there, and the cigars would be lost. Server owners can change what each piece and each cigar costs ("Building" and "Crafting"; the defaults are today's costs); in multiplayer the server's costs apply, and a cost with a mistake in it keeps the last good one. Settings: edits to the config file now apply while the game runs (a server owner no longer has to restart), and a server's admins can change the server's settings from their own game with Configuration Manager, where other players see them greyed out. Your config file always keeps your own values while you play on a server (saving it there could write the server's in). Players on an older version still get the server's settings. The drying rack and curing barrel are no longer counted as storage in the game's own building records (they were copied from a chest).
 - **0.4.2** Fix: after reloading the mod at the main menu (the mod manager's reload, or F6), its old pieces stayed in the hammer's and the cultivator's lists after it was gone, and every change to your bag threw an error half-way: crafting gave the item without taking the cost, and picking things up could go wrong, until the game was restarted. They now come off the lists they were put on, and destroyed pieces left there by any mod are cleared when it registers.
 - **0.4.1** Fix: the trader no longer buys tobacco seeds, leaves or cigars. They were worth coins, and a field of tobacco could be grown into as many coins as you liked.
-- **0.4.0** Now in your language: English, Russian, German, Chinese (Simplified), Portuguese (Brazil), Spanish, French, Polish and Turkish, following the game's own Language setting. The game's own names are used for its things (items, creatures, lands, stations). The translations were made with AI: to correct a line, or add a language, put a file in BepInEx/config/translations/com.quad.cigarsmoking/ named after the game's name for the language (German.json...) with only the lines you change, copied from translations/English.json on GitHub.
 
 <!-- GITHUB-ONLY -->[Every change](CHANGELOG.txt)<!-- END GITHUB-ONLY --><!-- THUNDERSTORE-ONLY: Every change is on the Changelog tab. -->

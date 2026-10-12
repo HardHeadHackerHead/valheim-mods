@@ -24,11 +24,18 @@ namespace LedgerChest
         public const string Guid = "com.quad.ledgerchest";
         public const string OldGuid = "com.dhack.ledgerchest"; // (its id until 2026-10: settings move over by themselves, see Shared/Migration.cs)
         public const string Name = "LedgerChest";
-        public const string Version = "1.2.2";
+        public const string Version = "1.2.3";
         public const string PiecePrefab = "piece_ledgerchest";
 
         internal static Plugin Instance;
         internal static ConfigEntry<float> Radius, Scale;
+        internal static DHack.Shared.ServerSettings Synced;   // the cost the server decides in multiplayer (and whether it has the mod)
+        internal static ConfigEntry<string> Cost;
+        internal static BepInEx.Logging.ManualLogSource Log;
+        private static bool _tellNoServer;   // the server hasn't the mod: say so once the player is in the world
+
+        /// <summary>What a Ledger Chest costs before anyone changes it.</summary>
+        internal const string DefaultCost = "Wood:10, FineWood:4, LeatherScraps:4, Resin:2";
 
         private static GameObject _holder, _prefab;
         private Harmony _harmony;
@@ -39,8 +46,13 @@ namespace LedgerChest
             DHack.Shared.Migration.FromOldGuid(this, OldGuid); // first: before any setting is read
             DHack.Shared.Translations.Load(this);   // translations/*.json: its words in the player's language
             Instance = this;
+            Log = Logger;
+            Synced = new DHack.Shared.ServerSettings(Guid, Config, Logger);
             Radius = Config.Bind("Ledger", "Radius", 30f, new ConfigDescription("How far from the Ledger Chest (metres) the chests it lists can be.", new AcceptableValueRange<float>(5f, 60f)));
             Scale = Config.Bind("Ledger", "Scale", 1f, new ConfigDescription("Size of the category buttons and notes under the ledger.", new AcceptableValueRange<float>(0.6f, 2f)));
+            Cost = Synced.Bind("Building", "Cost", DefaultCost, "What a Ledger Chest costs to build with the hammer (at a workbench). " + DHack.Shared.Costs.Help);
+            Cost.SettingChanged += (s, e) => ApplyCost();
+            Synced.ServerChanged += () => _tellNoServer = Synced.Server == DHack.Shared.ServerSettings.ServerMod.Missing;
             _harmony = new Harmony(Guid);
             _harmony.PatchAll();
             if (ZNetScene.instance != null) Register(ZNetScene.instance); // hot reload while in a world
@@ -57,10 +69,17 @@ namespace LedgerChest
             if (Instance == this) Instance = null;
             _harmony?.UnpatchSelf();
             Unregister();
+            Synced?.Dispose();
         }
 
         private void Update()
         {
+            Synced?.Update();
+            if (_tellNoServer && Player.m_localPlayer != null)
+            {
+                _tellNoServer = false;
+                Player.m_localPlayer.Message(MessageHud.MessageType.Center, "$ledgerchest_server_missing");
+            }
             Ledger.Tick();
             ClaudeLink();
         }
@@ -141,8 +160,16 @@ namespace LedgerChest
             // registered in place of an older copy's (a hot reload while playing), and the chests standing get this copy's marker
             // (what is in them is the game's own Container, untouched)
             DHack.Shared.PieceReload.ReplacePrefab(scene, _prefab, hammer.GetComponent<ItemDrop>().m_itemData.m_shared.m_buildPieces);
+            Synced.NeedsServer(_prefab);   // not in the build menu on a server without the mod (it would delete the chest and what is in it)
             int swapped = DHack.Shared.PieceReload.Reattach(scene, _prefab);
             if (swapped > 0) Debug.Log($"{Name}: {swapped} Ledger Chest(s) in the world now run this copy");
+        }
+
+        /// <summary>The cost setting (the server's in multiplayer) on the piece. One that can't be read keeps the last good cost.</summary>
+        internal static void ApplyCost()
+        {
+            Piece piece = _prefab != null ? _prefab.GetComponent<Piece>() : null;
+            if (piece != null) DHack.Shared.Costs.Apply(piece, Cost.Value, Log);
         }
 
         private static GameObject Make(GameObject source, CraftingStation workbench)
@@ -178,13 +205,21 @@ namespace LedgerChest
                 foreach (Renderer r in go.GetComponentsInChildren<Renderer>(true)) r.enabled = true;
             }
 
+            // snap points on the corners of its base, handles included (the wooden chest has none): it lines up with floor corners, wall
+            // ends and the chests beside it
+            DHack.Shared.SnapPoints.Clear(go);
+            DHack.Shared.SnapPoints.Box(go, new Vector3(-0.76f, 0f, -0.42f), new Vector3(0.76f, 0f, 0.42f));
+
             Piece piece = go.GetComponent<Piece>();
             piece.m_name = "$ledgerchest_piece";
             piece.m_description = "$ledgerchest_piece_desc";
             piece.m_category = Piece.PieceCategory.Furniture;
+            piece.m_usage = Piece.UsageTagFlags.Storage | Piece.UsageTagFlags.Furniture;   // the game's build-menu tags: a chest that lists the others
             piece.m_craftingStation = workbench;
-            piece.m_resources = new[] { Req("Wood", 10), Req("FineWood", 4), Req("LeatherScraps", 4), Req("Resin", 2) };
-            try { Sprite icon = Icon.Make(go); if (icon != null) piece.m_icon = icon; }
+            // the cost setting (a server owner can change it); if neither it nor the default can be read, the chest's: never free to build
+            if (!DHack.Shared.Costs.Apply(piece, Cost.Value, Log) && !DHack.Shared.Costs.Apply(piece, DefaultCost, Log))
+                piece.m_resources = source.GetComponent<Piece>().m_resources;
+            try { Sprite icon = DHack.Shared.Icon.Make(go, new Vector3(0.5f, 0.45f, -1f)); if (icon != null) piece.m_icon = icon; }
             catch (System.Exception e) { Debug.LogWarning($"{Name}: could not draw the build-menu picture: {e.Message}"); }
             go.AddComponent<LedgerPiece>();
             return go;
@@ -202,13 +237,6 @@ namespace LedgerChest
             _prefab = null;
             _holder = null;
             Look.Clear();
-        }
-
-        private static Piece.Requirement Req(string item, int amount)
-        {
-            GameObject go = ZNetScene.instance != null ? ZNetScene.instance.GetPrefab(item) : null;
-            if (go == null && ObjectDB.instance != null) go = ObjectDB.instance.GetItemPrefab(item);
-            return new Piece.Requirement { m_resItem = go != null ? go.GetComponent<ItemDrop>() : null, m_amount = amount, m_recover = true };
         }
     }
 

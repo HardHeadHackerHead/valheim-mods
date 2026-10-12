@@ -47,5 +47,6 @@
   "ledgerchest_no_room_msg": "No hay sitio en tu inventario",
   "ledgerchest_back_to_you": "Ningún cofre tiene sitio para {0}: vuelve a ti.",
   "ledgerchest_stays": "No hay sitio en ninguna parte para {0}: se queda en el cofre de registro.",
-  "ledgerchest_stays_msg": "No hay sitio en ninguna parte: {0} se queda en el cofre de registro"
+  "ledgerchest_stays_msg": "No hay sitio en ninguna parte: {0} se queda en el cofre de registro",
+  "ledgerchest_server_missing": "Ledger Chest no está instalado en este servidor, así que aquí no se pueden construir cofres de registro."
 }

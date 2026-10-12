@@ -925,5 +925,6 @@
   "aicompanion_net_marker": "{0} fell here",
   "aicompanion_net_lost_fight_other": "{0}'s companion {1} lost a fight at home while nobody was there: their things are in their tombstone (marked on your map)",
   "aicompanion_net_lost_fight": "{0} lost a fight at home while nobody was there: their things are in their tombstone (marked on your map)",
-  "aicompanion_net_fallen_other": "{0}'s companion {1} has fallen (marked on your map)"
+  "aicompanion_net_fallen_other": "{0}'s companion {1} has fallen (marked on your map)",
+  "aicompanion_server_missing": "AI Companion isn't installed on this server, so no companion can join you here."
 }

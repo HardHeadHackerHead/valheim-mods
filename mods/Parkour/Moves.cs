@@ -822,8 +822,11 @@ namespace Parkour
 
         // ---- what the blue bar shows (Bar.cs) ----
 
-        public static int KicksAllowed(Player p) =>
-            Mathf.Min(Plugin.KicksMax.Value, Plugin.KicksAtSkill0.Value + Mathf.FloorToInt(Skill.Level(p) / Mathf.Max(1, Plugin.KickEveryLevels.Value)));
+        public static int KicksAllowed(Player p) => KicksAt(Skill.Level(p));
+
+        /// <summary>Wall jumps in a row at a Parkour level (also in the skill's description: Skill.Describe).</summary>
+        public static int KicksAt(float level) =>
+            Mathf.Min(Plugin.KicksMax.Value, Plugin.KicksAtSkill0.Value + Mathf.FloorToInt(level / Mathf.Max(1, Plugin.KickEveryLevels.Value)));
 
         public static int KicksLeft(Player p) => Mathf.Max(0, KicksAllowed(p) - _kicks);
 
@@ -902,10 +905,9 @@ namespace Parkour
 
         internal static void Raise(Player p, float amount)
         {
-            float gain = amount * Plugin.SkillGain.Value;
-            if (gain <= 0f) return;
+            if (amount * Plugin.SkillGain.Value <= 0f) return;
             float before = Skill.Level(p);
-            p.RaiseSkill(Skill.Type, gain);
+            p.RaiseSkill(Skill.Type, amount);   // (SkillGain is in the skill's step: Skill.Gain)
             int unlock = Plugin.AutoRollLevel.Value;
             if (before < unlock && Skill.Level(p) >= unlock && unlock <= 100) p.Message(MessageHud.MessageType.Center, T("parkour_autoroll_unlocked"));
         }

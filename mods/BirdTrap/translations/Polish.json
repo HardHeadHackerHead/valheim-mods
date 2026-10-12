@@ -15,5 +15,6 @@
   "birdtrap_bait_state": "Przynęta: {0}/{1}  ·  {2}",
   "birdtrap_hover_add": "Dodaj przynętę (jagody lub nasiona)",
   "birdtrap_hover_fill": "Napełnij przynętą",
-  "birdtrap_plucked": "Oskubujesz mewę i ją wypuszczasz. Pióra: {0}"
+  "birdtrap_plucked": "Oskubujesz mewę i ją wypuszczasz. Pióra: {0}",
+  "birdtrap_server_missing": "Bird Trap nie jest zainstalowany na tym serwerze, więc nie można tu budować pułapek na ptaki."
 }

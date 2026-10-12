@@ -32,5 +32,6 @@
   "skaltavern_toast_companion": "Выпьем! Вы пьёте со своим спутником",
   "skaltavern_toast_companions": "Выпьем! Вы пьёте со своими спутниками",
   "skaltavern_toast_with_companion": "Выпьем! Вы пьёте вместе с {0} и своим спутником",
-  "skaltavern_toast_with_companions": "Выпьем! Вы пьёте вместе с {0} и своими спутниками"
+  "skaltavern_toast_with_companions": "Выпьем! Вы пьёте вместе с {0} и своими спутниками",
+  "skaltavern_server_missing": "SkalTavern не установлен на этом сервере, поэтому его напитки здесь варить нельзя."
 }

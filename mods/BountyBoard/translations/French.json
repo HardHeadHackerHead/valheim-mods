@@ -58,5 +58,6 @@
   "bountyboard_tracker_title": "Contrats du groupe",
   "bountyboard_you_have": "(vous en avez {0})",
   "bountyboard_to_collect": "{0} récompense à récupérer à un tableau",
-  "bountyboard_to_collect_many": "{0} récompenses à récupérer à un tableau"
+  "bountyboard_to_collect_many": "{0} récompenses à récupérer à un tableau",
+  "bountyboard_server_missing": "Bounty Board n'est pas installé sur ce serveur : impossible d'y construire des tableaux des primes."
 }

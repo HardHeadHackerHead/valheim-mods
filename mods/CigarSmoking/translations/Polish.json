@@ -73,5 +73,6 @@
   "cigarsmoking_hover_put": "Włóż liście z ekwipunku (do {0})",
   "cigarsmoking_drying_hover": "Suszenie: {1} ×{0}, jeszcze około {2} min",
   "cigarsmoking_curing_hover": "Dojrzewanie: {1} ×{0}, jeszcze około {2} min",
-  "cigarsmoking_hover_take": "Weź: {1} ×{0}"
+  "cigarsmoking_hover_take": "Weź: {1} ×{0}",
+  "cigarsmoking_server_missing": "Quad's Cigars nie jest zainstalowany na tym serwerze, więc nie można tu robić jego cygar ani budować jego konstrukcji."
 }

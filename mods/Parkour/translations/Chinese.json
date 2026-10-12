@@ -1,5 +1,5 @@
 {
-  "parkour_skill_description": "沿墙奔跑、蹬墙跳、冲上墙壁、攀上边缘、落地翻滚。技能越高，沿墙跑得越久越快、连续蹬墙次数越多、冲得越高、落地越轻，每个动作消耗的耐力越少。",
+  "parkour_skill_description": "沿墙奔跑、蹬墙跳、冲上墙壁、攀上边缘、落地翻滚。技能越高，沿墙跑得越久越快、连续蹬墙次数越多、冲得越高、落地越轻，每个动作消耗的耐力越少。技能从 0 到 100：沿墙奔跑 {run0}–{run100} 秒，连续蹬墙 {kicks0}–{kicks100} 次，冲上墙壁 {climb0}–{climb100} 米，落地翻滚可免除 {roll0}–{roll100} 米以内的坠落伤害。",
   "parkour_hint_wallrun": "沿墙奔跑！按跳跃蹬墙跳开。",
   "parkour_hint_climb": "冲上墙壁：按住前进以抓住顶部。",
   "parkour_hint_hang": "在边缘上：松开前进键再按一次，或跳跃，即可爬上去；转身背对墙并跳跃即可蹬墙跳开；A/D 沿边缘移动；下蹲或后退即可松手。",
@@ -10,6 +10,6 @@
   "parkour_hint_shimmy": "向左或向右可沿边缘移动。",
   "parkour_hint_slide": "滑铲！按住蹲下继续滑行，按跳跃借着速度跃出。",
   "parkour_hint_landing_slide": "从低处跳下时，在落地前一刻按蹲下即可落地滑铲。",
-  "skill_195522812": "跑酷",
+  "parkour_skill": "跑酷",
   "parkour_dungeon": "这里无法跑酷。"
 }

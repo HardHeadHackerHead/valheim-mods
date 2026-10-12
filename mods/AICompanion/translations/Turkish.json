@@ -925,5 +925,6 @@
   "aicompanion_net_marker": "{0} burada yere serildi",
   "aicompanion_net_lost_fight_other": "{0} adlı oyuncunun yoldaşı {1}, evde kimse yokken bir dövüşü kaybetti: eşyaları mezarında (haritanda işaretli)",
   "aicompanion_net_lost_fight": "{0}, evde kimse yokken bir dövüşü kaybetti: eşyaları mezarında (haritanda işaretli)",
-  "aicompanion_net_fallen_other": "{0} adlı oyuncunun yoldaşı {1} yere serildi (haritanda işaretli)"
+  "aicompanion_net_fallen_other": "{0} adlı oyuncunun yoldaşı {1} yere serildi (haritanda işaretli)",
+  "aicompanion_server_missing": "AI Companion bu sunucuda yüklü değil, bu yüzden burada sana hiçbir yoldaş katılamaz."
 }

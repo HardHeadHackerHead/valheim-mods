@@ -32,5 +32,6 @@
   "skaltavern_toast_companion": "Na zdrowie! Pijesz ze swoim towarzyszem",
   "skaltavern_toast_companions": "Na zdrowie! Pijesz ze swoimi towarzyszami",
   "skaltavern_toast_with_companion": "Na zdrowie! Pijesz razem z {0} i swoim towarzyszem",
-  "skaltavern_toast_with_companions": "Na zdrowie! Pijesz razem z {0} i swoimi towarzyszami"
+  "skaltavern_toast_with_companions": "Na zdrowie! Pijesz razem z {0} i swoimi towarzyszami",
+  "skaltavern_server_missing": "SkalTavern nie jest zainstalowany na tym serwerze, więc nie można tu warzyć jego napojów."
 }

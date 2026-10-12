@@ -16,5 +16,6 @@
   "slotmachine_horn": "Horn",
   "slotmachine_axe": "Axe",
   "slotmachine_raven": "Raven",
-  "slotmachine_valknut": "Valknut"
+  "slotmachine_valknut": "Valknut",
+  "slotmachine_server_missing": "Slot Machine isn't installed on this server, so Odin's Fortune can't be built here."
 }

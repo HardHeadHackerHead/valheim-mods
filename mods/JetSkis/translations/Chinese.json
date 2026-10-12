@@ -19,5 +19,6 @@
   "jetskis_paint_teal": "青色",
   "jetskis_paint_purple": "紫色",
   "jetskis_paint_black": "黑色",
-  "jetskis_paint_wood": "原木色"
+  "jetskis_paint_wood": "原木色",
+  "jetskis_server_missing": "此服务器未安装 Jet Skis，因此无法在这里建造摩托艇。"
 }

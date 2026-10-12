@@ -11,7 +11,8 @@ namespace SkalTavern
     ///
     /// How many swigs are left is kept on the stack, for its top mug (m_customData "SkalTavern.swigs", which the game saves with the item):
     /// when they run out the stack loses one mug and the next one starts full. A stack without the key (brewed, or from before swigs) is full.
-    /// The counter belongs to the stack: split one and both halves carry it, put two together and the one you add to keeps its own.
+    /// The counter belongs to the stack, and a stack with swigs missing never joins another (see Stacks.cs): in a split the half that stays keeps
+    /// it and the new half starts full, so no swig is made up or lost.
     /// </summary>
     internal static class Swigs
     {

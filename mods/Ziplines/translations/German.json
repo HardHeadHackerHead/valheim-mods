@@ -29,5 +29,6 @@
   "ziplines_in_way": "{0} m entlang des Seils ist etwas im Weg ({1}).",
   "ziplines_a_tree": "ein Baum",
   "ziplines_the_ground": "der Boden",
-  "ziplines_rock_or_tree": "ein Fels oder ein Baum"
+  "ziplines_rock_or_tree": "ein Fels oder ein Baum",
+  "ziplines_server_missing": "Ziplines ist auf diesem Server nicht installiert, daher können hier keine Seilrutschenpfähle gebaut werden."
 }

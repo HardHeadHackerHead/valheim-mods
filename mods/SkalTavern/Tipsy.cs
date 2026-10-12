@@ -1,3 +1,4 @@
+using DHack.Shared;
 using UnityEngine;
 using static DHack.Shared.Translations;
 
@@ -105,6 +106,13 @@ namespace SkalTavern
             player.Message(MessageHud.MessageType.TopLeft, T("skaltavern_puke"));
         }
 
+        /// <summary>How drunk you were when the mod was reloaded, from the Tipsy effect it put back (Shared/StatusEffects.cs).</summary>
+        public static void PutBack(float level)
+        {
+            Level = Mathf.Clamp(level, 0f, 130f);
+            _peak = Mathf.Max(_peak, Level);
+        }
+
         public static void Clear()
         {
             Level = 0f; _peak = 0f;
@@ -120,7 +128,8 @@ namespace SkalTavern
 
     // ---- the status effects ----------------------------------------------------------------------------------------
 
-    /// <summary>One swig of a drink: raises how drunk you are, then is gone (the Tipsy effect is what stays).</summary>
+    /// <summary>One swig of a drink: raises how drunk you are, then is gone (the Tipsy effect is what stays). Put back after a reload of the
+    /// mod (in its last second) it isn't drunk again.</summary>
     public class SE_Drink : StatusEffect
     {
         public float Amount;
@@ -129,16 +138,26 @@ namespace SkalTavern
         public override void Setup(Character character)
         {
             base.Setup(character);
-            if (character == Player.m_localPlayer) Tipsy.Drink(Amount, Share);
+            if (character == Player.m_localPlayer && !StatusEffects.PuttingBack) Tipsy.Drink(Amount, Share);
         }
     }
 
-    /// <summary>The lasting effect of drinking: a little warmth and stamina when you are merry, none of it (and worse) when you are not.</summary>
-    public class SE_Tipsy : SE_Stats
+    /// <summary>The lasting effect of drinking: a little warmth and stamina when you are merry, none of it (and worse) when you are not. It
+    /// carries how drunk you are over a reload of the mod (that lives in Tipsy.Level, which a reloaded copy starts again at 0).</summary>
+    public class SE_Tipsy : SE_Stats, StatusEffects.ICarry
     {
+        public float Carry => m_character == Player.m_localPlayer ? Tipsy.Level : float.NaN;
+
+        public void PutBack(float carry)
+        {
+            if (!float.IsNaN(carry) && m_character == Player.m_localPlayer) Tipsy.PutBack(carry);
+            Apply();
+        }
+
         public override void Setup(Character character)
         {
             m_ttl = 0f;   // (stays until you are sober)
+            m_mods = new System.Collections.Generic.List<HitData.DamageModPair>();   // its own list: Clone shares the stored effect's with every copy
             base.Setup(character);
             Apply();
         }

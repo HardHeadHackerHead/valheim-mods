@@ -73,5 +73,6 @@
   "cigarsmoking_hover_put": "Envanterden yaprak koy (en fazla {0})",
   "cigarsmoking_drying_hover": "{0} {1} kuruyor: yaklaşık {2} dk kaldı",
   "cigarsmoking_curing_hover": "{0} {1} olgunlaşıyor: yaklaşık {2} dk kaldı",
-  "cigarsmoking_hover_take": "{0} {1} al"
+  "cigarsmoking_hover_take": "{0} {1} al",
+  "cigarsmoking_server_missing": "Quad's Cigars bu sunucuda yüklü değil, bu yüzden burada purolar ve yapıları yapılamaz."
 }

@@ -1,67 +1,64 @@
+using System.Globalization;
 using System.IO;
-using HarmonyLib;
 using UnityEngine;
+using static DHack.Shared.Translations;
 
 namespace Parkour
 {
     /// <summary>
     /// The Parkour skill. Every move raises it; it makes wall runs longer, climbs higher and every move cheaper.
     ///
-    /// The game's skills are an enum, so a mod's skill is a number of its own: a stable hash of our id (as blaxxun's SkillManager makes
-    /// them), far from the game's 0-999 and from other mods' (Smooth Climbing's "Climbing" is 1879153461). For the game to keep it:
-    ///   * a SkillDef (icon, description) in the player's Skills list, and handed out when the game looks ours up (GetSkillDef);
-    ///   * Skills.IsSkillValid accepting the number (it asks Enum.IsDefined, so a saved level would be dropped on load);
-    ///   * its name under the key the game makes from it, "$skill_" + the number ("skill_195522812" in translations).
-    /// Without the mod the saved level is simply dropped the next time the character loads: no harm.
+    /// The skill itself is Shared/Skill.cs: a number of its own (a stable hash of our GUID, far from the game's 0-999 and from other mods':
+    /// Smooth Climbing's "Climbing" is 1879153461), kept by Skills.Load, named "$parkour_skill" where the game shows "$skill_195522812",
+    /// found by raiseskill / resetskill, and backed up in the character's custom data ("com.quad.parkour.skill"). Without the backup a single
+    /// load without the mod (a second mod-manager profile, the mod switched off) dropped the level for good at the next save; now it comes
+    /// back the next time the character loads with the mod. Never change the id: the number is its hash (195522812).
     /// </summary>
     internal static class Skill
     {
-        public static readonly Skills.SkillType Type = MakeType();
-        private static Skills.SkillDef _def;
-
-        private static Skills.SkillType MakeType()
-        {
-            int hash = Plugin.Guid.GetStableHashCode() & 0x7FFFFFFF;   // (positive: the key "skill_<number>" must not have a minus sign)
-            if (hash < 1000) hash += 1000;
-            return (Skills.SkillType)hash;                              // 195522812
-        }
-
-        public static Skills.SkillDef Def => _def ?? (_def = new Skills.SkillDef
-        {
-            m_skill = Type,
-            m_icon = LoadIcon(),
-            m_description = "$parkour_skill_description",
-            m_increseStep = 1f,
-        });
+        public static readonly Skills.SkillType Type = DHack.Shared.Skill.TypeFor(Plugin.Guid);   // 195522812, as in 0.1.0
+        private static DHack.Shared.Skill _skill;
 
         /// <summary>0 to 1: the player's Parkour level over 100.</summary>
-        public static float Factor(Player p) => p != null ? p.GetSkillFactor(Type) : 0f;
+        public static float Factor(Player p) => p != null && p.GetSkills() != null ? p.GetSkillFactor(Type) : 0f;
 
         public static float Level(Player p) => p != null && p.GetSkills() != null ? p.GetSkills().GetSkillLevel(Type) : 0f;
 
-        public static void Register(Player p)
+        /// <summary>How fast it rises (the server's SkillGain setting), live.</summary>
+        public static float Gain { set { if (_skill != null && _skill.Gain != value) _skill.Gain = value; } }
+
+        /// <summary>In Awake, after the translations and the settings (also on the player already in the world, after a hot reload).</summary>
+        public static void Create()
         {
-            if (p != null && p.GetSkills() != null) Register(p.GetSkills());
+            _skill?.Dispose();
+            _skill = new DHack.Shared.Skill(Plugin.Guid, "Parkour", "$parkour_skill", "$parkour_skill_description", LoadIcon());
+            Describe();
         }
 
-        private static void Register(Skills skills)
+        /// <summary>
+        /// The description (the skills window's tooltip) says what skill 0 and 100 give in numbers, from the strengths' settings: the
+        /// server's on a server, and again whenever one changes or the language does (Translations.Fill; Unload lets go of them).
+        /// </summary>
+        private static void Describe()
         {
-            Skills.SkillDef existing = skills.m_skills.Find(d => d.m_skill == Type);
-            if (existing == null) skills.m_skills.Add(Def);
-            else if (existing != Def) { existing.m_icon = Def.m_icon; existing.m_description = Def.m_description; }   // (an earlier copy of the mod's, after a reload)
+            const string key = "parkour_skill_description";
+            Fill(key, "run0", Plugin.WallRunMin, Number);
+            Fill(key, "run100", Plugin.WallRunMax, Number);
+            Fill(key, "kicks0", () => Moves.KicksAt(0f).ToString(CultureInfo.InvariantCulture), Plugin.KicksAtSkill0, Plugin.KickEveryLevels, Plugin.KicksMax);
+            Fill(key, "kicks100", () => Moves.KicksAt(100f).ToString(CultureInfo.InvariantCulture), Plugin.KicksAtSkill0, Plugin.KickEveryLevels, Plugin.KicksMax);
+            Fill(key, "climb0", Plugin.ClimbMin, Number);
+            Fill(key, "climb100", Plugin.ClimbMax, Number);
+            Fill(key, "roll0", Plugin.RollSafeMin, Number);
+            Fill(key, "roll100", Plugin.RollSafeMax, Number);
         }
 
-        public static void Reset() => _def = null;   // (the def stays on the player: the skill keeps showing until the game restarts)
+        private static string Number(float value) => value.ToString("0.#", CultureInfo.InvariantCulture);
 
-        [HarmonyPatch(typeof(Skills), nameof(Skills.Awake))]
-        private static class Skills_Awake { private static void Postfix(Skills __instance) => Register(__instance); }
-
-        [HarmonyPatch(typeof(Skills), "IsSkillValid")]
-        private static class Skills_IsSkillValid { private static void Postfix(Skills.SkillType type, ref bool __result) { if (type == Type) __result = true; } }
-
-        // The game makes a skill's entry from its def: never let ours be made without one (a missing def breaks the skills window).
-        [HarmonyPatch(typeof(Skills), "GetSkillDef")]
-        private static class Skills_GetSkillDef { private static void Postfix(Skills.SkillType type, ref Skills.SkillDef __result) { if (__result == null && type == Type) __result = Def; } }
+        public static void Reset()
+        {
+            _skill?.Dispose();   // (the def stays on the player: the skill keeps showing until the game restarts)
+            _skill = null;
+        }
 
         // ---- the icon ----
 

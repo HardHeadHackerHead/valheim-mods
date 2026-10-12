@@ -73,5 +73,6 @@
   "cigarsmoking_hover_put": "Blätter aus dem Inventar hineinlegen (bis zu {0})",
   "cigarsmoking_drying_hover": "{0} {1} trocknen: noch etwa {2} Min.",
   "cigarsmoking_curing_hover": "{0} {1} reifen: noch etwa {2} Min.",
-  "cigarsmoking_hover_take": "{0} {1} nehmen"
+  "cigarsmoking_hover_take": "{0} {1} nehmen",
+  "cigarsmoking_server_missing": "Quad's Cigars ist auf diesem Server nicht installiert, daher können hier keine Zigarren und Bauten daraus hergestellt werden."
 }

@@ -58,5 +58,6 @@
   "bountyboard_tracker_title": "队伍委托",
   "bountyboard_you_have": "（你有 {0}）",
   "bountyboard_to_collect": "有 {0} 份奖励可到告示板领取",
-  "bountyboard_to_collect_many": "有 {0} 份奖励可到告示板领取"
+  "bountyboard_to_collect_many": "有 {0} 份奖励可到告示板领取",
+  "bountyboard_server_missing": "此服务器未安装 Bounty Board，因此无法在这里建造悬赏告示板。"
 }

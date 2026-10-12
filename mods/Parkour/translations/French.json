@@ -1,5 +1,5 @@
 {
-  "parkour_skill_description": "Courir le long des murs, s'en propulser, les gravir en courant, se hisser sur les rebords et rouler à la réception. Courses murales plus longues et plus rapides, plus de sauts muraux d'affilée, montées plus hautes, réceptions plus douces et moins d'endurance pour chaque mouvement.",
+  "parkour_skill_description": "Courir le long des murs, s'en propulser, les gravir en courant, se hisser sur les rebords et rouler à la réception. Courses murales plus longues et plus rapides, plus de sauts muraux d'affilée, montées plus hautes, réceptions plus douces et moins d'endurance pour chaque mouvement. De la compétence 0 à 100 : courses murales de {run0} à {run100} s, {kicks0} à {kicks100} sauts muraux d'affilée, montées de {climb0} à {climb100} m, et roulades à la réception sans dégâts pour des chutes de {roll0} à {roll100} m.",
   "parkour_hint_wallrun": "Course murale ! Sautez pour vous propulser du mur.",
   "parkour_hint_climb": "Vous gravissez le mur : maintenez Avancer pour saisir le haut.",
   "parkour_hint_hang": "Au rebord : relâchez avancer puis appuyez à nouveau, ou sautez, pour vous hisser ; regardez ailleurs et sautez pour vous propulser ; A/D pour longer le rebord ; accroupissez-vous ou reculez pour lâcher.",
@@ -10,6 +10,6 @@
   "parkour_hint_shimmy": "Gauche ou droite vous déplace le long du rebord.",
   "parkour_hint_slide": "Glissade ! Maintenez S'accroupir pour continuer à glisser, Sauter pour bondir avec l'élan.",
   "parkour_hint_landing_slide": "Appuyez sur S'accroupir juste avant de toucher le sol après un petit saut pour atterrir en glissade.",
-  "skill_195522812": "Parkour",
+  "parkour_skill": "Parkour",
   "parkour_dungeon": "Pas de parkour ici."
 }
