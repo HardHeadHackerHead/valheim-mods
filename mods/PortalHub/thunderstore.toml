@@ -6,7 +6,7 @@ schemaVersion = "0.0.1"
 [package]
 namespace = "Quads_Lab"
 name = "Quads_Portal_Hub"
-versionNumber = "1.4.1"
+versionNumber = "1.4.3"
 description = "A portal network: press E on a portal and pick where it goes from a list, a teleport menu with search, favourites and map lines. No more matching portal names; portals you already built keep working."
 websiteUrl = "https://github.com/HardHeadHackerHead/valheim-mods/tree/main/mods/PortalHub"
 containsNsfwContent = false

@@ -6,7 +6,7 @@ schemaVersion = "0.0.1"
 [package]
 namespace = "Quads_Lab"
 name = "Quads_Quality_Of_Life"
-versionNumber = "1.13.2"
+versionNumber = "1.13.4"
 description = "Small QoL controls, each with its own switch: sort and stack to chests, chests that take what you assign, item locks, quick build sets, a boat push and more."
 websiteUrl = "https://github.com/HardHeadHackerHead/valheim-mods/tree/main/mods/QualityOfLife"
 containsNsfwContent = false

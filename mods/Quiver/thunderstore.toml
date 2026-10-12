@@ -6,7 +6,7 @@ schemaVersion = "0.0.1"
 [package]
 namespace = "Quads_Lab"
 name = "Quads_Quiver"
-versionNumber = "0.2.3"
+versionNumber = "0.2.4"
 description = "Arrow recovery: pick your shot arrows and bolts back up from the ground, trees, walls and creatures, and carry them in a quiver on your back. Archery that doesn't eat your arrows: retrieve them, save your ammo."
 websiteUrl = "https://github.com/HardHeadHackerHead/valheim-mods/tree/main/mods/Quiver"
 containsNsfwContent = false

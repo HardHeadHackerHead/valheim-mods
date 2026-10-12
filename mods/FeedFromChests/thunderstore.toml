@@ -6,7 +6,7 @@ schemaVersion = "0.0.1"
 [package]
 namespace = "Quads_Lab"
 name = "Quads_Feed_From_Chests"
-versionNumber = "1.8.2"
+versionNumber = "1.8.4"
 description = "Smelters, kilns, cooking racks, fires and fermenters refuel and fill themselves from nearby chests (auto fuel and ore), and smelters and kilns can run themselves."
 websiteUrl = "https://github.com/HardHeadHackerHead/valheim-mods/tree/main/mods/FeedFromChests"
 containsNsfwContent = false

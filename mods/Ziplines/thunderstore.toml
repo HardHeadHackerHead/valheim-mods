@@ -6,7 +6,7 @@ schemaVersion = "0.0.1"
 [package]
 namespace = "Quads_Lab"
 name = "Quads_Ziplines"
-versionNumber = "0.3.2"
+versionNumber = "0.3.3"
 description = "Ziplines (zip line): build two posts, even kilometres apart, run a rope between them and ride it downhill hanging from your axe. Fast travel across valleys and down mountains, saved with the world."
 websiteUrl = "https://github.com/HardHeadHackerHead/valheim-mods/tree/main/mods/Ziplines"
 containsNsfwContent = false

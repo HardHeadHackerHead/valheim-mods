@@ -6,7 +6,7 @@ schemaVersion = "0.0.1"
 [package]
 namespace = "Quads_Lab"
 name = "Quads_Bounty_Board"
-versionNumber = "1.4.2"
+versionNumber = "1.4.4"
 description = "A buildable notice board with bounties for the whole group: quests and hunting contracts, paid in coins and the materials of the stage you have reached."
 websiteUrl = "https://github.com/HardHeadHackerHead/valheim-mods/tree/main/mods/BountyBoard"
 containsNsfwContent = false

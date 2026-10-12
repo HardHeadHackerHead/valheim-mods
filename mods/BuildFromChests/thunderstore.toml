@@ -6,7 +6,7 @@ schemaVersion = "0.0.1"
 [package]
 namespace = "Quads_Lab"
 name = "Quads_Build_From_Chests"
-versionNumber = "1.5.2"
+versionNumber = "1.5.3"
 description = "Build from chests and containers: placing pieces with the hammer takes materials from your inventory, then from nearby chests (20 m, or your own range), and the build menu counts everything in storage. Pairs with Craft From Chests."
 websiteUrl = "https://github.com/HardHeadHackerHead/valheim-mods/tree/main/mods/BuildFromChests"
 containsNsfwContent = false
