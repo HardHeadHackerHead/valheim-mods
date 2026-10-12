@@ -491,7 +491,7 @@ after it finishes, or restart if the installer reports a mod that requires it
 - A mod that cannot be reloaded in game gets a `RESTART_REQUIRED.txt` explaining why.
 - Set `VALHEIM_DIR` for a custom game library; you do not need to edit shared build settings.
 - Mods with hand-made 3D looks (Bounty Board, Slot Machine, Bird Trap) are described as simple shapes in `tools/modelkit`, which draws previews and writes the C# for them; see its README.
-- Before writing or changing a mod, read [`docs/modding-pitfalls.md`](docs/modding-pitfalls.md): bugs that cost players their items and buildings, and how to avoid them.
+- Before writing or changing a mod, read [the modding pitfalls](https://github.com/HardHeadHackerHead/valheim-claude-tools/blob/main/docs/modding-pitfalls.md) in the toolkit (valheim-claude-tools): bugs that cost players their items and buildings, and how to avoid them.
 - Release: `.\publish.ps1`, then `git add -A; git commit; git push`.
 
 ## 🧱 Make your own mod repo

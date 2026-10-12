@@ -1,6 +1,7 @@
 # valhiem
 
-Before writing or changing a mod, read `docs/modding-pitfalls.md` (bugs that lost players' items and buildings, and how to avoid them).
+Before writing or changing a mod, read the toolkit's `E:\valheim-claude-tools\docs\modding-pitfalls.md` (bugs that lost players' items
+and buildings, and how to avoid them; the valheim-pitfalls skill has the same). It is the only copy: add new pitfalls there.
 
 ## Where things live (three repos side by side)
 

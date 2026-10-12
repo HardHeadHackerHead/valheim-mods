@@ -21,7 +21,7 @@ format is kept at the top of `Packs.cs`. If this skill disagrees with the code, 
 - **[map.md](map.md)**: how the in-game map reads a pack (floors from doorway heights, stairs by name), and how to check it offline.
 - This file: how the system works, the workflow, the tools, enemies and loot, and the lessons.
 
-Read `docs/modding-pitfalls.md` too before changing the mod's code: it has the rules for saved objects, ownership and items.
+Read the modding pitfalls too before changing the mod's code (the **valheim-pitfalls** skill, or `docs/modding-pitfalls.md` in [valheim-claude-tools](https://github.com/HardHeadHackerHead/valheim-claude-tools/blob/main/docs/modding-pitfalls.md)): it has the rules for saved objects, ownership and items.
 
 ## How it works
 

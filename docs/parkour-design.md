@@ -63,7 +63,7 @@ for that part (SmoothClimbing: our wall climb and ledge grab; Just_Vault: our ma
 mods" part lists them.
 
 ## How our mods are built (follow it)
-- Read `E:\valhiem\docs\modding-pitfalls.md` and the skills (`C:\Users\DHack\.claude\plugins\cache\valheim-claude-tools\valheim-modding\1.2.8\skills\`:
+- Read `E:\valheim-claude-tools\docs\modding-pitfalls.md` and the skills (`C:\Users\DHack\.claude\plugins\cache\valheim-claude-tools\valheim-modding\1.2.8\skills\`:
   valheim-mod-start, valheim-pitfalls, valheim-compat, valheim-game-code).
 - Translations from the start (mods/Shared/Translations.cs comes in by itself when `translations/English.json` exists): 9 languages
   (English, Russian, German, Chinese, Portuguese_Brazilian, Spanish, French, Polish, Turkish), keys `parkour_*`, the game's own words
