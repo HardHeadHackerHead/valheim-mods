@@ -6,4 +6,5 @@ and tested in our own world, with **bobisme** as our tester.
 - 🧰 [All Quads Lab mods on Thunderstore](https://thunderstore.io/c/valheim/p/Quads_Lab/)
 - 💻 [Source code on GitHub](https://github.com/HardHeadHackerHead/valheim-mods)
 - 💬 [Discord](https://discord.gg/EwTjQxEZPy)
+- ☕ [Buy me a coffee](https://buymeacoffee.com/quadh)
 - 🐞 Found a bug? [Open an issue on GitHub](https://github.com/HardHeadHackerHead/valheim-mods/issues/new/choose)

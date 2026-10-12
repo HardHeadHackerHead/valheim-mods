@@ -6,7 +6,8 @@ package, which makes its links absolute):
     Features (DESCRIPTION.txt)        Screenshots (hand-written)       How to use (keys from the repo's README, hand-written notes)
     Other mods (hand-written: known clashes, "none known" until there are some)
     Multiplayer (who needs it, from the repo's README; hand-written notes)            Settings (the mod's config file, or its code)
-    Made with AI      About Quads Lab (tools/modpages/about.md, the same on every page)      Recent changes (CHANGELOG.txt, the newest 3)
+    Made with AI      Join us on Discord (community.md)      About Quads Lab (tools/modpages/about.md, the same on every page)
+    Support my mods (support.md, the Buy Me a Coffee banner)      Recent changes (CHANGELOG.txt, the newest 3)
 
 Hand-written parts survive: each sits between <!-- HAND-WRITTEN: <part> --> and <!-- END HAND-WRITTEN: <part> --> and is kept as it is
 when the page is written again (screenshots, how-to-use, other-mods, multiplayer). The first time, the screenshots part holds
@@ -33,6 +34,12 @@ DISCORD = "https://discord.gg/EwTjQxEZPy"
 # the banner over the Discord section: loaded from GitHub on every page (Thunderstore too), so a new picture here shows everywhere
 BANNER = "https://raw.githubusercontent.com/HardHeadHackerHead/valheim-mods/main/tools/modpages/discord-banner.jpg"
 BANNER_FILE = os.path.join(os.path.dirname(__file__), "discord-banner.jpg")
+# Buy Me a Coffee: a badge by the Discord one at the top, and a section with its banner (loaded from GitHub like the Discord one) after
+# About Quads Lab. Its words are support.md; the banner is support-banner.jpg (made from support-banner-source.png, 1600 px wide).
+SUPPORT = "https://buymeacoffee.com/quadh"
+SUPPORT_WORDS = os.path.join(os.path.dirname(__file__), "support.md")
+SUPPORT_BANNER = "https://raw.githubusercontent.com/HardHeadHackerHead/valheim-mods/main/tools/modpages/support-banner.jpg"
+SUPPORT_BANNER_FILE = os.path.join(os.path.dirname(__file__), "support-banner.jpg")
 THUNDERSTORE_TEAM = "Quads_Lab"  # our team on Thunderstore: each mod is its own package there
 REPO = "https://github.com/HardHeadHackerHead/valheim-mods"
 MANAGER = "https://github.com/HardHeadHackerHead/valheim-mod-manager"
@@ -269,7 +276,8 @@ def page(folder, cards, keys, who, default_who, about):
                        badge("made with", "Claude Code", "c26a3d")]), ""]
     links = "  ·  ".join(["[Source code](%s/tree/main/mods/%s)" % (REPO, folder), "[Report a bug](%s)" % bug, "[Discord](%s)" % DISCORD])
     out += [(github_only("[Thunderstore](%s)  ·  " % store) if on_store else "") + links, ""]
-    out += ["[![Join us on Discord](https://img.shields.io/badge/Join_us_on-Discord-5865F2?style=for-the-badge&logo=discord&logoColor=white)](%s)" % DISCORD, ""]
+    out += ["[![Join us on Discord](https://img.shields.io/badge/Join_us_on-Discord-5865F2?style=for-the-badge&logo=discord&logoColor=white)](%s)  "
+            "[![Buy me a coffee](https://img.shields.io/badge/Buy_me_a-coffee-FFDD00?style=for-the-badge&logo=buymeacoffee&logoColor=black)](%s)" % (DISCORD, SUPPORT), ""]
     if on_store:
         out += [github_only("**Install:** with [r2modman](https://thunderstore.io/c/valheim/p/ebkr/r2modman/) or Thunderstore Mod Manager from "
                             "[Thunderstore](%s), or press **F7** in the game with our [mod manager](%s)." % (store, MANAGER)), ""]
@@ -354,6 +362,11 @@ def page(folder, cards, keys, who, default_who, about):
         out += ['<a href="%s"><img src="%s" alt="Join the Quads Lab Discord" width="100%%"></a>' % (DISCORD, BANNER), ""]
     out += [(read(COMMUNITY) or "").strip(), "", "**[Join the Quads Lab Discord →](%s)**" % DISCORD, ""]
     out += ["## 🧪 About Quads Lab", "", about.strip(), ""]
+
+    out += ["## ☕ Support my mods", ""]
+    if os.path.exists(SUPPORT_BANNER_FILE):
+        out += ['<a href="%s"><img src="%s" alt="Support my mods: buy me a coffee" width="100%%"></a>' % (SUPPORT, SUPPORT_BANNER), ""]
+    out += [(read(SUPPORT_WORDS) or "").strip(), "", "**[☕ Buy me a coffee →](%s)**" % SUPPORT, ""]
 
     if log.strip():
         out += ["## 📜 Recent changes", ""]

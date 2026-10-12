@@ -10,6 +10,7 @@ Craft and build from chests. Bring a viking companion on your adventures. Plan b
 [![License: MIT](https://img.shields.io/badge/license-MIT-green?style=flat-square)](LICENSE)
 [![Mod Manager](https://img.shields.io/badge/get%20them%20with-the%20mod%20manager-f2c75c?style=flat-square)](https://github.com/HardHeadHackerHead/valheim-mod-manager)
 ![Languages](https://img.shields.io/badge/languages-9-4c7a3d?style=flat-square)
+[![Buy me a coffee](https://img.shields.io/badge/buy%20me%20a-coffee-FFDD00?style=flat-square&logo=buymeacoffee&logoColor=black)](https://buymeacoffee.com/quadh)
 
 In your language: English · Русский · Deutsch · 简体中文 · Português do Brasil · Español · Français · Polski · Türkçe
 
@@ -443,6 +444,15 @@ Details are in [`tools/blueprints`](tools/blueprints).
 ## 🛡️ Playing fair
 
 These mods are about convenience, not cheating. Materials always come out of your inventory or a chest, and recycling returns only part of what gear cost. The two mods that do hand things out are tuned to stay fair: Bounty Board pay follows how many bosses the group has beaten, and the slot machine gives back less than it takes in.
+
+## ☕ Support my mods
+
+<a href="https://buymeacoffee.com/quadh"><img src="tools/modpages/support-banner.jpg" alt="Support my mods: buy me a coffee" width="100%"></a>
+
+Every Quads Lab mod is free, and it stays that way. If one of them made your game better and you'd like to say thanks, a coffee
+helps me make new mods and keep improving the ones you already play. It's 100% optional, and always appreciated!
+
+**[☕ Buy me a coffee →](https://buymeacoffee.com/quadh)**
 
 ## 🧑‍💻 For developers
 
