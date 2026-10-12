@@ -1,0 +1,19 @@
+{
+  "fourwheelers_atv": "Four Wheeler",
+  "fourwheelers_atv_desc": "A rugged four-wheeled runabout with a surtling-core engine, room for a passenger and a rack for your gear. Build it on dry land.",
+  "fourwheelers_ride": "Ride",
+  "fourwheelers_help": "W go, Shift+W full speed, S brake and reverse, A and D steer, Jump or E to get off.",
+  "fourwheelers_too_far": "Get closer to the four wheeler to climb on.",
+  "fourwheelers_too_heavy": "You are carrying too much to ride.",
+  "fourwheelers_passenger": "Passenger seat",
+  "fourwheelers_bags": "Rack",
+  "fourwheelers_server_missing": "Four Wheelers isn't installed on this server, so four wheelers can't be built here.",
+  "fourwheelers_kmh": "km/h",
+  "fourwheelers_gear_idle": "Idle",
+  "fourwheelers_gear_cruise": "Cruise",
+  "fourwheelers_gear_full": "Full speed",
+  "fourwheelers_gear_brake": "Braking",
+  "fourwheelers_gear_reverse": "Reverse",
+  "fourwheelers_paint": "Paint",
+  "fourwheelers_right": "Set upright"
+}

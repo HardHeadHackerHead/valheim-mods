@@ -1,0 +1,19 @@
+{
+  "fourwheelers_atv": "Cuatriciclo",
+  "fourwheelers_atv_desc": "Un robusto vehículo de cuatro ruedas con motor de corazón de surtling, sitio para un pasajero y una parrilla para tu equipo. Se construye en tierra firme.",
+  "fourwheelers_ride": "Montar",
+  "fourwheelers_help": "W avanzar, Shift+W a toda velocidad, S frenar y marcha atrás, A y D girar, Saltar o E para bajarte.",
+  "fourwheelers_too_far": "Acércate más al cuatriciclo para subirte.",
+  "fourwheelers_too_heavy": "Llevas demasiado peso para montar.",
+  "fourwheelers_passenger": "Asiento del pasajero",
+  "fourwheelers_bags": "Parrilla",
+  "fourwheelers_server_missing": "Four Wheelers no está instalado en este servidor, así que aquí no se pueden construir cuatriciclos.",
+  "fourwheelers_kmh": "km/h",
+  "fourwheelers_gear_idle": "Ralentí",
+  "fourwheelers_gear_cruise": "Crucero",
+  "fourwheelers_gear_full": "A toda velocidad",
+  "fourwheelers_gear_brake": "Frenando",
+  "fourwheelers_gear_reverse": "Marcha atrás",
+  "fourwheelers_paint": "Pintar",
+  "fourwheelers_right": "Enderezar"
+}

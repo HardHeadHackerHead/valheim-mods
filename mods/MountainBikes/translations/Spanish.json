@@ -1,0 +1,17 @@
+{
+  "mountainbikes_bike": "Bicicleta de montaña",
+  "mountainbikes_bike_desc": "Una bicicleta resistente para colinas y senderos. Pedaleas tú mismo, así que cansa, pero no necesita combustible y llega adonde un caminante se arrastraría. Se construye en tierra firme.",
+  "mountainbikes_ride": "Montar",
+  "mountainbikes_help": "W pedalear, Shift+W esprintar, S frenar y marcha atrás, A y D girar, Saltar o E para bajarte.",
+  "mountainbikes_too_far": "Acércate más a la bicicleta de montaña para subirte.",
+  "mountainbikes_too_heavy": "Llevas demasiado peso para montar.",
+  "mountainbikes_server_missing": "Mountain Bikes no está instalado en este servidor, así que aquí no se pueden construir bicicletas de montaña.",
+  "mountainbikes_kmh": "km/h",
+  "mountainbikes_gear_idle": "Ralentí",
+  "mountainbikes_gear_cruise": "Pedaleo",
+  "mountainbikes_gear_full": "Esprint",
+  "mountainbikes_gear_brake": "Frenando",
+  "mountainbikes_gear_reverse": "Marcha atrás",
+  "mountainbikes_paint": "Pintar",
+  "mountainbikes_right": "Enderezar"
+}

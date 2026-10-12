@@ -1,0 +1,19 @@
+{
+  "fourwheelers_atv": "Quad",
+  "fourwheelers_atv_desc": "Ein robustes vierrädriges Gefährt mit Surtling-Kern-Motor, Platz für einen Beifahrer und einem Gepäckträger für deine Ausrüstung. Wird an Land gebaut.",
+  "fourwheelers_ride": "Fahren",
+  "fourwheelers_help": "W fahren, Shift+W Vollgas, S bremsen und rückwärts, A und D lenken, Springen oder E zum Absteigen.",
+  "fourwheelers_too_far": "Geh näher an das Quad, um aufzusteigen.",
+  "fourwheelers_too_heavy": "Du trägst zu viel, um zu fahren.",
+  "fourwheelers_passenger": "Beifahrersitz",
+  "fourwheelers_bags": "Gepäckträger",
+  "fourwheelers_server_missing": "Four Wheelers ist auf diesem Server nicht installiert, daher können hier keine Quads gebaut werden.",
+  "fourwheelers_kmh": "km/h",
+  "fourwheelers_gear_idle": "Leerlauf",
+  "fourwheelers_gear_cruise": "Fahrt",
+  "fourwheelers_gear_full": "Vollgas",
+  "fourwheelers_gear_brake": "Bremsen",
+  "fourwheelers_gear_reverse": "Rückwärts",
+  "fourwheelers_paint": "Bemalen",
+  "fourwheelers_right": "Aufrichten"
+}

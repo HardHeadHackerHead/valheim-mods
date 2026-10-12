@@ -111,5 +111,15 @@
     "From the side at dusk: the painted band's bronze rivets, a round shield, the saddle and the caged surtling core",
     "From behind: the core glowing in its cage and the jet's spray on the water",
     "Stopped on a misty morning: the curled prow, the painted cowl and the iron handlebars"
+  ],
+  "FourWheelers": [
+    "From the front three-quarter: twin headlights, chrome bumper, sculpted red body with rally stripes, curved fenders and chevron-tread tyres",
+    "From behind: the long seat, the rear rack, the tail lights and the chrome exhaust",
+    "From the side: the open frame with its coil-over shocks and engine between the wheels"
+  ],
+  "MountainBikes": [
+    "From the front three-quarter: the sloping-top-tube frame, suspension fork with white lowers, spoked wheels and knobbly tyres",
+    "From the other side: the chain ring, chain, cassette and derailleur, the disc brake and the kickstand",
+    "From the side: the whole bike, with the headlamp, saddle and tail reflector"
   ]
 }

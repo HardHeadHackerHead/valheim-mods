@@ -1,0 +1,18 @@
+A mountain bike for Valheim: a sturdy trail bike that you pedal yourself. It tires you out like running does, needs no fuel and goes where a walker would crawl, with a headlamp for the night and colours to choose from.
+
+Riding it
+- Build it with the hammer on dry land, near a workbench: 6 Fine Wood, 4 Bronze, 4 Leather Scraps and 6 Resin.
+- Press E on its saddle and you climb on.
+- Hold W to pedal, Shift+W to sprint (it costs stamina, three times as much as pedalling); out of breath you drop to a walking pace. Coasting and braking are free, so downhill is a rest. S brakes (and backs up once stopped). A and D steer.
+- It leans into corners and holds its line: sharp at a crawl, a wide arc at speed, no sliding through the turns.
+- It stands up by itself when you leave it, and if it ends up on its side, E on it stands it back on its wheels.
+- Jump or E gets you off. Ride into an enemy and it takes a little damage and is knocked away. The hammer takes it apart again (not while someone is on it). A gauge at the bottom right shows your speed and whether you are pedalling, sprinting or braking.
+
+The look and the sound
+- A trail bike with a green sloping-top-tube frame, a suspension fork with chrome stanchions and white lowers, disc brakes, spoked wheels with knobbly tyres, a slim saddle, chain ring, chain, cassette and derailleur, a bottle and a kickstand that tucks up when you ride. The handlebars turn as you steer and the pedals go round as you pedal.
+- A small headlamp and a red tail reflector: the lamp comes on at night (and in caves) while someone rides it, and the tail light glows brighter when you brake.
+- Paint it: E on the frame in front of the saddle gives the next colour (green, red, blue, orange, black, cream, purple). Everyone sees it.
+- Hard cornering squeals the tyres, a landing after a jump thumps and kicks up dust, plus the sound of the tyres on the ground and a puff of dust off each wheel, coloured to the ground you are on: brown earth, pale sand on the plains, white snow in the mountains, grey ash.
+
+Settings: cruise and sprint speed, reverse speed, acceleration, coasting, turn rate, grip, how tiring pedalling is and cost are the server's in multiplayer; the controls hint is each player's own.
+Everyone in the world needs it installed.

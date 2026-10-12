@@ -1,0 +1,17 @@
+{
+  "mountainbikes_bike": "Dağ Bisikleti",
+  "mountainbikes_bike_desc": "Tepeler ve patikalar için sağlam bir bisiklet. Pedalı kendin çevirirsin, bu yüzden yorar, ama yakıt istemez ve yayanın zor ilerleyeceği yerlerden geçer. Karada inşa edilir.",
+  "mountainbikes_ride": "Sür",
+  "mountainbikes_help": "W pedal çevir, Shift+W sprint, S fren ve geri, A ve D dümen, inmek için Zıpla veya E.",
+  "mountainbikes_too_far": "Binmek için dağ bisikletine yaklaş.",
+  "mountainbikes_too_heavy": "Sürmek için çok fazla yük taşıyorsun.",
+  "mountainbikes_server_missing": "Mountain Bikes bu sunucuda kurulu değil, bu yüzden burada dağ bisikleti inşa edilemez.",
+  "mountainbikes_kmh": "km/sa",
+  "mountainbikes_gear_idle": "Rölanti",
+  "mountainbikes_gear_cruise": "Pedal",
+  "mountainbikes_gear_full": "Sprint",
+  "mountainbikes_gear_brake": "Frenleme",
+  "mountainbikes_gear_reverse": "Geri",
+  "mountainbikes_paint": "Boya",
+  "mountainbikes_right": "Doğrult"
+}

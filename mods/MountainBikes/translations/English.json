@@ -1,0 +1,17 @@
+{
+  "mountainbikes_bike": "Mountain Bike",
+  "mountainbikes_bike_desc": "A sturdy bike for hills and trails. You pedal it yourself, so it tires you out, but it needs no fuel and goes where a walker would crawl. Build it on dry land.",
+  "mountainbikes_ride": "Ride",
+  "mountainbikes_help": "W pedal, Shift+W sprint, S brake and back up, A and D steer, Jump or E to get off.",
+  "mountainbikes_too_far": "Get closer to the mountain bike to climb on.",
+  "mountainbikes_too_heavy": "You are carrying too much to ride.",
+  "mountainbikes_server_missing": "Mountain Bikes isn't installed on this server, so mountain bikes can't be built here.",
+  "mountainbikes_kmh": "km/h",
+  "mountainbikes_gear_idle": "Idle",
+  "mountainbikes_gear_cruise": "Pedalling",
+  "mountainbikes_gear_full": "Sprint",
+  "mountainbikes_gear_brake": "Braking",
+  "mountainbikes_gear_reverse": "Reverse",
+  "mountainbikes_paint": "Paint",
+  "mountainbikes_right": "Set upright"
+}

@@ -1,0 +1,19 @@
+{
+  "fourwheelers_atv": "Quadriciclo",
+  "fourwheelers_atv_desc": "Um veículo robusto de quatro rodas, com motor de núcleo de Surtling, lugar para um passageiro e um bagageiro para o seu equipamento. Construa-o em terra firme.",
+  "fourwheelers_ride": "Pilotar",
+  "fourwheelers_help": "W avança, Shift+W velocidade máxima, S freia e dá ré, A e D viram, Pular ou E para descer.",
+  "fourwheelers_too_far": "Chegue mais perto do quadriciclo para subir.",
+  "fourwheelers_too_heavy": "Você está carregando peso demais para pilotar.",
+  "fourwheelers_passenger": "Banco do passageiro",
+  "fourwheelers_bags": "Bagageiro",
+  "fourwheelers_server_missing": "Four Wheelers não está instalado neste servidor, então quadriciclos não podem ser construídos aqui.",
+  "fourwheelers_kmh": "km/h",
+  "fourwheelers_gear_idle": "Ponto morto",
+  "fourwheelers_gear_cruise": "Cruzeiro",
+  "fourwheelers_gear_full": "Velocidade máxima",
+  "fourwheelers_gear_brake": "Freando",
+  "fourwheelers_gear_reverse": "Ré",
+  "fourwheelers_paint": "Pintar",
+  "fourwheelers_right": "Desvirar"
+}

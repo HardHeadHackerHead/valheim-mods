@@ -1,0 +1,19 @@
+{
+  "fourwheelers_atv": "Квадроцикл",
+  "fourwheelers_atv_desc": "Прочная четырёхколёсная машинка с двигателем на ядре суртлинга, местом для пассажира и багажником для вашего снаряжения. Стройте её на суше.",
+  "fourwheelers_ride": "Сесть",
+  "fourwheelers_help": "W — вперёд, Shift+W — полный ход, S — тормоз и задний ход, A и D — руль, Прыжок или E — сойти.",
+  "fourwheelers_too_far": "Подойдите ближе к квадроциклу, чтобы забраться на него.",
+  "fourwheelers_too_heavy": "Вы несёте слишком много, чтобы ехать.",
+  "fourwheelers_passenger": "Место пассажира",
+  "fourwheelers_bags": "Багажник",
+  "fourwheelers_server_missing": "Four Wheelers не установлен на этом сервере, поэтому квадроциклы здесь строить нельзя.",
+  "fourwheelers_kmh": "км/ч",
+  "fourwheelers_gear_idle": "Холостой",
+  "fourwheelers_gear_cruise": "Крейсерский",
+  "fourwheelers_gear_full": "Полный ход",
+  "fourwheelers_gear_brake": "Торможение",
+  "fourwheelers_gear_reverse": "Задний ход",
+  "fourwheelers_paint": "Покрасить",
+  "fourwheelers_right": "Поставить"
+}

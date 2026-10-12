@@ -1,0 +1,19 @@
+{
+  "fourwheelers_atv": "Quad",
+  "fourwheelers_atv_desc": "Wytrzymały czterokołowy pojazd z silnikiem na rdzeń pomiotu Surtra, z miejscem dla pasażera i bagażnikiem na ekwipunek. Buduje się go na lądzie.",
+  "fourwheelers_ride": "Jedź",
+  "fourwheelers_help": "W naprzód, Shift+W pełna prędkość, S hamuj i wstecz, A i D skręt, Skok lub E, by zejść.",
+  "fourwheelers_too_far": "Podejdź bliżej quada, by na niego wsiąść.",
+  "fourwheelers_too_heavy": "Niesiesz za dużo, by jechać.",
+  "fourwheelers_passenger": "Miejsce pasażera",
+  "fourwheelers_bags": "Bagażnik",
+  "fourwheelers_server_missing": "Four Wheelers nie jest zainstalowany na tym serwerze, więc quadów nie można tu budować.",
+  "fourwheelers_kmh": "km/h",
+  "fourwheelers_gear_idle": "Jałowy",
+  "fourwheelers_gear_cruise": "Rejs",
+  "fourwheelers_gear_full": "Pełna prędkość",
+  "fourwheelers_gear_brake": "Hamowanie",
+  "fourwheelers_gear_reverse": "Wstecz",
+  "fourwheelers_paint": "Pomaluj",
+  "fourwheelers_right": "Postaw"
+}

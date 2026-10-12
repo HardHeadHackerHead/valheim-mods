@@ -66,7 +66,7 @@ Every player installs the mods they want for themselves. A few need more than th
 | Mod | Who needs it |
 |---|---|
 | **AICompanion** | Everyone in the world, **the host too**: without it the game deletes saved companions. |
-| **Recycler, BountyBoard, SlotMachine, BirdTrap, LedgerChest, Quad's Cigars, SkalTavern, Ziplines, Arena, Jet Skis** (new build pieces and items; the Arena's host also picks where it stands) | Everyone, and **the host above all**: a game without the mod deletes the pieces when their area loads. Restart after installing or updating them. |
+| **Recycler, BountyBoard, SlotMachine, BirdTrap, LedgerChest, Quad's Cigars, SkalTavern, Ziplines, Arena, Jet Skis, Four Wheelers, Mountain Bikes** (new build pieces and items; the Arena's host also picks where it stands) | Everyone, and **the host above all**: a game without the mod deletes the pieces when their area loads. Restart after installing or updating them. |
 | **PortalHub** | The host (it keeps the portal links), and everyone who wants the portal menu. |
 | Everything else | Only the players who want it. |
 
@@ -428,6 +428,8 @@ caged core that lights the water at night. Everyone in the world needs it.
 | **E** on a jet ski | Jet Skis | Climb on (from the water or the shore) and take the handlebars |
 | **W** / **Shift**+**W** / **S** | Jet Skis | Go / full speed / back up (let go to coast); **A** / **D** steer, **Jump** gets off |
 | **E** on a jet ski's cowl / saddlebags | Jet Skis | Paint it the next colour / open the saddlebags (**Tab** while riding opens them too) |
+| **E** on a four wheeler or mountain bike | Four Wheelers, Mountain Bikes | Climb on and take the handlebars (**E** on its hood or frame instead: paint it the next colour; **E** on one lying on its side: stand it up) |
+| **W** / **Shift**+**W** / **S** | Four Wheelers, Mountain Bikes | Go / full speed (a bike: pedal / sprint, both cost stamina) / brake, then back up; **A** / **D** steer, **Jump** or **E** gets off |
 | **F8** | PartyHud | Show or hide the party panel |
 
 Every key and setting is configurable in `BepInEx/config`.

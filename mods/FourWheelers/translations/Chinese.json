@@ -1,0 +1,19 @@
+{
+  "fourwheelers_atv": "四轮摩托",
+  "fourwheelers_atv_desc": "一辆结实的四轮小车，装有焰灵之核引擎，可载一名乘客，并带有放置装备的货架。在陆地上建造。",
+  "fourwheelers_ride": "驾驶",
+  "fourwheelers_help": "W 前进，Shift+W 全速，S 刹车并倒车，A 和 D 转向，跳跃或 E 下车。",
+  "fourwheelers_too_far": "靠近四轮摩托才能骑上去。",
+  "fourwheelers_too_heavy": "你携带的东西太多，无法驾驶。",
+  "fourwheelers_passenger": "乘客座位",
+  "fourwheelers_bags": "货架",
+  "fourwheelers_server_missing": "此服务器未安装 Four Wheelers，因此无法在这里建造四轮摩托。",
+  "fourwheelers_kmh": "公里/时",
+  "fourwheelers_gear_idle": "怠速",
+  "fourwheelers_gear_cruise": "巡航",
+  "fourwheelers_gear_full": "全速",
+  "fourwheelers_gear_brake": "刹车",
+  "fourwheelers_gear_reverse": "倒车",
+  "fourwheelers_paint": "涂装",
+  "fourwheelers_right": "扶正"
+}

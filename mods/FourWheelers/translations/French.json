@@ -1,0 +1,19 @@
+{
+  "fourwheelers_atv": "Quad",
+  "fourwheelers_atv_desc": "Un robuste petit véhicule à quatre roues, avec un moteur à cœur de surtling, une place pour un passager et un porte-bagages pour votre équipement. Se construit sur la terre ferme.",
+  "fourwheelers_ride": "Piloter",
+  "fourwheelers_help": "W avancer, Shift+W pleine vitesse, S freiner et reculer, A et D tourner, Sauter ou E pour descendre.",
+  "fourwheelers_too_far": "Approchez-vous du quad pour monter dessus.",
+  "fourwheelers_too_heavy": "Vous portez trop de choses pour piloter.",
+  "fourwheelers_passenger": "Siège passager",
+  "fourwheelers_bags": "Porte-bagages",
+  "fourwheelers_server_missing": "Four Wheelers n'est pas installé sur ce serveur, donc les quads ne peuvent pas être construits ici.",
+  "fourwheelers_kmh": "km/h",
+  "fourwheelers_gear_idle": "Ralenti",
+  "fourwheelers_gear_cruise": "Croisière",
+  "fourwheelers_gear_full": "Pleine vitesse",
+  "fourwheelers_gear_brake": "Freinage",
+  "fourwheelers_gear_reverse": "Marche arrière",
+  "fourwheelers_paint": "Peindre",
+  "fourwheelers_right": "Redresser"
+}

@@ -1,0 +1,19 @@
+{
+  "fourwheelers_atv": "Dört Teker",
+  "fourwheelers_atv_desc": "Alaz çekirdeği motorlu, bir yolcu için yeri ve eşyaların için bagaj rafı olan sağlam dört tekerlekli bir araç. Karada inşa edilir.",
+  "fourwheelers_ride": "Sür",
+  "fourwheelers_help": "W ilerle, Shift+W tam hız, S fren ve geri, A ve D dümen, inmek için Zıpla veya E.",
+  "fourwheelers_too_far": "Binmek için Dört Tekere yaklaş.",
+  "fourwheelers_too_heavy": "Sürmek için çok fazla yük taşıyorsun.",
+  "fourwheelers_passenger": "Yolcu koltuğu",
+  "fourwheelers_bags": "Bagaj rafı",
+  "fourwheelers_server_missing": "Four Wheelers bu sunucuda kurulu değil, bu yüzden burada dört tekerlekli araç inşa edilemez.",
+  "fourwheelers_kmh": "km/sa",
+  "fourwheelers_gear_idle": "Rölanti",
+  "fourwheelers_gear_cruise": "Seyir",
+  "fourwheelers_gear_full": "Tam hız",
+  "fourwheelers_gear_brake": "Frenleme",
+  "fourwheelers_gear_reverse": "Geri",
+  "fourwheelers_paint": "Boya",
+  "fourwheelers_right": "Doğrult"
+}

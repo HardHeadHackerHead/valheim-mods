@@ -1,0 +1,17 @@
+{
+  "mountainbikes_bike": "山地自行车",
+  "mountainbikes_bike_desc": "一辆结实的山地自行车，适合丘陵和小径。需要你自己蹬，所以会累，但无需燃料，能走过步行者只能爬行的地方。在陆地上建造。",
+  "mountainbikes_ride": "骑行",
+  "mountainbikes_help": "W 蹬车，Shift+W 冲刺，S 刹车并后退，A 和 D 转向，跳跃或 E 下车。",
+  "mountainbikes_too_far": "靠近山地自行车才能骑上去。",
+  "mountainbikes_too_heavy": "你携带的东西太多，无法骑行。",
+  "mountainbikes_server_missing": "此服务器未安装 Mountain Bikes，因此无法在这里建造山地自行车。",
+  "mountainbikes_kmh": "公里/时",
+  "mountainbikes_gear_idle": "怠速",
+  "mountainbikes_gear_cruise": "蹬车",
+  "mountainbikes_gear_full": "冲刺",
+  "mountainbikes_gear_brake": "刹车",
+  "mountainbikes_gear_reverse": "倒退",
+  "mountainbikes_paint": "涂装",
+  "mountainbikes_right": "扶正"
+}

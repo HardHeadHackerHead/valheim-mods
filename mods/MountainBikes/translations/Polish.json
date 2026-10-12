@@ -1,0 +1,17 @@
+{
+  "mountainbikes_bike": "Rower górski",
+  "mountainbikes_bike_desc": "Solidny rower na wzgórza i szlaki. Pedałujesz sam, więc się męczysz, ale nie potrzebuje paliwa i jedzie tam, gdzie pieszy ledwo by się wlókł. Buduje się go na lądzie.",
+  "mountainbikes_ride": "Jedź",
+  "mountainbikes_help": "W pedałuj, Shift+W sprint, S hamuj i cofaj, A i D skręt, Skok lub E, by zejść.",
+  "mountainbikes_too_far": "Podejdź bliżej roweru górskiego, by na niego wsiąść.",
+  "mountainbikes_too_heavy": "Niesiesz za dużo, by jechać.",
+  "mountainbikes_server_missing": "Mountain Bikes nie jest zainstalowany na tym serwerze, więc rowerów górskich nie można tu budować.",
+  "mountainbikes_kmh": "km/h",
+  "mountainbikes_gear_idle": "Jałowy",
+  "mountainbikes_gear_cruise": "Pedałowanie",
+  "mountainbikes_gear_full": "Sprint",
+  "mountainbikes_gear_brake": "Hamowanie",
+  "mountainbikes_gear_reverse": "Wstecz",
+  "mountainbikes_paint": "Pomaluj",
+  "mountainbikes_right": "Postaw"
+}

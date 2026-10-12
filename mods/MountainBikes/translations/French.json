@@ -1,0 +1,17 @@
+{
+  "mountainbikes_bike": "VTT",
+  "mountainbikes_bike_desc": "Un vélo robuste pour les collines et les sentiers. Vous pédalez vous-même, donc il fatigue, mais il n'a besoin d'aucun carburant et passe là où un marcheur peinerait. Se construit sur la terre ferme.",
+  "mountainbikes_ride": "Pédaler",
+  "mountainbikes_help": "W pédaler, Shift+W sprint, S freiner et reculer, A et D tourner, Sauter ou E pour descendre.",
+  "mountainbikes_too_far": "Approchez-vous du VTT pour monter dessus.",
+  "mountainbikes_too_heavy": "Vous portez trop de choses pour pédaler.",
+  "mountainbikes_server_missing": "Mountain Bikes n'est pas installé sur ce serveur, donc les VTT ne peuvent pas être construits ici.",
+  "mountainbikes_kmh": "km/h",
+  "mountainbikes_gear_idle": "Ralenti",
+  "mountainbikes_gear_cruise": "Pédalage",
+  "mountainbikes_gear_full": "Sprint",
+  "mountainbikes_gear_brake": "Freinage",
+  "mountainbikes_gear_reverse": "Marche arrière",
+  "mountainbikes_paint": "Peindre",
+  "mountainbikes_right": "Redresser"
+}

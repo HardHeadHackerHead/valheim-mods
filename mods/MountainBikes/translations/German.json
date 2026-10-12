@@ -1,0 +1,17 @@
+{
+  "mountainbikes_bike": "Mountainbike",
+  "mountainbikes_bike_desc": "Ein robustes Rad für Hügel und Pfade. Du trittst selbst in die Pedale, das strengt an, aber es braucht keinen Treibstoff und kommt dort voran, wo ein Wanderer kriechen würde. Wird an Land gebaut.",
+  "mountainbikes_ride": "Fahren",
+  "mountainbikes_help": "W treten, Shift+W Sprint, S bremsen und zurück, A und D lenken, Springen oder E zum Absteigen.",
+  "mountainbikes_too_far": "Geh näher an das Mountainbike, um aufzusteigen.",
+  "mountainbikes_too_heavy": "Du trägst zu viel, um zu fahren.",
+  "mountainbikes_server_missing": "Mountain Bikes ist auf diesem Server nicht installiert, daher können hier keine Mountainbikes gebaut werden.",
+  "mountainbikes_kmh": "km/h",
+  "mountainbikes_gear_idle": "Leerlauf",
+  "mountainbikes_gear_cruise": "Treten",
+  "mountainbikes_gear_full": "Sprint",
+  "mountainbikes_gear_brake": "Bremsen",
+  "mountainbikes_gear_reverse": "Rückwärts",
+  "mountainbikes_paint": "Bemalen",
+  "mountainbikes_right": "Aufrichten"
+}

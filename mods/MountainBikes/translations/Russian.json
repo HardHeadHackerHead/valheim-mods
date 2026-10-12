@@ -1,0 +1,17 @@
+{
+  "mountainbikes_bike": "Горный велосипед",
+  "mountainbikes_bike_desc": "Прочный велосипед для холмов и троп. Крутить педали приходится самому, поэтому он утомляет, но топлива не требует и проезжает там, где пешеход еле ползёт. Стройте его на суше.",
+  "mountainbikes_ride": "Сесть",
+  "mountainbikes_help": "W — крутить педали, Shift+W — рывок, S — тормоз и назад, A и D — руль, Прыжок или E — сойти.",
+  "mountainbikes_too_far": "Подойдите ближе к горному велосипеду, чтобы забраться на него.",
+  "mountainbikes_too_heavy": "Вы несёте слишком много, чтобы ехать.",
+  "mountainbikes_server_missing": "Mountain Bikes не установлен на этом сервере, поэтому горные велосипеды здесь строить нельзя.",
+  "mountainbikes_kmh": "км/ч",
+  "mountainbikes_gear_idle": "Холостой",
+  "mountainbikes_gear_cruise": "Педали",
+  "mountainbikes_gear_full": "Рывок",
+  "mountainbikes_gear_brake": "Торможение",
+  "mountainbikes_gear_reverse": "Задний ход",
+  "mountainbikes_paint": "Покрасить",
+  "mountainbikes_right": "Поставить"
+}
