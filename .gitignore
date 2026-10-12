@@ -23,3 +23,6 @@ __pycache__/
 
 # Thunderstore packages (made by thunderstore.ps1 / modkit package / tcli build)
 thunderstore-build/
+
+# rendered dungeon maps (tools/dungeonmap writes them; hundreds of MB)
+tools/dungeonmap/out/
