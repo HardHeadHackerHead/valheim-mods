@@ -1527,7 +1527,8 @@
   },
   "sameRooms": [],
   "overlap": {
-   "shiftinghalls": 0.0
+   "shiftinghalls": 0.0,
+   "starfall": 0.0
   }
  }
 }

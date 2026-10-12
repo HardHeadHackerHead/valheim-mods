@@ -1,0 +1,460 @@
+{
+ "about": "The Cathedral of the Bone Choir (pack bonechoir): a cathedral the dead raised inside the skeleton of something vast. Pale ruin stone (ivory and ash grey) for walls and floors, bone as architecture (ribcage vaults, bundled long-bone pillars, skull keystones), Gothic pointed doorways, choir stalls of white singers, bells; warm candle gold the only light. Rooms on a 4 m grid, 7 m a storey, 14 m one-storey rooms, doorways 4 x 7 m (tools/dungeons/authoring/themes/ossuary.py).",
+ "pieces": [
+  {
+   "prefab": "Ashlands_Ruins_Floor_6x6",
+   "role": "wall",
+   "look": "6 x 0.44 x 6 pale ruin slab: walls (stood up), floors, ceilings, tympana",
+   "mount": "structure",
+   "scale": [
+    0.3,
+    3
+   ],
+   "tier": 7
+  },
+  {
+   "prefab": "Ashlands_Floor",
+   "role": "block",
+   "look": "2 x 1 x 2 pale block: plinths, cover, altars, shutters' sills, the charnel cart's sledge",
+   "mount": "structure",
+   "scale": [
+    0.1,
+    6
+   ],
+   "tier": 7
+  },
+  {
+   "prefab": "Ashlands_Ruins_TopStone",
+   "role": "rail",
+   "look": "1 x 1 x 3 coping stone: parapets (1.5 m), the cornice where the vault springs",
+   "mount": "structure",
+   "scale": [
+    0.3,
+    8
+   ],
+   "tier": 7
+  },
+  {
+   "prefab": "piece_grausten_stonestair",
+   "role": "stair",
+   "look": "2 x 1 x 2 ash-grey stair block (climbs -z), a metre a step",
+   "mount": "structure",
+   "scale": [
+    1,
+    1
+   ],
+   "tier": 7,
+   "notes": "keep 1 on y: step height"
+  },
+  {
+   "prefab": "Ashlands_Arch1",
+   "role": "arch",
+   "look": "a pointed arch's half: two (yaw 0 and 180 at one point) make the Gothic arch over every doorway",
+   "mount": "structure",
+   "scale": [
+    0.3,
+    2
+   ],
+   "tier": 7
+  },
+  {
+   "prefab": "Ashlands_Ruins_Wall_Top_wHole",
+   "role": "decor",
+   "look": "a pointed gable with a round window: rose windows over far doors",
+   "mount": "wall",
+   "scale": [
+    0.5,
+    2
+   ],
+   "tier": 7
+  },
+  {
+   "prefab": "Ashlands_PillarBase3_double",
+   "role": "pillar",
+   "look": "a stepped pillar base: under the bone pillars, the lever's cap",
+   "mount": "ground",
+   "scale": [
+    0.3,
+    3
+   ],
+   "tier": 7
+  },
+  {
+   "prefab": "Ashlands_Ruins_twist_PillarBaseSmall",
+   "role": "pillar",
+   "look": "a small twisted pedestal: the reliquary's pedestals",
+   "mount": "ground",
+   "scale": [
+    0.5,
+    2
+   ],
+   "tier": 7
+  },
+  {
+   "prefab": "Ashlands_Pillar4_tip",
+   "role": "decor",
+   "look": "a carved stone spike: turned point down (euler x 180), the falling bone spikes (traps)",
+   "mount": "free",
+   "scale": [
+    0.2,
+    2
+   ],
+   "tier": 7
+  },
+  {
+   "prefab": "lox_ribs",
+   "role": "beam",
+   "look": "half a beast's ribcage (5 ribs on a spine bar): scaled up and tipped (tilt x -90) into the rib vaults, the spine on the ridge",
+   "mount": "span",
+   "scale": [
+    0.5,
+    6
+   ],
+   "tier": 5
+  },
+  {
+   "prefab": "LargeBone",
+   "role": "pillar",
+   "look": "a long bone: bundled four to a pillar, pilasters, door posts, organ pipes, lever handles, the bars of shutters",
+   "mount": "ground",
+   "scale": [
+    0.3,
+    12
+   ],
+   "tier": 8
+  },
+  {
+   "prefab": "AsksvinCarrionSkull",
+   "role": "decor",
+   "look": "a beast's skull: keystones, lever knobs (an item: the Builder makes it solid)",
+   "mount": "free",
+   "scale": [
+    0.5,
+    2
+   ],
+   "tier": 7
+  },
+  {
+   "prefab": "Bell",
+   "role": "decor",
+   "look": "the game's bell: great bells (2.4-3.2 m) that swing and toll, hung on chains (an item: made solid)",
+   "mount": "hang",
+   "scale": [
+    0.5,
+    3
+   ],
+   "tier": 7
+  },
+  {
+   "prefab": "FrozenSkeleton_Pose1",
+   "role": "decor",
+   "look": "a white skeleton, arms raised: the choir's singers",
+   "mount": "ground",
+   "scale": [
+    0.8,
+    1.2
+   ],
+   "tier": 8
+  },
+  {
+   "prefab": "FrozenSkeleton_Pose2",
+   "role": "decor",
+   "look": "a white skeleton, crouched: the choir's singers",
+   "mount": "ground",
+   "scale": [
+    0.8,
+    1.2
+   ],
+   "tier": 8
+  },
+  {
+   "prefab": "piece_throne02",
+   "role": "decor",
+   "look": "a pale stone throne: choir stalls",
+   "mount": "ground",
+   "scale": [
+    0.8,
+    1.2
+   ],
+   "tier": 1
+  },
+  {
+   "prefab": "piece_bone_throne",
+   "role": "decor",
+   "look": "the bone throne: the Choirmaster's lectern, the reliquary's niches",
+   "mount": "ground",
+   "scale": [
+    0.8,
+    1.2
+   ],
+   "tier": 3
+  },
+  {
+   "prefab": "Candle_resin",
+   "role": "light",
+   "look": "a resin candle at 3-5 times: banks of giant candles (walk-through)",
+   "mount": "ground",
+   "scale": [
+    1,
+    5
+   ],
+   "tier": 1
+  },
+  {
+   "prefab": "piece_groundtorch_wood",
+   "role": "light",
+   "look": "a thin standing torch (range 10, warm): in every candle bank; inside the bells, lit while they toll",
+   "mount": "ground",
+   "scale": [
+    0.8,
+    1.4
+   ],
+   "tier": 1
+  },
+  {
+   "prefab": "piece_brazierceiling01",
+   "role": "light",
+   "look": "a fire bowl on ropes (range 10, warm): hung on a chain from the ribs",
+   "mount": "hang",
+   "scale": [
+    0.8,
+    1.4
+   ],
+   "tier": 1
+  },
+  {
+   "prefab": "Morkhalla_WallChain1",
+   "role": "chain",
+   "look": "an iron chain: bells, fire bowls, bell ropes, the counterweight",
+   "mount": "hang",
+   "scale": [
+    0.2,
+    3
+   ],
+   "tier": 8
+  },
+  {
+   "prefab": "iron_grate",
+   "role": "gate",
+   "look": "wrought iron screens: gates (framed in bone), the shutters over the choir stalls",
+   "mount": "structure",
+   "scale": [
+    0.5,
+    3
+   ],
+   "tier": 3
+  },
+  {
+   "prefab": "TreasureChest_ashland_stone",
+   "role": "chest",
+   "look": "a pale stone reliquary chest",
+   "mount": "ground",
+   "scale": [
+    1,
+    1
+   ],
+   "tier": 7
+  },
+  {
+   "prefab": "Morkhalla_ChestAncient",
+   "role": "chest",
+   "look": "the vault's great chest (32 slots)",
+   "mount": "ground",
+   "scale": [
+    1,
+    1
+   ],
+   "tier": 8
+  },
+  {
+   "prefab": "skull_pile",
+   "role": "remains",
+   "look": "skulls: the charnel's walls, the mound",
+   "mount": "ground",
+   "scale": [
+    0.5,
+    2
+   ]
+  },
+  {
+   "prefab": "bone_stack",
+   "role": "remains",
+   "look": "bones",
+   "mount": "ground",
+   "scale": [
+    0.5,
+    2
+   ]
+  },
+  {
+   "prefab": "Skull2",
+   "role": "remains",
+   "look": "a giant's skull lying in the floor",
+   "mount": "ground",
+   "scale": [
+    0.3,
+    1
+   ]
+  },
+  {
+   "prefab": "giant_arm",
+   "role": "remains",
+   "look": "a giant's arm bone on the floor",
+   "mount": "ground",
+   "scale": [
+    0.2,
+    1
+   ],
+   "tier": 6
+  },
+  {
+   "prefab": "giant_ribs",
+   "role": "remains",
+   "look": "a giant's ribcage: the entrance's half-buried archway",
+   "mount": "ground",
+   "scale": [
+    0.5,
+    1.2
+   ],
+   "tier": 6
+  },
+  {
+   "prefab": "piece_cloth_hanging_door",
+   "role": "decor",
+   "look": "red hangings",
+   "mount": "wall",
+   "scale": [
+    0.8,
+    2
+   ],
+   "tier": 1
+  },
+  {
+   "prefab": "AsksvinCarrionRibcage",
+   "role": "decor",
+   "look": "a beast's ribcage",
+   "mount": "ground",
+   "scale": [
+    1,
+    2
+   ],
+   "tier": 7
+  },
+  {
+   "prefab": "piece_asksvinskeleton",
+   "role": "remains",
+   "look": "a beast's skeleton on the floor",
+   "mount": "ground",
+   "scale": [
+    1,
+    1.6
+   ],
+   "tier": 7
+  },
+  {
+   "prefab": "MemorialStone_Medium",
+   "role": "decor",
+   "look": "a carved tablet",
+   "mount": "ground",
+   "scale": [
+    0.5,
+    1.2
+   ],
+   "tier": 1
+  },
+  {
+   "prefab": "Skull1",
+   "role": "decor",
+   "look": "a skull: carvings, shrines",
+   "mount": "ground",
+   "scale": [
+    1,
+    3
+   ],
+   "tier": 1
+  }
+ ],
+ "roles": {
+  "wall": [
+   "Ashlands_Ruins_Floor_6x6"
+  ],
+  "floor": [
+   "Ashlands_Ruins_Floor_6x6"
+  ],
+  "ceiling": [
+   "Ashlands_Ruins_Floor_6x6"
+  ],
+  "trim": [
+   "Ashlands_Floor"
+  ],
+  "pillar": [
+   "LargeBone",
+   "Ashlands_PillarBase3_double"
+  ],
+  "column": [
+   "LargeBone"
+  ],
+  "beam": [
+   "lox_ribs",
+   "LargeBone"
+  ],
+  "rail": [
+   "Ashlands_Ruins_TopStone"
+  ],
+  "grate": [
+   "iron_grate"
+  ],
+  "door_leaf": [
+   "iron_grate"
+  ],
+  "stair": [
+   "piece_grausten_stonestair"
+  ],
+  "light_stand": [
+   "piece_groundtorch_wood",
+   "Candle_resin"
+  ],
+  "light_hang": [
+   "piece_brazierceiling01"
+  ],
+  "light_wall": [],
+  "chain": [
+   "Morkhalla_WallChain1"
+  ],
+  "chest": [
+   "TreasureChest_ashland_stone",
+   "Morkhalla_ChestAncient"
+  ],
+  "decor_small": [
+   "Candle_resin",
+   "Skull1",
+   "AsksvinCarrionRibcage"
+  ],
+  "decor_large": [
+   "piece_throne02",
+   "piece_bone_throne",
+   "FrozenSkeleton_Pose1",
+   "FrozenSkeleton_Pose2",
+   "Bell",
+   "MemorialStone_Medium",
+   "piece_cloth_hanging_door"
+  ],
+  "rubble": [
+   "skull_pile",
+   "bone_stack"
+  ],
+  "bones": [
+   "skull_pile",
+   "bone_stack",
+   "Skull2",
+   "giant_arm",
+   "lox_ribs",
+   "piece_asksvinskeleton"
+  ]
+ },
+ "how": {
+  "wall": "Ashlands_Ruins_Floor_6x6 stood up (tilt -90): panels up to 6 m",
+  "beam": "lox_ribs: tilt x -90, yaw towards the wall + 180: the spine on the ridge, the ribs arching down",
+  "pillar": "four LargeBones bound on a stepped base (theme.pillar)"
+ }
+}

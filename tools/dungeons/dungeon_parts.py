@@ -10,7 +10,7 @@ own frame (its "at" and "euler" in the room), and each pose moves them within it
 Prefab sizes come from prefab_bounds.json (the bounds of each prefab's visible shape, metres, in its own frame), filled from the game's files
 by game_meshes.py the first time a prefab is used, so the generators also run on a PC without the game once it's filled.
 """
-import json, math, os
+import json, math, os, time
 import numpy as np
 
 HERE = os.path.dirname(os.path.abspath(__file__))
@@ -29,8 +29,21 @@ def bounds(prefab):
         if s is None:
             raise KeyError(f"the game has no prefab {prefab}")
         _bounds[prefab] = [[round(float(x), 3) for x in s[3]], [round(float(x), 3) for x in s[4]]]
-        with open(BOUNDS_FILE, "w") as f:
+        # (several generators and checks run at once: keep what others added since, and write it whole, never half a file to a reader)
+        try:
+            on_disk = json.load(open(BOUNDS_FILE)) if os.path.exists(BOUNDS_FILE) else {}
+        except ValueError:
+            on_disk = {}
+        _bounds = {**on_disk, **_bounds}
+        tmp = f"{BOUNDS_FILE}.{os.getpid()}.tmp"
+        with open(tmp, "w") as f:
             json.dump(dict(sorted(_bounds.items())), f, indent=0)
+        for attempt in range(50):   # (Windows: not while a reader has it open)
+            try:
+                os.replace(tmp, BOUNDS_FILE)
+                break
+            except PermissionError:
+                time.sleep(0.1)
     lo, hi = _bounds[prefab]
     return np.array(lo), np.array(hi)
 

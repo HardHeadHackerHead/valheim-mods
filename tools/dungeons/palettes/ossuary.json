@@ -1,0 +1,2553 @@
+{
+ "theme": "ossuary",
+ "about": "The Cathedral of the Bone Choir (pack bonechoir): a cathedral the dead raised inside the skeleton of something vast. Pale ruin stone (ivory and ash grey) for walls and floors, bone as architecture (ribcage vaults, bundled long-bone pillars, skull keystones), Gothic pointed doorways, choir stalls of white singers, bells; warm candle gold the only light. Rooms on a 4 m grid, 7 m a storey, 14 m one-storey rooms, doorways 4 x 7 m (tools/dungeons/authoring/themes/ossuary.py).",
+ "made_by": "tools/dungeons/palette_tool.py (curation in palettes/src/ossuary.json; everything else read from the game's files)",
+ "fields": {
+  "role": "what it's for; structural roles (arch, block, ceiling, door, floor, gate, pillar, platform, rail, ramp, stair, wall) must be solid",
+  "mount": "ground: stands on a floor (prop_check.py); hang: needs something right above its origin or a chain on its top; wall: against a wall; span: rests on two supports; structure: what others stand on; free: anywhere",
+  "scale": "[min, max] that looks right and stays solid; stairs keep 1 (step height)",
+  "tier": "the land it looks like it belongs to (1 Meadows .. 8 Deep North): a look hint, not gameplay (enemies and loot follow the entrance's biome)",
+  "size/min/max/origin": "its shape's box in its own frame (m); origin: where its origin sits on that box (foot, top, centre...)",
+  "solid": "a character bumps into it in our rooms (the game's collision matrix; items fixed by BuildSolid.cs)",
+  "lights": "range, intensity, colour; lit: shines once stripped (a Fireplace's burning objects are switched on); lod: fades with distance",
+  "gives": "what the game would make it give or do: stripped as scenery; a networked prefab (networked) may be a Saved part instead",
+  "height": "its height at scale 1 (m)",
+  "climb": "ledges: its footholds (faces a player can stand on, no steeper than 38 degrees, with at least 0.1 m2 of them seen from above in a 0.2 m height band) as height ranges above its foot at scale 1, upright as the prefab stands; top: the highest reachable from the floor, each within a jump (1.6 m: gravity 20, jump force 8, Jump skill 0) of the last; top_skilled: the same with Jump skill 100 (3.14 m); 0: none. Scale the ledges by the part's y scale; a part turned off upright exposes other faces (treat a smooth bar or column as only its top end)",
+  "upright": "flat (thin along y: a floor tile, stand it up for a wall), upright (thin along x or z: a wall piece, use as it is), block",
+  "safe": "fine as stripped scenery; saved_only: works only as a Saved part (chests, pickables, spawners)",
+  "by_role": "{role: [default, variants...]}: the roles below without their notes",
+  "sets": "the dressing sets it suits (giant: ossuary, ruin, forge, archive, engine, armoury; Dvergr: store, workshop, tavern, barracks)",
+  "max_span": "a panel's longest side (m) before its stretched texture smears",
+  "game_dungeon": "the game's own dungeon themes whose rooms use it: a player knows it from there (a new kind should lean on pieces with none, or mix them so no room reads as that dungeon)",
+  "roles": "the same pieces by a theme recipe's roles (first = default, others = variants), with how each role's pieces are placed",
+  "render": "a picture in the mesh cache (C:\\Users\\DHack\\AppData\\Local\\Temp\\quaddungeon_meshes); the theme's contact sheet is palettes/ossuary_sheet.png there"
+ },
+ "pieces": [
+  {
+   "prefab": "Ashlands_Ruins_Floor_6x6",
+   "role": "wall",
+   "look": "6 x 0.44 x 6 pale ruin slab: walls (stood up), floors, ceilings, tympana",
+   "mount": "structure",
+   "scale": [
+    0.3,
+    3
+   ],
+   "tier": 7,
+   "notes": "as scenery its DropOnDestroyed is stripped: it gives nothing",
+   "exists": true,
+   "size": [
+    5.99,
+    0.44,
+    5.99
+   ],
+   "min": [
+    -3.0,
+    -0.22,
+    -3.0
+   ],
+   "max": [
+    3.0,
+    0.22,
+    3.0
+   ],
+   "origin": "centre",
+   "hollow": false,
+   "game_dungeon": [],
+   "kinds": [
+    "DropOnDestroyed",
+    "WearNTear",
+    "ZNetView"
+   ],
+   "colliders": {
+    "piece": 1
+   },
+   "solid": true,
+   "solid_note": "",
+   "lights": [],
+   "fire": false,
+   "particles": 0,
+   "item": false,
+   "networked": true,
+   "gives": [
+    "DropOnDestroyed"
+   ],
+   "physics": false,
+   "usable": [],
+   "height": 0.44,
+   "upright": "flat",
+   "saved_only": false,
+   "safe": true,
+   "climb": {
+    "ledges": [
+     [
+      0.4,
+      0.6
+     ]
+    ],
+    "top": 0.6,
+    "top_skilled": 0.6
+   }
+  },
+  {
+   "prefab": "Ashlands_Floor",
+   "role": "block",
+   "look": "2 x 1 x 2 pale block: plinths, cover, altars, shutters' sills, the charnel cart's sledge",
+   "mount": "structure",
+   "scale": [
+    0.1,
+    6
+   ],
+   "tier": 7,
+   "notes": "recognisable: a part of the game's own AshlandRuins and FortressRuins dungeons; as scenery its DropOnDestroyed is stripped: it gives nothing",
+   "exists": true,
+   "size": [
+    2.0,
+    1.0,
+    2.0
+   ],
+   "min": [
+    -1.0,
+    -0.5,
+    -1.0
+   ],
+   "max": [
+    1.0,
+    0.5,
+    1.0
+   ],
+   "origin": "centre",
+   "hollow": false,
+   "game_dungeon": [
+    "AshlandRuins",
+    "FortressRuins"
+   ],
+   "kinds": [
+    "DropOnDestroyed",
+    "WearNTear",
+    "ZNetView"
+   ],
+   "colliders": {
+    "piece": 1
+   },
+   "solid": true,
+   "solid_note": "",
+   "lights": [],
+   "fire": false,
+   "particles": 0,
+   "item": false,
+   "networked": true,
+   "gives": [
+    "DropOnDestroyed"
+   ],
+   "physics": false,
+   "usable": [],
+   "height": 1.0,
+   "upright": "block",
+   "saved_only": false,
+   "safe": true,
+   "climb": {
+    "ledges": [
+     [
+      1.0,
+      1.2
+     ]
+    ],
+    "top": 1.2,
+    "top_skilled": 1.2
+   }
+  },
+  {
+   "prefab": "Ashlands_Ruins_TopStone",
+   "role": "rail",
+   "look": "1 x 1 x 3 coping stone: parapets (1.5 m), the cornice where the vault springs",
+   "mount": "structure",
+   "scale": [
+    0.3,
+    8
+   ],
+   "tier": 7,
+   "notes": "recognisable: a part of the game's own AshlandRuins and FortressRuins dungeons; as scenery its DropOnDestroyed is stripped: it gives nothing",
+   "exists": true,
+   "size": [
+    1.0,
+    1.02,
+    3.0
+   ],
+   "min": [
+    -0.5,
+    0.0,
+    -2.0
+   ],
+   "max": [
+    0.5,
+    1.02,
+    1.0
+   ],
+   "origin": "foot",
+   "hollow": false,
+   "game_dungeon": [
+    "AshlandRuins",
+    "FortressRuins"
+   ],
+   "kinds": [
+    "DropOnDestroyed",
+    "WearNTear",
+    "ZNetView"
+   ],
+   "colliders": {
+    "piece": 1
+   },
+   "solid": true,
+   "solid_note": "",
+   "lights": [],
+   "fire": false,
+   "particles": 0,
+   "item": false,
+   "networked": true,
+   "gives": [
+    "DropOnDestroyed"
+   ],
+   "physics": false,
+   "usable": [],
+   "height": 1.02,
+   "upright": "upright",
+   "saved_only": false,
+   "safe": true,
+   "climb": {
+    "ledges": [
+     [
+      1.0,
+      1.2
+     ]
+    ],
+    "top": 1.2,
+    "top_skilled": 1.2
+   }
+  },
+  {
+   "prefab": "piece_grausten_stonestair",
+   "role": "stair",
+   "look": "2 x 1 x 2 ash-grey stair block (climbs -z), a metre a step",
+   "mount": "structure",
+   "scale": [
+    1,
+    1
+   ],
+   "tier": 7,
+   "notes": "keep 1 on y: step height",
+   "exists": true,
+   "size": [
+    2.0,
+    1.0,
+    2.0
+   ],
+   "min": [
+    -1.0,
+    0.0,
+    -1.0
+   ],
+   "max": [
+    1.0,
+    1.0,
+    1.0
+   ],
+   "origin": "foot",
+   "hollow": false,
+   "game_dungeon": [],
+   "kinds": [
+    "Piece",
+    "WearNTear",
+    "ZNetView"
+   ],
+   "colliders": {
+    "piece": 1
+   },
+   "solid": true,
+   "solid_note": "",
+   "lights": [],
+   "fire": false,
+   "particles": 0,
+   "item": false,
+   "networked": true,
+   "gives": [],
+   "physics": false,
+   "usable": [],
+   "height": 1.0,
+   "upright": "block",
+   "saved_only": false,
+   "safe": true,
+   "climb": {
+    "ledges": [
+     [
+      0.0,
+      1.2
+     ]
+    ],
+    "top": 1.2,
+    "top_skilled": 1.2
+   }
+  },
+  {
+   "prefab": "Ashlands_Arch1",
+   "role": "arch",
+   "look": "a pointed arch's half: two (yaw 0 and 180 at one point) make the Gothic arch over every doorway",
+   "mount": "structure",
+   "scale": [
+    0.3,
+    2
+   ],
+   "tier": 7,
+   "notes": "",
+   "exists": true,
+   "size": [
+    2.97,
+    3.98,
+    1.96
+   ],
+   "min": [
+    -0.0,
+    0.0,
+    -0.98
+   ],
+   "max": [
+    2.97,
+    3.98,
+    0.98
+   ],
+   "origin": "foot",
+   "hollow": false,
+   "game_dungeon": [],
+   "kinds": [
+    "Piece",
+    "WearNTear",
+    "ZNetView"
+   ],
+   "colliders": {
+    "piece": 1
+   },
+   "solid": true,
+   "solid_note": "",
+   "lights": [],
+   "fire": false,
+   "particles": 0,
+   "item": false,
+   "networked": true,
+   "gives": [],
+   "physics": false,
+   "usable": [],
+   "height": 3.98,
+   "upright": "block",
+   "saved_only": false,
+   "safe": true,
+   "climb": {
+    "ledges": [
+     [
+      0.0,
+      0.2
+     ]
+    ],
+    "top": 0.0,
+    "top_skilled": 0.0
+   }
+  },
+  {
+   "prefab": "Ashlands_Ruins_Wall_Top_wHole",
+   "role": "decor",
+   "look": "a pointed gable with a round window: rose windows over far doors",
+   "mount": "wall",
+   "scale": [
+    0.5,
+    2
+   ],
+   "tier": 7,
+   "notes": "recognisable: a part of the game's own AshlandRuins and FortressRuins dungeons; climbable: a player can stand 2.8 m above its foot (at scale 1; 2.8 m with Jump skill 100), so it's a stepping stone to a level up to about 4.4 m above its foot (5.9 m with Jump 100)",
+   "exists": true,
+   "size": [
+    6.08,
+    4.39,
+    1.01
+   ],
+   "min": [
+    -3.04,
+    -0.02,
+    -0.51
+   ],
+   "max": [
+    3.04,
+    4.37,
+    0.51
+   ],
+   "origin": "foot",
+   "hollow": false,
+   "game_dungeon": [
+    "AshlandRuins",
+    "FortressRuins"
+   ],
+   "kinds": [
+    "WearNTear",
+    "ZNetView"
+   ],
+   "colliders": {
+    "piece": 1
+   },
+   "solid": true,
+   "solid_note": "",
+   "lights": [],
+   "fire": false,
+   "particles": 0,
+   "item": false,
+   "networked": true,
+   "gives": [],
+   "physics": false,
+   "usable": [],
+   "height": 4.39,
+   "upright": "upright",
+   "saved_only": false,
+   "safe": true,
+   "climb": {
+    "ledges": [
+     [
+      0.0,
+      0.2
+     ],
+     [
+      1.0,
+      1.2
+     ],
+     [
+      2.6,
+      2.8
+     ]
+    ],
+    "top": 2.8,
+    "top_skilled": 2.8
+   }
+  },
+  {
+   "prefab": "Ashlands_PillarBase3_double",
+   "role": "pillar",
+   "look": "a stepped pillar base: under the bone pillars, the lever's cap",
+   "mount": "ground",
+   "scale": [
+    0.3,
+    3
+   ],
+   "tier": 7,
+   "notes": "recognisable: a part of the game's own AshlandRuins and FortressRuins dungeons; as scenery its DropOnDestroyed is stripped: it gives nothing; climbable: a player can stand 1.2 m above its foot (at scale 1; 1.2 m with Jump skill 100), so it's a stepping stone to a level up to about 2.8 m above its foot (4.3 m with Jump 100)",
+   "exists": true,
+   "size": [
+    2.31,
+    1.01,
+    2.28
+   ],
+   "min": [
+    -1.15,
+    -0.01,
+    -1.14
+   ],
+   "max": [
+    1.15,
+    1.01,
+    1.14
+   ],
+   "origin": "foot",
+   "hollow": false,
+   "game_dungeon": [
+    "AshlandRuins",
+    "FortressRuins"
+   ],
+   "kinds": [
+    "DropOnDestroyed",
+    "WearNTear",
+    "ZNetView"
+   ],
+   "colliders": {
+    "piece": 1
+   },
+   "solid": true,
+   "solid_note": "",
+   "lights": [],
+   "fire": false,
+   "particles": 0,
+   "item": false,
+   "networked": true,
+   "gives": [
+    "DropOnDestroyed"
+   ],
+   "physics": false,
+   "usable": [],
+   "height": 1.01,
+   "upright": "flat",
+   "saved_only": false,
+   "safe": true,
+   "climb": {
+    "ledges": [
+     [
+      0.0,
+      0.0
+     ],
+     [
+      1.0,
+      1.2
+     ]
+    ],
+    "top": 1.2,
+    "top_skilled": 1.2
+   }
+  },
+  {
+   "prefab": "Ashlands_Ruins_twist_PillarBaseSmall",
+   "role": "pillar",
+   "look": "a small twisted pedestal: the reliquary's pedestals",
+   "mount": "ground",
+   "scale": [
+    0.5,
+    2
+   ],
+   "tier": 7,
+   "notes": "recognisable: a part of the game's own AshlandRuins and FortressRuins dungeons; as scenery its DropOnDestroyed is stripped: it gives nothing",
+   "exists": true,
+   "size": [
+    1.15,
+    2.01,
+    1.14
+   ],
+   "min": [
+    -0.58,
+    -0.01,
+    -0.57
+   ],
+   "max": [
+    0.58,
+    2.0,
+    0.57
+   ],
+   "origin": "foot",
+   "hollow": false,
+   "game_dungeon": [
+    "AshlandRuins",
+    "FortressRuins"
+   ],
+   "kinds": [
+    "DropOnDestroyed",
+    "WearNTear",
+    "ZNetView"
+   ],
+   "colliders": {
+    "piece": 1
+   },
+   "solid": true,
+   "solid_note": "",
+   "lights": [],
+   "fire": false,
+   "particles": 0,
+   "item": false,
+   "networked": true,
+   "gives": [
+    "DropOnDestroyed"
+   ],
+   "physics": false,
+   "usable": [],
+   "height": 2.01,
+   "upright": "block",
+   "saved_only": false,
+   "safe": true,
+   "climb": {
+    "ledges": [
+     [
+      2.0,
+      2.2
+     ]
+    ],
+    "top": 0.0,
+    "top_skilled": 2.2
+   }
+  },
+  {
+   "prefab": "Ashlands_Pillar4_tip",
+   "role": "decor",
+   "look": "a carved stone spike: turned point down (euler x 180), the falling bone spikes (traps)",
+   "mount": "free",
+   "scale": [
+    0.2,
+    2
+   ],
+   "tier": 7,
+   "notes": "",
+   "exists": true,
+   "size": [
+    2.2,
+    6.04,
+    2.23
+   ],
+   "min": [
+    -1.1,
+    -0.01,
+    -1.11
+   ],
+   "max": [
+    1.1,
+    6.04,
+    1.11
+   ],
+   "origin": "foot",
+   "hollow": false,
+   "game_dungeon": [],
+   "kinds": [
+    "WearNTear",
+    "ZNetView"
+   ],
+   "colliders": {
+    "piece": 2
+   },
+   "solid": true,
+   "solid_note": "",
+   "lights": [],
+   "fire": false,
+   "particles": 0,
+   "item": false,
+   "networked": true,
+   "gives": [],
+   "physics": false,
+   "usable": [],
+   "height": 6.04,
+   "upright": "block",
+   "saved_only": false,
+   "safe": true,
+   "climb": {
+    "ledges": [
+     [
+      0.0,
+      0.2
+     ]
+    ],
+    "top": 0.0,
+    "top_skilled": 0.0
+   }
+  },
+  {
+   "prefab": "lox_ribs",
+   "role": "beam",
+   "look": "half a beast's ribcage (5 ribs on a spine bar): scaled up and tipped (tilt x -90) into the rib vaults, the spine on the ridge",
+   "mount": "span",
+   "scale": [
+    0.5,
+    6
+   ],
+   "tier": 5,
+   "notes": "recognisable: a part of the game's own Cave and CaveHildir dungeons; as scenery its DropOnDestroyed is stripped: it gives nothing; climbable: a player can stand 0.4 m above its foot (at scale 1; 0.4 m with Jump skill 100), so it's a stepping stone to a level up to about 2.0 m above its foot (3.5 m with Jump 100)",
+   "exists": true,
+   "size": [
+    2.2,
+    2.05,
+    1.63
+   ],
+   "min": [
+    -1.21,
+    -0.09,
+    -0.82
+   ],
+   "max": [
+    0.99,
+    1.97,
+    0.81
+   ],
+   "origin": "foot",
+   "hollow": false,
+   "game_dungeon": [
+    "Cave",
+    "CaveHildir"
+   ],
+   "kinds": [
+    "DropOnDestroyed",
+    "WearNTear",
+    "ZNetView"
+   ],
+   "colliders": {
+    "Default": 1
+   },
+   "solid": true,
+   "solid_note": "",
+   "lights": [],
+   "fire": false,
+   "particles": 0,
+   "item": false,
+   "networked": true,
+   "gives": [
+    "DropOnDestroyed"
+   ],
+   "physics": false,
+   "usable": [],
+   "height": 2.05,
+   "upright": "block",
+   "saved_only": false,
+   "safe": true,
+   "climb": {
+    "ledges": [
+     [
+      0.0,
+      0.4
+     ]
+    ],
+    "top": 0.4,
+    "top_skilled": 0.4
+   }
+  },
+  {
+   "prefab": "LargeBone",
+   "role": "pillar",
+   "look": "a long bone: bundled four to a pillar, pilasters, door posts, organ pipes, lever handles, the bars of shutters",
+   "mount": "ground",
+   "scale": [
+    0.3,
+    12
+   ],
+   "tier": 8,
+   "notes": "as scenery its Destructible, DropOnDestroyed is stripped: it gives nothing; climbable: a player can stand 1.2 m above its foot (at scale 1; 1.2 m with Jump skill 100), so it's a stepping stone to a level up to about 2.8 m above its foot (4.3 m with Jump 100); TROUBLE: carries an EggHatch (it hatches something): scenery only (Strip takes the hatching off); Saved, it would hatch.",
+   "exists": true,
+   "size": [
+    0.41,
+    1.98,
+    0.37
+   ],
+   "min": [
+    -0.22,
+    -0.91,
+    -0.2
+   ],
+   "max": [
+    0.19,
+    1.07,
+    0.17
+   ],
+   "origin": "centre",
+   "hollow": false,
+   "game_dungeon": [],
+   "kinds": [
+    "Destructible",
+    "DropOnDestroyed",
+    "EggHatch",
+    "ZNetView"
+   ],
+   "colliders": {
+    "Default_small": 1
+   },
+   "solid": true,
+   "solid_note": "",
+   "lights": [],
+   "fire": false,
+   "particles": 0,
+   "item": false,
+   "networked": true,
+   "gives": [
+    "Destructible",
+    "DropOnDestroyed"
+   ],
+   "physics": false,
+   "usable": [],
+   "height": 1.98,
+   "upright": "upright",
+   "saved_only": false,
+   "safe": true,
+   "climb": {
+    "ledges": [
+     [
+      1.0,
+      1.2
+     ]
+    ],
+    "top": 1.2,
+    "top_skilled": 1.2
+   }
+  },
+  {
+   "prefab": "AsksvinCarrionSkull",
+   "role": "decor",
+   "look": "a beast's skull: keystones, lever knobs (an item: the Builder makes it solid)",
+   "mount": "free",
+   "scale": [
+    0.5,
+    2
+   ],
+   "tier": 7,
+   "notes": "an item: made solid and fitted to its shape by the Builder (BuildSolid.cs); as scenery its ItemDrop is stripped: it gives nothing",
+   "exists": true,
+   "size": [
+    0.77,
+    0.45,
+    0.58
+   ],
+   "min": [
+    -0.38,
+    -0.22,
+    -0.24
+   ],
+   "max": [
+    0.39,
+    0.23,
+    0.34
+   ],
+   "origin": "centre",
+   "hollow": false,
+   "game_dungeon": [],
+   "kinds": [
+    "ItemDrop",
+    "ZNetView"
+   ],
+   "colliders": {
+    "item": 1
+   },
+   "solid": true,
+   "solid_note": "an item: made solid and fitted to its shape by the Builder (BuildSolid.cs)",
+   "lights": [],
+   "fire": false,
+   "particles": 1,
+   "item": true,
+   "networked": true,
+   "gives": [
+    "ItemDrop"
+   ],
+   "physics": false,
+   "usable": [],
+   "height": 0.45,
+   "upright": "block",
+   "saved_only": false,
+   "safe": true,
+   "climb": {
+    "ledges": [],
+    "top": 0.0,
+    "top_skilled": 0.0
+   }
+  },
+  {
+   "prefab": "Bell",
+   "role": "decor",
+   "look": "the game's bell: great bells (2.4-3.2 m) that swing and toll, hung on chains (an item: made solid)",
+   "mount": "hang",
+   "scale": [
+    0.5,
+    3
+   ],
+   "tier": 7,
+   "notes": "an item: made solid and fitted to its shape by the Builder (BuildSolid.cs); as scenery its ItemDrop is stripped: it gives nothing; climbable: a player can stand 1.2 m above its foot (at scale 1; 1.2 m with Jump skill 100), so it's a stepping stone to a level up to about 2.8 m above its foot (4.3 m with Jump 100)",
+   "exists": true,
+   "size": [
+    1.04,
+    1.2,
+    1.04
+   ],
+   "min": [
+    -0.52,
+    -0.01,
+    -0.52
+   ],
+   "max": [
+    0.52,
+    1.19,
+    0.52
+   ],
+   "origin": "foot",
+   "hollow": false,
+   "game_dungeon": [],
+   "kinds": [
+    "ItemDrop",
+    "ZNetView"
+   ],
+   "colliders": {
+    "item": 1
+   },
+   "solid": true,
+   "solid_note": "an item: made solid and fitted to its shape by the Builder (BuildSolid.cs)",
+   "lights": [],
+   "fire": false,
+   "particles": 1,
+   "item": true,
+   "networked": true,
+   "gives": [
+    "ItemDrop"
+   ],
+   "physics": false,
+   "usable": [],
+   "height": 1.2,
+   "upright": "block",
+   "saved_only": false,
+   "safe": true,
+   "climb": {
+    "ledges": [
+     [
+      1.0,
+      1.2
+     ]
+    ],
+    "top": 1.2,
+    "top_skilled": 1.2
+   }
+  },
+  {
+   "prefab": "FrozenSkeleton_Pose1",
+   "role": "decor",
+   "look": "a white skeleton, arms raised: the choir's singers",
+   "mount": "ground",
+   "scale": [
+    0.8,
+    1.2
+   ],
+   "tier": 8,
+   "notes": "as scenery its Destructible, DropOnDestroyed is stripped: it gives nothing",
+   "exists": true,
+   "size": [
+    2.13,
+    2.29,
+    1.9
+   ],
+   "min": [
+    -1.05,
+    -0.01,
+    -1.29
+   ],
+   "max": [
+    1.08,
+    2.29,
+    0.6
+   ],
+   "origin": "foot",
+   "hollow": false,
+   "game_dungeon": [],
+   "kinds": [
+    "Destructible",
+    "DropOnDestroyed",
+    "ZNetView"
+   ],
+   "colliders": {
+    "Default": 1
+   },
+   "solid": true,
+   "solid_note": "",
+   "lights": [],
+   "fire": false,
+   "particles": 0,
+   "item": false,
+   "networked": true,
+   "gives": [
+    "Destructible",
+    "DropOnDestroyed"
+   ],
+   "physics": false,
+   "usable": [],
+   "height": 2.29,
+   "upright": "block",
+   "saved_only": false,
+   "safe": true,
+   "climb": {
+    "ledges": [
+     [
+      2.2,
+      2.4
+     ]
+    ],
+    "top": 0.0,
+    "top_skilled": 2.4
+   }
+  },
+  {
+   "prefab": "FrozenSkeleton_Pose2",
+   "role": "decor",
+   "look": "a white skeleton, crouched: the choir's singers",
+   "mount": "ground",
+   "scale": [
+    0.8,
+    1.2
+   ],
+   "tier": 8,
+   "notes": "as scenery its Destructible, DropOnDestroyed is stripped: it gives nothing",
+   "exists": true,
+   "size": [
+    1.06,
+    2.1,
+    2.48
+   ],
+   "min": [
+    -0.44,
+    -0.03,
+    -0.83
+   ],
+   "max": [
+    0.63,
+    2.07,
+    1.66
+   ],
+   "origin": "foot",
+   "hollow": false,
+   "game_dungeon": [],
+   "kinds": [
+    "Destructible",
+    "DropOnDestroyed",
+    "ZNetView"
+   ],
+   "colliders": {
+    "Default": 2
+   },
+   "solid": true,
+   "solid_note": "",
+   "lights": [],
+   "fire": false,
+   "particles": 0,
+   "item": false,
+   "networked": true,
+   "gives": [
+    "Destructible",
+    "DropOnDestroyed"
+   ],
+   "physics": false,
+   "usable": [],
+   "height": 2.1,
+   "upright": "block",
+   "saved_only": false,
+   "safe": true,
+   "climb": {
+    "ledges": [
+     [
+      1.8,
+      2.2
+     ]
+    ],
+    "top": 0.0,
+    "top_skilled": 2.2
+   }
+  },
+  {
+   "prefab": "piece_throne02",
+   "role": "decor",
+   "look": "a pale stone throne: choir stalls",
+   "mount": "ground",
+   "scale": [
+    0.8,
+    1.2
+   ],
+   "tier": 1,
+   "notes": "climbable: a player can stand 1.0 m above its foot (at scale 1; 3.0 m with Jump skill 100), so it's a stepping stone to a level up to about 2.6 m above its foot (6.1 m with Jump 100)",
+   "exists": true,
+   "size": [
+    1.62,
+    2.97,
+    1.13
+   ],
+   "min": [
+    -0.81,
+    0.0,
+    -0.63
+   ],
+   "max": [
+    0.81,
+    2.97,
+    0.5
+   ],
+   "origin": "foot",
+   "hollow": false,
+   "game_dungeon": [],
+   "kinds": [
+    "Piece",
+    "WearNTear",
+    "ZNetView"
+   ],
+   "colliders": {
+    "piece": 6
+   },
+   "solid": true,
+   "solid_note": "",
+   "lights": [],
+   "fire": false,
+   "particles": 0,
+   "item": false,
+   "networked": true,
+   "gives": [],
+   "physics": false,
+   "usable": [],
+   "height": 2.97,
+   "upright": "block",
+   "saved_only": false,
+   "safe": true,
+   "climb": {
+    "ledges": [
+     [
+      0.4,
+      0.6
+     ],
+     [
+      0.8,
+      1.0
+     ],
+     [
+      2.8,
+      3.0
+     ]
+    ],
+    "top": 1.0,
+    "top_skilled": 3.0
+   }
+  },
+  {
+   "prefab": "piece_bone_throne",
+   "role": "decor",
+   "look": "the bone throne: the Choirmaster's lectern, the reliquary's niches",
+   "mount": "ground",
+   "scale": [
+    0.8,
+    1.2
+   ],
+   "tier": 3,
+   "notes": "climbable: a player can stand 1.0 m above its foot (at scale 1; 3.2 m with Jump skill 100), so it's a stepping stone to a level up to about 2.6 m above its foot (6.3 m with Jump 100)",
+   "exists": true,
+   "size": [
+    1.56,
+    3.17,
+    0.83
+   ],
+   "min": [
+    -0.78,
+    -0.04,
+    -0.49
+   ],
+   "max": [
+    0.78,
+    3.13,
+    0.34
+   ],
+   "origin": "foot",
+   "hollow": false,
+   "game_dungeon": [],
+   "kinds": [
+    "Piece",
+    "WearNTear",
+    "ZNetView"
+   ],
+   "colliders": {
+    "piece": 4
+   },
+   "solid": true,
+   "solid_note": "",
+   "lights": [],
+   "fire": false,
+   "particles": 0,
+   "item": false,
+   "networked": true,
+   "gives": [],
+   "physics": false,
+   "usable": [],
+   "height": 3.17,
+   "upright": "upright",
+   "saved_only": false,
+   "safe": true,
+   "climb": {
+    "ledges": [
+     [
+      0.4,
+      0.6
+     ],
+     [
+      0.8,
+      1.0
+     ],
+     [
+      3.0,
+      3.2
+     ]
+    ],
+    "top": 1.0,
+    "top_skilled": 3.2
+   }
+  },
+  {
+   "prefab": "Candle_resin",
+   "role": "light",
+   "look": "a resin candle at 3-5 times: banks of giant candles (walk-through)",
+   "mount": "ground",
+   "scale": [
+    1,
+    5
+   ],
+   "tier": 1,
+   "notes": "players walk through it; its light range, fade distance and fire grow with its scale (BuildScale.cs)",
+   "exists": true,
+   "size": [
+    0.25,
+    0.32,
+    0.25
+   ],
+   "min": [
+    -0.07,
+    -0.03,
+    -0.12
+   ],
+   "max": [
+    0.18,
+    0.3,
+    0.14
+   ],
+   "origin": "foot",
+   "hollow": false,
+   "game_dungeon": [],
+   "kinds": [
+    "EffectArea",
+    "Fireplace",
+    "LightLod",
+    "Piece",
+    "WearNTear",
+    "ZNetView"
+   ],
+   "colliders": {
+    "piece_nonsolid": 1
+   },
+   "solid": false,
+   "solid_note": "players walk through it",
+   "lights": [
+    {
+     "range": 1.0,
+     "intensity": 2.0,
+     "colour": "#ffa438",
+     "lit": true,
+     "lod": true
+    },
+    {
+     "range": 1.0,
+     "intensity": 2.0,
+     "colour": "#ffa438",
+     "lit": false,
+     "lod": true
+    }
+   ],
+   "fire": true,
+   "particles": 1,
+   "item": false,
+   "networked": true,
+   "gives": [],
+   "physics": false,
+   "usable": [],
+   "height": 0.32,
+   "upright": "block",
+   "saved_only": false,
+   "safe": true,
+   "climb": {
+    "ledges": [],
+    "top": 0.0,
+    "top_skilled": 0.0
+   }
+  },
+  {
+   "prefab": "piece_groundtorch_wood",
+   "role": "light",
+   "look": "a thin standing torch (range 10, warm): in every candle bank; inside the bells, lit while they toll",
+   "mount": "ground",
+   "scale": [
+    0.8,
+    1.4
+   ],
+   "tier": 1,
+   "notes": "recognisable: a part of the game's own PlainsFortHildir dungeons; its light range, fade distance and fire grow with its scale (BuildScale.cs); thin (0.12 m): a single face may not show from behind (one-sided): check its render from both sides",
+   "exists": true,
+   "size": [
+    0.12,
+    1.41,
+    0.13
+   ],
+   "min": [
+    -0.06,
+    -0.65,
+    -0.06
+   ],
+   "max": [
+    0.06,
+    0.76,
+    0.06
+   ],
+   "origin": "centre",
+   "hollow": false,
+   "game_dungeon": [
+    "PlainsFortHildir"
+   ],
+   "kinds": [
+    "EffectArea",
+    "Fireplace",
+    "LightLod",
+    "Piece",
+    "WearNTear",
+    "ZNetView"
+   ],
+   "colliders": {
+    "piece": 1
+   },
+   "solid": true,
+   "solid_note": "",
+   "lights": [
+    {
+     "range": 10.0,
+     "intensity": 1.5,
+     "colour": "#ff9e7a",
+     "lit": true,
+     "lod": true
+    }
+   ],
+   "fire": true,
+   "particles": 2,
+   "item": false,
+   "networked": true,
+   "gives": [],
+   "physics": false,
+   "usable": [],
+   "height": 1.41,
+   "upright": "upright",
+   "saved_only": false,
+   "safe": true,
+   "climb": {
+    "ledges": [],
+    "top": 0.0,
+    "top_skilled": 0.0
+   }
+  },
+  {
+   "prefab": "piece_brazierceiling01",
+   "role": "light",
+   "look": "a fire bowl on ropes (range 10, warm): hung on a chain from the ribs",
+   "mount": "hang",
+   "scale": [
+    0.8,
+    1.4
+   ],
+   "tier": 1,
+   "notes": "its light range, fade distance and fire grow with its scale (BuildScale.cs); TROUBLE: hangs: needs a ceiling or beam right above its origin.",
+   "exists": true,
+   "size": [
+    1.0,
+    1.95,
+    0.99
+   ],
+   "min": [
+    -0.49,
+    0.03,
+    -0.49
+   ],
+   "max": [
+    0.51,
+    1.98,
+    0.51
+   ],
+   "origin": "foot",
+   "hollow": false,
+   "game_dungeon": [],
+   "kinds": [
+    "EffectArea",
+    "Fireplace",
+    "LightLod",
+    "Piece",
+    "WearNTear",
+    "ZNetView"
+   ],
+   "colliders": {
+    "piece": 1,
+    "piece_nonsolid": 1,
+    "pathblocker": 1
+   },
+   "solid": true,
+   "solid_note": "",
+   "lights": [
+    {
+     "range": 10.0,
+     "intensity": 2.0,
+     "colour": "#ff9e7a",
+     "lit": true,
+     "lod": true
+    },
+    {
+     "range": 2.5,
+     "intensity": 1.5,
+     "colour": "#d58669",
+     "lit": false,
+     "lod": true
+    }
+   ],
+   "fire": true,
+   "particles": 3,
+   "item": false,
+   "networked": true,
+   "gives": [],
+   "physics": false,
+   "usable": [],
+   "height": 1.95,
+   "upright": "block",
+   "saved_only": false,
+   "safe": true,
+   "climb": {
+    "ledges": [
+     [
+      0.0,
+      0.2
+     ]
+    ],
+    "top": 0.0,
+    "top_skilled": 0.0
+   }
+  },
+  {
+   "prefab": "Morkhalla_WallChain1",
+   "role": "chain",
+   "look": "an iron chain: bells, fire bowls, bell ropes, the counterweight",
+   "mount": "hang",
+   "scale": [
+    0.2,
+    3
+   ],
+   "tier": 8,
+   "notes": "recognisable: a part of the game's own MorkHalla dungeons",
+   "exists": true,
+   "size": [
+    1.0,
+    4.44,
+    1.56
+   ],
+   "min": [
+    -0.5,
+    -3.54,
+    -1.0
+   ],
+   "max": [
+    0.5,
+    0.9,
+    0.56
+   ],
+   "origin": "inside",
+   "hollow": false,
+   "game_dungeon": [
+    "MorkHalla"
+   ],
+   "sets": [
+    "engine",
+    "ossuary"
+   ],
+   "kinds": [
+    "ZNetView"
+   ],
+   "colliders": {
+    "Default": 2
+   },
+   "solid": true,
+   "solid_note": "",
+   "lights": [],
+   "fire": false,
+   "particles": 0,
+   "item": false,
+   "networked": true,
+   "gives": [],
+   "physics": false,
+   "usable": [],
+   "height": 4.44,
+   "upright": "upright",
+   "saved_only": false,
+   "safe": true,
+   "climb": {
+    "ledges": [
+     [
+      3.8,
+      4.0
+     ],
+     [
+      4.4,
+      4.6
+     ]
+    ],
+    "top": 0.0,
+    "top_skilled": 0.0
+   }
+  },
+  {
+   "prefab": "iron_grate",
+   "role": "gate",
+   "look": "wrought iron screens: gates (framed in bone), the shutters over the choir stalls",
+   "mount": "structure",
+   "scale": [
+    0.5,
+    3
+   ],
+   "tier": 3,
+   "notes": "usable in the game (Door): as scenery the Builder strips it, so it only looks the part; thin (0.11 m): a single face may not show from behind (one-sided): check its render from both sides",
+   "exists": true,
+   "size": [
+    2.01,
+    3.0,
+    0.11
+   ],
+   "min": [
+    -1.01,
+    -1.0,
+    -0.06
+   ],
+   "max": [
+    1.0,
+    2.0,
+    0.06
+   ],
+   "origin": "inside",
+   "hollow": false,
+   "game_dungeon": [],
+   "kinds": [
+    "Door",
+    "Piece",
+    "WearNTear",
+    "ZNetView"
+   ],
+   "colliders": {
+    "piece": 5
+   },
+   "solid": true,
+   "solid_note": "",
+   "lights": [],
+   "fire": false,
+   "particles": 0,
+   "item": false,
+   "networked": true,
+   "gives": [],
+   "physics": false,
+   "usable": [
+    "Door"
+   ],
+   "height": 3.0,
+   "upright": "upright",
+   "saved_only": false,
+   "safe": true,
+   "climb": {
+    "ledges": [
+     [
+      0.0,
+      0.2
+     ],
+     [
+      2.8,
+      3.0
+     ]
+    ],
+    "top": 0.0,
+    "top_skilled": 3.0
+   }
+  },
+  {
+   "prefab": "TreasureChest_ashland_stone",
+   "role": "chest",
+   "look": "a pale stone reliquary chest",
+   "mount": "ground",
+   "scale": [
+    1,
+    1
+   ],
+   "tier": 7,
+   "notes": "climbable: a player can stand 0.6 m above its foot (at scale 1; 0.6 m with Jump skill 100), so it's a stepping stone to a level up to about 2.2 m above its foot (3.7 m with Jump 100)",
+   "exists": true,
+   "size": [
+    2.02,
+    0.65,
+    0.87
+   ],
+   "min": [
+    -1.01,
+    0.0,
+    -0.44
+   ],
+   "max": [
+    1.01,
+    0.65,
+    0.42
+   ],
+   "origin": "foot",
+   "hollow": false,
+   "game_dungeon": [],
+   "kinds": [
+    "Container",
+    "Piece",
+    "WearNTear",
+    "ZNetView"
+   ],
+   "colliders": {
+    "Default": 1
+   },
+   "solid": true,
+   "solid_note": "",
+   "lights": [],
+   "fire": false,
+   "particles": 0,
+   "item": false,
+   "networked": true,
+   "gives": [
+    "Container"
+   ],
+   "physics": false,
+   "usable": [
+    "Container"
+   ],
+   "height": 0.65,
+   "upright": "flat",
+   "saved_only": true,
+   "safe": false,
+   "climb": {
+    "ledges": [
+     [
+      0.0,
+      0.6
+     ]
+    ],
+    "top": 0.6,
+    "top_skilled": 0.6
+   }
+  },
+  {
+   "prefab": "Morkhalla_ChestAncient",
+   "role": "chest",
+   "look": "the vault's great chest (32 slots)",
+   "mount": "ground",
+   "scale": [
+    1,
+    1
+   ],
+   "tier": 8,
+   "notes": "recognisable: a part of the game's own MorkHalla dungeons; climbable: a player can stand 1.4 m above its foot (at scale 1; 1.4 m with Jump skill 100), so it's a stepping stone to a level up to about 3.0 m above its foot (4.5 m with Jump 100)",
+   "exists": true,
+   "size": [
+    3.22,
+    2.13,
+    2.19
+   ],
+   "min": [
+    -1.61,
+    -0.02,
+    -1.09
+   ],
+   "max": [
+    1.61,
+    2.11,
+    1.09
+   ],
+   "origin": "foot",
+   "hollow": false,
+   "game_dungeon": [
+    "MorkHalla"
+   ],
+   "kinds": [
+    "Container",
+    "Piece",
+    "WearNTear",
+    "ZNetView"
+   ],
+   "colliders": {
+    "piece": 2
+   },
+   "solid": true,
+   "solid_note": "",
+   "lights": [],
+   "fire": false,
+   "particles": 0,
+   "item": false,
+   "networked": true,
+   "gives": [
+    "Container"
+   ],
+   "physics": false,
+   "usable": [
+    "Container"
+   ],
+   "height": 2.13,
+   "upright": "block",
+   "saved_only": true,
+   "safe": false,
+   "climb": {
+    "ledges": [
+     [
+      0.0,
+      0.6
+     ],
+     [
+      0.8,
+      1.4
+     ]
+    ],
+    "top": 1.4,
+    "top_skilled": 1.4
+   }
+  },
+  {
+   "prefab": "skull_pile",
+   "role": "remains",
+   "look": "skulls: the charnel's walls, the mound",
+   "mount": "ground",
+   "scale": [
+    0.5,
+    2
+   ],
+   "tier": null,
+   "notes": "climbable: a player can stand 0.6 m above its foot (at scale 1; 0.6 m with Jump skill 100), so it's a stepping stone to a level up to about 2.2 m above its foot (3.7 m with Jump 100)",
+   "exists": true,
+   "size": [
+    1.18,
+    0.85,
+    1.09
+   ],
+   "min": [
+    -0.55,
+    -0.07,
+    -0.57
+   ],
+   "max": [
+    0.63,
+    0.78,
+    0.52
+   ],
+   "origin": "foot",
+   "hollow": false,
+   "game_dungeon": [],
+   "sets": [
+    "ossuary"
+   ],
+   "kinds": [
+    "Piece",
+    "WearNTear",
+    "ZNetView"
+   ],
+   "colliders": {
+    "piece": 2
+   },
+   "solid": true,
+   "solid_note": "",
+   "lights": [],
+   "fire": false,
+   "particles": 0,
+   "item": false,
+   "networked": true,
+   "gives": [],
+   "physics": false,
+   "usable": [],
+   "height": 0.85,
+   "upright": "block",
+   "saved_only": false,
+   "safe": true,
+   "climb": {
+    "ledges": [
+     [
+      0.0,
+      0.6
+     ]
+    ],
+    "top": 0.6,
+    "top_skilled": 0.6
+   }
+  },
+  {
+   "prefab": "bone_stack",
+   "role": "remains",
+   "look": "bones",
+   "mount": "ground",
+   "scale": [
+    0.5,
+    2
+   ],
+   "tier": null,
+   "notes": "climbable: a player can stand 0.6 m above its foot (at scale 1; 0.6 m with Jump skill 100), so it's a stepping stone to a level up to about 2.2 m above its foot (3.7 m with Jump 100)",
+   "exists": true,
+   "size": [
+    1.01,
+    0.63,
+    1.05
+   ],
+   "min": [
+    -0.48,
+    -0.06,
+    -0.52
+   ],
+   "max": [
+    0.52,
+    0.56,
+    0.54
+   ],
+   "origin": "foot",
+   "hollow": false,
+   "game_dungeon": [],
+   "sets": [
+    "ossuary"
+   ],
+   "kinds": [
+    "Piece",
+    "WearNTear",
+    "ZNetView"
+   ],
+   "colliders": {
+    "piece": 1
+   },
+   "solid": true,
+   "solid_note": "",
+   "lights": [],
+   "fire": false,
+   "particles": 0,
+   "item": false,
+   "networked": true,
+   "gives": [],
+   "physics": false,
+   "usable": [],
+   "height": 0.63,
+   "upright": "block",
+   "saved_only": false,
+   "safe": true,
+   "climb": {
+    "ledges": [
+     [
+      0.4,
+      0.6
+     ]
+    ],
+    "top": 0.6,
+    "top_skilled": 0.6
+   }
+  },
+  {
+   "prefab": "Skull2",
+   "role": "remains",
+   "look": "a giant's skull lying in the floor",
+   "mount": "ground",
+   "scale": [
+    0.3,
+    1
+   ],
+   "tier": null,
+   "notes": "",
+   "exists": true,
+   "size": [
+    4.16,
+    4.13,
+    3.83
+   ],
+   "min": [
+    -1.7,
+    -1.27,
+    -1.03
+   ],
+   "max": [
+    2.46,
+    2.86,
+    2.8
+   ],
+   "origin": "inside",
+   "hollow": false,
+   "game_dungeon": [],
+   "kinds": [
+    "ZNetView"
+   ],
+   "colliders": {
+    "static_solid": 1
+   },
+   "solid": true,
+   "solid_note": "",
+   "lights": [],
+   "fire": false,
+   "particles": 0,
+   "item": false,
+   "networked": true,
+   "gives": [],
+   "physics": false,
+   "usable": [],
+   "height": 4.13,
+   "upright": "block",
+   "saved_only": false,
+   "safe": true,
+   "climb": {
+    "ledges": [
+     [
+      4.2,
+      4.4
+     ]
+    ],
+    "top": 0.0,
+    "top_skilled": 0.0
+   }
+  },
+  {
+   "prefab": "giant_arm",
+   "role": "remains",
+   "look": "a giant's arm bone on the floor",
+   "mount": "ground",
+   "scale": [
+    0.2,
+    1
+   ],
+   "tier": 6,
+   "notes": "as scenery its Destructible is stripped: it gives nothing; climbable: a player can stand 1.4 m above its foot (at scale 1; 1.4 m with Jump skill 100), so it's a stepping stone to a level up to about 3.0 m above its foot (4.5 m with Jump 100)",
+   "exists": true,
+   "size": [
+    2.75,
+    2.61,
+    11.49
+   ],
+   "min": [
+    -1.12,
+    -0.55,
+    -6.68
+   ],
+   "max": [
+    1.63,
+    2.06,
+    4.81
+   ],
+   "origin": "inside",
+   "hollow": false,
+   "game_dungeon": [],
+   "sets": [
+    "ossuary"
+   ],
+   "kinds": [
+    "Destructible",
+    "ZNetView"
+   ],
+   "colliders": {
+    "static_solid": 1
+   },
+   "solid": true,
+   "solid_note": "",
+   "lights": [],
+   "fire": false,
+   "particles": 0,
+   "item": false,
+   "networked": true,
+   "gives": [
+    "Destructible"
+   ],
+   "physics": false,
+   "usable": [],
+   "height": 2.61,
+   "upright": "flat",
+   "saved_only": false,
+   "safe": true,
+   "climb": {
+    "ledges": [
+     [
+      0.2,
+      1.4
+     ]
+    ],
+    "top": 1.4,
+    "top_skilled": 1.4
+   }
+  },
+  {
+   "prefab": "giant_ribs",
+   "role": "remains",
+   "look": "a giant's ribcage: the entrance's half-buried archway",
+   "mount": "ground",
+   "scale": [
+    0.5,
+    1.2
+   ],
+   "tier": 6,
+   "notes": "as scenery its Destructible is stripped: it gives nothing; climbable: a player can stand 5.0 m above its foot (at scale 1; 11.8 m with Jump skill 100), so it's a stepping stone to a level up to about 6.6 m above its foot (14.9 m with Jump 100); TROUBLE: huge (0.75 scale is still about 14 m long), and hollow: its collider is boxes in prefab_shapes.json. Scale giant remains by their box.",
+   "exists": true,
+   "size": [
+    16.91,
+    11.7,
+    19.29
+   ],
+   "min": [
+    -8.45,
+    -2.81,
+    -9.81
+   ],
+   "max": [
+    8.45,
+    8.9,
+    9.47
+   ],
+   "origin": "inside",
+   "hollow": true,
+   "game_dungeon": [],
+   "sets": [
+    "ossuary"
+   ],
+   "kinds": [
+    "Destructible",
+    "ZNetView"
+   ],
+   "colliders": {
+    "static_solid": 1
+   },
+   "solid": true,
+   "solid_note": "",
+   "lights": [],
+   "fire": false,
+   "particles": 0,
+   "item": false,
+   "networked": true,
+   "gives": [
+    "Destructible"
+   ],
+   "physics": false,
+   "usable": [],
+   "height": 11.7,
+   "upright": "block",
+   "saved_only": false,
+   "safe": true,
+   "climb": {
+    "ledges": [
+     [
+      0.6,
+      2.8
+     ],
+     [
+      3.0,
+      3.4
+     ],
+     [
+      3.6,
+      3.8
+     ],
+     [
+      4.0,
+      4.6
+     ],
+     [
+      4.8,
+      5.0
+     ],
+     [
+      7.0,
+      11.8
+     ]
+    ],
+    "top": 5.0,
+    "top_skilled": 11.8
+   }
+  },
+  {
+   "prefab": "piece_cloth_hanging_door",
+   "role": "decor",
+   "look": "red hangings",
+   "mount": "wall",
+   "scale": [
+    0.8,
+    2
+   ],
+   "tier": 1,
+   "notes": "",
+   "exists": true,
+   "size": [
+    0.2,
+    2.5,
+    1.13
+   ],
+   "min": [
+    -0.1,
+    -2.4,
+    -0.56
+   ],
+   "max": [
+    0.1,
+    0.1,
+    0.56
+   ],
+   "origin": "top",
+   "hollow": false,
+   "game_dungeon": [],
+   "kinds": [
+    "Piece",
+    "WearNTear",
+    "ZNetView"
+   ],
+   "colliders": {
+    "piece": 1
+   },
+   "solid": true,
+   "solid_note": "",
+   "lights": [],
+   "fire": false,
+   "particles": 0,
+   "item": false,
+   "networked": true,
+   "gives": [],
+   "physics": false,
+   "usable": [],
+   "height": 2.5,
+   "upright": "upright",
+   "saved_only": false,
+   "safe": true,
+   "climb": {
+    "ledges": [
+     [
+      2.4,
+      2.6
+     ]
+    ],
+    "top": 0.0,
+    "top_skilled": 2.6
+   }
+  },
+  {
+   "prefab": "AsksvinCarrionRibcage",
+   "role": "decor",
+   "look": "a beast's ribcage",
+   "mount": "ground",
+   "scale": [
+    1,
+    2
+   ],
+   "tier": 7,
+   "notes": "an item: made solid and fitted to its shape by the Builder (BuildSolid.cs); as scenery its ItemDrop is stripped: it gives nothing; climbable: a player can stand 1.0 m above its foot (at scale 1; 1.0 m with Jump skill 100), so it's a stepping stone to a level up to about 2.6 m above its foot (4.1 m with Jump 100)",
+   "exists": true,
+   "size": [
+    0.98,
+    0.97,
+    0.93
+   ],
+   "min": [
+    -0.45,
+    -0.34,
+    -0.41
+   ],
+   "max": [
+    0.53,
+    0.64,
+    0.51
+   ],
+   "origin": "inside",
+   "hollow": false,
+   "game_dungeon": [],
+   "kinds": [
+    "ItemDrop",
+    "ZNetView"
+   ],
+   "colliders": {
+    "item": 1
+   },
+   "solid": true,
+   "solid_note": "an item: made solid and fitted to its shape by the Builder (BuildSolid.cs)",
+   "lights": [],
+   "fire": false,
+   "particles": 1,
+   "item": true,
+   "networked": true,
+   "gives": [
+    "ItemDrop"
+   ],
+   "physics": false,
+   "usable": [],
+   "height": 0.97,
+   "upright": "block",
+   "saved_only": false,
+   "safe": true,
+   "climb": {
+    "ledges": [
+     [
+      0.8,
+      1.0
+     ]
+    ],
+    "top": 1.0,
+    "top_skilled": 1.0
+   }
+  },
+  {
+   "prefab": "piece_asksvinskeleton",
+   "role": "remains",
+   "look": "a beast's skeleton on the floor",
+   "mount": "ground",
+   "scale": [
+    1,
+    1.6
+   ],
+   "tier": 7,
+   "notes": "climbable: a player can stand 1.8 m above its foot (at scale 1; 1.8 m with Jump skill 100), so it's a stepping stone to a level up to about 3.4 m above its foot (4.9 m with Jump 100)",
+   "exists": true,
+   "size": [
+    3.34,
+    1.95,
+    1.66
+   ],
+   "min": [
+    -1.61,
+    -0.01,
+    -0.83
+   ],
+   "max": [
+    1.73,
+    1.94,
+    0.83
+   ],
+   "origin": "foot",
+   "hollow": false,
+   "game_dungeon": [],
+   "kinds": [
+    "Piece",
+    "WearNTear",
+    "ZNetView"
+   ],
+   "colliders": {
+    "Default": 1
+   },
+   "solid": true,
+   "solid_note": "",
+   "lights": [],
+   "fire": false,
+   "particles": 0,
+   "item": false,
+   "networked": true,
+   "gives": [],
+   "physics": false,
+   "usable": [],
+   "height": 1.95,
+   "upright": "block",
+   "saved_only": false,
+   "safe": true,
+   "climb": {
+    "ledges": [
+     [
+      0.0,
+      0.4
+     ],
+     [
+      0.8,
+      1.8
+     ]
+    ],
+    "top": 1.8,
+    "top_skilled": 1.8
+   }
+  },
+  {
+   "prefab": "MemorialStone_Medium",
+   "role": "decor",
+   "look": "a carved tablet",
+   "mount": "ground",
+   "scale": [
+    0.5,
+    1.2
+   ],
+   "tier": 1,
+   "notes": "as scenery its Destructible, DropOnDestroyed is stripped: it gives nothing",
+   "exists": true,
+   "size": [
+    2.34,
+    2.17,
+    0.82
+   ],
+   "min": [
+    -1.12,
+    -0.2,
+    -0.41
+   ],
+   "max": [
+    1.22,
+    1.98,
+    0.41
+   ],
+   "origin": "inside",
+   "hollow": false,
+   "game_dungeon": [],
+   "kinds": [
+    "Destructible",
+    "DropOnDestroyed",
+    "ZNetView"
+   ],
+   "colliders": {
+    "Default": 1
+   },
+   "solid": true,
+   "solid_note": "",
+   "lights": [],
+   "fire": false,
+   "particles": 0,
+   "item": false,
+   "networked": true,
+   "gives": [
+    "Destructible",
+    "DropOnDestroyed"
+   ],
+   "physics": false,
+   "usable": [],
+   "height": 2.17,
+   "upright": "block",
+   "saved_only": false,
+   "safe": true,
+   "climb": {
+    "ledges": [
+     [
+      0.0,
+      0.2
+     ],
+     [
+      2.0,
+      2.2
+     ]
+    ],
+    "top": 0.0,
+    "top_skilled": 2.2
+   }
+  },
+  {
+   "prefab": "Skull1",
+   "role": "decor",
+   "look": "a skull: carvings, shrines",
+   "mount": "ground",
+   "scale": [
+    1,
+    3
+   ],
+   "tier": 1,
+   "notes": "recognisable: a part of the game's own ForestCrypt dungeons",
+   "exists": true,
+   "size": [
+    0.31,
+    0.24,
+    0.2
+   ],
+   "min": [
+    -0.17,
+    -0.0,
+    -0.1
+   ],
+   "max": [
+    0.14,
+    0.24,
+    0.1
+   ],
+   "origin": "foot",
+   "hollow": false,
+   "game_dungeon": [
+    "ForestCrypt"
+   ],
+   "kinds": [
+    "ZNetView"
+   ],
+   "colliders": {
+    "static_solid": 1
+   },
+   "solid": true,
+   "solid_note": "",
+   "lights": [],
+   "fire": false,
+   "particles": 0,
+   "item": false,
+   "networked": true,
+   "gives": [],
+   "physics": false,
+   "usable": [],
+   "height": 0.24,
+   "upright": "block",
+   "saved_only": false,
+   "safe": true,
+   "climb": {
+    "ledges": [],
+    "top": 0.0,
+    "top_skilled": 0.0
+   }
+  }
+ ],
+ "roles": {
+  "wall": {
+   "pieces": [
+    "Ashlands_Ruins_Floor_6x6"
+   ],
+   "how": "Ashlands_Ruins_Floor_6x6 stood up (tilt -90): panels up to 6 m"
+  },
+  "floor": {
+   "pieces": [
+    "Ashlands_Ruins_Floor_6x6"
+   ],
+   "how": "flat as it is; most slabs have their origin in their middle (see each piece's origin and min/max)"
+  },
+  "ceiling": {
+   "pieces": [
+    "Ashlands_Ruins_Floor_6x6"
+   ],
+   "how": "a floor slab turned over: euler (180, 0, 0) (dungeon_parts.slab with ceiling=True); its origin is in the slab's middle"
+  },
+  "trim": {
+   "pieces": [
+    "Ashlands_Floor"
+   ]
+  },
+  "pillar": {
+   "pieces": [
+    "LargeBone",
+    "Ashlands_PillarBase3_double"
+   ],
+   "how": "four LargeBones bound on a stepped base (theme.pillar)"
+  },
+  "column": {
+   "pieces": [
+    "LargeBone"
+   ]
+  },
+  "beam": {
+   "pieces": [
+    "lox_ribs",
+    "LargeBone"
+   ],
+   "how": "lox_ribs: tilt x -90, yaw towards the wall + 180: the spine on the ridge, the ribs arching down"
+  },
+  "rail": {
+   "pieces": [
+    "Ashlands_Ruins_TopStone"
+   ]
+  },
+  "grate": {
+   "pieces": [
+    "iron_grate"
+   ]
+  },
+  "door_leaf": {
+   "pieces": [
+    "iron_grate"
+   ],
+   "how": "as scenery it doesn't open: Pack.doors (saved, at joints) or a gate mechanism moves it"
+  },
+  "stair": {
+   "pieces": [
+    "piece_grausten_stonestair"
+   ],
+   "how": "keep scale 1 (step height); stack or repeat for a wider or longer stair"
+  },
+  "light_stand": {
+   "pieces": [
+    "piece_groundtorch_wood",
+    "Candle_resin"
+   ]
+  },
+  "light_hang": {
+   "pieces": [
+    "piece_brazierceiling01"
+   ],
+   "how": "hang it from the first part above it (ceiling, balcony, a mechanism's lid) on the theme's chain, the chain's foot on the light's top: giant, a thinned Morkhalla_WallChain1 (giant_kit.wisp); Dvergr, dvergrprops_lantern on dvergrprops_hooknchain. Stood at a point it floats (dverger_demister's mesh is below its origin)"
+  },
+  "light_wall": {
+   "pieces": [],
+   "how": "against a wall, its back to it"
+  },
+  "chain": {
+   "pieces": [
+    "Morkhalla_WallChain1"
+   ],
+   "how": "a wall chain hangs from its anchor at the top; a span rests on two anchors"
+  },
+  "chest": {
+   "pieces": [
+    "TreasureChest_ashland_stone",
+    "Morkhalla_ChestAncient"
+   ],
+   "how": "Saved parts only, scale 1: the Builder refills them from the pack's loot for the biome"
+  },
+  "decor_small": {
+   "pieces": [
+    "Candle_resin",
+    "Skull1",
+    "AsksvinCarrionRibcage"
+   ],
+   "how": "pick by the room's dressing set (each piece's \"sets\")"
+  },
+  "decor_large": {
+   "pieces": [
+    "piece_throne02",
+    "piece_bone_throne",
+    "FrozenSkeleton_Pose1",
+    "FrozenSkeleton_Pose2",
+    "Bell",
+    "MemorialStone_Medium",
+    "piece_cloth_hanging_door"
+   ],
+   "how": "pick by the room's dressing set (each piece's \"sets\")"
+  },
+  "rubble": {
+   "pieces": [
+    "skull_pile",
+    "bone_stack"
+   ]
+  },
+  "bones": {
+   "pieces": [
+    "skull_pile",
+    "bone_stack",
+    "Skull2",
+    "giant_arm",
+    "lox_ribs",
+    "piece_asksvinskeleton"
+   ],
+   "how": "giant bones are huge (a skull is 10 x 12 x 17 m): scale them down for human-scale rooms"
+  }
+ },
+ "by_role": {
+  "wall": [
+   "Ashlands_Ruins_Floor_6x6"
+  ],
+  "floor": [
+   "Ashlands_Ruins_Floor_6x6"
+  ],
+  "ceiling": [
+   "Ashlands_Ruins_Floor_6x6"
+  ],
+  "trim": [
+   "Ashlands_Floor"
+  ],
+  "pillar": [
+   "LargeBone",
+   "Ashlands_PillarBase3_double"
+  ],
+  "column": [
+   "LargeBone"
+  ],
+  "beam": [
+   "lox_ribs",
+   "LargeBone"
+  ],
+  "rail": [
+   "Ashlands_Ruins_TopStone"
+  ],
+  "grate": [
+   "iron_grate"
+  ],
+  "door_leaf": [
+   "iron_grate"
+  ],
+  "stair": [
+   "piece_grausten_stonestair"
+  ],
+  "light_stand": [
+   "piece_groundtorch_wood",
+   "Candle_resin"
+  ],
+  "light_hang": [
+   "piece_brazierceiling01"
+  ],
+  "light_wall": [],
+  "chain": [
+   "Morkhalla_WallChain1"
+  ],
+  "chest": [
+   "TreasureChest_ashland_stone",
+   "Morkhalla_ChestAncient"
+  ],
+  "decor_small": [
+   "Candle_resin",
+   "Skull1",
+   "AsksvinCarrionRibcage"
+  ],
+  "decor_large": [
+   "piece_throne02",
+   "piece_bone_throne",
+   "FrozenSkeleton_Pose1",
+   "FrozenSkeleton_Pose2",
+   "Bell",
+   "MemorialStone_Medium",
+   "piece_cloth_hanging_door"
+  ],
+  "rubble": [
+   "skull_pile",
+   "bone_stack"
+  ],
+  "bones": [
+   "skull_pile",
+   "bone_stack",
+   "Skull2",
+   "giant_arm",
+   "lox_ribs",
+   "piece_asksvinskeleton"
+  ]
+ }
+}

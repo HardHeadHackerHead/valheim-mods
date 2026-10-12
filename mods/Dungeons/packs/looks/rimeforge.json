@@ -1,0 +1,39 @@
+{
+  "name": "rimeforge",
+  "about": "Rimeforge Depths: a smoking crack in a glacier wall. Walls of ice pillars lean in over a cleft 5 m wide under a cap of glacier ice, the ice mountain behind; an iron portcullis between black fortress-stone posts fills the crack, a forge fire still burning behind it (its smoke and glow come out through the bars), embers either side. To the right a frost-giant's hammer lies head-down in the ice, its iron haft leaning up out of it; icicles hang over the gate, ice spikes stand round the way in, two iron lanterns light it. Things below y 0 are buried.",
+  "front": 5,
+  "parts": [
+    {"prefab": "caverock_ice_pillar_wall", "at": [-7.2, 1.0, -2.6], "euler": [0, 8, -4], "scale": [1.0, 1.1, 1.3]},
+    {"prefab": "caverock_ice_pillar_wall", "at": [7.0, 1.0, -2.6], "euler": [0, -172, 4], "scale": [1.0, 1.15, 1.3]},
+    {"prefab": "rock3_ice", "at": [0.4, 11.4, -4.2], "euler": [0, 90, 0], "scale": [0.45, 0.45, 0.6]},
+    {"prefab": "ice_rock1", "at": [3.0, 4.0, -15.0], "scale": [0.75, 0.75, 0.7]},
+    {"prefab": "rock3_ice", "at": [-14.5, 2.0, -6.5], "euler": [0, 30, 0], "scale": [0.55, 0.55, 0.55]},
+    {"prefab": "rock3_ice", "at": [14.5, 1.5, -7.0], "euler": [0, -40, 0], "scale": [0.55, 0.5, 0.55]},
+    {"prefab": "Morkhalla_GateDoor", "at": [0, 4.04, -1.6], "scale": [1.0, 1.0, 3.0]},
+    {"prefab": "Ashlands_Fortress_Floor", "at": [-2.75, 4.1, -1.6], "scale": [0.45, 8.2, 0.5]},
+    {"prefab": "Ashlands_Fortress_Floor", "at": [2.75, 4.1, -1.6], "scale": [0.45, 8.2, 0.5]},
+    {"prefab": "Ashlands_Fortress_Floor", "at": [0, 8.45, -1.6], "scale": [3.2, 0.9, 0.55]},
+    {"prefab": "Piece_flametal_beam", "at": [0, 7.85, -1.25], "scale": [2.9, 0.7, 0.7]},
+    {"prefab": "fire_pit_iron", "at": [0, 0, -3.6], "scale": [1.4, 1.4, 1.4]},
+    {"prefab": "piece_FaderEmbers", "at": [-1.3, 0, -3.2]},
+    {"prefab": "piece_FaderEmbers", "at": [1.3, 0, -3.2]},
+    {"prefab": "Morkhalla_Block", "at": [7.6, -1.8, 2.8], "euler": [6, 20, 12], "scale": [1.5, 1.1, 1.0]},
+    {"prefab": "Piece_flametal_beam", "at": [9.8, 6.6, 1.8], "euler": [0, 20, 58], "scale": [5.0, 1.7, 1.7]},
+    {"prefab": "Piece_flametal_beam", "at": [7.6, 1.6, 2.8], "euler": [0, 20, 12], "scale": [3.2, 1.2, 4.2]},
+    {"prefab": "Ice_floor", "at": [5.6, 0.2, 4.6], "euler": [0, 25, 0], "scale": [0.7, 0.8, 0.6]},
+    {"prefab": "Ice_floor", "at": [10.2, 0.0, 3.8], "euler": [0, -40, 0], "scale": [0.6, 0.6, 0.7]},
+    {"prefab": "Ice_floor", "at": [7.8, -0.2, 5.4], "euler": [0, 70, 0], "scale": [0.5, 0.5, 0.5]},
+    {"prefab": "caverock_ice_stalagmite", "at": [-4.6, -0.4, 3.0], "euler": [0, 30, 4], "scale": [0.7, 0.7, 0.7]},
+    {"prefab": "caverock_ice_stalagmite", "at": [-9.2, -0.4, 1.8], "euler": [0, 80, -5], "scale": [1.0, 1.1, 1.0]},
+    {"prefab": "caverock_ice_stalagmite", "at": [4.2, -0.4, 5.2], "euler": [0, 140, 3], "scale": [0.5, 0.5, 0.5]},
+    {"prefab": "caverock_ice_stalagtite", "at": [-1.4, 5.6, 0.4], "scale": [0.6, 0.6, 0.6]},
+    {"prefab": "caverock_ice_stalagtite", "at": [0.9, 6.0, 0.6], "euler": [0, 70, 0], "scale": [0.5, 0.5, 0.5]},
+    {"prefab": "caverock_ice_stalagtite", "at": [2.6, 5.2, 0.2], "euler": [0, 150, 0], "scale": [0.7, 0.7, 0.7]},
+    {"prefab": "Ice_floor", "at": [0, -0.95, 3.4], "scale": [1.3, 1.0, 1.0]},
+    {"prefab": "deepnorth_lantern_standing", "at": [-3.9, 0.2, 2.6]},
+    {"prefab": "deepnorth_lantern_standing", "at": [3.9, 0.2, 2.6]}
+  ],
+  "inside": [
+    {"prefab": "Morkhalla_GateDoor", "at": [0, 3.24, -0.3], "euler": [0, 180, 0], "scale": [0.95, 0.8, 3.0]}
+  ]
+}

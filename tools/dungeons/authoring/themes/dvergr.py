@@ -333,8 +333,8 @@ class Dvergr(Theme):
         sh = self._shell("vault", (12, 6, 12), [("in", 2, 0.0, -2.5)], tags=["end"], max=1)
         r = sh.room
         box(r, TRIM, (0, -2.25, 3.0), (2.8, 0.5, 2.8))
-        # the Dvergr stone chest (2 x 1 x 2 m, its origin at its middle): the vault's, on the plinth
-        r.stand("TreasureChest_dvergr_loose_stone", (0, -1.5, 3.0), yaw=180, saved=True)
+        # the Dvergr stone chest (2 x 1 x 2 m): the vault's, on the plinth (stand puts its foot at `at`)
+        r.stand("TreasureChest_dvergr_loose_stone", (0, -2.0, 3.0), yaw=180, saved=True)
         for x in (-4.0, 4.0):
             r.stand("dvergrprops_crate", (x, -2.5, 4.0))
             self.light_stand(r, (x, -2.5, -3.5))
@@ -366,12 +366,13 @@ class Dvergr(Theme):
         # flight 2: along the north gallery, from its west part up to the east gallery's north end
         self.stairs(r, (H - g - run, ys[1], H - w / 2), S, run, w, yaw=90, fill_below=None)
         # rails on the galleries' open edges (leaving the flights' heads)
-        self.rail(r, (-H + g + 0.2, 0, -H + w + 0.3), (-H + g + 0.2, 0, H - g - 0.2), ys[1])         # west gallery's edge
-        self.rail(r, (-H + g + 0.2, 0, H - g - 0.2), (H - g - run - 0.4, 0, H - g - 0.2), ys[1])     # north gallery's edge
-        self.rail(r, (H - g - 0.2, 0, -H + 0.3), (H - g - 0.2, 0, H - w - 0.3), ys[2])               # east gallery's edge
+        # (on the galleries, 0.2 m in from their edges: a rail's posts stand on the boards)
+        self.rail(r, (-H + g - 0.2, 0, -H + w + 0.3), (-H + g - 0.2, 0, H - g + 0.2), ys[1])         # west gallery's edge
+        self.rail(r, (-H + g - 0.2, 0, H - g + 0.2), (H - g - run - 0.4, 0, H - g + 0.2), ys[1])     # north gallery's edge
+        self.rail(r, (H - g + 0.2, 0, -H + 0.3), (H - g + 0.2, 0, H - w - 0.3), ys[2])               # east gallery's edge
         # the crane (its arm out over the south), the hook, the lights
         box(r, "dvergrtown_wood_crane", (0, y0 + 6.2, -2.0), (6.23, 12.4, 1.34), yaw=90)
-        self.chain(r, (0.3, y0 + 10.5, -6.0), 3.5)
+        self.chain(r, (0.3, y0 + 10.5, -4.8), 3.5)                 # (from the arm's end)
         for x, z, y in ((-5.5, 4.5, ys[1] + 3.5), (5.5, -4.5, ys[2] + 3.0), (0.0, 4.5, ys[1] + 3.5)):
             self.light_hang(r, (x, y, z))
         for x, z in ((5.6, 5.0), (-3.0, -4.0)):

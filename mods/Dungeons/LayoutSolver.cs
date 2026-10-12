@@ -113,6 +113,8 @@ namespace Dungeons
                 public readonly List<KeyValuePair<int, string>> Acts = new List<KeyValuePair<int, string>>();
                 public readonly List<KeyValuePair<int, int>> Needs = new List<KeyValuePair<int, int>>(), Gives = new List<KeyValuePair<int, int>>();
                 public int Flag = -1;                                                    // a Once part's flag slot
+                public Part After;                                                       // applied only if this part was (a trigger on a block's use:
+                                                                                         // no place without the item placed)
             }
 
             private readonly Layout _l;
@@ -200,7 +202,7 @@ namespace Dungeons
                             {
                                 Part p = ToPart(use, r, depth + 1);
                                 if (p == null) continue;
-                                if (part != null) p.Guard.InsertRange(0, part.Guard);
+                                if (part != null) { p.Guard.InsertRange(0, part.Guard); p.After = part; }
                                 use.Parts.Add(p);
                             }
                         return;
@@ -257,9 +259,17 @@ namespace Dungeons
                     if (p == null) continue;
                     use.Parts.Insert(0, p);
                     if (into.TryGetValue(r.Key, out var rules))   // (triggers on this block's use: a pedestal's place, a brazier lit)
-                        foreach (TriggerSolve.Rule q in rules) { Part qp = ToPart(use, q, 0); if (qp != null) { qp.Guard.InsertRange(0, p.Guard); use.Parts.Add(qp); } }
+                        foreach (TriggerSolve.Rule q in rules) { Part qp = ToPart(use, q, 0); if (qp != null) { qp.Guard.InsertRange(0, p.Guard); qp.After = p; use.Parts.Add(qp); } }
                     made[r.Key] = use;
                     (r.Cost ? _uses : _won).Add(use);
+                }
+                // (a part after the one it depends on: an encounter's win parts are made before the part that starts it)
+                foreach (Use u in _uses.Concat(_won))
+                {
+                    int Depth(Part x) { int d = 0; for (Part y = x.After; y != null && d < 16; y = y.After) d++; return d; }
+                    List<Part> ordered = u.Parts.Select((x, i) => new { x, i }).OrderBy(x => Depth(x.x)).ThenBy(x => x.i).Select(x => x.x).ToList();
+                    u.Parts.Clear();
+                    u.Parts.AddRange(ordered);
                 }
                 // Teleporters: one way, while their guard holds.
                 foreach (TriggerSolve.Teleport t in tm.Teleports)
@@ -387,10 +397,13 @@ namespace Dungeons
             {
                 long next = code;
                 foreach (KeyValuePair<int, string> act in use.Acts) next = With(next, act.Key, After(_slots[act.Key].Def, SlotState(next, act.Key), act.Value));
+                HashSet<Part> applied = null;
                 foreach (Part p in use.Parts)
                 {
+                    if (p.After != null && (applied == null || !applied.Contains(p.After))) continue;
                     if (!Holds(p.Guard, code) || (p.Flag >= 0 && SlotState(next, p.Flag) == 1)) continue;
                     if (p.Needs.Any(n => SlotState(next, n.Key) < n.Value)) continue;
+                    (applied ?? (applied = new HashSet<Part>())).Add(p);
                     foreach (KeyValuePair<int, int> n in p.Needs) next = With(next, n.Key, SlotState(next, n.Key) - n.Value);
                     foreach (KeyValuePair<int, int> g in p.Gives) next = With(next, g.Key, Math.Min(States(_slots[g.Key].Def) - 1, SlotState(next, g.Key) + g.Value));
                     foreach (KeyValuePair<int, string> act in p.Acts) next = With(next, act.Key, After(_slots[act.Key].Def, SlotState(next, act.Key), act.Value));

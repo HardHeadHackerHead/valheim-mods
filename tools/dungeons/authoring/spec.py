@@ -38,6 +38,9 @@ A dungeon spec: the short file an AI (or anyone) writes to make a dungeon kind. 
 
     [creatures]                                  # optional: per biome role lists; default dungeon_parts.CREATURES
     [loot]                                       # optional: per biome lists; default dungeon_parts.LOOT
+    [items]                                      # optional: the pack's key items, as they are (triggers.md)
+    relic = {look = "...", name = "$...", description = "$..."}
+    [pack]                                       # optional: any other pack field, written as it is (it wins over the above)
 
 build(spec) -> (Pack, report): the pack JSON (the format Packs.cs reads) and the variety report (variety.py).
 """
@@ -82,6 +85,9 @@ def build(spec):
     if "shortcut" in spec:
         sc = spec["shortcut"]
         fields["shortcut"] = {"near": sc["near"], "far": sc["far"], "farStep": sc["far_step"]}
+    if spec.get("items"):
+        fields["items"] = spec["items"]
+    fields.update(spec.get("pack", {}))
     pack = Pack(spec["name"], spec.get("title", spec["name"]), **fields)
     sig = theme.signatures()
     infos, used_sig = [], []

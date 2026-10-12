@@ -1,0 +1,524 @@
+{
+ "name": "bonechoir",
+ "about": "The Cathedral of the Bone Choir: a pale ruin-stone facade with a rose gable, its doorway a wrought iron screen in a pointed arch on long-bone posts with a beast's skull for keystone, under the arching ribs of a vast half-buried ribcage. A great cracked bell hangs from the ribs over the way in, its broken lip half buried by the path; candles and torches either side, skulls and bones at the ribs' feet, a mound of rock over the back. The door is at z 0, 1 m inside the ribs' front.",
+ "front": 5,
+ "parts": [
+  {
+   "prefab": "Ashlands_Ruins_Floor_6x6",
+   "at": [
+    -4.1,
+    4.0,
+    -0.9
+   ],
+   "euler": [
+    -90.0,
+    0.0,
+    0.0
+   ],
+   "scale": [
+    0.634,
+    2.283,
+    1.585
+   ]
+  },
+  {
+   "prefab": "Ashlands_Ruins_Floor_6x6",
+   "at": [
+    4.1,
+    4.0,
+    -0.9
+   ],
+   "euler": [
+    -90.0,
+    0.0,
+    0.0
+   ],
+   "scale": [
+    0.634,
+    2.283,
+    1.585
+   ]
+  },
+  {
+   "prefab": "Ashlands_Ruins_Floor_6x6",
+   "at": [
+    0.0,
+    7.6,
+    -0.9
+   ],
+   "euler": [
+    -90.0,
+    0.0,
+    0.0
+   ],
+   "scale": [
+    0.735,
+    2.283,
+    0.384
+   ]
+  },
+  {
+   "prefab": "Ashlands_Ruins_Wall_Top_wHole",
+   "at": [
+    0.0,
+    8.6,
+    -0.9
+   ],
+   "scale": [
+    2.0,
+    1.4,
+    1.0
+   ]
+  },
+  {
+   "prefab": "blackmarble_floor_large",
+   "at": [
+    0.0,
+    3.25,
+    -1.25
+   ],
+   "scale": [
+    0.55,
+    3.25,
+    0.037
+   ]
+  },
+  {
+   "prefab": "iron_grate",
+   "at": [
+    -0.997,
+    2.166,
+    -0.748
+   ],
+   "scale": [
+    0.996,
+    2.17,
+    1.062
+   ]
+  },
+  {
+   "prefab": "iron_grate",
+   "at": [
+    1.003,
+    2.166,
+    -0.748
+   ],
+   "scale": [
+    0.996,
+    2.17,
+    1.062
+   ]
+  },
+  {
+   "prefab": "LargeBone",
+   "at": [
+    -2.56,
+    2.109,
+    -0.168
+   ],
+   "scale": [
+    2.195,
+    2.32,
+    2.459
+   ]
+  },
+  {
+   "prefab": "LargeBone",
+   "at": [
+    2.64,
+    2.109,
+    -0.168
+   ],
+   "scale": [
+    2.195,
+    2.32,
+    2.459
+   ]
+  },
+  {
+   "prefab": "Ashlands_Arch2",
+   "at": [
+    0.0,
+    4.5,
+    -0.25
+   ],
+   "scale": [
+    0.771,
+    0.645,
+    0.45
+   ]
+  },
+  {
+   "prefab": "Ashlands_Arch2",
+   "at": [
+    0.0,
+    4.5,
+    -0.25
+   ],
+   "euler": [
+    0.0,
+    180.0,
+    0.0
+   ],
+   "scale": [
+    0.771,
+    0.645,
+    0.45
+   ]
+  },
+  {
+   "prefab": "AsksvinCarrionSkull",
+   "at": [
+    0.01,
+    8.191,
+    0.074
+   ],
+   "euler": [
+    0.0,
+    180.0,
+    0.0
+   ],
+   "scale": [
+    1.569,
+    1.685,
+    1.552
+   ]
+  },
+  {
+   "prefab": "giant_ribs",
+   "at": [
+    0.0,
+    -2.2,
+    3.4
+   ],
+   "scale": [
+    1.0,
+    1.0,
+    0.8
+   ]
+  },
+  {
+   "prefab": "rock4_heath",
+   "at": [
+    0.0,
+    -2.0,
+    -13.0
+   ],
+   "scale": [
+    0.85,
+    0.9,
+    0.6
+   ]
+  },
+  {
+   "prefab": "rock4_heath",
+   "at": [
+    -9.0,
+    -5.0,
+    -6.0
+   ],
+   "euler": [
+    0.0,
+    70.0,
+    0.0
+   ],
+   "scale": [
+    0.45,
+    0.5,
+    0.45
+   ]
+  },
+  {
+   "prefab": "rock4_heath",
+   "at": [
+    9.0,
+    -5.0,
+    -6.0
+   ],
+   "euler": [
+    0.0,
+    -70.0,
+    0.0
+   ],
+   "scale": [
+    0.45,
+    0.5,
+    0.45
+   ]
+  },
+  {
+   "prefab": "Bell",
+   "at": [
+    0.3,
+    4.2,
+    4.0
+   ],
+   "euler": [
+    0.0,
+    20.0,
+    11.0
+   ],
+   "scale": [
+    2.4,
+    2.4,
+    2.4
+   ]
+  },
+  {
+   "prefab": "Morkhalla_WallChain1",
+   "at": [
+    0.3,
+    6.694,
+    4.0
+   ],
+   "scale": [
+    0.6,
+    0.451,
+    0.6
+   ]
+  },
+  {
+   "prefab": "Bell",
+   "at": [
+    3.6,
+    -0.5,
+    4.8
+   ],
+   "euler": [
+    64.0,
+    35.0,
+    20.0
+   ],
+   "scale": [
+    1.4,
+    1.4,
+    1.4
+   ]
+  },
+  {
+   "prefab": "Ashlands_Ruins_Floor_6x6",
+   "at": [
+    0.0,
+    -0.15,
+    2.5
+   ],
+   "scale": [
+    0.751,
+    0.685,
+    0.801
+   ]
+  },
+  {
+   "prefab": "Ashlands_Ruins_Floor_6x6",
+   "at": [
+    0.0,
+    -0.15,
+    7.5
+   ],
+   "scale": [
+    0.751,
+    0.685,
+    0.801
+   ]
+  },
+  {
+   "prefab": "Candle_resin",
+   "at": [
+    -3.09,
+    0.125,
+    1.15
+   ],
+   "scale": [
+    5.0,
+    5.0,
+    5.0
+   ]
+  },
+  {
+   "prefab": "Candle_resin",
+   "at": [
+    -3.482,
+    0.1,
+    1.56
+   ],
+   "scale": [
+    4.0,
+    4.0,
+    4.0
+   ]
+  },
+  {
+   "prefab": "Candle_resin",
+   "at": [
+    -2.636,
+    0.08,
+    1.668
+   ],
+   "scale": [
+    3.2,
+    3.2,
+    3.2
+   ]
+  },
+  {
+   "prefab": "piece_groundtorch_wood",
+   "at": [
+    -3.215,
+    0.782,
+    2.4
+   ],
+   "scale": [
+    1.2,
+    1.2,
+    1.2
+   ]
+  },
+  {
+   "prefab": "Candle_resin",
+   "at": [
+    2.51,
+    0.125,
+    1.15
+   ],
+   "scale": [
+    5.0,
+    5.0,
+    5.0
+   ]
+  },
+  {
+   "prefab": "Candle_resin",
+   "at": [
+    3.018,
+    0.1,
+    1.56
+   ],
+   "scale": [
+    4.0,
+    4.0,
+    4.0
+   ]
+  },
+  {
+   "prefab": "Candle_resin",
+   "at": [
+    2.264,
+    0.08,
+    1.668
+   ],
+   "scale": [
+    3.2,
+    3.2,
+    3.2
+   ]
+  },
+  {
+   "prefab": "piece_groundtorch_wood",
+   "at": [
+    3.225,
+    0.782,
+    2.4
+   ],
+   "scale": [
+    1.2,
+    1.2,
+    1.2
+   ]
+  },
+  {
+   "prefab": "skull_pile",
+   "at": [
+    -5.218,
+    0.098,
+    3.06
+   ],
+   "euler": [
+    0.0,
+    40.0,
+    0.0
+   ],
+   "scale": [
+    1.4,
+    1.4,
+    1.4
+   ]
+  },
+  {
+   "prefab": "bone_stack",
+   "at": [
+    5.283,
+    0.091,
+    1.471
+   ],
+   "euler": [
+    0.0,
+    -30.0,
+    0.0
+   ],
+   "scale": [
+    1.5,
+    1.5,
+    1.5
+   ]
+  },
+  {
+   "prefab": "Skull1",
+   "at": [
+    -4.228,
+    0.003,
+    6.49
+   ],
+   "euler": [
+    0.0,
+    160.0,
+    0.0
+   ],
+   "scale": [
+    2.5,
+    2.5,
+    2.5
+   ]
+  }
+ ],
+ "inside": [
+  {
+   "prefab": "blackmarble_floor_large",
+   "at": [
+    0,
+    3.5,
+    -0.45
+   ],
+   "scale": [
+    0.55,
+    3.5,
+    0.04
+   ]
+  },
+  {
+   "prefab": "iron_grate",
+   "at": [
+    -1.0,
+    1.15,
+    -0.15
+   ],
+   "scale": [
+    1.0,
+    2.33,
+    1.0
+   ]
+  },
+  {
+   "prefab": "iron_grate",
+   "at": [
+    1.0,
+    1.15,
+    -0.15
+   ],
+   "scale": [
+    1.0,
+    2.33,
+    1.0
+   ]
+  }
+ ]
+}

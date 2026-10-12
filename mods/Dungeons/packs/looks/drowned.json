@@ -1,0 +1,902 @@
+{
+  "name": "drowned",
+  "about": "The Tidecaller's Drowned Vault: a way into a sea cliff of dark banded rock half sunk in the sand, framed by two posts of standing rock and two carved ship's knees under a dark timber lintel, a portcullis of timber lattice in it over darkness, an anchor of studded iron leaning on its post with a chain slung across its face, a wreck's bow and stern half buried either side, a fallen stone bell, olive planking strewn, kelp hanging from the arch, green sea-fire in rock fonts either side of the way in. Made by the pack-drowned team's script (scratchpad look.py). Things below y 0 are buried.",
+  "front": 5,
+  "parts": [
+    {
+      "prefab": "rock_mistlands1",
+      "at": [
+        -7.734,
+        4.656,
+        -3.238
+      ],
+      "euler": [
+        0.0,
+        20.0,
+        0.0
+      ],
+      "scale": [
+        1.357,
+        1.948,
+        0.679
+      ]
+    },
+    {
+      "prefab": "rock_mistlands1",
+      "at": [
+        7.503,
+        3.848,
+        -3.334
+      ],
+      "euler": [
+        0.0,
+        -25.0,
+        0.0
+      ],
+      "scale": [
+        1.357,
+        1.67,
+        0.679
+      ]
+    },
+    {
+      "prefab": "rock_mistlands1",
+      "at": [
+        -0.323,
+        9.632,
+        -3.864
+      ],
+      "scale": [
+        3.166,
+        1.113,
+        0.814
+      ]
+    },
+    {
+      "prefab": "rock_mistlands1",
+      "at": [
+        -3.453,
+        11.706,
+        -6.159
+      ],
+      "euler": [
+        0.0,
+        30.0,
+        6.0
+      ],
+      "scale": [
+        1.809,
+        1.113,
+        0.814
+      ]
+    },
+    {
+      "prefab": "rock_mistlands1",
+      "at": [
+        4.053,
+        11.243,
+        -6.869
+      ],
+      "euler": [
+        0.0,
+        -20.0,
+        -5.0
+      ],
+      "scale": [
+        1.809,
+        1.113,
+        0.814
+      ]
+    },
+    {
+      "prefab": "rock_mistlands1",
+      "at": [
+        -0.369,
+        8.08,
+        -9.364
+      ],
+      "scale": [
+        3.618,
+        2.783,
+        0.814
+      ]
+    },
+    {
+      "prefab": "rock_mistlands1",
+      "at": [
+        -11.768,
+        1.524,
+        -1.022
+      ],
+      "euler": [
+        0.0,
+        60.0,
+        0.0
+      ],
+      "scale": [
+        1.131,
+        0.835,
+        0.543
+      ]
+    },
+    {
+      "prefab": "rock_mistlands1",
+      "at": [
+        11.612,
+        1.201,
+        -0.744
+      ],
+      "euler": [
+        0.0,
+        -50.0,
+        0.0
+      ],
+      "scale": [
+        1.131,
+        0.724,
+        0.543
+      ]
+    },
+    {
+      "prefab": "rock_mistlands2",
+      "at": [
+        -3.172,
+        1.432,
+        -1.038
+      ],
+      "scale": [
+        0.73,
+        1.348,
+        0.726
+      ]
+    },
+    {
+      "prefab": "rock_mistlands2",
+      "at": [
+        3.228,
+        1.432,
+        -1.038
+      ],
+      "scale": [
+        0.73,
+        1.348,
+        0.726
+      ]
+    },
+    {
+      "prefab": "ashwood_arch_big",
+      "at": [
+        -2.6,
+        3.6,
+        -0.6
+      ],
+      "scale": [
+        1.163,
+        1.17,
+        1.2
+      ]
+    },
+    {
+      "prefab": "ashwood_arch_big",
+      "at": [
+        2.6,
+        3.6,
+        -0.6
+      ],
+      "euler": [
+        0.0,
+        180.0,
+        0.0
+      ],
+      "scale": [
+        1.163,
+        1.17,
+        1.2
+      ]
+    },
+    {
+      "prefab": "darkwood_beam",
+      "at": [
+        -0.013,
+        6.001,
+        -0.6
+      ],
+      "scale": [
+        3.768,
+        1.946,
+        1.829
+      ]
+    },
+    {
+      "prefab": "blackmarble_floor_large",
+      "at": [
+        0.0,
+        3.0,
+        -2.0
+      ],
+      "scale": [
+        0.75,
+        3.5,
+        0.05
+      ]
+    },
+    {
+      "prefab": "darkwood_beam",
+      "at": [
+        -2.263,
+        2.99,
+        -1.2
+      ],
+      "euler": [
+        0.0,
+        0.0,
+        90.0
+      ],
+      "scale": [
+        2.776,
+        0.535,
+        0.508
+      ]
+    },
+    {
+      "prefab": "darkwood_beam",
+      "at": [
+        -1.729,
+        2.99,
+        -1.2
+      ],
+      "euler": [
+        0.0,
+        0.0,
+        90.0
+      ],
+      "scale": [
+        2.776,
+        0.535,
+        0.508
+      ]
+    },
+    {
+      "prefab": "darkwood_beam",
+      "at": [
+        -1.196,
+        2.99,
+        -1.2
+      ],
+      "euler": [
+        0.0,
+        0.0,
+        90.0
+      ],
+      "scale": [
+        2.776,
+        0.535,
+        0.508
+      ]
+    },
+    {
+      "prefab": "darkwood_beam",
+      "at": [
+        -0.663,
+        2.99,
+        -1.2
+      ],
+      "euler": [
+        0.0,
+        0.0,
+        90.0
+      ],
+      "scale": [
+        2.776,
+        0.535,
+        0.508
+      ]
+    },
+    {
+      "prefab": "darkwood_beam",
+      "at": [
+        -0.129,
+        2.99,
+        -1.2
+      ],
+      "euler": [
+        0.0,
+        0.0,
+        90.0
+      ],
+      "scale": [
+        2.776,
+        0.535,
+        0.508
+      ]
+    },
+    {
+      "prefab": "darkwood_beam",
+      "at": [
+        0.404,
+        2.99,
+        -1.2
+      ],
+      "euler": [
+        0.0,
+        0.0,
+        90.0
+      ],
+      "scale": [
+        2.776,
+        0.535,
+        0.508
+      ]
+    },
+    {
+      "prefab": "darkwood_beam",
+      "at": [
+        0.937,
+        2.99,
+        -1.2
+      ],
+      "euler": [
+        0.0,
+        0.0,
+        90.0
+      ],
+      "scale": [
+        2.776,
+        0.535,
+        0.508
+      ]
+    },
+    {
+      "prefab": "darkwood_beam",
+      "at": [
+        1.471,
+        2.99,
+        -1.2
+      ],
+      "euler": [
+        0.0,
+        0.0,
+        90.0
+      ],
+      "scale": [
+        2.776,
+        0.535,
+        0.508
+      ]
+    },
+    {
+      "prefab": "darkwood_beam",
+      "at": [
+        2.004,
+        2.99,
+        -1.2
+      ],
+      "euler": [
+        0.0,
+        0.0,
+        90.0
+      ],
+      "scale": [
+        2.776,
+        0.535,
+        0.508
+      ]
+    },
+    {
+      "prefab": "darkwood_beam",
+      "at": [
+        2.537,
+        2.99,
+        -1.2
+      ],
+      "euler": [
+        0.0,
+        0.0,
+        90.0
+      ],
+      "scale": [
+        2.776,
+        0.535,
+        0.508
+      ]
+    },
+    {
+      "prefab": "darkwood_beam",
+      "at": [
+        -0.009,
+        1.05,
+        -1.35
+      ],
+      "scale": [
+        2.578,
+        0.584,
+        0.407
+      ]
+    },
+    {
+      "prefab": "darkwood_beam",
+      "at": [
+        -0.009,
+        2.85,
+        -1.35
+      ],
+      "scale": [
+        2.578,
+        0.584,
+        0.407
+      ]
+    },
+    {
+      "prefab": "darkwood_beam",
+      "at": [
+        -0.009,
+        4.65,
+        -1.35
+      ],
+      "scale": [
+        2.578,
+        0.584,
+        0.407
+      ]
+    },
+    {
+      "prefab": "Morkhalla_MetalBar",
+      "at": [
+        -6.2,
+        2.55,
+        1.3
+      ],
+      "euler": [
+        0.0,
+        -140.194,
+        -74.675
+      ],
+      "scale": [
+        0.296,
+        0.45,
+        0.45
+      ]
+    },
+    {
+      "prefab": "Morkhalla_MetalBar",
+      "at": [
+        -5.744,
+        4.716,
+        0.92
+      ],
+      "euler": [
+        0.0,
+        -90.0,
+        0.0
+      ],
+      "scale": [
+        0.17,
+        0.35,
+        0.35
+      ]
+    },
+    {
+      "prefab": "Morkhalla_MetalBar",
+      "at": [
+        -7.6,
+        0.35,
+        2.0
+      ],
+      "euler": [
+        0.0,
+        -165.964,
+        38.247
+      ],
+      "scale": [
+        0.105,
+        0.5,
+        0.5
+      ]
+    },
+    {
+      "prefab": "Morkhalla_MetalBar",
+      "at": [
+        -8.451,
+        1.45,
+        2.2
+      ],
+      "euler": [
+        0.0,
+        -180.0,
+        83.66
+      ],
+      "scale": [
+        0.045,
+        0.7,
+        0.7
+      ]
+    },
+    {
+      "prefab": "Morkhalla_MetalBar",
+      "at": [
+        -6.0,
+        0.35,
+        2.0
+      ],
+      "euler": [
+        0.0,
+        -14.036,
+        38.247
+      ],
+      "scale": [
+        0.105,
+        0.5,
+        0.5
+      ]
+    },
+    {
+      "prefab": "Morkhalla_MetalBar",
+      "at": [
+        -5.149,
+        1.45,
+        2.2
+      ],
+      "euler": [
+        0.0,
+        0.0,
+        83.66
+      ],
+      "scale": [
+        0.045,
+        0.7,
+        0.7
+      ]
+    },
+    {
+      "prefab": "Morkhalla_Chain",
+      "at": [
+        -0.925,
+        5.887,
+        0.3
+      ],
+      "euler": [
+        0.0,
+        0.0,
+        8.0
+      ],
+      "scale": [
+        0.5,
+        0.351,
+        0.5
+      ]
+    },
+    {
+      "prefab": "shipwreck_karve_bow",
+      "at": [
+        11.792,
+        -0.58,
+        3.68
+      ],
+      "euler": [
+        0.0,
+        60.0,
+        -18.0
+      ],
+      "scale": [
+        0.995,
+        1.007,
+        1.006
+      ]
+    },
+    {
+      "prefab": "shipwreck_karve_stern",
+      "at": [
+        -8.216,
+        -0.616,
+        1.046
+      ],
+      "euler": [
+        0.0,
+        -50.0,
+        15.0
+      ],
+      "scale": [
+        1.008,
+        1.002,
+        0.996
+      ]
+    },
+    {
+      "prefab": "Bell",
+      "at": [
+        5.835,
+        0.38,
+        2.802
+      ],
+      "euler": [
+        0.0,
+        30.0,
+        75.0
+      ],
+      "scale": [
+        2.115,
+        2.092,
+        2.115
+      ]
+    },
+    {
+      "prefab": "shipwreck_karve_bottomboards",
+      "at": [
+        -2.797,
+        -0.199,
+        3.508
+      ],
+      "euler": [
+        0.0,
+        20.0,
+        0.0
+      ],
+      "scale": [
+        0.638,
+        0.769,
+        0.501
+      ]
+    },
+    {
+      "prefab": "shipwreck_karve_bottomboards",
+      "at": [
+        2.995,
+        -0.199,
+        5.007
+      ],
+      "euler": [
+        0.0,
+        -35.0,
+        0.0
+      ],
+      "scale": [
+        0.638,
+        0.769,
+        0.501
+      ]
+    },
+    {
+      "prefab": "vines",
+      "at": [
+        -2.0,
+        4.744,
+        -0.2
+      ]
+    },
+    {
+      "prefab": "vines",
+      "at": [
+        1.8,
+        4.744,
+        -0.2
+      ]
+    },
+    {
+      "prefab": "rock_mistlands2",
+      "at": [
+        -3.974,
+        0.22,
+        2.364
+      ],
+      "scale": [
+        0.678,
+        0.181,
+        0.674
+      ]
+    },
+    {
+      "prefab": "piece_groundtorch_green",
+      "at": [
+        -4.0,
+        0.127,
+        2.4
+      ]
+    },
+    {
+      "prefab": "rock_mistlands2",
+      "at": [
+        4.026,
+        0.22,
+        2.364
+      ],
+      "scale": [
+        0.678,
+        0.181,
+        0.674
+      ]
+    },
+    {
+      "prefab": "piece_groundtorch_green",
+      "at": [
+        4.0,
+        0.127,
+        2.4
+      ]
+    }
+  ],
+  "inside": [
+    {
+      "prefab": "blackmarble_floor_large",
+      "at": [
+        0.0,
+        2.3,
+        -0.9
+      ],
+      "scale": [
+        0.55,
+        2.35,
+        0.025
+      ]
+    },
+    {
+      "prefab": "darkwood_beam",
+      "at": [
+        -1.763,
+        2.292,
+        -0.6
+      ],
+      "euler": [
+        0.0,
+        0.0,
+        90.0
+      ],
+      "scale": [
+        2.281,
+        0.535,
+        0.508
+      ]
+    },
+    {
+      "prefab": "darkwood_beam",
+      "at": [
+        -1.22,
+        2.292,
+        -0.6
+      ],
+      "euler": [
+        0.0,
+        0.0,
+        90.0
+      ],
+      "scale": [
+        2.281,
+        0.535,
+        0.508
+      ]
+    },
+    {
+      "prefab": "darkwood_beam",
+      "at": [
+        -0.677,
+        2.292,
+        -0.6
+      ],
+      "euler": [
+        0.0,
+        0.0,
+        90.0
+      ],
+      "scale": [
+        2.281,
+        0.535,
+        0.508
+      ]
+    },
+    {
+      "prefab": "darkwood_beam",
+      "at": [
+        -0.134,
+        2.292,
+        -0.6
+      ],
+      "euler": [
+        0.0,
+        0.0,
+        90.0
+      ],
+      "scale": [
+        2.281,
+        0.535,
+        0.508
+      ]
+    },
+    {
+      "prefab": "darkwood_beam",
+      "at": [
+        0.409,
+        2.292,
+        -0.6
+      ],
+      "euler": [
+        0.0,
+        0.0,
+        90.0
+      ],
+      "scale": [
+        2.281,
+        0.535,
+        0.508
+      ]
+    },
+    {
+      "prefab": "darkwood_beam",
+      "at": [
+        0.952,
+        2.292,
+        -0.6
+      ],
+      "euler": [
+        0.0,
+        0.0,
+        90.0
+      ],
+      "scale": [
+        2.281,
+        0.535,
+        0.508
+      ]
+    },
+    {
+      "prefab": "darkwood_beam",
+      "at": [
+        1.494,
+        2.292,
+        -0.6
+      ],
+      "euler": [
+        0.0,
+        0.0,
+        90.0
+      ],
+      "scale": [
+        2.281,
+        0.535,
+        0.508
+      ]
+    },
+    {
+      "prefab": "darkwood_beam",
+      "at": [
+        2.037,
+        2.292,
+        -0.6
+      ],
+      "euler": [
+        0.0,
+        0.0,
+        90.0
+      ],
+      "scale": [
+        2.281,
+        0.535,
+        0.508
+      ]
+    },
+    {
+      "prefab": "darkwood_beam",
+      "at": [
+        -0.007,
+        0.85,
+        -0.45
+      ],
+      "scale": [
+        2.082,
+        0.584,
+        0.407
+      ]
+    },
+    {
+      "prefab": "darkwood_beam",
+      "at": [
+        -0.007,
+        3.25,
+        -0.45
+      ],
+      "scale": [
+        2.082,
+        0.584,
+        0.407
+      ]
+    }
+  ]
+}

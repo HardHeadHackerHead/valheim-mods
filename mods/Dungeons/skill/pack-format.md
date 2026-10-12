@@ -142,6 +142,7 @@ In order along the way from the entrance. Each step's room is only reached throu
 | `wires` | A lever or plate: `[{"target": "stair1", "do": "next"}]`. |
 | `reachedFrom` | A lever or plate: a doorway id on the side of the room it's used from (null: anywhere in the room). |
 | `once` | A lever stays down, a plate stays pressed, until a reset. Its wires must all be `set:n` (or `start`). |
+| `beams` | Glowing lines of light while the mechanism is in some states (any kind): triggers.md. |
 
 **Wires.** `target`: a mechanism in the same room, `step:<id>` (the gate on that step's lock if it's locked, else that room's first
 mechanism that isn't a lever or plate), or `step:<id>.<mech id>`. `do`: `next` (one state on, wrapping), `set:<n>`, `hold` (a plate:

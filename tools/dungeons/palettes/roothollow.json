@@ -1,0 +1,2132 @@
+{
+ "theme": "roothollow",
+ "about": "Rootdeep (pack-rootdeep): inside the roots of a dying world-tree. Walls of upright trunks packed side by side over a hidden marble backing, floors of root ribs over a slab, ceilings under arches of great roots; pale root lattice, moss, rot and tar; cold fungal light with warm amber marks on what you use.",
+ "made_by": "tools/dungeons/palette_tool.py (curation in CURATED there; everything else read from the game's files)",
+ "fields": {
+  "role": "what it's for; structural roles (arch, block, ceiling, door, floor, gate, pillar, platform, rail, ramp, stair, wall) must be solid",
+  "mount": "ground: stands on a floor (prop_check.py); hang: needs something right above its origin or a chain on its top; wall: against a wall; span: rests on two supports; structure: what others stand on; free: anywhere",
+  "scale": "[min, max] that looks right and stays solid; stairs keep 1 (step height)",
+  "tier": "the land it looks like it belongs to (1 Meadows .. 8 Deep North): a look hint, not gameplay (enemies and loot follow the entrance's biome)",
+  "size/min/max/origin": "its shape's box in its own frame (m); origin: where its origin sits on that box (foot, top, centre...)",
+  "solid": "a character bumps into it in our rooms (the game's collision matrix; items fixed by BuildSolid.cs)",
+  "lights": "range, intensity, colour; lit: shines once stripped (a Fireplace's burning objects are switched on); lod: fades with distance",
+  "gives": "what the game would make it give or do: stripped as scenery; a networked prefab (networked) may be a Saved part instead",
+  "height": "its height at scale 1 (m)",
+  "climb": "ledges: its footholds (faces a player can stand on, no steeper than 38 degrees, with at least 0.1 m2 of them seen from above in a 0.2 m height band) as height ranges above its foot at scale 1, upright as the prefab stands; top: the highest reachable from the floor, each within a jump (1.6 m: gravity 20, jump force 8, Jump skill 0) of the last; top_skilled: the same with Jump skill 100 (3.14 m); 0: none. Scale the ledges by the part's y scale; a part turned off upright exposes other faces (treat a smooth bar or column as only its top end)",
+  "upright": "flat (thin along y: a floor tile, stand it up for a wall), upright (thin along x or z: a wall piece, use as it is), block",
+  "safe": "fine as stripped scenery; saved_only: works only as a Saved part (chests, pickables, spawners)",
+  "by_role": "{role: [default, variants...]}: the roles below without their notes",
+  "sets": "the dressing sets it suits (giant: ossuary, ruin, forge, archive, engine, armoury; Dvergr: store, workshop, tavern, barracks)",
+  "max_span": "a panel's longest side (m) before its stretched texture smears",
+  "game_dungeon": "the game's own dungeon themes whose rooms use it: a player knows it from there (a new kind should lean on pieces with none, or mix them so no room reads as that dungeon)",
+  "roles": "the same pieces by a theme recipe's roles (first = default, others = variants), with how each role's pieces are placed",
+  "render": "a picture in the mesh cache (C:\\Users\\DHack\\AppData\\Local\\Temp\\quaddungeon_meshes); the theme's contact sheet is palettes/roothollow_sheet.png there"
+ },
+ "pieces": [
+  {
+   "prefab": "Oak_log",
+   "role": "wall",
+   "look": "an oak trunk, 13.7 m long, already upright in its own frame (origin in its middle): walls of trunks side by side, pillars, floor ribs laid down",
+   "mount": "structure",
+   "scale": [
+    0.3,
+    1.5
+   ],
+   "tier": 1,
+   "notes": "a physics log in the game (it rolls): stripped it stays put; never Saved; as scenery its DropOnDestroyed is stripped: it gives nothing; has a physics body in the game: stripped, it stays where it's put",
+   "exists": true,
+   "size": [
+    2.86,
+    13.68,
+    2.69
+   ],
+   "min": [
+    -1.43,
+    -6.49,
+    -1.46
+   ],
+   "max": [
+    1.43,
+    7.19,
+    1.24
+   ],
+   "origin": "centre",
+   "hollow": false,
+   "game_dungeon": [],
+   "kinds": [
+    "DropOnDestroyed",
+    "ZNetView"
+   ],
+   "colliders": {
+    "Default": 1
+   },
+   "solid": true,
+   "solid_note": "",
+   "lights": [],
+   "fire": false,
+   "particles": 0,
+   "item": false,
+   "networked": true,
+   "gives": [
+    "DropOnDestroyed"
+   ],
+   "physics": true,
+   "usable": [],
+   "height": 13.68,
+   "upright": "upright",
+   "saved_only": false,
+   "safe": false,
+   "climb": {
+    "ledges": [
+     [
+      8.0,
+      8.2
+     ]
+    ],
+    "top": 0.0,
+    "top_skilled": 0.0
+   }
+  },
+  {
+   "prefab": "SwampTree1_log",
+   "role": "floor",
+   "look": "a swamp tree log, 6.7 m along z: floor ribs, a second log look",
+   "mount": "structure",
+   "scale": [
+    0.5,
+    2
+   ],
+   "tier": 3,
+   "notes": "a physics log in the game: never Saved; as scenery its DropOnDestroyed is stripped: it gives nothing; has a physics body in the game: stripped, it stays where it's put",
+   "exists": true,
+   "size": [
+    1.43,
+    1.35,
+    6.73
+   ],
+   "min": [
+    -0.72,
+    -0.67,
+    -3.37
+   ],
+   "max": [
+    0.72,
+    0.67,
+    3.36
+   ],
+   "origin": "centre",
+   "hollow": false,
+   "game_dungeon": [],
+   "kinds": [
+    "DropOnDestroyed",
+    "ZNetView"
+   ],
+   "colliders": {
+    "Default": 1
+   },
+   "solid": true,
+   "solid_note": "",
+   "lights": [],
+   "fire": false,
+   "particles": 0,
+   "item": false,
+   "networked": true,
+   "gives": [
+    "DropOnDestroyed"
+   ],
+   "physics": true,
+   "usable": [],
+   "height": 1.35,
+   "upright": "flat",
+   "saved_only": false,
+   "safe": false,
+   "climb": {
+    "ledges": [
+     [
+      1.2,
+      1.4
+     ]
+    ],
+    "top": 1.4,
+    "top_skilled": 1.4
+   }
+  },
+  {
+   "prefab": "yggashoot_log",
+   "role": "pillar",
+   "look": "a slim Yggdrasil shoot log, 10.6 m along y: columns",
+   "mount": "ground",
+   "scale": [
+    0.3,
+    1.5
+   ],
+   "tier": 6,
+   "notes": "a physics log in the game: never Saved; as scenery its DropOnDestroyed is stripped: it gives nothing; has a physics body in the game: stripped, it stays where it's put",
+   "exists": true,
+   "size": [
+    0.74,
+    10.59,
+    0.84
+   ],
+   "min": [
+    -0.35,
+    -5.51,
+    -0.42
+   ],
+   "max": [
+    0.39,
+    5.08,
+    0.42
+   ],
+   "origin": "centre",
+   "hollow": false,
+   "game_dungeon": [],
+   "kinds": [
+    "DropOnDestroyed",
+    "ZNetView"
+   ],
+   "colliders": {
+    "Default": 1
+   },
+   "solid": true,
+   "solid_note": "",
+   "lights": [],
+   "fire": false,
+   "particles": 0,
+   "item": false,
+   "networked": true,
+   "gives": [
+    "DropOnDestroyed"
+   ],
+   "physics": true,
+   "usable": [],
+   "height": 10.59,
+   "upright": "upright",
+   "saved_only": false,
+   "safe": false,
+   "climb": {
+    "ledges": [
+     [
+      5.6,
+      5.8
+     ]
+    ],
+    "top": 0.0,
+    "top_skilled": 0.0
+   }
+  },
+  {
+   "prefab": "SwampTree1_Stub",
+   "role": "pillar",
+   "look": "a swamp tree's stump with its roots: the foot of a trunk pillar",
+   "mount": "ground",
+   "scale": [
+    0.5,
+    1.5
+   ],
+   "tier": 3,
+   "notes": "as scenery its Destructible, DropOnDestroyed is stripped: it gives nothing; climbable: a player can stand 3.2 m above its foot (at scale 1; 3.2 m with Jump skill 100), so it's a stepping stone to a level up to about 4.8 m above its foot (6.3 m with Jump 100)",
+   "exists": true,
+   "size": [
+    4.45,
+    3.06,
+    5.26
+   ],
+   "min": [
+    -2.25,
+    -1.75,
+    -2.23
+   ],
+   "max": [
+    2.2,
+    1.3,
+    3.03
+   ],
+   "origin": "centre",
+   "hollow": false,
+   "game_dungeon": [],
+   "kinds": [
+    "Destructible",
+    "DropOnDestroyed",
+    "ZNetView"
+   ],
+   "colliders": {
+    "Default": 1
+   },
+   "solid": true,
+   "solid_note": "",
+   "lights": [],
+   "fire": false,
+   "particles": 0,
+   "item": false,
+   "networked": true,
+   "gives": [
+    "Destructible",
+    "DropOnDestroyed"
+   ],
+   "physics": false,
+   "usable": [],
+   "height": 3.06,
+   "upright": "block",
+   "saved_only": false,
+   "safe": true,
+   "climb": {
+    "ledges": [
+     [
+      0.2,
+      0.8
+     ],
+     [
+      2.4,
+      2.6
+     ],
+     [
+      2.8,
+      3.2
+     ]
+    ],
+    "top": 3.2,
+    "top_skilled": 3.2
+   }
+  },
+  {
+   "prefab": "FirTree_oldLog",
+   "role": "decor",
+   "look": "an old mossy fir log, 7 m along z: trim, fallen trunks",
+   "mount": "ground",
+   "scale": [
+    0.5,
+    2
+   ],
+   "tier": 2,
+   "notes": "as scenery its Destructible, DropOnDestroyed is stripped: it gives nothing; climbable: a player can stand 1.4 m above its foot (at scale 1; 1.4 m with Jump skill 100), so it's a stepping stone to a level up to about 3.0 m above its foot (4.5 m with Jump 100)",
+   "exists": true,
+   "size": [
+    1.26,
+    1.57,
+    7.05
+   ],
+   "min": [
+    -0.63,
+    -0.6,
+    -3.53
+   ],
+   "max": [
+    0.63,
+    0.97,
+    3.52
+   ],
+   "origin": "centre",
+   "hollow": false,
+   "game_dungeon": [],
+   "kinds": [
+    "Destructible",
+    "DropOnDestroyed",
+    "ZNetView"
+   ],
+   "colliders": {
+    "Default": 1
+   },
+   "solid": true,
+   "solid_note": "",
+   "lights": [],
+   "fire": false,
+   "particles": 0,
+   "item": false,
+   "networked": true,
+   "gives": [
+    "Destructible",
+    "DropOnDestroyed"
+   ],
+   "physics": false,
+   "usable": [],
+   "height": 1.57,
+   "upright": "upright",
+   "saved_only": false,
+   "safe": true,
+   "climb": {
+    "ledges": [
+     [
+      0.0,
+      0.4
+     ],
+     [
+      1.2,
+      1.4
+     ]
+    ],
+    "top": 1.4,
+    "top_skilled": 1.4
+   }
+  },
+  {
+   "prefab": "HugeRoot1",
+   "role": "arch",
+   "look": "a huge root, 29 m: arches under the ceiling",
+   "mount": "structure",
+   "scale": [
+    0.2,
+    1.2
+   ],
+   "tier": 2,
+   "notes": "as scenery its Destructible, DropOnDestroyed is stripped: it gives nothing",
+   "exists": true,
+   "size": [
+    29.27,
+    10.19,
+    11.8
+   ],
+   "min": [
+    -16.09,
+    -6.0,
+    -7.47
+   ],
+   "max": [
+    13.18,
+    4.18,
+    4.34
+   ],
+   "origin": "centre",
+   "hollow": false,
+   "game_dungeon": [],
+   "kinds": [
+    "Destructible",
+    "DropOnDestroyed",
+    "ZNetView"
+   ],
+   "colliders": {
+    "static_solid": 1
+   },
+   "solid": true,
+   "solid_note": "",
+   "lights": [],
+   "fire": false,
+   "particles": 0,
+   "item": false,
+   "networked": true,
+   "gives": [
+    "Destructible",
+    "DropOnDestroyed"
+   ],
+   "physics": false,
+   "usable": [],
+   "height": 10.19,
+   "upright": "flat",
+   "saved_only": false,
+   "safe": true,
+   "climb": {
+    "ledges": [
+     [
+      0.2,
+      0.4
+     ],
+     [
+      0.8,
+      1.2
+     ],
+     [
+      1.4,
+      1.6
+     ],
+     [
+      1.8,
+      2.6
+     ],
+     [
+      3.2,
+      3.6
+     ],
+     [
+      4.0,
+      4.4
+     ],
+     [
+      4.8,
+      6.4
+     ],
+     [
+      6.6,
+      8.0
+     ],
+     [
+      8.2,
+      10.0
+     ]
+    ],
+    "top": 10.0,
+    "top_skilled": 10.0
+   }
+  },
+  {
+   "prefab": "HoleRock_rootWall1",
+   "role": "grate",
+   "look": "a pale root lattice 10 x 8 m, solid: grates, root-mass doors, accents",
+   "mount": "structure",
+   "scale": [
+    0.3,
+    1.5
+   ],
+   "tier": 1,
+   "notes": "recognisable: a part of the game's own Hole dungeons; as scenery its Destructible, DropOnDestroyed is stripped: it gives nothing",
+   "exists": true,
+   "size": [
+    10.16,
+    8.36,
+    2.08
+   ],
+   "min": [
+    -5.07,
+    -3.93,
+    -1.16
+   ],
+   "max": [
+    5.09,
+    4.43,
+    0.91
+   ],
+   "origin": "centre",
+   "hollow": false,
+   "game_dungeon": [
+    "Hole"
+   ],
+   "kinds": [
+    "Destructible",
+    "DropOnDestroyed",
+    "ZNetView"
+   ],
+   "colliders": {
+    "static_solid": 1
+   },
+   "solid": true,
+   "solid_note": "",
+   "lights": [],
+   "fire": false,
+   "particles": 0,
+   "item": false,
+   "networked": true,
+   "gives": [
+    "Destructible",
+    "DropOnDestroyed"
+   ],
+   "physics": false,
+   "usable": [],
+   "height": 8.36,
+   "upright": "upright",
+   "saved_only": false,
+   "safe": true,
+   "climb": {
+    "ledges": [
+     [
+      5.8,
+      6.0
+     ]
+    ],
+    "top": 0.0,
+    "top_skilled": 0.0
+   }
+  },
+  {
+   "prefab": "SwampTree2_log",
+   "role": "decor",
+   "look": "a giant swamp log, 9 x 11 x 24 m: a fallen world-tree root",
+   "mount": "ground",
+   "scale": [
+    0.2,
+    1
+   ],
+   "tier": 3,
+   "notes": "climbable: a player can stand 10.0 m above its foot (at scale 1; 10.0 m with Jump skill 100), so it's a stepping stone to a level up to about 11.6 m above its foot (13.1 m with Jump 100)",
+   "exists": true,
+   "size": [
+    9.38,
+    11.0,
+    24.14
+   ],
+   "min": [
+    -5.41,
+    -5.21,
+    -14.49
+   ],
+   "max": [
+    3.97,
+    5.79,
+    9.65
+   ],
+   "origin": "centre",
+   "hollow": false,
+   "game_dungeon": [],
+   "kinds": [
+    "ZNetView"
+   ],
+   "colliders": {
+    "static_solid": 1
+   },
+   "solid": true,
+   "solid_note": "",
+   "lights": [],
+   "fire": false,
+   "particles": 0,
+   "item": false,
+   "networked": true,
+   "gives": [],
+   "physics": false,
+   "usable": [],
+   "height": 11.0,
+   "upright": "block",
+   "saved_only": false,
+   "safe": true,
+   "climb": {
+    "ledges": [
+     [
+      1.6,
+      2.2
+     ],
+     [
+      2.6,
+      7.6
+     ],
+     [
+      7.8,
+      9.4
+     ],
+     [
+      9.6,
+      10.0
+     ]
+    ],
+    "top": 10.0,
+    "top_skilled": 10.0
+   }
+  },
+  {
+   "prefab": "BigBranch",
+   "role": "decor",
+   "look": "a great fallen branch, 21 m",
+   "mount": "ground",
+   "scale": [
+    0.2,
+    1
+   ],
+   "tier": 2,
+   "notes": "as scenery its Destructible, DropOnDestroyed is stripped: it gives nothing",
+   "exists": true,
+   "size": [
+    21.33,
+    10.03,
+    9.28
+   ],
+   "min": [
+    -9.92,
+    -1.24,
+    -2.27
+   ],
+   "max": [
+    11.41,
+    8.79,
+    7.01
+   ],
+   "origin": "inside",
+   "hollow": false,
+   "game_dungeon": [],
+   "kinds": [
+    "Destructible",
+    "DropOnDestroyed",
+    "ZNetView"
+   ],
+   "colliders": {
+    "Default": 5
+   },
+   "solid": true,
+   "solid_note": "",
+   "lights": [],
+   "fire": false,
+   "particles": 0,
+   "item": false,
+   "networked": true,
+   "gives": [
+    "Destructible",
+    "DropOnDestroyed"
+   ],
+   "physics": false,
+   "usable": [],
+   "height": 10.03,
+   "upright": "block",
+   "saved_only": false,
+   "safe": true,
+   "climb": {
+    "ledges": [
+     [
+      2.4,
+      2.6
+     ]
+    ],
+    "top": 0.0,
+    "top_skilled": 2.6
+   }
+  },
+  {
+   "prefab": "AshlandsTreeStump1",
+   "role": "decor",
+   "look": "a dark gnarled stump, 7 m: rot",
+   "mount": "ground",
+   "scale": [
+    0.3,
+    1.5
+   ],
+   "tier": 7,
+   "notes": "as scenery its Destructible, DropOnDestroyed is stripped: it gives nothing",
+   "exists": true,
+   "size": [
+    2.65,
+    7.14,
+    2.87
+   ],
+   "min": [
+    -1.45,
+    -6.4,
+    -1.08
+   ],
+   "max": [
+    1.2,
+    0.74,
+    1.78
+   ],
+   "origin": "inside",
+   "hollow": false,
+   "game_dungeon": [],
+   "kinds": [
+    "Destructible",
+    "DropOnDestroyed",
+    "ZNetView"
+   ],
+   "colliders": {
+    "Default": 1
+   },
+   "solid": true,
+   "solid_note": "",
+   "lights": [],
+   "fire": false,
+   "particles": 0,
+   "item": false,
+   "networked": true,
+   "gives": [
+    "Destructible",
+    "DropOnDestroyed"
+   ],
+   "physics": false,
+   "usable": [],
+   "height": 7.14,
+   "upright": "block",
+   "saved_only": false,
+   "safe": true,
+   "climb": {
+    "ledges": [
+     [
+      5.6,
+      6.0
+     ],
+     [
+      7.0,
+      7.2
+     ]
+    ],
+    "top": 0.0,
+    "top_skilled": 0.0
+   }
+  },
+  {
+   "prefab": "tarlump1",
+   "role": "decor",
+   "look": "a lump of tar, 28 x 8 x 24 m: rot pools (scale it down)",
+   "mount": "ground",
+   "scale": [
+    0.05,
+    0.5
+   ],
+   "tier": 5,
+   "notes": "as scenery its Destructible is stripped: it gives nothing; climbable: a player can stand 8.4 m above its foot (at scale 1; 8.4 m with Jump skill 100), so it's a stepping stone to a level up to about 10.0 m above its foot (11.5 m with Jump 100)",
+   "exists": true,
+   "size": [
+    27.75,
+    8.42,
+    24.16
+   ],
+   "min": [
+    -12.63,
+    -6.43,
+    -11.06
+   ],
+   "max": [
+    15.13,
+    1.99,
+    13.1
+   ],
+   "origin": "inside",
+   "hollow": false,
+   "game_dungeon": [],
+   "kinds": [
+    "Destructible",
+    "ZNetView"
+   ],
+   "colliders": {
+    "static_solid": 1
+   },
+   "solid": true,
+   "solid_note": "",
+   "lights": [],
+   "fire": false,
+   "particles": 0,
+   "item": false,
+   "networked": true,
+   "gives": [
+    "Destructible"
+   ],
+   "physics": false,
+   "usable": [],
+   "height": 8.42,
+   "upright": "flat",
+   "saved_only": false,
+   "safe": true,
+   "climb": {
+    "ledges": [
+     [
+      0.2,
+      2.8
+     ],
+     [
+      3.2,
+      4.0
+     ],
+     [
+      4.2,
+      4.4
+     ],
+     [
+      4.6,
+      5.2
+     ],
+     [
+      5.4,
+      5.8
+     ],
+     [
+      6.0,
+      8.4
+     ]
+    ],
+    "top": 8.4,
+    "top_skilled": 8.4
+   }
+  },
+  {
+   "prefab": "GlowingMushroom",
+   "role": "light",
+   "look": "a glowing mushroom, cold grey-blue light (range 10)",
+   "mount": "ground",
+   "scale": [
+    0.5,
+    2
+   ],
+   "tier": 6,
+   "notes": "its light range, fade distance and fire grow with its scale (BuildScale.cs); climbable: a player can stand 1.6 m above its foot (at scale 1; 1.6 m with Jump skill 100), so it's a stepping stone to a level up to about 3.2 m above its foot (4.7 m with Jump 100)",
+   "exists": true,
+   "size": [
+    1.49,
+    1.53,
+    1.37
+   ],
+   "min": [
+    -0.78,
+    -0.19,
+    -0.72
+   ],
+   "max": [
+    0.71,
+    1.34,
+    0.65
+   ],
+   "origin": "inside",
+   "hollow": false,
+   "game_dungeon": [],
+   "kinds": [
+    "ZNetView"
+   ],
+   "colliders": {
+    "Default": 2
+   },
+   "solid": true,
+   "solid_note": "",
+   "lights": [
+    {
+     "range": 10.0,
+     "intensity": 2.0,
+     "colour": "#648190",
+     "lit": true,
+     "lod": false
+    }
+   ],
+   "fire": false,
+   "particles": 0,
+   "item": false,
+   "networked": true,
+   "gives": [],
+   "physics": false,
+   "usable": [],
+   "height": 1.53,
+   "upright": "block",
+   "saved_only": false,
+   "safe": true,
+   "climb": {
+    "ledges": [
+     [
+      0.8,
+      1.0
+     ],
+     [
+      1.2,
+      1.6
+     ]
+    ],
+    "top": 1.6,
+    "top_skilled": 1.6
+   }
+  },
+  {
+   "prefab": "GuckSack",
+   "role": "light",
+   "look": "a hanging guck sack, green glow (range 5.4)",
+   "mount": "hang",
+   "scale": [
+    0.5,
+    1.5
+   ],
+   "tier": 3,
+   "notes": "its light range, fade distance and fire grow with its scale (BuildScale.cs); as scenery its Destructible, DropOnDestroyed is stripped: it gives nothing; climbable: a player can stand 3.2 m above its foot (at scale 1; 3.2 m with Jump skill 100), so it's a stepping stone to a level up to about 4.8 m above its foot (6.3 m with Jump 100)",
+   "exists": true,
+   "size": [
+    2.41,
+    3.92,
+    2.79
+   ],
+   "min": [
+    -1.27,
+    -1.86,
+    -1.5
+   ],
+   "max": [
+    1.14,
+    2.06,
+    1.3
+   ],
+   "origin": "centre",
+   "hollow": false,
+   "game_dungeon": [],
+   "kinds": [
+    "Destructible",
+    "DropOnDestroyed",
+    "ZNetView"
+   ],
+   "colliders": {
+    "Default_small": 1
+   },
+   "solid": true,
+   "solid_note": "",
+   "lights": [
+    {
+     "range": 5.42,
+     "intensity": 2.0,
+     "colour": "#92b552",
+     "lit": true,
+     "lod": false
+    }
+   ],
+   "fire": false,
+   "particles": 1,
+   "item": false,
+   "networked": true,
+   "gives": [
+    "Destructible",
+    "DropOnDestroyed"
+   ],
+   "physics": false,
+   "usable": [],
+   "height": 3.92,
+   "upright": "block",
+   "saved_only": false,
+   "safe": true,
+   "climb": {
+    "ledges": [
+     [
+      0.4,
+      0.8
+     ],
+     [
+      1.2,
+      1.6
+     ],
+     [
+      2.8,
+      3.2
+     ]
+    ],
+    "top": 3.2,
+    "top_skilled": 3.2
+   }
+  },
+  {
+   "prefab": "GuckSack_small",
+   "role": "light",
+   "look": "a small guck sack, green glow (range 4)",
+   "mount": "hang",
+   "scale": [
+    0.5,
+    1.5
+   ],
+   "tier": 3,
+   "notes": "its light range, fade distance and fire grow with its scale (BuildScale.cs); as scenery its Destructible, DropOnDestroyed is stripped: it gives nothing",
+   "exists": true,
+   "size": [
+    1.21,
+    1.96,
+    1.4
+   ],
+   "min": [
+    -0.64,
+    -0.93,
+    -0.75
+   ],
+   "max": [
+    0.57,
+    1.03,
+    0.65
+   ],
+   "origin": "centre",
+   "hollow": false,
+   "game_dungeon": [],
+   "kinds": [
+    "Destructible",
+    "DropOnDestroyed",
+    "ZNetView"
+   ],
+   "colliders": {
+    "Default_small": 1
+   },
+   "solid": true,
+   "solid_note": "",
+   "lights": [
+    {
+     "range": 4.0,
+     "intensity": 2.0,
+     "colour": "#92b552",
+     "lit": true,
+     "lod": false
+    }
+   ],
+   "fire": false,
+   "particles": 1,
+   "item": false,
+   "networked": true,
+   "gives": [
+    "Destructible",
+    "DropOnDestroyed"
+   ],
+   "physics": false,
+   "usable": [],
+   "height": 1.96,
+   "upright": "block",
+   "saved_only": false,
+   "safe": true,
+   "climb": {
+    "ledges": [],
+    "top": 0.0,
+    "top_skilled": 0.0
+   }
+  },
+  {
+   "prefab": "piece_Lavalantern",
+   "role": "light",
+   "look": "a lava lantern, warm orange (range 12): an amber mark on what you use",
+   "mount": "ground",
+   "scale": [
+    0.5,
+    2
+   ],
+   "tier": 7,
+   "notes": "its light range, fade distance and fire grow with its scale (BuildScale.cs); climbable: a player can stand 1.0 m above its foot (at scale 1; 1.0 m with Jump skill 100), so it's a stepping stone to a level up to about 2.6 m above its foot (4.1 m with Jump 100)",
+   "exists": true,
+   "size": [
+    0.37,
+    0.81,
+    0.35
+   ],
+   "min": [
+    -0.19,
+    -0.01,
+    -0.2
+   ],
+   "max": [
+    0.19,
+    0.8,
+    0.16
+   ],
+   "origin": "foot",
+   "hollow": false,
+   "game_dungeon": [],
+   "kinds": [
+    "EffectArea",
+    "LightLod",
+    "Piece",
+    "WearNTear",
+    "ZNetView"
+   ],
+   "colliders": {
+    "piece": 1
+   },
+   "solid": true,
+   "solid_note": "",
+   "lights": [
+    {
+     "range": 12.0,
+     "intensity": 1.5,
+     "colour": "#ff9e7a",
+     "lit": true,
+     "lod": true
+    }
+   ],
+   "fire": false,
+   "particles": 3,
+   "item": false,
+   "networked": true,
+   "gives": [],
+   "physics": false,
+   "usable": [],
+   "height": 0.81,
+   "upright": "block",
+   "saved_only": false,
+   "safe": true,
+   "climb": {
+    "ledges": [
+     [
+      0.8,
+      1.0
+     ]
+    ],
+    "top": 1.0,
+    "top_skilled": 1.0
+   }
+  },
+  {
+   "prefab": "Candle_resin",
+   "role": "light",
+   "look": "a resin candle, amber (range 1): small marks on knobs and levers",
+   "mount": "ground",
+   "scale": [
+    0.5,
+    3
+   ],
+   "tier": 1,
+   "notes": "players walk through it; its light range, fade distance and fire grow with its scale (BuildScale.cs)",
+   "exists": true,
+   "size": [
+    0.25,
+    0.32,
+    0.25
+   ],
+   "min": [
+    -0.07,
+    -0.03,
+    -0.12
+   ],
+   "max": [
+    0.18,
+    0.3,
+    0.14
+   ],
+   "origin": "foot",
+   "hollow": false,
+   "game_dungeon": [],
+   "kinds": [
+    "EffectArea",
+    "Fireplace",
+    "LightLod",
+    "Piece",
+    "WearNTear",
+    "ZNetView"
+   ],
+   "colliders": {
+    "piece_nonsolid": 1
+   },
+   "solid": false,
+   "solid_note": "players walk through it",
+   "lights": [
+    {
+     "range": 1.0,
+     "intensity": 2.0,
+     "colour": "#ffa438",
+     "lit": true,
+     "lod": true
+    },
+    {
+     "range": 1.0,
+     "intensity": 2.0,
+     "colour": "#ffa438",
+     "lit": false,
+     "lod": true
+    }
+   ],
+   "fire": true,
+   "particles": 1,
+   "item": false,
+   "networked": true,
+   "gives": [],
+   "physics": false,
+   "usable": [],
+   "height": 0.32,
+   "upright": "block",
+   "saved_only": false,
+   "safe": true,
+   "climb": {
+    "ledges": [],
+    "top": 0.0,
+    "top_skilled": 0.0
+   }
+  },
+  {
+   "prefab": "vines",
+   "role": "decor",
+   "look": "hanging vines (walk-through)",
+   "mount": "wall",
+   "scale": [
+    0.5,
+    2
+   ],
+   "tier": 2,
+   "notes": "players walk through it",
+   "exists": true,
+   "size": [
+    2.32,
+    2.43,
+    0.46
+   ],
+   "min": [
+    -1.02,
+    -1.17,
+    -0.34
+   ],
+   "max": [
+    1.3,
+    1.26,
+    0.12
+   ],
+   "origin": "centre",
+   "hollow": false,
+   "game_dungeon": [],
+   "kinds": [
+    "WearNTear",
+    "ZNetView"
+   ],
+   "colliders": {
+    "piece_nonsolid": 1
+   },
+   "solid": false,
+   "solid_note": "players walk through it",
+   "lights": [],
+   "fire": false,
+   "particles": 0,
+   "item": false,
+   "networked": true,
+   "gives": [],
+   "physics": false,
+   "usable": [],
+   "height": 2.43,
+   "upright": "upright",
+   "saved_only": false,
+   "safe": true,
+   "climb": {
+    "ledges": [],
+    "top": 0.0,
+    "top_skilled": 0.0
+   }
+  },
+  {
+   "prefab": "Bush01",
+   "role": "decor",
+   "look": "a bush",
+   "mount": "ground",
+   "scale": [
+    0.5,
+    1.5
+   ],
+   "tier": 1,
+   "notes": "as scenery its Destructible, DropOnDestroyed is stripped: it gives nothing",
+   "exists": true,
+   "size": [
+    2.91,
+    2.56,
+    2.85
+   ],
+   "min": [
+    -1.48,
+    -0.76,
+    -1.57
+   ],
+   "max": [
+    1.43,
+    1.8,
+    1.28
+   ],
+   "origin": "inside",
+   "hollow": false,
+   "game_dungeon": [],
+   "kinds": [
+    "Destructible",
+    "DropOnDestroyed",
+    "ZNetView"
+   ],
+   "colliders": {
+    "Default_small": 1,
+    "viewblock": 1
+   },
+   "solid": true,
+   "solid_note": "",
+   "lights": [],
+   "fire": false,
+   "particles": 0,
+   "item": false,
+   "networked": true,
+   "gives": [
+    "Destructible",
+    "DropOnDestroyed"
+   ],
+   "physics": false,
+   "usable": [],
+   "height": 2.56,
+   "upright": "block",
+   "saved_only": false,
+   "safe": true,
+   "climb": {
+    "ledges": [],
+    "top": 0.0,
+    "top_skilled": 0.0
+   }
+  },
+  {
+   "prefab": "mudpile_old",
+   "role": "decor",
+   "look": "a heap of old mud",
+   "mount": "ground",
+   "scale": [
+    0.5,
+    2
+   ],
+   "tier": 3,
+   "notes": "as scenery its MineRock is stripped: it gives nothing; climbable: a player can stand 1.4 m above its foot (at scale 1; 1.4 m with Jump skill 100), so it's a stepping stone to a level up to about 3.0 m above its foot (4.5 m with Jump 100)",
+   "exists": true,
+   "size": [
+    2.9,
+    1.46,
+    3.19
+   ],
+   "min": [
+    -1.46,
+    -0.07,
+    -1.74
+   ],
+   "max": [
+    1.44,
+    1.4,
+    1.45
+   ],
+   "origin": "foot",
+   "hollow": false,
+   "game_dungeon": [],
+   "kinds": [
+    "MineRock",
+    "ZNetView"
+   ],
+   "colliders": {
+    "Default": 20
+   },
+   "solid": true,
+   "solid_note": "",
+   "lights": [],
+   "fire": false,
+   "particles": 0,
+   "item": false,
+   "networked": true,
+   "gives": [
+    "MineRock"
+   ],
+   "physics": false,
+   "usable": [],
+   "height": 1.46,
+   "upright": "flat",
+   "saved_only": false,
+   "safe": true,
+   "climb": {
+    "ledges": [
+     [
+      0.0,
+      0.6
+     ],
+     [
+      1.0,
+      1.4
+     ]
+    ],
+    "top": 1.4,
+    "top_skilled": 1.4
+   }
+  },
+  {
+   "prefab": "root08",
+   "role": "decor",
+   "look": "roots across a floor",
+   "mount": "ground",
+   "scale": [
+    0.5,
+    2
+   ],
+   "tier": 2,
+   "notes": "recognisable: a part of the game's own ForestCrypt and ForestCryptHildir and SunkenCrypt dungeons; as scenery its Destructible, DropOnDestroyed is stripped: it gives nothing; climbable: a player can stand 0.8 m above its foot (at scale 1; 0.8 m with Jump skill 100), so it's a stepping stone to a level up to about 2.4 m above its foot (3.9 m with Jump 100)",
+   "exists": true,
+   "size": [
+    2.33,
+    0.64,
+    2.17
+   ],
+   "min": [
+    -0.66,
+    -0.38,
+    -1.38
+   ],
+   "max": [
+    1.67,
+    0.26,
+    0.79
+   ],
+   "origin": "centre",
+   "hollow": false,
+   "game_dungeon": [
+    "ForestCrypt",
+    "ForestCryptHildir",
+    "SunkenCrypt"
+   ],
+   "kinds": [
+    "Destructible",
+    "DropOnDestroyed",
+    "ZNetView"
+   ],
+   "colliders": {
+    "Default": 1
+   },
+   "solid": true,
+   "solid_note": "",
+   "lights": [],
+   "fire": false,
+   "particles": 0,
+   "item": false,
+   "networked": true,
+   "gives": [
+    "Destructible",
+    "DropOnDestroyed"
+   ],
+   "physics": false,
+   "usable": [],
+   "height": 0.64,
+   "upright": "flat",
+   "saved_only": false,
+   "safe": true,
+   "climb": {
+    "ledges": [
+     [
+      0.0,
+      0.8
+     ]
+    ],
+    "top": 0.8,
+    "top_skilled": 0.8
+   }
+  },
+  {
+   "prefab": "root12",
+   "role": "decor",
+   "look": "roots along a floor",
+   "mount": "ground",
+   "scale": [
+    0.5,
+    2
+   ],
+   "tier": 2,
+   "notes": "recognisable: a part of the game's own ForestCrypt and ForestCryptHildir and SunkenCrypt dungeons; as scenery its Destructible, DropOnDestroyed is stripped: it gives nothing; climbable: a player can stand 0.4 m above its foot (at scale 1; 0.4 m with Jump skill 100), so it's a stepping stone to a level up to about 2.0 m above its foot (3.5 m with Jump 100)",
+   "exists": true,
+   "size": [
+    1.35,
+    0.38,
+    2.76
+   ],
+   "min": [
+    -0.35,
+    -0.0,
+    -1.05
+   ],
+   "max": [
+    1.0,
+    0.38,
+    1.71
+   ],
+   "origin": "foot",
+   "hollow": false,
+   "game_dungeon": [
+    "ForestCrypt",
+    "ForestCryptHildir",
+    "SunkenCrypt"
+   ],
+   "kinds": [
+    "Destructible",
+    "DropOnDestroyed",
+    "ZNetView"
+   ],
+   "colliders": {
+    "Default": 1
+   },
+   "solid": true,
+   "solid_note": "",
+   "lights": [],
+   "fire": false,
+   "particles": 0,
+   "item": false,
+   "networked": true,
+   "gives": [
+    "Destructible",
+    "DropOnDestroyed"
+   ],
+   "physics": false,
+   "usable": [],
+   "height": 0.38,
+   "upright": "flat",
+   "saved_only": false,
+   "safe": true,
+   "climb": {
+    "ledges": [
+     [
+      0.0,
+      0.4
+     ]
+    ],
+    "top": 0.4,
+    "top_skilled": 0.4
+   }
+  },
+  {
+   "prefab": "blackmarble_floor_large",
+   "role": "floor",
+   "look": "8 x 2 x 8 black marble slab: the hidden backing behind trunk walls, under rib floors, and turned over, the ceiling",
+   "mount": "structure",
+   "scale": [
+    0.5,
+    2
+   ],
+   "tier": 6,
+   "notes": "",
+   "exists": true,
+   "size": [
+    8.0,
+    2.0,
+    8.0
+   ],
+   "min": [
+    -4.0,
+    -1.0,
+    -4.0
+   ],
+   "max": [
+    4.0,
+    1.0,
+    4.0
+   ],
+   "origin": "centre",
+   "hollow": false,
+   "game_dungeon": [],
+   "max_span": 10.0,
+   "kinds": [
+    "Piece",
+    "WearNTear",
+    "ZNetView"
+   ],
+   "colliders": {
+    "piece": 1
+   },
+   "solid": true,
+   "solid_note": "",
+   "lights": [],
+   "fire": false,
+   "particles": 0,
+   "item": false,
+   "networked": true,
+   "gives": [],
+   "physics": false,
+   "usable": [],
+   "height": 2.0,
+   "upright": "flat",
+   "saved_only": false,
+   "safe": true,
+   "climb": {
+    "ledges": [
+     [
+      2.0,
+      2.2
+     ]
+    ],
+    "top": 0.0,
+    "top_skilled": 2.2
+   }
+  },
+  {
+   "prefab": "YggdrasilRoot",
+   "role": "decor",
+   "look": "a great Yggdrasil root, 44 m long: arches",
+   "mount": "ground",
+   "scale": [
+    0.05,
+    0.6
+   ],
+   "tier": 6,
+   "notes": "climbable: a player can stand 15.0 m above its foot (at scale 1; 15.0 m with Jump skill 100), so it's a stepping stone to a level up to about 16.6 m above its foot (18.1 m with Jump 100)",
+   "exists": true,
+   "size": [
+    43.9,
+    15.28,
+    17.71
+   ],
+   "min": [
+    -25.13,
+    -11.07,
+    -11.2
+   ],
+   "max": [
+    18.77,
+    4.21,
+    6.51
+   ],
+   "origin": "inside",
+   "hollow": false,
+   "game_dungeon": [],
+   "kinds": [
+    "ZNetView"
+   ],
+   "colliders": {
+    "static_solid": 1
+   },
+   "solid": true,
+   "solid_note": "",
+   "lights": [],
+   "fire": false,
+   "particles": 0,
+   "item": false,
+   "networked": true,
+   "gives": [],
+   "physics": false,
+   "usable": [],
+   "height": 15.28,
+   "upright": "flat",
+   "saved_only": false,
+   "safe": true,
+   "climb": {
+    "ledges": [
+     [
+      0.4,
+      0.6
+     ],
+     [
+      1.2,
+      1.4
+     ],
+     [
+      1.6,
+      1.8
+     ],
+     [
+      2.2,
+      2.4
+     ],
+     [
+      2.8,
+      3.2
+     ],
+     [
+      3.4,
+      4.0
+     ],
+     [
+      4.8,
+      5.4
+     ],
+     [
+      6.0,
+      6.2
+     ],
+     [
+      6.4,
+      6.6
+     ],
+     [
+      7.2,
+      8.4
+     ],
+     [
+      8.6,
+      9.6
+     ],
+     [
+      9.8,
+      11.4
+     ],
+     [
+      11.6,
+      12.0
+     ],
+     [
+      12.4,
+      15.0
+     ]
+    ],
+    "top": 15.0,
+    "top_skilled": 15.0
+   }
+  },
+  {
+   "prefab": "dvergrprops_wood_stair",
+   "role": "stair",
+   "look": "a timber stair (with log treads over it)",
+   "mount": "structure",
+   "scale": [
+    1,
+    1
+   ],
+   "tier": 6,
+   "notes": "keep 1",
+   "exists": true,
+   "size": [
+    2.27,
+    1.15,
+    2.1
+   ],
+   "min": [
+    -1.12,
+    -0.1,
+    -1.11
+   ],
+   "max": [
+    1.15,
+    1.05,
+    0.99
+   ],
+   "origin": "foot",
+   "hollow": false,
+   "game_dungeon": [],
+   "kinds": [
+    "Piece",
+    "WearNTear",
+    "ZNetView"
+   ],
+   "colliders": {
+    "piece": 4
+   },
+   "solid": true,
+   "solid_note": "",
+   "lights": [],
+   "fire": false,
+   "particles": 0,
+   "item": false,
+   "networked": true,
+   "gives": [],
+   "physics": false,
+   "usable": [],
+   "height": 1.15,
+   "upright": "block",
+   "saved_only": false,
+   "safe": true,
+   "climb": {
+    "ledges": [
+     [
+      0.0,
+      0.2
+     ],
+     [
+      0.4,
+      0.8
+     ],
+     [
+      1.0,
+      1.2
+     ]
+    ],
+    "top": 1.2,
+    "top_skilled": 1.2
+   }
+  },
+  {
+   "prefab": "piece_groundtorch_green",
+   "role": "light",
+   "look": "a green standing torch, on a wall bracket of roots",
+   "mount": "wall",
+   "scale": [
+    0.5,
+    2
+   ],
+   "tier": 3,
+   "notes": "its light range, fade distance and fire grow with its scale (BuildScale.cs)",
+   "exists": true,
+   "size": [
+    0.23,
+    1.48,
+    0.24
+   ],
+   "min": [
+    -0.12,
+    -0.65,
+    -0.12
+   ],
+   "max": [
+    0.11,
+    0.82,
+    0.12
+   ],
+   "origin": "centre",
+   "hollow": false,
+   "game_dungeon": [],
+   "kinds": [
+    "EffectArea",
+    "Fireplace",
+    "LightLod",
+    "Piece",
+    "WearNTear",
+    "ZNetView"
+   ],
+   "colliders": {
+    "piece": 1
+   },
+   "solid": true,
+   "solid_note": "",
+   "lights": [
+    {
+     "range": 10.0,
+     "intensity": 1.5,
+     "colour": "#a0ff7a",
+     "lit": true,
+     "lod": true
+    }
+   ],
+   "fire": true,
+   "particles": 2,
+   "item": false,
+   "networked": true,
+   "gives": [],
+   "physics": false,
+   "usable": [],
+   "height": 1.48,
+   "upright": "upright",
+   "saved_only": false,
+   "safe": true,
+   "climb": {
+    "ledges": [],
+    "top": 0.0,
+    "top_skilled": 0.0
+   }
+  },
+  {
+   "prefab": "TreasureChest_swamp",
+   "role": "container",
+   "look": "a swamp chest (Saved: refilled by the Builder)",
+   "mount": "ground",
+   "scale": [
+    1,
+    1
+   ],
+   "tier": 3,
+   "notes": "Saved only, scale 1; climbable: a player can stand 0.8 m above its foot (at scale 1; 0.8 m with Jump skill 100), so it's a stepping stone to a level up to about 2.4 m above its foot (3.9 m with Jump 100)",
+   "exists": true,
+   "size": [
+    1.64,
+    0.79,
+    0.76
+   ],
+   "min": [
+    -0.82,
+    0.0,
+    -0.37
+   ],
+   "max": [
+    0.82,
+    0.79,
+    0.39
+   ],
+   "origin": "foot",
+   "hollow": false,
+   "game_dungeon": [],
+   "kinds": [
+    "Container",
+    "Piece",
+    "WearNTear",
+    "ZNetView"
+   ],
+   "colliders": {
+    "piece": 1
+   },
+   "solid": true,
+   "solid_note": "",
+   "lights": [],
+   "fire": false,
+   "particles": 0,
+   "item": false,
+   "networked": true,
+   "gives": [
+    "Container"
+   ],
+   "physics": false,
+   "usable": [
+    "Container"
+   ],
+   "height": 0.79,
+   "upright": "block",
+   "saved_only": true,
+   "safe": false,
+   "climb": {
+    "ledges": [
+     [
+      0.0,
+      0.2
+     ],
+     [
+      0.6,
+      0.8
+     ]
+    ],
+    "top": 0.8,
+    "top_skilled": 0.8
+   }
+  }
+ ],
+ "roles": {
+  "wall": {
+   "pieces": [
+    "Oak_log"
+   ],
+   "how": "a floor slab stood up: euler (-90, side yaw, 0), its top face inwards (dungeon_parts.wall); a wall piece (tile wall, metal wall, timber wall) stands as it is, turned by yaw"
+  },
+  "wall_alt": {
+   "pieces": [
+    "blackmarble_floor_large"
+   ],
+   "how": "as wall"
+  },
+  "floor": {
+   "pieces": [
+    "Oak_log",
+    "SwampTree1_log",
+    "blackmarble_floor_large"
+   ],
+   "how": "flat as it is; most slabs have their origin in their middle (see each piece's origin and min/max)"
+  },
+  "ceiling": {
+   "pieces": [
+    "blackmarble_floor_large"
+   ],
+   "how": "a floor slab turned over: euler (180, 0, 0) (dungeon_parts.slab with ceiling=True); its origin is in the slab's middle"
+  },
+  "trim": {
+   "pieces": [
+    "HoleRock_rootWall1",
+    "FirTree_oldLog",
+    "SwampTree1_log"
+   ]
+  },
+  "pillar": {
+   "pieces": [
+    "Oak_log",
+    "SwampTree1_Stub"
+   ]
+  },
+  "column": {
+   "pieces": [
+    "yggashoot_log"
+   ]
+  },
+  "beam": {
+   "pieces": [
+    "HugeRoot1"
+   ]
+  },
+  "rail": {
+   "pieces": []
+  },
+  "grate": {
+   "pieces": [
+    "HoleRock_rootWall1"
+   ]
+  },
+  "door_leaf": {
+   "pieces": [
+    "HoleRock_rootWall1",
+    "Oak_log"
+   ],
+   "how": "as scenery it doesn't open: Pack.doors (saved, at joints) or a gate mechanism moves it"
+  },
+  "stair": {
+   "pieces": [
+    "dvergrprops_wood_stair"
+   ],
+   "how": "keep scale 1 (step height); stack or repeat for a wider or longer stair"
+  },
+  "light_stand": {
+   "pieces": [
+    "GlowingMushroom",
+    "piece_Lavalantern"
+   ]
+  },
+  "light_hang": {
+   "pieces": [
+    "GuckSack",
+    "GuckSack_small"
+   ],
+   "how": "hang it from the first part above it (ceiling, balcony, a mechanism's lid) on the theme's chain, the chain's foot on the light's top: giant, a thinned Morkhalla_WallChain1 (giant_kit.wisp); Dvergr, dvergrprops_lantern on dvergrprops_hooknchain. Stood at a point it floats (dverger_demister's mesh is below its origin)"
+  },
+  "light_wall": {
+   "pieces": [
+    "piece_groundtorch_green"
+   ],
+   "how": "against a wall, its back to it"
+  },
+  "chain": {
+   "pieces": [],
+   "how": "a wall chain hangs from its anchor at the top; a span rests on two anchors"
+  },
+  "chest": {
+   "pieces": [
+    "TreasureChest_swamp"
+   ],
+   "how": "Saved parts only, scale 1: the Builder refills them from the pack's loot for the biome"
+  },
+  "decor_small": {
+   "pieces": [
+    "Candle_resin",
+    "mudpile_old",
+    "root08",
+    "root12",
+    "Bush01",
+    "skull_pile",
+    "bone_stack"
+   ],
+   "how": "pick by the room's dressing set (each piece's \"sets\")"
+  },
+  "decor_large": {
+   "pieces": [
+    "SwampTree2_log",
+    "BigBranch",
+    "AshlandsTreeStump1",
+    "tarlump1",
+    "YggdrasilRoot",
+    "HugeRoot1",
+    "vines"
+   ],
+   "how": "pick by the room's dressing set (each piece's \"sets\")"
+  },
+  "rubble": {
+   "pieces": [
+    "mudpile_old",
+    "root08"
+   ]
+  },
+  "bones": {
+   "pieces": [
+    "skull_pile",
+    "bone_stack"
+   ],
+   "how": "giant bones are huge (a skull is 10 x 12 x 17 m): scale them down for human-scale rooms"
+  }
+ },
+ "by_role": {
+  "wall": [
+   "Oak_log"
+  ],
+  "wall_alt": [
+   "blackmarble_floor_large"
+  ],
+  "floor": [
+   "Oak_log",
+   "SwampTree1_log",
+   "blackmarble_floor_large"
+  ],
+  "ceiling": [
+   "blackmarble_floor_large"
+  ],
+  "trim": [
+   "HoleRock_rootWall1",
+   "FirTree_oldLog",
+   "SwampTree1_log"
+  ],
+  "pillar": [
+   "Oak_log",
+   "SwampTree1_Stub"
+  ],
+  "column": [
+   "yggashoot_log"
+  ],
+  "beam": [
+   "HugeRoot1"
+  ],
+  "rail": [],
+  "grate": [
+   "HoleRock_rootWall1"
+  ],
+  "door_leaf": [
+   "HoleRock_rootWall1",
+   "Oak_log"
+  ],
+  "stair": [
+   "dvergrprops_wood_stair"
+  ],
+  "light_stand": [
+   "GlowingMushroom",
+   "piece_Lavalantern"
+  ],
+  "light_hang": [
+   "GuckSack",
+   "GuckSack_small"
+  ],
+  "light_wall": [
+   "piece_groundtorch_green"
+  ],
+  "chain": [],
+  "chest": [
+   "TreasureChest_swamp"
+  ],
+  "decor_small": [
+   "Candle_resin",
+   "mudpile_old",
+   "root08",
+   "root12",
+   "Bush01",
+   "skull_pile",
+   "bone_stack"
+  ],
+  "decor_large": [
+   "SwampTree2_log",
+   "BigBranch",
+   "AshlandsTreeStump1",
+   "tarlump1",
+   "YggdrasilRoot",
+   "HugeRoot1",
+   "vines"
+  ],
+  "rubble": [
+   "mudpile_old",
+   "root08"
+  ],
+  "bones": [
+   "skull_pile",
+   "bone_stack"
+  ]
+ }
+}

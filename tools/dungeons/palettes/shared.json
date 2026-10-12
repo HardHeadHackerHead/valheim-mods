@@ -18,6 +18,7 @@
   "by_role": "{role: [default, variants...]}: the roles below without their notes",
   "sets": "the dressing sets it suits (giant: ossuary, ruin, forge, archive, engine, armoury; Dvergr: store, workshop, tavern, barracks)",
   "max_span": "a panel's longest side (m) before its stretched texture smears",
+  "game_dungeon": "the game's own dungeon themes whose rooms use it: a player knows it from there (a new kind should lean on pieces with none, or mix them so no room reads as that dungeon)",
   "roles": "the same pieces by a theme recipe's roles (first = default, others = variants), with how each role's pieces are placed",
   "render": "a picture in the mesh cache (C:\\Users\\DHack\\AppData\\Local\\Temp\\quaddungeon_meshes); the theme's contact sheet is palettes/shared_sheet.png there"
  },
@@ -32,7 +33,7 @@
     1
    ],
    "tier": 8,
-   "notes": "Saved only, scale 1 (as scenery Strip takes its Container off: it opens nothing); climbable: a player can stand 1.4 m above its foot (at scale 1; 1.4 m with Jump skill 100), so it's a stepping stone to a level up to about 3.0 m above its foot (4.5 m with Jump 100)",
+   "notes": "Saved only, scale 1 (as scenery Strip takes its Container off: it opens nothing); recognisable: a part of the game's own MorkHalla dungeons; climbable: a player can stand 1.4 m above its foot (at scale 1; 1.4 m with Jump skill 100), so it's a stepping stone to a level up to about 3.0 m above its foot (4.5 m with Jump 100)",
    "exists": true,
    "size": [
     3.22,
@@ -51,6 +52,9 @@
    ],
    "origin": "foot",
    "hollow": false,
+   "game_dungeon": [
+    "MorkHalla"
+   ],
    "kinds": [
     "Container",
     "Piece",
@@ -71,6 +75,9 @@
     "Container"
    ],
    "physics": false,
+   "usable": [
+    "Container"
+   ],
    "height": 2.13,
    "upright": "block",
    "saved_only": true,
@@ -88,8 +95,7 @@
     ],
     "top": 1.4,
     "top_skilled": 1.4
-   },
-   "render": "palettes/Morkhalla_ChestAncient.png"
+   }
   },
   {
    "prefab": "TreasureChest_morkhalla",
@@ -101,7 +107,7 @@
     1
    ],
    "tier": 8,
-   "notes": "Saved only; keep scale 1; climbable: a player can stand 1.2 m above its foot (at scale 1; 1.2 m with Jump skill 100), so it's a stepping stone to a level up to about 2.8 m above its foot (4.3 m with Jump 100)",
+   "notes": "Saved only; keep scale 1; recognisable: a part of the game's own MorkHalla dungeons; climbable: a player can stand 1.2 m above its foot (at scale 1; 1.2 m with Jump skill 100), so it's a stepping stone to a level up to about 2.8 m above its foot (4.3 m with Jump 100)",
    "exists": true,
    "size": [
     2.61,
@@ -120,6 +126,9 @@
    ],
    "origin": "foot",
    "hollow": false,
+   "game_dungeon": [
+    "MorkHalla"
+   ],
    "kinds": [
     "Container",
     "Piece",
@@ -140,6 +149,9 @@
     "Container"
    ],
    "physics": false,
+   "usable": [
+    "Container"
+   ],
    "height": 1.06,
    "upright": "flat",
    "saved_only": true,
@@ -153,8 +165,7 @@
     ],
     "top": 1.2,
     "top_skilled": 1.2
-   },
-   "render": "palettes/TreasureChest_morkhalla.png"
+   }
   },
   {
    "prefab": "TreasureChest_charredfortress",
@@ -166,7 +177,7 @@
     1
    ],
    "tier": 7,
-   "notes": "Saved only; keep scale 1; climbable: a player can stand 1.6 m above its foot (at scale 1; 1.6 m with Jump skill 100), so it's a stepping stone to a level up to about 3.2 m above its foot (4.7 m with Jump 100)",
+   "notes": "Saved only; keep scale 1; recognisable: a part of the game's own FortressRuins dungeons; climbable: a player can stand 1.6 m above its foot (at scale 1; 1.6 m with Jump skill 100), so it's a stepping stone to a level up to about 3.2 m above its foot (4.7 m with Jump 100)",
    "exists": true,
    "size": [
     2.71,
@@ -185,6 +196,9 @@
    ],
    "origin": "foot",
    "hollow": false,
+   "game_dungeon": [
+    "FortressRuins"
+   ],
    "kinds": [
     "Container",
     "Piece",
@@ -205,6 +219,9 @@
     "Container"
    ],
    "physics": false,
+   "usable": [
+    "Container"
+   ],
    "height": 1.75,
    "upright": "block",
    "saved_only": true,
@@ -222,8 +239,7 @@
     ],
     "top": 1.6,
     "top_skilled": 1.6
-   },
-   "render": "palettes/TreasureChest_charredfortress.png"
+   }
   },
   {
    "prefab": "piece_chest_grausten",
@@ -254,6 +270,7 @@
    ],
    "origin": "foot",
    "hollow": false,
+   "game_dungeon": [],
    "kinds": [
     "Container",
     "Piece",
@@ -274,6 +291,9 @@
     "Container"
    ],
    "physics": false,
+   "usable": [
+    "Container"
+   ],
    "height": 1.17,
    "upright": "block",
    "saved_only": true,
@@ -287,8 +307,7 @@
     ],
     "top": 0.8,
     "top_skilled": 0.8
-   },
-   "render": "palettes/piece_chest_grausten.png"
+   }
   },
   {
    "prefab": "TreasureChest_dvergr_loose_stone",
@@ -319,6 +338,7 @@
    ],
    "origin": "centre",
    "hollow": false,
+   "game_dungeon": [],
    "kinds": [
     "Container",
     "Piece",
@@ -339,6 +359,9 @@
     "Container"
    ],
    "physics": false,
+   "usable": [
+    "Container"
+   ],
    "height": 1.0,
    "upright": "flat",
    "saved_only": true,
@@ -352,8 +375,7 @@
     ],
     "top": 0.8,
     "top_skilled": 0.8
-   },
-   "render": "palettes/TreasureChest_dvergr_loose_stone.png"
+   }
   },
   {
    "prefab": "TreasureChest_trollcave",
@@ -384,6 +406,7 @@
    ],
    "origin": "foot",
    "hollow": false,
+   "game_dungeon": [],
    "kinds": [
     "Container",
     "Piece",
@@ -404,6 +427,9 @@
     "Container"
    ],
    "physics": false,
+   "usable": [
+    "Container"
+   ],
    "height": 0.65,
    "upright": "flat",
    "saved_only": true,
@@ -417,8 +443,7 @@
     ],
     "top": 0.6,
     "top_skilled": 0.6
-   },
-   "render": "palettes/TreasureChest_trollcave.png"
+   }
   },
   {
    "prefab": "TreasureChest_forestcrypt",
@@ -430,7 +455,7 @@
     1
    ],
    "tier": 2,
-   "notes": "Saved only; keep scale 1; climbable: a player can stand 0.6 m above its foot (at scale 1; 0.6 m with Jump skill 100), so it's a stepping stone to a level up to about 2.2 m above its foot (3.7 m with Jump 100)",
+   "notes": "Saved only; keep scale 1; recognisable: a part of the game's own ForestCrypt and ForestCryptHildir and theme 262144 dungeons; climbable: a player can stand 0.6 m above its foot (at scale 1; 0.6 m with Jump skill 100), so it's a stepping stone to a level up to about 2.2 m above its foot (3.7 m with Jump 100)",
    "exists": true,
    "size": [
     2.02,
@@ -449,6 +474,11 @@
    ],
    "origin": "foot",
    "hollow": false,
+   "game_dungeon": [
+    "ForestCrypt",
+    "ForestCryptHildir",
+    "theme 262144"
+   ],
    "kinds": [
     "Container",
     "Piece",
@@ -469,6 +499,9 @@
     "Container"
    ],
    "physics": false,
+   "usable": [
+    "Container"
+   ],
    "height": 0.65,
    "upright": "flat",
    "saved_only": true,
@@ -482,8 +515,7 @@
     ],
     "top": 0.6,
     "top_skilled": 0.6
-   },
-   "render": "palettes/TreasureChest_forestcrypt.png"
+   }
   },
   {
    "prefab": "TreasureChest_dvergrtown",
@@ -495,7 +527,7 @@
     1
    ],
    "tier": 6,
-   "notes": "Saved only; keep scale 1; climbable: a player can stand 0.6 m above its foot (at scale 1; 0.6 m with Jump skill 100), so it's a stepping stone to a level up to about 2.2 m above its foot (3.7 m with Jump 100)",
+   "notes": "Saved only; keep scale 1; recognisable: a part of the game's own DvergerTown dungeons; climbable: a player can stand 0.6 m above its foot (at scale 1; 0.6 m with Jump skill 100), so it's a stepping stone to a level up to about 2.2 m above its foot (3.7 m with Jump 100)",
    "exists": true,
    "size": [
     1.39,
@@ -514,6 +546,9 @@
    ],
    "origin": "foot",
    "hollow": false,
+   "game_dungeon": [
+    "DvergerTown"
+   ],
    "kinds": [
     "Container",
     "Piece",
@@ -534,6 +569,9 @@
     "Container"
    ],
    "physics": false,
+   "usable": [
+    "Container"
+   ],
    "height": 0.73,
    "upright": "block",
    "saved_only": true,
@@ -551,8 +589,7 @@
     ],
     "top": 0.6,
     "top_skilled": 0.6
-   },
-   "render": "palettes/TreasureChest_dvergrtown.png"
+   }
   },
   {
    "prefab": "crypt_skeleton_chest",
@@ -564,7 +601,7 @@
     1
    ],
    "tier": 2,
-   "notes": "Saved: its drops and what it hatches are fitted to the biome; as scenery a prop; as scenery its Destructible, DropOnDestroyed is stripped: it gives nothing; climbable: a player can stand 1.0 m above its foot (at scale 1; 1.0 m with Jump skill 100), so it's a stepping stone to a level up to about 2.6 m above its foot (4.1 m with Jump 100)",
+   "notes": "Saved: its drops and what it hatches are fitted to the biome; as scenery a prop; recognisable: a part of the game's own ForestCryptHildir dungeons; as scenery its Destructible, DropOnDestroyed is stripped: it gives nothing; climbable: a player can stand 1.0 m above its foot (at scale 1; 1.0 m with Jump skill 100), so it's a stepping stone to a level up to about 2.6 m above its foot (4.1 m with Jump 100)",
    "exists": true,
    "size": [
     3.03,
@@ -583,6 +620,9 @@
    ],
    "origin": "foot",
    "hollow": false,
+   "game_dungeon": [
+    "ForestCryptHildir"
+   ],
    "kinds": [
     "Destructible",
     "DropOnDestroyed",
@@ -604,6 +644,7 @@
     "DropOnDestroyed"
    ],
    "physics": false,
+   "usable": [],
    "height": 0.97,
    "upright": "flat",
    "saved_only": false,
@@ -621,8 +662,7 @@
     ],
     "top": 1.0,
     "top_skilled": 1.0
-   },
-   "render": "palettes/crypt_skeleton_chest.png"
+   }
   },
   {
    "prefab": "Spawner_Draugr",
@@ -634,7 +674,7 @@
     1
    ],
    "tier": 3,
-   "notes": "Saved only; invisible; stands 0.5 m above its floor; no collider: players walk through it",
+   "notes": "Saved only; invisible; stands 0.5 m above its floor; recognisable: a part of the game's own MeadowsVillage and SunkenCrypt dungeons; no collider: players walk through it",
    "exists": true,
    "size": [
     0.0,
@@ -653,6 +693,10 @@
    ],
    "origin": "foot",
    "hollow": false,
+   "game_dungeon": [
+    "MeadowsVillage",
+    "SunkenCrypt"
+   ],
    "kinds": [
     "CreatureSpawner",
     "ZNetView"
@@ -667,6 +711,7 @@
    "networked": true,
    "gives": [],
    "physics": false,
+   "usable": [],
    "height": 0.0,
    "upright": "block",
    "saved_only": true,
@@ -675,8 +720,7 @@
     "ledges": [],
     "top": 0.0,
     "top_skilled": 0.0
-   },
-   "render": "palettes/Spawner_Draugr.png"
+   }
   },
   {
    "prefab": "Spawner_Draugr_Ranged",
@@ -688,7 +732,7 @@
     1
    ],
    "tier": 3,
-   "notes": "Saved only; no collider: players walk through it",
+   "notes": "Saved only; recognisable: a part of the game's own MeadowsVillage dungeons; no collider: players walk through it",
    "exists": true,
    "size": [
     0.0,
@@ -707,6 +751,9 @@
    ],
    "origin": "foot",
    "hollow": false,
+   "game_dungeon": [
+    "MeadowsVillage"
+   ],
    "kinds": [
     "CreatureSpawner",
     "ZNetView"
@@ -721,6 +768,7 @@
    "networked": true,
    "gives": [],
    "physics": false,
+   "usable": [],
    "height": 0.0,
    "upright": "block",
    "saved_only": true,
@@ -729,8 +777,7 @@
     "ledges": [],
     "top": 0.0,
     "top_skilled": 0.0
-   },
-   "render": "palettes/Spawner_Draugr_Ranged.png"
+   }
   },
   {
    "prefab": "Spawner_Ghost",
@@ -742,7 +789,7 @@
     1
    ],
    "tier": 2,
-   "notes": "Saved only; no collider: players walk through it",
+   "notes": "Saved only; recognisable: a part of the game's own ForestCrypt and ForestCryptHildir dungeons; no collider: players walk through it",
    "exists": true,
    "size": [
     0.0,
@@ -761,6 +808,10 @@
    ],
    "origin": "foot",
    "hollow": false,
+   "game_dungeon": [
+    "ForestCrypt",
+    "ForestCryptHildir"
+   ],
    "kinds": [
     "CreatureSpawner",
     "ZNetView"
@@ -775,6 +826,7 @@
    "networked": true,
    "gives": [],
    "physics": false,
+   "usable": [],
    "height": 0.0,
    "upright": "block",
    "saved_only": true,
@@ -783,8 +835,7 @@
     "ledges": [],
     "top": 0.0,
     "top_skilled": 0.0
-   },
-   "render": "palettes/Spawner_Ghost.png"
+   }
   },
   {
    "prefab": "BonePileSpawner",
@@ -796,7 +847,7 @@
     1
    ],
    "tier": 2,
-   "notes": "Saved only; what it spawns is fitted to the biome; climbable: a player can stand 0.6 m above its foot (at scale 1; 0.6 m with Jump skill 100), so it's a stepping stone to a level up to about 2.2 m above its foot (3.7 m with Jump 100)",
+   "notes": "Saved only; what it spawns is fitted to the biome; recognisable: a part of the game's own ForestCrypt and ForestCryptHildir and theme 262144 dungeons; climbable: a player can stand 0.6 m above its foot (at scale 1; 0.6 m with Jump skill 100), so it's a stepping stone to a level up to about 2.2 m above its foot (3.7 m with Jump 100)",
    "exists": true,
    "size": [
     2.0,
@@ -815,6 +866,11 @@
    ],
    "origin": "foot",
    "hollow": false,
+   "game_dungeon": [
+    "ForestCrypt",
+    "ForestCryptHildir",
+    "theme 262144"
+   ],
    "kinds": [
     "Destructible",
     "SpawnArea",
@@ -835,6 +891,7 @@
     "Destructible"
    ],
    "physics": false,
+   "usable": [],
    "height": 1.01,
    "upright": "block",
    "saved_only": true,
@@ -848,8 +905,7 @@
     ],
     "top": 0.6,
     "top_skilled": 0.6
-   },
-   "render": "palettes/BonePileSpawner.png"
+   }
   },
   {
    "prefab": "Pickable_DvergrMineTreasure",
@@ -861,7 +917,7 @@
     1
    ],
    "tier": 6,
-   "notes": "Saved only; as scenery it shows loot that can't be taken; its 'item'-layer collider is made solid by the Builder (BuildSolid.cs); climbable: a player can stand 0.4 m above its foot (at scale 1; 0.4 m with Jump skill 100), so it's a stepping stone to a level up to about 2.0 m above its foot (3.5 m with Jump 100)",
+   "notes": "Saved only; as scenery it shows loot that can't be taken; recognisable: a part of the game's own DvergerTown dungeons; its 'item'-layer collider is made solid by the Builder (BuildSolid.cs); climbable: a player can stand 0.4 m above its foot (at scale 1; 0.4 m with Jump skill 100), so it's a stepping stone to a level up to about 2.0 m above its foot (3.5 m with Jump 100)",
    "exists": true,
    "size": [
     2.3,
@@ -880,6 +936,9 @@
    ],
    "origin": "foot",
    "hollow": false,
+   "game_dungeon": [
+    "DvergerTown"
+   ],
    "kinds": [
     "Pickable",
     "ZNetView"
@@ -898,6 +957,9 @@
     "Pickable"
    ],
    "physics": false,
+   "usable": [
+    "Pickable"
+   ],
    "height": 0.4,
    "upright": "flat",
    "saved_only": true,
@@ -911,8 +973,7 @@
     ],
     "top": 0.4,
     "top_skilled": 0.4
-   },
-   "render": "palettes/Pickable_DvergrMineTreasure.png"
+   }
   },
   {
    "prefab": "skull_pile",
@@ -943,6 +1004,7 @@
    ],
    "origin": "foot",
    "hollow": false,
+   "game_dungeon": [],
    "sets": [
     "ossuary"
    ],
@@ -963,6 +1025,7 @@
    "networked": true,
    "gives": [],
    "physics": false,
+   "usable": [],
    "height": 0.85,
    "upright": "block",
    "saved_only": false,
@@ -976,8 +1039,7 @@
     ],
     "top": 0.6,
     "top_skilled": 0.6
-   },
-   "render": "palettes/skull_pile.png"
+   }
   },
   {
    "prefab": "bone_stack",
@@ -1008,6 +1070,7 @@
    ],
    "origin": "foot",
    "hollow": false,
+   "game_dungeon": [],
    "sets": [
     "ossuary"
    ],
@@ -1028,6 +1091,7 @@
    "networked": true,
    "gives": [],
    "physics": false,
+   "usable": [],
    "height": 0.63,
    "upright": "block",
    "saved_only": false,
@@ -1041,8 +1105,7 @@
     ],
     "top": 0.6,
     "top_skilled": 0.6
-   },
-   "render": "palettes/bone_stack.png"
+   }
   },
   {
    "prefab": "rug_fur",
@@ -1073,6 +1136,7 @@
    ],
    "origin": "foot",
    "hollow": false,
+   "game_dungeon": [],
    "kinds": [
     "Piece",
     "WearNTear",
@@ -1090,6 +1154,7 @@
    "networked": true,
    "gives": [],
    "physics": false,
+   "usable": [],
    "height": 0.08,
    "upright": "flat",
    "saved_only": false,
@@ -1098,8 +1163,7 @@
     "ledges": [],
     "top": 0.0,
     "top_skilled": 0.0
-   },
-   "render": "palettes/rug_fur.png"
+   }
   },
   {
    "prefab": "piece_banner01",
@@ -1130,6 +1194,7 @@
    ],
    "origin": "top",
    "hollow": false,
+   "game_dungeon": [],
    "kinds": [
     "Piece",
     "WearNTear",
@@ -1147,6 +1212,7 @@
    "networked": true,
    "gives": [],
    "physics": false,
+   "usable": [],
    "height": 3.03,
    "upright": "upright",
    "saved_only": false,
@@ -1160,8 +1226,7 @@
     ],
     "top": 0.0,
     "top_skilled": 3.2
-   },
-   "render": "palettes/piece_banner01.png"
+   }
   },
   {
    "prefab": "bar_iron_stack",
@@ -1192,6 +1257,7 @@
    ],
    "origin": "foot",
    "hollow": false,
+   "game_dungeon": [],
    "sets": [
     "forge",
     "store"
@@ -1213,6 +1279,7 @@
    "networked": true,
    "gives": [],
    "physics": false,
+   "usable": [],
    "height": 1.0,
    "upright": "block",
    "saved_only": false,
@@ -1226,8 +1293,7 @@
     ],
     "top": 1.0,
     "top_skilled": 1.0
-   },
-   "render": "palettes/bar_iron_stack.png"
+   }
   },
   {
    "prefab": "wood_core_stack",
@@ -1258,6 +1324,7 @@
    ],
    "origin": "foot",
    "hollow": false,
+   "game_dungeon": [],
    "kinds": [
     "Piece",
     "WearNTear",
@@ -1275,6 +1342,7 @@
    "networked": true,
    "gives": [],
    "physics": false,
+   "usable": [],
    "height": 1.32,
    "upright": "block",
    "saved_only": false,
@@ -1300,8 +1368,7 @@
     ],
     "top": 1.4,
     "top_skilled": 1.4
-   },
-   "render": "palettes/wood_core_stack.png"
+   }
   },
   {
    "prefab": "stone_pile",
@@ -1332,6 +1399,7 @@
    ],
    "origin": "foot",
    "hollow": false,
+   "game_dungeon": [],
    "kinds": [
     "Piece",
     "WearNTear",
@@ -1349,6 +1417,7 @@
    "networked": true,
    "gives": [],
    "physics": false,
+   "usable": [],
    "height": 0.92,
    "upright": "block",
    "saved_only": false,
@@ -1362,8 +1431,7 @@
     ],
     "top": 1.0,
     "top_skilled": 1.0
-   },
-   "render": "palettes/stone_pile.png"
+   }
   }
  ],
  "trouble": {
@@ -1379,6 +1447,9 @@
   "blackmarble_2x2x1": "stretched, its bevels become spikes: don't use it as a stretched wall (blackmarble_tile_wall_2x4 instead).",
   "Ashlands_floor_large_fractured": "looks the same as Ashlands_floor_large: no use for a cracked floor.",
   "giant_ribs": "huge (0.75 scale is still about 14 m long), and hollow: its collider is boxes in prefab_shapes.json. Scale giant remains by their box.",
+  "Lantern_DN": "an item: its lights are off in the prefab (lit only while carried), so as scenery it's dark. Use deepnorth_lantern_standing or a Dvergr lantern.",
+  "LargeBone": "carries an EggHatch (it hatches something): scenery only (Strip takes the hatching off); Saved, it would hatch.",
+  "*_log": "Oak_log, SwampTree1_log, yggashoot_log and other tree logs are physics logs in the game (a live Rigidbody: they roll): fine as stripped scenery, never Saved.",
   "*_frac": "fractured debris (physics pieces of something broken): don't use as scenery.",
   "Pickable_*": "as scenery a pickable shows its item but can't be taken: confusing. Use only as Saved parts.",
   "TreasureChest_*": "as scenery a chest opens nothing: Saved only, scale 1.",

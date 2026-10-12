@@ -601,7 +601,7 @@ class Corridor(Job):
                 at = (0 if along_z else u, sh.floor_y, u if along_z else 0)
                 foot = (width * 0.7, min(t.grid * 0.4, 3.0)) if along_z else (min(t.grid * 0.4, 3.0), width * 0.7)
                 h = r.mech(f"hammer{i + 1}", "trap", at)
-                box(h, t.p("block"), (0, hh / 2, 0), (foot[0], hh, foot[1]))
+                t.trap_head(h, (0, hh / 2, 0), (foot[0], hh, foot[1]))
                 raised = sh.top - t.floor_t - 0.6 - hh - sh.floor_y         # (0.6 m under the ceiling: room for its wind-up lift)
                 h.pose(at=(0, raised, 0)).pose(at=(0, 0, 0))        # rest: up under the ceiling; fired: on the floor
                 h.start = 1

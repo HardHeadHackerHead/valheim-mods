@@ -1,0 +1,275 @@
+{
+ "about": "Rimeforge Depths (pack-rimeforge): a frost-giants' smithy swallowed by a glacier, its forges still smouldering in the ice. Tall forge-naves, 8 m storeys on a 4 m grid, doorways 4 x 6 m. Walls: a black fortress-stone plinth to 3 m with faceted glacier ice above; black iron (flametal) ribs and beams; iron-bar portcullises; ember light against the ice's pale blue. The Ashlands stone and flametal are always mixed with the ice and the smithy's pieces so no room reads as the Charred Fortress. Builders: authoring/themes/rimeforge.py.",
+ "pieces": [
+  {
+   "prefab": "Ice_floor",
+   "role": "wall",
+   "look": "faceted glacier ice 4.7 x 2.1 x 4.7: upper walls (stood up), ice ceilings (turned over), ice blocks, ice walls in doorways, the push block",
+   "mount": "structure",
+   "scale": [
+    0.2,
+    3
+   ],
+   "tier": 8,
+   "notes": "flat along y: stand it up as a wall (euler -90)"
+  },
+  {
+   "prefab": "Ashlands_Fortress_Floor",
+   "role": "floor",
+   "look": "black fortress stone 2 x 1 x 2: floors, the 3 m wall plinth, solid levels, daises, lever bases, lintels",
+   "mount": "structure",
+   "scale": [
+    0.2,
+    8
+   ],
+   "tier": 7,
+   "notes": ""
+  },
+  {
+   "prefab": "Piece_flametal_beam",
+   "role": "beam",
+   "look": "black iron beam 2 x 0.56 x 0.56 (along x): ceiling beams, lintels, rails; stood on end (euler z 90) as ribs, posts and door posts",
+   "mount": "span",
+   "scale": [
+    0.1,
+    20
+   ],
+   "tier": 7,
+   "notes": "stood on end it isn't a climber (the flametal pillar stretched was read as one)"
+  },
+  {
+   "prefab": "Morkhalla_GateDoor",
+   "role": "door_leaf",
+   "look": "iron bars 4.6 x 7.6 x 0.1: portcullises, end caps",
+   "mount": "structure",
+   "scale": [
+    0.5,
+    1.5
+   ],
+   "tier": 6,
+   "notes": ""
+  },
+  {
+   "prefab": "iron_floor_2x2",
+   "role": "grate",
+   "look": "iron floor grate 2 x 0.12 x 2: over slag channels, steam vents, the gantry",
+   "mount": "structure",
+   "scale": [
+    0.3,
+    3
+   ],
+   "tier": 4,
+   "notes": ""
+  },
+  {
+   "prefab": "Ashland_Stair",
+   "role": "stair",
+   "look": "black stone stair 4 x 2 x 4: one per metre of rise, stretched",
+   "mount": "structure",
+   "scale": [
+    0.2,
+    2
+   ],
+   "tier": 7,
+   "notes": ""
+  },
+  {
+   "prefab": "forge_ext4",
+   "role": "decor_large",
+   "look": "the smith's anvil: a giant's at 2-6 times (dais centrepieces, remains, nooks)",
+   "mount": "ground",
+   "scale": [
+    1,
+    6
+   ],
+   "tier": 2,
+   "notes": ""
+  },
+  {
+   "prefab": "blastfurnace",
+   "role": "decor_large",
+   "look": "a frost-giant's furnace (cold and dark as scenery: its light only works while smelting): the Frozen Forges, corners",
+   "mount": "ground",
+   "scale": [
+    0.8,
+    2
+   ],
+   "tier": 2,
+   "notes": "stripped of its Smelter: never usable"
+  },
+  {
+   "prefab": "smelter",
+   "role": "decor_small",
+   "look": "a smaller furnace, dark: nooks",
+   "mount": "ground",
+   "scale": [
+    0.6,
+    1.2
+   ],
+   "tier": 2,
+   "notes": ""
+  },
+  {
+   "prefab": "piece_Lavalantern",
+   "role": "light_stand",
+   "look": "a small orange lantern (12 m light): lever knobs, forge vents, slag channels",
+   "mount": "ground",
+   "scale": [
+    0.3,
+    1.5
+   ],
+   "tier": 7,
+   "notes": ""
+  },
+  {
+   "prefab": "deepnorth_lantern_standing",
+   "role": "light_stand",
+   "look": "a 3.25 m iron lantern pole, orange: not climbable",
+   "mount": "ground",
+   "scale": [
+    0.8,
+    1.2
+   ],
+   "tier": 8,
+   "notes": ""
+  },
+  {
+   "prefab": "piece_brazierceiling01",
+   "role": "light_hang",
+   "look": "a hanging fire bowl, hung on an iron chain from what's above",
+   "mount": "hang",
+   "scale": [
+    0.8,
+    1.5
+   ],
+   "tier": 3,
+   "notes": ""
+  },
+  {
+   "prefab": "fire_pit_iron",
+   "role": "decor_small",
+   "look": "an iron fire bowl (a Fireplace): the forges' fires, the bosses' lamps, accents",
+   "mount": "ground",
+   "scale": [
+    0.8,
+    1.6
+   ],
+   "tier": 3,
+   "notes": ""
+  },
+  {
+   "prefab": "caverock_ice_stalagtite",
+   "role": "decor_small",
+   "look": "an icicle 3.4 m: hung high from ice ceilings (tips 5 m or more over the floor)",
+   "mount": "free",
+   "scale": [
+    0.5,
+    1.4
+   ],
+   "tier": 4,
+   "notes": ""
+  },
+  {
+   "prefab": "caverock_ice_stalagmite",
+   "role": "decor_small",
+   "look": "an ice spike 4.8 m: dressing, shrines, the entrance",
+   "mount": "ground",
+   "scale": [
+    0.4,
+    1.2
+   ],
+   "tier": 4,
+   "notes": ""
+  },
+  {
+   "prefab": "Morkhalla_coal_pile_memorial",
+   "role": "decor_small",
+   "look": "smouldering coal (dim red light): slag channels, forge mouths, dressing",
+   "mount": "ground",
+   "scale": [
+    0.3,
+    1.5
+   ],
+   "tier": 6,
+   "notes": ""
+  },
+  {
+   "prefab": "IcePond_rock",
+   "role": "floor",
+   "look": "a frozen pool disc 25 m: quench pools, sunk flush with the floor",
+   "mount": "structure",
+   "scale": [
+    0.2,
+    0.4
+   ],
+   "tier": 4,
+   "notes": ""
+  },
+  {
+   "prefab": "TreasureChest_mountaincave",
+   "role": "chest",
+   "look": "the frost caves' chest: the smiths' chests (saved, scale 1)",
+   "mount": "ground",
+   "scale": [
+    1,
+    1
+   ],
+   "tier": 4,
+   "notes": ""
+  }
+ ],
+ "roles": {
+  "wall": [
+   "Ice_floor"
+  ],
+  "floor": [
+   "Ashlands_Fortress_Floor"
+  ],
+  "ceiling": [
+   "Ice_floor"
+  ],
+  "trim": [
+   "Ashlands_Fortress_Floor"
+  ],
+  "beam": [
+   "Piece_flametal_beam"
+  ],
+  "pillar": [
+   "Piece_flametal_beam"
+  ],
+  "column": [
+   "Piece_flametal_beam"
+  ],
+  "rail": [
+   "Piece_flametal_beam"
+  ],
+  "door_leaf": [
+   "Morkhalla_GateDoor"
+  ],
+  "grate": [
+   "iron_floor_2x2"
+  ],
+  "stair": [
+   "Ashland_Stair"
+  ],
+  "light_stand": [
+   "deepnorth_lantern_standing",
+   "piece_Lavalantern"
+  ],
+  "light_hang": [
+   "piece_brazierceiling01"
+  ],
+  "chest": [
+   "TreasureChest_mountaincave"
+  ],
+  "decor_large": [
+   "forge_ext4",
+   "blastfurnace"
+  ],
+  "decor_small": [
+   "Morkhalla_coal_pile_memorial",
+   "caverock_ice_stalagmite",
+   "fire_pit_iron"
+  ]
+ }
+}

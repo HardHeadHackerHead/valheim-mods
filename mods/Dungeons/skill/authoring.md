@@ -29,7 +29,9 @@ scripts, never by hand: a room is hundreds of parts, and the checks below read t
   declared drops, with free descent and with no falls. Helpers: `encounter`, `door_gate`, `cracked_panel`, `secret_room`,
   `shortcut_door`.
 - **`testmechs.py`**: the small test pack, one room per mechanism, joined to the game's forest crypt rooms.
-- **`palettes/*.json`** (`palette_tool.py`): each theme's chosen pieces by role, with their facts from the game's files: new-dungeon.md.
+- **`palettes/*.json`** (`palette_tool.py`): each theme's chosen pieces by role, with their facts from the game's files (size, solidity,
+  climb, `game_dungeon`...): new-dungeon.md. `palette_tool.py --probe <names|patterns>` gives the same facts, and a picture, for any game
+  prefab before it's curated.
 - **`prefab_bounds.json`**: each prefab's box in its own frame (filled by `bounds()` from the game's files the first time a prefab is used).
 - **`prefab_shapes.json`** (`prefab_shapes.py`): a hollow prefab's collider as many boxes (`giant_ribs`: a ribcage you walk through). The
   walk and gap checks use it in place of the one box.
@@ -53,8 +55,8 @@ scripts, never by hand: a room is hundreds of parts, and the checks below read t
 
 1. Edit the room (a signature room in `shifting_halls.py` or `boss_rooms.py`; a recipe or theme in `authoring/`) or the spec.
 2. `python make_dungeon.py specs/<name>.toml`: writes the pack and its variety report.
-3. The checks (walk, prop, lever, box, creatures), then the gate: `python make_pack.py specs/<name>.toml` (new-dungeon.md), with
-   `--install` once it passes.
+3. The checks (walk, prop, lever, box, creatures), then the gate: `python make_pack.py specs/<name>.toml --seeds 50` while you
+   work, the full 1000 seeds (no `--seeds`) once at the end (new-dungeon.md), with `--install` once that passes.
 4. `dotnet build mods/Dungeons -c Release -p:DeployToGame=false` (a plain build copies the DLL into the game's `BepInEx/scripts`,
    `mods/Directory.Build.props`). **Never deploy while a player is in the game.**
 5. Pictures (`--preview DIR`), then the game.

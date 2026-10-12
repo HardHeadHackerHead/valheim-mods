@@ -1,0 +1,167 @@
+# Rimeforge Depths: a frost-giants' smithy sealed under a glacier, its forges still smouldering in the ice. The rimeforge theme (tall
+# forge-naves, black masonry under glacier ice, black iron ribs, ember light). On the way: a fight, the Frozen Forges (light three
+# furnaces at once to melt the ice wall), a key wing and its gate, a timed bridge over a slag pit, the Bellows-Keeper (mini boss), a
+# held gate, a drop, the Hammer Line (presses on a beat), the Rimesmith in the Great Forge, and the giants' hoard.
+name = "rimeforge"
+title = "$dungeons_pack_rimeforge"
+theme = "rimeforge"
+seed = 1
+difficulty = "normal"
+biome = "any"
+environment = "Caves"
+entrance_look = "rimeforge"
+rooms = [16, 32]
+max_size = [320, 140, 320]
+min_uses = 4
+music = "forestcrypt"
+parkour = false
+variants = 3
+
+plan = [
+  {id = "start", room = "entrance"},
+  {id = "thaw", room = "frozenforges"},                               # (signature: the Frozen Forges)
+  {id = "fight1", job = "fight"},
+  {id = "hub1", job = "hub"},
+  {id = "lever1", job = "lever", from = "hub1"},                       # a side wing: the key to the gate
+  {id = "gate1", job = "gate", opens_with = "lever1", from = "hub1", variants = 4},
+  {id = "timing1", job = "timing", variants = 4},
+  {id = "keeper", room = "keeper"},                                    # (bosses_rimeforge: the Bellows-Keeper, the mini boss)
+  {id = "plate1", job = "plate"},
+  {id = "drop1", job = "drop"},
+  {id = "hammers", room = "hammerline"},                              # (signature: the Hammer Line)
+  {id = "smith", room = "greatforge"},                                 # (bosses_rimeforge: the Rimesmith)
+  {id = "vault", room = "vault"},
+]
+
+signatures = ["slagbridge", "quenchhall", "secret_hoard", "cap_plain", "cap_ice", "vault_cap"]
+
+[fill]
+breather = 4
+pillarhall = 3
+machineroom = 3
+corridor = 2
+stairhall = 2
+nook = 4
+twolevers = 1
+ambush = 1
+timeddoor = 1
+
+# Enemies by land: the game's own for each, with the smithy's own touches where the land allows (Surtlings at the swamp's forges,
+# stone golems and drakes in the mountains); never above the land's tier (the builder checks).
+[creatures.Meadows]
+melee = ["Greyling", "Skeleton_Meadows_noarcher"]
+ranged = ["Skeleton_Meadows"]
+elite = ["Skeleton_Meadows_noarcher"]
+
+[creatures.BlackForest]
+melee = ["Skeleton_NoArcher", "Greydwarf", "Greydwarf_Elite"]
+ranged = ["Skeleton", "Greydwarf_Shaman"]
+flying = ["Ghost"]
+elite = ["Troll"]
+
+[creatures.Swamp]
+melee = ["Draugr", "Draugr_Elite", "Surtling"]
+ranged = ["Draugr_Ranged", "Skeleton_Swamps"]
+flying = ["Wraith"]
+elite = ["Draugr_Elite"]
+
+[creatures.Mountain]
+melee = ["Ulv", "Fenring", "Skeleton_Mountains_noarcher"]
+ranged = ["Fenring_Cultist"]
+flying = ["Hatchling"]
+elite = ["StoneGolem", "Fenring"]
+
+[creatures.Plains]
+melee = ["Goblin", "GoblinBrute"]
+ranged = ["GoblinArcher", "GoblinShaman"]
+flying = ["Deathsquito"]
+elite = ["GoblinBrute"]
+
+[creatures.Mistlands]
+melee = ["Seeker", "Tick", "SeekerBrute"]
+flying = ["Seeker"]
+elite = ["SeekerBrute"]
+
+[creatures.AshLands]
+melee = ["Charred_Melee", "Charred_Twitcher"]
+ranged = ["Charred_Archer", "Charred_Mage"]
+flying = ["Volture"]
+elite = ["Charred_Melee"]
+
+[creatures.DeepNorth]
+melee = ["Skeleton_DeepNorth", "GoblinDeepNorth", "Greydwarf_Frozen"]
+ranged = ["Greydwarf_Shaman_Frozen"]
+flying = ["Bat"]
+elite = ["GoblinDeepNorth"]
+
+[creatures.Ocean]
+melee = ["Greyling", "Skeleton_Meadows_noarcher"]
+ranged = ["Skeleton_Meadows"]
+elite = ["Skeleton_Meadows_noarcher"]
+
+[creatures.default]
+melee = ["Skeleton_NoArcher", "Greydwarf", "Greydwarf_Elite"]
+ranged = ["Skeleton", "Greydwarf_Shaman"]
+flying = ["Ghost"]
+elite = ["Troll"]
+
+# Loot by land: a smithy's (metal of the land, coal, cores), fair for the land's tier.
+[loot.Meadows]
+common = ["Coins:5-15", "Flint:2-5", "LeatherScraps:2-6", "Amber"]
+rare = ["Coins:15-30", "Amber:1-2", "Flint:4-8", "ArrowFlint:10-20"]
+vault = ["Coins:60-100", "Amber:2-4", "AmberPearl:1-2", "Ruby:1-2", "ArrowFlint:20-40"]
+boss = ["Coins:100-150", "AmberPearl:2-3", "Ruby:2-3", "ArrowFlint:40-60"]
+
+[loot.BlackForest]
+common = ["Coins:10-20", "Coal:3-6", "Copper:1-2", "Tin:1-2", "Resin:3-6"]
+rare = ["Coins:20-40", "Bronze:2-3", "SurtlingCore", "Ruby"]
+vault = ["Coins:80-140", "Bronze:6-10", "SurtlingCore:3-5", "Ruby:2-4", "ArrowBronze:20-30"]
+boss = ["Coins:150-220", "Bronze:10-14", "SurtlingCore:4-6", "Ruby:3-5"]
+
+[loot.Swamp]
+common = ["Coins:15-30", "Coal:4-8", "IronScrap:2-4", "Guck:2-4"]
+rare = ["Coins:30-60", "Iron:2-4", "Chain", "SurtlingCore:1-2"]
+vault = ["Coins:120-200", "Iron:8-12", "Chain:2-3", "SurtlingCore:3-5", "Ruby:3-5"]
+boss = ["Coins:200-300", "Iron:12-16", "Chain:3-4", "Ruby:4-6"]
+
+[loot.Mountain]
+common = ["Coins:20-40", "Obsidian:3-6", "Coal:4-8", "Crystal:1-2"]
+rare = ["Coins:40-80", "Silver:2-4", "FreezeGland:2-4", "Crystal:2-4"]
+vault = ["Coins:160-260", "Silver:8-12", "Crystal:4-8", "FreezeGland:4-6", "Ruby:4-6", "SilverNecklace:1-2"]
+boss = ["Coins:260-380", "Silver:12-16", "Crystal:6-10", "SilverNecklace:2-3"]
+
+[loot.Plains]
+common = ["Coins:30-50", "BlackMetalScrap:2-4", "Coal:4-8", "Needle:3-6"]
+rare = ["Coins:60-100", "BlackMetal:2-4", "SilverNecklace", "Ruby:1-2"]
+vault = ["Coins:200-320", "BlackMetal:8-12", "SilverNecklace:2-3", "Ruby:4-6"]
+boss = ["Coins:320-450", "BlackMetal:12-16", "SilverNecklace:3-4", "Ruby:6-8"]
+
+[loot.Mistlands]
+common = ["Coins:40-70", "Softtissue:2-4", "Sap:3-6", "BlackMarble:4-8"]
+rare = ["Coins:80-120", "DvergrNeedle:2-4", "Softtissue:4-6", "SilverNecklace", "Ruby:2-3"]
+vault = ["Coins:260-400", "BlackCore:2-3", "DvergrNeedle:4-6", "Softtissue:8-12", "SilverNecklace:2-3", "Eitr:4-8"]
+boss = ["Coins:400-550", "BlackCore:3-4", "Eitr:8-12", "SilverNecklace:3-4"]
+
+[loot.AshLands]
+common = ["Coins:50-80", "Grausten:4-8", "CharcoalResin:2-4", "FlametalOreNew:1-2"]
+rare = ["Coins:100-150", "FlametalNew:2-3", "ProustitePowder:2-3", "Ruby:2-3"]
+vault = ["Coins:320-500", "FlametalNew:6-10", "MoltenCore:2-3", "Ruby:5-8", "SilverNecklace:2-3"]
+boss = ["Coins:500-700", "FlametalNew:10-14", "MoltenCore:3-4", "CelestialFeather:4-6"]
+
+[loot.DeepNorth]
+common = ["Coins:50-80", "Grausten:4-8", "Obsidian:4-8", "Crystal:2-4"]
+rare = ["Coins:100-150", "Crystal:4-6", "Ruby:2-3", "SilverNecklace"]
+vault = ["Coins:320-500", "Ruby:5-8", "SilverNecklace:2-3", "AmberPearl:5-8", "Crystal:8-12"]
+boss = ["Coins:500-700", "Ruby:8-10", "SilverNecklace:3-4", "Crystal:12-16"]
+
+[loot.Ocean]
+common = ["Coins:5-15", "Flint:2-5", "LeatherScraps:2-6", "Amber"]
+rare = ["Coins:15-30", "Amber:1-2", "Flint:4-8", "ArrowFlint:10-20"]
+vault = ["Coins:60-100", "Amber:2-4", "AmberPearl:1-2", "Ruby:1-2", "ArrowFlint:20-40"]
+boss = ["Coins:100-150", "AmberPearl:2-3", "Ruby:2-3", "ArrowFlint:40-60"]
+
+[loot.default]
+common = ["Coins:10-20", "Coal:3-6", "Copper:1-2", "Tin:1-2", "Resin:3-6"]
+rare = ["Coins:20-40", "Bronze:2-3", "SurtlingCore", "Ruby"]
+vault = ["Coins:80-140", "Bronze:6-10", "SurtlingCore:3-5", "Ruby:2-4", "ArrowBronze:20-30"]
+boss = ["Coins:150-220", "Bronze:10-14", "SurtlingCore:4-6", "Ruby:3-5"]

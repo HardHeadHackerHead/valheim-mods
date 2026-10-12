@@ -11,6 +11,7 @@ Then every check, in this order, stopping at the first failure with what and whe
    2. pack                PackReader's problems (unknown kinds, doorways, targets, states, fields, looks named...)
    3. walk                walk_check.py: every doorway the solver joins can be walked to in its room
    4. props               prop_check.py: lanterns, chests, spawners... stand on something
+      boxes               box_check.py: every part, in every pose, inside its room's box (one poking out shows in the next room)
       creatures           creature_check.py (when it's there): a creature can walk from every encounter's spawn points to its fight
    5. levers              lever_check.py: every lever and exit can be reached and aimed at
    6. gaps                the harness's gap check: no jump or fall round a puzzle, no join blocked, spawn points on floors
@@ -26,8 +27,7 @@ import argparse, glob, json, os, shutil, subprocess, sys, time
 HERE = os.path.dirname(os.path.abspath(__file__))
 REPO = os.path.abspath(os.path.join(HERE, "..", ".."))
 PACKS = os.path.join(REPO, "mods", "Dungeons", "packs")
-GATE_BIN = os.path.join(HERE, "bin", "gate")             # the gate's own builds (never the ones other runs hold open)
-MAP_BIN = os.path.join(REPO, "tools", "dungeonmap", "bin", "gate")
+GATE_BIN = os.path.join(HERE, "bin", "gate")             # the gate's builds' lock, and its default out folders
 BUILDER = os.path.join(HERE, "make_dungeon.py")
 
 
@@ -89,15 +89,42 @@ class Gate:
         return passed
 
 
-def build_tools():
-    for proj, out in ((os.path.join(HERE, "LayoutTest.csproj"), GATE_BIN), (os.path.join(REPO, "tools", "dungeonmap", "MapRender.csproj"), MAP_BIN)):
-        for attempt in range(5):   # (another gate building the same project at once holds its files: wait and try again)
-            code, text = run(["dotnet", "build", proj, "-c", "Release", "-o", out], timeout=600)
-            if code == 0 or not any(k in text for k in ("MSB3021", "MSB3026", "MSB3027", "being used by another process")):
-                break
-            time.sleep(15)
-        if code != 0:
-            raise RuntimeError(f"{os.path.basename(proj)} doesn't build: " + " | ".join(tail(text, ["error"], 3)))
+def build_tools(harness_dir, map_dir):
+    """The harness and the map renderer, built for this run into its own folders (several gates at once: none holds another's files
+    open), one build at a time (they share the projects' obj folders): a lock file, waited for, taken over when it's 15 minutes old."""
+    os.makedirs(GATE_BIN, exist_ok=True)
+    lock = os.path.join(GATE_BIN, ".build.lock")
+    start = time.time()
+    while True:
+        try:
+            fd = os.open(lock, os.O_CREAT | os.O_EXCL | os.O_WRONLY)
+            os.write(fd, str(os.getpid()).encode())
+            os.close(fd)
+            break
+        except FileExistsError:
+            try:
+                if time.time() - os.path.getmtime(lock) > 900:
+                    os.remove(lock)
+                    continue
+            except OSError:
+                continue
+            if time.time() - start > 1800:
+                raise RuntimeError("another gate's build has held the build lock for 30 minutes (" + lock + ")")
+            time.sleep(3)
+    try:
+        for proj, out in ((os.path.join(HERE, "LayoutTest.csproj"), harness_dir), (os.path.join(REPO, "tools", "dungeonmap", "MapRender.csproj"), map_dir)):
+            for attempt in range(5):   # (something else building the same project at once holds its files: wait and try again)
+                code, text = run(["dotnet", "build", proj, "-c", "Release", "-o", out], timeout=600)
+                if code == 0 or not any(k in text for k in ("MSB3021", "MSB3026", "MSB3027", "being used by another process")):
+                    break
+                time.sleep(15)
+            if code != 0:
+                raise RuntimeError(f"{os.path.basename(proj)} doesn't build: " + " | ".join(tail(text, ["error"], 3)))
+    finally:
+        try:
+            os.remove(lock)
+        except OSError:
+            pass
 
 
 def main():
@@ -109,13 +136,14 @@ def main():
     ap.add_argument("--install", action="store_true", help="a built spec's pack: copy it into mods/Dungeons/packs when every check passes")
     a = ap.parse_args()
     spec = os.path.abspath(a.spec)
-    harness = os.path.join(GATE_BIN, "LayoutTest.exe")
     state = {"pack": None, "name": os.path.splitext(os.path.basename(spec))[0], "dump": None, "rooms_dir": None, "report": None, "built": False}
     out = a.out or os.path.join(GATE_BIN, "out", state["name"])   # (under bin/: ignored by git)
+    harness_dir, map_dir = os.path.join(out, "_tools", "harness"), os.path.join(out, "_tools", "map")   # (this run's own builds)
+    harness = os.path.join(harness_dir, "LayoutTest.exe")
     gate = Gate(out, a.keep_going)
 
     def generation():
-        build_tools()
+        build_tools(harness_dir, map_dir)
         os.makedirs(out, exist_ok=True)
         rooms_dir = os.path.join(out, "rooms")
         if spec.endswith(".json"):
@@ -201,7 +229,7 @@ def main():
             folder = os.path.join(out, "maps", f"seed{seed}")
             if os.path.isdir(folder):
                 shutil.rmtree(folder)
-            code, text = run([os.path.join(MAP_BIN, "MapRender.exe"), state["pack"], "--seed", str(seed), "--visit", "1", "--out", folder])
+            code, text = run([os.path.join(map_dir, "MapRender.exe"), state["pack"], "--seed", str(seed), "--visit", "1", "--out", folder])
             if code != 0:
                 return False, f"the map for seed {seed} wasn't drawn (exit {code})", tail(text)
             made += glob.glob(os.path.join(folder, "*.png"))
@@ -234,6 +262,7 @@ def main():
     gate.step("pack", pack_check)
     gate.step("walk", script("walk_check.py", ["can't", "FAIL", "blocked", "no way", "room"]))
     gate.step("props", script("prop_check.py", ["float", "FAIL", "spawn", "nothing"]))
+    gate.step("boxes", script("box_check.py", ["out of", "FAIL"]))   # (a part poking out of its room's box shows in the next room)
     if os.path.exists(os.path.join(HERE, "creature_check.py")):   # (dungeon-boss's: creatures can walk from every spawn point to the fight)
         gate.step("creatures", script("creature_check.py", ["island", "FAIL", "can't", "stuck"]))
     gate.step("levers", script("lever_check.py", ["FAIL", "can't", "aim", "approach"]))
@@ -243,7 +272,9 @@ def main():
     gate.step("look", look)
     gate.step("variety", variety)
     passed = gate.report(state["name"])
-    if passed and a.install and state["built"]:
+    if a.install and a.seeds < 1000:
+        print(f"not installed: --install needs the full 1000 seeds (this run checked {a.seeds})")
+    elif passed and a.install and state["built"]:
         target = os.path.join(PACKS, state["name"] + ".json")
         shutil.copyfile(state["pack"], target)
         print(f"installed: {rel(target)}")

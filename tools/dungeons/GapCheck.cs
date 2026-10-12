@@ -17,8 +17,8 @@ namespace Dungeons
     ///   - the room is cut into 0.5 m columns; a box's top is a place to stand (not a thin standing part's, under 0.3 m: bars, a grate; and
     ///     for a palette piece standing upright, only at a height where the palette measured a foothold) where it covers a column's middle and nothing else is in
     ///     the column from just above it to 1.8 m up (anything touching a column at all counts there, so a thin wall still splits a floor);
-    ///   - a prop (not a structure piece: a stair, floor or wall is a surface like any other) with footholds (the palettes' "climb.top": upward faces a jump apart, measured from the game's colliders; standing as the
-    ///     prefab stands) is climbed: from the floor beside its foot to any place within a jump of it (and of that foot spot, across at most 3 m of the prop),
+    ///   - a prop (not a structure piece: a stair, floor or wall is a surface like any other) with footholds (the palettes' "climb.ledges": standable faces measured from the game's colliders, stretched as the part is,
+    ///     climbed band by band from its foot, each within a jump of the last; standing as the prefab stands) is climbed: from the floor beside its foot to any place within a jump of it (and of that foot spot, across at most 3 m of the prop),
     ///     up to its highest foothold + one jump, with nothing in the way at body height (as a jump) but the prop itself;
     ///   - with Quad's Parkour (when the pack allows it), a wall climb or ledge grab reaches 6 m up within 2 m: "only with Parkour", its own
     ///     section; a failure only when the pack says "parkour": true itself, information when it's left to the default;
@@ -146,6 +146,8 @@ namespace Dungeons
             if (shapes != null && File.Exists(shapes))
                 foreach (JProperty p in JObject.Parse(File.ReadAllText(shapes)).Properties())
                 {
+                    // (an empty list: a piece players walk through, vines, a rug, a web: no boxes at all)
+                    if (p.Value is JArray none && none.Count == 0) { map[p.Name] = new List<Vector3[]>(); continue; }
                     var list = (p.Value as JArray ?? new JArray()).OfType<JArray>().Where(e => e.Count == 2).Select(e => Pair(e[0], e[1])).Where(b => b != null).ToList();
                     if (list.Count > 0) map[p.Name] = list;
                 }
@@ -155,6 +157,7 @@ namespace Dungeons
         /// <summary>A part's boxes in its room's frame (one per box of its prefab's shape).</summary>
         private static IEnumerable<Vector3[]> Boxes(PartDef p, Dictionary<string, List<Vector3[]>> bounds, MechDef mech, Pose pose)
         {
+            if (bounds[p.Prefab].Count == 0) return Enumerable.Empty<Vector3[]>();   // (walked through: nothing)
             float foot = bounds[p.Prefab].Min(b => b[0].y);
             return bounds[p.Prefab].Select(local => Box(p, local, mech, pose, foot));
         }
@@ -659,8 +662,15 @@ namespace Dungeons
                 || (upright && Ledges.TryGetValue(p.Prefab, out var bands) && !bands.Any(l => top >= l.x - 0.25f && top <= l.y + 0.25f)))
                 NoTop.Add(box, p.Prefab);
             // (footholds only as the prefab stands: turned off upright, a part is climbed by its top end alone, as any box)
-            if (Climbers.TryGetValue(p.Prefab, out var tops) && (JumpSkill >= 100 ? tops.Value : tops.Key) > 0f && upright)
-                Climbable.Add(box, new Climb { Prefab = p.Prefab, Top = (JumpSkill >= 100 ? tops.Value : tops.Key) * p.Scale.y });
+            // (how high: its footholds as this part is stretched, climbed from its foot band by band, each within a jump of the last: a post
+            // stretched to 7 m has its top face 7 m up, out of reach, not "climbable to 7 m")
+            if (Climbers.ContainsKey(p.Prefab) && upright && Ledges.TryGetValue(p.Prefab, out var held))
+            {
+                float reach = 0f;
+                foreach (Vector2 band in held.OrderBy(x => x.x))
+                    if (band.x * p.Scale.y <= reach + JumpUp) reach = Math.Max(reach, band.y * p.Scale.y);
+                if (reach > 0f) Climbable.Add(box, new Climb { Prefab = p.Prefab, Top = reach });
+            }
             return box;
         }
 

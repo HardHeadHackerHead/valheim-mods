@@ -34,6 +34,43 @@ def frame(at=(0, 0, 0), euler=(0, 0, 0), scale=(1, 1, 1)):
     return m
 
 
+def clip(t, col, n, d):
+    """Triangles t (k, 3, 3) and their colours clipped to the half-space n.x <= d: whole ones kept, outside ones dropped, a triangle with
+    one corner in becomes the corner and its two edge crossings, one with two corners in becomes the quad of those and the crossings
+    (two triangles)."""
+    if not len(t):
+        return t, col
+    s = t @ n - d                                    # (k, 3): <= 0 inside
+    inside = s <= 0
+    cnt = inside.sum(axis=1)
+    out_t, out_c = [t[cnt == 3]], [col[cnt == 3]]
+
+    def cross(a, b, sa, sb):
+        return a + (b - a) * (sa / (sa - sb))[:, None]
+
+    for want in (1, 2):
+        sel = cnt == want
+        if not sel.any():
+            continue
+        tt, ss, cc, ins = t[sel], s[sel], col[sel], inside[sel]
+        # turn each triangle's corners so that the odd one out (the lone inside corner, or the lone outside one) comes first
+        odd = ins if want == 1 else ~ins
+        first = np.argmax(odd, axis=1)
+        order = (first[:, None] + np.arange(3)[None, :]) % 3
+        tt = np.take_along_axis(tt, order[:, :, None], axis=1)
+        ss = np.take_along_axis(ss, order, axis=1)
+        a, b, c = tt[:, 0], tt[:, 1], tt[:, 2]
+        ab, ac = cross(a, b, ss[:, 0], ss[:, 1]), cross(a, c, ss[:, 0], ss[:, 2])
+        if want == 1:                                # a inside: the small triangle a, ab, ac
+            out_t.append(np.stack([a, ab, ac], axis=1))
+            out_c.append(cc)
+        else:                                        # a outside: the quad ab, b, c, ac
+            out_t.append(np.stack([ab, b, c], axis=1))
+            out_t.append(np.stack([ab, c, ac], axis=1))
+            out_c += [cc, cc]
+    return np.concatenate(out_t), np.concatenate(out_c)
+
+
 class Scene:
     def __init__(self):
         self.items = []         # (name, 4x4 matrix, tint or None)
@@ -50,7 +87,9 @@ class Scene:
     def mark(self, point, colour=(255, 220, 60), label=""):
         self.marks.append((np.array(point, float), colour, label))
 
-    def triangles(self, cut_y=None, keep=None):
+    def triangles(self, cut_y=None, keep=None, plane=None):
+        """Every part's triangles in the room's frame, clipped (not kept or dropped whole: a 24 m slab crossing the cut would be drawn
+        whole) to y < cut_y and to the plane (n, d): n.x <= d. keep: an older test on the centroids, if given."""
         tris, cols = [], []
         for name, m, tint in self.items:
             s = shape(name)
@@ -65,8 +104,9 @@ class Scene:
             if tint is not None:
                 col = col * 0.35 + np.array(tint, np.float32) * 0.65
             if cut_y is not None:
-                sel = t[:, :, 1].min(axis=1) < cut_y
-                t, col = t[sel], col[sel]
+                t, col = clip(t, col, np.array([0.0, 1.0, 0.0]), cut_y)
+            if plane is not None:
+                t, col = clip(t, col, plane[0], plane[1])
             if keep is not None:
                 sel = keep(t.mean(axis=1))
                 t, col = t[sel], col[sel]
@@ -104,7 +144,8 @@ class Scene:
                 horiz = np.array([back[0], 0, back[2]])
                 horiz /= np.linalg.norm(horiz) + 1e-9
                 keep = lambda c, h=horiz: (c - target) @ h < 0.3
-            tris, colours = self.triangles(cut_y, keep)
+            plane = (horiz, float(horiz @ target) + 0.3) if section else None
+            tris, colours = self.triangles(cut_y, plane=plane)
             marks = [m for m in self.marks if (keep is None or keep(m[0][None, :])[0]) and (cut_y is None or m[0][1] < cut_y)]
             images.append(self._draw(tris, colours, marks, target, back, dist, size, fov, ortho, bg, f"yaw {yaw} pitch {pitch}"))
         n = len(images)

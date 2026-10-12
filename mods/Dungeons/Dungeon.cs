@@ -39,6 +39,7 @@ namespace Dungeons
         public bool MechsMade;
         public float NextOwnerCheck;
         public float NextClaim;         // (Tend: an entrance nobody owns, claimed at most once a second)
+        public float NextParts;         // (Tend: making its saved parts made nothing new: not again before then)
 
         public ZNetView View => Entrance != null ? Entrance.View : null;
         /// <summary>The entrance's ZDO: its object's, or the one kept from it while this game's ZDOMan still has it (its object unloaded, or
@@ -495,17 +496,29 @@ namespace Dungeons
             Rebuild.Register();
             Strays.Register();
             Acts.Register();
+            { long timed = PerfTiming.Begin();
             Sweep.Tick();
+            PerfTiming.Add("sweep (orphans, strays)", timed); }
+            { long timed = PerfTiming.Begin();
             try { Acts.Tick(); }
             catch (Exception e) { if (Warned.Add("acts")) Plugin.Log.LogWarning("Acts waiting for an answer: " + e); }
+            PerfTiming.Add("acts", timed); }
+            { long timed = PerfTiming.Begin();
             try { DungeonMusic.Update(); }
             catch (Exception e) { if (Warned.Add("music")) Plugin.Log.LogWarning("The dungeon's music: " + e); }
+            PerfTiming.Add("music", timed); }
+            { long timed = PerfTiming.Begin();
             try { UseReach.Update(); }
             catch (Exception e) { if (Warned.Add("reach")) Plugin.Log.LogWarning("E on a lever or way out: " + e); }
+            PerfTiming.Add("E reach", timed); }
+            { long timed = PerfTiming.Begin();
             try { ThawMovedOut(); }
             catch (Exception e) { if (Warned.Add("thaw")) Plugin.Log.LogWarning("Letting held bodies go: " + e); }
+            PerfTiming.Add("held bodies (thaw)", timed); }
+            { long timed = PerfTiming.Begin();
             try { Safety.Net(); }
             catch (Exception e) { if (Warned.Add("net")) Plugin.Log.LogWarning("The dungeons' safety net: " + e); }
+            PerfTiming.Add("safety net", timed); }
             for (int i = Sites.Count - 1; i >= 0; i--)
             {
                 Site site = Sites[i];
@@ -519,15 +532,19 @@ namespace Dungeons
                 }
                 else if (site.Entrance == null) { Untrack(site); continue; }   // (destroyed without OnDestroy: a reload)
                 if (site.Zdo == null && site.Layout == null) continue;   // (a dungeon already laid out goes on from what it knows)
+                long tended = PerfTiming.Begin();
                 try { Tend(site); }
                 catch (Exception e)
                 {
                     if (Warned.Add("tend|" + site.Id)) Plugin.Log.LogWarning($"Dungeon {site.Id} ({site.PackName}): {e}");
                 }
+                PerfTiming.Add("tend, all: " + site.PackName, tended);
             }
             // (added by the map, MapWindow.cs: the rooms the player has been in, and the map window while it's open)
+            { long timed = PerfTiming.Begin();
             try { DungeonMap.Tick(); }
             catch (Exception e) { if (Warned.Add("map")) Plugin.Log.LogWarning("The dungeon map: " + e); }
+            PerfTiming.Add("map", timed); }
         }
 
         private static void Tend(Site site)
@@ -569,20 +586,31 @@ namespace Dungeons
                     try { site.Mechs = MechSet.Make(site); }
                     catch (Exception e) { Fail(site, "making its mechanisms", e); }
                 }
-                if (site.Mechs != null && !site.Mechs.Complete) site.Mechs.Grow();
+                long timed = PerfTiming.Begin();
+                if (site.Mechs != null && !site.Mechs.Complete) { site.Mechs.Grow(); PerfTiming.Add("tend: mechanisms made", timed); timed = PerfTiming.Begin(); }
                 if (site.EnterWhenBuilt && site.MechsReady) { site.EnterWhenBuilt = false; GoIn(site); }
                 site.Mechs?.Update();
+                PerfTiming.Add("tend: mechanisms (every game)", timed);
+                timed = PerfTiming.Begin();
                 if (site.IsOwner) site.Mechs?.OwnerTick();
+                PerfTiming.Add("tend: mechanisms (owner)", timed);
             }
-            if (site.IsOwner && site.Ready && site.PartsPending)
+            if (site.IsOwner && site.Ready && site.PartsPending && Time.time >= site.NextParts)
             {
-                site.PartsPending = MakeParts(site);   // (the next frame's worth, without waiting for the owner's 2 s tend)
+                // the next frame's worth, without waiting for the owner's 2 s tend; nothing new made (its rooms' zones not loaded, a part
+                // that can't be made): again in 2 s, never every frame (it goes through every object loaded here)
+                long timed = PerfTiming.Begin();
+                site.PartsPending = MakeParts(site, out bool progress);
                 site.PartsMadeFor = site.Zdo.GetString(Keys.Done) ?? "";
+                if (!progress) site.NextParts = Time.time + 2f;
+                PerfTiming.Add("tend: saved parts made", timed);
             }
             else if (site.IsOwner && Time.time >= site.NextOwnerCheck)
             {
                 site.NextOwnerCheck = Time.time + 2f;
+                long timed = PerfTiming.Begin();
                 OwnerTend(site);
+                PerfTiming.Add("tend: owner's jobs (every 2 s)", timed);
             }
         }
 
@@ -595,11 +623,13 @@ namespace Dungeons
             foreach (Site site in Sites)
             {
                 if (site.Mechs == null || !site.Ready) continue;
+                long timed = PerfTiming.Begin();
                 try { site.Mechs.FixedUpdate(characters); }
                 catch (Exception e)
                 {
                     if (Warned.Add("mechs|" + site.Id)) Plugin.Log.LogWarning($"Dungeon {site.Id} ({site.PackName}): its mechanisms: {e}");
                 }
+                PerfTiming.Add("physics step: moving parts, carrying: " + site.PackName, timed);
             }
         }
 
@@ -981,7 +1011,7 @@ namespace Dungeons
             string state = zdo.GetString(Keys.Done) ?? "";
             if (site.Ready && site.PartsMadeFor != state && site.RoomsDone < site.Layout.Rooms.Count)
             {
-                site.PartsPending = MakeParts(site);
+                site.PartsPending = MakeParts(site, out _);
                 site.PartsMadeFor = zdo.GetString(Keys.Done) ?? "";
             }
         }
@@ -1023,8 +1053,9 @@ namespace Dungeons
 
         /// <summary>The builder makes the rooms' saved parts, a frame's worth per call (true: more to do, called again next frame); every
         /// object it made in that call is marked as this dungeon's (Keys.PartOf), so a reset can find them again.</summary>
-        private static bool MakeParts(Site site)
+        private static bool MakeParts(Site site, out bool progress)
         {
+            progress = false;
             Dictionary<ZDO, ZNetView> instances = ZNetScene.instance != null ? Instances(ZNetScene.instance) : null;
             if (instances == null || !site.Box(out Bounds box)) return false;
             var before = new HashSet<ZDO>(instances.Keys);
@@ -1042,6 +1073,7 @@ namespace Dungeons
                 marked++;
             }
             if (marked > 0) Plugin.Log.LogInfo($"Dungeon {site.Id}: {marked} saved parts made");
+            progress = marked > 0 || instances.Count != before.Count;
             return more;
         }
 

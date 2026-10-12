@@ -1,0 +1,140 @@
+# The Tidecaller's Drowned Vault: a sea-temple that sank long ago and drained. Pale sea-worn stone, wreck timber rammed through it and
+# banded where the tide stood, kelp, stone bells, sea-green fire. The tide is the puzzle: drowned hulls float low or high in the locks.
+# A fight, a hub with a key wing and its gate, the anchor gallery, the Tide Locks, the Bellkeeper (mini boss), a sinking-hull crossing,
+# a held sluice, Jarl Hafgrim's Tide Throne (the final boss) and his hoard.
+name = "drowned"
+title = "$dungeons_pack_drowned"
+theme = "tidevault"
+seed = 1
+difficulty = "normal"
+biome = "any"
+environment = "Caves"
+entrance_look = "drowned"
+rooms = [16, 26]
+max_size = [420, 160, 420]
+min_uses = 6
+music = "forestcrypt"
+parkour = false
+variants = 3
+
+plan = [
+  {id = "start", room = "entrance"},
+  {id = "fight1", job = "fight"},
+  {id = "hub1", job = "hub"},
+  {id = "lever1", job = "lever", from = "hub1"},                      # a side wing: the key to the gate
+  {id = "gate1", job = "gate", opens_with = "lever1", from = "hub1"},
+  {id = "anchors", room = "anchors"},                                 # the anchor gallery: swinging anchors
+  {id = "locks", room = "tidelocks"},                                 # the Tide Locks: the tide puzzle (5 pulls)
+  {id = "plate1", job = "plate", variants = 2},
+  {id = "bell", room = "bellshaft"},                                  # the Bellkeeper (mini boss)
+  {id = "timing1", job = "timing"},
+  {id = "throne", room = "throne"},                                   # Jarl Hafgrim, the Drowned (final boss)
+  {id = "vault", room = "vault"},
+]
+
+signatures = ["wreckhall", "kelpway", "sunkenshrine", "shipshold", "cap_seal", "cap_silt", "lock_seal", "grotto", "shortcut_near", "shortcut_far", "throne_cap"]
+
+[fill]
+breather = 5
+pillarhall = 3
+corridor = 2
+stairhall = 2
+nook = 4
+twolevers = 1
+ambush = 1
+timeddoor = 1
+
+[shortcut]
+near = "shortcut_near"
+far = "shortcut_far"
+far_step = "bell"
+
+# Enemies: drowned dead and things of the shore, fitted to the land (a creature above the land's tier is never used).
+[creatures.Meadows]
+melee = ["Neck", "Skeleton_Meadows_noarcher", "Greyling"]
+ranged = ["Skeleton_Meadows"]
+elite = ["Skeleton_Meadows_noarcher"]
+
+[creatures.BlackForest]
+melee = ["Skeleton_NoArcher", "Skeleton_Poison", "Neck"]
+ranged = ["Skeleton"]
+flying = ["Ghost"]
+elite = ["Skeleton_Poison"]
+
+[creatures.Ocean]
+melee = ["Skeleton_NoArcher", "Skeleton_Poison", "Neck"]
+ranged = ["Skeleton"]
+flying = ["Ghost"]
+elite = ["Skeleton_Poison"]
+
+[creatures.Swamp]
+melee = ["Draugr", "Draugr_Elite", "Skeleton_Swamps_noarcher"]
+ranged = ["Draugr_Ranged", "Skeleton_Swamps"]
+flying = ["Wraith"]
+elite = ["Draugr_Elite"]
+
+[creatures.Mountain]
+melee = ["Skeleton_Mountains_noarcher", "Draugr_Elite", "Draugr"]
+ranged = ["Skeleton_Mountains", "Draugr_Ranged"]
+flying = ["Bat"]
+elite = ["Draugr_Elite"]
+
+[creatures.Plains]
+melee = ["Goblin", "GoblinBrute"]
+ranged = ["GoblinArcher", "GoblinShaman"]
+flying = ["Deathsquito"]
+elite = ["GoblinBrute"]
+
+[creatures.Mistlands]
+melee = ["Seeker", "Tick", "SeekerBrute"]
+flying = ["Seeker"]
+elite = ["SeekerBrute"]
+
+[creatures.AshLands]
+melee = ["Charred_Melee", "Charred_Twitcher"]
+ranged = ["Charred_Archer", "Charred_Mage"]
+flying = ["Volture"]
+elite = ["Charred_Melee"]
+
+[creatures.DeepNorth]
+melee = ["Skeleton_DeepNorth", "GoblinDeepNorth", "Greydwarf_Frozen"]
+ranged = ["Greydwarf_Shaman_Frozen"]
+flying = ["Bat"]
+elite = ["GoblinDeepNorth"]
+
+[creatures.default]
+melee = ["Skeleton_NoArcher", "Skeleton_Poison"]
+ranged = ["Skeleton"]
+flying = ["Ghost"]
+elite = ["Skeleton_Poison"]
+
+# Loot: what the sea gave up, fitted to the land (pearls, sea chests' coin, iron and silver from wrecks).
+[loot.Meadows]
+common = ["Coins:5-15", "FishRaw:1-3", "NeckTail:1-3", "Feathers:2-6", "Amber"]
+rare = ["Coins:15-30", "Amber:1-2", "DeerHide:2-4", "Flint:4-8"]
+vault = ["Coins:60-100", "Amber:2-4", "AmberPearl:1-2", "Ruby:1-2", "ArrowFlint:20-40", "DeerHide:4-6"]
+boss = ["Coins:100-150", "AmberPearl:2-3", "Ruby:2-3", "ArrowFlint:40-60"]
+
+[loot.BlackForest]
+common = ["Coins:10-20", "Amber", "Resin:3-6", "BoneFragments:3-6", "FishRaw:2-4"]
+rare = ["Coins:20-40", "AmberPearl", "Ruby", "SurtlingCore", "Copper:2-3", "Tin:2-3"]
+vault = ["Coins:80-140", "Ruby:2-4", "AmberPearl:2-4", "SurtlingCore:3-5", "Bronze:4-8", "TrollHide:2-3", "ArrowBronze:20-30"]
+boss = ["Coins:150-220", "Ruby:3-5", "AmberPearl:3-4", "Bronze:8-12"]
+
+[loot.Ocean]
+common = ["Coins:10-20", "Amber", "FishRaw:2-4", "BoneFragments:3-6"]
+rare = ["Coins:20-40", "AmberPearl", "Ruby", "Copper:2-3"]
+vault = ["Coins:80-140", "Ruby:2-4", "AmberPearl:2-4", "Bronze:4-8"]
+boss = ["Coins:150-220", "Ruby:3-5", "AmberPearl:3-4"]
+
+[loot.Swamp]
+common = ["Coins:15-30", "Amber", "AmberPearl", "WitheredBone", "Chain"]
+rare = ["Coins:30-60", "IronScrap:3-6", "Chain", "Ruby", "AmberPearl:1-2"]
+vault = ["Coins:120-200", "Iron:5-8", "IronScrap:8-12", "Chain:2-3", "Ruby:3-5", "AmberPearl:3-5", "SilverNecklace:1-2"]
+boss = ["Coins:200-300", "Iron:8-12", "Chain:3-4", "Ruby:4-6", "SilverNecklace:1-2"]
+
+[loot.Mountain]
+common = ["Coins:20-40", "Obsidian:3-6", "Chain", "Crystal:1-2", "Ruby"]
+rare = ["Coins:40-80", "SilverOre:3-6", "Crystal:2-4", "AmberPearl:1-2", "SilverNecklace"]
+vault = ["Coins:160-260", "Silver:6-10", "Crystal:4-8", "Ruby:4-6", "AmberPearl:3-5", "SilverNecklace:1-2", "Chain:2-4"]
+boss = ["Coins:260-380", "Silver:10-14", "AmberPearl:4-6", "SilverNecklace:2-3"]

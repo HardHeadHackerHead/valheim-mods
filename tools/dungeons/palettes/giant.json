@@ -18,6 +18,7 @@
   "by_role": "{role: [default, variants...]}: the roles below without their notes",
   "sets": "the dressing sets it suits (giant: ossuary, ruin, forge, archive, engine, armoury; Dvergr: store, workshop, tavern, barracks)",
   "max_span": "a panel's longest side (m) before its stretched texture smears",
+  "game_dungeon": "the game's own dungeon themes whose rooms use it: a player knows it from there (a new kind should lean on pieces with none, or mix them so no room reads as that dungeon)",
   "roles": "the same pieces by a theme recipe's roles (first = default, others = variants), with how each role's pieces are placed",
   "render": "a picture in the mesh cache (C:\\Users\\DHack\\AppData\\Local\\Temp\\quaddungeon_meshes); the theme's contact sheet is palettes/giant_sheet.png there"
  },
@@ -32,7 +33,7 @@
     3
    ],
    "tier": 7,
-   "notes": "as scenery its Destructible is stripped: it gives nothing",
+   "notes": "recognisable: a part of the game's own AshlandRuins and FortressRuins dungeons; as scenery its Destructible is stripped: it gives nothing",
    "exists": true,
    "size": [
     10.0,
@@ -51,6 +52,10 @@
    ],
    "origin": "centre",
    "hollow": false,
+   "game_dungeon": [
+    "AshlandRuins",
+    "FortressRuins"
+   ],
    "max_span": 10.0,
    "kinds": [
     "Destructible",
@@ -70,6 +75,7 @@
     "Destructible"
    ],
    "physics": false,
+   "usable": [],
    "height": 2.0,
    "upright": "flat",
    "saved_only": false,
@@ -83,8 +89,7 @@
     ],
     "top": 0.0,
     "top_skilled": 2.2
-   },
-   "render": "palettes/Ashlands_floor_large.png"
+   }
   },
   {
    "prefab": "blackmarble_floor_large",
@@ -115,6 +120,7 @@
    ],
    "origin": "centre",
    "hollow": false,
+   "game_dungeon": [],
    "max_span": 10.0,
    "kinds": [
     "Piece",
@@ -133,6 +139,7 @@
    "networked": true,
    "gives": [],
    "physics": false,
+   "usable": [],
    "height": 2.0,
    "upright": "flat",
    "saved_only": false,
@@ -146,8 +153,7 @@
     ],
     "top": 0.0,
     "top_skilled": 2.2
-   },
-   "render": "palettes/blackmarble_floor_large.png"
+   }
   },
   {
    "prefab": "Ashlands_Boss_Pillar",
@@ -178,6 +184,7 @@
    ],
    "origin": "foot",
    "hollow": false,
+   "game_dungeon": [],
    "kinds": [
     "DropOnDestroyed",
     "WearNTear",
@@ -197,6 +204,7 @@
     "DropOnDestroyed"
    ],
    "physics": false,
+   "usable": [],
    "height": 8.03,
    "upright": "block",
    "saved_only": false,
@@ -214,8 +222,7 @@
     ],
     "top": 0.0,
     "top_skilled": 0.0
-   },
-   "render": "palettes/Ashlands_Boss_Pillar.png"
+   }
   },
   {
    "prefab": "Ashlands_Pillar4",
@@ -227,7 +234,7 @@
     3
    ],
    "tier": 7,
-   "notes": "as scenery its DropOnDestroyed is stripped: it gives nothing",
+   "notes": "recognisable: a part of the game's own AshlandRuins and FortressRuins dungeons; as scenery its DropOnDestroyed is stripped: it gives nothing",
    "exists": true,
    "size": [
     2.28,
@@ -246,6 +253,10 @@
    ],
    "origin": "foot",
    "hollow": false,
+   "game_dungeon": [
+    "AshlandRuins",
+    "FortressRuins"
+   ],
    "kinds": [
     "DropOnDestroyed",
     "WearNTear",
@@ -265,6 +276,7 @@
     "DropOnDestroyed"
    ],
    "physics": false,
+   "usable": [],
    "height": 4.01,
    "upright": "block",
    "saved_only": false,
@@ -278,8 +290,7 @@
     ],
     "top": 0.0,
     "top_skilled": 0.0
-   },
-   "render": "palettes/Ashlands_Pillar4.png"
+   }
   },
   {
    "prefab": "blackmarble_column_3",
@@ -310,6 +321,7 @@
    ],
    "origin": "centre",
    "hollow": false,
+   "game_dungeon": [],
    "kinds": [
     "Piece",
     "WearNTear",
@@ -327,6 +339,7 @@
    "networked": true,
    "gives": [],
    "physics": false,
+   "usable": [],
    "height": 8.0,
    "upright": "upright",
    "saved_only": false,
@@ -340,8 +353,7 @@
     ],
     "top": 0.0,
     "top_skilled": 0.0
-   },
-   "render": "palettes/blackmarble_column_3.png"
+   }
   },
   {
    "prefab": "Piece_flametal_pillar",
@@ -372,6 +384,7 @@
    ],
    "origin": "foot",
    "hollow": false,
+   "game_dungeon": [],
    "kinds": [
     "Piece",
     "WearNTear",
@@ -389,6 +402,7 @@
    "networked": true,
    "gives": [],
    "physics": false,
+   "usable": [],
    "height": 2.01,
    "upright": "upright",
    "saved_only": false,
@@ -402,8 +416,7 @@
     ],
     "top": 0.0,
     "top_skilled": 2.0
-   },
-   "render": "palettes/Piece_flametal_pillar.png"
+   }
   },
   {
    "prefab": "Morkhalla_Block",
@@ -415,7 +428,7 @@
     3
    ],
    "tier": 8,
-   "notes": "",
+   "notes": "recognisable: a part of the game's own MorkHalla dungeons",
    "exists": true,
    "size": [
     4.0,
@@ -434,6 +447,9 @@
    ],
    "origin": "foot",
    "hollow": false,
+   "game_dungeon": [
+    "MorkHalla"
+   ],
    "kinds": [
     "ZNetView"
    ],
@@ -449,6 +465,7 @@
    "networked": true,
    "gives": [],
    "physics": false,
+   "usable": [],
    "height": 4.0,
    "upright": "block",
    "saved_only": false,
@@ -462,8 +479,7 @@
     ],
     "top": 0.0,
     "top_skilled": 0.0
-   },
-   "render": "palettes/Morkhalla_Block.png"
+   }
   },
   {
    "prefab": "Ashlands_WallBlock",
@@ -475,7 +491,7 @@
     3
    ],
    "tier": 7,
-   "notes": "as scenery its Destructible is stripped: it gives nothing",
+   "notes": "recognisable: a part of the game's own AshlandRuins and FortressRuins dungeons; as scenery its Destructible is stripped: it gives nothing",
    "exists": true,
    "size": [
     1.0,
@@ -494,6 +510,10 @@
    ],
    "origin": "centre",
    "hollow": false,
+   "game_dungeon": [
+    "AshlandRuins",
+    "FortressRuins"
+   ],
    "kinds": [
     "Destructible",
     "ZNetView"
@@ -512,6 +532,7 @@
     "Destructible"
    ],
    "physics": false,
+   "usable": [],
    "height": 2.0,
    "upright": "block",
    "saved_only": false,
@@ -525,8 +546,7 @@
     ],
     "top": 0.0,
     "top_skilled": 2.2
-   },
-   "render": "palettes/Ashlands_WallBlock.png"
+   }
   },
   {
    "prefab": "Ashlands_Fortress_Floor",
@@ -557,6 +577,7 @@
    ],
    "origin": "centre",
    "hollow": false,
+   "game_dungeon": [],
    "kinds": [
     "DropOnDestroyed",
     "WearNTear",
@@ -576,6 +597,7 @@
     "DropOnDestroyed"
    ],
    "physics": false,
+   "usable": [],
    "height": 1.0,
    "upright": "block",
    "saved_only": false,
@@ -589,8 +611,7 @@
     ],
     "top": 1.2,
     "top_skilled": 1.2
-   },
-   "render": "palettes/Ashlands_Fortress_Floor.png"
+   }
   },
   {
    "prefab": "Morkhalla_Floor_4x4",
@@ -602,7 +623,7 @@
     3
    ],
    "tier": 8,
-   "notes": "",
+   "notes": "recognisable: a part of the game's own MorkHalla dungeons",
    "exists": true,
    "size": [
     4.0,
@@ -621,6 +642,9 @@
    ],
    "origin": "centre",
    "hollow": false,
+   "game_dungeon": [
+    "MorkHalla"
+   ],
    "kinds": [
     "ZNetView"
    ],
@@ -636,6 +660,7 @@
    "networked": true,
    "gives": [],
    "physics": false,
+   "usable": [],
    "height": 1.0,
    "upright": "flat",
    "saved_only": false,
@@ -649,8 +674,7 @@
     ],
     "top": 1.0,
     "top_skilled": 1.0
-   },
-   "render": "palettes/Morkhalla_Floor_4x4.png"
+   }
   },
   {
    "prefab": "piece_grausten_stonestair",
@@ -681,6 +705,7 @@
    ],
    "origin": "foot",
    "hollow": false,
+   "game_dungeon": [],
    "kinds": [
     "Piece",
     "WearNTear",
@@ -698,6 +723,7 @@
    "networked": true,
    "gives": [],
    "physics": false,
+   "usable": [],
    "height": 1.0,
    "upright": "block",
    "saved_only": false,
@@ -711,8 +737,7 @@
     ],
     "top": 1.2,
     "top_skilled": 1.2
-   },
-   "render": "palettes/piece_grausten_stonestair.png"
+   }
   },
   {
    "prefab": "Morkhalla_Stairs_giant_short",
@@ -724,7 +749,7 @@
     1
    ],
    "tier": 8,
-   "notes": "",
+   "notes": "recognisable: a part of the game's own MorkHalla dungeons",
    "exists": true,
    "size": [
     4.0,
@@ -743,6 +768,9 @@
    ],
    "origin": "inside",
    "hollow": false,
+   "game_dungeon": [
+    "MorkHalla"
+   ],
    "kinds": [
     "ZNetView"
    ],
@@ -759,6 +787,7 @@
    "networked": true,
    "gives": [],
    "physics": false,
+   "usable": [],
    "height": 3.5,
    "upright": "block",
    "saved_only": false,
@@ -776,8 +805,7 @@
     ],
     "top": 0.0,
     "top_skilled": 3.6
-   },
-   "render": "palettes/Morkhalla_Stairs_giant_short.png"
+   }
   },
   {
    "prefab": "Ashlands_Arch1",
@@ -808,6 +836,7 @@
    ],
    "origin": "foot",
    "hollow": false,
+   "game_dungeon": [],
    "kinds": [
     "Piece",
     "WearNTear",
@@ -825,6 +854,7 @@
    "networked": true,
    "gives": [],
    "physics": false,
+   "usable": [],
    "height": 3.98,
    "upright": "block",
    "saved_only": false,
@@ -838,8 +868,7 @@
     ],
     "top": 0.0,
     "top_skilled": 0.0
-   },
-   "render": "palettes/Ashlands_Arch1.png"
+   }
   },
   {
    "prefab": "Ashlands_Ruins_twist_ArchBig",
@@ -851,7 +880,7 @@
     2
    ],
    "tier": 7,
-   "notes": "as scenery its DropOnDestroyed is stripped: it gives nothing",
+   "notes": "recognisable: a part of the game's own AshlandRuins and FortressRuins dungeons; as scenery its DropOnDestroyed is stripped: it gives nothing",
    "exists": true,
    "size": [
     4.08,
@@ -870,6 +899,10 @@
    ],
    "origin": "centre",
    "hollow": false,
+   "game_dungeon": [
+    "AshlandRuins",
+    "FortressRuins"
+   ],
    "kinds": [
     "DropOnDestroyed",
     "WearNTear",
@@ -889,6 +922,7 @@
     "DropOnDestroyed"
    ],
    "physics": false,
+   "usable": [],
    "height": 4.08,
    "upright": "upright",
    "saved_only": false,
@@ -910,8 +944,7 @@
     ],
     "top": 4.2,
     "top_skilled": 4.2
-   },
-   "render": "palettes/Ashlands_Ruins_twist_ArchBig.png"
+   }
   },
   {
    "prefab": "blackmarble_head_big01",
@@ -942,6 +975,7 @@
    ],
    "origin": "centre",
    "hollow": false,
+   "game_dungeon": [],
    "kinds": [
     "Piece",
     "WearNTear",
@@ -959,6 +993,7 @@
    "networked": true,
    "gives": [],
    "physics": false,
+   "usable": [],
    "height": 2.0,
    "upright": "block",
    "saved_only": false,
@@ -984,8 +1019,7 @@
     ],
     "top": 2.0,
     "top_skilled": 2.0
-   },
-   "render": "palettes/blackmarble_head_big01.png"
+   }
   },
   {
    "prefab": "CharredCogwheel",
@@ -1016,6 +1050,7 @@
    ],
    "origin": "foot",
    "hollow": false,
+   "game_dungeon": [],
    "sets": [
     "engine"
    ],
@@ -1037,6 +1072,7 @@
     "ItemDrop"
    ],
    "physics": false,
+   "usable": [],
    "height": 0.4,
    "upright": "flat",
    "saved_only": false,
@@ -1050,8 +1086,7 @@
     ],
     "top": 0.4,
     "top_skilled": 0.4
-   },
-   "render": "palettes/CharredCogwheel.png"
+   }
   },
   {
    "prefab": "Morkhalla_MetalBar",
@@ -1063,7 +1098,7 @@
     2
    ],
    "tier": 8,
-   "notes": "climbable: a player can stand 1.0 m above its foot (at scale 1; 1.0 m with Jump skill 100), so it's a stepping stone to a level up to about 2.6 m above its foot (4.1 m with Jump 100)",
+   "notes": "recognisable: a part of the game's own MorkHalla dungeons; climbable: a player can stand 1.0 m above its foot (at scale 1; 1.0 m with Jump skill 100), so it's a stepping stone to a level up to about 2.6 m above its foot (4.1 m with Jump 100)",
    "exists": true,
    "size": [
     20.0,
@@ -1082,6 +1117,9 @@
    ],
    "origin": "centre",
    "hollow": false,
+   "game_dungeon": [
+    "MorkHalla"
+   ],
    "sets": [
     "engine"
    ],
@@ -1100,6 +1138,7 @@
    "networked": true,
    "gives": [],
    "physics": false,
+   "usable": [],
    "height": 1.0,
    "upright": "flat",
    "saved_only": false,
@@ -1113,8 +1152,7 @@
     ],
     "top": 1.0,
     "top_skilled": 1.0
-   },
-   "render": "palettes/Morkhalla_MetalBar.png"
+   }
   },
   {
    "prefab": "Piece_flametal_beam",
@@ -1145,6 +1183,7 @@
    ],
    "origin": "centre",
    "hollow": false,
+   "game_dungeon": [],
    "sets": [
     "engine"
    ],
@@ -1165,6 +1204,7 @@
    "networked": true,
    "gives": [],
    "physics": false,
+   "usable": [],
    "height": 0.56,
    "upright": "flat",
    "saved_only": false,
@@ -1178,8 +1218,7 @@
     ],
     "top": 0.6,
     "top_skilled": 0.6
-   },
-   "render": "palettes/Piece_flametal_beam.png"
+   }
   },
   {
    "prefab": "iron_grate",
@@ -1191,7 +1230,7 @@
     3
    ],
    "tier": 3,
-   "notes": "thin (0.11 m): a single face may not show from behind (one-sided): check its render from both sides",
+   "notes": "usable in the game (Door): as scenery the Builder strips it, so it only looks the part; thin (0.11 m): a single face may not show from behind (one-sided): check its render from both sides",
    "exists": true,
    "size": [
     2.01,
@@ -1210,6 +1249,7 @@
    ],
    "origin": "inside",
    "hollow": false,
+   "game_dungeon": [],
    "kinds": [
     "Door",
     "Piece",
@@ -1228,6 +1268,9 @@
    "networked": true,
    "gives": [],
    "physics": false,
+   "usable": [
+    "Door"
+   ],
    "height": 3.0,
    "upright": "upright",
    "saved_only": false,
@@ -1245,8 +1288,7 @@
     ],
     "top": 0.0,
     "top_skilled": 3.0
-   },
-   "render": "palettes/iron_grate.png"
+   }
   },
   {
    "prefab": "Ashlands_Fortress_Gate_Door",
@@ -1277,6 +1319,7 @@
    ],
    "origin": "foot",
    "hollow": false,
+   "game_dungeon": [],
    "kinds": [
     "WearNTear",
     "ZNetView"
@@ -1293,6 +1336,7 @@
    "networked": true,
    "gives": [],
    "physics": false,
+   "usable": [],
    "height": 5.63,
    "upright": "upright",
    "saved_only": false,
@@ -1322,8 +1366,7 @@
     ],
     "top": 0.4,
     "top_skilled": 5.6
-   },
-   "render": "palettes/Ashlands_Fortress_Gate_Door.png"
+   }
   },
   {
    "prefab": "Morkhalla_WallChain1",
@@ -1335,7 +1378,7 @@
     3
    ],
    "tier": 8,
-   "notes": "",
+   "notes": "recognisable: a part of the game's own MorkHalla dungeons",
    "exists": true,
    "size": [
     1.0,
@@ -1354,6 +1397,9 @@
    ],
    "origin": "inside",
    "hollow": false,
+   "game_dungeon": [
+    "MorkHalla"
+   ],
    "sets": [
     "engine",
     "ossuary"
@@ -1373,6 +1419,7 @@
    "networked": true,
    "gives": [],
    "physics": false,
+   "usable": [],
    "height": 4.44,
    "upright": "upright",
    "saved_only": false,
@@ -1390,8 +1437,7 @@
     ],
     "top": 0.0,
     "top_skilled": 0.0
-   },
-   "render": "palettes/Morkhalla_WallChain1.png"
+   }
   },
   {
    "prefab": "Morkhalla_Chain",
@@ -1403,7 +1449,7 @@
     2
    ],
    "tier": 8,
-   "notes": "",
+   "notes": "recognisable: a part of the game's own MorkHalla dungeons",
    "exists": true,
    "size": [
     20.0,
@@ -1422,6 +1468,9 @@
    ],
    "origin": "inside",
    "hollow": false,
+   "game_dungeon": [
+    "MorkHalla"
+   ],
    "sets": [
     "engine"
    ],
@@ -1440,6 +1489,7 @@
    "networked": true,
    "gives": [],
    "physics": false,
+   "usable": [],
    "height": 7.4,
    "upright": "upright",
    "saved_only": false,
@@ -1461,8 +1511,7 @@
     ],
     "top": 0.0,
     "top_skilled": 0.0
-   },
-   "render": "palettes/Morkhalla_Chain.png"
+   }
   },
   {
    "prefab": "Morkhalla_giant_railing",
@@ -1474,7 +1523,7 @@
     2
    ],
    "tier": 8,
-   "notes": "",
+   "notes": "recognisable: a part of the game's own MorkHalla dungeons",
    "exists": true,
    "size": [
     1.0,
@@ -1493,6 +1542,9 @@
    ],
    "origin": "inside",
    "hollow": false,
+   "game_dungeon": [
+    "MorkHalla"
+   ],
    "kinds": [
     "ZNetView"
    ],
@@ -1508,6 +1560,7 @@
    "networked": true,
    "gives": [],
    "physics": false,
+   "usable": [],
    "height": 2.5,
    "upright": "upright",
    "saved_only": false,
@@ -1521,8 +1574,7 @@
     ],
     "top": 0.0,
     "top_skilled": 2.6
-   },
-   "render": "palettes/Morkhalla_giant_railing.png"
+   }
   },
   {
    "prefab": "Morkhalla_giant_railing_corner",
@@ -1534,7 +1586,7 @@
     2
    ],
    "tier": 8,
-   "notes": "",
+   "notes": "recognisable: a part of the game's own MorkHalla dungeons",
    "exists": true,
    "size": [
     1.6,
@@ -1553,6 +1605,9 @@
    ],
    "origin": "inside",
    "hollow": false,
+   "game_dungeon": [
+    "MorkHalla"
+   ],
    "kinds": [
     "ZNetView"
    ],
@@ -1568,6 +1623,7 @@
    "networked": true,
    "gives": [],
    "physics": false,
+   "usable": [],
    "height": 2.5,
    "upright": "block",
    "saved_only": false,
@@ -1581,8 +1637,7 @@
     ],
     "top": 0.0,
     "top_skilled": 2.6
-   },
-   "render": "palettes/Morkhalla_giant_railing_corner.png"
+   }
   },
   {
    "prefab": "Morkhalla_giant_railing_torch",
@@ -1594,7 +1649,7 @@
     3
    ],
    "tier": 8,
-   "notes": "its light range, fade distance and fire grow with its scale (BuildScale.cs); climbable: a player can stand 1.4 m above its foot (at scale 1; 1.4 m with Jump skill 100), so it's a stepping stone to a level up to about 3.0 m above its foot (4.5 m with Jump 100)",
+   "notes": "recognisable: a part of the game's own MorkHalla dungeons; its light range, fade distance and fire grow with its scale (BuildScale.cs); climbable: a player can stand 1.4 m above its foot (at scale 1; 1.4 m with Jump skill 100), so it's a stepping stone to a level up to about 3.0 m above its foot (4.5 m with Jump 100)",
    "exists": true,
    "size": [
     1.0,
@@ -1613,6 +1668,9 @@
    ],
    "origin": "inside",
    "hollow": false,
+   "game_dungeon": [
+    "MorkHalla"
+   ],
    "kinds": [
     "EffectArea",
     "LightLod",
@@ -1638,6 +1696,7 @@
    "networked": true,
    "gives": [],
    "physics": false,
+   "usable": [],
    "height": 1.5,
    "upright": "block",
    "saved_only": false,
@@ -1651,8 +1710,7 @@
     ],
     "top": 1.4,
     "top_skilled": 1.4
-   },
-   "render": "palettes/Morkhalla_giant_railing_torch.png"
+   }
   },
   {
    "prefab": "MountainKit_brazier_blue",
@@ -1664,7 +1722,7 @@
     3
    ],
    "tier": 4,
-   "notes": "its light range, fade distance and fire grow with its scale (BuildScale.cs); as scenery its Destructible, DropOnDestroyed is stripped: it gives nothing; climbable: a player can stand 0.8 m above its foot (at scale 1; 0.8 m with Jump skill 100), so it's a stepping stone to a level up to about 2.4 m above its foot (3.9 m with Jump 100)",
+   "notes": "recognisable: a part of the game's own Cave and CaveHildir dungeons; its light range, fade distance and fire grow with its scale (BuildScale.cs); as scenery its Destructible, DropOnDestroyed is stripped: it gives nothing; climbable: a player can stand 0.8 m above its foot (at scale 1; 0.8 m with Jump skill 100), so it's a stepping stone to a level up to about 2.4 m above its foot (3.9 m with Jump 100)",
    "exists": true,
    "size": [
     1.0,
@@ -1683,6 +1741,10 @@
    ],
    "origin": "top",
    "hollow": false,
+   "game_dungeon": [
+    "Cave",
+    "CaveHildir"
+   ],
    "kinds": [
     "Destructible",
     "DropOnDestroyed",
@@ -1714,6 +1776,7 @@
     "DropOnDestroyed"
    ],
    "physics": false,
+   "usable": [],
    "height": 0.99,
    "upright": "block",
    "saved_only": false,
@@ -1727,8 +1790,7 @@
     ],
     "top": 0.8,
     "top_skilled": 0.8
-   },
-   "render": "palettes/MountainKit_brazier_blue.png"
+   }
   },
   {
    "prefab": "dverger_demister",
@@ -1740,7 +1802,7 @@
     2
    ],
    "tier": 6,
-   "notes": "its light range, fade distance and fire grow with its scale (BuildScale.cs); climbable: a player can stand 0.8 m above its foot (at scale 1; 0.8 m with Jump skill 100), so it's a stepping stone to a level up to about 2.4 m above its foot (3.9 m with Jump 100); TROUBLE: floated in 35 places in Shifting Halls: its origin is at its top (the mesh hangs below it), so stood at a point it's in the air. Hang it on a chain from the first part above it (giant_kit.wisp).",
+   "notes": "recognisable: a part of the game's own DvergerBoss dungeons; its light range, fade distance and fire grow with its scale (BuildScale.cs); climbable: a player can stand 0.8 m above its foot (at scale 1; 0.8 m with Jump skill 100), so it's a stepping stone to a level up to about 2.4 m above its foot (3.9 m with Jump 100); TROUBLE: floated in 35 places in Shifting Halls: its origin is at its top (the mesh hangs below it), so stood at a point it's in the air. Hang it on a chain from the first part above it (giant_kit.wisp).",
    "exists": true,
    "size": [
     0.93,
@@ -1759,6 +1821,9 @@
    ],
    "origin": "top",
    "hollow": false,
+   "game_dungeon": [
+    "DvergerBoss"
+   ],
    "kinds": [
     "LightLod",
     "WearNTear",
@@ -1784,6 +1849,7 @@
    "networked": true,
    "gives": [],
    "physics": false,
+   "usable": [],
    "height": 0.74,
    "upright": "block",
    "saved_only": false,
@@ -1797,8 +1863,7 @@
     ],
     "top": 0.8,
     "top_skilled": 0.8
-   },
-   "render": "palettes/dverger_demister.png"
+   }
   },
   {
    "prefab": "blackmarble_altar_crystal",
@@ -1810,7 +1875,7 @@
     2
    ],
    "tier": 6,
-   "notes": "its light range, fade distance and fire grow with its scale (BuildScale.cs); as scenery its Destructible is stripped: it gives nothing; climbable: a player can stand 1.8 m above its foot (at scale 1; 1.8 m with Jump skill 100), so it's a stepping stone to a level up to about 3.4 m above its foot (4.9 m with Jump 100)",
+   "notes": "recognisable: a part of the game's own DvergerTown dungeons; its light range, fade distance and fire grow with its scale (BuildScale.cs); as scenery its Destructible is stripped: it gives nothing; climbable: a player can stand 1.8 m above its foot (at scale 1; 1.8 m with Jump skill 100), so it's a stepping stone to a level up to about 3.4 m above its foot (4.9 m with Jump 100)",
    "exists": true,
    "size": [
     1.23,
@@ -1829,6 +1894,9 @@
    ],
    "origin": "centre",
    "hollow": false,
+   "game_dungeon": [
+    "DvergerTown"
+   ],
    "kinds": [
     "Destructible",
     "LightLod",
@@ -1856,6 +1924,7 @@
     "Destructible"
    ],
    "physics": false,
+   "usable": [],
    "height": 1.67,
    "upright": "block",
    "saved_only": false,
@@ -1877,8 +1946,7 @@
     ],
     "top": 1.8,
     "top_skilled": 1.8
-   },
-   "render": "palettes/blackmarble_altar_crystal.png"
+   }
   },
   {
    "prefab": "Morkhalla_firepit",
@@ -1890,7 +1958,7 @@
     2
    ],
    "tier": 8,
-   "notes": "its light range, fade distance and fire grow with its scale (BuildScale.cs); as scenery its Destructible, DropOnDestroyed is stripped: it gives nothing; climbable: a player can stand 1.2 m above its foot (at scale 1; 1.2 m with Jump skill 100), so it's a stepping stone to a level up to about 2.8 m above its foot (4.3 m with Jump 100)",
+   "notes": "recognisable: a part of the game's own MorkHalla dungeons; its light range, fade distance and fire grow with its scale (BuildScale.cs); as scenery its Destructible, DropOnDestroyed is stripped: it gives nothing; climbable: a player can stand 1.2 m above its foot (at scale 1; 1.2 m with Jump skill 100), so it's a stepping stone to a level up to about 2.8 m above its foot (4.3 m with Jump 100)",
    "exists": true,
    "size": [
     3.0,
@@ -1909,6 +1977,9 @@
    ],
    "origin": "foot",
    "hollow": false,
+   "game_dungeon": [
+    "MorkHalla"
+   ],
    "sets": [
     "forge"
    ],
@@ -1953,6 +2024,7 @@
     "DropOnDestroyed"
    ],
    "physics": false,
+   "usable": [],
    "height": 1.91,
    "upright": "block",
    "saved_only": false,
@@ -1970,8 +2042,7 @@
     ],
     "top": 1.2,
     "top_skilled": 1.2
-   },
-   "render": "palettes/Morkhalla_firepit.png"
+   }
   },
   {
    "prefab": "piece_walltorch",
@@ -2002,6 +2073,7 @@
    ],
    "origin": "inside",
    "hollow": false,
+   "game_dungeon": [],
    "kinds": [
     "EffectArea",
     "Fireplace",
@@ -2030,6 +2102,7 @@
    "networked": true,
    "gives": [],
    "physics": false,
+   "usable": [],
    "height": 0.95,
    "upright": "upright",
    "saved_only": false,
@@ -2043,8 +2116,7 @@
     ],
     "top": 1.0,
     "top_skilled": 1.0
-   },
-   "render": "palettes/piece_walltorch.png"
+   }
   },
   {
    "prefab": "giant_skull",
@@ -2075,6 +2147,7 @@
    ],
    "origin": "inside",
    "hollow": false,
+   "game_dungeon": [],
    "sets": [
     "ossuary"
    ],
@@ -2096,6 +2169,7 @@
     "Destructible"
    ],
    "physics": false,
+   "usable": [],
    "height": 11.57,
    "upright": "block",
    "saved_only": false,
@@ -2133,8 +2207,7 @@
     ],
     "top": 11.4,
     "top_skilled": 11.4
-   },
-   "render": "palettes/giant_skull.png"
+   }
   },
   {
    "prefab": "giant_ribs",
@@ -2165,6 +2238,7 @@
    ],
    "origin": "inside",
    "hollow": true,
+   "game_dungeon": [],
    "sets": [
     "ossuary"
    ],
@@ -2186,6 +2260,7 @@
     "Destructible"
    ],
    "physics": false,
+   "usable": [],
    "height": 11.7,
    "upright": "block",
    "saved_only": false,
@@ -2219,8 +2294,7 @@
     ],
     "top": 5.0,
     "top_skilled": 11.8
-   },
-   "render": "palettes/giant_ribs.png"
+   }
   },
   {
    "prefab": "giant_sword1",
@@ -2251,6 +2325,7 @@
    ],
    "origin": "inside",
    "hollow": false,
+   "game_dungeon": [],
    "sets": [
     "armoury",
     "ossuary"
@@ -2273,6 +2348,7 @@
     "Destructible"
    ],
    "physics": false,
+   "usable": [],
    "height": 19.0,
    "upright": "upright",
    "saved_only": false,
@@ -2314,8 +2390,7 @@
     ],
     "top": 0.4,
     "top_skilled": 0.4
-   },
-   "render": "palettes/giant_sword1.png"
+   }
   },
   {
    "prefab": "giant_helmet1",
@@ -2346,6 +2421,7 @@
    ],
    "origin": "inside",
    "hollow": false,
+   "game_dungeon": [],
    "sets": [
     "armoury",
     "ossuary"
@@ -2368,6 +2444,7 @@
     "Destructible"
    ],
    "physics": false,
+   "usable": [],
    "height": 9.94,
    "upright": "block",
    "saved_only": false,
@@ -2397,8 +2474,7 @@
     ],
     "top": 10.0,
     "top_skilled": 10.0
-   },
-   "render": "palettes/giant_helmet1.png"
+   }
   },
   {
    "prefab": "giant_arm",
@@ -2429,6 +2505,7 @@
    ],
    "origin": "inside",
    "hollow": false,
+   "game_dungeon": [],
    "sets": [
     "ossuary"
    ],
@@ -2450,6 +2527,7 @@
     "Destructible"
    ],
    "physics": false,
+   "usable": [],
    "height": 2.61,
    "upright": "flat",
    "saved_only": false,
@@ -2463,8 +2541,7 @@
     ],
     "top": 1.4,
     "top_skilled": 1.4
-   },
-   "render": "palettes/giant_arm.png"
+   }
   },
   {
    "prefab": "ancient_skull",
@@ -2495,6 +2572,7 @@
    ],
    "origin": "centre",
    "hollow": false,
+   "game_dungeon": [],
    "sets": [
     "ossuary"
    ],
@@ -2516,6 +2594,7 @@
     "Destructible"
    ],
    "physics": false,
+   "usable": [],
    "height": 8.13,
    "upright": "block",
    "saved_only": false,
@@ -2549,8 +2628,7 @@
     ],
     "top": 8.0,
     "top_skilled": 8.0
-   },
-   "render": "palettes/ancient_skull.png"
+   }
   },
   {
    "prefab": "Morkhalla_StatuePieceFace_big",
@@ -2562,7 +2640,7 @@
     2
    ],
    "tier": 8,
-   "notes": "climbable: a player can stand 4.4 m above its foot (at scale 1; 4.4 m with Jump skill 100), so it's a stepping stone to a level up to about 6.0 m above its foot (7.5 m with Jump 100)",
+   "notes": "recognisable: a part of the game's own MorkHalla dungeons; climbable: a player can stand 4.4 m above its foot (at scale 1; 4.4 m with Jump skill 100), so it's a stepping stone to a level up to about 6.0 m above its foot (7.5 m with Jump 100)",
    "exists": true,
    "size": [
     3.5,
@@ -2581,6 +2659,9 @@
    ],
    "origin": "off the box",
    "hollow": false,
+   "game_dungeon": [
+    "MorkHalla"
+   ],
    "sets": [
     "archive",
     "ruin"
@@ -2600,6 +2681,7 @@
    "networked": true,
    "gives": [],
    "physics": false,
+   "usable": [],
    "height": 4.3,
    "upright": "block",
    "saved_only": false,
@@ -2625,8 +2707,7 @@
     ],
     "top": 4.4,
     "top_skilled": 4.4
-   },
-   "render": "palettes/Morkhalla_StatuePieceFace_big.png"
+   }
   },
   {
    "prefab": "Morkhalla_StatueSword_hanging",
@@ -2638,7 +2719,7 @@
     2
    ],
    "tier": 8,
-   "notes": "",
+   "notes": "recognisable: a part of the game's own MorkHalla dungeons",
    "exists": true,
    "size": [
     1.53,
@@ -2657,6 +2738,9 @@
    ],
    "origin": "inside",
    "hollow": false,
+   "game_dungeon": [
+    "MorkHalla"
+   ],
    "sets": [
     "armoury",
     "archive"
@@ -2676,6 +2760,7 @@
    "networked": true,
    "gives": [],
    "physics": false,
+   "usable": [],
    "height": 8.2,
    "upright": "upright",
    "saved_only": false,
@@ -2689,8 +2774,7 @@
     ],
     "top": 0.0,
     "top_skilled": 0.0
-   },
-   "render": "palettes/Morkhalla_StatueSword_hanging.png"
+   }
   },
   {
    "prefab": "Morkhalla_Rubble1",
@@ -2702,7 +2786,7 @@
     2
    ],
    "tier": 8,
-   "notes": "as scenery its Destructible, DropOnDestroyed is stripped: it gives nothing; climbable: a player can stand 1.8 m above its foot (at scale 1; 1.8 m with Jump skill 100), so it's a stepping stone to a level up to about 3.4 m above its foot (4.9 m with Jump 100)",
+   "notes": "recognisable: a part of the game's own MorkHalla dungeons; as scenery its Destructible, DropOnDestroyed is stripped: it gives nothing; climbable: a player can stand 1.8 m above its foot (at scale 1; 1.8 m with Jump skill 100), so it's a stepping stone to a level up to about 3.4 m above its foot (4.9 m with Jump 100)",
    "exists": true,
    "size": [
     4.17,
@@ -2721,6 +2805,9 @@
    ],
    "origin": "inside",
    "hollow": false,
+   "game_dungeon": [
+    "MorkHalla"
+   ],
    "sets": [
     "ruin"
    ],
@@ -2744,6 +2831,7 @@
     "DropOnDestroyed"
    ],
    "physics": false,
+   "usable": [],
    "height": 1.77,
    "upright": "flat",
    "saved_only": false,
@@ -2757,8 +2845,7 @@
     ],
     "top": 1.8,
     "top_skilled": 1.8
-   },
-   "render": "palettes/Morkhalla_Rubble1.png"
+   }
   },
   {
    "prefab": "Morkhalla_Rubble2",
@@ -2770,7 +2857,7 @@
     2
    ],
    "tier": 8,
-   "notes": "as scenery its Destructible, DropOnDestroyed is stripped: it gives nothing; climbable: a player can stand 1.2 m above its foot (at scale 1; 1.2 m with Jump skill 100), so it's a stepping stone to a level up to about 2.8 m above its foot (4.3 m with Jump 100)",
+   "notes": "recognisable: a part of the game's own MorkHalla dungeons; as scenery its Destructible, DropOnDestroyed is stripped: it gives nothing; climbable: a player can stand 1.2 m above its foot (at scale 1; 1.2 m with Jump skill 100), so it's a stepping stone to a level up to about 2.8 m above its foot (4.3 m with Jump 100)",
    "exists": true,
    "size": [
     3.66,
@@ -2789,6 +2876,9 @@
    ],
    "origin": "inside",
    "hollow": false,
+   "game_dungeon": [
+    "MorkHalla"
+   ],
    "sets": [
     "ruin"
    ],
@@ -2812,6 +2902,7 @@
     "DropOnDestroyed"
    ],
    "physics": false,
+   "usable": [],
    "height": 1.25,
    "upright": "flat",
    "saved_only": false,
@@ -2825,8 +2916,7 @@
     ],
     "top": 1.2,
     "top_skilled": 1.2
-   },
-   "render": "palettes/Morkhalla_Rubble2.png"
+   }
   },
   {
    "prefab": "Morkhalla_Stonepile",
@@ -2857,6 +2947,7 @@
    ],
    "origin": "foot",
    "hollow": false,
+   "game_dungeon": [],
    "sets": [
     "ruin",
     "archive"
@@ -2876,6 +2967,7 @@
    "networked": true,
    "gives": [],
    "physics": false,
+   "usable": [],
    "height": 0.81,
    "upright": "flat",
    "saved_only": false,
@@ -2884,8 +2976,7 @@
     "ledges": [],
     "top": 0.0,
     "top_skilled": 0.0
-   },
-   "render": "palettes/Morkhalla_Stonepile.png"
+   }
   },
   {
    "prefab": "Morkhalla_Bench",
@@ -2897,7 +2988,7 @@
     2
    ],
    "tier": 8,
-   "notes": "as scenery its DropOnDestroyed is stripped: it gives nothing; climbable: a player can stand 1.2 m above its foot (at scale 1; 1.2 m with Jump skill 100), so it's a stepping stone to a level up to about 2.8 m above its foot (4.3 m with Jump 100)",
+   "notes": "recognisable: a part of the game's own MorkHalla dungeons; as scenery its DropOnDestroyed is stripped: it gives nothing; climbable: a player can stand 1.2 m above its foot (at scale 1; 1.2 m with Jump skill 100), so it's a stepping stone to a level up to about 2.8 m above its foot (4.3 m with Jump 100)",
    "exists": true,
    "size": [
     3.46,
@@ -2916,6 +3007,9 @@
    ],
    "origin": "foot",
    "hollow": false,
+   "game_dungeon": [
+    "MorkHalla"
+   ],
    "sets": [
     "archive"
    ],
@@ -2938,6 +3032,7 @@
     "DropOnDestroyed"
    ],
    "physics": false,
+   "usable": [],
    "height": 1.03,
    "upright": "upright",
    "saved_only": false,
@@ -2959,8 +3054,7 @@
     ],
     "top": 1.2,
     "top_skilled": 1.2
-   },
-   "render": "palettes/Morkhalla_Bench.png"
+   }
   },
   {
    "prefab": "Morkhalla_Table",
@@ -2972,7 +3066,7 @@
     2
    ],
    "tier": 8,
-   "notes": "as scenery its DropOnDestroyed is stripped: it gives nothing; climbable: a player can stand 1.6 m above its foot (at scale 1; 1.6 m with Jump skill 100), so it's a stepping stone to a level up to about 3.2 m above its foot (4.7 m with Jump 100)",
+   "notes": "recognisable: a part of the game's own MorkHalla dungeons; as scenery its DropOnDestroyed is stripped: it gives nothing; climbable: a player can stand 1.6 m above its foot (at scale 1; 1.6 m with Jump skill 100), so it's a stepping stone to a level up to about 3.2 m above its foot (4.7 m with Jump 100)",
    "exists": true,
    "size": [
     3.96,
@@ -2991,6 +3085,9 @@
    ],
    "origin": "foot",
    "hollow": false,
+   "game_dungeon": [
+    "MorkHalla"
+   ],
    "sets": [
     "archive",
     "forge"
@@ -3014,6 +3111,7 @@
     "DropOnDestroyed"
    ],
    "physics": false,
+   "usable": [],
    "height": 1.58,
    "upright": "flat",
    "saved_only": false,
@@ -3039,8 +3137,7 @@
     ],
     "top": 1.6,
     "top_skilled": 1.6
-   },
-   "render": "palettes/Morkhalla_Table.png"
+   }
   },
   {
    "prefab": "Morkhalla_WeaponStand",
@@ -3052,7 +3149,7 @@
     2
    ],
    "tier": 8,
-   "notes": "as scenery its Destructible, DropOnDestroyed is stripped: it gives nothing",
+   "notes": "recognisable: a part of the game's own MorkHalla dungeons; as scenery its Destructible, DropOnDestroyed is stripped: it gives nothing",
    "exists": true,
    "size": [
     2.91,
@@ -3071,6 +3168,9 @@
    ],
    "origin": "foot",
    "hollow": false,
+   "game_dungeon": [
+    "MorkHalla"
+   ],
    "sets": [
     "armoury"
    ],
@@ -3094,6 +3194,7 @@
     "DropOnDestroyed"
    ],
    "physics": false,
+   "usable": [],
    "height": 2.44,
    "upright": "block",
    "saved_only": false,
@@ -3107,8 +3208,7 @@
     ],
     "top": 0.0,
     "top_skilled": 2.2
-   },
-   "render": "palettes/Morkhalla_WeaponStand.png"
+   }
   },
   {
    "prefab": "Morkhalla_coal_pile_memorial",
@@ -3120,7 +3220,7 @@
     2
    ],
    "tier": 8,
-   "notes": "its light range, fade distance and fire grow with its scale (BuildScale.cs); as scenery its DropOnDestroyed is stripped: it gives nothing; climbable: a player can stand 1.2 m above its foot (at scale 1; 1.2 m with Jump skill 100), so it's a stepping stone to a level up to about 2.8 m above its foot (4.3 m with Jump 100)",
+   "notes": "recognisable: a part of the game's own MorkHalla dungeons; its light range, fade distance and fire grow with its scale (BuildScale.cs); as scenery its DropOnDestroyed is stripped: it gives nothing; climbable: a player can stand 1.2 m above its foot (at scale 1; 1.2 m with Jump skill 100), so it's a stepping stone to a level up to about 2.8 m above its foot (4.3 m with Jump 100)",
    "exists": true,
    "size": [
     1.89,
@@ -3139,6 +3239,9 @@
    ],
    "origin": "inside",
    "hollow": false,
+   "game_dungeon": [
+    "MorkHalla"
+   ],
    "sets": [
     "forge"
    ],
@@ -3177,6 +3280,7 @@
     "DropOnDestroyed"
    ],
    "physics": false,
+   "usable": [],
    "height": 1.34,
    "upright": "block",
    "saved_only": false,
@@ -3194,8 +3298,7 @@
     ],
     "top": 1.2,
     "top_skilled": 1.2
-   },
-   "render": "palettes/Morkhalla_coal_pile_memorial.png"
+   }
   },
   {
    "prefab": "MemorialStone_Large",
@@ -3226,6 +3329,7 @@
    ],
    "origin": "inside",
    "hollow": false,
+   "game_dungeon": [],
    "sets": [
     "archive"
    ],
@@ -3249,6 +3353,7 @@
     "DropOnDestroyed"
    ],
    "physics": false,
+   "usable": [],
    "height": 4.95,
    "upright": "upright",
    "saved_only": false,
@@ -3274,8 +3379,7 @@
     ],
     "top": 0.0,
     "top_skilled": 0.0
-   },
-   "render": "palettes/MemorialStone_Large.png"
+   }
   },
   {
    "prefab": "giant_helmet2",
@@ -3306,6 +3410,7 @@
    ],
    "origin": "inside",
    "hollow": false,
+   "game_dungeon": [],
    "sets": [
     "armoury",
     "ossuary"
@@ -3328,6 +3433,7 @@
     "Destructible"
    ],
    "physics": false,
+   "usable": [],
    "height": 9.77,
    "upright": "block",
    "saved_only": false,
@@ -3353,8 +3459,7 @@
     ],
     "top": 1.4,
     "top_skilled": 9.8
-   },
-   "render": "palettes/giant_helmet2.png"
+   }
   },
   {
    "prefab": "giant_brain",
@@ -3385,6 +3490,7 @@
    ],
    "origin": "off the box",
    "hollow": false,
+   "game_dungeon": [],
    "sets": [
     "ossuary"
    ],
@@ -3406,6 +3512,7 @@
     "Destructible"
    ],
    "physics": false,
+   "usable": [],
    "height": 8.61,
    "upright": "block",
    "saved_only": false,
@@ -3443,8 +3550,7 @@
     ],
     "top": 1.8,
     "top_skilled": 8.6
-   },
-   "render": "palettes/giant_brain.png"
+   }
   },
   {
    "prefab": "grausten_pile",
@@ -3475,6 +3581,7 @@
    ],
    "origin": "inside",
    "hollow": false,
+   "game_dungeon": [],
    "sets": [
     "ruin",
     "forge"
@@ -3496,6 +3603,7 @@
    "networked": true,
    "gives": [],
    "physics": false,
+   "usable": [],
    "height": 1.48,
    "upright": "block",
    "saved_only": false,
@@ -3509,8 +3617,7 @@
     ],
     "top": 1.4,
     "top_skilled": 1.4
-   },
-   "render": "palettes/grausten_pile.png"
+   }
   },
   {
    "prefab": "Morkhalla_Banner1",
@@ -3522,7 +3629,7 @@
     2
    ],
    "tier": 8,
-   "notes": "as scenery its DropOnDestroyed is stripped: it gives nothing",
+   "notes": "recognisable: a part of the game's own MorkHalla dungeons; as scenery its DropOnDestroyed is stripped: it gives nothing",
    "exists": true,
    "size": [
     3.0,
@@ -3541,6 +3648,9 @@
    ],
    "origin": "inside",
    "hollow": false,
+   "game_dungeon": [
+    "MorkHalla"
+   ],
    "sets": [
     "archive",
     "armoury"
@@ -3564,6 +3674,7 @@
     "DropOnDestroyed"
    ],
    "physics": false,
+   "usable": [],
    "height": 6.37,
    "upright": "upright",
    "saved_only": false,
@@ -3577,8 +3688,7 @@
     ],
     "top": 0.0,
     "top_skilled": 0.0
-   },
-   "render": "palettes/Morkhalla_Banner1.png"
+   }
   }
  ],
  "roles": {

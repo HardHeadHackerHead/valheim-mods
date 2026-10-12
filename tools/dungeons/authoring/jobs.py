@@ -145,6 +145,21 @@ def spread_points(c, n, level=0, way_in=None, gap=2.5, keep=None, on_ways=False)
     return out
 
 
+def add_spare(c, id, level=None):
+    """A spare doorway on a side none of the room's doorways use yet (the floor's level first): a second way on for the layout when
+    the first runs into rooms already placed; unused, it gets an end cap like any other. True if one fits."""
+    sh = c.shell
+    used = {d.k for d in sh.doors.values()}
+    slots = [s for s in sh.slots() if s[0] not in used and (level is None or s[2] == level)]
+    if not slots:
+        return False
+    slots.sort(key=lambda s: (s[2], abs(s[1])))
+    k, lat, lv = slots[0] if c.vary.flag("spare middle", 0.5) else c.rng.choice(slots)
+    sh.add_door(id, k, lat, lv)
+    c.info["params"].setdefault("doors", []).append([k, lat, lv])
+    return True
+
+
 def gate_on(c, id, door, start, kind="gate"):
     sh, t = c.shell, c.theme
     d = sh.doors[door]
@@ -173,12 +188,18 @@ class Fight(Job):
 
     def doors(self, c):
         # in on the floor (the waves come for it); on a balcony the way out may be up on the gallery
-        pick_doors(c, self.door_ids, c.vary.choice("door pattern", ("through", "turn")), levels={"in": 0})
+        pick_doors(c, ("in", "out"), c.vary.choice("door pattern", ("through", "turn")), levels={"in": 0})
+        # a spare way out on a third side, gated like the other (the layout uses it where the first runs into rooms already placed,
+        # or caps it)
+        self.spare = c.vary.flag("spare exit", 0.75) and add_spare(c, "out2")
+        self.door_ids = ("in", "out", "out2") if self.spare else ("in", "out")
 
     def build(self, c):
         c.room.extra["joinBy"] = ["in"]
         gate_on(c, "ingate", "in", 1)
         gate_on(c, "outgate", "out", 0)
+        if self.spare:
+            gate_on(c, "outgate2", "out2", 0)
         self.lever = place_lever(c, "release", [("fight", "start")], far_from="in", reached_from="in")
         c.note("lever", "far")
 
@@ -189,8 +210,9 @@ class Fight(Job):
         pts = spread_points(c, 6, way_in="in")
         if len(pts) < 4:
             raise NoFit()
+        gates = ["ingate", "outgate"] + (["outgate2"] if self.spare else [])
         encounter(c, "fight", "wire", [{"melee": 2, "ranged": 1}, {"melee": 3, "flying": 1}, {"melee": 2, "ranged": 1, "elite": 1}],
-                  pts, lock=["ingate", "outgate"], opens=["ingate", "outgate"], reached_from="in")
+                  pts, lock=gates, opens=gates, reached_from="in")
         c.note("points", len(pts))
 
 
@@ -295,7 +317,18 @@ class HeldGate(Job):
         zz = rng.uniform(*beyond)
         lat = -zz if k == 1 else zz
         sh.add_door("side", k, round(lat), 0)
-        c.note("doors", [[2, sh.doors["in"].lateral, 0], [0, sh.doors["out"].lateral, 0], [k, lat, 0]])
+        doors = [[2, sh.doors["in"].lateral, 0], [0, sh.doors["out"].lateral, 0], [k, lat, 0]]
+        # a spare way on, beyond the screen in the other side wall (the layout uses it where the first two run into rooms already
+        # placed, or caps it)
+        self.spare = False
+        if c.vary.flag("spare exit", 0.75):
+            zz2 = rng.uniform(*beyond)
+            k2 = 4 - k
+            sh.add_door("side2", k2, round(-zz2 if k2 == 1 else zz2), 0)
+            doors.append([k2, round(-zz2 if k2 == 1 else zz2), 0])
+            self.spare = True
+        self.door_ids = ("in", "out", "side", "side2") if self.spare else ("in", "out", "side")
+        c.note("doors", doors)
         c.note("screen_z", self.zs)
 
     def build(self, c):
@@ -317,6 +350,9 @@ class HeldGate(Job):
         g.join("in", "out", state=1)
         g.join("in", "side", state=1)
         room.join("out", "side")
+        if self.spare:
+            g.join("in", "side2", state=1)
+            room.join("out", "side2")
         # the plate before the gate
         pz = zs - rng.uniform(2.5, 4.0)
         p = t.plate(room, "plate", (gx + rng.uniform(-1.5, 1.5), sh.floor_y, pz))
@@ -351,7 +387,7 @@ class HeldGate(Job):
         self.lever_at = lever_at
         c.note("ledge", side)
         # rail on the ledge's open side (towards the room), leaving the stair's head
-        rail_x = lx1 + 0.3 if side < 0 else lx0 - 0.3
+        rail_x = lx1 - 0.3 if side < 0 else lx0 + 0.3                 # (on the ledge's edge, not beside it)
         t.rail(room, (rail_x, 0, lz0 + 0.5), (rail_x, 0, lz1), ly)
         # nothing to climb onto it from: no prop, light or cover within a jump (6 m) of the ledge (spawn points may still go there)
         plan.set_rect(0, lx0 - 6.5, lx1 + 6.5, lz0 - 6.5, lz1 + 6.5, WAY, only=(FREE,))

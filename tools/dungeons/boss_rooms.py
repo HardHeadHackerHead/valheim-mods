@@ -182,7 +182,8 @@ def warden_hall():
             {"at": 0.66, "wires": hammers + [{"target": "gears", "do": "set:1"}], "adds": {"melee": 2}, "leap": seat,
              "sound": "sfx_gdking_scream", "shake": 0.6,
              "shield": {"take": 0, "until": [{"mech": "brazierL", "state": 1}, {"mech": "brazierR", "state": 1}], "seconds": 110,
-                        "times": 2, "hold": True, "breakShare": 0.08, "hint": "$dungeons_boss_warden_shield"}},
+                        "times": 2, "hold": True, "breakShare": 0.08, "hint": "$dungeons_boss_warden_shield",
+                        "flicker": "$dungeons_boss_warden_flicker"}},
             # a second wind: driven down to 30%, it tears free, recovers to 50% and is enraged
             {"at": 0.3, "healTo": 0.5, "wires": [{"target": f"riser{i}", "do": "set:1"} for i in range(1, 5)] + [{"target": "gears", "do": "set:2"}],
              "adds": {"melee": 1, "ranged": 1}, "enrage": 1.25, "message": "$dungeons_boss_warden_p3", "sound": "sfx_gdking_scream",
@@ -256,6 +257,7 @@ def guardian_room():
         "abilities": [
             {"id": "slam", "kind": "slam", "every": 12, "first": 6, "warn": 1.6, "radius": 4, "scale": 2, "push": 35}],
         "weakTo": [{"mech": "hammer", "state": 1, "area": [6.0, 5.0, 6.0], "areaAt": [0.0, 1.5, 0.0], "share": 0.12, "stagger": True,
+                    "held": "$dungeons_boss_thrall_held",
                     "breaks": True, "hurt": 2.0}],
         # a second wind: driven down to 30%, it recovers to 55% and is enraged
         "phases": [{"at": 0.3, "healTo": 0.55, "enrage": 1.2, "adds": {"melee": 1}, "message": "$dungeons_boss_thrall_p2",

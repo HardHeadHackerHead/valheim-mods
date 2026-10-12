@@ -1,0 +1,411 @@
+{
+ "about": "The Starfall Orrery (pack starfall): a sky-watchers' observatory built into the crater where a star fell. Pale ashlar walls banded in black marble, floors and ceilings of black marble (the night sky) hung with stars, silver armillary hoops tumbling, planets on silver arms, meteorite shards; cold white starlight, violet crystals, a warm white sun. Rooms on a 6 m grid, 8 m a storey, 12 m rooms, doorways 4.5 x 7 m (tools/dungeons/authoring/themes/orrery.py).",
+ "pieces": [
+  {
+   "prefab": "stone_floor",
+   "role": "wall",
+   "look": "4 x 1 x 4 pale stone: walls stood up, posts and columns stood on end, blocks, raised galleries",
+   "mount": "structure",
+   "scale": [
+    0.3,
+    3
+   ],
+   "tier": 1
+  },
+  {
+   "prefab": "blackmarble_floor_large",
+   "role": "floor",
+   "look": "8 x 2 x 8 black marble: floors and ceilings (the night sky)",
+   "mount": "structure",
+   "scale": [
+    0.3,
+    3
+   ],
+   "tier": 6
+  },
+  {
+   "prefab": "blackmarble_2x2x1",
+   "role": "block",
+   "look": "2 x 2 x 1 black marble: bands, plinths, lintels, dais steps",
+   "mount": "structure",
+   "scale": [
+    0.1,
+    6
+   ],
+   "tier": 6
+  },
+  {
+   "prefab": "stone_wall_2x1",
+   "role": "rail",
+   "look": "pale stone 2.2 x 1.2 x 1.2: parapets",
+   "mount": "structure",
+   "scale": [
+    0.3,
+    4
+   ],
+   "tier": 1
+  },
+  {
+   "prefab": "stone_stair",
+   "role": "stair",
+   "look": "a pale stone stair block (one per step)",
+   "mount": "structure",
+   "scale": [
+    0.5,
+    2
+   ],
+   "tier": 1
+  },
+  {
+   "prefab": "iron_grate",
+   "role": "gate",
+   "look": "iron grate 2 x 3",
+   "mount": "structure",
+   "scale": [
+    0.5,
+    3
+   ],
+   "tier": 3
+  },
+  {
+   "prefab": "piece_dvergr_metal_wall_2x2",
+   "role": "gate",
+   "look": "a metal lattice 2 x 2: gate leaves (thickened to 0.3 m)",
+   "mount": "structure",
+   "scale": [
+    0.5,
+    4
+   ],
+   "tier": 6
+  },
+  {
+   "prefab": "piece_chest_grausten",
+   "role": "container",
+   "look": "a pale stone chest (Saved: refilled by the Builder)",
+   "mount": "ground",
+   "scale": [
+    1,
+    1
+   ],
+   "tier": 7,
+   "notes": "Saved only, scale 1"
+  },
+  {
+   "prefab": "CastleKit_groundtorch_blue",
+   "role": "light",
+   "look": "an iron torch with a pale white-blue flame (range 6)",
+   "mount": "ground",
+   "scale": [
+    0.5,
+    2
+   ],
+   "tier": 4
+  },
+  {
+   "prefab": "piece_groundtorch_blue",
+   "role": "light",
+   "look": "a blue standing torch with a fire (range 10): the star-charts' beacons (braziers)",
+   "mount": "ground",
+   "scale": [
+    0.5,
+    2
+   ],
+   "tier": 4
+  },
+  {
+   "prefab": "StatueSeed",
+   "role": "decor",
+   "look": "a pale spiky star-stone 1.6 x 1.9 x 2: hung stars (on a chain), keystones on lintels, lever knobs, falling stars",
+   "mount": "free",
+   "scale": [
+    0.2,
+    2
+   ],
+   "tier": 1
+  },
+  {
+   "prefab": "FireFlies",
+   "role": "light",
+   "look": "drifting sparks of light (#8cb8ff, range 4): no mesh",
+   "mount": "free",
+   "scale": [
+    0.5,
+    2
+   ],
+   "tier": 1
+  },
+  {
+   "prefab": "Pickable_MountainCaveCrystal",
+   "role": "light",
+   "look": "violet crystals with a cyan light (walk-through)",
+   "mount": "ground",
+   "scale": [
+    0.5,
+    3
+   ],
+   "tier": 4
+  },
+  {
+   "prefab": "BarrelRings",
+   "role": "decor",
+   "look": "an iron hoop, three hoops in one (flat in xz; its own z axis a diameter): tumbling armillaries scaled 4-18 m, high out of reach",
+   "mount": "free",
+   "scale": [
+    2,
+    35
+   ],
+   "tier": 1
+  },
+  {
+   "prefab": "MemorialStone_Medium",
+   "role": "decor",
+   "look": "a round dark stone 2.3 m: planets, moons, moon-doors",
+   "mount": "free",
+   "scale": [
+    0.3,
+    4
+   ],
+   "tier": 4
+  },
+  {
+   "prefab": "MemorialStone_Small",
+   "role": "decor",
+   "look": "a standing stone tablet 3.3 m: the watchers' star tablets",
+   "mount": "ground",
+   "scale": [
+    0.5,
+    1.5
+   ],
+   "tier": 4
+  },
+  {
+   "prefab": "MineRock_Meteorite",
+   "role": "remains",
+   "look": "a 13 m pillar of meteorite rock, glowing (#ffae8a): the fallen star",
+   "mount": "ground",
+   "scale": [
+    0.1,
+    1.5
+   ],
+   "tier": 7
+  },
+  {
+   "prefab": "Pickable_Meteorite",
+   "role": "remains",
+   "look": "a glowing meteorite chunk 0.7 m: shards of the fallen star",
+   "mount": "ground",
+   "scale": [
+    0.5,
+    4
+   ],
+   "tier": 7
+  },
+  {
+   "prefab": "highstone_2",
+   "role": "remains",
+   "look": "a pale standing stone 4.4 x 6.6 x 2.3: the crater's stones, fallen",
+   "mount": "ground",
+   "scale": [
+    0.3,
+    1.5
+   ],
+   "tier": 1
+  },
+  {
+   "prefab": "widestone_2",
+   "role": "remains",
+   "look": "a wide pale boulder",
+   "mount": "ground",
+   "scale": [
+    0.3,
+    1.5
+   ],
+   "tier": 1
+  },
+  {
+   "prefab": "piece_cloth_hanging_door_blue",
+   "role": "decor",
+   "look": "night-blue hangings (walk-through)",
+   "mount": "wall",
+   "scale": [
+    0.5,
+    1.5
+   ],
+   "tier": 2
+  },
+  {
+   "prefab": "Morkhalla_MetalBar",
+   "role": "beam",
+   "look": "studded bar 20 x 1 x 1, centred along x: lever handles, spokes, orbits' rims, arms",
+   "mount": "span",
+   "scale": [
+    0.01,
+    2
+   ],
+   "tier": 8
+  },
+  {
+   "prefab": "piece_hoodedlantern",
+   "role": "light",
+   "look": "a warm white lamp (range 30): the sun",
+   "mount": "free",
+   "scale": [
+    0.5,
+    2
+   ],
+   "tier": 4
+  },
+  {
+   "prefab": "piece_table_runed",
+   "role": "prop",
+   "look": "a runed table: the watchers' charts",
+   "mount": "ground",
+   "scale": [
+    0.5,
+    1.5
+   ],
+   "tier": 4
+  },
+  {
+   "prefab": "piece_bench_runed",
+   "role": "prop",
+   "look": "a runed bench",
+   "mount": "ground",
+   "scale": [
+    0.5,
+    1.5
+   ],
+   "tier": 4
+  },
+  {
+   "prefab": "Bell",
+   "role": "prop",
+   "look": "a bell",
+   "mount": "ground",
+   "scale": [
+    0.5,
+    2
+   ],
+   "tier": 7
+  },
+  {
+   "prefab": "fader_bellholder",
+   "role": "prop",
+   "look": "a lyre-shaped holder: a sighting frame",
+   "mount": "ground",
+   "scale": [
+    0.5,
+    1.5
+   ],
+   "tier": 7
+  },
+  {
+   "prefab": "Morkhalla_Chain",
+   "role": "chain",
+   "look": "a 20 m chain span between two anchors: across the near moon-door",
+   "mount": "span",
+   "scale": [
+    0.1,
+    1
+   ],
+   "tier": 8
+  },
+  {
+   "prefab": "Morkhalla_WallChain1",
+   "role": "chain",
+   "look": "an iron chain from an anchor: hung stars",
+   "mount": "hang",
+   "scale": [
+    0.2,
+    4
+   ],
+   "tier": 8
+  },
+  {
+   "prefab": "stone_pile",
+   "role": "decor",
+   "look": "a pile of stones",
+   "mount": "ground",
+   "scale": [
+    0.5,
+    2
+   ],
+   "tier": 1
+  }
+ ],
+ "roles": {
+  "wall": [
+   "stone_floor"
+  ],
+  "wall_alt": [
+   "blackmarble_2x2x1"
+  ],
+  "floor": [
+   "blackmarble_floor_large"
+  ],
+  "ceiling": [
+   "blackmarble_floor_large"
+  ],
+  "trim": [
+   "blackmarble_2x2x1"
+  ],
+  "pillar": [
+   "stone_floor"
+  ],
+  "column": [
+   "stone_floor"
+  ],
+  "beam": [
+   "Morkhalla_MetalBar"
+  ],
+  "rail": [
+   "stone_wall_2x1"
+  ],
+  "grate": [
+   "iron_grate"
+  ],
+  "door_leaf": [
+   "piece_dvergr_metal_wall_2x2"
+  ],
+  "stair": [
+   "stone_stair"
+  ],
+  "light_stand": [
+   "CastleKit_groundtorch_blue",
+   "piece_groundtorch_blue",
+   "Pickable_MountainCaveCrystal"
+  ],
+  "light_hang": [
+   "StatueSeed",
+   "FireFlies"
+  ],
+  "light_wall": [],
+  "chain": [
+   "Morkhalla_WallChain1"
+  ],
+  "chest": [
+   "piece_chest_grausten"
+  ],
+  "decor_small": [
+   "Bell",
+   "Pickable_Meteorite",
+   "stone_pile",
+   "Pickable_MountainCaveCrystal"
+  ],
+  "decor_large": [
+   "piece_table_runed",
+   "piece_bench_runed",
+   "fader_bellholder",
+   "MemorialStone_Small",
+   "piece_cloth_hanging_door_blue"
+  ],
+  "rubble": [
+   "stone_pile",
+   "Pickable_Meteorite"
+  ],
+  "bones": [
+   "skull_pile",
+   "bone_stack"
+  ]
+ }
+}

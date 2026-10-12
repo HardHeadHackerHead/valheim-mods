@@ -1,0 +1,120 @@
+# The Cathedral of the Bone Choir: a cathedral the dead raised inside the skeleton of something vast, where the dead still sing.
+# Theme "ossuary" (authoring/themes/ossuary.py: tall pointed doorways, ribcage vaults, bone pillars, candle gold); hand-made rooms in
+# bonechoir_rooms.py (the nave, the bell towers, the charnel, the reliquary) and bosses_bonechoir.py (the Choirmaster, the Colossus).
+# The way: the Nave of Ribs (a procession of the dead under falling spikes), a hub with a key wing and its gate, a timed crossing, the
+# Bell Tower (ring the hymn: the lift, and the bell relic), a one-way drop, the Choir Loft (the Choirmaster: the skull relic) with the
+# Charnel off it (push the bone cart onto the grave: the bone relic), a held gate, the Reliquary (the three relics open it), the Apse
+# (the Bone Colossus) and the vault.
+name = "bonechoir"
+title = "$dungeons_pack_bonechoir"
+theme = "ossuary"
+seed = 1
+difficulty = "normal"
+biome = "any"
+environment = "Crypt"
+entrance_look = "bonechoir"
+rooms = [24, 40]
+max_size = [360, 180, 360]
+min_uses = 6
+music = "forestcrypt"
+parkour = false
+variants = 2
+
+plan = [
+  {id = "start", room = "entrance"},
+  {id = "nave", room = "nave"},
+  {id = "hub1", job = "hub"},
+  {id = "lever1", job = "lever", from = "hub1"},
+  {id = "gate1", job = "gate", opens_with = "lever1", from = "hub1"},
+  {id = "timing1", job = "timing"},
+  {id = "plate1", job = "plate"},
+  {id = "tower", rooms = ["tower_a", "tower_b"]},
+  {id = "drop1", job = "drop"},
+  {id = "choir", room = "choir"},
+  {id = "charnel", room = "charnel", from = "choir"},
+  {id = "reliquary", room = "reliquary", from = "choir"},
+  {id = "apse", room = "apse"},
+  {id = "vault", room = "vault"},
+]
+
+signatures = ["cap_plain", "secret_chapel", "shortcut_near", "shortcut_far", "ossuary_walk", "choir_crossing", "bell_chapel"]
+
+[fill]
+breather = 5
+pillarhall = 3
+corridor = 3
+stairhall = 2
+nook = 4
+twolevers = 1
+ambush = 1
+timeddoor = 1
+
+[shortcut]
+near = "shortcut_near"
+far = "shortcut_far"
+far_step = "choir"
+
+[items]
+relic_bell = {look = "Bell", name = "$dungeons_bonechoir_relic_bell", description = "$dungeons_bonechoir_relic_bell_desc"}
+relic_skull = {look = "TrophySkeleton", name = "$dungeons_bonechoir_relic_skull", description = "$dungeons_bonechoir_relic_skull_desc"}
+relic_bone = {look = "WitheredBone", name = "$dungeons_bonechoir_relic_bone", description = "$dungeons_bonechoir_relic_bone_desc"}
+
+# The choir's dead: skeletons, ghosts, wraiths and draugr where the land has them; the elite (the waves' last, and the bosses: the
+# Choirmaster and the Colossus are the land's elite, scaled up) is a skeleton where it can be (fitted to the land: never above it).
+[creatures.Meadows]
+melee = ["Skeleton_Meadows_noarcher", "Greyling"]
+ranged = ["Skeleton_Meadows"]
+elite = ["Skeleton_Meadows_noarcher"]
+
+[creatures.BlackForest]
+melee = ["Skeleton_NoArcher", "Skeleton_Meadows_noarcher", "Greydwarf"]
+ranged = ["Skeleton", "Greydwarf_Shaman"]
+flying = ["Ghost"]
+elite = ["Skeleton_NoArcher"]
+
+[creatures.Swamp]
+melee = ["Draugr", "Skeleton_Swamps_noarcher"]
+ranged = ["Draugr_Ranged", "Skeleton_Swamps"]
+flying = ["Wraith", "Ghost"]
+elite = ["Skeleton_Poison", "Draugr_Elite"]
+
+[creatures.Mountain]
+melee = ["Skeleton_Mountains_noarcher", "Ulv", "Draugr"]
+ranged = ["Skeleton_Mountains", "Fenring_Cultist"]
+flying = ["Wraith", "Bat"]
+elite = ["Skeleton_Poison", "Fenring"]
+
+[creatures.Plains]
+melee = ["Skeleton_Mountains_noarcher", "Goblin", "Ulv"]
+ranged = ["Skeleton_Mountains", "GoblinArcher"]
+flying = ["Deathsquito"]
+elite = ["GoblinBrute"]
+
+[creatures.Mistlands]
+melee = ["Seeker", "Goblin"]
+ranged = ["GoblinArcher", "GoblinShaman"]
+flying = ["Seeker"]
+elite = ["SeekerBrute"]
+
+[creatures.AshLands]
+melee = ["Charred_Melee", "Charred_Twitcher"]
+ranged = ["Charred_Archer", "Charred_Mage"]
+flying = ["Volture"]
+elite = ["Charred_Melee"]
+
+[creatures.DeepNorth]
+melee = ["Skeleton_DeepNorth", "Greydwarf_Frozen"]
+ranged = ["Greydwarf_Shaman_Frozen"]
+flying = ["Bat"]
+elite = ["Skeleton_DeepNorth"]
+
+[creatures.Ocean]
+melee = ["Skeleton_Meadows_noarcher", "Greyling"]
+ranged = ["Skeleton_Meadows"]
+elite = ["Skeleton_Meadows_noarcher"]
+
+[creatures.default]
+melee = ["Skeleton_NoArcher", "Greydwarf"]
+ranged = ["Skeleton"]
+flying = ["Ghost"]
+elite = ["Skeleton_NoArcher"]

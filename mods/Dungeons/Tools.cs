@@ -420,6 +420,7 @@ namespace Dungeons
                 ["metres"] = Builder.CullDistance,
                 ["linger"] = Builder.CullLinger,
                 ["report"] = Builder.PerfReport(),
+                ["timing"] = PerfTiming.Report(),   // (averages over the last 60 frames; the game's markers where this build records them)
             });
         }
 
@@ -669,21 +670,10 @@ namespace Dungeons
             if (site == null) return;
             Layout layout = site.Layout;
             if (layout == null) { error($"it isn't laid out: {site.Problem ?? "not yet"}"); return; }
+            TriggerSolve.Model rules = null;
+            try { rules = TriggerSolve.For(layout); } catch (Exception) { }
             var steps = new JArray();
-            foreach (string key in layout.Solution)
-            {
-                MechDef def = Layouts.Mech(layout, key, out int room);
-                Mech m = null;
-                site.Mechs?.ByKey.TryGetValue(key, out m);
-                steps.Add(new JObject
-                {
-                    ["use"] = key,
-                    ["kind"] = def?.Kind ?? "(not in the layout)",
-                    ["room"] = room >= 0 ? room + " " + layout.Rooms[room].Def?.Name : null,
-                    ["stateNow"] = m != null ? site.Mechs.StateOf(m) : (JToken)null,
-                    ["at"] = m != null ? V(m.WorldPos) : null,
-                });
-            }
+            foreach (string key in layout.Solution) steps.Add(SolveStep(site, layout, rules, key));
             output(new JObject
             {
                 ["id"] = site.Zdo.m_uid.ToString(),
@@ -695,6 +685,59 @@ namespace Dungeons
             });
         }
 
+        /// <summary>One use of the solution, said so a player (or an agent walking the dungeon) can make it: what, where, and how. A use is a
+        /// mechanism ("3.lever"), a building block's own use ("3.socket/place", "/light", "/take", a lock "3.lock1") or a trigger's
+        /// ("3.hymn": what sets it off).</summary>
+        private static JObject SolveStep(Site site, Layout layout, TriggerSolve.Model rules, string key)
+        {
+            int dot = key.IndexOf('.');
+            int room = dot > 0 && int.TryParse(key.Substring(0, dot), NumberStyles.Integer, CultureInfo.InvariantCulture, out int r) && r >= 0 && r < layout.Rooms.Count ? r : -1;
+            string rest = dot > 0 ? key.Substring(dot + 1) : key;
+            int slash = rest.IndexOf('/');
+            string id = slash < 0 ? rest : rest.Substring(0, slash), action = slash < 0 ? null : rest.Substring(slash + 1);
+            RoomDef rd = room >= 0 ? layout.Rooms[room].Def : null;
+            MechDef def = rd?.Mechs.FirstOrDefault(x => x.Id == id);
+            TriggerDef trig = def == null ? rd?.Triggers.FirstOrDefault(t => t.Id == id) : null;
+            TriggerSolve.Rule rule = rules?.Rules.FirstOrDefault(x => x.Key == key && x.Cost && x.Into == null);
+            Mech m = null;
+            if (room >= 0) site.Mechs?.ByKey.TryGetValue(room + "." + id, out m);
+            string needs = rule != null && rule.Needs.Count > 0 ? string.Join(", ", rule.Needs.Select(n => n.Value > 1 ? n.Value + " " + n.Key : n.Key)) : null;
+            string how;
+            if (trig != null)
+            {
+                string Ev(TriggerEvent e) => e.Kind + (string.IsNullOrEmpty(e.Mech) ? "" : " " + e.Mech) + (e.State >= 0 ? " to " + e.State : "")
+                    + (string.IsNullOrEmpty(e.Item) ? "" : " (" + e.Item + ")") + (string.IsNullOrEmpty(e.From) ? "" : " from " + e.From) + (e.Kind == "kills" ? " x" + e.Count : "");
+                string on = string.Join(trig.When == "sequence" ? ", then " : trig.When == "any" ? " or " : " and ", trig.On.Select(Ev));
+                how = (trig.When == "sequence" ? "in this order: " : "set it off: ") + on
+                    + (trig.If.Count > 0 ? "; while " + string.Join(", ", trig.If.Select(c => c.Mech != null ? c.Mech + (c.State >= 0 ? " is " + c.State : " isn't " + c.Not) : "a counter")) : "")
+                    + (trig.Within > 0f ? $"; within {trig.Within:0} s" : "");
+            }
+            else if (def == null) how = null;
+            else if (action == "place") how = "place " + (needs ?? def.Block?.Item ?? "its item") + " on it"
+                + (def.Block != null && def.Block.Accepts.Count > 1 ? " (it also takes " + string.Join(", ", def.Block.Accepts.Where(x => x != def.Block.Item)) + ", the wrong ones)" : "");
+            else if (action == "take") how = "take the item off it";
+            else if (action == "light") how = "light it (a torch in hand and E, or a fire hit)";
+            else if (def.Kind == "lock") how = "open it with " + (needs ?? def.Block?.Key ?? "its key");
+            else if (def.Kind == "lever") how = "pull it";
+            else if (def.Kind == "plate") how = "step on it" + (def.Wires.Any(w => w.Do == "hold") ? " and stay (or leave something on it)" : "");
+            else if (rule != null) how = "use it";
+            else how = "use it (E)";
+            return new JObject
+            {
+                ["use"] = key,
+                ["kind"] = def?.Kind ?? (trig != null ? "trigger" : "(not in the layout)"),
+                ["mechanism"] = def != null ? id : null,
+                ["trigger"] = trig != null ? id : null,
+                ["do"] = how,
+                ["uses up"] = needs,
+                ["room"] = room >= 0 ? room + " " + rd?.Name : null,
+                ["standAt"] = rule != null && !rule.Anywhere && rule.Nodes != null ? "by doorway " + string.Join(" or ", rule.Nodes)
+                    : def != null && !string.IsNullOrEmpty(def.ReachedFrom) ? "from doorway " + def.ReachedFrom : null,
+                ["stateNow"] = m != null ? site.Mechs.StateOf(m) : (JToken)null,
+                ["at"] = m != null ? V(m.WorldPos) : null,
+            };
+        }
+
         // ---- checking the packs against this game ----
 
         private static void Check(string[] args, Action<JObject> output, Action<string> error)
@@ -702,7 +745,7 @@ namespace Dungeons
             List<string> names = args.Length > 1 ? new List<string> { args[1] } : Packs.Names.ToList();
             var packs = new JArray();
             var missing = new Dictionary<string, JObject>();
-            int used = 0;
+            int used = 0, sceneryProblems = 0;
             foreach (string name in names)
             {
                 Pack pack;
@@ -712,7 +755,17 @@ namespace Dungeons
                 List<Checks.Use> all = Checks.Pack(pack, false);
                 List<Checks.Use> gone = all.Where(u => !Checks.Has(u)).ToList();
                 used += all.Count;
-                packs.Add(new JObject { ["pack"] = pack.Name, ["names"] = all.Count, ["missing"] = gone.Count, ["look"] = EntranceLooks.Get(pack.EntranceLook).Name });
+                // scenery that keeps something usable (a machine, a station, anything with a hover or a use: BuildStrip, builder's)
+                List<string> scenery;
+                try { scenery = Builder.CheckScenery(pack) ?? new List<string>(); }
+                catch (Exception e) { scenery = new List<string> { "the scenery check failed: " + e.Message }; }
+                var sceneryNotes = scenery.Where(l => l.StartsWith("note: ")).ToList();
+                var sceneryBad = scenery.Where(l => !l.StartsWith("note: ")).ToList();
+                sceneryProblems += sceneryBad.Count;
+                var entry = new JObject { ["pack"] = pack.Name, ["names"] = all.Count, ["missing"] = gone.Count, ["look"] = EntranceLooks.Get(pack.EntranceLook).Name,
+                                          ["sceneryProblems"] = new JArray(sceneryBad) };
+                if (sceneryNotes.Count > 0) entry["sceneryNotes"] = new JArray(sceneryNotes);
+                packs.Add(entry);
                 foreach (Checks.Use u in gone)
                 {
                     string key = u.Kind + " " + u.Name;
@@ -730,10 +783,12 @@ namespace Dungeons
                 }
             output(new JObject
             {
+                ["result"] = sceneryProblems == 0 && missing.Count == 0 ? "pass" : "FAIL",
                 ["packs"] = packs,
                 ["looks"] = new JArray(EntranceLooks.All.Select(l => l.Name)),
                 ["missing"] = new JArray(missing.Values),
-                ["note"] = missing.Count == 0 ? $"this game has every one of the {used} names the packs use" : "these names aren't in this game: the parts are left out where they're used (a mechanism or look without them shows what's left)",
+                ["note"] = (missing.Count == 0 ? $"this game has every one of the {used} names the packs use" : "these names aren't in this game: the parts are left out where they're used (a mechanism or look without them shows what's left)")
+                           + (sceneryProblems > 0 ? $"; {sceneryProblems} scenery problem(s): scenery that keeps something usable (see each pack's sceneryProblems)" : ""),
             });
         }
 

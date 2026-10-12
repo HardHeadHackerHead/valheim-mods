@@ -23,6 +23,9 @@ Exits 1 when a curated prefab isn't in the game, or a structural piece (wall, fl
     python palette_tool.py                  every theme
     python palette_tool.py giant dvergr     these
     python palette_tool.py --no-render      without pictures (faster)
+    (a pack team's own theme: palettes/src/<theme>.json, see load_sources; then python palette_tool.py <theme>)
+    python palette_tool.py --probe Rock_ "^piece_jute"    the same facts for any prefabs (names or regular expressions), one JSON
+                                            line each, with a picture: for choosing pieces before they're curated into a palette
 """
 import json, math, os, sys
 import numpy as np
@@ -222,6 +225,44 @@ CURATED = {
             E("mudpile", "decor", "a pile of mud (sunken crypts)", "ground", (0.5, 2), 3),
         ],
     },
+    "roothollow": {
+        "about": "Rootdeep (pack-rootdeep): inside the roots of a dying world-tree. Walls of upright trunks packed side by side over a hidden "
+                 "marble backing, floors of root ribs over a slab, ceilings under arches of great roots; pale root lattice, moss, rot and tar; "
+                 "cold fungal light with warm amber marks on what you use.",
+        "pieces": [
+            E("Oak_log", "wall", "an oak trunk, 13.7 m long, already upright in its own frame (origin in its middle): walls of trunks side by "
+              "side, pillars, floor ribs laid down", "structure", (0.3, 1.5), 1,
+              "a physics log in the game (it rolls): stripped it stays put; never Saved"),
+            E("SwampTree1_log", "floor", "a swamp tree log, 6.7 m along z: floor ribs, a second log look", "structure", (0.5, 2), 3,
+              "a physics log in the game: never Saved"),
+            E("yggashoot_log", "pillar", "a slim Yggdrasil shoot log, 10.6 m along y: columns", "ground", (0.3, 1.5), 6,
+              "a physics log in the game: never Saved"),
+            E("SwampTree1_Stub", "pillar", "a swamp tree's stump with its roots: the foot of a trunk pillar", "ground", (0.5, 1.5), 3),
+            E("FirTree_oldLog", "decor", "an old mossy fir log, 7 m along z: trim, fallen trunks", "ground", (0.5, 2), 2),
+            E("HugeRoot1", "arch", "a huge root, 29 m: arches under the ceiling", "structure", (0.2, 1.2), 2),
+            E("HoleRock_rootWall1", "grate", "a pale root lattice 10 x 8 m, solid: grates, root-mass doors, accents", "structure", (0.3, 1.5), 1),
+            E("SwampTree2_log", "decor", "a giant swamp log, 9 x 11 x 24 m: a fallen world-tree root", "ground", (0.2, 1), 3),
+            E("BigBranch", "decor", "a great fallen branch, 21 m", "ground", (0.2, 1), 2),
+            E("AshlandsTreeStump1", "decor", "a dark gnarled stump, 7 m: rot", "ground", (0.3, 1.5), 7),
+            E("tarlump1", "decor", "a lump of tar, 28 x 8 x 24 m: rot pools (scale it down)", "ground", (0.05, 0.5), 5),
+            E("GlowingMushroom", "light", "a glowing mushroom, cold grey-blue light (range 10)", "ground", (0.5, 2), 6),
+            E("GuckSack", "light", "a hanging guck sack, green glow (range 5.4)", "hang", (0.5, 1.5), 3),
+            E("GuckSack_small", "light", "a small guck sack, green glow (range 4)", "hang", (0.5, 1.5), 3),
+            E("piece_Lavalantern", "light", "a lava lantern, warm orange (range 12): an amber mark on what you use", "ground", (0.5, 2), 7),
+            E("Candle_resin", "light", "a resin candle, amber (range 1): small marks on knobs and levers", "ground", (0.5, 3), 1),
+            E("vines", "decor", "hanging vines (walk-through)", "wall", (0.5, 2), 2),
+            E("Bush01", "decor", "a bush", "ground", (0.5, 1.5), 1),
+            E("mudpile_old", "decor", "a heap of old mud", "ground", (0.5, 2), 3),
+            E("root08", "decor", "roots across a floor", "ground", (0.5, 2), 2),
+            E("root12", "decor", "roots along a floor", "ground", (0.5, 2), 2),
+            E("blackmarble_floor_large", "floor", "8 x 2 x 8 black marble slab: the hidden backing behind trunk walls, under rib floors, and turned "
+              "over, the ceiling", "structure", (0.5, 2), 6),
+            E("YggdrasilRoot", "decor", "a great Yggdrasil root, 44 m long: arches", "ground", (0.05, 0.6), 6),
+            E("dvergrprops_wood_stair", "stair", "a timber stair (with log treads over it)", "structure", (1, 1), 6, "keep 1"),
+            E("piece_groundtorch_green", "light", "a green standing torch, on a wall bracket of roots", "wall", (0.5, 2), 3),
+            E("TreasureChest_swamp", "container", "a swamp chest (Saved: refilled by the Builder)", "ground", (1, 1), 3, "Saved only, scale 1"),
+        ],
+    },
     "shared": {
         "about": "Pieces any theme uses: saved parts (chests, spawners, treasure), lights and props that fit anywhere.",
         "pieces": [
@@ -318,6 +359,29 @@ ROLES = {
         "rubble": ["blackmarble_pile", "dvergrtown_wood_stakewall"],
         "bones": [],
     },
+    "roothollow": {
+        "wall": ["Oak_log"],
+        "wall_alt": ["blackmarble_floor_large"],
+        "floor": ["Oak_log", "SwampTree1_log", "blackmarble_floor_large"],
+        "ceiling": ["blackmarble_floor_large"],
+        "trim": ["HoleRock_rootWall1", "FirTree_oldLog", "SwampTree1_log"],
+        "pillar": ["Oak_log", "SwampTree1_Stub"],
+        "column": ["yggashoot_log"],
+        "beam": ["HugeRoot1"],
+        "rail": [],
+        "grate": ["HoleRock_rootWall1"],
+        "door_leaf": ["HoleRock_rootWall1", "Oak_log"],
+        "stair": ["dvergrprops_wood_stair"],
+        "light_stand": ["GlowingMushroom", "piece_Lavalantern"],
+        "light_hang": ["GuckSack", "GuckSack_small"],
+        "light_wall": ["piece_groundtorch_green"],
+        "chain": [],
+        "chest": ["TreasureChest_swamp"],
+        "decor_small": ["Candle_resin", "mudpile_old", "root08", "root12", "Bush01", "skull_pile", "bone_stack"],
+        "decor_large": ["SwampTree2_log", "BigBranch", "AshlandsTreeStump1", "tarlump1", "YggdrasilRoot", "HugeRoot1", "vines"],
+        "rubble": ["mudpile_old", "root08"],
+        "bones": ["skull_pile", "bone_stack"],
+    },
     "crypt": {
         "wall": ["stone_wall_4x2", "stone_wall_2x1"],
         "wall_alt": ["stone_wall_ruin", "stone_wall_1x1"],
@@ -377,6 +441,9 @@ TROUBLE = {
     "blackmarble_2x2x1": "stretched, its bevels become spikes: don't use it as a stretched wall (blackmarble_tile_wall_2x4 instead).",
     "Ashlands_floor_large_fractured": "looks the same as Ashlands_floor_large: no use for a cracked floor.",
     "giant_ribs": "huge (0.75 scale is still about 14 m long), and hollow: its collider is boxes in prefab_shapes.json. Scale giant remains by their box.",
+    "Lantern_DN": "an item: its lights are off in the prefab (lit only while carried), so as scenery it's dark. Use deepnorth_lantern_standing or a Dvergr lantern.",
+    "LargeBone": "carries an EggHatch (it hatches something): scenery only (Strip takes the hatching off); Saved, it would hatch.",
+    "*_log": "Oak_log, SwampTree1_log, yggashoot_log and other tree logs are physics logs in the game (a live Rigidbody: they roll): fine as stripped scenery, never Saved.",
     "*_frac": "fractured debris (physics pieces of something broken): don't use as scenery.",
     "Pickable_*": "as scenery a pickable shows its item but can't be taken: confusing. Use only as Saved parts.",
     "TreasureChest_*": "as scenery a chest opens nothing: Saved only, scale 1.",
@@ -406,6 +473,37 @@ SETS = {
 # Panels: the longest a stretched piece may get (m) before its texture smears (dungeon-content's testing)
 MAX_SPAN = {"Ashlands_floor_large": 10.0, "blackmarble_floor_large": 10.0, "blackmarble_tile_wall_2x4": 4.0, "blackmarble_tile_wall_2x2": 4.0,
             "blackmarble_tile_floor_2x2": 4.0}
+
+# Themes curated by their own pack teams: palettes/src/<theme>.json, the same curation as CURATED and ROLES here, in a file each team owns
+# (so five teams never edit this one at once):
+#   {"about": "...", "pieces": [{"prefab": "...", "role": "...", "look": "...", "mount": "ground", "scale": [0.5, 2], "tier": 6,
+#                                "notes": "..."}],
+#    "roles": {"wall": ["...", ...], ...}, "how": {"wall": "...", ...}}
+# mount, scale, tier and notes may be left out (ground, [0.5, 2], none, none). Everything measured is filled in by this tool, as for the rest.
+SRC = os.path.join(OUT_DIR, "src")
+
+
+def load_sources():
+    if not os.path.isdir(SRC):
+        return
+    for f in sorted(os.listdir(SRC)):
+        if not f.endswith(".json"):
+            continue
+        theme = f[:-5]
+        try:
+            d = json.load(open(os.path.join(SRC, f), encoding="utf-8"))
+        except Exception as ex:
+            print(f"PROBLEM palettes/src/{f} can't be read: {ex}")
+            continue
+        pieces = [E(p["prefab"], p.get("role", "decor"), p.get("look", ""), p.get("mount", "ground"), tuple(p.get("scale", (0.5, 2.0))),
+                    p.get("tier"), p.get("notes", "")) for p in d.get("pieces", []) if p.get("prefab")]
+        CURATED[theme] = {"about": d.get("about", ""), "pieces": pieces, "source": "palettes/src/" + f}
+        ROLES[theme] = d.get("roles", {})
+        for k, v in (d.get("how") or {}).items():
+            HOW_BY_THEME.setdefault(theme, {})[k] = v
+
+
+HOW_BY_THEME = {}
 
 # Of those, the ones not to use at all (the others are fine placed as their note says)
 AVOID = {"Morkhalla_MetalPillar", "dverger_guardstone", "MistArea", "MistArea_small", "MistArea_edge", "Morkhalla_Rubble1_fall",
@@ -444,7 +542,13 @@ KINDS = [
     ("SpawnArea", {"m_spawnIntervalSec", "m_prefabs"}), ("TriggerSpawner", {"m_creaturePrefabs"}), ("Door", {"m_keyItem"}),
     ("EffectArea", {"m_statusEffect", "m_playerOnly"}), ("Chair", {"m_sittingAnimation"}), ("Ladder", {"m_targetPos"}),
     ("EggHatch", {"m_chanceToHatch"}), ("LootSpawner", {"m_spawnWhenEnemiesCleared"}),
+    ("CraftingStation", {"m_craftRequireRoof"}), ("Smelter", {"m_maxOre"}), ("Fermenter", {"m_fermentationDuration"}),
+    ("Bed", {"m_spawnPoint"}), ("TeleportWorld", {"m_activationRange"}), ("ItemStand", {"m_supportedTypes"}), ("Sign", {"m_characterLimit"}),
+    ("Ship", {"m_sailForceFactor"}),
 ]
+# what a player could use in the game; as scenery the Builder strips all of it (Builder.Usable, BuildParts.cs), and `dungeon check` proves it
+USABLE = {"CraftingStation", "Smelter", "Fermenter", "Bed", "TeleportWorld", "ItemStand", "Sign", "Ship", "Door", "Container", "Pickable",
+          "PickableItem", "Chair", "Ladder"}
 GIVES = {"ItemDrop", "Pickable", "PickableItem", "Container", "Destructible", "DropOnDestroyed", "MineRock", "LootSpawner"}
 
 
@@ -525,6 +629,7 @@ def inspect(name):
         "networked": "ZNetView" in kinds,
         "gives": sorted(kinds & GIVES),
         "physics": rigid and not item,
+        "usable": sorted(kinds & USABLE),
     }
 
 
@@ -659,6 +764,30 @@ def climb(name):
     return {"ledges": [[round(max(a, 0.0), 2), round(b, 2)] for a, b in merged], "top": reach(STEP), "top_skilled": reach(STEP_SKILLED)}
 
 
+CATALOGUE = os.path.join(GAME, "BepInEx", "claude", "dungeon-rooms.json")
+# the catalogue writes a room shared by two themes as their sum (Room.Theme flags)
+THEMES = {"520": ["ForestCrypt", "ForestCryptHildir"], "1028": ["Cave", "CaveHildir"], "12288": ["AshlandRuins", "FortressRuins"]}
+_dungeon_parts = None
+
+
+def game_dungeons(name):
+    """The game's dungeon themes whose rooms hold this prefab as a part (the catalogue's networked parts): a piece that says "that's the
+    forest crypt" or "that's Mórk halla" to a player. Empty for a piece no game dungeon uses."""
+    global _dungeon_parts
+    if _dungeon_parts is None:
+        import re
+        _dungeon_parts = {}
+        try:
+            for r in json.load(open(CATALOGUE, encoding="utf-8")):
+                t = str(r.get("theme"))
+                themes = THEMES.get(t, [t if not t.isdigit() else "theme " + t])
+                for n in r.get("networked", []):
+                    _dungeon_parts.setdefault(re.sub(r" x\d+$", "", n), set()).update(themes)
+        except Exception:
+            pass
+    return sorted(_dungeon_parts.get(name, ()))
+
+
 def origin_of(lo, hi):
     """Where the prefab's origin sits on its box: the word an author needs to place it."""
     def axis(a, b):
@@ -729,7 +858,11 @@ def build(theme, do_render=True):
             e["origin"] = origin_of(lo, hi)
         except Exception as ex:
             problems.append(f"{theme}: {name}: no shape ({ex})")
-        e["hollow"] = name in shapes
+        notes = [e["notes"]] if e.get("notes") else []
+        e["hollow"] = bool(shapes.get(name))   # (a list of boxes; [] is a walk-through piece, not a hollow one)
+        e["game_dungeon"] = game_dungeons(name)
+        if e["game_dungeon"]:
+            notes.append(f"recognisable: a part of the game's own {' and '.join(e['game_dungeon'])} dungeons")
         if name in SETS:
             e["sets"] = SETS[name]
         if name in MAX_SPAN:
@@ -743,22 +876,24 @@ def build(theme, do_render=True):
             thin = int(np.argmin(sz))
             e["upright"] = "flat" if thin == 1 and sz[1] < 0.5 * max(sz[0], sz[2]) else \
                            "upright" if thin != 1 and sz[thin] < 0.35 * max(sz) else "block"
-        saved_only = e["role"] in ("container", "pickable", "spawner") or bool(info and info["kinds"] and
+        saved_only = e["role"] in ("container", "chest", "pickable", "spawner") or bool(info and info["kinds"] and
                      {"Container", "Pickable", "PickableItem", "CreatureSpawner", "SpawnArea"} & set(info["kinds"]))
         e["saved_only"] = saved_only
         e["safe"] = bool(e["exists"] and not saved_only and name not in AVOID and not (info and info["physics"])
                          and not (e["role"] in STRUCTURAL and info and not info["solid"]))
         if e["role"] in STRUCTURAL and info and not info["solid"]:
             problems.append(f"{theme}: {name} is a {e['role']} but players walk through it ({info['solid_note']})")
-        notes = [e["notes"]] if e.get("notes") else []
         if info and info["solid_note"]:
             notes.append(info["solid_note"])
         if info and info["lights"]:
             notes.append("its light range, fade distance and fire grow with its scale (BuildScale.cs)")
-        if info and info["gives"] and e["role"] not in ("container", "pickable", "spawner"):
+        if info and info["gives"] and e["role"] not in ("container", "chest", "pickable", "spawner"):
             notes.append(f"as scenery its {', '.join(info['gives'])} is stripped: it gives nothing")
         if info and info["physics"]:
             notes.append("has a physics body in the game: stripped, it stays where it's put")
+        if info and [k for k in info["usable"] if k not in ("Chair", "Ladder")] and not saved_only:
+            notes.append(f"usable in the game ({', '.join(k for k in info['usable'] if k not in ('Chair', 'Ladder'))}): as scenery the Builder "
+                         "strips it, so it only looks the part")
         if e.get("size") and min(e["size"]) < 0.15 and max(e["size"]) > 0.5:
             notes.append(f"thin ({min(e['size'])} m): a single face may not show from behind (one-sided): check its render from both sides")
         try:
@@ -786,7 +921,7 @@ def build(theme, do_render=True):
     data = {
         "theme": theme,
         "about": cur["about"],
-        "made_by": "tools/dungeons/palette_tool.py (curation in CURATED there; everything else read from the game's files)",
+        "made_by": "tools/dungeons/palette_tool.py (curation in " + cur.get("source", "CURATED there") + "; everything else read from the game's files)",
         "fields": {
             "role": "what it's for; structural roles (" + ", ".join(sorted(STRUCTURAL)) + ") must be solid",
             "mount": "ground: stands on a floor (prop_check.py); hang: needs something right above its origin or a chain on its top; "
@@ -810,6 +945,8 @@ def build(theme, do_render=True):
             "by_role": "{role: [default, variants...]}: the roles below without their notes",
             "sets": "the dressing sets it suits (giant: ossuary, ruin, forge, archive, engine, armoury; Dvergr: store, workshop, tavern, barracks)",
             "max_span": "a panel's longest side (m) before its stretched texture smears",
+            "game_dungeon": "the game's own dungeon themes whose rooms use it: a player knows it from there (a new kind should lean on pieces "
+                            "with none, or mix them so no room reads as that dungeon)",
             "roles": "the same pieces by a theme recipe's roles (first = default, others = variants), with how each role's pieces are placed",
             "render": "a picture in the mesh cache (" + gm.CACHE + "); the theme's contact sheet is palettes/" + theme + "_sheet.png there",
         },
@@ -823,8 +960,9 @@ def build(theme, do_render=True):
                 if n not in here:
                     problems.append(f"{theme}: role {role} names {n}, which isn't in this palette or shared")
             roles[role] = {"pieces": names}
-            if role in HOW:
-                roles[role]["how"] = HOW[role]
+            how = HOW_BY_THEME.get(theme, {}).get(role) or HOW.get(role)
+            if how:
+                roles[role]["how"] = how
         data["roles"] = roles
         data["by_role"] = {role: list(names) for role, names in ROLES[theme].items()}
     if theme == "shared":
@@ -839,8 +977,70 @@ def build(theme, do_render=True):
     return path, problems, entries
 
 
+def probe(patterns, do_render):
+    """The measured facts of any prefabs (exact names or regular expressions over ZNetScene's names), one JSON object each: what a pack team
+    needs to choose pieces before they go into a palette."""
+    import re
+    known = sorted(gm.znetscene_names())
+    names = []
+    for pat in patterns:
+        if pat in known:
+            names.append(pat)
+        else:
+            names += [n for n in known if re.search(pat, n)]
+    for name in dict.fromkeys(names):
+        e = {"prefab": name}
+        try:
+            lo, hi = bounds(name)
+            e["size"] = [round(float(x), 2) for x in hi - lo]
+            e["origin"] = origin_of(lo, hi)
+            e["height"] = e["size"][1]
+        except Exception as ex:
+            e["size"] = None
+            e["error"] = str(ex)
+        info = inspect(name)
+        if info:
+            e.update({k: info[k] for k in ("kinds", "solid", "solid_note", "lights", "fire", "item", "networked", "gives", "physics", "usable")})
+        try:
+            e["climb"] = climb(name)
+        except Exception:
+            pass
+        e["game_dungeon"] = game_dungeons(name)
+        e["avoid"] = name in AVOID
+        if do_render and e.get("size"):
+            out = os.path.join(RENDERS, name + ".png")
+            os.makedirs(RENDERS, exist_ok=True)
+            if not os.path.exists(out):
+                try:
+                    render(name, out)
+                except Exception:
+                    pass
+            e["render"] = out
+        print(json.dumps(e, ensure_ascii=False))
+    return 0
+
+
+def sync_walkthrough(entries):
+    """Pieces players walk through (no solid collider) get no boxes in prefab_shapes.json ("name": []), so the offline walk and gap checks
+    don't take their whole box for a wall (kelp curtains, cloth, webs, rugs). A prefab already there (a real shape) is never changed."""
+    path = SHAPES
+    shapes = json.load(open(path)) if os.path.exists(path) else {}
+    added = []
+    for e in entries:
+        name = e["prefab"]
+        if e.get("exists") and e.get("solid") is False and name not in shapes and e.get("size") and max(e["size"]) > 0:
+            shapes[name] = []
+            added.append(name)
+    if added:
+        json.dump(shapes, open(path, "w"), separators=(",", ":"))   # (prefab_shapes.py's own format)
+        print("walk-through, no boxes in prefab_shapes.json:", ", ".join(added))
+
+
 def main(argv):
+    load_sources()
     do_render = "--no-render" not in argv
+    if "--probe" in argv:
+        return probe([a for a in argv if not a.startswith("--")], do_render)
     themes = [a for a in argv if not a.startswith("--")] or list(CURATED)
     all_problems = []
     for t in themes:
@@ -848,6 +1048,7 @@ def main(argv):
             print(f"unknown theme {t}: {', '.join(CURATED)}")
             return 2
         path, problems, entries = build(t, do_render)
+        sync_walkthrough(entries)
         lights = sum(1 for e in entries if e.get("lights"))
         items = [e["prefab"] for e in entries if e.get("item")]
         print(f"{t}: {len(entries)} pieces -> {path} ({lights} with lights{'; items: ' + ', '.join(items) if items else ''})")

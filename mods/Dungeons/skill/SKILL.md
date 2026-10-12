@@ -85,6 +85,19 @@ Read `docs/modding-pitfalls.md` too before changing the mod's code: it has the r
     through `Builder.DefineItem` / `RegisterItems` → `ItemReload.Replace`: never add to ObjectDB any other way.
   - Why it's careful: lesson 29.
 
+## The dungeon kinds (installed, final)
+
+| Pack | Spec | Theme | Hand-made rooms and bosses | Entrance look |
+|---|---|---|---|---|
+| Shifting Halls (`shiftinghalls`) | `specs/shiftinghalls.toml` | `giant` | `shifting_halls.py`, `boss_rooms.py` | `giant` |
+| The Drowned Vault (`drowned`) | `specs/drowned.toml` | `tidevault` (`tidevault_rooms.py`) | `bosses_drowned.py` | `drowned` |
+| Rimeforge Depths (`rimeforge`) | `specs/rimeforge.toml` | `rimeforge` | `rimeforge_rooms.py`, `bosses_rimeforge.py` | `rimeforge` |
+| Rootdeep Hollow (`rootdeep`) | `specs/rootdeep.toml` | `roothollow` | `rootdeep_rooms.py`, `bosses_roothollow.py` | `roothollow` |
+| The Starfall Orrery (`starfall`) | `specs/starfall.toml` | `orrery` (palette `palettes/src/orrery.json`) | `orrery_rooms.py` (`--look` writes the entrance look), `bosses_starfall.py` | `starfall` |
+| Cathedral of the Bone Choir (`bonechoir`) | `specs/bonechoir.toml` | `ossuary` | `bonechoir_rooms.py`, `bosses_bonechoir.py` (`bonechoir_look.py`) | `bonechoir` |
+
+Test packs: `testcrypt`, `testmechs`, `testblocks`, `testtheme` (Dvergr). New kinds are added here once the lead installs them as final.
+
 ## Packs from a folder, the server's packs, and versions (SyncPacks.cs, SyncNet.cs)
 
 - **Where:** `BepInEx/config/Dungeons/packs/<name>.json`, and looks in `BepInEx/config/Dungeons/packs/looks/<name>.json` (the mod makes the

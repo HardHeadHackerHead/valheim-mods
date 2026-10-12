@@ -1,0 +1,110 @@
+# Rootdeep Hollow: inside the roots of a dying world-tree. The roothollow theme (authoring/themes/roothollow.py): trunk walls, root-rib
+# floors, arched roots, fungus light and amber sap on what you use. A fight, a hub with a key wing and its gate, a timed root bridge,
+# the Sap-Warden (a mini boss: the seed run), a drop, the Sap Shaft (grow and wither the root bridges to climb a hollow trunk), the
+# Rotheart (the final boss: burn the rot-nodes while the chamber closes in) and the Heartwood Vault.
+name = "rootdeep"
+title = "$dungeons_pack_rootdeep"
+theme = "roothollow"
+seed = 1
+difficulty = "normal"
+biome = "any"
+environment = "Caves"
+entrance_look = "roothollow"
+rooms = [16, 26]
+max_size = [320, 160, 320]
+min_uses = 10
+music = "forestcrypt"
+parkour = false
+variants = 2
+
+plan = [
+  {id = "start", room = "entrance"},
+  {id = "fight1", job = "fight"},
+  {id = "hub1", job = "hub"},
+  {id = "lever1", job = "lever", from = "hub1"},                      # a side wing: the key to the gate
+  {id = "gate1", job = "gate", opens_with = "lever1", from = "hub1"},
+  {id = "garden", room = "seedgarden"},                                # (rootdeep_rooms.py: seeds to the sockets grow a bridge)
+  {id = "timing1", job = "timing"},
+  {id = "warden", room = "sapwarden"},                                 # (bosses_roothollow.py: the Sap-Warden, the seed run)
+  {id = "drop1", job = "drop"},
+  {id = "shaft", rooms = ["sapshaft_a", "sapshaft_b"]},                # (rootdeep_rooms.py: the Sap Shaft, proved there)
+  {id = "heart", room = "rotheart"},                                   # (bosses_roothollow.py: the Rotheart)
+  {id = "vault", room = "vault"},
+]
+
+# the caps: a doorway grown shut (the theme's doorways and the ledges'), and the ledges' sap-nooks
+signatures = ["cap_root", "cap_ledge", "ledge_nook"]
+
+[fill]
+breather = 4
+pillarhall = 2
+corridor = 3
+stairhall = 2
+nook = 4
+twolevers = 1
+ambush = 1
+timeddoor = 1
+
+[items]
+seed = {look = "AncientSeed", name = "$dungeons_rootdeep_seed", description = "$dungeons_rootdeep_seed_desc"}
+heartseed = {look = "AncientSeed", name = "$dungeons_rootdeep_heartseed", description = "$dungeons_rootdeep_heartseed_desc"}
+
+# Enemies: what lives in a world-tree's roots, fitted to the land (a creature above the land's tier is never used): greylings and
+# greydwarfs where they live, the swamp's abomination as the elite there (the bosses' creature: the Sap-Warden, the Rotheart).
+[creatures.Meadows]
+melee = ["Greyling", "Greyling", "Skeleton_Meadows_noarcher"]
+ranged = ["Skeleton_Meadows"]
+elite = ["Greyling"]
+
+[creatures.BlackForest]
+melee = ["Greydwarf", "Greydwarf_Elite", "Skeleton_NoArcher"]
+ranged = ["Greydwarf_Shaman", "Skeleton"]
+flying = ["Ghost"]
+elite = ["Greydwarf_Elite"]
+
+[creatures.Ocean]
+melee = ["Greydwarf", "Greydwarf_Elite", "Skeleton_NoArcher"]
+ranged = ["Greydwarf_Shaman", "Skeleton"]
+flying = ["Ghost"]
+elite = ["Greydwarf_Elite"]
+
+[creatures.Swamp]
+melee = ["Draugr", "Blob", "Skeleton_Swamps_noarcher"]
+ranged = ["Draugr_Ranged", "Skeleton_Swamps"]
+flying = ["Bat_Swamp"]
+elite = ["Abomination"]
+
+[creatures.Mountain]
+melee = ["Ulv", "Fenring", "Skeleton_Mountains_noarcher"]
+ranged = ["Fenring_Cultist", "Skeleton_Mountains"]
+flying = ["Bat"]
+elite = ["Fenring"]
+
+[creatures.Plains]
+melee = ["Goblin", "GoblinBrute"]
+ranged = ["GoblinArcher", "GoblinShaman"]
+flying = ["Deathsquito"]
+elite = ["GoblinBrute"]
+
+[creatures.Mistlands]
+melee = ["Seeker", "Tick", "SeekerBrute"]
+flying = ["Seeker"]
+elite = ["SeekerBrute"]
+
+[creatures.AshLands]
+melee = ["Charred_Melee", "Charred_Twitcher"]
+ranged = ["Charred_Archer", "Charred_Mage"]
+flying = ["Volture"]
+elite = ["Charred_Melee"]
+
+[creatures.DeepNorth]
+melee = ["Greydwarf_Frozen", "Skeleton_DeepNorth", "GoblinDeepNorth"]
+ranged = ["Greydwarf_Shaman_Frozen"]
+flying = ["Bat"]
+elite = ["GoblinDeepNorth"]
+
+[creatures.default]
+melee = ["Greydwarf", "Greydwarf_Elite", "Skeleton_NoArcher"]
+ranged = ["Greydwarf_Shaman", "Skeleton"]
+flying = ["Ghost"]
+elite = ["Greydwarf_Elite"]

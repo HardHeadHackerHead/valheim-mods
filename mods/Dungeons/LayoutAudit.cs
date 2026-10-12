@@ -194,7 +194,8 @@ namespace Dungeons
             }
             bool At(HashSet<KeyValuePair<int, int>> reach, int room, IEnumerable<string> ids) =>
                 Enumerable.Range(0, l.Rooms[room].Def.Doorways.Count).Any(d => (ids == null || ids.Contains(l.Rooms[room].Def.Doorways[d].Id)) && reach.Contains(new KeyValuePair<int, int>(room, d)));
-            // What happens by itself where the player gets: encounters won, free triggers, until nothing more changes.
+            // What happens by itself where the player gets: encounters won (a fight room's waves start as the player walks in), until
+            // nothing more changes.
             void Win()
             {
                 for (bool more = true; more;)
@@ -211,23 +212,69 @@ namespace Dungeons
                             WinEncounter(r.Index + "." + e.Id);
                             more = true;
                         }
-                    foreach (TriggerSolve.Rule r in tm.Rules.Where(x => !x.Cost && x.Into == null))
+                }
+            }
+            // The free triggers (no use of the player's: a sequence done, all braziers lit, one burning out) are moves the solver may
+            // make or not, so here too: before each step, the fewest of them that let it be made (none if it can be made already), a
+            // search over what they lead to. Fired all at once instead, one going out (a brazier's burn-out) undid what the solution
+            // needed lit.
+            var free = tm.Rules.Where(x => !x.Cost && x.Into == null).ToList();
+            var ruleIndex = tm.Rules.Select((r, i) => new KeyValuePair<TriggerSolve.Rule, int>(r, i)).ToDictionary(x => x.Key, x => x.Value);
+            string Sig() => string.Join(",", state.OrderBy(x => x.Key, StringComparer.Ordinal).Select(x => x.Value)) + "|"
+                + string.Join(",", items.OrderBy(x => x.Key, StringComparer.Ordinal).Select(x => x.Key + "=" + x.Value)) + "|"
+                + string.Join(",", done.Select(r => ruleIndex[r]).OrderBy(x => x)) + "|" + string.Join(",", won.OrderBy(x => x, StringComparer.Ordinal));
+            object[] Save() => new object[] { new Dictionary<string, int>(state), new Dictionary<string, int>(items), new HashSet<TriggerSolve.Rule>(done), new HashSet<string>(won) };
+            void Load(object[] s)
+            {
+                state.Clear(); foreach (var x in (Dictionary<string, int>)s[0]) state[x.Key] = x.Value;
+                items.Clear(); foreach (var x in (Dictionary<string, int>)s[1]) items[x.Key] = x.Value;
+                done.Clear(); done.UnionWith((HashSet<TriggerSolve.Rule>)s[2]);
+                won.Clear(); won.UnionWith((HashSet<string>)s[3]);
+            }
+            bool Settle(Func<bool> ok)
+            {
+                Win();
+                if (ok() || free.Count == 0) return ok();
+                object[] start = Save();
+                var seen = new HashSet<string> { Sig() };
+                var todo = new Queue<object[]>();
+                todo.Enqueue(start);
+                for (int n = 0; todo.Count > 0 && n < 4000; n++)
+                {
+                    object[] from = todo.Dequeue();
+                    Load(from);
+                    HashSet<KeyValuePair<int, int>> here = Walk(l, state, at, tm);
+                    foreach (TriggerSolve.Rule r in free)
                     {
                         if (r.Room < 0 || (!r.Anywhere && !At(here, r.Room, r.Nodes))) continue;
-                        string before = string.Join(",", state.Values) + "|" + string.Join(",", items.Values) + "|" + done.Count;
+                        Load(from);
                         var s0 = new Dictionary<string, int>(state);
                         if (!Fire(r, s0)) continue;
                         Into(r.Key, s0);
-                        if (string.Join(",", state.Values) + "|" + string.Join(",", items.Values) + "|" + done.Count != before) more = true;
+                        Win();
+                        if (!seen.Add(Sig())) continue;
+                        if (ok()) return true;
+                        todo.Enqueue(Save());
                     }
                 }
+                Load(start);
+                return false;
             }
             foreach (string key in l.Solution)
             {
-                Win();
-                HashSet<KeyValuePair<int, int>> reach = Walk(l, state, at, tm);
                 MechDef lever = Layouts.Mech(l, key, out int room);
                 bool ownRule = tm.Rules.Any(r => r.Key == key && r.Cost && r.Into == null);   // (a lock's or pedestal's own use: its rule, not a pull)
+                bool Usable()
+                {
+                    HashSet<KeyValuePair<int, int>> r0 = Walk(l, state, at, tm);
+                    if (lever != null && !ownRule)
+                        return Enumerable.Range(0, l.Rooms[room].Def.Doorways.Count)
+                            .Any(d => (lever.ReachedFrom == null || l.Rooms[room].Def.Doorways[d].Id == lever.ReachedFrom) && r0.Contains(new KeyValuePair<int, int>(room, d)));
+                    return tm.Rules.Any(r => r.Key == key && r.Cost && r.Into == null && (r.Anywhere || At(r0, r.Room, r.Nodes)) && Holds(r.Guard, state)
+                        && !done.Contains(r) && r.Needs.All(n => (items.TryGetValue(n.Key, out int c) ? c : 0) >= n.Value));
+                }
+                Settle(Usable);
+                HashSet<KeyValuePair<int, int>> reach = Walk(l, state, at, tm);
                 if (lever != null && !ownRule)
                 {
                     List<Doorway> doorways = l.Rooms[room].Def.Doorways;
@@ -250,8 +297,8 @@ namespace Dungeons
                 Fire(rule, s1);
                 Into(rule.Key, s1);
             }
-            Win();
             int endRoom = l.Rooms.FindIndex(r => r.Step == Layouts.StepName(l.Pack.Plan.Last()));
+            Settle(() => endRoom < 0 || Walk(l, state, at, tm).Any(p => p.Key == endRoom));
             if (ReplayDebug != null)   // (what the replay ended with: the harness's REPLAYDEBUG)
                 ReplayDebug($"REPLAY seed {l.Seed}: at {at}, states {string.Join(" ", state.Select(x => x.Key + "=" + x.Value))}, items {string.Join(" ", items.Select(x => x.Key + "=" + x.Value))}, " +
                                   $"rooms reached {string.Join(" ", Walk(l, state, at, tm).Select(x => x.Key).Distinct().OrderBy(x => x))}, end {endRoom}");

@@ -151,6 +151,12 @@ class Theme:
             c = a + d * ((i + 0.5) / n)
             box(holder, self.p("grate"), (c[0], (bottom + top) / 2, c[2]), (length / n + 0.02, top - bottom, thickness), yaw=yaw)
 
+    def trap_head(self, holder, centre, size):
+        """What a slamming trap brings down (the corridor's hammers): `size` (x, y, z) about `centre` in the trap's frame, its foot
+        what strikes. Default: a block of the theme's stone. A theme may hang anything there (spikes, a bell...): the trap, its poses,
+        area and warning stay the recipe's."""
+        box(holder, self.p("block"), centre, size)
+
     def pillar(self, room, at, height, width=1.2):
         """A pillar standing at `at`, `height` tall; returns its footprint (x, z)."""
         room.fill(self.p("pillar"), (at[0], at[1] + height / 2, at[2]), (width, height, width))

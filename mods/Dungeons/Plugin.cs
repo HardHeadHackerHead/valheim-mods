@@ -27,7 +27,7 @@ namespace Dungeons
     {
         public const string Guid = "com.quad.dungeons";
         public const string Name = "Dungeons";
-        public const string Version = "0.3.3";
+        public const string Version = "0.4.0";
 
         internal static Plugin Instance;
         internal static ManualLogSource Log;
@@ -61,11 +61,18 @@ namespace Dungeons
         {
             Synced?.Update();
             Tools.Update();
+            long timed = PerfTiming.Begin();   // (`dungeon perf`'s timing: PerfTiming.cs)
             Dungeons.Update();
+            PerfTiming.EndUpdate(timed);
             HotReload.Update();   // (the last copy's builds, after a reload: removed once this copy's stand)
         }
 
-        private void FixedUpdate() => Dungeons.FixedUpdate();
+        private void FixedUpdate()
+        {
+            long timed = PerfTiming.Begin();
+            Dungeons.FixedUpdate();
+            PerfTiming.EndFixed(timed);
+        }
 
         private void OnDestroy()
         {
@@ -87,6 +94,7 @@ namespace Dungeons
             Builder.UnregisterItems();
             PackWatch.Dispose();
             Synced?.Dispose();
+            PerfTiming.Stop();
             DHack.Shared.Translations.Unload();
             if (Instance == this) Instance = null;
         }

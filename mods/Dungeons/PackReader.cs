@@ -329,6 +329,7 @@ namespace Dungeons
             }
             if (mech.Cycle < 0f) { problems.Add($"{where} mechanism {mech.Id}: a cycle below 0 (taken as none)"); mech.Cycle = 0f; }
             TriggerReader.Block(m, mech, problems, where);   // (dungeon-triggers' blocks: before the states are counted)
+            BossReader.ReadBeams(m, mech, problems, where);   // (dungeon-boss: "beams" on any mechanism, PackReaderBoss.cs)
             return mech;
         }
 
@@ -336,6 +337,7 @@ namespace Dungeons
         private static void CheckMechs(RoomDef def, List<string> problems, string packName)
         {
             string where = $"{packName}: {def.Name}";
+            BossReader.CheckBeams(def, problems, where);   // (dungeon-boss: beams naming mechanisms the room doesn't have)
             bool Door(string id) => def.Doorways.Any(d => d.Id == id);
             foreach (PartDef p in def.Parts.Where(p => p.Spin != Vector3.zero))
                 problems.Add($"{where}: part {p.Prefab} has \"spin\", but spin only turns in a mechanism's parts (a room's parts are fixed scenery)");
@@ -375,8 +377,10 @@ namespace Dungeons
                     EncounterDef e = m.Encounter;
                     if (e.StartOn != "enter" && e.StartOn != "wire" && e.StartOn != "open") problems.Add($"{me}: startOn {e.StartOn} (\"enter\", \"wire\" or \"open\")");
                     if (e.StartOn == "open" && e.Chest == Vector3.zero) problems.Add($"{me}: starts when its chest is opened, but has no \"chest\"");
-                    if (e.StartOn == "wire" && !def.Mechs.Any(o => o.Wires.Any(w => w.Do == "start" && w.Target == m.Id)))
-                        problems.Add($"{me}: starts on a wire, but nothing in its room is wired to \"start\" it");
+                    // (a lever's or plate's wire, or a trigger's {"start": id} in the same room)
+                    if (e.StartOn == "wire" && !def.Mechs.Any(o => o.Wires.Any(w => w.Do == "start" && w.Target == m.Id))
+                        && !def.Triggers.Any(t => t.Do.Any(a => a.Verb == TriggerActions.Start && a.Target == m.Id)))
+                        problems.Add($"{me}: starts on a wire, but nothing in its room is wired to \"start\" it (a wire, or a trigger's \"start\")");
                     foreach (string id in e.Lock.Where(id => !def.Mechs.Any(o => o.Id == id))) problems.Add($"{me}: locks {id}, which isn't a mechanism in its room");
                     if (e.HoldBy != null && !def.Mechs.Any(o => o.Id == e.HoldBy && o.Kind == "plate")) problems.Add($"{me}: is held by {e.HoldBy}, which isn't a plate in its room");
                     if (e.LockLever != null && !def.Mechs.Any(o => o.Id == e.LockLever && o.Kind == "lever")) problems.Add($"{me}: lockLever {e.LockLever} isn't a lever in its room");

@@ -320,10 +320,13 @@ namespace Dungeons
         private void EncounterTick()
         {
             if (Time.time < _nextEncounter) return;
-            _nextEncounter = Time.time + EncounterEvery;
+            bool someone = SomeoneInside();
+            _nextEncounter = Time.time + (someone ? EncounterEvery : 1f);   // (nobody in the dungeon: a fight going on ticks once a second)
             foreach (Mech m in All)
             {
                 if (m.Def.Encounter == null || m.Base == null) continue;
+                // nobody in the dungeon: an idle fight can't start (a player steps in, or opens its chest); one going on still ticks (a wipe)
+                if (!someone && EncounterOf(m).State == EncounterRecord.Idle) continue;
                 try { TickOne(m); }
                 catch (Exception e) { WarnOnce($"Encounter {m.Key}: {e.Message}"); }
             }
@@ -398,17 +401,28 @@ namespace Dungeons
             SpawnWave(m, r.Wave);
         }
 
+        /// <summary>Its chest (within 2 m of Chest) is open. The chest is found once (and looked for again every 2 s while there's none):
+        /// searching every object of the scene each tick, for every guard of every dungeon, cost the owner tens of ms a frame.</summary>
         private bool ChestOpened(Mech m)
         {
-            Vector3 at = RoomPoint(m, m.Def.Encounter.Chest);
-            foreach (Container c in Object.FindObjectsByType<Container>(FindObjectsSortMode.None))
+            if (m.Chest == null && Time.time >= m.NextChestLook)
             {
-                if (c == null || (c.transform.position - at).sqrMagnitude > 4f) continue;
-                ZNetView v = c.GetComponent<ZNetView>();
-                if (v != null && v.IsValid() && v.GetZDO().GetInt(ZDOVars.s_inUse) == 1) return true;
+                m.NextChestLook = Time.time + 2f;
+                Vector3 at = RoomPoint(m, m.Def.Encounter.Chest);
+                foreach (ZNetView v in Instances(ZNetScene.instance).Values)
+                {
+                    if (v == null || (v.transform.position - at).sqrMagnitude > 4f) continue;
+                    Container c = v.GetComponent<Container>();
+                    if (c != null) { m.Chest = c; break; }
+                }
             }
-            return false;
+            if (m.Chest == null) return false;
+            ZNetView view = m.Chest.GetComponent<ZNetView>();
+            return view != null && view.IsValid() && view.GetZDO().GetInt(ZDOVars.s_inUse) == 1;
         }
+
+        private static readonly HarmonyLib.AccessTools.FieldRef<ZNetScene, Dictionary<ZDO, ZNetView>> Instances =
+            HarmonyLib.AccessTools.FieldRefAccess<ZNetScene, Dictionary<ZDO, ZNetView>>("m_instances");
 
         // ---- every game: what the players see and hear
 

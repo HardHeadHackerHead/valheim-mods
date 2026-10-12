@@ -81,7 +81,7 @@ to it:
 8. **The checks, offline:** `walk_check.py`, `prop_check.py`, `lever_check.py` and `box_check.py` (every part, in every pose, inside its
    room's box) on the pack, then the harness until seeds lay out and pass (SKILL.md), then the map for a few seeds (`tools/dungeonmap`:
    map.md). Then **the gate**, which runs all of it and the variety checks: `python tools/dungeons/make_pack.py specs/<name>.toml`
-   (below). A kind is done when it passes.
+   (below), with `--seeds 50` while you work and the full 1000 once at the end. A kind is done when the full run passes.
 9. **In the game:** `dungeon spawn`, stand by the entrance, then `dungeon tour` on a seed or two (below). Look at every room's views, fix,
    tour again. Then `dungeon mapshot all` on the built one: does the map match what the tour showed? The tour and the map are for
    looking; they prove nothing about solvability: walk it, or `dungeon solve`, and the gate. `dungeon test <pack>` runs the gate's
@@ -136,8 +136,11 @@ far_step = "guardian1"
 
 ### Themes (`tools/dungeons/authoring/themes/<theme>.py`)
 
-A theme is a class on `authoring/theme.py`'s base: **architecture, not textures**. Two exist: `giant` (the Shifting Halls: vast, 12 m
-storeys) and `dvergr` (tight and many-levelled). A theme sets:
+A theme is a class on `authoring/theme.py`'s base: **architecture, not textures**. Among them: `giant` (the Shifting Halls: vast,
+12 m storeys), `ossuary` (the Bone Choir: a cathedral inside a giant skeleton, ribcage vaults), `tidevault` (the Drowned Vault: a drained sea temple of
+sea-rock and wrecked longships), `rimeforge` (Rimeforge Depths: frozen giant forges in a glacier), `roothollow` (Rootdeep Hollow: earth, dark rock and great roots under
+a dying world-tree), `orrery` (the Starfall Orrery: a star-watchers' observatory of pale stone, black marble and silver), and `dvergr` (the test theme: tight and
+many-levelled); more are in `authoring/themes/` (SKILL.md lists the installed kinds). A theme sets:
 - **its scale**: `door_w`, `door_h`, `wall_t`, `floor_t`, `storey`, `height`, `grid`, `step_rise`, `step_run`, `way_width` (the clear way
   kept between doorways, 3 m by default), `lever_base`, `panel` (the largest wall, floor or ceiling piece before textures smear: Dvergr
   marble 4 m, giant grausten 10 m), and optionally `pit_gaps` (a pit's widths, always more than the 6 m jump);
@@ -178,7 +181,8 @@ A palette is a theme's chosen list of the game's prefabs that are known to work 
     `solid`, `lights` (range, intensity, colour, lit, lod), `fire`, `particles`, `item`, `networked`, `gives`, `physics`, `notes`,
     `render`, `height` (metres at scale 1), `upright` (`flat`: thin along y, a floor tile to stand up as a wall; `upright`: a wall piece
     used as it is; `block`), `safe` (fine as stripped scenery), `saved_only` (chests, pickables, spawners: only as saved parts),
-    `climb` (`ledges` and `top`: below).
+    `climb` (`ledges`, `top` and `top_skilled`: below), `game_dungeon` (the game's own dungeon types whose rooms use the piece, worked
+    out from the room catalogue) with a "recognisable" note when it has any.
   - `tier` is the land the piece **looks** like: it decides nothing about enemies or loot (those follow the entrance's biome), so a Deep
     North-looking hall can stand in the Mountains.
   - `roles`: `{role: {pieces: [default, variants...], how}}`, in the recipes' words: `wall`, `wall_alt`, `floor`, `ceiling`, `trim`,
@@ -195,6 +199,12 @@ A palette is a theme's chosen list of the game's prefabs that are known to work 
 - **Make the newness from combination and scale, not invented assets.** Build from the game's own families: they share materials and
   light. The giants' vault is Ashlands grausten, Mistlands black marble, Mórk halla iron and statues and charred gears, at 2 to 17 times
   their size, under cold blue light. Nothing in the game looks like it, yet every piece is the game's.
+- **Look like nothing in the game: watch `game_dungeon`.** A piece flagged with a game dungeon (`MorkHalla`, `AshlandRuins`,
+  `FortressRuins`...) is one players know from there. Lean on unflagged pieces, or mix flagged ones from different places so no room
+  reads as that game dungeon (the user's rule: "look like it's not something in the game at all... but it belongs here").
+- **Before a piece is in a palette, probe it:** `python tools/dungeons/palette_tool.py --probe <names or patterns>` (exact names or
+  regular expressions over the game's prefabs, e.g. `--probe Rock_ "^piece_jute"`) gives the same facts for any game prefab, one JSON line
+  each, with a picture: size, origin, solidity, climb at Jump 0 and 100, lights, `game_dungeon`, and whether it's on the avoid list.
 - **One material family dominant** (walls, floors), **one accent family** (trim, doors), **one light colour**. Two or three families at
   most, or it reads as a junk pile.
 - **Contrast a new theme with the others on scale, light and material.** Dvergr is tight and human-sized, black marble and Yggdrasil
@@ -360,8 +370,14 @@ fog that shows the way on (dashed doorways), not dead walls.
 - `<spec>`: a `.toml` spec (built with `make_dungeon.py`), a generator `.py`, or a ready pack `.json`.
 - Output in `DIR` (default `tools/dungeons/bin/gate/out/<pack>`, not committed): `report.txt`; `maps/seed<N>/dungeon-map-<floor>.png`
   with `legend.png`; `rooms/` (if the generator draws); `layouts.jsonl`; and for a `.toml`, `<name>.json` and `variety_report.json`.
-- `--install` copies the built pack into `mods/Dungeons/packs` only after every check passes.
-- It stops at the first FAIL (`--keep-going` runs them all). Shifting Halls takes about 80 s.
+- **While you work, `--seeds 50`; the full 1000 once, at the end.** 50 seeds catch most problems in about a third of the time
+  (Shifting Halls: about 90 s at 50 seeds, about 5 min at 1000 with other work running). The final run is the default 1000 seeds: it
+  catches the rare ones (a fault in 1 layout of 300 is found 96% of the time at 1000, 15% at 50) and is the only run that counts.
+  Variety's percentages over 50 layouts are rough, so a pack near a limit can pass at 50 and fail at 1000. Fix what the final run
+  finds, then run 1000 again.
+- `--install` copies the built pack into `mods/Dungeons/packs` only after every check passes, and only on a full run (it refuses
+  `--seeds` under 1000).
+- It stops at the first FAIL (`--keep-going` runs them all).
 - Code: `make_pack.py`, `variety.py`, the harness (`Program.cs`, `GapCheck.cs`), and `mods/Dungeons/LayoutAudit.cs` (the per-layout
   checks and the replay, shared with `dungeon test`).
 

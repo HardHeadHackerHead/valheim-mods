@@ -36,6 +36,7 @@ namespace Dungeons
         public double FlickerAt;        // when the shield last flickered (its conditions held, not for the last time)
         public double HealAt;           // when a phase's second wind last healed it
         public double ClampUntil;       // a weakTo mechanism coming down on it holds it in place until it lands (then this is its landing + 0.15)
+        public int ClampWeak = -1;      // which weakTo holds it
         public double DeadAt;           // when it fell (0: alive)
         public int DeathBeats;          // death beats whose wires the owner fired
         public List<double> WeakSeen = new List<double>();    // each weakTo: the arrival it last looked at
@@ -70,6 +71,7 @@ namespace Dungeons
                     WeakSeen = Doubles(f[20]), LeapArc = (float)D(f[21]),
                     ShieldCount = f.Length > 22 ? I(f[22]) : 0, FlickerAt = f.Length > 23 ? D(f[23]) : 0.0,
                     HealAt = f.Length > 24 ? D(f[24]) : 0.0, ClampUntil = f.Length > 25 ? D(f[25]) : 0.0,
+                    ClampWeak = f.Length > 26 ? I(f[26]) : -1,
                 };
                 if (r.Enrage <= 0f) r.Enrage = 1f;
                 all[entry.Substring(0, eq)] = r;
@@ -92,7 +94,7 @@ namespace Dungeons
                     r.Cast.ToString(CultureInfo.InvariantCulture), S(r.CastAt), Vecs(r.CastPts), Doubles(r.Next), S(r.LeapAt),
                     Vecs(new[] { r.LeapFrom }), Vecs(new[] { r.LeapTo }), S(r.LeapDur), S(r.DeadAt), r.DeathBeats.ToString(CultureInfo.InvariantCulture),
                     Doubles(r.WeakSeen), S(r.LeapArc), r.ShieldCount.ToString(CultureInfo.InvariantCulture), S(r.FlickerAt), S(r.HealAt),
-                    S(r.ClampUntil),
+                    S(r.ClampUntil), r.ClampWeak.ToString(CultureInfo.InvariantCulture),
                 }));
             }
             return sb.ToString();

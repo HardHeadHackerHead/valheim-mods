@@ -22,11 +22,11 @@ namespace Dungeons
     ///                              "phases": [0, 1], "adds": {"melee": 2}, "points": [[x, y, z]], "wires": [...],
     ///                              "sound": "...", "fx": "...", "cue": "..." } ],
     ///             "weakTo": [ { "mech": "hammer", "state": 1, "area": [5, 4, 5], "areaAt": [0, -6, 0], "share": 0.1,
-    ///                           "stagger": true, "breaks": true, "hurt": 2, "mark": true } ],
+    ///                           "stagger": true, "breaks": true, "hurt": 2, "mark": true, "held": "$..." } ],
     ///             "phases": [ { "at": 0.66, "wires": [...], "adds": {...}, "use": ["slam", "rain"], "leap": [x, y, z], "enrage": 1.25, "healTo": 0.55,
     ///                           "banner": "$...", "message": "$...", "sound": "...", "shake": 0.5,
     ///                           "shield": { "take": 0, "until": [{"mech": "brazier1", "state": 1}], "seconds": 60, "hold": true,
-    ///                                       "breakShare": 0.08, "breakWires": [...], "hint": "$...", "times": 1 } } ] }
+    ///                                       "breakShare": 0.08, "breakWires": [...], "hint": "$...", "times": 1, "flicker": "$..." } } ] }
     ///   a beat: { "at": 1.5, "wires": [...], "sound": "...", "fx": "...", "where": [x, y, z], "shake": 0.4, "banner": true, "message": "$..." }
     /// Points (leap, where, summon points) are in the room's frame, on a floor. Wires are a mechanism of the room (id) with "next" or
     /// "set:n", as a boss phase's.
@@ -111,6 +111,7 @@ namespace Dungeons
                     Breaks = (bool?)w["breaks"] ?? true,
                     Hurt = F(w["hurt"], 2f),
                     Mark = (bool?)w["mark"] ?? true,
+                    Held = (string)w["held"],
                 });
             // (its phases in the boss, or, as one draft wrote them, on the encounter)
             foreach (JObject ph in Objects(b["phases"] ?? mech["phases"]))
@@ -137,6 +138,7 @@ namespace Dungeons
                         BreakShare = F(s["breakShare"], 0.08f),
                         Hint = (string)s["hint"],
                         Times = (int?)s["times"] ?? 1,
+                        Flicker = (string)s["flicker"],
                     };
                     foreach (JObject c in Objects(s["until"])) phase.Shield.Until.Add(new BossCond { Mech = (string)c["mech"], State = (int?)c["state"] ?? 1 });
                     phase.Shield.BreakWires.AddRange(Wires(s["breakWires"]));
@@ -179,7 +181,13 @@ namespace Dungeons
                     if (s.Times < 1 || s.Times > 5) problems.Add($"{me}: a shield's times {s.Times} (1 to 5)");
                     if (s.Until.Count == 0 && !b.WeakTo.Any(w => w.Breaks))
                         problems.Add($"{me}: a shield with nothing to break it (no \"until\", no weakTo that breaks): it only fails after its seconds");
-                    foreach (BossCond c in s.Until) Cond(def, c.Mech, c.State, $"{me}: a shield's until", problems);
+                    foreach (BossCond c in s.Until)
+                    {
+                        Cond(def, c.Mech, c.State, $"{me}: a shield's until", problems);
+                        MechDef cm = def.Mechs.FirstOrDefault(o => o.Id == c.Mech);
+                        if (cm != null && cm.Start == c.State)
+                            problems.Add($"{me}: a shield's until wants {c.Mech} in state {c.State}, its start: put back there as the shield comes up, it would hold at once");
+                    }
                     CheckWires(def, s.BreakWires, $"{me}: a shield's breakWires", problems);
                 }
             }
@@ -281,6 +289,49 @@ namespace Dungeons
             Vector3 half = def.Size * 0.5f;
             if (def.Size != Vector3.zero && (Math.Abs(p.x) > half.x || Math.Abs(p.y) > half.y || Math.Abs(p.z) > half.z))
                 problems.Add($"{what} {p} is outside the room");
+        }
+
+        /// <summary>Any mechanism's "beams" (BeamDef; PackReader calls it for each mechanism, after its states are known):
+        ///   "beams": [ { "from": [x, y, z], "to": [x, y, z], "fromMech": "id", "toMech": "id", "states": [1], "colour": [r, g, b],
+        ///                "width": 0.3, "light": 4 } ]
+        /// "states": this mechanism's states it shows in (required). With fromMech / toMech, that point is in that mechanism's moving
+        /// part's frame (a mirror's face), else in the room's.</summary>
+        public static void ReadBeams(JObject m, MechDef mech, List<string> problems, string where)
+        {
+            if (!(m["beams"] is JArray arr)) return;
+            var list = new List<BeamDef>();
+            int states = Layouts.States(mech);
+            foreach (JObject b in arr.OfType<JObject>())
+            {
+                var beam = new BeamDef
+                {
+                    From = b["from"] is JArray f ? Vec(f) : Vector3.zero,
+                    To = b["to"] is JArray t ? Vec(t) : Vector3.zero,
+                    FromMech = (string)b["fromMech"],
+                    ToMech = (string)b["toMech"],
+                    Colour = Col(b["colour"], new Color(1f, 0.85f, 0.45f)),
+                    Width = F(b["width"], 0.3f),
+                    Light = F(b["light"], 4f),
+                };
+                if (b["states"] is JArray st) beam.States.AddRange(st.Where(Num).Select(x => (int)x));
+                string me = $"{where} mechanism {mech.Id}: a beam";
+                if (beam.States.Count == 0) problems.Add($"{me} has no \"states\" (the states of {mech.Id} it shows in)");
+                foreach (int s in beam.States.Where(s => s < 0 || s >= states)) problems.Add($"{me} shows in state {s}, but {mech.Id} has {states}");
+                if (beam.Width <= 0f || beam.Width > 3f) problems.Add($"{me}: width {beam.Width} (over 0, 3 at most)");
+                if (beam.Light < 0f || beam.Light > 20f) problems.Add($"{me}: light {beam.Light} (0 to 20)");
+                if (beam.FromMech == null && beam.ToMech == null && (beam.To - beam.From).sqrMagnitude < 0.01f) problems.Add($"{me} from and to the same point");
+                list.Add(beam);
+            }
+            Beams.Set(mech, list);
+        }
+
+        /// <summary>A room's beams naming mechanisms it doesn't have (CheckMechs calls it for each room).</summary>
+        public static void CheckBeams(RoomDef def, List<string> problems, string where)
+        {
+            foreach (MechDef m in def.Mechs)
+                foreach (BeamDef b in Beams.Get(m) ?? new List<BeamDef>())
+                    foreach (string id in new[] { b.FromMech, b.ToMech }.Where(x => x != null && !def.Mechs.Any(o => o.Id == x)))
+                        problems.Add($"{where} mechanism {m.Id}: a beam names {id}, which isn't a mechanism in its room");
         }
 
         // ---- reading

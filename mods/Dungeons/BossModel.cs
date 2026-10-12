@@ -4,6 +4,34 @@ using UnityEngine;
 
 namespace Dungeons
 {
+    /// <summary>A beam of light between two points, shown while its mechanism is in some states (a mirror aimed, a lens lit, a soul tether):
+    /// "beams" on any mechanism. Seen only: never solid, never in a check. Points are the room's frame, or with fromMech / toMech that
+    /// mechanism's moving part's frame (it follows it).</summary>
+    internal class BeamDef
+    {
+        public Vector3 From, To;
+        public string FromMech, ToMech;  // null: the point is in the room's frame
+        public List<int> States = new List<int>();   // the carrying mechanism's states it shows in
+        public Color Colour = new Color(1f, 0.85f, 0.45f);
+        public float Width = 0.3f;
+        public float Light = 4f;         // a light at its far end, this range (0: none)
+    }
+
+    /// <summary>The beams of each mechanism (MechDef isn't ours to add a field to: kept beside it).</summary>
+    internal static class Beams
+    {
+        private static readonly System.Runtime.CompilerServices.ConditionalWeakTable<MechDef, List<BeamDef>> Of =
+            new System.Runtime.CompilerServices.ConditionalWeakTable<MechDef, List<BeamDef>>();
+
+        public static List<BeamDef> Get(MechDef m) => m != null && Of.TryGetValue(m, out List<BeamDef> list) ? list : null;
+
+        public static void Set(MechDef m, List<BeamDef> list)
+        {
+            Of.Remove(m);
+            if (list != null && list.Count > 0) Of.Add(m, list);
+        }
+    }
+
     // The boss toolkit's data (an encounter's "boss" in a pack): read by PackReaderBoss.cs, run by BossFight.cs (the owner) and
     // BossShow.cs (every game). Plain classes, no game objects, so the harness can read and check them outside the game.
 
@@ -129,8 +157,9 @@ namespace Dungeons
         public float BreakShare = 0.08f;
         public List<Wire> BreakWires = new List<Wire>();
         public string Hint;             // a centre message (a $ key) for the players in the fight when it comes up
-        public int Times = 1;           // its conditions must hold this many times (each time but the last they're put back, and it
-                                        // flickers on)
+        public int Times = 1;           // its conditions must hold this many times (each time but the last they're put back, to their
+                                        // start, and it flickers on)
+        public string Flicker;          // the message when it flickers (a $ key, {0} its name); null: the toolkit's own
     }
 
     internal class BossCond
@@ -153,5 +182,6 @@ namespace Dungeons
         public bool Breaks = true;
         public float Hurt = 2f;
         public bool Mark = true;        // an amber ring on the floor round its area while the fight is on: where to lure the boss
+        public string Held;             // the message when it comes down with the boss under it and holds it (a $ key); null: the toolkit's
     }
 }

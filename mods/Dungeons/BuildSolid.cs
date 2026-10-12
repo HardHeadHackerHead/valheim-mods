@@ -23,6 +23,10 @@ namespace Dungeons
         /// the one thing the game makes non-solid because it's a pickup, which as scenery it isn't.</summary>
         private static readonly string[] PassThrough = { "item" };
 
+        /// <summary>Items that are hoops, not discs (their meshes can't be read, so their shape is told here): a ring of boxes round the rim,
+        /// open in the middle (pack-starfall's armillary hoops are BarrelRings scaled up to 18 m).</summary>
+        private static readonly HashSet<string> RingItems = new HashSet<string> { "BarrelRings" };
+
         private static HashSet<int> _passLayers;
         private static int _solidLayer = -2;
         private static Mesh _disc;
@@ -84,6 +88,25 @@ namespace Dungeons
             bool disc = t < 0.5f * Mathf.Min(a1, a2) && Mathf.Min(a1, a2) > 0.7f * Mathf.Max(a1, a2);
             GameObject child = SolidChild(root, solid);
             child.transform.localPosition = local.center;
+            if (disc && RingItems.Contains(go.name))
+            {
+                // a hoop: 16 boxes round the rim, each a little longer than its arc, a tenth of the radius wide
+                child.transform.localRotation = thin == 0 ? Quaternion.Euler(0f, 0f, 90f) : thin == 2 ? Quaternion.Euler(90f, 0f, 0f) : Quaternion.identity;
+                float r = 0.25f * (a1 + a2) * 0.95f;    // (near round: the disc test above)
+                const int n = 16;
+                for (int i = 0; i < n; i++)
+                {
+                    // (a BoxCollider can't be turned on its own object: each segment is a child, its x along the radius)
+                    float ang = i * 360f / n, rad = ang * Mathf.Deg2Rad;
+                    var piece = new GameObject("quaddungeon_solid_rim") { layer = solid };
+                    piece.transform.SetParent(child.transform, false);
+                    piece.transform.localPosition = new Vector3(Mathf.Cos(rad) * r, 0f, Mathf.Sin(rad) * r);
+                    piece.transform.localRotation = Quaternion.Euler(0f, -ang, 0f);
+                    BoxCollider box = piece.AddComponent<BoxCollider>();
+                    box.size = new Vector3(Mathf.Max(0.02f, 0.1f * r), Mathf.Max(t, 0.02f), 2f * Mathf.PI * r / n * 1.15f);
+                }
+                return;
+            }
             if (disc)
             {
                 // the unit disc lies along y: turn y onto the thin axis, and scale it to the item's box

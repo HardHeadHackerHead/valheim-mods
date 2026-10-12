@@ -1,0 +1,1515 @@
+{
+ "theme": "rimeforge",
+ "about": "Rimeforge Depths (pack-rimeforge): a frost-giants' smithy swallowed by a glacier, its forges still smouldering in the ice. Tall forge-naves, 8 m storeys on a 4 m grid, doorways 4 x 6 m. Walls: a black fortress-stone plinth to 3 m with faceted glacier ice above; black iron (flametal) ribs and beams; iron-bar portcullises; ember light against the ice's pale blue. The Ashlands stone and flametal are always mixed with the ice and the smithy's pieces so no room reads as the Charred Fortress. Builders: authoring/themes/rimeforge.py.",
+ "made_by": "tools/dungeons/palette_tool.py (curation in palettes/src/rimeforge.json; everything else read from the game's files)",
+ "fields": {
+  "role": "what it's for; structural roles (arch, block, ceiling, door, floor, gate, pillar, platform, rail, ramp, stair, wall) must be solid",
+  "mount": "ground: stands on a floor (prop_check.py); hang: needs something right above its origin or a chain on its top; wall: against a wall; span: rests on two supports; structure: what others stand on; free: anywhere",
+  "scale": "[min, max] that looks right and stays solid; stairs keep 1 (step height)",
+  "tier": "the land it looks like it belongs to (1 Meadows .. 8 Deep North): a look hint, not gameplay (enemies and loot follow the entrance's biome)",
+  "size/min/max/origin": "its shape's box in its own frame (m); origin: where its origin sits on that box (foot, top, centre...)",
+  "solid": "a character bumps into it in our rooms (the game's collision matrix; items fixed by BuildSolid.cs)",
+  "lights": "range, intensity, colour; lit: shines once stripped (a Fireplace's burning objects are switched on); lod: fades with distance",
+  "gives": "what the game would make it give or do: stripped as scenery; a networked prefab (networked) may be a Saved part instead",
+  "height": "its height at scale 1 (m)",
+  "climb": "ledges: its footholds (faces a player can stand on, no steeper than 38 degrees, with at least 0.1 m2 of them seen from above in a 0.2 m height band) as height ranges above its foot at scale 1, upright as the prefab stands; top: the highest reachable from the floor, each within a jump (1.6 m: gravity 20, jump force 8, Jump skill 0) of the last; top_skilled: the same with Jump skill 100 (3.14 m); 0: none. Scale the ledges by the part's y scale; a part turned off upright exposes other faces (treat a smooth bar or column as only its top end)",
+  "upright": "flat (thin along y: a floor tile, stand it up for a wall), upright (thin along x or z: a wall piece, use as it is), block",
+  "safe": "fine as stripped scenery; saved_only: works only as a Saved part (chests, pickables, spawners)",
+  "by_role": "{role: [default, variants...]}: the roles below without their notes",
+  "sets": "the dressing sets it suits (giant: ossuary, ruin, forge, archive, engine, armoury; Dvergr: store, workshop, tavern, barracks)",
+  "max_span": "a panel's longest side (m) before its stretched texture smears",
+  "game_dungeon": "the game's own dungeon themes whose rooms use it: a player knows it from there (a new kind should lean on pieces with none, or mix them so no room reads as that dungeon)",
+  "roles": "the same pieces by a theme recipe's roles (first = default, others = variants), with how each role's pieces are placed",
+  "render": "a picture in the mesh cache (C:\\Users\\DHack\\AppData\\Local\\Temp\\quaddungeon_meshes); the theme's contact sheet is palettes/rimeforge_sheet.png there"
+ },
+ "pieces": [
+  {
+   "prefab": "Ice_floor",
+   "role": "wall",
+   "look": "faceted glacier ice 4.7 x 2.1 x 4.7: upper walls (stood up), ice ceilings (turned over), ice blocks, ice walls in doorways, the push block",
+   "mount": "structure",
+   "scale": [
+    0.2,
+    3
+   ],
+   "tier": 8,
+   "notes": "flat along y: stand it up as a wall (euler -90); recognisable: a part of the game's own Cave and CaveHildir dungeons",
+   "exists": true,
+   "size": [
+    4.7,
+    2.1,
+    4.66
+   ],
+   "min": [
+    -2.33,
+    -1.05,
+    -2.29
+   ],
+   "max": [
+    2.38,
+    1.05,
+    2.37
+   ],
+   "origin": "centre",
+   "hollow": false,
+   "game_dungeon": [
+    "Cave",
+    "CaveHildir"
+   ],
+   "kinds": [
+    "ZNetView"
+   ],
+   "colliders": {
+    "static_solid": 1
+   },
+   "solid": true,
+   "solid_note": "",
+   "lights": [],
+   "fire": false,
+   "particles": 0,
+   "item": false,
+   "networked": true,
+   "gives": [],
+   "physics": false,
+   "usable": [],
+   "height": 2.1,
+   "upright": "flat",
+   "saved_only": false,
+   "safe": true,
+   "climb": {
+    "ledges": [
+     [
+      0.0,
+      0.2
+     ],
+     [
+      1.8,
+      2.2
+     ]
+    ],
+    "top": 2.2,
+    "top_skilled": 2.2
+   }
+  },
+  {
+   "prefab": "Ashlands_Fortress_Floor",
+   "role": "floor",
+   "look": "black fortress stone 2 x 1 x 2: floors, the 3 m wall plinth, solid levels, daises, lever bases, lintels",
+   "mount": "structure",
+   "scale": [
+    0.2,
+    8
+   ],
+   "tier": 7,
+   "notes": "as scenery its DropOnDestroyed is stripped: it gives nothing",
+   "exists": true,
+   "size": [
+    2.0,
+    1.0,
+    2.0
+   ],
+   "min": [
+    -1.0,
+    -0.5,
+    -1.0
+   ],
+   "max": [
+    1.0,
+    0.5,
+    1.0
+   ],
+   "origin": "centre",
+   "hollow": false,
+   "game_dungeon": [],
+   "kinds": [
+    "DropOnDestroyed",
+    "WearNTear",
+    "ZNetView"
+   ],
+   "colliders": {
+    "piece": 1
+   },
+   "solid": true,
+   "solid_note": "",
+   "lights": [],
+   "fire": false,
+   "particles": 0,
+   "item": false,
+   "networked": true,
+   "gives": [
+    "DropOnDestroyed"
+   ],
+   "physics": false,
+   "usable": [],
+   "height": 1.0,
+   "upright": "block",
+   "saved_only": false,
+   "safe": true,
+   "climb": {
+    "ledges": [
+     [
+      1.0,
+      1.2
+     ]
+    ],
+    "top": 1.2,
+    "top_skilled": 1.2
+   }
+  },
+  {
+   "prefab": "Piece_flametal_beam",
+   "role": "beam",
+   "look": "black iron beam 2 x 0.56 x 0.56 (along x): ceiling beams, lintels, rails; stood on end (euler z 90) as ribs, posts and door posts",
+   "mount": "span",
+   "scale": [
+    0.1,
+    20
+   ],
+   "tier": 7,
+   "notes": "stood on end it isn't a climber (the flametal pillar stretched was read as one); climbable: a player can stand 0.6 m above its foot (at scale 1; 0.6 m with Jump skill 100), so it's a stepping stone to a level up to about 2.2 m above its foot (3.7 m with Jump 100)",
+   "exists": true,
+   "size": [
+    2.0,
+    0.56,
+    0.56
+   ],
+   "min": [
+    -1.0,
+    -0.28,
+    -0.28
+   ],
+   "max": [
+    1.0,
+    0.28,
+    0.28
+   ],
+   "origin": "centre",
+   "hollow": false,
+   "game_dungeon": [],
+   "sets": [
+    "engine"
+   ],
+   "kinds": [
+    "Piece",
+    "WearNTear",
+    "ZNetView"
+   ],
+   "colliders": {
+    "piece": 2
+   },
+   "solid": true,
+   "solid_note": "",
+   "lights": [],
+   "fire": false,
+   "particles": 0,
+   "item": false,
+   "networked": true,
+   "gives": [],
+   "physics": false,
+   "usable": [],
+   "height": 0.56,
+   "upright": "flat",
+   "saved_only": false,
+   "safe": true,
+   "climb": {
+    "ledges": [
+     [
+      0.2,
+      0.6
+     ]
+    ],
+    "top": 0.6,
+    "top_skilled": 0.6
+   }
+  },
+  {
+   "prefab": "Morkhalla_GateDoor",
+   "role": "door_leaf",
+   "look": "iron bars 4.6 x 7.6 x 0.1: portcullises, end caps",
+   "mount": "structure",
+   "scale": [
+    0.5,
+    1.5
+   ],
+   "tier": 6,
+   "notes": "recognisable: a part of the game's own MorkHalla dungeons; as scenery its Destructible is stripped: it gives nothing; thin (0.09 m): a single face may not show from behind (one-sided): check its render from both sides",
+   "exists": true,
+   "size": [
+    4.61,
+    7.56,
+    0.09
+   ],
+   "min": [
+    -2.31,
+    -4.04,
+    -0.04
+   ],
+   "max": [
+    2.31,
+    3.52,
+    0.04
+   ],
+   "origin": "centre",
+   "hollow": false,
+   "game_dungeon": [
+    "MorkHalla"
+   ],
+   "kinds": [
+    "Destructible",
+    "ZNetView"
+   ],
+   "colliders": {
+    "Default": 1
+   },
+   "solid": true,
+   "solid_note": "",
+   "lights": [],
+   "fire": false,
+   "particles": 0,
+   "item": false,
+   "networked": true,
+   "gives": [
+    "Destructible"
+   ],
+   "physics": false,
+   "usable": [],
+   "height": 7.56,
+   "upright": "upright",
+   "saved_only": false,
+   "safe": true,
+   "climb": {
+    "ledges": [
+     [
+      7.4,
+      7.6
+     ]
+    ],
+    "top": 0.0,
+    "top_skilled": 0.0
+   }
+  },
+  {
+   "prefab": "iron_floor_2x2",
+   "role": "grate",
+   "look": "iron floor grate 2 x 0.12 x 2: over slag channels, steam vents, the gantry",
+   "mount": "structure",
+   "scale": [
+    0.3,
+    3
+   ],
+   "tier": 4,
+   "notes": "thin (0.12 m): a single face may not show from behind (one-sided): check its render from both sides",
+   "exists": true,
+   "size": [
+    2.0,
+    0.12,
+    2.16
+   ],
+   "min": [
+    -1.0,
+    -0.04,
+    -1.09
+   ],
+   "max": [
+    1.0,
+    0.08,
+    1.07
+   ],
+   "origin": "foot",
+   "hollow": false,
+   "game_dungeon": [],
+   "kinds": [
+    "Piece",
+    "WearNTear",
+    "ZNetView"
+   ],
+   "colliders": {
+    "piece": 1
+   },
+   "solid": true,
+   "solid_note": "",
+   "lights": [],
+   "fire": false,
+   "particles": 0,
+   "item": false,
+   "networked": true,
+   "gives": [],
+   "physics": false,
+   "usable": [],
+   "height": 0.12,
+   "upright": "flat",
+   "saved_only": false,
+   "safe": true,
+   "climb": {
+    "ledges": [
+     [
+      0.0,
+      0.2
+     ]
+    ],
+    "top": 0.0,
+    "top_skilled": 0.0
+   }
+  },
+  {
+   "prefab": "Ashland_Stair",
+   "role": "stair",
+   "look": "black stone stair 4 x 2 x 4: one per metre of rise, stretched",
+   "mount": "structure",
+   "scale": [
+    0.2,
+    2
+   ],
+   "tier": 7,
+   "notes": "as scenery its DropOnDestroyed is stripped: it gives nothing",
+   "exists": true,
+   "size": [
+    4.0,
+    2.0,
+    4.0
+   ],
+   "min": [
+    -2.0,
+    0.0,
+    -2.0
+   ],
+   "max": [
+    2.0,
+    2.0,
+    2.0
+   ],
+   "origin": "foot",
+   "hollow": false,
+   "game_dungeon": [],
+   "kinds": [
+    "DropOnDestroyed",
+    "WearNTear",
+    "ZNetView"
+   ],
+   "colliders": {
+    "piece": 2
+   },
+   "solid": true,
+   "solid_note": "",
+   "lights": [],
+   "fire": false,
+   "particles": 0,
+   "item": false,
+   "networked": true,
+   "gives": [
+    "DropOnDestroyed"
+   ],
+   "physics": false,
+   "usable": [],
+   "height": 2.0,
+   "upright": "block",
+   "saved_only": false,
+   "safe": true,
+   "climb": {
+    "ledges": [
+     [
+      0.0,
+      0.8
+     ],
+     [
+      1.0,
+      1.8
+     ],
+     [
+      2.0,
+      2.2
+     ]
+    ],
+    "top": 2.2,
+    "top_skilled": 2.2
+   }
+  },
+  {
+   "prefab": "forge_ext4",
+   "role": "decor_large",
+   "look": "the smith's anvil: a giant's at 2-6 times (dais centrepieces, remains, nooks)",
+   "mount": "ground",
+   "scale": [
+    1,
+    6
+   ],
+   "tier": 2,
+   "notes": "climbable: a player can stand 0.6 m above its foot (at scale 1; 0.6 m with Jump skill 100), so it's a stepping stone to a level up to about 2.2 m above its foot (3.7 m with Jump 100)",
+   "exists": true,
+   "size": [
+    0.58,
+    0.53,
+    1.27
+   ],
+   "min": [
+    -0.29,
+    0.91,
+    -0.48
+   ],
+   "max": [
+    0.29,
+    1.44,
+    0.79
+   ],
+   "origin": "off the box",
+   "hollow": false,
+   "game_dungeon": [],
+   "kinds": [
+    "Piece",
+    "WearNTear",
+    "ZNetView"
+   ],
+   "colliders": {
+    "piece": 2
+   },
+   "solid": true,
+   "solid_note": "",
+   "lights": [],
+   "fire": false,
+   "particles": 0,
+   "item": false,
+   "networked": true,
+   "gives": [],
+   "physics": false,
+   "usable": [],
+   "height": 0.53,
+   "upright": "flat",
+   "saved_only": false,
+   "safe": true,
+   "climb": {
+    "ledges": [
+     [
+      0.4,
+      0.6
+     ]
+    ],
+    "top": 0.6,
+    "top_skilled": 0.6
+   }
+  },
+  {
+   "prefab": "blastfurnace",
+   "role": "decor_large",
+   "look": "a frost-giant's furnace (cold and dark as scenery: its light only works while smelting): the Frozen Forges, corners",
+   "mount": "ground",
+   "scale": [
+    0.8,
+    2
+   ],
+   "tier": 2,
+   "notes": "stripped of its Smelter: never usable; its light range, fade distance and fire grow with its scale (BuildScale.cs); usable in the game (Smelter): as scenery the Builder strips it, so it only looks the part; climbable: a player can stand 3.0 m above its foot (at scale 1; 5.6 m with Jump skill 100), so it's a stepping stone to a level up to about 4.6 m above its foot (8.7 m with Jump 100)",
+   "exists": true,
+   "size": [
+    3.74,
+    5.43,
+    3.9
+   ],
+   "min": [
+    -2.06,
+    -0.26,
+    -1.97
+   ],
+   "max": [
+    1.68,
+    5.17,
+    1.94
+   ],
+   "origin": "inside",
+   "hollow": false,
+   "game_dungeon": [],
+   "kinds": [
+    "EffectArea",
+    "LightLod",
+    "Piece",
+    "Smelter",
+    "WearNTear",
+    "ZNetView"
+   ],
+   "colliders": {
+    "piece": 6,
+    "piece_nonsolid": 2
+   },
+   "solid": true,
+   "solid_note": "",
+   "lights": [
+    {
+     "range": 6.0,
+     "intensity": 5.0,
+     "colour": "#ffa300",
+     "lit": false,
+     "lod": true
+    }
+   ],
+   "fire": false,
+   "particles": 0,
+   "item": false,
+   "networked": true,
+   "gives": [],
+   "physics": false,
+   "usable": [
+    "Smelter"
+   ],
+   "height": 5.43,
+   "upright": "block",
+   "saved_only": false,
+   "safe": true,
+   "climb": {
+    "ledges": [
+     [
+      0.6,
+      0.8
+     ],
+     [
+      1.2,
+      1.4
+     ],
+     [
+      2.0,
+      2.2
+     ],
+     [
+      2.8,
+      3.0
+     ],
+     [
+      5.4,
+      5.6
+     ]
+    ],
+    "top": 3.0,
+    "top_skilled": 5.6
+   }
+  },
+  {
+   "prefab": "smelter",
+   "role": "decor_small",
+   "look": "a smaller furnace, dark: nooks",
+   "mount": "ground",
+   "scale": [
+    0.6,
+    1.2
+   ],
+   "tier": 2,
+   "notes": "its light range, fade distance and fire grow with its scale (BuildScale.cs); usable in the game (Smelter): as scenery the Builder strips it, so it only looks the part; climbable: a player can stand 2.0 m above its foot (at scale 1; 4.4 m with Jump skill 100), so it's a stepping stone to a level up to about 3.6 m above its foot (7.5 m with Jump 100)",
+   "exists": true,
+   "size": [
+    3.03,
+    4.24,
+    2.58
+   ],
+   "min": [
+    -1.34,
+    0.0,
+    -1.31
+   ],
+   "max": [
+    1.7,
+    4.24,
+    1.27
+   ],
+   "origin": "foot",
+   "hollow": false,
+   "game_dungeon": [],
+   "kinds": [
+    "EffectArea",
+    "LightLod",
+    "Piece",
+    "Smelter",
+    "WearNTear",
+    "ZNetView"
+   ],
+   "colliders": {
+    "piece": 4,
+    "piece_nonsolid": 2
+   },
+   "solid": true,
+   "solid_note": "",
+   "lights": [
+    {
+     "range": 4.0,
+     "intensity": 5.0,
+     "colour": "#ffa300",
+     "lit": false,
+     "lod": true
+    },
+    {
+     "range": 2.0,
+     "intensity": 3.0,
+     "colour": "#ff8400",
+     "lit": false,
+     "lod": true
+    }
+   ],
+   "fire": false,
+   "particles": 0,
+   "item": false,
+   "networked": true,
+   "gives": [],
+   "physics": false,
+   "usable": [
+    "Smelter"
+   ],
+   "height": 4.24,
+   "upright": "block",
+   "saved_only": false,
+   "safe": true,
+   "climb": {
+    "ledges": [
+     [
+      0.0,
+      0.2
+     ],
+     [
+      0.4,
+      2.0
+     ],
+     [
+      4.0,
+      4.4
+     ]
+    ],
+    "top": 2.0,
+    "top_skilled": 4.4
+   }
+  },
+  {
+   "prefab": "piece_Lavalantern",
+   "role": "light_stand",
+   "look": "a small orange lantern (12 m light): lever knobs, forge vents, slag channels",
+   "mount": "ground",
+   "scale": [
+    0.3,
+    1.5
+   ],
+   "tier": 7,
+   "notes": "its light range, fade distance and fire grow with its scale (BuildScale.cs); climbable: a player can stand 1.0 m above its foot (at scale 1; 1.0 m with Jump skill 100), so it's a stepping stone to a level up to about 2.6 m above its foot (4.1 m with Jump 100)",
+   "exists": true,
+   "size": [
+    0.37,
+    0.81,
+    0.35
+   ],
+   "min": [
+    -0.19,
+    -0.01,
+    -0.2
+   ],
+   "max": [
+    0.19,
+    0.8,
+    0.16
+   ],
+   "origin": "foot",
+   "hollow": false,
+   "game_dungeon": [],
+   "kinds": [
+    "EffectArea",
+    "LightLod",
+    "Piece",
+    "WearNTear",
+    "ZNetView"
+   ],
+   "colliders": {
+    "piece": 1
+   },
+   "solid": true,
+   "solid_note": "",
+   "lights": [
+    {
+     "range": 12.0,
+     "intensity": 1.5,
+     "colour": "#ff9e7a",
+     "lit": true,
+     "lod": true
+    }
+   ],
+   "fire": false,
+   "particles": 3,
+   "item": false,
+   "networked": true,
+   "gives": [],
+   "physics": false,
+   "usable": [],
+   "height": 0.81,
+   "upright": "block",
+   "saved_only": false,
+   "safe": true,
+   "climb": {
+    "ledges": [
+     [
+      0.8,
+      1.0
+     ]
+    ],
+    "top": 1.0,
+    "top_skilled": 1.0
+   }
+  },
+  {
+   "prefab": "deepnorth_lantern_standing",
+   "role": "light_stand",
+   "look": "a 3.25 m iron lantern pole, orange: not climbable",
+   "mount": "ground",
+   "scale": [
+    0.8,
+    1.2
+   ],
+   "tier": 8,
+   "notes": "its light range, fade distance and fire grow with its scale (BuildScale.cs); as scenery its DropOnDestroyed is stripped: it gives nothing",
+   "exists": true,
+   "size": [
+    0.6,
+    3.25,
+    0.56
+   ],
+   "min": [
+    -0.28,
+    -0.22,
+    -0.32
+   ],
+   "max": [
+    0.32,
+    3.03,
+    0.24
+   ],
+   "origin": "inside",
+   "hollow": false,
+   "game_dungeon": [],
+   "kinds": [
+    "DropOnDestroyed",
+    "LightLod",
+    "WearNTear",
+    "ZNetView"
+   ],
+   "colliders": {
+    "Default": 1
+   },
+   "solid": true,
+   "solid_note": "",
+   "lights": [
+    {
+     "range": 8.0,
+     "intensity": 1.5,
+     "colour": "#ff6f17",
+     "lit": true,
+     "lod": true
+    }
+   ],
+   "fire": false,
+   "particles": 1,
+   "item": false,
+   "networked": true,
+   "gives": [
+    "DropOnDestroyed"
+   ],
+   "physics": false,
+   "usable": [],
+   "height": 3.25,
+   "upright": "upright",
+   "saved_only": false,
+   "safe": true,
+   "climb": {
+    "ledges": [],
+    "top": 0.0,
+    "top_skilled": 0.0
+   }
+  },
+  {
+   "prefab": "piece_brazierceiling01",
+   "role": "light_hang",
+   "look": "a hanging fire bowl, hung on an iron chain from what's above",
+   "mount": "hang",
+   "scale": [
+    0.8,
+    1.5
+   ],
+   "tier": 3,
+   "notes": "its light range, fade distance and fire grow with its scale (BuildScale.cs); TROUBLE: hangs: needs a ceiling or beam right above its origin.",
+   "exists": true,
+   "size": [
+    1.0,
+    1.95,
+    0.99
+   ],
+   "min": [
+    -0.49,
+    0.03,
+    -0.49
+   ],
+   "max": [
+    0.51,
+    1.98,
+    0.51
+   ],
+   "origin": "foot",
+   "hollow": false,
+   "game_dungeon": [],
+   "kinds": [
+    "EffectArea",
+    "Fireplace",
+    "LightLod",
+    "Piece",
+    "WearNTear",
+    "ZNetView"
+   ],
+   "colliders": {
+    "piece": 1,
+    "piece_nonsolid": 1,
+    "pathblocker": 1
+   },
+   "solid": true,
+   "solid_note": "",
+   "lights": [
+    {
+     "range": 10.0,
+     "intensity": 2.0,
+     "colour": "#ff9e7a",
+     "lit": true,
+     "lod": true
+    },
+    {
+     "range": 2.5,
+     "intensity": 1.5,
+     "colour": "#d58669",
+     "lit": false,
+     "lod": true
+    }
+   ],
+   "fire": true,
+   "particles": 3,
+   "item": false,
+   "networked": true,
+   "gives": [],
+   "physics": false,
+   "usable": [],
+   "height": 1.95,
+   "upright": "block",
+   "saved_only": false,
+   "safe": true,
+   "climb": {
+    "ledges": [
+     [
+      0.0,
+      0.2
+     ]
+    ],
+    "top": 0.0,
+    "top_skilled": 0.0
+   }
+  },
+  {
+   "prefab": "fire_pit_iron",
+   "role": "decor_small",
+   "look": "an iron fire bowl (a Fireplace): the forges' fires, the bosses' lamps, accents",
+   "mount": "ground",
+   "scale": [
+    0.8,
+    1.6
+   ],
+   "tier": 3,
+   "notes": "its light range, fade distance and fire grow with its scale (BuildScale.cs); climbable: a player can stand 1.2 m above its foot (at scale 1; 1.2 m with Jump skill 100), so it's a stepping stone to a level up to about 2.8 m above its foot (4.3 m with Jump 100)",
+   "exists": true,
+   "size": [
+    1.5,
+    1.08,
+    1.5
+   ],
+   "min": [
+    -0.75,
+    -0.0,
+    -0.75
+   ],
+   "max": [
+    0.75,
+    1.08,
+    0.75
+   ],
+   "origin": "foot",
+   "hollow": false,
+   "game_dungeon": [],
+   "kinds": [
+    "EffectArea",
+    "Fireplace",
+    "LightLod",
+    "Piece",
+    "WearNTear",
+    "ZNetView"
+   ],
+   "colliders": {
+    "Default": 2,
+    "pathblocker": 1
+   },
+   "solid": true,
+   "solid_note": "",
+   "lights": [
+    {
+     "range": 10.0,
+     "intensity": 2.0,
+     "colour": "#ff8052",
+     "lit": true,
+     "lod": true
+    },
+    {
+     "range": 2.5,
+     "intensity": 1.5,
+     "colour": "#d58669",
+     "lit": false,
+     "lod": true
+    }
+   ],
+   "fire": true,
+   "particles": 3,
+   "item": false,
+   "networked": true,
+   "gives": [],
+   "physics": false,
+   "usable": [],
+   "height": 1.08,
+   "upright": "block",
+   "saved_only": false,
+   "safe": true,
+   "climb": {
+    "ledges": [
+     [
+      0.4,
+      0.6
+     ],
+     [
+      1.0,
+      1.2
+     ]
+    ],
+    "top": 1.2,
+    "top_skilled": 1.2
+   }
+  },
+  {
+   "prefab": "caverock_ice_stalagtite",
+   "role": "decor_small",
+   "look": "an icicle 3.4 m: hung high from ice ceilings (tips 5 m or more over the floor)",
+   "mount": "free",
+   "scale": [
+    0.5,
+    1.4
+   ],
+   "tier": 4,
+   "notes": "recognisable: a part of the game's own Cave and CaveHildir dungeons; as scenery its Destructible is stripped: it gives nothing",
+   "exists": true,
+   "size": [
+    0.94,
+    3.39,
+    0.94
+   ],
+   "min": [
+    -0.48,
+    0.01,
+    -0.45
+   ],
+   "max": [
+    0.46,
+    3.4,
+    0.49
+   ],
+   "origin": "foot",
+   "hollow": false,
+   "game_dungeon": [
+    "Cave",
+    "CaveHildir"
+   ],
+   "kinds": [
+    "Destructible",
+    "ZNetView"
+   ],
+   "colliders": {
+    "static_solid": 1
+   },
+   "solid": true,
+   "solid_note": "",
+   "lights": [],
+   "fire": false,
+   "particles": 0,
+   "item": false,
+   "networked": true,
+   "gives": [
+    "Destructible"
+   ],
+   "physics": false,
+   "usable": [],
+   "height": 3.39,
+   "upright": "upright",
+   "saved_only": false,
+   "safe": true,
+   "climb": {
+    "ledges": [
+     [
+      3.2,
+      3.4
+     ]
+    ],
+    "top": 0.0,
+    "top_skilled": 0.0
+   }
+  },
+  {
+   "prefab": "caverock_ice_stalagmite",
+   "role": "decor_small",
+   "look": "an ice spike 4.8 m: dressing, shrines, the entrance",
+   "mount": "ground",
+   "scale": [
+    0.4,
+    1.2
+   ],
+   "tier": 4,
+   "notes": "recognisable: a part of the game's own Cave and CaveHildir dungeons; as scenery its Destructible is stripped: it gives nothing",
+   "exists": true,
+   "size": [
+    1.36,
+    4.82,
+    1.33
+   ],
+   "min": [
+    -0.68,
+    -0.89,
+    -0.55
+   ],
+   "max": [
+    0.68,
+    3.93,
+    0.78
+   ],
+   "origin": "inside",
+   "hollow": false,
+   "game_dungeon": [
+    "Cave",
+    "CaveHildir"
+   ],
+   "kinds": [
+    "Destructible",
+    "ZNetView"
+   ],
+   "colliders": {
+    "static_solid": 1
+   },
+   "solid": true,
+   "solid_note": "",
+   "lights": [],
+   "fire": false,
+   "particles": 0,
+   "item": false,
+   "networked": true,
+   "gives": [
+    "Destructible"
+   ],
+   "physics": false,
+   "usable": [],
+   "height": 4.82,
+   "upright": "upright",
+   "saved_only": false,
+   "safe": true,
+   "climb": {
+    "ledges": [
+     [
+      0.0,
+      0.2
+     ]
+    ],
+    "top": 0.0,
+    "top_skilled": 0.0
+   }
+  },
+  {
+   "prefab": "Morkhalla_coal_pile_memorial",
+   "role": "decor_small",
+   "look": "smouldering coal (dim red light): slag channels, forge mouths, dressing",
+   "mount": "ground",
+   "scale": [
+    0.3,
+    1.5
+   ],
+   "tier": 6,
+   "notes": "recognisable: a part of the game's own MorkHalla dungeons; its light range, fade distance and fire grow with its scale (BuildScale.cs); as scenery its DropOnDestroyed is stripped: it gives nothing; climbable: a player can stand 1.2 m above its foot (at scale 1; 1.2 m with Jump skill 100), so it's a stepping stone to a level up to about 2.8 m above its foot (4.3 m with Jump 100)",
+   "exists": true,
+   "size": [
+    1.89,
+    1.34,
+    1.93
+   ],
+   "min": [
+    -0.93,
+    -0.23,
+    -0.84
+   ],
+   "max": [
+    0.96,
+    1.11,
+    1.09
+   ],
+   "origin": "inside",
+   "hollow": false,
+   "game_dungeon": [
+    "MorkHalla"
+   ],
+   "sets": [
+    "forge"
+   ],
+   "kinds": [
+    "DropOnDestroyed",
+    "LightLod",
+    "WearNTear",
+    "ZNetView"
+   ],
+   "colliders": {
+    "piece": 2
+   },
+   "solid": true,
+   "solid_note": "",
+   "lights": [
+    {
+     "range": 2.5,
+     "intensity": 1.5,
+     "colour": "#963232",
+     "lit": true,
+     "lod": true
+    },
+    {
+     "range": 2.5,
+     "intensity": 1.5,
+     "colour": "#963232",
+     "lit": false,
+     "lod": true
+    }
+   ],
+   "fire": false,
+   "particles": 0,
+   "item": false,
+   "networked": true,
+   "gives": [
+    "DropOnDestroyed"
+   ],
+   "physics": false,
+   "usable": [],
+   "height": 1.34,
+   "upright": "block",
+   "saved_only": false,
+   "safe": true,
+   "climb": {
+    "ledges": [
+     [
+      0.0,
+      0.4
+     ],
+     [
+      0.6,
+      1.2
+     ]
+    ],
+    "top": 1.2,
+    "top_skilled": 1.2
+   }
+  },
+  {
+   "prefab": "IcePond_rock",
+   "role": "floor",
+   "look": "a frozen pool disc 25 m: quench pools, sunk flush with the floor",
+   "mount": "structure",
+   "scale": [
+    0.2,
+    0.4
+   ],
+   "tier": 4,
+   "notes": "as scenery its Destructible is stripped: it gives nothing",
+   "exists": true,
+   "size": [
+    24.9,
+    3.4,
+    24.9
+   ],
+   "min": [
+    -12.45,
+    -2.34,
+    -12.45
+   ],
+   "max": [
+    12.45,
+    1.06,
+    12.45
+   ],
+   "origin": "inside",
+   "hollow": false,
+   "game_dungeon": [],
+   "kinds": [
+    "Destructible",
+    "ZNetView"
+   ],
+   "colliders": {
+    "static_solid": 1
+   },
+   "solid": true,
+   "solid_note": "",
+   "lights": [],
+   "fire": false,
+   "particles": 0,
+   "item": false,
+   "networked": true,
+   "gives": [
+    "Destructible"
+   ],
+   "physics": false,
+   "usable": [],
+   "height": 3.4,
+   "upright": "flat",
+   "saved_only": false,
+   "safe": true,
+   "climb": {
+    "ledges": [
+     [
+      0.0,
+      0.4
+     ],
+     [
+      0.6,
+      0.8
+     ],
+     [
+      1.0,
+      1.2
+     ],
+     [
+      1.4,
+      1.6
+     ],
+     [
+      2.0,
+      2.2
+     ],
+     [
+      3.0,
+      3.4
+     ]
+    ],
+    "top": 3.4,
+    "top_skilled": 3.4
+   }
+  },
+  {
+   "prefab": "TreasureChest_mountaincave",
+   "role": "chest",
+   "look": "the frost caves' chest: the smiths' chests (saved, scale 1)",
+   "mount": "ground",
+   "scale": [
+    1,
+    1
+   ],
+   "tier": 4,
+   "notes": "recognisable: a part of the game's own Cave and CaveHildir dungeons; climbable: a player can stand 0.6 m above its foot (at scale 1; 0.6 m with Jump skill 100), so it's a stepping stone to a level up to about 2.2 m above its foot (3.7 m with Jump 100)",
+   "exists": true,
+   "size": [
+    2.02,
+    0.65,
+    0.87
+   ],
+   "min": [
+    -1.01,
+    0.0,
+    -0.44
+   ],
+   "max": [
+    1.01,
+    0.65,
+    0.42
+   ],
+   "origin": "foot",
+   "hollow": false,
+   "game_dungeon": [
+    "Cave",
+    "CaveHildir"
+   ],
+   "kinds": [
+    "Container",
+    "Piece",
+    "WearNTear",
+    "ZNetView"
+   ],
+   "colliders": {
+    "Default": 1
+   },
+   "solid": true,
+   "solid_note": "",
+   "lights": [],
+   "fire": false,
+   "particles": 0,
+   "item": false,
+   "networked": true,
+   "gives": [
+    "Container"
+   ],
+   "physics": false,
+   "usable": [
+    "Container"
+   ],
+   "height": 0.65,
+   "upright": "flat",
+   "saved_only": true,
+   "safe": false,
+   "climb": {
+    "ledges": [
+     [
+      0.0,
+      0.6
+     ]
+    ],
+    "top": 0.6,
+    "top_skilled": 0.6
+   }
+  }
+ ],
+ "roles": {
+  "wall": {
+   "pieces": [
+    "Ice_floor"
+   ],
+   "how": "a floor slab stood up: euler (-90, side yaw, 0), its top face inwards (dungeon_parts.wall); a wall piece (tile wall, metal wall, timber wall) stands as it is, turned by yaw"
+  },
+  "floor": {
+   "pieces": [
+    "Ashlands_Fortress_Floor"
+   ],
+   "how": "flat as it is; most slabs have their origin in their middle (see each piece's origin and min/max)"
+  },
+  "ceiling": {
+   "pieces": [
+    "Ice_floor"
+   ],
+   "how": "a floor slab turned over: euler (180, 0, 0) (dungeon_parts.slab with ceiling=True); its origin is in the slab's middle"
+  },
+  "trim": {
+   "pieces": [
+    "Ashlands_Fortress_Floor"
+   ]
+  },
+  "beam": {
+   "pieces": [
+    "Piece_flametal_beam"
+   ]
+  },
+  "pillar": {
+   "pieces": [
+    "Piece_flametal_beam"
+   ]
+  },
+  "column": {
+   "pieces": [
+    "Piece_flametal_beam"
+   ]
+  },
+  "rail": {
+   "pieces": [
+    "Piece_flametal_beam"
+   ]
+  },
+  "door_leaf": {
+   "pieces": [
+    "Morkhalla_GateDoor"
+   ],
+   "how": "as scenery it doesn't open: Pack.doors (saved, at joints) or a gate mechanism moves it"
+  },
+  "grate": {
+   "pieces": [
+    "iron_floor_2x2"
+   ]
+  },
+  "stair": {
+   "pieces": [
+    "Ashland_Stair"
+   ],
+   "how": "keep scale 1 (step height); stack or repeat for a wider or longer stair"
+  },
+  "light_stand": {
+   "pieces": [
+    "deepnorth_lantern_standing",
+    "piece_Lavalantern"
+   ]
+  },
+  "light_hang": {
+   "pieces": [
+    "piece_brazierceiling01"
+   ],
+   "how": "hang it from the first part above it (ceiling, balcony, a mechanism's lid) on the theme's chain, the chain's foot on the light's top: giant, a thinned Morkhalla_WallChain1 (giant_kit.wisp); Dvergr, dvergrprops_lantern on dvergrprops_hooknchain. Stood at a point it floats (dverger_demister's mesh is below its origin)"
+  },
+  "chest": {
+   "pieces": [
+    "TreasureChest_mountaincave"
+   ],
+   "how": "Saved parts only, scale 1: the Builder refills them from the pack's loot for the biome"
+  },
+  "decor_large": {
+   "pieces": [
+    "forge_ext4",
+    "blastfurnace"
+   ],
+   "how": "pick by the room's dressing set (each piece's \"sets\")"
+  },
+  "decor_small": {
+   "pieces": [
+    "Morkhalla_coal_pile_memorial",
+    "caverock_ice_stalagmite",
+    "fire_pit_iron"
+   ],
+   "how": "pick by the room's dressing set (each piece's \"sets\")"
+  }
+ },
+ "by_role": {
+  "wall": [
+   "Ice_floor"
+  ],
+  "floor": [
+   "Ashlands_Fortress_Floor"
+  ],
+  "ceiling": [
+   "Ice_floor"
+  ],
+  "trim": [
+   "Ashlands_Fortress_Floor"
+  ],
+  "beam": [
+   "Piece_flametal_beam"
+  ],
+  "pillar": [
+   "Piece_flametal_beam"
+  ],
+  "column": [
+   "Piece_flametal_beam"
+  ],
+  "rail": [
+   "Piece_flametal_beam"
+  ],
+  "door_leaf": [
+   "Morkhalla_GateDoor"
+  ],
+  "grate": [
+   "iron_floor_2x2"
+  ],
+  "stair": [
+   "Ashland_Stair"
+  ],
+  "light_stand": [
+   "deepnorth_lantern_standing",
+   "piece_Lavalantern"
+  ],
+  "light_hang": [
+   "piece_brazierceiling01"
+  ],
+  "chest": [
+   "TreasureChest_mountaincave"
+  ],
+  "decor_large": [
+   "forge_ext4",
+   "blastfurnace"
+  ],
+  "decor_small": [
+   "Morkhalla_coal_pile_memorial",
+   "caverock_ice_stalagmite",
+   "fire_pit_iron"
+  ]
+ }
+}

@@ -1,0 +1,1489 @@
+{
+ "pack": "starfall",
+ "theme": "orrery",
+ "seed": 6,
+ "rooms": [
+  {
+   "name": "fight_L_1",
+   "recipe": "fight",
+   "shell": "L",
+   "features": [
+    "machinery"
+   ],
+   "params": {
+    "shape": "L",
+    "size": [
+     30.0,
+     12.0,
+     30.0
+    ],
+    "notch": [
+     3,
+     0.5,
+     0.4
+    ],
+    "doors": [
+     [
+      3,
+      -9.0,
+      0
+     ],
+     [
+      1,
+      -2.0,
+      0
+     ],
+     [
+      2,
+      1.0,
+      0
+     ]
+    ],
+    "lever": "far",
+    "points": 6,
+    "pillar_pattern": "rows",
+    "gears": 1,
+    "dressing": "ossuary",
+    "props": 6,
+    "lights": [
+     0,
+     8
+    ]
+   }
+  },
+  {
+   "name": "fight_balcony_2",
+   "recipe": "fight",
+   "shell": "balcony",
+   "features": [
+    "pillars"
+   ],
+   "params": {
+    "shape": "balcony",
+    "size": [
+     30.0,
+     24.0,
+     30.0
+    ],
+    "balcony": [
+     0,
+     8.0
+    ],
+    "stair": [
+     -1
+    ],
+    "doors": [
+     [
+      0,
+      -9.0,
+      0
+     ],
+     [
+      1,
+      -9.0,
+      1
+     ],
+     [
+      2,
+      0.0,
+      0
+     ]
+    ],
+    "lever": "far",
+    "points": 6,
+    "pillar_pattern": "scatter",
+    "pillars": 3,
+    "dressing": "shrine",
+    "props": 6,
+    "lights": [
+     6,
+     8
+    ]
+   }
+  },
+  {
+   "name": "hub_balcony_3",
+   "recipe": "hub",
+   "shell": "balcony",
+   "features": [
+    "stash",
+    "pillars"
+   ],
+   "params": {
+    "shape": "balcony",
+    "size": [
+     30.0,
+     24.0,
+     30.0
+    ],
+    "balcony": [
+     0,
+     7.7
+    ],
+    "stair": [
+     1
+    ],
+    "doors": [
+     [
+      0,
+      0.0,
+      0
+     ],
+     [
+      1,
+      -9.0,
+      0
+     ],
+     [
+      2,
+      0.0,
+      0
+     ],
+     [
+      3,
+      0.0,
+      0
+     ]
+    ],
+    "closet": [
+     3,
+     -9.2
+    ],
+    "side_job": "stash",
+    "pillar_pattern": "rows",
+    "pillars": 1,
+    "dressing": "ossuary",
+    "props": 4,
+    "lights": [
+     7,
+     8
+    ]
+   }
+  },
+  {
+   "name": "hub_rect_4",
+   "recipe": "hub",
+   "shell": "rect",
+   "features": [
+    "guard"
+   ],
+   "params": {
+    "shape": "rect",
+    "size": [
+     18.0,
+     12.0,
+     18.0
+    ],
+    "doors": [
+     [
+      0,
+      0.0,
+      0
+     ],
+     [
+      1,
+      0.0,
+      0
+     ],
+     [
+      2,
+      0.0,
+      0
+     ],
+     [
+      3,
+      0.0,
+      0
+     ]
+    ],
+    "side_job": "guard",
+    "pillar_pattern": "scatter",
+    "dressing": "shrine",
+    "props": 3,
+    "lights": [
+     0,
+     2
+    ]
+   }
+  },
+  {
+   "name": "lever_L_5",
+   "recipe": "lever",
+   "shell": "L",
+   "features": [
+    "pillars",
+    "machinery",
+    "cover"
+   ],
+   "params": {
+    "shape": "L",
+    "size": [
+     18.0,
+     12.0,
+     18.0
+    ],
+    "notch": [
+     3,
+     0.4,
+     0.4
+    ],
+    "variant": "alcove",
+    "doors": [
+     [
+      1,
+      -1.0,
+      0
+     ]
+    ],
+    "lever_level": 0,
+    "pillar_pattern": "rows",
+    "pillars": 1,
+    "gears": 2,
+    "cover": 1,
+    "dressing": "ossuary",
+    "props": 6,
+    "lights": [
+     3,
+     2
+    ]
+   }
+  },
+  {
+   "name": "lever_balcony_6",
+   "recipe": "lever",
+   "shell": "balcony",
+   "features": [
+    "pillars"
+   ],
+   "params": {
+    "shape": "balcony",
+    "size": [
+     30.0,
+     24.0,
+     30.0
+    ],
+    "balcony": [
+     1,
+     7.6
+    ],
+    "stair": [
+     1
+    ],
+    "variant": "room",
+    "doors": [
+     [
+      0,
+      -9.0,
+      0
+     ],
+     [
+      3,
+      0.0,
+      0
+     ]
+    ],
+    "lever_level": 1,
+    "pillar_pattern": "scatter",
+    "pillars": 3,
+    "dressing": "shrine",
+    "props": 6,
+    "lights": [
+     8,
+     8
+    ]
+   }
+  },
+  {
+   "name": "timing_pit_7",
+   "recipe": "timing",
+   "shell": "pit",
+   "features": [
+    "remains"
+   ],
+   "params": {
+    "shape": "pit",
+    "size": [
+     18.0,
+     24.0,
+     36.0
+    ],
+    "gap": 12.0,
+    "pit_at": -3.0,
+    "doors": [
+     [
+      0,
+      -1.0,
+      1
+     ],
+     [
+      2,
+      -1.0,
+      1
+     ],
+     [
+      3,
+      -3.0,
+      0
+     ]
+    ],
+    "bridge": [
+     "sink",
+     3.0
+    ],
+    "cycle": 7.0,
+    "dressing": "ossuary",
+    "props": 4,
+    "lights": [
+     4,
+     0
+    ]
+   }
+  },
+  {
+   "name": "timing_pit_8",
+   "recipe": "timing",
+   "shell": "pit",
+   "features": [],
+   "params": {
+    "shape": "pit",
+    "size": [
+     24.0,
+     24.0,
+     36.0
+    ],
+    "gap": 13.5,
+    "pit_at": 0.0,
+    "doors": [
+     [
+      0,
+      0.0,
+      1
+     ],
+     [
+      2,
+      0.0,
+      1
+     ],
+     [
+      1,
+      0.0,
+      0
+     ]
+    ],
+    "bridge": [
+     "sink",
+     2.4
+    ],
+    "cycle": 5.0,
+    "dressing": "shrine",
+    "props": 6,
+    "lights": [
+     8,
+     0
+    ]
+   }
+  },
+  {
+   "name": "plate_rect_9",
+   "recipe": "plate",
+   "shell": "rect",
+   "features": [
+    "remains",
+    "cover"
+   ],
+   "params": {
+    "shape": "rect",
+    "size": [
+     24.0,
+     12.0,
+     36.0
+    ],
+    "doors": [
+     [
+      2,
+      -1.0,
+      0
+     ],
+     [
+      0,
+      0.0,
+      0
+     ],
+     [
+      1,
+      -10.214638666282868,
+      0
+     ]
+    ],
+    "screen_z": 6.0,
+    "gap": -4,
+    "ledge": 1,
+    "cover": 1,
+    "dressing": "ossuary",
+    "props": 4,
+    "lights": [
+     5,
+     0
+    ]
+   }
+  },
+  {
+   "name": "plate_rect_10",
+   "recipe": "plate",
+   "shell": "rect",
+   "features": [
+    "cover"
+   ],
+   "params": {
+    "shape": "rect",
+    "size": [
+     24.0,
+     12.0,
+     30.0
+    ],
+    "doors": [
+     [
+      2,
+      0.0,
+      0
+     ],
+     [
+      0,
+      -1.0,
+      0
+     ],
+     [
+      3,
+      6.385814349344711,
+      0
+     ]
+    ],
+    "screen_z": 0.0,
+    "gap": 0,
+    "ledge": 1,
+    "cover": 1,
+    "dressing": "shrine",
+    "props": 4,
+    "lights": [
+     2,
+     0
+    ]
+   }
+  },
+  {
+   "name": "drop_drop_11",
+   "recipe": "drop",
+   "shell": "drop",
+   "features": [
+    "remains"
+   ],
+   "params": {
+    "shape": "drop",
+    "size": [
+     24.0,
+     24.0,
+     36.0
+    ],
+    "ledge": 11.5,
+    "stair": 1,
+    "doors": [
+     [
+      2,
+      -1.0,
+      1
+     ],
+     [
+      0,
+      -2.0,
+      0
+     ]
+    ],
+    "lever": "foot",
+    "drop_gap": -0.2,
+    "dressing": "ossuary",
+    "props": 4,
+    "lights": [
+     8,
+     0
+    ]
+   }
+  },
+  {
+   "name": "drop_drop_12",
+   "recipe": "drop",
+   "shell": "drop",
+   "features": [],
+   "params": {
+    "shape": "drop",
+    "size": [
+     30.0,
+     24.0,
+     24.0
+    ],
+    "ledge": 13.5,
+    "stair": -1,
+    "doors": [
+     [
+      2,
+      -1.0,
+      1
+     ],
+     [
+      0,
+      10.0,
+      0
+     ]
+    ],
+    "lever": "far",
+    "drop_gap": -5.5,
+    "dressing": "shrine",
+    "props": 6,
+    "lights": [
+     5,
+     0
+    ]
+   }
+  },
+  {
+   "name": "breather_split_13",
+   "recipe": "breather",
+   "shell": "split",
+   "features": [
+    "stash",
+    "pillars",
+    "machinery",
+    "remains"
+   ],
+   "params": {
+    "shape": "split",
+    "size": [
+     24.0,
+     20.0,
+     30.0
+    ],
+    "rise": 8.0,
+    "split": 6.0,
+    "stair": [
+     1
+    ],
+    "doors": [
+     [
+      0,
+      -7.0,
+      1
+     ],
+     [
+      2,
+      -2.0,
+      0
+     ]
+    ],
+    "closet": [
+     2,
+     4.3
+    ],
+    "side_job": "stash",
+    "pillar_pattern": "rows",
+    "pillars": 4,
+    "gears": 2,
+    "dressing": "ossuary",
+    "props": 4,
+    "lights": [
+     7,
+     6
+    ]
+   }
+  },
+  {
+   "name": "breather_L_14",
+   "recipe": "breather",
+   "shell": "L",
+   "features": [
+    "alcove"
+   ],
+   "params": {
+    "shape": "L",
+    "size": [
+     18.0,
+     12.0,
+     18.0
+    ],
+    "notch": [
+     0,
+     0.5,
+     0.4
+    ],
+    "doors": [
+     [
+      3,
+      -4.0,
+      0
+     ],
+     [
+      1,
+      4.0,
+      0
+     ],
+     [
+      2,
+      1.0,
+      0
+     ]
+    ],
+    "closet": [
+     3,
+     2.8
+    ],
+    "side_job": "alcove",
+    "pillar_pattern": "scatter",
+    "dressing": "shrine",
+    "props": 4,
+    "lights": [
+     0,
+     2
+    ]
+   }
+  },
+  {
+   "name": "breather_balcony_15",
+   "recipe": "breather",
+   "shell": "balcony",
+   "features": [
+    "guard"
+   ],
+   "params": {
+    "shape": "balcony",
+    "size": [
+     30.0,
+     24.0,
+     30.0
+    ],
+    "balcony": [
+     3,
+     8.3
+    ],
+    "stair": [
+     1
+    ],
+    "doors": [
+     [
+      2,
+      -4.0,
+      0
+     ],
+     [
+      1,
+      -3.0,
+      0
+     ]
+    ],
+    "side_job": "guard",
+    "dressing": "watch",
+    "props": 8,
+    "lights": [
+     8,
+     8
+    ]
+   }
+  },
+  {
+   "name": "breather_rect_16",
+   "recipe": "breather",
+   "shell": "rect",
+   "features": [
+    "sentries",
+    "machinery",
+    "remains"
+   ],
+   "params": {
+    "shape": "rect",
+    "size": [
+     24.0,
+     12.0,
+     24.0
+    ],
+    "doors": [
+     [
+      3,
+      -4.0,
+      0
+     ],
+     [
+      0,
+      0.0,
+      0
+     ]
+    ],
+    "side_job": "sentries",
+    "gears": 2,
+    "dressing": "charts",
+    "props": 6,
+    "lights": [
+     6,
+     5
+    ]
+   }
+  },
+  {
+   "name": "breather_round_17",
+   "recipe": "breather",
+   "shell": "round",
+   "features": [
+    "sentries",
+    "pillars",
+    "remains"
+   ],
+   "params": {
+    "shape": "round",
+    "size": [
+     24.0,
+     12.0,
+     24.0
+    ],
+    "doors": [
+     [
+      3,
+      0.0,
+      0
+     ],
+     [
+      2,
+      0.0,
+      0
+     ],
+     [
+      0,
+      0.0,
+      0
+     ]
+    ],
+    "side_job": "sentries",
+    "pillar_pattern": "ring",
+    "pillars": 3,
+    "dressing": "crater",
+    "props": 5,
+    "lights": [
+     0,
+     5
+    ]
+   }
+  },
+  {
+   "name": "pillarhall_rect_18",
+   "recipe": "pillarhall",
+   "shell": "rect",
+   "features": [
+    "stash",
+    "pillars",
+    "remains"
+   ],
+   "params": {
+    "shape": "rect",
+    "size": [
+     24.0,
+     12.0,
+     24.0
+    ],
+    "doors": [
+     [
+      3,
+      -6.0,
+      0
+     ],
+     [
+      0,
+      2.0,
+      0
+     ],
+     [
+      2,
+      3.0,
+      0
+     ]
+    ],
+    "closet": [
+     0,
+     -8.2
+    ],
+    "side_job": "stash",
+    "pillar_pattern": "rows",
+    "pillars": 2,
+    "dressing": "ossuary",
+    "props": 6,
+    "lights": [
+     3,
+     5
+    ]
+   }
+  },
+  {
+   "name": "pillarhall_round_19",
+   "recipe": "pillarhall",
+   "shell": "round",
+   "features": [
+    "guard"
+   ],
+   "params": {
+    "shape": "round",
+    "size": [
+     18.0,
+     12.0,
+     18.0
+    ],
+    "doors": [
+     [
+      3,
+      0.0,
+      0
+     ],
+     [
+      1,
+      0.0,
+      0
+     ],
+     [
+      2,
+      0.0,
+      0
+     ]
+    ],
+    "side_job": "guard",
+    "pillar_pattern": "ring",
+    "dressing": "shrine",
+    "props": 2,
+    "lights": [
+     0,
+     2
+    ]
+   }
+  },
+  {
+   "name": "pillarhall_L_20",
+   "recipe": "pillarhall",
+   "shell": "L",
+   "features": [
+    "guard"
+   ],
+   "params": {
+    "shape": "L",
+    "size": [
+     18.0,
+     12.0,
+     18.0
+    ],
+    "notch": [
+     0,
+     0.5,
+     0.5
+    ],
+    "doors": [
+     [
+      2,
+      2.0,
+      0
+     ],
+     [
+      3,
+      2.0,
+      0
+     ]
+    ],
+    "side_job": "guard",
+    "pillar_pattern": "rows",
+    "dressing": "watch",
+    "props": 5,
+    "lights": [
+     0,
+     2
+    ]
+   }
+  },
+  {
+   "name": "machineroom_split_21",
+   "recipe": "machineroom",
+   "shell": "split",
+   "features": [
+    "stash",
+    "machinery"
+   ],
+   "params": {
+    "shape": "split",
+    "size": [
+     24.0,
+     20.0,
+     30.0
+    ],
+    "rise": 8.0,
+    "split": 8.0,
+    "stair": [
+     -1
+    ],
+    "doors": [
+     [
+      0,
+      2.0,
+      1
+     ],
+     [
+      1,
+      1.0,
+      0
+     ]
+    ],
+    "closet": [
+     2,
+     -7.7
+    ],
+    "side_job": "stash",
+    "gears": 2,
+    "dressing": "ossuary",
+    "props": 4,
+    "lights": [
+     7,
+     6
+    ]
+   }
+  },
+  {
+   "name": "machineroom_L_22",
+   "recipe": "machineroom",
+   "shell": "L",
+   "features": [
+    "guard"
+   ],
+   "params": {
+    "shape": "L",
+    "size": [
+     18.0,
+     12.0,
+     18.0
+    ],
+    "notch": [
+     1,
+     0.4,
+     0.4
+    ],
+    "doors": [
+     [
+      3,
+      -4.0,
+      0
+     ],
+     [
+      1,
+      -4.0,
+      0
+     ],
+     [
+      0,
+      1.0,
+      0
+     ]
+    ],
+    "side_job": "guard",
+    "dressing": "shrine",
+    "props": 3,
+    "lights": [
+     0,
+     2
+    ]
+   }
+  },
+  {
+   "name": "machineroom_rect_23",
+   "recipe": "machineroom",
+   "shell": "rect",
+   "features": [
+    "guard",
+    "machinery"
+   ],
+   "params": {
+    "shape": "rect",
+    "size": [
+     18.0,
+     12.0,
+     18.0
+    ],
+    "doors": [
+     [
+      0,
+      4.0,
+      0
+     ],
+     [
+      1,
+      0.0,
+      0
+     ]
+    ],
+    "side_job": "guard",
+    "gears": 2,
+    "dressing": "watch",
+    "props": 9,
+    "lights": [
+     0,
+     2
+    ]
+   }
+  },
+  {
+   "name": "corridor_rect_24",
+   "recipe": "corridor",
+   "shell": "rect",
+   "features": [
+    "machinery"
+   ],
+   "params": {
+    "shape": "rect",
+    "size": [
+     6.0,
+     12.0,
+     24.0
+    ],
+    "doors": [
+     [
+      2,
+      0,
+      0
+     ],
+     [
+      0,
+      0,
+      0
+     ]
+    ],
+    "variant": "hammers",
+    "bays": 1,
+    "pillar_pattern": "rows",
+    "gears": 2,
+    "dressing": "ossuary",
+    "props": 0,
+    "lights": [
+     0,
+     0
+    ]
+   }
+  },
+  {
+   "name": "corridor_rect_25",
+   "recipe": "corridor",
+   "shell": "rect",
+   "features": [],
+   "params": {
+    "shape": "rect",
+    "size": [
+     6.0,
+     12.0,
+     18.0
+    ],
+    "doors": [
+     [
+      2,
+      0,
+      0
+     ],
+     [
+      0,
+      0,
+      0
+     ]
+    ],
+    "variant": "plain",
+    "bays": 1,
+    "pillar_pattern": "scatter",
+    "dressing": "shrine",
+    "props": 0,
+    "lights": [
+     0,
+     0
+    ]
+   }
+  },
+  {
+   "name": "corridor_rect_26",
+   "recipe": "corridor",
+   "shell": "rect",
+   "features": [],
+   "params": {
+    "shape": "rect",
+    "size": [
+     6.0,
+     12.0,
+     18.0
+    ],
+    "doors": [
+     [
+      2,
+      0,
+      0
+     ],
+     [
+      0,
+      0,
+      0
+     ]
+    ],
+    "variant": "arches",
+    "bays": 1,
+    "dressing": "watch",
+    "props": 0,
+    "lights": [
+     0,
+     0
+    ]
+   }
+  },
+  {
+   "name": "stairhall_split_27",
+   "recipe": "stairhall",
+   "shell": "split",
+   "features": [
+    "stash",
+    "pillars",
+    "machinery",
+    "remains"
+   ],
+   "params": {
+    "shape": "split",
+    "size": [
+     24.0,
+     20.0,
+     30.0
+    ],
+    "rise": 8.0,
+    "split": 6.0,
+    "stair": [
+     1
+    ],
+    "doors": [
+     [
+      3,
+      -1.0,
+      0
+     ],
+     [
+      0,
+      -3.0,
+      1
+     ]
+    ],
+    "closet": [
+     2,
+     3.8
+    ],
+    "side_job": "stash",
+    "pillar_pattern": "rows",
+    "pillars": 1,
+    "gears": 2,
+    "dressing": "ossuary",
+    "props": 4,
+    "lights": [
+     8,
+     6
+    ]
+   }
+  },
+  {
+   "name": "stairhall_balcony_28",
+   "recipe": "stairhall",
+   "shell": "balcony",
+   "features": [
+    "alcove",
+    "pillars"
+   ],
+   "params": {
+    "shape": "balcony",
+    "size": [
+     30.0,
+     24.0,
+     30.0
+    ],
+    "balcony": [
+     0,
+     8.7
+    ],
+    "stair": [
+     -1
+    ],
+    "doors": [
+     [
+      2,
+      -2.0,
+      0
+     ],
+     [
+      0,
+      1.0,
+      1
+     ]
+    ],
+    "closet": [
+     2,
+     -10.7
+    ],
+    "side_job": "alcove",
+    "pillar_pattern": "scatter",
+    "pillars": 3,
+    "dressing": "shrine",
+    "props": 6,
+    "lights": [
+     8,
+     8
+    ]
+   }
+  },
+  {
+   "name": "nook_rect_29",
+   "recipe": "nook",
+   "shell": "rect",
+   "features": [],
+   "params": {
+    "shape": "rect",
+    "size": [
+     12.0,
+     12.0,
+     12.0
+    ],
+    "doors": [
+     [
+      0,
+      -1.0,
+      0
+     ]
+    ],
+    "centrepiece": "shrine",
+    "pieces": 1,
+    "dressing": "ossuary",
+    "props": 5,
+    "lights": [
+     0,
+     1
+    ]
+   }
+  },
+  {
+   "name": "nook_round_30",
+   "recipe": "nook",
+   "shell": "round",
+   "features": [],
+   "params": {
+    "shape": "round",
+    "size": [
+     12.0,
+     12.0,
+     12.0
+    ],
+    "doors": [
+     [
+      3,
+      0.0,
+      0
+     ]
+    ],
+    "centrepiece": "meteor",
+    "pieces": 1,
+    "dressing": "shrine",
+    "props": 1,
+    "lights": [
+     0,
+     1
+    ]
+   }
+  },
+  {
+   "name": "nook_rect_31",
+   "recipe": "nook",
+   "shell": "rect",
+   "features": [],
+   "params": {
+    "shape": "rect",
+    "size": [
+     12.0,
+     12.0,
+     12.0
+    ],
+    "doors": [
+     [
+      1,
+      -1.0,
+      0
+     ]
+    ],
+    "centrepiece": "sight",
+    "pieces": 1,
+    "dressing": "watch",
+    "props": 5,
+    "lights": [
+     0,
+     1
+    ]
+   }
+  },
+  {
+   "name": "nook_round_32",
+   "recipe": "nook",
+   "shell": "round",
+   "features": [],
+   "params": {
+    "shape": "round",
+    "size": [
+     12.0,
+     12.0,
+     12.0
+    ],
+    "doors": [
+     [
+      0,
+      0.0,
+      0
+     ]
+    ],
+    "centrepiece": "bones",
+    "pieces": 1,
+    "dressing": "charts",
+    "props": 1,
+    "lights": [
+     0,
+     1
+    ]
+   }
+  },
+  {
+   "name": "twolevers_rect_33",
+   "recipe": "twolevers",
+   "shell": "rect",
+   "features": [],
+   "params": {
+    "shape": "rect",
+    "size": [
+     18.0,
+     12.0,
+     18.0
+    ],
+    "doors": [
+     [
+      2,
+      0,
+      0
+     ]
+    ],
+    "notches": 4,
+    "wall_z": 1.9,
+    "dressing": "ossuary",
+    "props": 5,
+    "lights": [
+     0,
+     2
+    ]
+   }
+  },
+  {
+   "name": "ambush_rect_34",
+   "recipe": "ambush",
+   "shell": "rect",
+   "features": [
+    "pillars"
+   ],
+   "params": {
+    "shape": "rect",
+    "size": [
+     24.0,
+     12.0,
+     24.0
+    ],
+    "doors": [
+     [
+      2,
+      0,
+      0
+     ]
+    ],
+    "pillar_pattern": "rows",
+    "pillars": 1,
+    "dressing": "ossuary",
+    "props": 6,
+    "lights": [
+     5,
+     5
+    ]
+   }
+  },
+  {
+   "name": "timeddoor_rect_35",
+   "recipe": "timeddoor",
+   "shell": "rect",
+   "features": [
+    "machinery"
+   ],
+   "params": {
+    "shape": "rect",
+    "size": [
+     18.0,
+     12.0,
+     18.0
+    ],
+    "doors": [
+     [
+      2,
+      0,
+      0
+     ]
+    ],
+    "cycle": 4.0,
+    "gears": 2,
+    "dressing": "ossuary",
+    "props": 6,
+    "lights": [
+     5,
+     2
+    ]
+   }
+  }
+ ],
+ "signatures": [
+  "entrance",
+  "gatehouse",
+  "chart_a",
+  "chart_b",
+  "chart_c",
+  "astrolabe",
+  "orrery_a",
+  "orrery_b",
+  "eclipse",
+  "vault",
+  "passage_bend",
+  "passage_riser",
+  "cap_seal",
+  "cap_fallen",
+  "secret_lens",
+  "vault_cap",
+  "shortcut_near",
+  "shortcut_far"
+ ],
+ "variety": {
+  "recipeRooms": 35,
+  "signatureRooms": 18,
+  "jobs": 15,
+  "shells": 7,
+  "spread": {
+   "fight": 0.68,
+   "hub": 0.75,
+   "lever": 0.91,
+   "timing": 0.35,
+   "plate": 0.36,
+   "drop": 0.46,
+   "breather": 0.74,
+   "pillarhall": 0.6,
+   "machineroom": 0.67,
+   "corridor": 0.43,
+   "stairhall": 0.73,
+   "nook": 0.48
+  },
+  "sameRooms": [],
+  "overlap": {
+   "rimeforge": 0.0,
+   "shiftinghalls": 0.0,
+   "testtheme": 0.0
+  }
+ }
+}

@@ -11,7 +11,7 @@
 
 <!-- GITHUB-ONLY -->[Thunderstore](https://thunderstore.io/c/valheim/p/Quads_Lab/Quads_Dungeons/)  ·  <!-- END GITHUB-ONLY -->[Source code](https://github.com/HardHeadHackerHead/valheim-mods/tree/main/mods/Dungeons)  ·  [Report a bug](https://github.com/HardHeadHackerHead/valheim-mods/issues/new?template=bug.yml&title=%5BQuad%27s%20Dungeons%5D%20)  ·  [Discord](https://discord.gg/EwTjQxEZPy)
 
-[![Join us on Discord](https://img.shields.io/badge/Join_us_on-Discord-5865F2?style=for-the-badge&logo=discord&logoColor=white)](https://discord.gg/EwTjQxEZPy)
+[![Join us on Discord](https://img.shields.io/badge/Join_us_on-Discord-5865F2?style=for-the-badge&logo=discord&logoColor=white)](https://discord.gg/EwTjQxEZPy)  [![Buy me a coffee](https://img.shields.io/badge/Buy_me_a-coffee-FFDD00?style=for-the-badge&logo=buymeacoffee&logoColor=black)](https://buymeacoffee.com/quadh)
 
 <!-- GITHUB-ONLY -->**Install:** with [r2modman](https://thunderstore.io/c/valheim/p/ebkr/r2modman/) or Thunderstore Mod Manager from [Thunderstore](https://thunderstore.io/c/valheim/p/Quads_Lab/Quads_Dungeons/), or press **F7** in the game with our [mod manager](https://github.com/HardHeadHackerHead/valheim-mod-manager).<!-- END GITHUB-ONLY -->
 
@@ -32,6 +32,21 @@ Dungeons don't appear in the world by themselves yet. For now, an admin or a tes
 - Shifting Halls: a Giants' clockwork vault. Ancient Jotunn machinery in grausten and black marble, bronze and iron gears, chains, and cold blue light. A hall four storeys high with turning staircases driven by gears, levers, a round drum room that turns every 12 seconds, and a vault at the top behind a gate, where the Jotunn's great carved chest holds the reward. Every room in it is new, made for this mod, and most are built fresh for each dungeon: two rooms with the same job (a fight, a lever, a pit to cross) look and play differently.
 - On the way: fight rooms that lock until their waves are beaten (with cover and pillars to fight round), quieter rooms with something of their own (a guarded chest, a lever alcove, a hidden stash behind a cracked wall), secret rooms behind walls a pickaxe or a club can break, a shortcut back to the entrance once you've come far enough, and the Clockwork Warden, a boss with its own health bar.
 - Its entrance is a giant iron door in a hill. Beside it lie the bones of a fallen giant: a skull, a sword and a huge cogwheel.
+- Cathedral of the Bone Choir: a cathedral built inside a giant skeleton. Tall pointed doorways and pale stone, every vault a ribcage, pillars of bound bones, skeleton singers on stone thrones, and only candles and firebowls for light.
+- In the Bone Choir: ring the bell in the Nave of Ribs and the dead come in four waves while stone spikes drop on the marked lanes (they shudder first). In the Bell Tower the bells ring a hymn by themselves: pull their ropes in the same order and the lift rises. In the Charnel, push the bone cart round the skull piles onto the open grave. Three relics, laid on their carved pedestals in the Reliquary, open the way on, and a checkpoint waits there.
+- Its bosses: the Choirmaster, who can't be hurt while a choir stall sings (drop that stall's shutter with the lever beside it), and the Bone Colossus, whom the choir sings back to its mound behind a shield (pull the four bell ropes in the order the bells ring).
+- The Drowned Vault: a sea temple cut into a sea cliff, sunk long ago and drained. Dark banded sea-rock, floors of weathered ship's decks, wrecked longships rammed through the walls, ceilings ribbed like an upturned hull, kelp hanging from the vaults, and green sea-fire for light. Its entrance is a way into a sea cliff half-sunk in sand, with an iron anchor leaning on it.
+- In the Drowned Vault: in the Tide Locks, sluice levers raise and lower the tide under three drowned hulls. Low, a hull's deck is the path through the arcades under the piers; high, it's level with the pier tops. Raising one path drowns another, and the emblems by each lever match the hulls it moves. In the Anchor Gallery, four iron anchors swing across the hall in turn (each creaks and shudders first). In the Kelp Way, timber tide-gates slam down in turn after a warning. Opening the drowned crew's sea chest in the Wreck Hall wakes them.
+- Its bosses: the Bellkeeper in its bell tower (lure it under the great bell and pull a bell-rope: the bell drops on it), and Jarl Hafgrim the Drowned in his mead-hall, who calls the tide: the side aisles flood with a freezing surge every few seconds while he sits shielded on his throne (shut both sluice gates together, twice).
+- Rimeforge Depths: a frost-giants' smithy that a glacier swallowed, its forges still smouldering inside the ice. Tall forge halls of black stone with glacier ice grown over them, black iron ribs and beams, and orange forge light against the ice's pale blue. Its entrance is a smoking crack in a glacier wall, with a giant's hammer lying head-down in the ice beside it.
+- In Rimeforge: walls of ice close every way on until all three Frozen Forges burn at once (pull each furnace's bellows lever, or light it with a torch; each burns only 14 seconds, and steam vents scald across the hall on a beat). In the Hammer Line four trip-hammers slam across the hall in turn (each creaks and smokes first), until a lever at the far end stops them. A secret strongroom hides behind cracked ice.
+- Its bosses: the Bellows-Keeper, whose frost-crusted hide turns most blows until you lure it into a bellows lane and pull that bellows' lever, and the Rimesmith, whose rime armour breaks under a falling drop-hammer press, and who turns white-hot and shielded until you push blocks of glacier ice into the forge's mouth, twice.
+- Rootdeep Hollow: down among the roots of a dying world-tree. Floors of packed earth, walls of dark layered rock with pale roots woven over them, great roots arching across every roof, and the cold glow of mushrooms and guck pods for light; amber marks anything you can use. Its entrance is a great root arching out of the ground, split open at its foot.
+- In Rootdeep: the Sap Shaft is a hollow trunk three storeys tall, where each sap valve makes two root bridges grow up level with the ledges or wither into the dark; work out the order to climb to the heart's door. In the Seed Garden a sap valve drops a glowing seed from a pod; put it in the root socket at the rot pit's edge and a root bridge grows across (the seed belongs to the dungeon and vanishes if taken outside).
+- Its bosses: the Sap-Warden, which goes back to drink from the Mother Root and can't be hurt until you carry a fallen seed to the root's mouth, and the Rotheart, which hides behind a rot-shield while the chamber's root walls close in, until all three rot-nodes burn at once (pull the amber sap-fire bloom beside each, or use a torch or fire arrows). Its spores are poison.
+- The Starfall Orrery: a sky-watchers' observatory built into the crater where a star fell. Tall round halls of pale stone banded in black marble, star-stones hung on chains from night-black vaults, silver armillary hoops tumbling overhead, and cold white starlight. Its entrance is a ring of pale standing stones round a glowing meteorite, with a moon-door: a dark stone disc in a silver ring.
+- In the Starfall: in the Great Orrery, three geared star-cranks each turn one, two or three planets round the fallen star; bring all three into line with the far door (a planet lights up when it's in line) and the moon-bridge rises across the star-well. In the Star-Chart Halls the floor is a star map: step on the constellation's stars in order (a wrong step starts it over), then beat the watchers' shades it raises. Stars fall from the vault onto pale rings on a beat, with a whistle first.
+- Its bosses: the Astrolabe Keeper, whose star-iron hide turns most blows until you lure it onto the pale ring as the sighting-lens strikes, and the Sun-Eater, who hides on its dais when the black moon covers the sun, until you turn all three sun-mirrors to throw their light onto it at once, twice.
 - Test Crypt: the game's own Black Forest crypt rooms, joined in new ways. Made to test the dungeon system.
 - Test Mechanisms: a small dungeon with one of each moving part: a lever, a pressure plate, a turning stair, a lift and a gate.
 - Test Blocks: a small dungeon with the other building blocks: a pedestal for a key, braziers to light, a block to push, a trap, teleporters, a locked gate and a checkpoint.
@@ -78,7 +93,7 @@ Dungeons don't appear in the world by themselves yet. For now, an admin or a tes
 
 ### Commands for admins and testers
 
-- With our Claude Tools mod, type them in the game's console (F5) after "claude". For example, claude dungeon spawn shiftinghalls puts a Shifting Halls entrance in front of you (the others: testcrypt, testmechs).
+- With our Claude Tools mod, type them in the game's console (F5) after "claude". For example, claude dungeon spawn shiftinghalls puts a Shifting Halls entrance in front of you (the others: bonechoir, drowned, rimeforge, rootdeep, starfall, testcrypt, testmechs, testblocks).
 - dungeon list shows the dungeons in the world, dungeon map a dungeon's layout floor by floor, dungeon solve its puzzle's solution, dungeon reset makes it new again now, and dungeon remove takes it away for good.
 - Commands that change the world follow the game's cheat rule: they work in single player, for the host, or with devcommands on.
 
@@ -190,7 +205,17 @@ and tested in our own world, with **bobisme** as our tester.
 - 🧰 [All Quads Lab mods on Thunderstore](https://thunderstore.io/c/valheim/p/Quads_Lab/)
 - 💻 [Source code on GitHub](https://github.com/HardHeadHackerHead/valheim-mods)
 - 💬 [Discord](https://discord.gg/EwTjQxEZPy)
+- ☕ [Buy me a coffee](https://buymeacoffee.com/quadh)
 - 🐞 Found a bug? [Open an issue on GitHub](https://github.com/HardHeadHackerHead/valheim-mods/issues/new/choose)
+
+## ☕ Support my mods
+
+<a href="https://buymeacoffee.com/quadh"><img src="https://raw.githubusercontent.com/HardHeadHackerHead/valheim-mods/main/tools/modpages/support-banner.jpg" alt="Support my mods: buy me a coffee" width="100%"></a>
+
+Every Quads Lab mod is free, and it stays that way. If one of them made your game better and you'd like to say thanks, a coffee
+helps me make new mods and keep improving the ones you already play. It's 100% optional, and always appreciated!
+
+**[☕ Buy me a coffee →](https://buymeacoffee.com/quadh)**
 
 ## 📜 Recent changes
 

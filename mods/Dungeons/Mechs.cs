@@ -11,6 +11,8 @@ namespace Dungeons
     /// <summary>One mechanism built in this game: its frame in the room, the pivot its moving parts hang from, its colliders.</summary>
     internal class Mech
     {
+        public Container Chest;         // (an encounter that starts when its chest opens: the chest, found once: ChestOpened)
+        public float NextChestLook;
         public string Key;              // "<room index>.<mech id>"
         public int Room;
         public MechDef Def;
@@ -517,19 +519,26 @@ namespace Dungeons
             if (!Alive) return;
             ReadRecords();
             double now = MechClock.Now;
+            bool seen = Seen();   // (a dungeon this game's camera and player are outside: its gears don't turn, nothing of it is drawn)
             foreach (Mech m in All)
             {
                 if (m.Pivot == null) continue;
                 MechMotion mo = Motion(m, now);
                 Place(m, mo, now);
                 Hear(m, mo, now);
-                if (m.Spinners.Count > 0) Turn(m, mo, now);
+                if (seen && m.Spinners.Count > 0) Turn(m, mo, now);
             }
+            long timed = PerfTiming.Begin();
             TellPlates();
             EncounterNotices();
+            PerfTiming.Add("mechanisms: plates and fights", timed);
+            timed = PerfTiming.Begin();
             BossShow();       // (the boss toolkit: telegraphs, beats, the boss's look: BossShow.cs)
+            PerfTiming.Add("mechanisms: boss (BossShow)", timed);
+            timed = PerfTiming.Begin();
             Breaks();
             BlocksUpdate();   // (triggers: blocks shown, pushed, firing, stepped on, BlockSet.cs)
+            PerfTiming.Add("mechanisms: breakables and blocks", timed);
         }
 
         private float _nextTell;
@@ -571,10 +580,13 @@ namespace Dungeons
                 m.Last = at;
                 m.HasLast = true;
             }
-            if (!any) return;
+            if (!any || characters == null) return;
+            // nobody (no creature, no player) in the dungeon here: nothing to carry, and no physics sync forced every step for it
+            bool someone = false;
+            foreach (Character c in characters) if (c != null && Site.Contains(c.transform.position)) { someone = true; break; }
+            if (!someone) return;
             // the game's own ground checks in this step (Character's) see the parts where they are now, not where they were
             Physics.SyncTransforms();
-            if (characters == null) return;
             foreach (Character c in characters)
             {
                 if (c == null || !c.IsOwner() || !c.IsOnGround() || c.IsAttached()) continue;
@@ -617,8 +629,19 @@ namespace Dungeons
             float t = Mathf.SmoothStep(0f, 1f, mo.Progress(now));
             Vector3 at = Vector3.Lerp(from.At, to.At, t);
             Quaternion turn = Quaternion.Slerp(Quaternion.Euler(from.Euler), Quaternion.Euler(to.Euler), t);
-            m.Pivot.localPosition = at;
-            m.Pivot.localRotation = turn;
+            // only when it moved: setting a transform, even to the same value, marks it and everything under it changed (its colliders
+            // synced to physics, its renderers' bounds), every frame, for every mechanism of every dungeon built here
+            if (m.Pivot.localPosition != at) m.Pivot.localPosition = at;
+            if (m.Pivot.localRotation != turn) m.Pivot.localRotation = turn;
+        }
+
+        private DungeonCull _cull;
+
+        /// <summary>This game's camera or player is in the dungeon (its culling's word; no culling: always).</summary>
+        private bool Seen()
+        {
+            if (_cull == null && Site.Built?.Root != null) _cull = Site.Built.Root.GetComponent<DungeonCull>();
+            return _cull == null || _cull.Inside;
         }
 
         /// <summary>A motion that started in the last second, not heard yet: its sound, where it is (a gate its own door's, the rest the
@@ -742,10 +765,30 @@ namespace Dungeons
         public void OwnerTick()
         {
             if (!Alive || !Site.IsOwner) return;
+            bool someone = SomeoneInside();
+            long timed = PerfTiming.Begin();
             EncounterTick();
-            TriggersTick();   // (triggers: state changes, areas, timers, TriggerSet.cs)
+            PerfTiming.Add("owner: encounters", timed);
+            // nobody in the dungeon: its triggers (state changes, areas, timers checked against when they started) once a second, not ten
+            if (someone || Time.time >= _nextIdleTriggers)
+            {
+                _nextIdleTriggers = Time.time + 1f;
+                timed = PerfTiming.Begin();
+                TriggersTick();   // (triggers: state changes, areas, timers, TriggerSet.cs)
+                PerfTiming.Add("owner: triggers (TriggersTick)", timed);
+            }
             if (Time.time < _nextPlates) return;
-            _nextPlates = Time.time + PlateEvery;
+            // nobody in the dungeon: no player can stand on a plate, and its creatures are idle; looked at once a second, not ten times
+            _nextPlates = Time.time + (someone ? PlateEvery : 1f);
+            timed = PerfTiming.Begin();
+            OwnerPlates();
+            PerfTiming.Add("owner: plates", timed);
+        }
+
+        private float _nextIdleTriggers;
+
+        private void OwnerPlates()
+        {
             List<Character> characters = Character.GetAllCharacters();
             var pending = new Dictionary<Mech, int>();
             var why = new List<string>();
@@ -772,6 +815,19 @@ namespace Dungeons
         }
 
         // ---- helpers
+
+        private bool _someone;
+        private float _nextSomeone;
+
+        /// <summary>A player in the dungeon (loaded here, or on the server a peer whose game says so), looked at twice a second: a dungeon
+        /// nobody is in has its owner's checks slowed right down (OwnerTick, EncounterTick).</summary>
+        public bool SomeoneInside()
+        {
+            if (Time.time < _nextSomeone) return _someone;
+            _nextSomeone = Time.time + 0.5f;
+            _someone = Dungeons.AnyoneInside(Site);
+            return _someone;
+        }
 
         private static readonly AccessTools.FieldRef<Character, Rigidbody> Body = AccessTools.FieldRefAccess<Character, Rigidbody>("m_body");
         private static Rigidbody CharacterBody(Character c) => Body(c);

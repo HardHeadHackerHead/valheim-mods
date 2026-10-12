@@ -243,9 +243,12 @@ namespace Dungeons
             foreach (KeyValuePair<ZDO, ZNetView> kv in Instances(ZNetScene.instance))
             {
                 ZNetView view = kv.Value;
-                if (view == null || !kv.Key.IsOwner() || view.GetComponent<Player>() != null || Transient(kv.Key.GetPrefab())) continue;
-                string belongs = Sweep.DungeonOf(kv.Key);   // (one of another dungeon's is never moved into this one: the orphan sweep takes it)
+                if (view == null || !kv.Key.IsOwner()) continue;
                 Vector3 pos = view.transform.position;
+                // (the cheap test first: down on the ground, only a gravestone made up in a dungeon matters; most loaded things are neither)
+                if (pos.y < 3000f && !(kv.Key.GetVec3(ZDOVars.s_spawnPoint, out Vector3 made0) && made0.y > 3000f)) continue;
+                if (view.GetComponent<Player>() != null || Transient(kv.Key.GetPrefab())) continue;
+                string belongs = Sweep.DungeonOf(kv.Key);   // (one of another dungeon's is never moved into this one: the orphan sweep takes it)
                 // a gravestone: from wherever it is (even the ground), if it was made in a dungeon built here and has left it (far below)
                 if (view.GetComponent<TombStone>() != null && kv.Key.GetVec3(ZDOVars.s_spawnPoint, out Vector3 spawn) && spawn.y > 3000f && pos.y < spawn.y - 30f)
                 {

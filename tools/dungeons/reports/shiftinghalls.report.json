@@ -1528,6 +1528,7 @@
   },
   "sameRooms": [],
   "overlap": {
+   "starfall": 0.0,
    "testtheme": 0.0
   }
  }

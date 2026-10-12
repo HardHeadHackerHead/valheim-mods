@@ -72,6 +72,14 @@ it never flickers on the first frame), and any block `"fx": [game prefabs]` play
 glow on a lit teleporter, a torch on your own checkpoint), **never for swapping one model for another**: two parts of one mechanism
 shown in states that never meet, under 1 m apart, fail the pack.
 
+**`"beams"`** on any mechanism (not yet seen in the game): glowing lines of light while the mechanism is in one of `states`:
+`"beams": [{"from": [x,y,z], "to": [x,y,z], "fromMech": "id", "toMech": "id", "states": [k], "colour": [r,g,b], "width": 0.3, "light": 4}]`.
+For a mirror aimed at a dais, a lens lit, a laser, a soul tether. Points are in the room's frame, or with `fromMech` / `toMech` in that
+mechanism's moving part's frame, following it. It pulses softly, with a point light of range `light` at its far end (0: none); `width`
+over 0 and up to 3. Seen only: no collider, never in a check, never culled. The reader refuses no `states`, a state out of range, a
+`width` or `light` out of range, `from` equal to `to`, and an unknown `fromMech` / `toMech`. Code: `BossBeams.cs`, `PackReaderBoss.cs`
+(`ReadBeams`, `CheckBeams`), `BossModel.cs` (`BeamDef`).
+
 **`"lit": [states]`** on any mechanism's part makes the part's own fire burn only in those states (a Fireplace's flame, light, warmth and
 crackle; for a part with no Fireplace, its lights, particles and looping sounds). The model stays; set as it's built (no flash), then
 following state changes on every game. `show` hides and shows the whole part; `lit` only its fire. A brazier's parts act as if they had

@@ -346,6 +346,10 @@ namespace Dungeons
                 Vector3 look = view.Target - view.At;
                 t.SetPositionAndRotation(view.At, Quaternion.LookRotation(look.sqrMagnitude > 0.01f ? look : Vector3.forward, Vector3.up));
                 cam.fieldOfView = Fov;
+                // the rooms seen from the view, drawn now: culling (BuildCull.cs) draws only what's near the player and the camera, and
+                // updates a few times a second, so a room far from the player would come out empty (keepShown: nothing else is hidden)
+                DungeonCull cull = site.Built?.Root != null ? site.Built.Root.GetComponent<DungeonCull>() : null;
+                if (cull != null) cull.Reveal(view.At);
                 lit = LightUp(site, out was);
                 if (bright) { Brighten(out was2); brightened = true; lamp = Lamp(view.At); }
                 Wake(view.At, lights);

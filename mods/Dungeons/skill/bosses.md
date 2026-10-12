@@ -96,10 +96,12 @@ flares, the game's health-upgrade effect, a guard stone's activation, a heal sou
 
 **A shield** (on a phase): `{"take": 0, "until": [{"mech": "brazierL", "state": 1}, ...], "seconds": 60, "hold": true,
 "breakShare": 0.08, "breakWires": [...], "hint": "$key"}`. While it's up the boss takes `take` of each hit (0: none; hits clang off,
-"Immune", with the protection staff's bubble on it). With `hold` it stands still, channelling. The mechanisms in `until` are put back to 0 as it
-comes up (lit braziers go out), and it breaks when every condition holds at once, when a `weakTo` that `breaks` lands, or after
+"Immune", with the protection staff's bubble on it). With `hold` it stands still, channelling. The mechanisms in `until` are put back to their **start**
+state as it comes up and on each flicker (a push block to its `S` cell, a brazier out; the reader refuses an `until` state equal to the
+mechanism's start), and it breaks when every condition holds at once, when a `weakTo` that `breaks` lands, or after
 `seconds` (never stuck). With `"times": n` (1 to 5) its conditions must hold that many times: each time but the last the shield
-flickers (a message, a sound) and the mechanisms in `until` are put back. Then it staggers, takes `breakShare` of its health, and
+flickers (a sound, and the message `flicker`: a $ key, `{0}` the boss's name; default "The shield of {0} still holds: do it again!";
+the Warden's is `$dungeons_boss_warden_flicker`) and the mechanisms in `until` are put back. Then it staggers, takes `breakShare` of its health, and
 `breakWires` fire. `hint` is the message the
 players in the fight get as it comes up (default: "{0} is shielded: find what in the room breaks it!").
 
@@ -108,10 +110,12 @@ players in the fight get as it comes up (default: "{0} is shielded: find what in
 `areaAt`), the boss takes `share` of its whole health (through its shield and armour), staggers, and with `breaks` its shield
 breaks and its armour comes off for `armourOff` seconds. Players inside take `hurt` times the land's trap damage. A lever with a `next`
 wire drops it and raises it again. While it falls, every game draws a red ring where it lands (with the mechanism's own sound).
-Give it `seconds` of 1 or more so players can roll out.
+Give it `seconds` of 1 or more so players can roll out. A platform with `cycle` and `cycleIn` keeps cycling while it's set into
+`cycleIn`: for one blast, set it, then set it back with a named timer (triggers.md).
 
 **The clamp**: when the mechanism starts down with the boss inside its area, the boss is held there until it lands (chains snap round
-it, with an effect, a chain sound and "{name} is chained in place: the hammer is coming down!"). The hit is judged at the landing, so a
+it, with an effect, a chain sound and the weakTo's `held` message: a $ key, `{0}` the boss's name; default "{0} is held in place: it's
+coming down on it!"; the Thrall's is `$dungeons_boss_thrall_held`). The hit is judged at the landing, so a
 well-timed pull always lands; a pull with the boss off the target drops on empty floor. While the mechanism moves, or is down with the
 boss under it, the boss passes through its colliders (it can't be caught in it), and after a hit it's hopped out.
 

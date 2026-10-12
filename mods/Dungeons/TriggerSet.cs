@@ -376,7 +376,8 @@ namespace Dungeons
 
         // ---- the owner, every frame
 
-        /// <summary>The owner (from OwnerTick): state changes seen, areas, timers, braziers going out, one-shot traps ending.</summary>
+        /// <summary>The owner (from OwnerTick): state changes seen, areas, timers, braziers going out, one-shot traps ending. Each part timed
+        /// (PerfTiming, `dungeon perf`). A dungeon with no triggers only looks at the blocks that change by themselves.</summary>
         public void TriggersTick()
         {
             if (!Alive || !Site.IsOwner || !Complete) return;
@@ -384,81 +385,139 @@ namespace Dungeons
             _nextTrigger = Time.time + TriggerEvery;
             try
             {
+                long t = PerfTiming.Begin();
                 ReadRecords();
                 ReadTriggers();
+                PerfTiming.Add("triggers: read", t);
                 double now = MechClock.Now;
-                var pending = new Dictionary<Mech, int>();
-                var events = new List<Action>();
-                foreach (Mech m in All)
+                bool triggers = Trigs().Count > 0;
+                t = PerfTiming.Begin();
+                List<Mech> watched = triggers ? All : SelfChanging();
+                List<Action> events = null;
+                Dictionary<Mech, int> pending = null;
+                foreach (Mech m in watched)
                 {
-                    int s = m.Def.Encounter != null ? EncounterOf(m).State : m.Def.Kind == "breakable" ? (IsBroken(m) ? 1 : 0) : StateOf(m);
+                    // (the records read once above: no ZDO lookup per mechanism)
+                    int s = m.Def.Encounter != null ? EncounterOf(m).State : m.Def.Kind == "breakable" ? (_records.ContainsKey(m.Key) ? 1 : 0) : Motion(m, now).To;
                     // blocks that change by themselves (the owner writes it): a brazier burning out, a one-shot trap ending
                     BlockDef b = m.Def.Block;
                     if (b != null && s == 1)
                     {
                         MechMotion mo = Motion(m, now);
-                        if (m.Def.Kind == "brazier" && b.Burn > 0f && now - mo.Start >= b.Burn) pending[m] = 0;
-                        if (m.Def.Kind == "trap" && b.Every <= 0f && now - mo.Start >= b.Warn + b.For) pending[m] = 0;   // (its wind-up, then its firing)
+                        if ((m.Def.Kind == "brazier" && b.Burn > 0f && now - mo.Start >= b.Burn)
+                            || (m.Def.Kind == "trap" && b.Every <= 0f && now - mo.Start >= b.Warn + b.For))   // (its wind-up, then its firing)
+                            (pending ?? (pending = new Dictionary<Mech, int>()))[m] = 0;
                     }
+                    if (!triggers) continue;
                     if (!_lastSeen.TryGetValue(m, out int was)) { _lastSeen[m] = s; continue; }
                     if (was == s) continue;
                     _lastSeen[m] = s;
                     Mech seen = m;
+                    events = events ?? new List<Action>();
                     events.Add(() => Fire(TriggerEvents.State, seen.Key, s));
                     if (m.Def.Kind == "brazier") events.Add(() => Fire(s == 1 ? TriggerEvents.Lit : TriggerEvents.Out, seen.Key));
                     if (m.Def.Kind == "breakable" && s == 1) events.Add(() => Fire(TriggerEvents.Broken, seen.Key));
                     if (m.Def.Encounter != null && s == EncounterRecord.Cleared) events.Add(() => Fire(TriggerEvents.Cleared, seen.Key));
                 }
-                if (pending.Count > 0) Change(pending.ToList(), "burnt out, or a trap's firing over");
-                if (Trigs().Count == 0) return;
-                foreach (Action ev in events) ev();
+                if (pending != null) Change(pending.ToList(), "burnt out, or a trap's firing over");
+                PerfTiming.Add("triggers: states", t);
+                if (!triggers) return;
+                if (events != null)
+                {
+                    t = PerfTiming.Begin();
+                    foreach (Action ev in events) ev();
+                    PerfTiming.Add("triggers: events", t);
+                }
+                t = PerfTiming.Begin();
                 Timers(now);
-                if (Time.time >= _nextArea) { _nextArea = Time.time + AreaEvery; Areas(); }
+                PerfTiming.Add("triggers: timers", t);
+                if (Time.time >= _nextArea)
+                {
+                    _nextArea = Time.time + AreaEvery;
+                    t = PerfTiming.Begin();
+                    Areas();
+                    PerfTiming.Add("triggers: areas", t);
+                }
             }
             catch (Exception e) { WarnOnce($"Dungeon {Site.Id}: its triggers: {e}"); }
         }
 
+        private List<Mech> _selfChanging;
+
+        /// <summary>The blocks that change state by themselves (a brazier that burns out, a trap set off by an action), found once.</summary>
+        private List<Mech> SelfChanging() => _selfChanging ?? (_selfChanging = All.Where(m => m.Def.Block != null
+            && ((m.Def.Kind == "brazier" && m.Def.Block.Burn > 0f) || (m.Def.Kind == "trap" && m.Def.Block.Every <= 0f))).ToList());
+
+        private readonly List<KeyValuePair<string, string>> _rang = new List<KeyValuePair<string, string>>();
+        private List<KeyValuePair<Trig, int>> _everyEvents;
+
         private void Timers(double now)
         {
-            foreach (KeyValuePair<string, string> kv in _trig.Where(k => k.Key.StartsWith("t|")).ToList())
+            // named timers (saved): those that rang, collected first (firing them changes the saved state)
+            _rang.Clear();
+            foreach (KeyValuePair<string, string> kv in _trig)
+            {
+                if (!kv.Key.StartsWith("t|")) continue;
+                int comma = kv.Value.IndexOf(',');
+                if (now >= TriggerState.D(comma < 0 ? kv.Value : kv.Value.Substring(0, comma))) _rang.Add(kv);
+            }
+            foreach (KeyValuePair<string, string> kv in _rang)
             {
                 string[] f = kv.Value.Split(',');
                 double ring = TriggerState.D(f[0]), every = f.Length > 1 ? TriggerState.D(f[1]) : 0.0;
-                if (now < ring) continue;
                 PutTrig(kv.Key, every > 0.0 ? TriggerState.F(ring + every * Math.Max(1.0, Math.Ceiling((now - ring) / every + 1e-6))) + "," + TriggerState.F(every) : null);
                 Fire(TriggerEvents.Timer, name: kv.Key.Substring(2));
             }
-            // every N seconds of the server's clock (nothing saved: every game would count the same)
-            foreach (Trig t in Trigs())
-                for (int i = 0; i < t.Def.On.Count; i++)
-                {
-                    TriggerEvent e = t.Def.On[i];
-                    if (e.Kind != TriggerEvents.Timer || e.Every <= 0f || !string.IsNullOrEmpty(e.Name)) continue;
-                    long tick = (long)Math.Floor(now / e.Every);
-                    string k = t.Key + "|" + i;
-                    if (_everyTick.TryGetValue(k, out long last) && tick > last) Handle(t, i, 0);
-                    _everyTick[k] = tick;
-                }
+            // every N seconds of the server's clock (nothing saved: every game would count the same); the events found once
+            if (_everyEvents == null)
+            {
+                _everyEvents = new List<KeyValuePair<Trig, int>>();
+                foreach (Trig t in Trigs())
+                    for (int i = 0; i < t.Def.On.Count; i++)
+                        if (t.Def.On[i].Kind == TriggerEvents.Timer && t.Def.On[i].Every > 0f && string.IsNullOrEmpty(t.Def.On[i].Name))
+                            _everyEvents.Add(new KeyValuePair<Trig, int>(t, i));
+            }
+            foreach (KeyValuePair<Trig, int> ev in _everyEvents)
+            {
+                long tick = (long)Math.Floor(now / ev.Key.Def.On[ev.Value].Every);
+                string k = ev.Key.Key + "|" + ev.Value;
+                if (_everyTick.TryGetValue(k, out long last) && tick > last) Handle(ev.Key, ev.Value, 0);
+                _everyTick[k] = tick;
+            }
         }
+
+        private List<KeyValuePair<Trig, int>> _areaEvents;
+        private readonly List<Vector3> _at = new List<Vector3>();
 
         /// <summary>Enter and leave: an area becoming occupied or empty, by living players (this game's loaded ones and those other games
         /// tell of). An area not seen yet counts as empty, so a player already in it enters it.</summary>
         private void Areas()
         {
-            var at = Player.GetAllPlayers().Where(p => p != null && !p.IsDead()).Select(p => p.transform.position)
-                .Concat(_playerAt.Values.Where(v => v.Value > Time.time).Select(v => v.Key)).ToList();
-            foreach (Trig t in Trigs())
-                for (int i = 0; i < t.Def.On.Count; i++)
-                {
-                    TriggerEvent e = t.Def.On[i];
-                    if (e.Kind != TriggerEvents.Enter && e.Kind != TriggerEvents.Leave) continue;
-                    string k = t.Key + "|" + i;
-                    bool now = at.Any(p => InArea(t.Room, e, p));
-                    bool known = _occupied.TryGetValue(k, out bool was);
-                    _occupied[k] = now;
-                    if ((known ? was : false) == now) continue;
-                    if ((e.Kind == TriggerEvents.Enter && now) || (e.Kind == TriggerEvents.Leave && !now && known)) Handle(t, i, 0);
-                }
+            // the enter and leave events, found once
+            if (_areaEvents == null)
+            {
+                _areaEvents = new List<KeyValuePair<Trig, int>>();
+                foreach (Trig t in Trigs())
+                    for (int i = 0; i < t.Def.On.Count; i++)
+                        if (t.Def.On[i].Kind == TriggerEvents.Enter || t.Def.On[i].Kind == TriggerEvents.Leave) _areaEvents.Add(new KeyValuePair<Trig, int>(t, i));
+            }
+            if (_areaEvents.Count == 0) return;
+            _at.Clear();
+            foreach (Player p in Player.GetAllPlayers()) if (p != null && !p.IsDead()) _at.Add(p.transform.position);
+            foreach (KeyValuePair<Vector3, float> v in _playerAt.Values) if (v.Value > Time.time) _at.Add(v.Key);
+            foreach (KeyValuePair<Trig, int> ev in _areaEvents)
+            {
+                Trig t = ev.Key;
+                int i = ev.Value;
+                TriggerEvent e = t.Def.On[i];
+                string k = t.Key + "|" + i;
+                bool now = false;
+                foreach (Vector3 p in _at) if (InArea(t.Room, e, p)) { now = true; break; }
+                bool known = _occupied.TryGetValue(k, out bool was);
+                _occupied[k] = now;
+                if ((known ? was : false) == now) continue;
+                if ((e.Kind == TriggerEvents.Enter && now) || (e.Kind == TriggerEvents.Leave && !now && known)) Handle(t, i, 0);
+            }
         }
 
         // ---- what other games tell the owner (Dungeons.HandleAct: "blk:...")

@@ -205,8 +205,17 @@ namespace Dungeons
             RegisterNotices();
             TellPosition();
             if (_blocks.Count == 0 && _escrow == null && _unlocking == null) return;
+            long timing = PerfTiming.Begin();
             double now = MechClock.Now;
             Player p = Player.m_localPlayer;
+            // what's seen and felt here only matters with this game's player in or by the dungeon: otherwise nothing per frame (the parts
+            // are set for their state again as the player comes back, silently for anything older than a moment)
+            if (p == null || !Site.Covers(p.transform.position))
+            {
+                Settle(now);
+                PerfTiming.Add("blocks: update", timing);
+                return;
+            }
             foreach (KeyValuePair<Mech, BlockRun> kv in _blocks)
             {
                 Mech m = kv.Key;
@@ -236,6 +245,7 @@ namespace Dungeons
                 catch (Exception e) { WarnOnce($"Dungeon {Site.Id}: block {m.Key}: {e}"); }
             }
             Settle(now);
+            PerfTiming.Add("blocks: update", timing);
         }
 
         // ---- pedestals

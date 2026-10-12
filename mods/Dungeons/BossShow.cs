@@ -51,6 +51,7 @@ namespace Dungeons
         /// <summary>Every frame, every game (Update): each boss fight shown.</summary>
         private void BossShow()
         {
+            BeamsShow();   // (any mechanism's beams: BossBeams.cs)
             if (Time.time >= _nextBossFind) { _nextBossFind = Time.time + 1f; BossBody.Find(); }
             ReadBosses();
             foreach (Mech m in All)
@@ -186,7 +187,8 @@ namespace Dungeons
                 {
                     PlayAt("fx_StaffShield_Hit", bossAt);
                     PlayAt("sfx_gdking_scream", bossAt);
-                    if (here) p.Message(MessageHud.MessageType.Center, T("dungeons_boss_shield_flicker", Localize(d.Name)));
+                    string flicker = b.Shield >= 0 && b.Shield < d.Phases.Count ? d.Phases[b.Shield].Shield?.Flicker : null;
+                    if (here) p.Message(MessageHud.MessageType.Center, string.IsNullOrEmpty(flicker) ? T("dungeons_boss_shield_flicker", Localize(d.Name)) : Localize(flicker, Localize(d.Name)));
                 }
                 v.FlickerAt = b.FlickerAt;
             }
@@ -211,7 +213,8 @@ namespace Dungeons
                 {
                     PlayAt("fx_frozenking_chain_ground_impact_1", bossAt);
                     PlayAt("sfx_frozenking_chainflurry_chain", bossAt);
-                    if (here) p.Message(MessageHud.MessageType.TopLeft, T("dungeons_boss_held", Localize(d.Name)));
+                    string held = b.ClampWeak >= 0 && b.ClampWeak < d.WeakTo.Count ? d.WeakTo[b.ClampWeak].Held : null;
+                    if (here) p.Message(MessageHud.MessageType.TopLeft, string.IsNullOrEmpty(held) ? T("dungeons_boss_held", Localize(d.Name)) : Localize(held, Localize(d.Name)));
                 }
                 v.ClampUntil = b.ClampUntil;
             }

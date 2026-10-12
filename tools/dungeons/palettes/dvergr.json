@@ -18,6 +18,7 @@
   "by_role": "{role: [default, variants...]}: the roles below without their notes",
   "sets": "the dressing sets it suits (giant: ossuary, ruin, forge, archive, engine, armoury; Dvergr: store, workshop, tavern, barracks)",
   "max_span": "a panel's longest side (m) before its stretched texture smears",
+  "game_dungeon": "the game's own dungeon themes whose rooms use it: a player knows it from there (a new kind should lean on pieces with none, or mix them so no room reads as that dungeon)",
   "roles": "the same pieces by a theme recipe's roles (first = default, others = variants), with how each role's pieces are placed",
   "render": "a picture in the mesh cache (C:\\Users\\DHack\\AppData\\Local\\Temp\\quaddungeon_meshes); the theme's contact sheet is palettes/dvergr_sheet.png there"
  },
@@ -51,6 +52,7 @@
    ],
    "origin": "centre",
    "hollow": false,
+   "game_dungeon": [],
    "kinds": [
     "Piece",
     "WearNTear",
@@ -68,6 +70,7 @@
    "networked": true,
    "gives": [],
    "physics": false,
+   "usable": [],
    "height": 1.0,
    "upright": "block",
    "saved_only": false,
@@ -81,8 +84,7 @@
     ],
     "top": 1.2,
     "top_skilled": 1.2
-   },
-   "render": "palettes/blackmarble_floor.png"
+   }
   },
   {
    "prefab": "blackmarble_floor_large",
@@ -113,6 +115,7 @@
    ],
    "origin": "centre",
    "hollow": false,
+   "game_dungeon": [],
    "max_span": 10.0,
    "kinds": [
     "Piece",
@@ -131,6 +134,7 @@
    "networked": true,
    "gives": [],
    "physics": false,
+   "usable": [],
    "height": 2.0,
    "upright": "flat",
    "saved_only": false,
@@ -144,8 +148,7 @@
     ],
     "top": 0.0,
     "top_skilled": 2.2
-   },
-   "render": "palettes/blackmarble_floor_large.png"
+   }
   },
   {
    "prefab": "blackmarble_tile_floor_2x2",
@@ -176,6 +179,7 @@
    ],
    "origin": "foot",
    "hollow": false,
+   "game_dungeon": [],
    "max_span": 4.0,
    "kinds": [
     "Piece",
@@ -194,6 +198,7 @@
    "networked": true,
    "gives": [],
    "physics": false,
+   "usable": [],
    "height": 0.19,
    "upright": "flat",
    "saved_only": false,
@@ -207,8 +212,7 @@
     ],
     "top": 0.0,
     "top_skilled": 0.0
-   },
-   "render": "palettes/blackmarble_tile_floor_2x2.png"
+   }
   },
   {
    "prefab": "blackmarble_tile_wall_2x2",
@@ -239,6 +243,7 @@
    ],
    "origin": "foot",
    "hollow": false,
+   "game_dungeon": [],
    "max_span": 4.0,
    "kinds": [
     "Piece",
@@ -257,6 +262,7 @@
    "networked": true,
    "gives": [],
    "physics": false,
+   "usable": [],
    "height": 2.06,
    "upright": "upright",
    "saved_only": false,
@@ -270,8 +276,7 @@
     ],
     "top": 0.0,
     "top_skilled": 2.2
-   },
-   "render": "palettes/blackmarble_tile_wall_2x2.png"
+   }
   },
   {
    "prefab": "blackmarble_tile_wall_2x4",
@@ -302,6 +307,7 @@
    ],
    "origin": "foot",
    "hollow": false,
+   "game_dungeon": [],
    "max_span": 4.0,
    "kinds": [
     "Piece",
@@ -320,6 +326,7 @@
    "networked": true,
    "gives": [],
    "physics": false,
+   "usable": [],
    "height": 4.12,
    "upright": "upright",
    "saved_only": false,
@@ -333,8 +340,7 @@
     ],
     "top": 0.0,
     "top_skilled": 0.0
-   },
-   "render": "palettes/blackmarble_tile_wall_2x4.png"
+   }
   },
   {
    "prefab": "blackmarble_2x2x2",
@@ -365,6 +371,7 @@
    ],
    "origin": "centre",
    "hollow": false,
+   "game_dungeon": [],
    "kinds": [
     "Piece",
     "WearNTear",
@@ -382,6 +389,7 @@
    "networked": true,
    "gives": [],
    "physics": false,
+   "usable": [],
    "height": 2.0,
    "upright": "block",
    "saved_only": false,
@@ -395,8 +403,7 @@
     ],
     "top": 0.0,
     "top_skilled": 2.2
-   },
-   "render": "palettes/blackmarble_2x2x2.png"
+   }
   },
   {
    "prefab": "blackmarble_2x2x1",
@@ -427,6 +434,7 @@
    ],
    "origin": "centre",
    "hollow": false,
+   "game_dungeon": [],
    "kinds": [
     "Piece",
     "WearNTear",
@@ -444,6 +452,7 @@
    "networked": true,
    "gives": [],
    "physics": false,
+   "usable": [],
    "height": 2.0,
    "upright": "block",
    "saved_only": false,
@@ -457,8 +466,7 @@
     ],
     "top": 0.0,
     "top_skilled": 2.2
-   },
-   "render": "palettes/blackmarble_2x2x1.png"
+   }
   },
   {
    "prefab": "blackmarble_2x1x1",
@@ -489,6 +497,7 @@
    ],
    "origin": "centre",
    "hollow": false,
+   "game_dungeon": [],
    "kinds": [
     "Piece",
     "WearNTear",
@@ -506,6 +515,7 @@
    "networked": true,
    "gives": [],
    "physics": false,
+   "usable": [],
    "height": 1.0,
    "upright": "block",
    "saved_only": false,
@@ -519,8 +529,7 @@
     ],
     "top": 1.2,
     "top_skilled": 1.2
-   },
-   "render": "palettes/blackmarble_2x1x1.png"
+   }
   },
   {
    "prefab": "blackmarble_1x1",
@@ -551,6 +560,7 @@
    ],
    "origin": "centre",
    "hollow": false,
+   "game_dungeon": [],
    "kinds": [
     "Piece",
     "WearNTear",
@@ -568,6 +578,7 @@
    "networked": true,
    "gives": [],
    "physics": false,
+   "usable": [],
    "height": 1.0,
    "upright": "block",
    "saved_only": false,
@@ -581,8 +592,7 @@
     ],
     "top": 1.2,
     "top_skilled": 1.2
-   },
-   "render": "palettes/blackmarble_1x1.png"
+   }
   },
   {
    "prefab": "blackmarble_column_1",
@@ -613,6 +623,7 @@
    ],
    "origin": "centre",
    "hollow": false,
+   "game_dungeon": [],
    "kinds": [
     "Piece",
     "WearNTear",
@@ -630,6 +641,7 @@
    "networked": true,
    "gives": [],
    "physics": false,
+   "usable": [],
    "height": 1.0,
    "upright": "block",
    "saved_only": false,
@@ -647,8 +659,7 @@
     ],
     "top": 1.2,
     "top_skilled": 1.2
-   },
-   "render": "palettes/blackmarble_column_1.png"
+   }
   },
   {
    "prefab": "blackmarble_column_2",
@@ -679,6 +690,7 @@
    ],
    "origin": "centre",
    "hollow": false,
+   "game_dungeon": [],
    "kinds": [
     "Piece",
     "WearNTear",
@@ -696,6 +708,7 @@
    "networked": true,
    "gives": [],
    "physics": false,
+   "usable": [],
    "height": 1.0,
    "upright": "block",
    "saved_only": false,
@@ -713,8 +726,7 @@
     ],
     "top": 1.2,
     "top_skilled": 1.2
-   },
-   "render": "palettes/blackmarble_column_2.png"
+   }
   },
   {
    "prefab": "blackmarble_column_3",
@@ -745,6 +757,7 @@
    ],
    "origin": "centre",
    "hollow": false,
+   "game_dungeon": [],
    "kinds": [
     "Piece",
     "WearNTear",
@@ -762,6 +775,7 @@
    "networked": true,
    "gives": [],
    "physics": false,
+   "usable": [],
    "height": 8.0,
    "upright": "upright",
    "saved_only": false,
@@ -775,8 +789,7 @@
     ],
     "top": 0.0,
     "top_skilled": 0.0
-   },
-   "render": "palettes/blackmarble_column_3.png"
+   }
   },
   {
    "prefab": "blackmarble_base_1",
@@ -807,6 +820,7 @@
    ],
    "origin": "centre",
    "hollow": false,
+   "game_dungeon": [],
    "kinds": [
     "Piece",
     "WearNTear",
@@ -824,6 +838,7 @@
    "networked": true,
    "gives": [],
    "physics": false,
+   "usable": [],
    "height": 2.01,
    "upright": "block",
    "saved_only": false,
@@ -841,8 +856,7 @@
     ],
     "top": 0.0,
     "top_skilled": 2.2
-   },
-   "render": "palettes/blackmarble_base_1.png"
+   }
   },
   {
    "prefab": "blackmarble_tip",
@@ -873,6 +887,7 @@
    ],
    "origin": "centre",
    "hollow": false,
+   "game_dungeon": [],
    "kinds": [
     "Piece",
     "WearNTear",
@@ -890,6 +905,7 @@
    "networked": true,
    "gives": [],
    "physics": false,
+   "usable": [],
    "height": 2.02,
    "upright": "block",
    "saved_only": false,
@@ -903,8 +919,7 @@
     ],
     "top": 0.0,
     "top_skilled": 0.0
-   },
-   "render": "palettes/blackmarble_tip.png"
+   }
   },
   {
    "prefab": "blackmarble_arch",
@@ -935,6 +950,7 @@
    ],
    "origin": "centre",
    "hollow": false,
+   "game_dungeon": [],
    "kinds": [
     "Piece",
     "WearNTear",
@@ -952,6 +968,7 @@
    "networked": true,
    "gives": [],
    "physics": false,
+   "usable": [],
    "height": 2.0,
    "upright": "block",
    "saved_only": false,
@@ -969,8 +986,7 @@
     ],
     "top": 2.0,
     "top_skilled": 2.0
-   },
-   "render": "palettes/blackmarble_arch.png"
+   }
   },
   {
    "prefab": "blackmarble_stair",
@@ -1001,6 +1017,7 @@
    ],
    "origin": "foot",
    "hollow": false,
+   "game_dungeon": [],
    "kinds": [
     "Piece",
     "WearNTear",
@@ -1018,6 +1035,7 @@
    "networked": true,
    "gives": [],
    "physics": false,
+   "usable": [],
    "height": 1.0,
    "upright": "block",
    "saved_only": false,
@@ -1031,8 +1049,7 @@
     ],
     "top": 1.2,
     "top_skilled": 1.2
-   },
-   "render": "palettes/blackmarble_stair.png"
+   }
   },
   {
    "prefab": "blackmarble_stair_corner",
@@ -1063,6 +1080,7 @@
    ],
    "origin": "foot",
    "hollow": false,
+   "game_dungeon": [],
    "kinds": [
     "Piece",
     "WearNTear",
@@ -1080,6 +1098,7 @@
    "networked": true,
    "gives": [],
    "physics": false,
+   "usable": [],
    "height": 1.01,
    "upright": "block",
    "saved_only": false,
@@ -1093,8 +1112,7 @@
     ],
     "top": 1.0,
     "top_skilled": 1.0
-   },
-   "render": "palettes/blackmarble_stair_corner.png"
+   }
   },
   {
    "prefab": "blackmarble_slope_1x2",
@@ -1125,6 +1143,7 @@
    ],
    "origin": "centre",
    "hollow": false,
+   "game_dungeon": [],
    "kinds": [
     "Piece",
     "WearNTear",
@@ -1142,6 +1161,7 @@
    "networked": true,
    "gives": [],
    "physics": false,
+   "usable": [],
    "height": 2.0,
    "upright": "block",
    "saved_only": false,
@@ -1155,8 +1175,7 @@
     ],
     "top": 0.0,
     "top_skilled": 0.0
-   },
-   "render": "palettes/blackmarble_slope_1x2.png"
+   }
   },
   {
    "prefab": "blackmarble_out_1",
@@ -1187,6 +1206,7 @@
    ],
    "origin": "centre",
    "hollow": false,
+   "game_dungeon": [],
    "kinds": [
     "Piece",
     "WearNTear",
@@ -1204,6 +1224,7 @@
    "networked": true,
    "gives": [],
    "physics": false,
+   "usable": [],
    "height": 2.01,
    "upright": "block",
    "saved_only": false,
@@ -1221,8 +1242,7 @@
     ],
     "top": 0.0,
     "top_skilled": 2.2
-   },
-   "render": "palettes/blackmarble_out_1.png"
+   }
   },
   {
    "prefab": "blackmarble_head01",
@@ -1253,6 +1273,7 @@
    ],
    "origin": "centre",
    "hollow": false,
+   "game_dungeon": [],
    "kinds": [
     "Piece",
     "WearNTear",
@@ -1270,6 +1291,7 @@
    "networked": true,
    "gives": [],
    "physics": false,
+   "usable": [],
    "height": 1.0,
    "upright": "block",
    "saved_only": false,
@@ -1283,8 +1305,7 @@
     ],
     "top": 1.2,
     "top_skilled": 1.2
-   },
-   "render": "palettes/blackmarble_head01.png"
+   }
   },
   {
    "prefab": "blackmarble_altar_crystal",
@@ -1296,7 +1317,7 @@
     2
    ],
    "tier": 6,
-   "notes": "its light range, fade distance and fire grow with its scale (BuildScale.cs); as scenery its Destructible is stripped: it gives nothing; climbable: a player can stand 1.8 m above its foot (at scale 1; 1.8 m with Jump skill 100), so it's a stepping stone to a level up to about 3.4 m above its foot (4.9 m with Jump 100)",
+   "notes": "recognisable: a part of the game's own DvergerTown dungeons; its light range, fade distance and fire grow with its scale (BuildScale.cs); as scenery its Destructible is stripped: it gives nothing; climbable: a player can stand 1.8 m above its foot (at scale 1; 1.8 m with Jump skill 100), so it's a stepping stone to a level up to about 3.4 m above its foot (4.9 m with Jump 100)",
    "exists": true,
    "size": [
     1.23,
@@ -1315,6 +1336,9 @@
    ],
    "origin": "centre",
    "hollow": false,
+   "game_dungeon": [
+    "DvergerTown"
+   ],
    "kinds": [
     "Destructible",
     "LightLod",
@@ -1342,6 +1366,7 @@
     "Destructible"
    ],
    "physics": false,
+   "usable": [],
    "height": 1.67,
    "upright": "block",
    "saved_only": false,
@@ -1363,8 +1388,7 @@
     ],
     "top": 1.8,
     "top_skilled": 1.8
-   },
-   "render": "palettes/blackmarble_altar_crystal.png"
+   }
   },
   {
    "prefab": "dvergrtown_arch",
@@ -1376,7 +1400,7 @@
     2
    ],
    "tier": 6,
-   "notes": "as scenery its Destructible is stripped: it gives nothing",
+   "notes": "recognisable: a part of the game's own DvergerBoss and DvergerTown dungeons; as scenery its Destructible is stripped: it gives nothing",
    "exists": true,
    "size": [
     2.19,
@@ -1395,6 +1419,10 @@
    ],
    "origin": "centre",
    "hollow": false,
+   "game_dungeon": [
+    "DvergerBoss",
+    "DvergerTown"
+   ],
    "kinds": [
     "Destructible",
     "ZNetView"
@@ -1413,6 +1441,7 @@
     "Destructible"
    ],
    "physics": false,
+   "usable": [],
    "height": 2.06,
    "upright": "block",
    "saved_only": false,
@@ -1430,8 +1459,7 @@
     ],
     "top": 2.2,
     "top_skilled": 2.2
-   },
-   "render": "palettes/dvergrtown_arch.png"
+   }
   },
   {
    "prefab": "dvergrtown_wood_beam",
@@ -1443,7 +1471,7 @@
     2
    ],
    "tier": 6,
-   "notes": "as scenery its Destructible, DropOnDestroyed is stripped: it gives nothing; climbable: a player can stand 1.0 m above its foot (at scale 1; 1.0 m with Jump skill 100), so it's a stepping stone to a level up to about 2.6 m above its foot (4.1 m with Jump 100)",
+   "notes": "recognisable: a part of the game's own DvergerTown dungeons; as scenery its Destructible, DropOnDestroyed is stripped: it gives nothing; climbable: a player can stand 1.0 m above its foot (at scale 1; 1.0 m with Jump skill 100), so it's a stepping stone to a level up to about 2.6 m above its foot (4.1 m with Jump 100)",
    "exists": true,
    "size": [
     6.11,
@@ -1462,6 +1490,9 @@
    ],
    "origin": "centre",
    "hollow": false,
+   "game_dungeon": [
+    "DvergerTown"
+   ],
    "kinds": [
     "Destructible",
     "DropOnDestroyed",
@@ -1482,6 +1513,7 @@
     "DropOnDestroyed"
    ],
    "physics": false,
+   "usable": [],
    "height": 0.92,
    "upright": "flat",
    "saved_only": false,
@@ -1495,8 +1527,7 @@
     ],
     "top": 1.0,
     "top_skilled": 1.0
-   },
-   "render": "palettes/dvergrtown_wood_beam.png"
+   }
   },
   {
    "prefab": "dvergrtown_wood_pole",
@@ -1508,7 +1539,7 @@
     2
    ],
    "tier": 6,
-   "notes": "as scenery its Destructible, DropOnDestroyed is stripped: it gives nothing",
+   "notes": "recognisable: a part of the game's own DvergerTown dungeons; as scenery its Destructible, DropOnDestroyed is stripped: it gives nothing",
    "exists": true,
    "size": [
     1.36,
@@ -1527,6 +1558,9 @@
    ],
    "origin": "centre",
    "hollow": false,
+   "game_dungeon": [
+    "DvergerTown"
+   ],
    "kinds": [
     "Destructible",
     "DropOnDestroyed",
@@ -1547,6 +1581,7 @@
     "DropOnDestroyed"
    ],
    "physics": false,
+   "usable": [],
    "height": 4.0,
    "upright": "upright",
    "saved_only": false,
@@ -1560,8 +1595,7 @@
     ],
     "top": 0.0,
     "top_skilled": 0.0
-   },
-   "render": "palettes/dvergrtown_wood_pole.png"
+   }
   },
   {
    "prefab": "dvergrtown_wood_support",
@@ -1573,7 +1607,7 @@
     2
    ],
    "tier": 6,
-   "notes": "as scenery its Destructible, DropOnDestroyed is stripped: it gives nothing",
+   "notes": "recognisable: a part of the game's own DvergerTown dungeons; as scenery its Destructible, DropOnDestroyed is stripped: it gives nothing",
    "exists": true,
    "size": [
     6.11,
@@ -1592,6 +1626,9 @@
    ],
    "origin": "foot",
    "hollow": false,
+   "game_dungeon": [
+    "DvergerTown"
+   ],
    "kinds": [
     "Destructible",
     "DropOnDestroyed",
@@ -1612,6 +1649,7 @@
     "DropOnDestroyed"
    ],
    "physics": false,
+   "usable": [],
    "height": 4.71,
    "upright": "upright",
    "saved_only": false,
@@ -1629,8 +1667,7 @@
     ],
     "top": 0.0,
     "top_skilled": 0.0
-   },
-   "render": "palettes/dvergrtown_wood_support.png"
+   }
   },
   {
    "prefab": "dvergrtown_wood_wall01",
@@ -1661,6 +1698,7 @@
    ],
    "origin": "centre",
    "hollow": false,
+   "game_dungeon": [],
    "kinds": [
     "Destructible",
     "DropOnDestroyed",
@@ -1681,6 +1719,7 @@
     "DropOnDestroyed"
    ],
    "physics": false,
+   "usable": [],
    "height": 5.42,
    "upright": "upright",
    "saved_only": false,
@@ -1694,8 +1733,7 @@
     ],
     "top": 0.0,
     "top_skilled": 0.0
-   },
-   "render": "palettes/dvergrtown_wood_wall01.png"
+   }
   },
   {
    "prefab": "dvergrtown_wood_stakewall",
@@ -1726,6 +1764,7 @@
    ],
    "origin": "inside",
    "hollow": false,
+   "game_dungeon": [],
    "kinds": [
     "ZNetView"
    ],
@@ -1741,6 +1780,7 @@
    "networked": true,
    "gives": [],
    "physics": false,
+   "usable": [],
    "height": 2.48,
    "upright": "block",
    "saved_only": false,
@@ -1754,8 +1794,7 @@
     ],
     "top": 1.4,
     "top_skilled": 1.4
-   },
-   "render": "palettes/dvergrtown_wood_stakewall.png"
+   }
   },
   {
    "prefab": "dvergrtown_wood_wall02",
@@ -1786,6 +1825,7 @@
    ],
    "origin": "inside",
    "hollow": false,
+   "game_dungeon": [],
    "kinds": [
     "Destructible",
     "DropOnDestroyed",
@@ -1806,6 +1846,7 @@
     "DropOnDestroyed"
    ],
    "physics": false,
+   "usable": [],
    "height": 4.92,
    "upright": "upright",
    "saved_only": false,
@@ -1819,8 +1860,7 @@
     ],
     "top": 0.0,
     "top_skilled": 0.0
-   },
-   "render": "palettes/dvergrtown_wood_wall02.png"
+   }
   },
   {
    "prefab": "dvergrtown_wood_wall03",
@@ -1851,6 +1891,7 @@
    ],
    "origin": "foot",
    "hollow": false,
+   "game_dungeon": [],
    "kinds": [
     "Destructible",
     "DropOnDestroyed",
@@ -1871,6 +1912,7 @@
     "DropOnDestroyed"
    ],
    "physics": false,
+   "usable": [],
    "height": 4.02,
    "upright": "upright",
    "saved_only": false,
@@ -1904,8 +1946,7 @@
     ],
     "top": 4.2,
     "top_skilled": 4.2
-   },
-   "render": "palettes/dvergrtown_wood_wall03.png"
+   }
   },
   {
    "prefab": "dvergrtown_wood_crane",
@@ -1936,6 +1977,7 @@
    ],
    "origin": "inside",
    "hollow": false,
+   "game_dungeon": [],
    "sets": [
     "workshop"
    ],
@@ -1959,6 +2001,7 @@
     "DropOnDestroyed"
    ],
    "physics": false,
+   "usable": [],
    "height": 12.46,
    "upright": "upright",
    "saved_only": false,
@@ -1996,8 +2039,7 @@
     ],
     "top": 0.0,
     "top_skilled": 12.4
-   },
-   "render": "palettes/dvergrtown_wood_crane.png"
+   }
   },
   {
    "prefab": "dvergrprops_wood_beam",
@@ -2028,6 +2070,7 @@
    ],
    "origin": "centre",
    "hollow": false,
+   "game_dungeon": [],
    "kinds": [
     "DropOnDestroyed",
     "WearNTear",
@@ -2047,6 +2090,7 @@
     "DropOnDestroyed"
    ],
    "physics": false,
+   "usable": [],
    "height": 0.92,
    "upright": "flat",
    "saved_only": false,
@@ -2060,8 +2104,7 @@
     ],
     "top": 1.0,
     "top_skilled": 1.0
-   },
-   "render": "palettes/dvergrprops_wood_beam.png"
+   }
   },
   {
    "prefab": "dvergrprops_wood_pole",
@@ -2092,6 +2135,7 @@
    ],
    "origin": "centre",
    "hollow": false,
+   "game_dungeon": [],
    "kinds": [
     "DropOnDestroyed",
     "WearNTear",
@@ -2111,6 +2155,7 @@
     "DropOnDestroyed"
    ],
    "physics": false,
+   "usable": [],
    "height": 4.0,
    "upright": "upright",
    "saved_only": false,
@@ -2124,8 +2169,7 @@
     ],
     "top": 0.0,
     "top_skilled": 0.0
-   },
-   "render": "palettes/dvergrprops_wood_pole.png"
+   }
   },
   {
    "prefab": "dvergrprops_wood_wall",
@@ -2156,6 +2200,7 @@
    ],
    "origin": "centre",
    "hollow": false,
+   "game_dungeon": [],
    "kinds": [
     "DropOnDestroyed",
     "WearNTear",
@@ -2175,6 +2220,7 @@
     "DropOnDestroyed"
    ],
    "physics": false,
+   "usable": [],
    "height": 4.02,
    "upright": "upright",
    "saved_only": false,
@@ -2188,8 +2234,7 @@
     ],
     "top": 0.0,
     "top_skilled": 0.0
-   },
-   "render": "palettes/dvergrprops_wood_wall.png"
+   }
   },
   {
    "prefab": "piece_dvergr_spiralstair_right",
@@ -2220,6 +2265,7 @@
    ],
    "origin": "foot",
    "hollow": false,
+   "game_dungeon": [],
    "kinds": [
     "Piece",
     "WearNTear",
@@ -2237,6 +2283,7 @@
    "networked": true,
    "gives": [],
    "physics": false,
+   "usable": [],
    "height": 1.24,
    "upright": "block",
    "saved_only": false,
@@ -2250,8 +2297,7 @@
     ],
     "top": 1.4,
     "top_skilled": 1.4
-   },
-   "render": "palettes/piece_dvergr_spiralstair_right.png"
+   }
   },
   {
    "prefab": "dvergrtown_secretdoor",
@@ -2263,7 +2309,7 @@
     1
    ],
    "tier": 6,
-   "notes": "as scenery it doesn't open",
+   "notes": "as scenery it doesn't open; recognisable: a part of the game's own DvergerTown dungeons; usable in the game (Door): as scenery the Builder strips it, so it only looks the part",
    "exists": true,
    "size": [
     4.0,
@@ -2282,6 +2328,9 @@
    ],
    "origin": "foot",
    "hollow": false,
+   "game_dungeon": [
+    "DvergerTown"
+   ],
    "kinds": [
     "Door",
     "ZNetView"
@@ -2298,6 +2347,9 @@
    "networked": true,
    "gives": [],
    "physics": false,
+   "usable": [
+    "Door"
+   ],
    "height": 4.0,
    "upright": "upright",
    "saved_only": false,
@@ -2315,8 +2367,7 @@
     ],
     "top": 0.0,
     "top_skilled": 4.2
-   },
-   "render": "palettes/dvergrtown_secretdoor.png"
+   }
   },
   {
    "prefab": "blackmarble_post01",
@@ -2347,6 +2398,7 @@
    ],
    "origin": "inside",
    "hollow": false,
+   "game_dungeon": [],
    "kinds": [
     "Destructible",
     "DropOnDestroyed",
@@ -2367,6 +2419,7 @@
     "DropOnDestroyed"
    ],
    "physics": false,
+   "usable": [],
    "height": 6.25,
    "upright": "upright",
    "saved_only": false,
@@ -2384,8 +2437,7 @@
     ],
     "top": 0.0,
     "top_skilled": 0.0
-   },
-   "render": "palettes/blackmarble_post01.png"
+   }
   },
   {
    "prefab": "blackmarble_tile_wall_1x1",
@@ -2416,6 +2468,7 @@
    ],
    "origin": "foot",
    "hollow": false,
+   "game_dungeon": [],
    "kinds": [
     "Piece",
     "WearNTear",
@@ -2433,6 +2486,7 @@
    "networked": true,
    "gives": [],
    "physics": false,
+   "usable": [],
    "height": 1.03,
    "upright": "upright",
    "saved_only": false,
@@ -2446,8 +2500,7 @@
     ],
     "top": 1.2,
     "top_skilled": 1.2
-   },
-   "render": "palettes/blackmarble_tile_wall_1x1.png"
+   }
   },
   {
    "prefab": "blackmarble_creep_4x2x1",
@@ -2459,7 +2512,7 @@
     2
    ],
    "tier": 6,
-   "notes": "",
+   "notes": "recognisable: a part of the game's own DvergerBoss dungeons",
    "exists": true,
    "size": [
     2.0,
@@ -2478,6 +2531,9 @@
    ],
    "origin": "centre",
    "hollow": false,
+   "game_dungeon": [
+    "DvergerBoss"
+   ],
    "kinds": [
     "Piece",
     "WearNTear",
@@ -2495,6 +2551,7 @@
    "networked": true,
    "gives": [],
    "physics": false,
+   "usable": [],
    "height": 4.0,
    "upright": "upright",
    "saved_only": false,
@@ -2508,8 +2565,7 @@
     ],
     "top": 0.0,
     "top_skilled": 0.0
-   },
-   "render": "palettes/blackmarble_creep_4x2x1.png"
+   }
   },
   {
    "prefab": "blackmarble_pile",
@@ -2540,6 +2596,7 @@
    ],
    "origin": "foot",
    "hollow": false,
+   "game_dungeon": [],
    "sets": [
     "workshop",
     "store"
@@ -2561,6 +2618,7 @@
    "networked": true,
    "gives": [],
    "physics": false,
+   "usable": [],
    "height": 0.99,
    "upright": "block",
    "saved_only": false,
@@ -2574,8 +2632,7 @@
     ],
     "top": 1.0,
     "top_skilled": 1.0
-   },
-   "render": "palettes/blackmarble_pile.png"
+   }
   },
   {
    "prefab": "dverger_demister_large",
@@ -2606,6 +2663,7 @@
    ],
    "origin": "off the box",
    "hollow": false,
+   "game_dungeon": [],
    "kinds": [
     "LightLod",
     "WearNTear",
@@ -2631,6 +2689,7 @@
    "networked": true,
    "gives": [],
    "physics": false,
+   "usable": [],
    "height": 0.74,
    "upright": "block",
    "saved_only": false,
@@ -2644,8 +2703,7 @@
     ],
     "top": 0.8,
     "top_skilled": 0.8
-   },
-   "render": "palettes/dverger_demister_large.png"
+   }
   },
   {
    "prefab": "piece_blackmarble_table",
@@ -2676,6 +2734,7 @@
    ],
    "origin": "foot",
    "hollow": false,
+   "game_dungeon": [],
    "sets": [
     "tavern"
    ],
@@ -2696,6 +2755,7 @@
    "networked": true,
    "gives": [],
    "physics": false,
+   "usable": [],
    "height": 0.82,
    "upright": "flat",
    "saved_only": false,
@@ -2709,8 +2769,7 @@
     ],
     "top": 1.0,
     "top_skilled": 1.0
-   },
-   "render": "palettes/piece_blackmarble_table.png"
+   }
   },
   {
    "prefab": "piece_blackmarble_bench",
@@ -2741,6 +2800,7 @@
    ],
    "origin": "foot",
    "hollow": false,
+   "game_dungeon": [],
    "sets": [
     "tavern",
     "barracks"
@@ -2763,6 +2823,7 @@
    "networked": true,
    "gives": [],
    "physics": false,
+   "usable": [],
    "height": 1.01,
    "upright": "upright",
    "saved_only": false,
@@ -2780,8 +2841,7 @@
     ],
     "top": 1.2,
     "top_skilled": 1.2
-   },
-   "render": "palettes/piece_blackmarble_bench.png"
+   }
   },
   {
    "prefab": "dvergrprops_wood_floor",
@@ -2812,6 +2872,7 @@
    ],
    "origin": "foot",
    "hollow": false,
+   "game_dungeon": [],
    "kinds": [
     "Piece",
     "WearNTear",
@@ -2829,6 +2890,7 @@
    "networked": true,
    "gives": [],
    "physics": false,
+   "usable": [],
    "height": 0.25,
    "upright": "flat",
    "saved_only": false,
@@ -2842,8 +2904,7 @@
     ],
     "top": 0.4,
     "top_skilled": 0.4
-   },
-   "render": "palettes/dvergrprops_wood_floor.png"
+   }
   },
   {
    "prefab": "dvergrprops_wood_stair",
@@ -2874,6 +2935,7 @@
    ],
    "origin": "foot",
    "hollow": false,
+   "game_dungeon": [],
    "kinds": [
     "Piece",
     "WearNTear",
@@ -2891,6 +2953,7 @@
    "networked": true,
    "gives": [],
    "physics": false,
+   "usable": [],
    "height": 1.15,
    "upright": "block",
    "saved_only": false,
@@ -2912,8 +2975,7 @@
     ],
     "top": 1.2,
     "top_skilled": 1.2
-   },
-   "render": "palettes/dvergrprops_wood_stair.png"
+   }
   },
   {
    "prefab": "piece_dvergr_spiralstair",
@@ -2944,6 +3006,7 @@
    ],
    "origin": "foot",
    "hollow": false,
+   "game_dungeon": [],
    "kinds": [
     "Piece",
     "WearNTear",
@@ -2961,6 +3024,7 @@
    "networked": true,
    "gives": [],
    "physics": false,
+   "usable": [],
    "height": 1.24,
    "upright": "block",
    "saved_only": false,
@@ -2974,8 +3038,7 @@
     ],
     "top": 1.4,
     "top_skilled": 1.4
-   },
-   "render": "palettes/piece_dvergr_spiralstair.png"
+   }
   },
   {
    "prefab": "piece_dvergr_metal_wall_2x2",
@@ -3006,6 +3069,7 @@
    ],
    "origin": "centre",
    "hollow": false,
+   "game_dungeon": [],
    "kinds": [
     "Piece",
     "WearNTear",
@@ -3023,6 +3087,7 @@
    "networked": true,
    "gives": [],
    "physics": false,
+   "usable": [],
    "height": 2.0,
    "upright": "upright",
    "saved_only": false,
@@ -3036,8 +3101,7 @@
     ],
     "top": 0.0,
     "top_skilled": 2.2
-   },
-   "render": "palettes/piece_dvergr_metal_wall_2x2.png"
+   }
   },
   {
    "prefab": "piece_dvergr_pole",
@@ -3068,6 +3132,7 @@
    ],
    "origin": "top",
    "hollow": false,
+   "game_dungeon": [],
    "kinds": [
     "Piece",
     "WearNTear",
@@ -3085,6 +3150,7 @@
    "networked": true,
    "gives": [],
    "physics": false,
+   "usable": [],
    "height": 2.0,
    "upright": "upright",
    "saved_only": false,
@@ -3098,8 +3164,7 @@
     ],
     "top": 0.0,
     "top_skilled": 2.2
-   },
-   "render": "palettes/piece_dvergr_pole.png"
+   }
   },
   {
    "prefab": "dvergrtown_slidingdoor",
@@ -3111,7 +3176,7 @@
     1
    ],
    "tier": 6,
-   "notes": "placed by the Builder at joints as a saved door; as scenery it doesn't open",
+   "notes": "placed by the Builder at joints as a saved door; as scenery it doesn't open; usable in the game (Door): as scenery the Builder strips it, so it only looks the part",
    "exists": true,
    "size": [
     4.0,
@@ -3130,6 +3195,7 @@
    ],
    "origin": "foot",
    "hollow": false,
+   "game_dungeon": [],
    "kinds": [
     "Door",
     "ZNetView"
@@ -3146,6 +3212,9 @@
    "networked": true,
    "gives": [],
    "physics": false,
+   "usable": [
+    "Door"
+   ],
    "height": 4.0,
    "upright": "upright",
    "saved_only": false,
@@ -3159,8 +3228,7 @@
     ],
     "top": 0.0,
     "top_skilled": 0.0
-   },
-   "render": "palettes/dvergrtown_slidingdoor.png"
+   }
   },
   {
    "prefab": "piece_dvergr_wood_door",
@@ -3172,7 +3240,7 @@
     1
    ],
    "tier": 6,
-   "notes": "as scenery it doesn't open: Pack.doors or a gate",
+   "notes": "as scenery it doesn't open: Pack.doors or a gate; usable in the game (Door): as scenery the Builder strips it, so it only looks the part",
    "exists": true,
    "size": [
     3.94,
@@ -3191,6 +3259,7 @@
    ],
    "origin": "centre",
    "hollow": false,
+   "game_dungeon": [],
    "kinds": [
     "Door",
     "Piece",
@@ -3209,6 +3278,9 @@
    "networked": true,
    "gives": [],
    "physics": false,
+   "usable": [
+    "Door"
+   ],
    "height": 4.22,
    "upright": "upright",
    "saved_only": false,
@@ -3242,8 +3314,7 @@
     ],
     "top": 4.0,
     "top_skilled": 4.0
-   },
-   "render": "palettes/piece_dvergr_wood_door.png"
+   }
   },
   {
    "prefab": "dvergrprops_lantern",
@@ -3255,7 +3326,7 @@
     2
    ],
    "tier": 6,
-   "notes": "hangs from its top: needs a beam or ceiling right above, or a chain (dvergrprops_hooknchain) whose foot is on its top; its light range, fade distance and fire grow with its scale (BuildScale.cs); as scenery its DropOnDestroyed is stripped: it gives nothing; climbable: a player can stand 1.4 m above its foot (at scale 1; 1.4 m with Jump skill 100), so it's a stepping stone to a level up to about 3.0 m above its foot (4.5 m with Jump 100); TROUBLE: floated in the first Shifting Halls (hanging lanterns with nothing above): hang it from a beam, a ceiling or dvergrprops_hooknchain / Morkhalla_WallChain1 with the chain's foot on its top (prop_check.py).",
+   "notes": "hangs from its top: needs a beam or ceiling right above, or a chain (dvergrprops_hooknchain) whose foot is on its top; recognisable: a part of the game's own DvergerBoss and DvergerTown dungeons; its light range, fade distance and fire grow with its scale (BuildScale.cs); as scenery its DropOnDestroyed is stripped: it gives nothing; climbable: a player can stand 1.4 m above its foot (at scale 1; 1.4 m with Jump skill 100), so it's a stepping stone to a level up to about 3.0 m above its foot (4.5 m with Jump 100); TROUBLE: floated in the first Shifting Halls (hanging lanterns with nothing above): hang it from a beam, a ceiling or dvergrprops_hooknchain / Morkhalla_WallChain1 with the chain's foot on its top (prop_check.py).",
    "exists": true,
    "size": [
     1.14,
@@ -3274,6 +3345,10 @@
    ],
    "origin": "inside",
    "hollow": false,
+   "game_dungeon": [
+    "DvergerBoss",
+    "DvergerTown"
+   ],
    "kinds": [
     "DropOnDestroyed",
     "LightLod",
@@ -3316,6 +3391,7 @@
     "DropOnDestroyed"
    ],
    "physics": false,
+   "usable": [],
    "height": 1.34,
    "upright": "block",
    "saved_only": false,
@@ -3329,8 +3405,7 @@
     ],
     "top": 1.4,
     "top_skilled": 1.4
-   },
-   "render": "palettes/dvergrprops_lantern.png"
+   }
   },
   {
    "prefab": "dvergrprops_lantern_standing",
@@ -3361,6 +3436,7 @@
    ],
    "origin": "foot",
    "hollow": false,
+   "game_dungeon": [],
    "kinds": [
     "DropOnDestroyed",
     "LightLod",
@@ -3389,6 +3465,7 @@
     "DropOnDestroyed"
    ],
    "physics": false,
+   "usable": [],
    "height": 0.66,
    "upright": "block",
    "saved_only": false,
@@ -3397,8 +3474,7 @@
     "ledges": [],
     "top": 0.0,
     "top_skilled": 0.0
-   },
-   "render": "palettes/dvergrprops_lantern_standing.png"
+   }
   },
   {
    "prefab": "piece_dvergr_lantern",
@@ -3429,6 +3505,7 @@
    ],
    "origin": "inside",
    "hollow": false,
+   "game_dungeon": [],
    "kinds": [
     "EffectArea",
     "LightLod",
@@ -3470,6 +3547,7 @@
    "networked": true,
    "gives": [],
    "physics": false,
+   "usable": [],
    "height": 1.34,
    "upright": "block",
    "saved_only": false,
@@ -3483,8 +3561,7 @@
     ],
     "top": 1.4,
     "top_skilled": 1.4
-   },
-   "render": "palettes/piece_dvergr_lantern.png"
+   }
   },
   {
    "prefab": "piece_dvergr_lantern_pole",
@@ -3515,6 +3592,7 @@
    ],
    "origin": "inside",
    "hollow": false,
+   "game_dungeon": [],
    "kinds": [
     "EffectArea",
     "LightLod",
@@ -3556,6 +3634,7 @@
    "networked": true,
    "gives": [],
    "physics": false,
+   "usable": [],
    "height": 3.53,
    "upright": "upright",
    "saved_only": false,
@@ -3573,8 +3652,7 @@
     ],
     "top": 0.0,
     "top_skilled": 0.0
-   },
-   "render": "palettes/piece_dvergr_lantern_pole.png"
+   }
   },
   {
    "prefab": "dverger_demister",
@@ -3586,7 +3664,7 @@
     2
    ],
    "tier": 6,
-   "notes": "its light range, fade distance and fire grow with its scale (BuildScale.cs); climbable: a player can stand 0.8 m above its foot (at scale 1; 0.8 m with Jump skill 100), so it's a stepping stone to a level up to about 2.4 m above its foot (3.9 m with Jump 100); TROUBLE: floated in 35 places in Shifting Halls: its origin is at its top (the mesh hangs below it), so stood at a point it's in the air. Hang it on a chain from the first part above it (giant_kit.wisp).",
+   "notes": "recognisable: a part of the game's own DvergerBoss dungeons; its light range, fade distance and fire grow with its scale (BuildScale.cs); climbable: a player can stand 0.8 m above its foot (at scale 1; 0.8 m with Jump skill 100), so it's a stepping stone to a level up to about 2.4 m above its foot (3.9 m with Jump 100); TROUBLE: floated in 35 places in Shifting Halls: its origin is at its top (the mesh hangs below it), so stood at a point it's in the air. Hang it on a chain from the first part above it (giant_kit.wisp).",
    "exists": true,
    "size": [
     0.93,
@@ -3605,6 +3683,9 @@
    ],
    "origin": "top",
    "hollow": false,
+   "game_dungeon": [
+    "DvergerBoss"
+   ],
    "kinds": [
     "LightLod",
     "WearNTear",
@@ -3630,6 +3711,7 @@
    "networked": true,
    "gives": [],
    "physics": false,
+   "usable": [],
    "height": 0.74,
    "upright": "block",
    "saved_only": false,
@@ -3643,8 +3725,7 @@
     ],
     "top": 0.8,
     "top_skilled": 0.8
-   },
-   "render": "palettes/dverger_demister.png"
+   }
   },
   {
    "prefab": "dvergrprops_hooknchain",
@@ -3675,6 +3756,7 @@
    ],
    "origin": "inside",
    "hollow": false,
+   "game_dungeon": [],
    "kinds": [
     "DropOnDestroyed",
     "WearNTear",
@@ -3694,6 +3776,7 @@
     "DropOnDestroyed"
    ],
    "physics": false,
+   "usable": [],
    "height": 2.89,
    "upright": "upright",
    "saved_only": false,
@@ -3707,8 +3790,7 @@
     ],
     "top": 0.0,
     "top_skilled": 3.0
-   },
-   "render": "palettes/dvergrprops_hooknchain.png"
+   }
   },
   {
    "prefab": "dvergrprops_banner",
@@ -3739,6 +3821,7 @@
    ],
    "origin": "centre",
    "hollow": false,
+   "game_dungeon": [],
    "sets": [
     "barracks"
    ],
@@ -3761,6 +3844,7 @@
     "DropOnDestroyed"
    ],
    "physics": false,
+   "usable": [],
    "height": 4.29,
    "upright": "upright",
    "saved_only": false,
@@ -3774,8 +3858,7 @@
     ],
     "top": 0.0,
     "top_skilled": 0.0
-   },
-   "render": "palettes/dvergrprops_banner.png"
+   }
   },
   {
    "prefab": "dvergrprops_curtain",
@@ -3806,6 +3889,7 @@
    ],
    "origin": "off the box",
    "hollow": false,
+   "game_dungeon": [],
    "sets": [
     "barracks",
     "tavern"
@@ -3829,6 +3913,7 @@
     "DropOnDestroyed"
    ],
    "physics": false,
+   "usable": [],
    "height": 1.7,
    "upright": "upright",
    "saved_only": false,
@@ -3842,8 +3927,7 @@
     ],
     "top": 1.8,
     "top_skilled": 1.8
-   },
-   "render": "palettes/dvergrprops_curtain.png"
+   }
   },
   {
    "prefab": "dvergrprops_barrel",
@@ -3874,6 +3958,7 @@
    ],
    "origin": "foot",
    "hollow": false,
+   "game_dungeon": [],
    "sets": [
     "store",
     "tavern"
@@ -3898,6 +3983,7 @@
     "DropOnDestroyed"
    ],
    "physics": false,
+   "usable": [],
    "height": 1.59,
    "upright": "block",
    "saved_only": false,
@@ -3915,8 +4001,7 @@
     ],
     "top": 1.6,
     "top_skilled": 1.6
-   },
-   "render": "palettes/dvergrprops_barrel.png"
+   }
   },
   {
    "prefab": "dvergrprops_crate",
@@ -3947,6 +4032,7 @@
    ],
    "origin": "foot",
    "hollow": false,
+   "game_dungeon": [],
    "sets": [
     "store",
     "workshop"
@@ -3970,6 +4056,7 @@
     "DropOnDestroyed"
    ],
    "physics": false,
+   "usable": [],
    "height": 1.02,
    "upright": "block",
    "saved_only": false,
@@ -3983,8 +4070,7 @@
     ],
     "top": 1.2,
     "top_skilled": 1.2
-   },
-   "render": "palettes/dvergrprops_crate.png"
+   }
   },
   {
    "prefab": "dvergrprops_crate_long",
@@ -4015,6 +4101,7 @@
    ],
    "origin": "foot",
    "hollow": false,
+   "game_dungeon": [],
    "sets": [
     "store"
    ],
@@ -4038,6 +4125,7 @@
     "DropOnDestroyed"
    ],
    "physics": false,
+   "usable": [],
    "height": 0.64,
    "upright": "flat",
    "saved_only": false,
@@ -4051,8 +4139,7 @@
     ],
     "top": 0.8,
     "top_skilled": 0.8
-   },
-   "render": "palettes/dvergrprops_crate_long.png"
+   }
   },
   {
    "prefab": "dvergrprops_table",
@@ -4083,6 +4170,7 @@
    ],
    "origin": "foot",
    "hollow": false,
+   "game_dungeon": [],
    "sets": [
     "tavern",
     "workshop"
@@ -4107,6 +4195,7 @@
     "DropOnDestroyed"
    ],
    "physics": false,
+   "usable": [],
    "height": 0.78,
    "upright": "flat",
    "saved_only": false,
@@ -4120,8 +4209,7 @@
     ],
     "top": 0.8,
     "top_skilled": 0.8
-   },
-   "render": "palettes/dvergrprops_table.png"
+   }
   },
   {
    "prefab": "dvergrprops_chair",
@@ -4152,6 +4240,7 @@
    ],
    "origin": "foot",
    "hollow": false,
+   "game_dungeon": [],
    "sets": [
     "tavern",
     "barracks"
@@ -4175,6 +4264,7 @@
     "DropOnDestroyed"
    ],
    "physics": false,
+   "usable": [],
    "height": 1.05,
    "upright": "block",
    "saved_only": false,
@@ -4188,8 +4278,7 @@
     ],
     "top": 0.4,
     "top_skilled": 0.4
-   },
-   "render": "palettes/dvergrprops_chair.png"
+   }
   },
   {
    "prefab": "dvergrprops_stool",
@@ -4220,6 +4309,7 @@
    ],
    "origin": "foot",
    "hollow": false,
+   "game_dungeon": [],
    "sets": [
     "tavern"
    ],
@@ -4242,6 +4332,7 @@
     "DropOnDestroyed"
    ],
    "physics": false,
+   "usable": [],
    "height": 0.41,
    "upright": "block",
    "saved_only": false,
@@ -4255,8 +4346,7 @@
     ],
     "top": 0.6,
     "top_skilled": 0.6
-   },
-   "render": "palettes/dvergrprops_stool.png"
+   }
   },
   {
    "prefab": "dvergrprops_shelf",
@@ -4287,6 +4377,7 @@
    ],
    "origin": "foot",
    "hollow": false,
+   "game_dungeon": [],
    "sets": [
     "store",
     "workshop"
@@ -4311,6 +4402,7 @@
     "DropOnDestroyed"
    ],
    "physics": false,
+   "usable": [],
    "height": 1.52,
    "upright": "upright",
    "saved_only": false,
@@ -4332,8 +4424,7 @@
     ],
     "top": 1.6,
     "top_skilled": 1.6
-   },
-   "render": "palettes/dvergrprops_shelf.png"
+   }
   },
   {
    "prefab": "dvergrprops_bed",
@@ -4364,6 +4455,7 @@
    ],
    "origin": "foot",
    "hollow": false,
+   "game_dungeon": [],
    "sets": [
     "barracks"
    ],
@@ -4386,6 +4478,7 @@
     "DropOnDestroyed"
    ],
    "physics": false,
+   "usable": [],
    "height": 0.67,
    "upright": "flat",
    "saved_only": false,
@@ -4399,8 +4492,7 @@
     ],
     "top": 0.8,
     "top_skilled": 0.8
-   },
-   "render": "palettes/dvergrprops_bed.png"
+   }
   },
   {
    "prefab": "dvergrprops_pickaxe",
@@ -4412,7 +4504,7 @@
     2
    ],
    "tier": 6,
-   "notes": "its 'item'-layer collider is made solid by the Builder (BuildSolid.cs); as scenery its Destructible, DropOnDestroyed is stripped: it gives nothing; climbable: a player can stand 0.8 m above its foot (at scale 1; 0.8 m with Jump skill 100), so it's a stepping stone to a level up to about 2.4 m above its foot (3.9 m with Jump 100)",
+   "notes": "recognisable: a part of the game's own DvergerTown dungeons; its 'item'-layer collider is made solid by the Builder (BuildSolid.cs); as scenery its Destructible, DropOnDestroyed is stripped: it gives nothing; climbable: a player can stand 0.8 m above its foot (at scale 1; 0.8 m with Jump skill 100), so it's a stepping stone to a level up to about 2.4 m above its foot (3.9 m with Jump 100)",
    "exists": true,
    "size": [
     0.9,
@@ -4431,6 +4523,9 @@
    ],
    "origin": "foot",
    "hollow": false,
+   "game_dungeon": [
+    "DvergerTown"
+   ],
    "sets": [
     "workshop"
    ],
@@ -4454,6 +4549,7 @@
     "DropOnDestroyed"
    ],
    "physics": false,
+   "usable": [],
    "height": 0.83,
    "upright": "upright",
    "saved_only": false,
@@ -4467,8 +4563,7 @@
     ],
     "top": 0.8,
     "top_skilled": 0.8
-   },
-   "render": "palettes/dvergrprops_pickaxe.png"
+   }
   },
   {
    "prefab": "CreepProp_hanging01",
@@ -4480,7 +4575,7 @@
     2
    ],
    "tier": 6,
-   "notes": "as scenery its Destructible is stripped: it gives nothing",
+   "notes": "recognisable: a part of the game's own DvergerTown dungeons; as scenery its Destructible is stripped: it gives nothing",
    "exists": true,
    "size": [
     0.37,
@@ -4499,6 +4594,9 @@
    ],
    "origin": "foot",
    "hollow": false,
+   "game_dungeon": [
+    "DvergerTown"
+   ],
    "kinds": [
     "Destructible",
     "ZNetView"
@@ -4517,6 +4615,7 @@
     "Destructible"
    ],
    "physics": false,
+   "usable": [],
    "height": 2.11,
    "upright": "upright",
    "saved_only": false,
@@ -4525,8 +4624,7 @@
     "ledges": [],
     "top": 0.0,
     "top_skilled": 0.0
-   },
-   "render": "palettes/CreepProp_hanging01.png"
+   }
   },
   {
    "prefab": "CreepProp_wall01",
@@ -4538,7 +4636,7 @@
     2
    ],
    "tier": 6,
-   "notes": "its light range, fade distance and fire grow with its scale (BuildScale.cs)",
+   "notes": "recognisable: a part of the game's own DvergerBoss and DvergerTown dungeons; its light range, fade distance and fire grow with its scale (BuildScale.cs)",
    "exists": true,
    "size": [
     2.58,
@@ -4557,6 +4655,10 @@
    ],
    "origin": "centre",
    "hollow": false,
+   "game_dungeon": [
+    "DvergerBoss",
+    "DvergerTown"
+   ],
    "kinds": [
     "LightLod",
     "ZNetView"
@@ -4581,6 +4683,7 @@
    "networked": true,
    "gives": [],
    "physics": false,
+   "usable": [],
    "height": 3.04,
    "upright": "upright",
    "saved_only": false,
@@ -4589,8 +4692,7 @@
     "ledges": [],
     "top": 0.0,
     "top_skilled": 0.0
-   },
-   "render": "palettes/CreepProp_wall01.png"
+   }
   },
   {
    "prefab": "YggdrasilRoot",
@@ -4621,6 +4723,7 @@
    ],
    "origin": "inside",
    "hollow": false,
+   "game_dungeon": [],
    "kinds": [
     "ZNetView"
    ],
@@ -4636,6 +4739,7 @@
    "networked": true,
    "gives": [],
    "physics": false,
+   "usable": [],
    "height": 15.28,
    "upright": "flat",
    "saved_only": false,
@@ -4701,8 +4805,7 @@
     ],
     "top": 15.0,
     "top_skilled": 15.0
-   },
-   "render": "palettes/YggdrasilRoot.png"
+   }
   }
  ],
  "roles": {

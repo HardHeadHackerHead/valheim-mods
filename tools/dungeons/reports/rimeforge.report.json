@@ -1,0 +1,1751 @@
+{
+ "pack": "rimeforge",
+ "theme": "rimeforge",
+ "seed": 1,
+ "rooms": [
+  {
+   "name": "fight_L_1",
+   "recipe": "fight",
+   "shell": "L",
+   "features": [
+    "cover",
+    "machinery"
+   ],
+   "params": {
+    "shape": "L",
+    "size": [
+     28.0,
+     10.0,
+     36.0
+    ],
+    "notch": [
+     2,
+     0.5,
+     0.4
+    ],
+    "doors": [
+     [
+      1,
+      -10.0,
+      0
+     ],
+     [
+      3,
+      1.0,
+      0
+     ]
+    ],
+    "lever": "far",
+    "points": 6,
+    "pillar_pattern": "rows",
+    "cover": 1,
+    "gears": 2,
+    "dressing": "frozen",
+    "props": 7,
+    "lights": [
+     3,
+     23
+    ]
+   }
+  },
+  {
+   "name": "fight_balcony_2",
+   "recipe": "fight",
+   "shell": "balcony",
+   "features": [
+    "pillars"
+   ],
+   "params": {
+    "shape": "balcony",
+    "size": [
+     24.0,
+     20.0,
+     28.0
+    ],
+    "balcony": [
+     0,
+     8.3
+    ],
+    "stair": [
+     1
+    ],
+    "doors": [
+     [
+      2,
+      -7.0,
+      0
+     ],
+     [
+      3,
+      1.0,
+      0
+     ]
+    ],
+    "lever": "far",
+    "points": 6,
+    "pillar_pattern": "scatter",
+    "pillars": 2,
+    "dressing": "smithy",
+    "props": 18,
+    "lights": [
+     2,
+     17
+    ]
+   }
+  },
+  {
+   "name": "fight_rect_3",
+   "recipe": "fight",
+   "shell": "rect",
+   "features": [
+    "cover",
+    "pillars"
+   ],
+   "params": {
+    "shape": "rect",
+    "size": [
+     24.0,
+     10.0,
+     32.0
+    ],
+    "doors": [
+     [
+      0,
+      4.0,
+      0
+     ],
+     [
+      2,
+      7.0,
+      0
+     ]
+    ],
+    "lever": "far",
+    "points": 6,
+    "cover": 3,
+    "pillar_pattern": "rows",
+    "pillars": 1,
+    "dressing": "store",
+    "props": 10,
+    "lights": [
+     0,
+     20
+    ]
+   }
+  },
+  {
+   "name": "hub_L_4",
+   "recipe": "hub",
+   "shell": "L",
+   "features": [
+    "stash",
+    "pillars"
+   ],
+   "params": {
+    "shape": "L",
+    "size": [
+     20.0,
+     10.0,
+     28.0
+    ],
+    "notch": [
+     2,
+     0.5,
+     0.4
+    ],
+    "doors": [
+     [
+      0,
+      0.0,
+      0
+     ],
+     [
+      1,
+      0.0,
+      0
+     ],
+     [
+      2,
+      -4.0,
+      0
+     ],
+     [
+      3,
+      1.0,
+      0
+     ]
+    ],
+    "closet": [
+     1,
+     -9.4
+    ],
+    "side_job": "stash",
+    "pillar_pattern": "rows",
+    "pillars": 1,
+    "dressing": "frozen",
+    "props": 7,
+    "lights": [
+     0,
+     11
+    ]
+   }
+  },
+  {
+   "name": "hub_rect_5",
+   "recipe": "hub",
+   "shell": "rect",
+   "features": [
+    "guard"
+   ],
+   "params": {
+    "shape": "rect",
+    "size": [
+     16.0,
+     10.0,
+     20.0
+    ],
+    "doors": [
+     [
+      0,
+      0.0,
+      0
+     ],
+     [
+      1,
+      0.0,
+      0
+     ],
+     [
+      2,
+      0.0,
+      0
+     ],
+     [
+      3,
+      0.0,
+      0
+     ]
+    ],
+    "side_job": "guard",
+    "pillar_pattern": "scatter",
+    "dressing": "smithy",
+    "props": 9,
+    "lights": [
+     0,
+     7
+    ]
+   }
+  },
+  {
+   "name": "hub_balcony_6",
+   "recipe": "hub",
+   "shell": "balcony",
+   "features": [
+    "guard",
+    "pillars"
+   ],
+   "params": {
+    "shape": "balcony",
+    "size": [
+     24.0,
+     20.0,
+     24.0
+    ],
+    "balcony": [
+     0,
+     6.4
+    ],
+    "stair": [
+     -1
+    ],
+    "doors": [
+     [
+      0,
+      0.0,
+      0
+     ],
+     [
+      1,
+      0.0,
+      0
+     ],
+     [
+      2,
+      0.0,
+      0
+     ],
+     [
+      3,
+      7.0,
+      0
+     ]
+    ],
+    "side_job": "guard",
+    "pillar_pattern": "rows",
+    "pillars": 1,
+    "dressing": "coal",
+    "props": 10,
+    "lights": [
+     5,
+     14
+    ]
+   }
+  },
+  {
+   "name": "lever_L_7",
+   "recipe": "lever",
+   "shell": "L",
+   "features": [
+    "pillars",
+    "machinery",
+    "cover"
+   ],
+   "params": {
+    "shape": "L",
+    "size": [
+     16.0,
+     10.0,
+     20.0
+    ],
+    "notch": [
+     3,
+     0.4,
+     0.4
+    ],
+    "variant": "alcove",
+    "doors": [
+     [
+      1,
+      0.0,
+      0
+     ]
+    ],
+    "lever_level": 0,
+    "pillar_pattern": "rows",
+    "pillars": 2,
+    "gears": 2,
+    "cover": 1,
+    "dressing": "frozen",
+    "props": 7,
+    "lights": [
+     1,
+     5
+    ]
+   }
+  },
+  {
+   "name": "lever_balcony_8",
+   "recipe": "lever",
+   "shell": "balcony",
+   "features": [
+    "pillars"
+   ],
+   "params": {
+    "shape": "balcony",
+    "size": [
+     24.0,
+     20.0,
+     24.0
+    ],
+    "balcony": [
+     2,
+     6.3
+    ],
+    "stair": [
+     -1
+    ],
+    "variant": "room",
+    "doors": [
+     [
+      3,
+      -4.0,
+      0
+     ],
+     [
+      2,
+      7.0,
+      1
+     ]
+    ],
+    "lever_level": 1,
+    "pillar_pattern": "scatter",
+    "pillars": 2,
+    "dressing": "smithy",
+    "props": 18,
+    "lights": [
+     2,
+     14
+    ]
+   }
+  },
+  {
+   "name": "lever_rect_9",
+   "recipe": "lever",
+   "shell": "rect",
+   "features": [],
+   "params": {
+    "shape": "rect",
+    "size": [
+     12.0,
+     10.0,
+     16.0
+    ],
+    "variant": "room",
+    "doors": [
+     [
+      1,
+      -3.0,
+      0
+     ],
+     [
+      3,
+      -1.0,
+      0
+     ]
+    ],
+    "lever_level": 0,
+    "dressing": "store",
+    "props": 10,
+    "lights": [
+     0,
+     4
+    ]
+   }
+  },
+  {
+   "name": "gate_split_10",
+   "recipe": "gate",
+   "shell": "split",
+   "features": [
+    "pillars",
+    "machinery"
+   ],
+   "params": {
+    "shape": "split",
+    "size": [
+     16.0,
+     18.0,
+     24.0
+    ],
+    "rise": 8.0,
+    "split": 6.0,
+    "stair": [
+     -1
+    ],
+    "doors": [
+     [
+      2,
+      0.0,
+      0
+     ],
+     [
+      0,
+      0.0,
+      1
+     ]
+    ],
+    "pillar_pattern": "rows",
+    "pillars": 1,
+    "gears": 2,
+    "dressing": "frozen",
+    "props": 7,
+    "lights": [
+     3,
+     6
+    ]
+   }
+  },
+  {
+   "name": "gate_rect_11",
+   "recipe": "gate",
+   "shell": "rect",
+   "features": [
+    "pillars"
+   ],
+   "params": {
+    "shape": "rect",
+    "size": [
+     12.0,
+     10.0,
+     16.0
+    ],
+    "doors": [
+     [
+      3,
+      -2.0,
+      0
+     ],
+     [
+      0,
+      0.0,
+      0
+     ]
+    ],
+    "winch": true,
+    "pillar_pattern": "scatter",
+    "pillars": 2,
+    "dressing": "smithy",
+    "props": 9,
+    "lights": [
+     0,
+     3
+    ]
+   }
+  },
+  {
+   "name": "gate_rect_12",
+   "recipe": "gate",
+   "shell": "rect",
+   "features": [
+    "machinery"
+   ],
+   "params": {
+    "shape": "rect",
+    "size": [
+     16.0,
+     10.0,
+     20.0
+    ],
+    "doors": [
+     [
+      2,
+      2.0,
+      0
+     ],
+     [
+      1,
+      -4.0,
+      0
+     ]
+    ],
+    "gears": 2,
+    "dressing": "armoury",
+    "props": 7,
+    "lights": [
+     4,
+     7
+    ]
+   }
+  },
+  {
+   "name": "timing_pit_13",
+   "recipe": "timing",
+   "shell": "pit",
+   "features": [],
+   "params": {
+    "shape": "pit",
+    "size": [
+     12.0,
+     20.0,
+     36.0
+    ],
+    "gap": 12.0,
+    "pit_at": -2.0,
+    "doors": [
+     [
+      0,
+      -1.0,
+      1
+     ],
+     [
+      2,
+      -1.0,
+      1
+     ],
+     [
+      3,
+      -4.0,
+      0
+     ]
+    ],
+    "bridge": [
+     "sink",
+     3.0
+    ],
+    "cycle": 7.0,
+    "dressing": "frozen",
+    "props": 7,
+    "lights": [
+     2,
+     0
+    ]
+   }
+  },
+  {
+   "name": "timing_pit_14",
+   "recipe": "timing",
+   "shell": "pit",
+   "features": [],
+   "params": {
+    "shape": "pit",
+    "size": [
+     16.0,
+     20.0,
+     32.0
+    ],
+    "gap": 13.0,
+    "pit_at": 0.0,
+    "doors": [
+     [
+      0,
+      0.0,
+      1
+     ],
+     [
+      2,
+      0.0,
+      1
+     ],
+     [
+      1,
+      -1.0,
+      0
+     ]
+    ],
+    "bridge": [
+     "sink",
+     2.4
+    ],
+    "cycle": 5.0,
+    "dressing": "smithy",
+    "props": 18,
+    "lights": [
+     3,
+     0
+    ]
+   }
+  },
+  {
+   "name": "timing_pit_15",
+   "recipe": "timing",
+   "shell": "pit",
+   "features": [],
+   "params": {
+    "shape": "pit",
+    "size": [
+     8.0,
+     20.0,
+     36.0
+    ],
+    "gap": 14.0,
+    "pit_at": 2.0,
+    "doors": [
+     [
+      0,
+      1.0,
+      1
+     ],
+     [
+      2,
+      1.0,
+      1
+     ],
+     [
+      1,
+      -3.0,
+      0
+     ]
+    ],
+    "bridge": [
+     "sink",
+     2.6
+    ],
+    "cycle": 6.0,
+    "dressing": "coal",
+    "props": 5,
+    "lights": [
+     0,
+     0
+    ]
+   }
+  },
+  {
+   "name": "plate_rect_16",
+   "recipe": "plate",
+   "shell": "rect",
+   "features": [
+    "cover"
+   ],
+   "params": {
+    "shape": "rect",
+    "size": [
+     20.0,
+     20.0,
+     28.0
+    ],
+    "doors": [
+     [
+      2,
+      -1.0,
+      0
+     ],
+     [
+      0,
+      0.0,
+      0
+     ],
+     [
+      1,
+      -8.077583152892927,
+      0
+     ]
+    ],
+    "screen_z": 5.0,
+    "gap": -3,
+    "ledge": 1,
+    "cover": 1,
+    "dressing": "frozen",
+    "props": 1,
+    "lights": [
+     0,
+     0
+    ]
+   }
+  },
+  {
+   "name": "plate_rect_17",
+   "recipe": "plate",
+   "shell": "rect",
+   "features": [],
+   "params": {
+    "shape": "rect",
+    "size": [
+     16.0,
+     20.0,
+     24.0
+    ],
+    "doors": [
+     [
+      2,
+      0.0,
+      0
+     ],
+     [
+      0,
+      -1.0,
+      0
+     ],
+     [
+      3,
+      7.159454919165932,
+      0
+     ]
+    ],
+    "screen_z": 3.0,
+    "gap": 0,
+    "ledge": 1,
+    "dressing": "smithy",
+    "props": 6,
+    "lights": [
+     0,
+     0
+    ]
+   }
+  },
+  {
+   "name": "plate_rect_18",
+   "recipe": "plate",
+   "shell": "rect",
+   "features": [],
+   "params": {
+    "shape": "rect",
+    "size": [
+     16.0,
+     20.0,
+     24.0
+    ],
+    "doors": [
+     [
+      2,
+      1.0,
+      0
+     ],
+     [
+      0,
+      1.0,
+      0
+     ],
+     [
+      3,
+      7.163083353217448,
+      0
+     ]
+    ],
+    "screen_z": 4.0,
+    "gap": 2,
+    "ledge": -1,
+    "dressing": "store",
+    "props": 7,
+    "lights": [
+     0,
+     0
+    ]
+   }
+  },
+  {
+   "name": "drop_drop_19",
+   "recipe": "drop",
+   "shell": "drop",
+   "features": [
+    "remains"
+   ],
+   "params": {
+    "shape": "drop",
+    "size": [
+     16.0,
+     20.0,
+     32.0
+    ],
+    "ledge": 11.0,
+    "stair": 1,
+    "doors": [
+     [
+      2,
+      -0.0,
+      1
+     ],
+     [
+      0,
+      -2.0,
+      0
+     ]
+    ],
+    "lever": "foot",
+    "drop_gap": -3.2,
+    "dressing": "frozen",
+    "props": 7,
+    "lights": [
+     6,
+     0
+    ]
+   }
+  },
+  {
+   "name": "drop_drop_20",
+   "recipe": "drop",
+   "shell": "drop",
+   "features": [],
+   "params": {
+    "shape": "drop",
+    "size": [
+     20.0,
+     20.0,
+     24.0
+    ],
+    "ledge": 13.0,
+    "stair": -1,
+    "doors": [
+     [
+      2,
+      1.0,
+      1
+     ],
+     [
+      0,
+      1.0,
+      0
+     ]
+    ],
+    "lever": "far",
+    "drop_gap": -0.0,
+    "dressing": "smithy",
+    "props": 18,
+    "lights": [
+     1,
+     0
+    ]
+   }
+  },
+  {
+   "name": "drop_drop_21",
+   "recipe": "drop",
+   "shell": "drop",
+   "features": [],
+   "params": {
+    "shape": "drop",
+    "size": [
+     20.0,
+     20.0,
+     24.0
+    ],
+    "ledge": 9.0,
+    "stair": -1,
+    "doors": [
+     [
+      2,
+      -1.0,
+      1
+     ],
+     [
+      0,
+      -1.0,
+      0
+     ]
+    ],
+    "lever": "far",
+    "drop_gap": 1.2,
+    "dressing": "coal",
+    "props": 10,
+    "lights": [
+     5,
+     0
+    ]
+   }
+  },
+  {
+   "name": "breather_split_22",
+   "recipe": "breather",
+   "shell": "split",
+   "features": [
+    "stash",
+    "pillars",
+    "machinery"
+   ],
+   "params": {
+    "shape": "split",
+    "size": [
+     20.0,
+     18.0,
+     28.0
+    ],
+    "rise": 8.0,
+    "split": 8.0,
+    "stair": [
+     1
+    ],
+    "doors": [
+     [
+      3,
+      -4.0,
+      0
+     ],
+     [
+      0,
+      1.0,
+      1
+     ]
+    ],
+    "closet": [
+     1,
+     9.6
+    ],
+    "side_job": "stash",
+    "pillar_pattern": "rows",
+    "pillars": 3,
+    "gears": 2,
+    "dressing": "frozen",
+    "props": 7,
+    "lights": [
+     6,
+     11
+    ]
+   }
+  },
+  {
+   "name": "breather_L_23",
+   "recipe": "breather",
+   "shell": "L",
+   "features": [
+    "sentries"
+   ],
+   "params": {
+    "shape": "L",
+    "size": [
+     16.0,
+     10.0,
+     20.0
+    ],
+    "notch": [
+     1,
+     0.4,
+     0.5
+    ],
+    "doors": [
+     [
+      2,
+      3.0,
+      0
+     ],
+     [
+      0,
+      1.0,
+      0
+     ],
+     [
+      3,
+      0.0,
+      0
+     ]
+    ],
+    "side_job": "sentries",
+    "pillar_pattern": "scatter",
+    "dressing": "smithy",
+    "props": 10,
+    "lights": [
+     0,
+     6
+    ]
+   }
+  },
+  {
+   "name": "breather_balcony_24",
+   "recipe": "breather",
+   "shell": "balcony",
+   "features": [
+    "guard"
+   ],
+   "params": {
+    "shape": "balcony",
+    "size": [
+     24.0,
+     20.0,
+     24.0
+    ],
+    "balcony": [
+     3,
+     6.0
+    ],
+    "stair": [
+     1
+    ],
+    "doors": [
+     [
+      1,
+      5.0,
+      0
+     ],
+     [
+      2,
+      -2.0,
+      0
+     ]
+    ],
+    "side_job": "guard",
+    "dressing": "store",
+    "props": 10,
+    "lights": [
+     8,
+     15
+    ]
+   }
+  },
+  {
+   "name": "breather_rect_25",
+   "recipe": "breather",
+   "shell": "rect",
+   "features": [
+    "sentries",
+    "machinery"
+   ],
+   "params": {
+    "shape": "rect",
+    "size": [
+     20.0,
+     10.0,
+     28.0
+    ],
+    "doors": [
+     [
+      3,
+      -1.0,
+      0
+     ],
+     [
+      2,
+      1.0,
+      0
+     ]
+    ],
+    "side_job": "sentries",
+    "gears": 2,
+    "dressing": "armoury",
+    "props": 7,
+    "lights": [
+     4,
+     14
+    ]
+   }
+  },
+  {
+   "name": "pillarhall_rect_26",
+   "recipe": "pillarhall",
+   "shell": "rect",
+   "features": [
+    "stash",
+    "pillars"
+   ],
+   "params": {
+    "shape": "rect",
+    "size": [
+     20.0,
+     10.0,
+     28.0
+    ],
+    "doors": [
+     [
+      2,
+      5.0,
+      0
+     ],
+     [
+      3,
+      -3.0,
+      0
+     ],
+     [
+      1,
+      -2.0,
+      0
+     ]
+    ],
+    "closet": [
+     1,
+     9.6
+    ],
+    "side_job": "stash",
+    "pillar_pattern": "rows",
+    "pillars": 5,
+    "dressing": "frozen",
+    "props": 7,
+    "lights": [
+     3,
+     14
+    ]
+   }
+  },
+  {
+   "name": "pillarhall_round_27",
+   "recipe": "pillarhall",
+   "shell": "round",
+   "features": [
+    "guard",
+    "pillars"
+   ],
+   "params": {
+    "shape": "round",
+    "size": [
+     20.0,
+     10.0,
+     20.0
+    ],
+    "doors": [
+     [
+      3,
+      0.0,
+      0
+     ],
+     [
+      1,
+      0.0,
+      0
+     ],
+     [
+      2,
+      0.0,
+      0
+     ]
+    ],
+    "side_job": "guard",
+    "pillar_pattern": "ring",
+    "pillars": 1,
+    "dressing": "smithy",
+    "props": 8,
+    "lights": [
+     0,
+     6
+    ]
+   }
+  },
+  {
+   "name": "pillarhall_L_28",
+   "recipe": "pillarhall",
+   "shell": "L",
+   "features": [
+    "guard"
+   ],
+   "params": {
+    "shape": "L",
+    "size": [
+     16.0,
+     10.0,
+     24.0
+    ],
+    "notch": [
+     0,
+     0.5,
+     0.4
+    ],
+    "doors": [
+     [
+      2,
+      -3.0,
+      0
+     ],
+     [
+      3,
+      5.0,
+      0
+     ]
+    ],
+    "side_job": "guard",
+    "pillar_pattern": "rows",
+    "dressing": "store",
+    "props": 10,
+    "lights": [
+     0,
+     6
+    ]
+   }
+  },
+  {
+   "name": "machineroom_split_29",
+   "recipe": "machineroom",
+   "shell": "split",
+   "features": [
+    "stash",
+    "machinery"
+   ],
+   "params": {
+    "shape": "split",
+    "size": [
+     20.0,
+     18.0,
+     28.0
+    ],
+    "rise": 8.0,
+    "split": 4.0,
+    "stair": [
+     1
+    ],
+    "doors": [
+     [
+      3,
+      1.0,
+      0
+     ],
+     [
+      1,
+      -8.0,
+      1
+     ]
+    ],
+    "closet": [
+     3,
+     -9.4
+    ],
+    "side_job": "stash",
+    "gears": 2,
+    "dressing": "frozen",
+    "props": 7,
+    "lights": [
+     5,
+     9
+    ]
+   }
+  },
+  {
+   "name": "machineroom_L_30",
+   "recipe": "machineroom",
+   "shell": "L",
+   "features": [
+    "alcove",
+    "machinery"
+   ],
+   "params": {
+    "shape": "L",
+    "size": [
+     16.0,
+     10.0,
+     20.0
+    ],
+    "notch": [
+     1,
+     0.4,
+     0.5
+    ],
+    "doors": [
+     [
+      3,
+      1.0,
+      0
+     ],
+     [
+      1,
+      -5.0,
+      0
+     ],
+     [
+      2,
+      2.0,
+      0
+     ]
+    ],
+    "closet": [
+     0,
+     -2.9
+    ],
+    "side_job": "alcove",
+    "gears": 1,
+    "dressing": "smithy",
+    "props": 8,
+    "lights": [
+     0,
+     4
+    ]
+   }
+  },
+  {
+   "name": "machineroom_rect_31",
+   "recipe": "machineroom",
+   "shell": "rect",
+   "features": [
+    "guard",
+    "machinery"
+   ],
+   "params": {
+    "shape": "rect",
+    "size": [
+     16.0,
+     10.0,
+     24.0
+    ],
+    "doors": [
+     [
+      1,
+      -2.0,
+      0
+     ],
+     [
+      0,
+      3.0,
+      0
+     ]
+    ],
+    "side_job": "guard",
+    "gears": 2,
+    "dressing": "store",
+    "props": 10,
+    "lights": [
+     2,
+     9
+    ]
+   }
+  },
+  {
+   "name": "corridor_rect_32",
+   "recipe": "corridor",
+   "shell": "rect",
+   "features": [
+    "machinery"
+   ],
+   "params": {
+    "shape": "rect",
+    "size": [
+     8.0,
+     10.0,
+     24.0
+    ],
+    "doors": [
+     [
+      2,
+      0,
+      0
+     ],
+     [
+      0,
+      0,
+      0
+     ]
+    ],
+    "variant": "hammers",
+    "bays": 2,
+    "pillar_pattern": "rows",
+    "gears": 2,
+    "dressing": "frozen",
+    "props": 5,
+    "lights": [
+     0,
+     3
+    ]
+   }
+  },
+  {
+   "name": "corridor_rect_33",
+   "recipe": "corridor",
+   "shell": "rect",
+   "features": [],
+   "params": {
+    "shape": "rect",
+    "size": [
+     8.0,
+     10.0,
+     16.0
+    ],
+    "doors": [
+     [
+      2,
+      0,
+      0
+     ],
+     [
+      0,
+      0,
+      0
+     ]
+    ],
+    "variant": "plain",
+    "bays": 1,
+    "pillar_pattern": "scatter",
+    "dressing": "smithy",
+    "props": 2,
+    "lights": [
+     0,
+     2
+    ]
+   }
+  },
+  {
+   "name": "stairhall_split_34",
+   "recipe": "stairhall",
+   "shell": "split",
+   "features": [
+    "stash",
+    "pillars",
+    "machinery"
+   ],
+   "params": {
+    "shape": "split",
+    "size": [
+     20.0,
+     18.0,
+     28.0
+    ],
+    "rise": 8.0,
+    "split": 5.0,
+    "stair": [
+     1
+    ],
+    "doors": [
+     [
+      3,
+      2.0,
+      0
+     ],
+     [
+      0,
+      -2.0,
+      1
+     ]
+    ],
+    "closet": [
+     3,
+     -9.4
+    ],
+    "side_job": "stash",
+    "pillar_pattern": "rows",
+    "pillars": 2,
+    "gears": 2,
+    "dressing": "frozen",
+    "props": 7,
+    "lights": [
+     3,
+     7
+    ]
+   }
+  },
+  {
+   "name": "stairhall_balcony_35",
+   "recipe": "stairhall",
+   "shell": "balcony",
+   "features": [
+    "alcove",
+    "pillars"
+   ],
+   "params": {
+    "shape": "balcony",
+    "size": [
+     24.0,
+     20.0,
+     24.0
+    ],
+    "balcony": [
+     0,
+     6.5
+    ],
+    "stair": [
+     -1
+    ],
+    "doors": [
+     [
+      1,
+      -1.0,
+      0
+     ],
+     [
+      0,
+      -2.0,
+      1
+     ]
+    ],
+    "closet": [
+     2,
+     -6.9
+    ],
+    "side_job": "alcove",
+    "pillar_pattern": "scatter",
+    "pillars": 4,
+    "dressing": "smithy",
+    "props": 18,
+    "lights": [
+     4,
+     11
+    ]
+   }
+  },
+  {
+   "name": "nook_rect_36",
+   "recipe": "nook",
+   "shell": "rect",
+   "features": [],
+   "params": {
+    "shape": "rect",
+    "size": [
+     12.0,
+     10.0,
+     12.0
+    ],
+    "doors": [
+     [
+      2,
+      0.0,
+      0
+     ]
+    ],
+    "centrepiece": "forge",
+    "pieces": 1,
+    "dressing": "frozen",
+    "props": 7,
+    "lights": [
+     0,
+     2
+    ]
+   }
+  },
+  {
+   "name": "nook_rect_37",
+   "recipe": "nook",
+   "shell": "rect",
+   "features": [],
+   "params": {
+    "shape": "rect",
+    "size": [
+     8.0,
+     10.0,
+     8.0
+    ],
+    "doors": [
+     [
+      2,
+      0.0,
+      0
+     ]
+    ],
+    "centrepiece": "shrine",
+    "pieces": 1,
+    "dressing": "smithy",
+    "props": 1,
+    "lights": [
+     0,
+     1
+    ]
+   }
+  },
+  {
+   "name": "nook_rect_38",
+   "recipe": "nook",
+   "shell": "rect",
+   "features": [],
+   "params": {
+    "shape": "rect",
+    "size": [
+     8.0,
+     10.0,
+     8.0
+    ],
+    "doors": [
+     [
+      0,
+      0.0,
+      0
+     ]
+    ],
+    "centrepiece": "anvil",
+    "pieces": 0,
+    "dressing": "store",
+    "props": 0,
+    "lights": [
+     0,
+     0
+    ]
+   }
+  },
+  {
+   "name": "nook_rect_39",
+   "recipe": "nook",
+   "shell": "rect",
+   "features": [],
+   "params": {
+    "shape": "rect",
+    "size": [
+     12.0,
+     10.0,
+     12.0
+    ],
+    "doors": [
+     [
+      2,
+      0.0,
+      0
+     ]
+    ],
+    "centrepiece": "ingots",
+    "pieces": 1,
+    "dressing": "armoury",
+    "props": 1,
+    "lights": [
+     3,
+     2
+    ]
+   }
+  },
+  {
+   "name": "twolevers_rect_40",
+   "recipe": "twolevers",
+   "shell": "rect",
+   "features": [],
+   "params": {
+    "shape": "rect",
+    "size": [
+     16.0,
+     10.0,
+     20.0
+    ],
+    "doors": [
+     [
+      2,
+      0,
+      0
+     ]
+    ],
+    "notches": 3,
+    "wall_z": 1.4,
+    "dressing": "frozen",
+    "props": 7,
+    "lights": [
+     0,
+     3
+    ]
+   }
+  },
+  {
+   "name": "ambush_rect_41",
+   "recipe": "ambush",
+   "shell": "rect",
+   "features": [],
+   "params": {
+    "shape": "rect",
+    "size": [
+     20.0,
+     10.0,
+     28.0
+    ],
+    "doors": [
+     [
+      2,
+      0,
+      0
+     ]
+    ],
+    "pillar_pattern": "rows",
+    "dressing": "frozen",
+    "props": 7,
+    "lights": [
+     2,
+     14
+    ]
+   }
+  },
+  {
+   "name": "timeddoor_rect_42",
+   "recipe": "timeddoor",
+   "shell": "rect",
+   "features": [
+    "machinery"
+   ],
+   "params": {
+    "shape": "rect",
+    "size": [
+     16.0,
+     10.0,
+     20.0
+    ],
+    "doors": [
+     [
+      2,
+      0,
+      0
+     ]
+    ],
+    "cycle": 4.0,
+    "gears": 2,
+    "dressing": "frozen",
+    "props": 7,
+    "lights": [
+     3,
+     7
+    ]
+   }
+  }
+ ],
+ "signatures": [
+  "entrance",
+  "frozenforges",
+  "keeper",
+  "hammerline",
+  "greatforge",
+  "vault",
+  "slagbridge",
+  "quenchhall",
+  "secret_hoard",
+  "cap_plain",
+  "cap_ice",
+  "vault_cap"
+ ],
+ "variety": {
+  "recipeRooms": 42,
+  "signatureRooms": 12,
+  "jobs": 16,
+  "shells": 7,
+  "spread": {
+   "fight": 0.56,
+   "hub": 0.61,
+   "lever": 0.79,
+   "gate": 0.72,
+   "timing": 0.28,
+   "plate": 0.41,
+   "drop": 0.35,
+   "breather": 0.72,
+   "pillarhall": 0.62,
+   "machineroom": 0.68,
+   "corridor": 0.54,
+   "stairhall": 0.67,
+   "nook": 0.46
+  },
+  "sameRooms": [],
+  "overlap": {
+   "shiftinghalls": 0.0,
+   "starfall": 0.0,
+   "testtheme": 0.0
+  }
+ }
+}

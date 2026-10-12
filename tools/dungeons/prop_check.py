@@ -13,7 +13,8 @@ import numpy as np
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, HERE)
-from walk_check import boxes_of, frame  # noqa: E402
+from walk_check import boxes_of, frame, SHAPES  # noqa: E402
+from dungeon_parts import euler_matrix  # noqa: E402
 
 STANDING = ("Morkhalla_giant_railing_torch", "MountainKit_brazier_blue", "blackmarble_altar_crystal", "dverger_demister",
             "TreasureChest_trollcave", "Morkhalla_ChestAncient", "bone_stack", "skull_pile", "Skull2", "Morkhalla_Bench",
@@ -25,17 +26,69 @@ MOUNTED = ("Morkhalla_StatuePieceFace_big", "giant_helmet", "giant_sword")   # t
 DROP, SINK = 0.3, 0.5          # a support's top may be this far below the prop's bottom; a spawner stands this high above its floor
 
 
+def _palette_mounts():
+    """Every palette piece's "mount" (tools/dungeons/palettes/*.json, builder2's): ground stands on a floor, hang hangs from what's
+    above, wall is mounted on a wall. The lists above cover what no palette has."""
+    import glob
+    out = {}
+    for path in glob.glob(os.path.join(HERE, "palettes", "*.json")):
+        try:
+            for e in json.load(open(path, encoding="utf-8")).get("pieces", []):
+                if e.get("prefab") and e.get("mount"):
+                    out.setdefault(e["prefab"], e["mount"])
+        except Exception:
+            continue
+    return out
+
+
+MOUNTS = _palette_mounts()
+
+
 def standing(prefab):
-    return any(prefab.startswith(s) for s in STANDING)
+    return any(prefab.startswith(s) for s in STANDING) or MOUNTS.get(prefab) in ("ground", "hang", "wall")
+
+
+def hanging(prefab):
+    return prefab in HANGING or MOUNTS.get(prefab) == "hang"
+
+
+def wall_mounted(prefab):
+    return prefab.startswith(MOUNTED) or MOUNTS.get(prefab) == "wall"
+
+
+def _plain_box(p, f, bounds):
+    """A part's own box (prefab_bounds), scaled, turned and moved, whatever prefab_shapes says about walking through it."""
+    b = bounds.get(p["prefab"])
+    if b is None:
+        return None
+    lo, hi = np.array(b[0]), np.array(b[1])
+    if np.allclose(lo, hi):
+        return None                                     # (a true point: a spawner)
+    sc = np.array(p.get("scale", [1, 1, 1]))
+    R = euler_matrix(*p.get("euler", [0, 0, 0]))
+    pts = np.array([[x, y, z] for x in (lo[0], hi[0]) for y in (lo[1], hi[1]) for z in (lo[2], hi[2])]) * sc
+    w = (R @ pts.T).T + np.array(p["at"])
+    w = (f[:3, :3] @ w.T).T + f[:3, 3]
+    return w.min(0), w.max(0)
+
+
+# walk-through pieces (prefab_shapes.json gives them no solid boxes: vines, rugs, webs, candles, cloth): checked by their own box like
+# any prop, but nothing stands on or hangs from them
+SOFT = {k for k, v in SHAPES.items() if not v}
 
 
 def placed(parts, f, bounds):
-    """(lo, hi, prefab, at) for each part, in the room's frame; a part with no box (a spawner) is a point at its place."""
+    """(lo, hi, prefab, at) for each part, in the room's frame; a walk-through piece by its plain box; a part with no box at all (a
+    spawner) is a point at its place."""
     out = []
     for p in parts:
         at = (f[:3, :3] @ np.array(p["at"])) + f[:3, 3]
         b = boxes_of([p], f, bounds)                    # (a hollow prefab's boxes taken together)
-        out.append((np.min([x[0] for x in b], 0), np.max([x[1] for x in b], 0), p["prefab"], at) if b else (at, at, p["prefab"], at))
+        if b:
+            out.append((np.min([x[0] for x in b], 0), np.max([x[1] for x in b], 0), p["prefab"], at))
+            continue
+        pb = _plain_box(p, f, bounds)
+        out.append((pb[0], pb[1], p["prefab"], at) if pb is not None else (at, at, p["prefab"], at))
     return out
 
 
@@ -48,10 +101,13 @@ def check_room(room, bounds):
             pose = m["poses"][min(m.get("start", 0), len(m["poses"]) - 1)]
             f = f @ frame(pose["at"], pose["euler"])
         everything += [(x, m["id"]) for x in placed(m.get("parts", []), f, bounds)]
-    chains = [x for x, _ in everything if x[2] in HANGING]
+    chains = [x for x, _ in everything if hanging(x[2])]
+    # (a mechanism that moves, a platform, trap or lift with more than one pose, holds its own parts up: a hammer in the air is no
+    # floating prop)
+    moving = {m["id"] for m in room.get("mechs", []) if m.get("kind") in ("platform", "trap", "rotator", "stair") and len(m.get("poses", [])) > 1}
     problems = []
     for (lo, hi, name, at), mech in everything:
-        if not standing(name):
+        if not standing(name) or mech in moving:
             continue
         mid = (lo + hi) / 2
         if name.startswith("Spawner_"):
@@ -59,17 +115,24 @@ def check_room(room, bounds):
         else:
             bottom, middle = lo[1], mid[1]
         hung = any(c[0][0] <= mid[0] <= c[1][0] and c[0][2] <= mid[2] <= c[1][2] and abs(c[0][1] - hi[1]) <= 0.6 for c in chains)
-        mounted = name.startswith(MOUNTED) and any(
-            b[1][1] - b[0][1] > 2.0 and b[0][1] <= mid[1] <= b[1][1] and b[0] is not lo
-            and b[0][0] - 0.15 <= hi[0] and lo[0] <= b[1][0] + 0.15 and b[0][2] - 0.15 <= hi[2] and lo[2] <= b[1][2] + 0.15
-            for (b, _) in everything)
+        if (hanging(name) or MOUNTS.get(name) == "wall") and any((hi[1] - 0.6 <= b[0][1] <= hi[1] + 0.6 or b[0][1] <= hi[1] <= b[1][1]) and b[0] is not lo
+                                 and (b[2] not in SOFT or b[2] == name)        # (a strand may go on from a strand)
+                                 and any(b[0][0] - 0.3 <= q[0] <= b[1][0] + 0.3 and b[0][2] - 0.3 <= q[2] <= b[1][2] + 0.3
+                                         for q in (mid, at))       # (its middle, or its origin: where a lamp's ring is)
+                                 for (b, _) in everything):
+            continue                                   # (a hung piece with something right above it)
+        mounted = wall_mounted(name) and any(
+            b[1][1] - b[0][1] > (0.5 if MOUNTS.get(name) == "wall" else 2.0) and b[0][1] <= mid[1] <= b[1][1] and b[0] is not lo
+            and b[0][0] - 0.3 <= hi[0] and lo[0] <= b[1][0] + 0.3 and b[0][2] - 0.3 <= hi[2] and lo[2] <= b[1][2] + 0.3
+            for (b, _) in everything if b[2] not in SOFT)
         if hung or mounted:
             continue
-        under = [b for (b, _) in everything if b is not None and b[2] not in HANGING and (b[0] is not lo)
+        under = [b for (b, _) in everything if b is not None and not hanging(b[2]) and b[2] not in SOFT and (b[0] is not lo)
                  and b[0][0] - 0.05 <= mid[0] <= b[1][0] + 0.05 and b[0][2] - 0.05 <= mid[2] <= b[1][2] + 0.05
-                 and bottom - DROP <= b[1][1] <= max(middle, bottom + 0.05) and b[1][1] > b[0][1]]
+                 and ((bottom - DROP <= b[1][1] <= max(middle, bottom + 0.05)) or b[0][1] <= bottom <= b[1][1])   # (on it, or set in it)
+                 and b[1][1] > b[0][1]]
         if not under:
-            below = [b[1][1] for (b, _) in everything if b[0] is not lo and b[1][1] < bottom and b[2] not in HANGING
+            below = [b[1][1] for (b, _) in everything if b[0] is not lo and b[1][1] < bottom and not hanging(b[2])
                      and b[0][0] <= mid[0] <= b[1][0] and b[0][2] <= mid[2] <= b[1][2]]
             gap = f"{bottom - max(below):.1f} m above the nearest top under it" if below else "nothing under it at all"
             problems.append(f"{name}{' (' + mech + ')' if mech else ''} at {np.round(at, 1).tolist()} floats: {gap}")

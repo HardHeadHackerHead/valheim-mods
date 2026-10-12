@@ -18,6 +18,7 @@
   "by_role": "{role: [default, variants...]}: the roles below without their notes",
   "sets": "the dressing sets it suits (giant: ossuary, ruin, forge, archive, engine, armoury; Dvergr: store, workshop, tavern, barracks)",
   "max_span": "a panel's longest side (m) before its stretched texture smears",
+  "game_dungeon": "the game's own dungeon themes whose rooms use it: a player knows it from there (a new kind should lean on pieces with none, or mix them so no room reads as that dungeon)",
   "roles": "the same pieces by a theme recipe's roles (first = default, others = variants), with how each role's pieces are placed",
   "render": "a picture in the mesh cache (C:\\Users\\DHack\\AppData\\Local\\Temp\\quaddungeon_meshes); the theme's contact sheet is palettes/crypt_sheet.png there"
  },
@@ -51,6 +52,7 @@
    ],
    "origin": "centre",
    "hollow": false,
+   "game_dungeon": [],
    "kinds": [
     "Piece",
     "WearNTear",
@@ -68,6 +70,7 @@
    "networked": true,
    "gives": [],
    "physics": false,
+   "usable": [],
    "height": 2.22,
    "upright": "upright",
    "saved_only": false,
@@ -85,8 +88,7 @@
     ],
     "top": 2.2,
     "top_skilled": 2.2
-   },
-   "render": "palettes/stone_wall_4x2.png"
+   }
   },
   {
    "prefab": "stone_wall_2x1",
@@ -98,7 +100,7 @@
     2
    ],
    "tier": 2,
-   "notes": "",
+   "notes": "recognisable: a part of the game's own GoblinCamp and MeadowsVillage dungeons",
    "exists": true,
    "size": [
     2.18,
@@ -117,6 +119,10 @@
    ],
    "origin": "centre",
    "hollow": false,
+   "game_dungeon": [
+    "GoblinCamp",
+    "MeadowsVillage"
+   ],
    "kinds": [
     "Piece",
     "WearNTear",
@@ -134,6 +140,7 @@
    "networked": true,
    "gives": [],
    "physics": false,
+   "usable": [],
    "height": 1.18,
    "upright": "block",
    "saved_only": false,
@@ -147,8 +154,7 @@
     ],
     "top": 1.2,
     "top_skilled": 1.2
-   },
-   "render": "palettes/stone_wall_2x1.png"
+   }
   },
   {
    "prefab": "stone_wall_1x1",
@@ -160,7 +166,7 @@
     2
    ],
    "tier": 2,
-   "notes": "",
+   "notes": "recognisable: a part of the game's own MeadowsVillage dungeons",
    "exists": true,
    "size": [
     1.09,
@@ -179,6 +185,9 @@
    ],
    "origin": "centre",
    "hollow": false,
+   "game_dungeon": [
+    "MeadowsVillage"
+   ],
    "kinds": [
     "Piece",
     "WearNTear",
@@ -196,6 +205,7 @@
    "networked": true,
    "gives": [],
    "physics": false,
+   "usable": [],
    "height": 1.18,
    "upright": "block",
    "saved_only": false,
@@ -209,8 +219,7 @@
     ],
     "top": 1.2,
     "top_skilled": 1.2
-   },
-   "render": "palettes/stone_wall_1x1.png"
+   }
   },
   {
    "prefab": "stone_wall_ruin",
@@ -241,6 +250,7 @@
    ],
    "origin": "inside",
    "hollow": false,
+   "game_dungeon": [],
    "kinds": [
     "WearNTear",
     "ZNetView"
@@ -257,6 +267,7 @@
    "networked": true,
    "gives": [],
    "physics": false,
+   "usable": [],
    "height": 3.19,
    "upright": "block",
    "saved_only": false,
@@ -278,8 +289,7 @@
     ],
     "top": 3.2,
     "top_skilled": 3.2
-   },
-   "render": "palettes/stone_wall_ruin.png"
+   }
   },
   {
    "prefab": "stone_floor_2x2",
@@ -310,6 +320,7 @@
    ],
    "origin": "centre",
    "hollow": false,
+   "game_dungeon": [],
    "kinds": [
     "Piece",
     "WearNTear",
@@ -327,6 +338,7 @@
    "networked": true,
    "gives": [],
    "physics": false,
+   "usable": [],
    "height": 1.0,
    "upright": "block",
    "saved_only": false,
@@ -340,8 +352,7 @@
     ],
     "top": 1.2,
     "top_skilled": 1.2
-   },
-   "render": "palettes/stone_floor_2x2.png"
+   }
   },
   {
    "prefab": "stone_floor",
@@ -372,6 +383,7 @@
    ],
    "origin": "centre",
    "hollow": false,
+   "game_dungeon": [],
    "kinds": [
     "Piece",
     "WearNTear",
@@ -389,6 +401,7 @@
    "networked": true,
    "gives": [],
    "physics": false,
+   "usable": [],
    "height": 1.0,
    "upright": "flat",
    "saved_only": false,
@@ -402,8 +415,7 @@
     ],
     "top": 1.2,
     "top_skilled": 1.2
-   },
-   "render": "palettes/stone_floor.png"
+   }
   },
   {
    "prefab": "stone_pillar",
@@ -434,6 +446,7 @@
    ],
    "origin": "centre",
    "hollow": false,
+   "game_dungeon": [],
    "kinds": [
     "Piece",
     "WearNTear",
@@ -451,6 +464,7 @@
    "networked": true,
    "gives": [],
    "physics": false,
+   "usable": [],
    "height": 2.0,
    "upright": "block",
    "saved_only": false,
@@ -468,8 +482,7 @@
     ],
     "top": 2.2,
     "top_skilled": 2.2
-   },
-   "render": "palettes/stone_pillar.png"
+   }
   },
   {
    "prefab": "stone_arch",
@@ -500,6 +513,7 @@
    ],
    "origin": "centre",
    "hollow": false,
+   "game_dungeon": [],
    "kinds": [
     "Piece",
     "WearNTear",
@@ -517,6 +531,7 @@
    "networked": true,
    "gives": [],
    "physics": false,
+   "usable": [],
    "height": 1.02,
    "upright": "block",
    "saved_only": false,
@@ -530,8 +545,7 @@
     ],
     "top": 1.2,
     "top_skilled": 1.2
-   },
-   "render": "palettes/stone_arch.png"
+   }
   },
   {
    "prefab": "stone_stair",
@@ -562,6 +576,7 @@
    ],
    "origin": "foot",
    "hollow": false,
+   "game_dungeon": [],
    "kinds": [
     "Piece",
     "WearNTear",
@@ -579,6 +594,7 @@
    "networked": true,
    "gives": [],
    "physics": false,
+   "usable": [],
    "height": 1.0,
    "upright": "flat",
    "saved_only": false,
@@ -592,8 +608,7 @@
     ],
     "top": 1.2,
     "top_skilled": 1.2
-   },
-   "render": "palettes/stone_stair.png"
+   }
   },
   {
    "prefab": "Piece_grausten_pillar_arch",
@@ -624,6 +639,7 @@
    ],
    "origin": "foot",
    "hollow": false,
+   "game_dungeon": [],
    "kinds": [
     "Piece",
     "WearNTear",
@@ -641,6 +657,7 @@
    "networked": true,
    "gives": [],
    "physics": false,
+   "usable": [],
    "height": 2.48,
    "upright": "block",
    "saved_only": false,
@@ -666,8 +683,7 @@
     ],
     "top": 2.4,
     "top_skilled": 2.4
-   },
-   "render": "palettes/Piece_grausten_pillar_arch.png"
+   }
   },
   {
    "prefab": "dungeon_forestcrypt_door",
@@ -679,7 +695,7 @@
     1
    ],
    "tier": 2,
-   "notes": "placed by the Builder at joints as a saved door; as scenery it doesn't open",
+   "notes": "placed by the Builder at joints as a saved door; as scenery it doesn't open; usable in the game (Door): as scenery the Builder strips it, so it only looks the part",
    "exists": true,
    "size": [
     2.28,
@@ -698,6 +714,7 @@
    ],
    "origin": "foot",
    "hollow": false,
+   "game_dungeon": [],
    "kinds": [
     "Door",
     "WearNTear",
@@ -715,6 +732,9 @@
    "networked": true,
    "gives": [],
    "physics": false,
+   "usable": [
+    "Door"
+   ],
    "height": 3.01,
    "upright": "upright",
    "saved_only": false,
@@ -728,8 +748,7 @@
     ],
     "top": 0.0,
     "top_skilled": 3.2
-   },
-   "render": "palettes/dungeon_forestcrypt_door.png"
+   }
   },
   {
    "prefab": "dungeon_sunkencrypt_irongate",
@@ -741,7 +760,7 @@
     1
    ],
    "tier": 3,
-   "notes": "as scenery it doesn't open; thin (0.11 m): a single face may not show from behind (one-sided): check its render from both sides",
+   "notes": "as scenery it doesn't open; usable in the game (Door): as scenery the Builder strips it, so it only looks the part; thin (0.11 m): a single face may not show from behind (one-sided): check its render from both sides",
    "exists": true,
    "size": [
     2.0,
@@ -760,6 +779,7 @@
    ],
    "origin": "inside",
    "hollow": false,
+   "game_dungeon": [],
    "kinds": [
     "Door",
     "WearNTear",
@@ -777,6 +797,9 @@
    "networked": true,
    "gives": [],
    "physics": false,
+   "usable": [
+    "Door"
+   ],
    "height": 3.05,
    "upright": "upright",
    "saved_only": false,
@@ -790,8 +813,7 @@
     ],
     "top": 0.0,
     "top_skilled": 0.0
-   },
-   "render": "palettes/dungeon_sunkencrypt_irongate.png"
+   }
   },
   {
    "prefab": "CastleKit_groundtorch",
@@ -803,7 +825,7 @@
     2
    ],
    "tier": 2,
-   "notes": "its light range, fade distance and fire grow with its scale (BuildScale.cs)",
+   "notes": "recognisable: a part of the game's own ForestCrypt and ForestCryptHildir and PlainsFortHildir and theme 262144 dungeons; its light range, fade distance and fire grow with its scale (BuildScale.cs)",
    "exists": true,
    "size": [
     0.23,
@@ -822,6 +844,12 @@
    ],
    "origin": "foot",
    "hollow": false,
+   "game_dungeon": [
+    "ForestCrypt",
+    "ForestCryptHildir",
+    "PlainsFortHildir",
+    "theme 262144"
+   ],
    "kinds": [
     "EffectArea",
     "LightLod",
@@ -848,6 +876,7 @@
    "networked": true,
    "gives": [],
    "physics": false,
+   "usable": [],
    "height": 1.48,
    "upright": "upright",
    "saved_only": false,
@@ -856,8 +885,7 @@
     "ledges": [],
     "top": 0.0,
     "top_skilled": 0.0
-   },
-   "render": "palettes/CastleKit_groundtorch.png"
+   }
   },
   {
    "prefab": "CastleKit_groundtorch_green",
@@ -869,7 +897,7 @@
     2
    ],
    "tier": 3,
-   "notes": "its light range, fade distance and fire grow with its scale (BuildScale.cs)",
+   "notes": "recognisable: a part of the game's own SunkenCrypt dungeons; its light range, fade distance and fire grow with its scale (BuildScale.cs)",
    "exists": true,
    "size": [
     0.23,
@@ -888,6 +916,9 @@
    ],
    "origin": "foot",
    "hollow": false,
+   "game_dungeon": [
+    "SunkenCrypt"
+   ],
    "kinds": [
     "EffectArea",
     "LightLod",
@@ -914,6 +945,7 @@
    "networked": true,
    "gives": [],
    "physics": false,
+   "usable": [],
    "height": 1.48,
    "upright": "upright",
    "saved_only": false,
@@ -922,8 +954,7 @@
     "ledges": [],
     "top": 0.0,
     "top_skilled": 0.0
-   },
-   "render": "palettes/CastleKit_groundtorch_green.png"
+   }
   },
   {
    "prefab": "CastleKit_groundtorch_blue",
@@ -935,7 +966,7 @@
     2
    ],
    "tier": 4,
-   "notes": "its light range, fade distance and fire grow with its scale (BuildScale.cs)",
+   "notes": "recognisable: a part of the game's own Cave and CaveHildir dungeons; its light range, fade distance and fire grow with its scale (BuildScale.cs)",
    "exists": true,
    "size": [
     0.23,
@@ -954,6 +985,10 @@
    ],
    "origin": "foot",
    "hollow": false,
+   "game_dungeon": [
+    "Cave",
+    "CaveHildir"
+   ],
    "kinds": [
     "EffectArea",
     "LightLod",
@@ -980,6 +1015,7 @@
    "networked": true,
    "gives": [],
    "physics": false,
+   "usable": [],
    "height": 1.48,
    "upright": "upright",
    "saved_only": false,
@@ -988,8 +1024,7 @@
     "ledges": [],
     "top": 0.0,
     "top_skilled": 0.0
-   },
-   "render": "palettes/CastleKit_groundtorch_blue.png"
+   }
   },
   {
    "prefab": "piece_walltorch",
@@ -1020,6 +1055,7 @@
    ],
    "origin": "inside",
    "hollow": false,
+   "game_dungeon": [],
    "kinds": [
     "EffectArea",
     "Fireplace",
@@ -1048,6 +1084,7 @@
    "networked": true,
    "gives": [],
    "physics": false,
+   "usable": [],
    "height": 0.95,
    "upright": "upright",
    "saved_only": false,
@@ -1061,8 +1098,7 @@
     ],
     "top": 1.0,
     "top_skilled": 1.0
-   },
-   "render": "palettes/piece_walltorch.png"
+   }
   },
   {
    "prefab": "piece_groundtorch_green",
@@ -1093,6 +1129,7 @@
    ],
    "origin": "centre",
    "hollow": false,
+   "game_dungeon": [],
    "kinds": [
     "EffectArea",
     "Fireplace",
@@ -1121,6 +1158,7 @@
    "networked": true,
    "gives": [],
    "physics": false,
+   "usable": [],
    "height": 1.48,
    "upright": "upright",
    "saved_only": false,
@@ -1129,8 +1167,7 @@
     "ledges": [],
     "top": 0.0,
     "top_skilled": 0.0
-   },
-   "render": "palettes/piece_groundtorch_green.png"
+   }
   },
   {
    "prefab": "piece_brazierfloor01",
@@ -1161,6 +1198,7 @@
    ],
    "origin": "top",
    "hollow": false,
+   "game_dungeon": [],
    "kinds": [
     "EffectArea",
     "Fireplace",
@@ -1197,6 +1235,7 @@
    "networked": true,
    "gives": [],
    "physics": false,
+   "usable": [],
    "height": 1.02,
    "upright": "block",
    "saved_only": false,
@@ -1210,8 +1249,7 @@
     ],
     "top": 1.2,
     "top_skilled": 1.2
-   },
-   "render": "palettes/piece_brazierfloor01.png"
+   }
   },
   {
    "prefab": "piece_brazierceiling01",
@@ -1242,6 +1280,7 @@
    ],
    "origin": "foot",
    "hollow": false,
+   "game_dungeon": [],
    "kinds": [
     "EffectArea",
     "Fireplace",
@@ -1279,6 +1318,7 @@
    "networked": true,
    "gives": [],
    "physics": false,
+   "usable": [],
    "height": 1.95,
    "upright": "block",
    "saved_only": false,
@@ -1292,8 +1332,7 @@
     ],
     "top": 0.0,
     "top_skilled": 0.0
-   },
-   "render": "palettes/piece_brazierceiling01.png"
+   }
   },
   {
    "prefab": "Candle_resin",
@@ -1324,6 +1363,7 @@
    ],
    "origin": "foot",
    "hollow": false,
+   "game_dungeon": [],
    "kinds": [
     "EffectArea",
     "Fireplace",
@@ -1359,6 +1399,7 @@
    "networked": true,
    "gives": [],
    "physics": false,
+   "usable": [],
    "height": 0.32,
    "upright": "block",
    "saved_only": false,
@@ -1367,8 +1408,7 @@
     "ledges": [],
     "top": 0.0,
     "top_skilled": 0.0
-   },
-   "render": "palettes/Candle_resin.png"
+   }
   },
   {
    "prefab": "Skull1",
@@ -1380,7 +1420,7 @@
     2
    ],
    "tier": 2,
-   "notes": "",
+   "notes": "recognisable: a part of the game's own ForestCrypt dungeons",
    "exists": true,
    "size": [
     0.31,
@@ -1399,6 +1439,9 @@
    ],
    "origin": "foot",
    "hollow": false,
+   "game_dungeon": [
+    "ForestCrypt"
+   ],
    "kinds": [
     "ZNetView"
    ],
@@ -1414,6 +1457,7 @@
    "networked": true,
    "gives": [],
    "physics": false,
+   "usable": [],
    "height": 0.24,
    "upright": "block",
    "saved_only": false,
@@ -1422,8 +1466,7 @@
     "ledges": [],
     "top": 0.0,
     "top_skilled": 0.0
-   },
-   "render": "palettes/Skull1.png"
+   }
   },
   {
    "prefab": "Skull2",
@@ -1454,6 +1497,7 @@
    ],
    "origin": "inside",
    "hollow": false,
+   "game_dungeon": [],
    "kinds": [
     "ZNetView"
    ],
@@ -1469,6 +1513,7 @@
    "networked": true,
    "gives": [],
    "physics": false,
+   "usable": [],
    "height": 4.13,
    "upright": "block",
    "saved_only": false,
@@ -1482,8 +1527,7 @@
     ],
     "top": 0.0,
     "top_skilled": 0.0
-   },
-   "render": "palettes/Skull2.png"
+   }
   },
   {
    "prefab": "root07",
@@ -1495,7 +1539,7 @@
     2
    ],
    "tier": 2,
-   "notes": "as scenery its Destructible, DropOnDestroyed is stripped: it gives nothing",
+   "notes": "recognisable: a part of the game's own ForestCrypt and ForestCryptHildir and SunkenCrypt dungeons; as scenery its Destructible, DropOnDestroyed is stripped: it gives nothing",
    "exists": true,
    "size": [
     1.22,
@@ -1514,6 +1558,11 @@
    ],
    "origin": "centre",
    "hollow": false,
+   "game_dungeon": [
+    "ForestCrypt",
+    "ForestCryptHildir",
+    "SunkenCrypt"
+   ],
    "kinds": [
     "Destructible",
     "DropOnDestroyed",
@@ -1534,6 +1583,7 @@
     "DropOnDestroyed"
    ],
    "physics": false,
+   "usable": [],
    "height": 1.61,
    "upright": "upright",
    "saved_only": false,
@@ -1542,8 +1592,7 @@
     "ledges": [],
     "top": 0.0,
     "top_skilled": 0.0
-   },
-   "render": "palettes/root07.png"
+   }
   },
   {
    "prefab": "root11",
@@ -1555,7 +1604,7 @@
     2
    ],
    "tier": 2,
-   "notes": "as scenery its Destructible, DropOnDestroyed is stripped: it gives nothing; climbable: a player can stand 0.4 m above its foot (at scale 1; 0.4 m with Jump skill 100), so it's a stepping stone to a level up to about 2.0 m above its foot (3.5 m with Jump 100)",
+   "notes": "recognisable: a part of the game's own ForestCrypt and ForestCryptHildir and SunkenCrypt dungeons; as scenery its Destructible, DropOnDestroyed is stripped: it gives nothing; climbable: a player can stand 0.4 m above its foot (at scale 1; 0.4 m with Jump skill 100), so it's a stepping stone to a level up to about 2.0 m above its foot (3.5 m with Jump 100)",
    "exists": true,
    "size": [
     1.67,
@@ -1574,6 +1623,11 @@
    ],
    "origin": "foot",
    "hollow": false,
+   "game_dungeon": [
+    "ForestCrypt",
+    "ForestCryptHildir",
+    "SunkenCrypt"
+   ],
    "kinds": [
     "Destructible",
     "DropOnDestroyed",
@@ -1594,6 +1648,7 @@
     "DropOnDestroyed"
    ],
    "physics": false,
+   "usable": [],
    "height": 0.38,
    "upright": "flat",
    "saved_only": false,
@@ -1607,8 +1662,7 @@
     ],
     "top": 0.4,
     "top_skilled": 0.4
-   },
-   "render": "palettes/root11.png"
+   }
   },
   {
    "prefab": "vertical_web",
@@ -1639,6 +1693,7 @@
    ],
    "origin": "foot",
    "hollow": false,
+   "game_dungeon": [],
    "kinds": [
     "ZNetView"
    ],
@@ -1652,6 +1707,7 @@
    "networked": true,
    "gives": [],
    "physics": false,
+   "usable": [],
    "height": 59.87,
    "upright": "block",
    "saved_only": false,
@@ -1660,8 +1716,7 @@
     "ledges": [],
     "top": 0.0,
     "top_skilled": 0.0
-   },
-   "render": "palettes/vertical_web.png"
+   }
   },
   {
    "prefab": "horizontal_web",
@@ -1692,6 +1747,7 @@
    ],
    "origin": "off the box",
    "hollow": false,
+   "game_dungeon": [],
    "kinds": [
     "ZNetView"
    ],
@@ -1705,6 +1761,7 @@
    "networked": true,
    "gives": [],
    "physics": false,
+   "usable": [],
    "height": 0.0,
    "upright": "flat",
    "saved_only": false,
@@ -1713,8 +1770,7 @@
     "ledges": [],
     "top": 0.0,
     "top_skilled": 0.0
-   },
-   "render": "palettes/horizontal_web.png"
+   }
   },
   {
    "prefab": "cloth_hanging_long",
@@ -1726,7 +1782,7 @@
     2
    ],
    "tier": 2,
-   "notes": "players walk through it; as scenery its Destructible, DropOnDestroyed is stripped: it gives nothing; thin (0.13 m): a single face may not show from behind (one-sided): check its render from both sides",
+   "notes": "recognisable: a part of the game's own Cave and CaveHildir dungeons; players walk through it; as scenery its Destructible, DropOnDestroyed is stripped: it gives nothing; thin (0.13 m): a single face may not show from behind (one-sided): check its render from both sides",
    "exists": true,
    "size": [
     2.0,
@@ -1745,6 +1801,10 @@
    ],
    "origin": "off the box",
    "hollow": false,
+   "game_dungeon": [
+    "Cave",
+    "CaveHildir"
+   ],
    "kinds": [
     "Destructible",
     "DropOnDestroyed",
@@ -1765,6 +1825,7 @@
     "DropOnDestroyed"
    ],
    "physics": false,
+   "usable": [],
    "height": 8.0,
    "upright": "upright",
    "saved_only": false,
@@ -1773,8 +1834,7 @@
     "ledges": [],
     "top": 0.0,
     "top_skilled": 0.0
-   },
-   "render": "palettes/cloth_hanging_long.png"
+   }
   },
   {
    "prefab": "mudpile",
@@ -1805,6 +1865,7 @@
    ],
    "origin": "foot",
    "hollow": false,
+   "game_dungeon": [],
    "kinds": [
     "Destructible",
     "ZNetView"
@@ -1823,6 +1884,7 @@
     "Destructible"
    ],
    "physics": false,
+   "usable": [],
    "height": 1.46,
    "upright": "flat",
    "saved_only": false,
@@ -1840,8 +1902,7 @@
     ],
     "top": 1.6,
     "top_skilled": 1.6
-   },
-   "render": "palettes/mudpile.png"
+   }
   }
  ],
  "roles": {

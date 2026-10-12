@@ -182,6 +182,7 @@ namespace Dungeons
                 if (mo.To == w.State && mo.Moving(now) && b.ClampUntil < arrived && InWeakArea(wm, w, boss.transform.position))
                 {
                     b.ClampUntil = arrived + 0.15;
+                    b.ClampWeak = i;
                     why = $"{w.Mech} is coming down on it: held till it lands";
                 }
                 if (mo.To != w.State || now < arrived || double.IsInfinity(arrived) || now - arrived > 1.5 || arrived <= b.WeakSeen[i] + 0.01) continue;
@@ -203,7 +204,7 @@ namespace Dungeons
                     // not the last time: it flickers, and what broke it is put back (the braziers go out): again
                     b.ShieldCount++;
                     b.FlickerAt = now;
-                    var back = s.Until.Select(c => Sibling(m, c.Mech)).Where(cm => cm != null).Select(cm => new KeyValuePair<Mech, int>(cm, 0)).ToList();
+                    var back = s.Until.Select(c => Sibling(m, c.Mech)).Where(cm => cm != null).Select(cm => new KeyValuePair<Mech, int>(cm, cm.Def.Start)).ToList();
                     if (back.Count > 0) Change(back, $"encounter {m.Key}: its shield flickers ({b.ShieldCount} of {s.Times})");
                     why = $"its shield flickers ({b.ShieldCount} of {s.Times})";
                 }
@@ -387,7 +388,7 @@ namespace Dungeons
                 foreach (BossCond c in ph.Shield.Until)
                 {
                     Mech cm = Sibling(m, c.Mech);
-                    if (cm != null && c.State != 0) pending[cm] = 0;
+                    if (cm != null && c.State != cm.Def.Start) pending[cm] = cm.Def.Start;   // (its start: a brazier out, a push block in its start cell)
                 }
                 b.Shield = i;
                 b.ShieldAt = now;
