@@ -33,6 +33,8 @@ namespace Dungeons
         private static readonly AccessTools.FieldRef<Character, float> MaxAirAltitude = AccessTools.FieldRefAccess<Character, float>("m_maxAirAltitude");
         private static readonly AccessTools.FieldRef<Character, Rigidbody> Body = AccessTools.FieldRefAccess<Character, Rigidbody>("m_body");
         private static readonly List<ZDO> Waiting = new List<ZDO>();
+        private static readonly AccessTools.FieldRef<Player, Vector3> TeleportTarget = AccessTools.FieldRefAccess<Player, Vector3>("m_teleportTargetPos");
+        private static bool _arrivalTold;   // (this teleport's landing told to the culling)
 
         private static bool _holding, _sentOut, _ourTeleport;
         private static Vector3 _holdAt;
@@ -59,10 +61,14 @@ namespace Dungeons
         {
             if (p.IsTeleporting())
             {
+                // any teleport (ours, a trigger's, a portal): the rooms round where it lands are drawn before the player gets there (culling,
+                // BuildCull.cs), told once as it starts
+                if (!_arrivalTold) { _arrivalTold = true; Builder.Arriving(TeleportTarget(p)); }
                 if (_ourTeleport) _grace = GraceSeconds;
                 Release();
                 return;
             }
+            _arrivalTold = false;
             if (_grace > 0f) _grace -= dt;
             else _ourTeleport = false;
             Vector3 pos = p.transform.position;
@@ -87,6 +93,7 @@ namespace Dungeons
                     Plugin.Log.LogWarning($"Dungeon {site.Id}: the player fell out of it (at {pos.y:0} m, its floor {box.min.y:0} m): back at its way in");
                     p.Message(MessageHud.MessageType.Center, T("dungeons_rescued"));
                     OurTeleport();
+                    Builder.Reveal(site.Built, wayIn);   // (culling: the way in drawn before the player lands)
                     p.TeleportTo(wayIn + Vector3.up * 0.1f, facing, false);
                 }
                 return;
@@ -280,7 +287,7 @@ namespace Dungeons
                 Vector3 from = view.transform.position;
                 Rigidbody body = view.GetComponent<Rigidbody>();
                 view.transform.position = move.Value;
-                if (body != null) { body.position = move.Value; body.linearVelocity = Vector3.zero; }
+                if (body != null) { body.position = move.Value; if (!body.isKinematic) body.linearVelocity = Vector3.zero; }
                 Plugin.Log.LogWarning($"{view.name.Replace("(Clone)", "")} had fallen out of a dungeon (at {from}): put back at {move.Value}");
             }
         }

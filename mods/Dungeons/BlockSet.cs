@@ -39,6 +39,7 @@ namespace Dungeons
             public Transform TrapPart;          // a trap: what its own clock moves
             public Bounds Area;                 // a trap: where it hurts (the mechanism's frame); a pushblock: its box
             public long Window = long.MinValue; // a trap: the firing seen last (each game hurts once per firing)
+            public long WarnWindow = long.MinValue;   // a trap: the wind-up whose sound played last
             public float PushFor, NextPush;
             public int PushDir = -1;
             public float NextStep;              // a teleporter stepped on: not again before
@@ -377,12 +378,17 @@ namespace Dungeons
         // ---- traps
 
         /// <summary>Whether a trap fires now, and since when its firing (or rest) began; window: which firing (for hurting once each).</summary>
-        private bool Firing(Mech m, double now, out double since, out long window)
+        private bool Firing(Mech m, double now, out double since, out long window) => Firing(m, now, out since, out window, out _, out _);
+
+        /// <summary>The same, and its wind-up: warn, how far into it (0 to 1, "warn" seconds before each firing) or -1 when it isn't
+        /// winding up; warnWindow, the firing that wind-up comes before. A trap set on by an action ("every" 0) winds up first, then fires.</summary>
+        private bool Firing(Mech m, double now, out double since, out long window, out float warn, out long warnWindow)
         {
             BlockDef b = m.Def.Block;
             MechMotion mo = Motion(m, now);
             since = 0.0;
-            window = long.MinValue;
+            window = warnWindow = long.MinValue;
+            warn = -1f;
             if (mo.To != 1 || now < mo.Start) { since = double.IsInfinity(mo.Start) ? 99.0 : Math.Max(0.0, now - mo.Start); return false; }
             if (b.Every > 0f)
             {
@@ -390,10 +396,13 @@ namespace Dungeons
                 window = (long)Math.Floor(t / b.Every);
                 double c = t - window * (double)b.Every;
                 since = c < b.For ? c : c - b.For;
+                if (b.Warn > 0f && c >= b.Every - b.Warn) { warn = Mathf.Clamp01((float)((c - (b.Every - b.Warn)) / b.Warn)); warnWindow = window + 1; }
                 return c < b.For;
             }
-            window = (long)Math.Round(mo.Start * 10.0);
+            window = warnWindow = (long)Math.Round(mo.Start * 10.0);
             double age = now - mo.Start;
+            if (age < b.Warn) { warn = Mathf.Clamp01((float)(age / b.Warn)); since = 99.0; return false; }
+            age -= b.Warn;
             since = age < b.For ? age : age - b.For;
             return age < b.For;
         }
@@ -402,22 +411,40 @@ namespace Dungeons
         {
             BlockDef b = m.Def.Block;
             if (b == null) return;
-            bool firing = Firing(m, now, out double since, out long window);
-            // its parts: up in a tenth of a second, back down in under half a second
+            bool firing = Firing(m, now, out double since, out long window, out float warn, out long warnWindow);
+            bool near = p != null && Vector3.Distance(p.transform.position, m.WorldPos) < 40f;
+            // the wind-up's sound, once before each firing (not for a wind-up already under way when it's first seen)
+            if (warn >= 0f && warnWindow != r.WarnWindow)
+            {
+                bool freshWarn = r.WarnWindow != long.MinValue || warn < 0.2f;
+                r.WarnWindow = warnWindow;
+                if (freshWarn && near) foreach (string fx in b.WarnFx) PlayAt(fx, m.WorldPos);
+            }
+            // its parts: drawn back "warnLift" metres (shaking at the end) through its wind-up, down in a tenth of a second, back in under
+            // half a second
             if (r.TrapPart != null && b.TrapPoses.Count >= 2)
             {
-                float k = firing ? Mathf.Clamp01((float)since / 0.12f) : 1f - Mathf.Clamp01((float)since / 0.4f);
-                // (the pivot stands at the rest pose: the child moves by the difference)
                 Pose rest = b.TrapPoses[0], fired = b.TrapPoses[1];
+                float k = firing ? Mathf.Clamp01((float)since / 0.12f) : 1f - Mathf.Clamp01((float)since / 0.4f);
+                Vector3 at = Vector3.Lerp(rest.At, fired.At, k);
+                if (!firing && warn >= 0f && b.WarnLift > 0f)
+                {
+                    Vector3 back = rest.At - fired.At;
+                    back = back.sqrMagnitude > 1e-4f ? back.normalized : Vector3.up;
+                    float pull = Mathf.SmoothStep(0f, 1f, Mathf.Clamp01(warn * 1.5f));
+                    float shake = warn > 0.5f ? Mathf.Sin((float)now * 70f) * 0.025f * (warn - 0.5f) * 2f : 0f;
+                    at = rest.At + back * (b.WarnLift * pull + shake);
+                    k = 0f;
+                }
+                // (the pivot stands at the rest pose: the child moves by the difference)
                 Quaternion inv = Quaternion.Inverse(Quaternion.Euler(rest.Euler));
-                r.TrapPart.localPosition = inv * (Vector3.Lerp(rest.At, fired.At, k) - rest.At);
+                r.TrapPart.localPosition = inv * (at - rest.At);
                 r.TrapPart.localRotation = inv * Quaternion.Slerp(Quaternion.Euler(rest.Euler), Quaternion.Euler(fired.Euler), k);
             }
             if (!firing || window == r.Window) return;
             bool fresh = r.Window != long.MinValue || since < 0.3;
             r.Window = window;
-            if (fresh && p != null && Vector3.Distance(p.transform.position, m.WorldPos) < 40f)
-                foreach (string fx in b.Fx) PlayAt(fx, m.WorldPos);
+            if (fresh && near) foreach (string fx in b.Fx) PlayAt(fx, m.WorldPos);
             // this game's player (each game hurts its own), and on the owner the creatures it owns
             if (p != null && !p.IsDead() && r.Area.Contains(m.Base.InverseTransformPoint(p.transform.position + Vector3.up * 0.5f))) Hurt(m, p);
             if (!Site.IsOwner) return;
@@ -616,7 +643,7 @@ namespace Dungeons
 
         private void ForgetBlocks()
         {
-            foreach (BlockRun r in _blocks.Values) { r.ShownState = -2; r.Window = long.MinValue; r.PushFor = 0f; }
+            foreach (BlockRun r in _blocks.Values) { r.ShownState = -2; r.Window = r.WarnWindow = long.MinValue; r.PushFor = 0f; }
             _trapHit.Clear();
         }
     }

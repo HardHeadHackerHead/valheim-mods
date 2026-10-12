@@ -22,6 +22,7 @@ namespace Dungeons
         public Room.Theme Theme;        // what the game's RandomSpawn/RandomObject see as the dungeon's theme (Builder.ThemeOf)
         public bool Removed;            // Remove was called (a build still running stops)
         public string Stats = "";       // how the build went, for the log and commands: rooms, time, frames, worst frame, meshes batched
+        public int Batched;             // meshes put together by static batching (BuildLook.cs), for `dungeon perf`
 
         internal DungeonGenerator Themes;   // a never-woken DungeonGenerator, only for its m_themes (RandomSpawn.Randomize reads it)
         internal readonly List<SoftReference<GameObject>> Held = new List<SoftReference<GameObject>>();   // rooms loaded for the build
@@ -156,6 +157,8 @@ namespace Dungeons
             frame.Finish();
             ReleaseHeld(built);
             built.Done = true;
+            built.Batched = batched;
+            StartCulling(built);   // (drawing only what can be seen from here: BuildCull.cs)
             built.Stats = $"{gameRooms + ownRooms} rooms ({gameRooms} the game's, {ownRooms} ours{(failed > 0 ? $", {failed} failed" : "")}) in "
                         + $"{Time.realtimeSinceStartup - began:0.00} s over {frame.Frames} frames, building {frame.TotalMs:0} ms, at most {frame.WorstMs:0.0} ms in one frame"
                         + $"{(frame.SlowestRoom != null ? $" (slowest room {frame.SlowestRoom}, {frame.SlowestMs:0.0} ms)" : "")}, {batched} meshes batched; "

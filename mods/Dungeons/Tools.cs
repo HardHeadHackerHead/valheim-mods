@@ -64,7 +64,7 @@ namespace Dungeons
     /// </summary>
     internal static class Tools
     {
-        private const string Usage = "dungeon packs | sync | reload [force] | respawn [same|new] [force] [id] | spawn <pack> [seed] | list | enter [id] | leave | map [id | <pack> <seed>] | mapshot [floor] [all] [open] | mapshot mini | tour [id] [rooms] [views] [bright] | seeds <pack> <count> | test <pack> [seeds] | state [id] | reset [id] | remove [id] | mechs [id] | use <key> [id] | set <key> <state> [id] | solve [id] | check [pack] | aim | music | orphans [remove] | bring <player> | rooms [theme] | " + TriggerTools.Usage + " | " + BossTools.Usage + "";
+        private const string Usage = "dungeon packs | sync | reload [force] | respawn [same|new] [force] [id] | spawn <pack> [seed] | list | enter [id] | leave | map [id | <pack> <seed>] | mapshot [floor] [all] [open] | mapshot mini | tour [id] [rooms] [views] [bright] | seeds <pack> <count> | test <pack> [seeds] | state [id] | reset [id] | remove [id] | mechs [id] | use <key> [id] | set <key> <state> [id] | solve [id] | check [pack] | aim | music | perf [cull on|off | near <doorways> <metres> [linger s]] | orphans [remove] | bring <player> | rooms [theme] | " + TriggerTools.Usage + " | " + BossTools.Usage + "";
         private const string NoWorld = "the packs need the game's dungeon rooms: load a world first";
         private static BaseUnityPlugin _claudeTools;
         private static float _next;
@@ -140,6 +140,7 @@ namespace Dungeons
                 case "aim": output(UseReach.Report()); yield break;
                 case "triggers": case "fire": case "blocks": case "checkpoint": TriggerTools.Command(sub, args, output, error, Find); yield break;   // (triggers: TriggerTools.cs)
                 case "music": output(DungeonMusic.Report()); yield break;
+                case "perf": Perf(args, output, error); yield break;   // (culling: BuildCull.cs, builder's; local, changes nothing saved)
                 case "boss": { IEnumerator run = BossTools.Command(args, output, error, Find); while (run.MoveNext()) yield return run.Current; yield break; }   // (the boss toolkit's tests: BossTools.cs)
                 case "orphans":
                     if (ZNet.instance == null || !ZNet.instance.IsServer()) { error("only the host (or the server) knows every saved object: run it there"); yield break; }
@@ -386,6 +387,40 @@ namespace Dungeons
             }
             if (!Dungeons.Remove(site)) { error("could not remove it"); return; }
             output(new JObject { ["id"] = id, ["removed"] = true });
+        }
+
+        /// <summary>`dungeon perf`: the frame rate and what each built dungeon draws (Builder.PerfReport); `perf cull on|off` (off: everything
+        /// drawn, for a before and after); `perf near <doorways> <metres> [linger s]`. This game only, nothing saved: no cheat rule.</summary>
+        private static void Perf(string[] args, Action<JObject> output, Action<string> error)
+        {
+            string what = args.Length > 1 ? args[1].ToLowerInvariant() : "";
+            var inv = System.Globalization.CultureInfo.InvariantCulture;
+            if (what == "cull")
+            {
+                string v = args.Length > 2 ? args[2].ToLowerInvariant() : "";
+                if (v != "on" && v != "off") { error("dungeon perf cull on|off"); return; }
+                Builder.Culling = v == "on";
+            }
+            else if (what == "near")
+            {
+                if (args.Length < 4 || !int.TryParse(args[2], out int doorways) || !float.TryParse(args[3], System.Globalization.NumberStyles.Float, inv, out float metres)
+                    || doorways < 0 || metres < 0f)
+                { error("dungeon perf near <doorways> <metres> [linger s]"); return; }
+                float linger = Builder.CullLinger;
+                if (args.Length > 4 && (!float.TryParse(args[4], System.Globalization.NumberStyles.Float, inv, out linger) || linger < 0f)) { error("dungeon perf near: linger is seconds (0 or more)"); return; }
+                Builder.CullDoorways = doorways;
+                Builder.CullDistance = metres;
+                Builder.CullLinger = linger;
+            }
+            else if (what.Length > 0) { error("dungeon perf [cull on|off | near <doorways> <metres> [linger s]]"); return; }
+            output(new JObject
+            {
+                ["culling"] = Builder.Culling,
+                ["doorways"] = Builder.CullDoorways,
+                ["metres"] = Builder.CullDistance,
+                ["linger"] = Builder.CullLinger,
+                ["report"] = Builder.PerfReport(),
+            });
         }
 
         private static IEnumerator Spawn(string[] args, Action<JObject> output, Action<string> error)

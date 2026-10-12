@@ -115,7 +115,9 @@ namespace Dungeons
                 catch (Exception e) { Failed("stripping the build of dungeon " + site.Id, e); }
             }
             data["husks"] = husks;
+            Carry(data, "heldwas", Dungeons.CarryHeldWas);   // (the held bodies' own constraints, before Frozen: Adopt reads them)
             Carry(data, "frozen", Dungeons.CarryFrozen);
+            Carry(data, "frozenbox", Dungeons.CarryFrozenBox);   // (where they were held: one moved out of it goes free)
             Carry(data, "safety", Safety.Carry);
             Carry(data, "sync", SyncNet.Carry);
             Carry(data, "escrow", MechSet.CarryEscrow);
@@ -179,7 +181,9 @@ namespace Dungeons
             Husks.AddRange(husks.Where(x => x.Root != null));
             Take(data, "sync", x => SyncNet.Take(x as Dictionary<string, object>));
             Take(data, "safety", x => Safety.Take(x as object[]));
+            Take(data, "heldwas", x => Dungeons.TakeHeldWas(x as Dictionary<Rigidbody, RigidbodyConstraints>));
             Take(data, "frozen", x => Dungeons.TakeFrozen(x as Dictionary<string, List<Rigidbody>>));
+            Take(data, "frozenbox", x => Dungeons.TakeFrozenBox(x as Dictionary<string, Bounds>));
             Take(data, "escrow", x => MechSet.TakeEscrow(x as object[]));
             Plugin.Log.LogInfo($"Reloaded in a world: {Husks.Count} built dungeon(s) taken over, to be built again");
         }
@@ -289,7 +293,7 @@ namespace Dungeons
                 return false;
             }
             Plugin.Log.LogInfo($"Dungeon {h.Id}: the last copy's build removed ({done ?? outWhy}, {age:0.0} s after the reload)");
-            if (done == null) Dungeons.FreezeIn(h.Id, h.Box);   // (what's still loaded in it waits, as when a dungeon is taken down)
+            if (done == null) Dungeons.HoldStill(h.Id, h.Box);   // (what's still loaded in it waits, as when a dungeon is taken down)
             Dispose(h);
             return true;
         }
@@ -410,7 +414,7 @@ namespace Dungeons
 
     internal static partial class Dungeons
     {
-        /// <summary>Bodies held still for dungeons not built here (FreezeLeftovers): the next copy thaws them when it builds those.</summary>
+        /// <summary>Bodies held still for dungeons not built here (HoldStill): the next copy lets them go when it builds those.</summary>
         public static Dictionary<string, List<Rigidbody>> CarryFrozen()
         {
             var all = Frozen.ToDictionary(kv => kv.Key, kv => kv.Value);
@@ -418,32 +422,12 @@ namespace Dungeons
             return all;
         }
 
-        /// <summary>FreezeLeftovers for a box: the bodies of what's loaded in it held still for that dungeon (a husk taken down with no
-        /// build of this copy's under it).</summary>
-        public static void FreezeIn(string id, Bounds box)
-        {
-            if (ZNetScene.instance == null || string.IsNullOrEmpty(id)) return;
-            box.Expand(8f);
-            if (!Frozen.TryGetValue(id, out List<Rigidbody> frozen)) Frozen[id] = frozen = new List<Rigidbody>();
-            foreach (ZNetView view in Instances(ZNetScene.instance).Values)
-            {
-                if (view == null || !box.Contains(view.transform.position) || view.GetComponent<Player>() != null) continue;
-                foreach (Rigidbody body in view.GetComponentsInChildren<Rigidbody>())
-                {
-                    if (body.isKinematic) continue;
-                    body.isKinematic = true;
-                    frozen.Add(body);
-                }
-            }
-        }
-
         public static void TakeFrozen(Dictionary<string, List<Rigidbody>> all)
         {
             if (all == null) return;
             foreach (KeyValuePair<string, List<Rigidbody>> kv in all)
             {
-                if (!Frozen.TryGetValue(kv.Key, out List<Rigidbody> mine)) Frozen[kv.Key] = mine = new List<Rigidbody>();
-                mine.AddRange(kv.Value.Where(b => b != null));
+                foreach (Rigidbody b in kv.Value) Adopt(kv.Key, b);   // (still held; a 0.3.2 copy's kinematic hold switched to constraints)
             }
         }
     }

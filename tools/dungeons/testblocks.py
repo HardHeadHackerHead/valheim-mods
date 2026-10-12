@@ -149,11 +149,12 @@ def trap_room():
     spikes.pose(at=(0, -1.15, 0)).pose(at=(0, 0, 0))            # rest: sunk in the floor; fired: up
     spikes.start = 1            # on from the start (dungeon_parts always writes "start")
     spikes.extra.update({"damage": "pierce", "every": 3, "for": 1, "area": [12, 2, 2], "areaAt": [0, 1, 0],
-                         "fx": ["fx_trap_trigger"]})
+                         "fx": ["fx_trap_trigger"], "warn": 0.8, "warnFx": ["fx_trap_arm"], "warnLift": 0.1})
     crusher = r.mech("crusher", "trap", (3.0, FLOOR, 4.0))
     crusher.fill("blackmarble_2x2x1", (0, 0.5, 0), (2.0, 1.0, 2.0))
     crusher.pose(at=(0, 2.6, 0)).pose(at=(0, 0, 0))             # rest: up under the ceiling; fired: down
-    crusher.extra.update({"damage": "blunt", "for": 1.5, "area": [2.2, 2.0, 2.2], "areaAt": [0, 1, 0], "fx": ["sfx_rock_destroyed"]})
+    crusher.extra.update({"damage": "blunt", "for": 1.5, "area": [2.2, 2.0, 2.2], "areaAt": [0, 1, 0], "fx": ["sfx_rock_destroyed"],
+                          "warn": 0.8, "warnFx": ["sfx_frozenking_punchaoe_chain_start"], "warnLift": 0.3})
     # a one-way teleporter round the spikes: from the way in to the way out
     for id, z, send in (("tp_in", -4.0, True), ("tp_out", 3.5, False)):
         tp = r.mech(id, "teleporter", (-4.5, FLOOR, z), (0, 180 if send else 0, 0))

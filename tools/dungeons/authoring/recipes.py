@@ -564,8 +564,8 @@ class MachineRoom(Breather):
 
 @job
 class Corridor(Job):
-    """A passage: plain, under arches, or under the machine's hammers (stone blocks that rise and fall on their own, stopping well
-    above a head)."""
+    """A passage: plain, under arches, or under the machine's hammers (traps: stone blocks that slam down to the floor in turn, on a beat
+    a player can read and run through)."""
     name = "corridor"
     size = "corridor"
     shapes = ("rect",)
@@ -592,18 +592,25 @@ class Corridor(Job):
                     size = (width, 0.6, 0.8) if along_z else (0.8, 0.6, width)
                     r.fill(t.p("trim"), (0 if along_z else u, y, u if along_z else 0), size)
             elif variant == "hammers":
-                head = 2.4                                       # the hammers' foot never comes lower than this over the floor
-                hh = min(t.door_h * 0.35, sh.top - t.floor_t - sh.floor_y - head - 1.0)
+                # a trap: a stone block held up under the ceiling that slams down to the floor on its own clock (blunt, the land's
+                # damage, never a one-shot at low tiers: dungeon-triggers' trap), the hammers in turn along the passage so there's always
+                # a gap to run through; it rests up (the checks see the way open)
+                hh = min(t.door_h * 0.35, sh.top - t.floor_t - sh.floor_y - 2.4 - 1.0)
                 if hh < 0.8:
                     continue
-                at = (0 if along_z else u, sh.top - t.floor_t - hh / 2 - 0.1, u if along_z else 0)
-                h = r.mech(f"hammer{i + 1}", "platform", at)
-                box(h, t.p("block"), (0, 0, 0), (width * 0.7, hh, min(t.grid * 0.4, 3.0)) if along_z else
-                    (min(t.grid * 0.4, 3.0), hh, width * 0.7))
-                drop = (sh.top - t.floor_t - 0.1 - hh) - (sh.floor_y + head)
-                h.pose().pose(at=(0, -drop, 0))
-                h.cycle = rng.choice((4.0, 5.0, 6.0))
-                h.seconds = 0.9
+                at = (0 if along_z else u, sh.floor_y, u if along_z else 0)
+                foot = (width * 0.7, min(t.grid * 0.4, 3.0)) if along_z else (min(t.grid * 0.4, 3.0), width * 0.7)
+                h = r.mech(f"hammer{i + 1}", "trap", at)
+                box(h, t.p("block"), (0, hh / 2, 0), (foot[0], hh, foot[1]))
+                raised = sh.top - t.floor_t - 0.6 - hh - sh.floor_y         # (0.6 m under the ceiling: room for its wind-up lift)
+                h.pose(at=(0, raised, 0)).pose(at=(0, 0, 0))        # rest: up under the ceiling; fired: on the floor
+                h.start = 1
+                every = c.vary.choice("hammer beat", (4.0, 5.0, 6.0))
+                h.extra.update({"damage": "blunt", "scale": 1.0, "every": every, "for": 1.2, "offset": round(i * every / max(2, n), 2),
+                                "area": [round(foot[0] + 0.4, 2), 2.2, round(foot[1] + 0.4, 2)], "areaAt": [0, 1.1, 0],
+                                "fx": ["sfx_rock_destroyed", "vfx_troll_groundslam"],          # (the crash, and dust off the floor)
+                                # its wind-up: 0.8 s before each slam the chain creaks, the block draws up 0.3 m and shakes
+                                "warn": 0.8, "warnFx": ["sfx_frozenking_punchaoe_chain_start"], "warnLift": 0.3})
         c.note("bays", n)
 
     def doors(self, c):

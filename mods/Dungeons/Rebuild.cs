@@ -388,9 +388,10 @@ namespace Dungeons
             if (grave) z.Set(ZDOVars.s_spawnPoint, to);   // (or the gravestone's own check pulls it back to its old spot)
             ZNetView view = ZNetScene.instance.FindInstance(z);
             if (view == null) return;
+            foreach (Rigidbody held in view.GetComponentsInChildren<Rigidbody>()) Dungeons.Release(held);   // (held still for a dungeon: free on the ground)
             view.transform.position = to;
             Rigidbody body = view.GetComponent<Rigidbody>();
-            if (body != null) { body.position = to; body.linearVelocity = Vector3.zero; }
+            if (body != null) { body.position = to; if (!body.isKinematic) body.linearVelocity = Vector3.zero; }
         }
     }
 }

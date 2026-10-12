@@ -523,7 +523,10 @@
      "for": 1,
      "area": [12, 2, 2],
      "areaAt": [0, 1, 0],
-     "fx": ["fx_trap_trigger"]
+     "fx": ["fx_trap_trigger"],
+     "warn": 0.8,
+     "warnFx": ["fx_trap_arm"],
+     "warnLift": 0.1
     },
     {
      "id": "crusher",
@@ -537,7 +540,10 @@
      "for": 1.5,
      "area": [2.2, 2.0, 2.2],
      "areaAt": [0, 1, 0],
-     "fx": ["sfx_rock_destroyed"]
+     "fx": ["sfx_rock_destroyed"],
+     "warn": 0.8,
+     "warnFx": ["sfx_frozenking_punchaoe_chain_start"],
+     "warnLift": 0.3
     },
     {
      "id": "tp_in",

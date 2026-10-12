@@ -7746,13 +7746,23 @@
    "mechs": [
     {
      "id": "hammer1",
-     "kind": "platform",
-     "at": [0.0, 1.7, 0.0],
-     "parts": [{"prefab": "blackmarble_2x2x2", "at": [0.0, 0.0, -0.003], "scale": [0.98, 0.7, 0.797]}],
-     "poses": [{"at": [0.0, 0.0, 0.0], "euler": [0.0, 0.0, 0.0]}, {"at": [0.0, -1.1, 0.0], "euler": [0.0, 0.0, 0.0]}],
-     "start": 0,
-     "seconds": 0.9,
-     "cycle": 5.0
+     "kind": "trap",
+     "at": [0.0, -2.5, 0.0],
+     "parts": [{"prefab": "blackmarble_2x2x2", "at": [0.0, 0.7, -0.003], "scale": [0.98, 0.7, 0.797]}],
+     "poses": [{"at": [0.0, 3.0, 0.0], "euler": [0.0, 0.0, 0.0]}, {"at": [0.0, 0.0, 0.0], "euler": [0.0, 0.0, 0.0]}],
+     "start": 1,
+     "seconds": 1.5,
+     "damage": "blunt",
+     "scale": 1.0,
+     "every": 6.0,
+     "for": 1.2,
+     "offset": 0.0,
+     "area": [2.36, 2.2, 2.0],
+     "areaAt": [0, 1.1, 0],
+     "fx": ["sfx_rock_destroyed", "vfx_troll_groundslam"],
+     "warn": 0.8,
+     "warnFx": ["sfx_frozenking_punchaoe_chain_start"],
+     "warnLift": 0.3
     },
     {
      "id": "gears",

@@ -139,7 +139,8 @@ namespace Dungeons
                     case "trap":
                         o["on"] = s == 1;
                         o["firing"] = b != null && Firing(m, now, out _, out _);
-                        o["damage"] = b == null ? null : $"{b.Damage} x{b.Scale:0.##}" + (b.Every > 0f ? $", {b.For:0.#} s every {b.Every:0.#} s" : $", {b.For:0.#} s when set on");
+                        o["damage"] = b == null ? null : $"{b.Damage} x{b.Scale:0.##}" + (b.Every > 0f ? $", {b.For:0.#} s every {b.Every:0.#} s" : $", {b.For:0.#} s when set on")
+                                      + (b.Warn > 0f ? $", winds up {b.Warn:0.#} s before" : "");
                         break;
                     case "teleporter":
                         Mech other = OtherTeleporter(m);

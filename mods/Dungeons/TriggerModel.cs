@@ -107,6 +107,9 @@ namespace Dungeons
         public float Scale = 1f;                            // times the land's trap damage
         public float Every, For = 1f, Offset;               // on: fires For seconds every Every seconds (server clock); Every 0: once when set on
         public Vector3 AreaAt, AreaSize;                    // where it hurts (the mechanism's frame; size zero: its parts' box)
+        public float Warn;                                  // seconds of wind-up before each firing (0: none); set on by an action, it winds up first
+        public List<string> WarnFx = new List<string>();    // the game's sounds or effects played as the wind-up starts
+        public float WarnLift;                              // metres its parts draw back (away from the strike) through the wind-up, shaking
         public List<Pose> TrapPoses = new List<Pose>();     // [rest, fired]: how its parts move (not states: the trap's own clock)
 
         // teleporter (MechDef.Pair names the pair): states 0 off, 1 on

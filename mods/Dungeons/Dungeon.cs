@@ -463,6 +463,9 @@ namespace Dungeons
             foreach (Site site in Sites.ToList()) { site.Gone = true; Unbuild(site); }
             Sites.Clear();
             Frozen.Clear();
+            HeldWas.Clear();
+            FrozenBox.Clear();
+            LetGoAt.Clear();
             Laying.Clear();   // (a layout still being made finishes on its own and is dropped)
             LayoutCache.Clear();
             Warned.Clear();
@@ -499,6 +502,8 @@ namespace Dungeons
             catch (Exception e) { if (Warned.Add("music")) Plugin.Log.LogWarning("The dungeon's music: " + e); }
             try { UseReach.Update(); }
             catch (Exception e) { if (Warned.Add("reach")) Plugin.Log.LogWarning("E on a lever or way out: " + e); }
+            try { ThawMovedOut(); }
+            catch (Exception e) { if (Warned.Add("thaw")) Plugin.Log.LogWarning("Letting held bodies go: " + e); }
             try { Safety.Net(); }
             catch (Exception e) { if (Warned.Add("net")) Plugin.Log.LogWarning("The dungeons' safety net: " + e); }
             for (int i = Sites.Count - 1; i >= 0; i--)
@@ -692,29 +697,163 @@ namespace Dungeons
         /// entrance's) stay where they are, not falling, until their own zone unloads, or until the dungeon is built here again (Thaw).</summary>
         private static void FreezeLeftovers(Site site)
         {
-            if (ZNetScene.instance == null || !site.Box(out Bounds box)) return;
-            box.Expand(8f);
-            if (!Frozen.TryGetValue(site.Id, out List<Rigidbody> frozen)) Frozen[site.Id] = frozen = new List<Rigidbody>();
-            foreach (ZNetView view in Instances(ZNetScene.instance).Values)
-            {
-                if (view == null || !box.Contains(view.transform.position) || view.GetComponent<Player>() != null) continue;
-                foreach (Rigidbody body in view.GetComponentsInChildren<Rigidbody>())
-                {
-                    if (body.isKinematic) continue;
-                    body.isKinematic = true;
-                    frozen.Add(body);
-                }
-            }
+            if (site.Box(out Bounds box)) HoldStill(site.Id, box);
         }
 
         private static readonly Dictionary<string, List<Rigidbody>> Frozen = new Dictionary<string, List<Rigidbody>>();
+        private static readonly Dictionary<Rigidbody, RigidbodyConstraints> HeldWas = new Dictionary<Rigidbody, RigidbodyConstraints>();   // (each held body's own constraints)
+        private static readonly Dictionary<string, Bounds> FrozenBox = new Dictionary<string, Bounds>();   // (where they were held: one moved out of it goes free)
+        private static float _nextThawCheck;
+
+        /// <summary>
+        /// The bodies of what's loaded in a dungeon's box (and 8 m round it), players aside, held still for that dungeon: every position
+        /// and turn frozen by the body's constraints (its own kept, given back after). Never isKinematic: a creature's movement sets its
+        /// body's velocity every physics step, and Unity warns for each on a kinematic body (19,500 lines in Quadbobheim, 0.3.2).
+        /// Also HotReload's FreezeIn (a husk's box).
+        /// </summary>
+        internal static void HoldStill(string id, Bounds box)
+        {
+            if (ZNetScene.instance == null || string.IsNullOrEmpty(id)) return;
+            box.Expand(8f);
+            if (!Frozen.TryGetValue(id, out List<Rigidbody> frozen)) Frozen[id] = frozen = new List<Rigidbody>();
+            if (FrozenBox.TryGetValue(id, out Bounds had)) box.Encapsulate(had);
+            FrozenBox[id] = box;
+            foreach (ZNetView view in Instances(ZNetScene.instance).Values)
+            {
+                if (view == null || !box.Contains(view.transform.position) || view.GetComponent<Player>() != null) continue;
+                foreach (Rigidbody body in view.GetComponentsInChildren<Rigidbody>()) Hold(id, body);
+            }
+        }
+
+        /// <summary>One body held still for a dungeon (HoldStill). One kinematic of its own isn't ours to hold.</summary>
+        private static void Hold(string id, Rigidbody body)
+        {
+            if (body == null || body.isKinematic || HeldWas.ContainsKey(body)) return;
+            if (!Frozen.TryGetValue(id, out List<Rigidbody> frozen)) Frozen[id] = frozen = new List<Rigidbody>();
+            HeldWas[body] = body.constraints;
+            body.constraints = RigidbodyConstraints.FreezeAll;
+            body.linearVelocity = Vector3.zero;
+            body.angularVelocity = Vector3.zero;
+            frozen.Add(body);
+        }
+
+        /// <summary>A held body goes free: its own constraints back (or, one a last copy made kinematic, not kinematic).</summary>
+        private static void Free(Rigidbody body)
+        {
+            if (body == null) return;
+            if (HeldWas.TryGetValue(body, out RigidbodyConstraints was)) { body.constraints = was; HeldWas.Remove(body); }
+            else if (body.isKinematic) body.isKinematic = false;
+        }
+
+        /// <summary>One body moved by us (Rebuild.Place: a remake's move-out, Strays): let go if held, and forgotten.</summary>
+        public static void Release(Rigidbody body)
+        {
+            if (body == null) return;
+            bool held = HeldWas.ContainsKey(body);
+            foreach (List<Rigidbody> list in Frozen.Values) held |= list.Remove(body);
+            if (held) Free(body);
+        }
+
+        /// <summary>A dungeon removed (its entrance gone): what's still held for it is let go once Strays have had time to move it down
+        /// (they run 5 s after a remove); anything still held then goes free where it is.</summary>
+        private static readonly Dictionary<string, float> LetGoAt = new Dictionary<string, float>();
+
+        public static void LetGoLater(string id, float seconds)
+        {
+            if (!string.IsNullOrEmpty(id) && Frozen.ContainsKey(id)) LetGoAt[id] = Time.time + seconds;
+        }
 
         /// <summary>The dungeon is built here again: what FreezeLeftovers held still may move again (on its floor now).</summary>
         private static void Thaw(Site site)
         {
+            FrozenBox.Remove(site.Id);
             if (!Frozen.TryGetValue(site.Id, out List<Rigidbody> frozen)) return;
             Frozen.Remove(site.Id);
-            foreach (Rigidbody body in frozen) if (body != null) body.isKinematic = false;
+            foreach (Rigidbody body in frozen) Free(body);
+        }
+
+        /// <summary>Once a second: a held body that's gone, or out of the box it was held in (moved down by Strays, out to the entrance by a
+        /// remake, a companion teleported to its player), is let go: nothing stays held where no dungeon needs it.</summary>
+        private static void ThawMovedOut()
+        {
+            if ((Frozen.Count == 0 && LetGoAt.Count == 0) || Time.time < _nextThawCheck) return;
+            _nextThawCheck = Time.time + 1f;
+            foreach (KeyValuePair<string, float> due in LetGoAt.ToList())
+            {
+                if (Time.time < due.Value) continue;
+                LetGoAt.Remove(due.Key);
+                if (!Frozen.TryGetValue(due.Key, out List<Rigidbody> left)) continue;
+                int n = left.Count(b => b != null);
+                foreach (Rigidbody body in left) Free(body);
+                Frozen.Remove(due.Key);
+                FrozenBox.Remove(due.Key);
+                if (n > 0) Plugin.Log.LogInfo($"Dungeon {due.Key} is gone: {n} bodies held for it let go");
+            }
+            foreach (KeyValuePair<string, List<Rigidbody>> kv in Frozen.ToList())
+            {
+                Bounds box = default;
+                bool hasBox = FrozenBox.TryGetValue(kv.Key, out box);
+                if (!hasBox)
+                {
+                    Site site = Sites.FirstOrDefault(s => !s.Gone && s.Id == kv.Key);
+                    if (site != null && site.Box(out box)) { box.Expand(8f); hasBox = true; }
+                }
+                // its dungeon removed (the server knows every entrance: none with this id): let go once Strays have had their go
+                if (!hasBox && !LetGoAt.ContainsKey(kv.Key) && ZNet.instance != null && ZNet.instance.IsServer()
+                    && !EntranceZdos().Any(z => z.GetString(Keys.Id) == kv.Key))
+                    LetGoLater(kv.Key, 30f);
+                kv.Value.RemoveAll(body =>
+                {
+                    if (body == null) return true;
+                    // below 3000 m no dungeon is (moved down, or on the ground already); else out of the box it was held in
+                    if (body.position.y >= 3000f && (!hasBox || box.Contains(body.position))) return false;
+                    Free(body);
+                    return true;
+                });
+                if (kv.Value.Count == 0) { Frozen.Remove(kv.Key); FrozenBox.Remove(kv.Key); }
+            }
+            foreach (Rigidbody gone in HeldWas.Keys.Where(b => b == null).ToList()) HeldWas.Remove(gone);
+        }
+
+        /// <summary>HotReload: the held bodies' own constraints, carried with Frozen.</summary>
+        public static Dictionary<Rigidbody, RigidbodyConstraints> CarryHeldWas()
+        {
+            var all = HeldWas.Where(kv => kv.Key != null).ToDictionary(kv => kv.Key, kv => kv.Value);
+            HeldWas.Clear();
+            return all;
+        }
+
+        /// <summary>HotReload's TakeFrozen, for each body a last copy held: kept held. One that copy made kinematic (0.3.2 and before) is
+        /// held the new way instead, so its creature's velocity no longer warns.</summary>
+        public static void Adopt(string id, Rigidbody body)
+        {
+            if (body == null || string.IsNullOrEmpty(id)) return;
+            if (!Frozen.TryGetValue(id, out List<Rigidbody> frozen)) Frozen[id] = frozen = new List<Rigidbody>();
+            if (HeldWas.ContainsKey(body)) { if (!frozen.Contains(body)) frozen.Add(body); return; }
+            if (body.isKinematic) body.isKinematic = false;
+            Hold(id, body);
+        }
+
+        /// <summary>HotReload: the boxes the bodies were held in (a body moved out of one goes free), carried with Frozen.</summary>
+        public static Dictionary<string, Bounds> CarryFrozenBox()
+        {
+            var all = FrozenBox.ToDictionary(kv => kv.Key, kv => kv.Value);
+            FrozenBox.Clear();
+            return all;
+        }
+
+        public static void TakeFrozenBox(Dictionary<string, Bounds> all)
+        {
+            if (all == null) return;
+            foreach (KeyValuePair<string, Bounds> kv in all) FrozenBox[kv.Key] = FrozenBox.TryGetValue(kv.Key, out Bounds had) ? Enclose(had, kv.Value) : kv.Value;
+        }
+
+        private static Bounds Enclose(Bounds a, Bounds b) { a.Encapsulate(b); return a; }
+
+        public static void TakeHeldWas(Dictionary<Rigidbody, RigidbodyConstraints> all)
+        {
+            if (all == null) return;
+            foreach (KeyValuePair<Rigidbody, RigidbodyConstraints> kv in all) if (kv.Key != null) HeldWas[kv.Key] = kv.Value;
         }
 
         /// <summary>
@@ -959,6 +1098,7 @@ namespace Dungeons
             int removed = RemoveParts(site);
             Sweep.Everywhere(site.Id, -1, true);   // (everything else of it, loaded or not: its parts and its encounters' creatures)
             Strays.Around(site.EntrancePos, UnknownReach, 5f);   // (once its entrance is gone: what's left up there, untagged, moved down or removed)
+            LetGoLater(site.Id, 30f);   // (what this game held still for it: let go once Strays have moved it down)
             Plugin.Log.LogInfo($"Dungeon {site.Id} ({site.PackName} seed {site.Seed}) removed: its entrance and {removed} of its parts here (the rest wherever they are)");
             if (site.View != null) ZNetScene.instance.Destroy(site.View.gameObject);
             else if (site.Zdo != null) ZDOMan.instance.DestroyZDO(site.Zdo);
@@ -1025,6 +1165,7 @@ namespace Dungeons
             Player p = Player.m_localPlayer;
             if (p == null || !Doorway(site, 2f, out Vector3 at, out Quaternion facing)) return;
             Safety.OurTeleport();
+            Builder.Reveal(site.Built, at);   // (culling: what's seen from the way in is drawn before the player lands: BuildCull.cs)
             if (!p.TeleportTo(at + Vector3.up * 0.1f, facing, false)) return;
             try { site.Act("entered"); } catch (Exception) { }
             if (MessageHud.instance != null) MessageHud.instance.ShowBiomeFoundMsg(site.Title, false);

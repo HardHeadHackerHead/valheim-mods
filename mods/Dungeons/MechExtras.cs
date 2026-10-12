@@ -102,6 +102,7 @@ namespace Dungeons
                 if (other?.Base == null) return false;
                 Vector3 to = other.Base.position + other.Base.forward * 1.5f + Vector3.up * 0.2f;
                 Safety.OurTeleport();
+                Builder.Reveal(_set.Site.Built, to);   // (culling: the other end's rooms drawn before the player lands)
                 p.TeleportTo(to, Quaternion.LookRotation(Vector3.ProjectOnPlane(other.Base.forward, Vector3.up).normalized), false);
                 return true;
             }

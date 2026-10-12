@@ -398,7 +398,7 @@ namespace Dungeons
                     {
                         MechMotion mo = Motion(m, now);
                         if (m.Def.Kind == "brazier" && b.Burn > 0f && now - mo.Start >= b.Burn) pending[m] = 0;
-                        if (m.Def.Kind == "trap" && b.Every <= 0f && now - mo.Start >= b.For) pending[m] = 0;
+                        if (m.Def.Kind == "trap" && b.Every <= 0f && now - mo.Start >= b.Warn + b.For) pending[m] = 0;   // (its wind-up, then its firing)
                     }
                     if (!_lastSeen.TryGetValue(m, out int was)) { _lastSeen[m] = s; continue; }
                     if (was == s) continue;

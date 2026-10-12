@@ -51,7 +51,9 @@ namespace Dungeons
     ///             cells in reading order. One that can be pushed where it can't come back needs a "group" and a trigger resetting it.
     ///   trap      {"damage": "pierce", "scale": 1, "every": 4, "for": 1, "offset": 0, "area": [x,y,z], "areaAt": [x,y,z], "poses": [rest, fired]}:
     ///             while on (state 1) it fires "for" seconds every "every" seconds; "every" 0: once each time it's set on. Hurts players in
-    ///             its area by the land's tier, never more than part of their health at low tiers.
+    ///             its area by the land's tier, never more than part of their health at low tiers. "warn": 0.8, "warnFx": [...],
+    ///             "warnLift": 0.3: a wind-up before each firing (its sounds played, its parts drawn back that far from the strike and
+    ///             shaking); one set on by an action winds up first, then fires.
     ///   teleporter {"pair": "tp1", "send": true, "step": false}: E (or stepping on it) takes a player to the pair's other end; "send":
     ///             false is arrival only. States 0 off, 1 on ("start": 0 to switch it on with an action).
     ///   lock      {"doorway": "north", "key": "smallkey", "parts", "poses": [shut, open]}: a gate a key opens (used up).
@@ -122,6 +124,9 @@ namespace Dungeons
                 Offset = F(m["offset"], 0f),
                 AreaAt = m["areaAt"] is JArray aa ? Vec(aa) : Vector3.zero,
                 AreaSize = m["area"] is JArray ar ? Vec(ar) : Vector3.zero,
+                Warn = F(m["warn"], 0f),
+                WarnFx = Strings(m["warnFx"]).ToList(),
+                WarnLift = F(m["warnLift"], 0f),
                 Send = B(m["send"], true),
                 Step = B(m["step"], false),
                 Key = S(m["key"]),
@@ -147,6 +152,8 @@ namespace Dungeons
                     if (!DamageTypes.Contains(b.Damage)) problems.Add($"{me}: damage {b.Damage} ({string.Join(", ", DamageTypes)})");
                     if (b.Scale <= 0f || b.Scale > 5f) problems.Add($"{me}: \"scale\" {b.Scale} (above 0, at most 5)");
                     if (b.Every < 0f || b.For <= 0f || (b.Every > 0f && b.For >= b.Every)) problems.Add($"{me}: it fires \"for\" {b.For} s every {b.Every} s (for must be above 0 and below every)");
+                    if (b.Warn < 0f || (b.Every > 0f && b.Warn > b.Every - b.For)) problems.Add($"{me}: \"warn\" {b.Warn} s (0 or more, fitting in the rest between firings: at most every - for = {b.Every - b.For:0.##} s)");
+                    if (b.WarnLift < 0f || b.WarnLift > 2f) problems.Add($"{me}: \"warnLift\" {b.WarnLift} m (0 to 2)");
                     // its poses are its own clock's (rest, fired), not states: the mechanism itself stands at rest, off or on (so the
                     // layout's checks see it at rest), and its parts move from there on its own clock (BlockSet.Trap)
                     b.TrapPoses.AddRange(mech.Poses);

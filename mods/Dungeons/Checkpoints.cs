@@ -141,6 +141,10 @@ namespace Dungeons
             if (Wait(game) <= LoadDuration(game) || ZNetScene.instance == null || !ZNetScene.instance.IsAreaReady(p.At)) return true;
             point = p.At;
             found = true;
+            // a dungeon still built here: its rooms there drawn before the player appears (BuildCull.cs); one that isn't is built, and
+            // the player held, as for a login (Safety)
+            Site built = Dungeons.Covering(p.At);
+            if (built?.Built != null) Builder.Reveal(built.Built, p.At);
             _rose = true;
             Plugin.Log.LogInfo($"Respawning at the dungeon checkpoint {p.Mech} of {p.Dungeon} ({p.At}), not at the bed");
             return true;
