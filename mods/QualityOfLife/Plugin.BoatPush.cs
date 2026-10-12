@@ -1,5 +1,7 @@
+using System.Collections.Generic;
 using System.Linq;
 using BepInEx.Configuration;
+using HarmonyLib;
 using UnityEngine;
 using static DHack.Shared.Translations;
 
@@ -15,8 +17,6 @@ namespace QualityOfLife
         private ConfigEntry<KeyCode> _pushKey;
         private ConfigEntry<float> _pushStrength, _pushMaxSpeed, _pushRange, _pushSeconds;
 
-        private Ship[] _ships = new Ship[0];
-        private float _nextShipScan;
         private Ship _pushing;
 
         private void BindBoatPushConfig()
@@ -51,16 +51,10 @@ namespace QualityOfLife
                 return;
             }
 
-            if (pressed || Time.time >= _nextShipScan)
-            {
-                _nextShipScan = Time.time + 1f;
-                _ships = FindObjectsOfType<Ship>();
-            }
-
             Ship best = null;
             float bestDistance = _pushRange.Value;
             float nearest = float.MaxValue;
-            foreach (Ship ship in _ships)
+            foreach (Ship ship in ShipRegistry.Alive())   // (kept as ships appear: searching the scene every second while held made a hitch)
             {
                 if (ship == null) continue; // (not IsPlayerInBoat: that is true anywhere inside the boat's big "onboard" zone, even on the beach next to it)
                 float d = DistanceToHull(ship, player.transform.position);
@@ -72,7 +66,7 @@ namespace QualityOfLife
                 if (pressed)
                 {
                     Tell(player, nearest < float.MaxValue ? T("qualityoflife_boat_too_far") : T("qualityoflife_boat_none"));
-                    Logger.LogInfo($"Boat push: no boat in range (ships found: {_ships.Length}, nearest hull {nearest:0.0} m, range {_pushRange.Value:0.0} m)");
+                    Logger.LogInfo($"Boat push: no boat in range (ships found: {ShipRegistry.Alive().Count}, nearest hull {nearest:0.0} m, range {_pushRange.Value:0.0} m)");
                 }
                 return;
             }
@@ -124,5 +118,27 @@ namespace QualityOfLife
             if (along >= _pushMaxSpeed.Value) return;
             body.AddForce(dir * _pushStrength.Value, ForceMode.Acceleration);
         }
+    }
+
+    /// <summary>Every ship in the scene, kept as ships appear (a postfix on Ship.Awake), so pushing never searches the scene.</summary>
+    internal static class ShipRegistry
+    {
+        private static readonly List<Ship> All = new List<Ship>();
+
+        public static void Register(Ship s) { if (s != null && !All.Contains(s)) All.Add(s); }
+
+        /// <summary>Pick up ships that already exist (once, when the mod loads or reloads).</summary>
+        public static void Seed() { foreach (Ship s in UnityEngine.Object.FindObjectsByType<Ship>(FindObjectsSortMode.None)) Register(s); }
+
+        /// <summary>The ships that still exist (destroyed ones are dropped).</summary>
+        public static List<Ship> Alive() { All.RemoveAll(s => s == null); return All; }
+
+        public static void Clear() => All.Clear();
+    }
+
+    [HarmonyPatch(typeof(Ship), "Awake")]
+    internal static class Ship_Awake
+    {
+        private static void Postfix(Ship __instance) => ShipRegistry.Register(__instance);
     }
 }

@@ -1,3 +1,5 @@
+1.13.6: The boat push no longer searches the whole scene for ships every second while you hold the key: ships are kept in a list as they appear.
+
 1.13.5: No more small hitch every second from the ship pins: the look through the world for ships (every saved object, once per kind of ship) took about 40 ms in one frame; it is now spread over many frames. The pins follow their ships about every 2 seconds instead of every second.
 
 1.13.4: Settings: edits to the config file now apply while the game runs (a server owner no longer has to restart), and a server's admins can change the server's settings from their own game with Configuration Manager, where other players see them greyed out. Your config file always keeps your own values while you play on a server (saving it there could write the server's in). Players on an older version still get the server's settings. Upgrading an item at a station no longer takes off its KEEP lock or its quick-set tag (the game makes the upgraded item new, without them).

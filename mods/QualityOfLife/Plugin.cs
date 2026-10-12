@@ -21,7 +21,7 @@ namespace QualityOfLife
         public const string Guid = "com.quad.qualityoflife";
         public const string OldGuid = "com.dhack.qualityoflife"; // (its id until 2026-10: settings move over by themselves, see Shared/Migration.cs)
         public const string Name = "QualityOfLife";
-        public const string Version = "1.13.5";
+        public const string Version = "1.13.6";
 
         private ConfigEntry<bool> _quickSetEnabled, _showBadges, _hammerEnabled, _showMessages;
         private ConfigEntry<KeyboardShortcut> _quickSetKey, _hammerKey;
@@ -64,6 +64,7 @@ namespace QualityOfLife
             _harmony = new Harmony(Guid); // keeps the game from reacting to clicks while the assign menu is open, and tracks chests
             _harmony.PatchAll();
             ContainerRegistry.Seed(); // chests that already exist; new ones are added as they appear
+            ShipRegistry.Seed();      // ships too (for the boat push)
 
             _hammerEnabled = Config.Bind("Hammer", "Enabled", true, "Turn the hammer shortcut on or off.");
             _hammerKey = Config.Bind("Hammer", "Key", new KeyboardShortcut(KeyCode.B),
@@ -87,6 +88,7 @@ namespace QualityOfLife
             DestroyInventoryUi(); // a hot reload must leave nothing of ours in the inventory's interface
             GameUi.Destroy();
             ContainerRegistry.Clear();
+            ShipRegistry.Clear();
             if (Instance == this) Instance = null;
             RestoreCamera();
             ClearShipPins();

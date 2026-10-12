@@ -407,13 +407,35 @@ namespace AICompanion
             foreach (Minimap.PinData pin in Markers().ToList())
             {
                 if (Vector3.Distance(pin.m_pos, me.transform.position) > 30f) continue; // close enough that the crate would be loaded
-                bool crate = UnityEngine.Object.FindObjectsByType<Container>(FindObjectsSortMode.None).Any(c => Vector3.Distance(c.transform.position, pin.m_pos) < 6f
-                    && c.GetComponent<ZNetView>() is ZNetView v && v.IsValid() && v.GetZDO().GetString(CrateKey, "") != "");
-                if (crate || RecentlyFallen.Any(f => Time.time - f.At < 120f && Vector3.Distance(f.Pos, pin.m_pos) < 4f)) continue; // (a fall without gear has no crate)
+                if (CrateNear(pin.m_pos) || RecentlyFallen.Any(f => Time.time - f.At < 120f && Vector3.Distance(f.Pos, pin.m_pos) < 4f)) continue; // (a fall without gear has no crate)
                 Plugin.Instance?.Note($"The fallen companion's crate at {pin.m_pos:F0} is gone: marker removed");
                 Minimap.instance.RemovePin(pin);
                 Send(RpcCleared, $"{F(pin.m_pos.x)}|{F(pin.m_pos.y)}|{F(pin.m_pos.z)}");
             }
+        }
+
+        private static readonly List<ZDO> NearObjects = new List<ZDO>();
+        private static readonly HashSet<Vector2s> CrateZones = new HashSet<Vector2s>();
+
+        /// <summary>
+        /// A fallen companion's crate within 6 m: from the saved objects of the zones there (one or a few), not a search of every container
+        /// in the scene (which, every 2 s near a marker, was a hitch in a big base).
+        /// </summary>
+        private static bool CrateNear(Vector3 at)
+        {
+            if (ZDOMan.instance == null) return true;   // (can't tell: keep the marker)
+            CrateZones.Clear();
+            foreach (float dx in new[] { -6f, 6f })
+                foreach (float dz in new[] { -6f, 6f })
+                    CrateZones.Add(ZoneSystem.GetZone(at + new Vector3(dx, 0f, dz)));
+            foreach (Vector2s zone in CrateZones)
+            {
+                NearObjects.Clear();
+                ZDOMan.instance.FindSectorObjects(zone, new SimulationDistance(0, 0), NearObjects);
+                foreach (ZDO zdo in NearObjects)
+                    if (zdo != null && zdo.IsValid() && Vector3.Distance(zdo.GetPosition(), at) < 6f && zdo.GetString(CrateKey, "") != "") return true;
+            }
+            return false;
         }
 
         private static IEnumerator TellNewcomers()
