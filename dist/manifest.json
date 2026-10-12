@@ -131,9 +131,9 @@
                  {
                      "guid":  "com.quad.craftfromchests",
                      "name":  "CraftFromChests",
-                     "version":  "1.5.3",
+                     "version":  "1.6.0",
                      "description":  "Craft from chests: crafting stations, and hand-crafting from your inventory, use materials from nearby chests and containers.\n\nHow it works\n- Anything you can reach within the range counts toward a recipe. The game takes the materials from your inventory first, then from the chests.\n- The crafting menu shows how many of each material you have in total.\n- A Chest lines button beside the crafting tabs draws lines from the station to every chest in use; a Range button cycles the distance (5 to 30 m).\n\nSettings: range (default 20 m), whether counts and lines show, and the position and size of the buttons.",
-                     "notes":  "1.5.3: Settings: edits to the config file now apply while the game runs (a server owner no longer has to restart), and a server\u0027s admins can change the server\u0027s settings from their own game with Configuration Manager, where other players see them greyed out. Your config file always keeps your own values while you play on a server (saving it there could write the server\u0027s in). Players on an older version still get the server\u0027s settings.",
+                     "notes":  "1.6.0: Fix for crafting with other players around: materials in the crafting window no longer appear and disappear when another player crafts, opens a chest or uses a station nearby (Multi User Chest included). Chests are no longer taken from the player whose game owns them: this mod now asks that game to take the items out, and serves two players one after the other, so nothing is paid twice. Needs this version on every player\u0027s game (an older version does not answer). With Multi User Chest, a chest someone has open is still used.",
                      "restart":  "",
                      "cover":  "CraftFromChests.cover.png",
                      "files":  [
