@@ -1,0 +1,5 @@
+{
+  "guns_machinegun": "Machine Gun",
+  "guns_machinegun_desc": "Fires for as long as you hold the attack button. Hold it long and the barrel climbs: short bursts stay accurate.",
+  "guns_server_missing": "Quad's Guns isn't installed on this server: the guns can't be crafted here."
+}

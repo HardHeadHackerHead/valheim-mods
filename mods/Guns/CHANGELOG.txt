@@ -1,0 +1,1 @@
+0.1.0: First version (not released): the Machine Gun, with auto-fire and a spread that climbs, aiming down the sights, its own sound, flash, casings, recoil and tracers, and an inventory picture drawn from its model.
