@@ -65,12 +65,12 @@ Wild tobacco only appears in parts of the world you have not visited yet. It add
 
 ## 🤝 Goes well with
 
-<a href="https://thunderstore.io/c/valheim/p/Quads_Lab/Quads_Skal_Tavern/"><img src="https://raw.githubusercontent.com/HardHeadHackerHead/valheim-mods/main/mods/SkalTavern/thunderstore/icon.png" alt="Quad&#x27;s Skal Tavern" title="Quad&#x27;s Skal Tavern" width="72"></a> <a href="https://thunderstore.io/c/valheim/p/Quads_Lab/Quads_Slot_Machine/"><img src="https://raw.githubusercontent.com/HardHeadHackerHead/valheim-mods/main/mods/SlotMachine/thunderstore/icon.png" alt="Quad&#x27;s Slot Machine" title="Quad&#x27;s Slot Machine" width="72"></a> <a href="https://thunderstore.io/c/valheim/p/Quads_Lab/Quads_Rainbows/"><img src="https://raw.githubusercontent.com/HardHeadHackerHead/valheim-mods/main/mods/Rainbows/thunderstore/icon.png" alt="Quad&#x27;s Rainbows" title="Quad&#x27;s Rainbows" width="72"></a> <a href="https://thunderstore.io/c/valheim/p/Quads_Lab/Quads_Bird_Trap/"><img src="https://raw.githubusercontent.com/HardHeadHackerHead/valheim-mods/main/mods/BirdTrap/thunderstore/icon.png" alt="Quad&#x27;s Bird Trap" title="Quad&#x27;s Bird Trap" width="72"></a>
-
-- **[Quad's Skal Tavern](https://thunderstore.io/c/valheim/p/Quads_Lab/Quads_Skal_Tavern/)**: Ale, mead and wine that get you drunk
-- **[Quad's Slot Machine](https://thunderstore.io/c/valheim/p/Quads_Lab/Quads_Slot_Machine/)**: A viking slot machine for your coins
-- **[Quad's Rainbows](https://thunderstore.io/c/valheim/p/Quads_Lab/Quads_Rainbows/)**: Rainbows after the rain, and a blessing
-- **[Quad's Bird Trap](https://thunderstore.io/c/valheim/p/Quads_Lab/Quads_Bird_Trap/)**: Trap birds for feathers
+| | |
+|:-:|:--|
+| <a href="https://thunderstore.io/c/valheim/p/Quads_Lab/Quads_Skal_Tavern/"><img src="https://raw.githubusercontent.com/HardHeadHackerHead/valheim-mods/main/mods/SkalTavern/thunderstore/icon.png" alt="Quad&#x27;s Skal Tavern" width="48"></a> | **[Quad's Skal Tavern](https://thunderstore.io/c/valheim/p/Quads_Lab/Quads_Skal_Tavern/)**<br>Ale, mead and wine that get you drunk |
+| <a href="https://thunderstore.io/c/valheim/p/Quads_Lab/Quads_Slot_Machine/"><img src="https://raw.githubusercontent.com/HardHeadHackerHead/valheim-mods/main/mods/SlotMachine/thunderstore/icon.png" alt="Quad&#x27;s Slot Machine" width="48"></a> | **[Quad's Slot Machine](https://thunderstore.io/c/valheim/p/Quads_Lab/Quads_Slot_Machine/)**<br>A viking slot machine for your coins |
+| <a href="https://thunderstore.io/c/valheim/p/Quads_Lab/Quads_Rainbows/"><img src="https://raw.githubusercontent.com/HardHeadHackerHead/valheim-mods/main/mods/Rainbows/thunderstore/icon.png" alt="Quad&#x27;s Rainbows" width="48"></a> | **[Quad's Rainbows](https://thunderstore.io/c/valheim/p/Quads_Lab/Quads_Rainbows/)**<br>Rainbows after the rain, and a blessing |
+| <a href="https://thunderstore.io/c/valheim/p/Quads_Lab/Quads_Bird_Trap/"><img src="https://raw.githubusercontent.com/HardHeadHackerHead/valheim-mods/main/mods/BirdTrap/thunderstore/icon.png" alt="Quad&#x27;s Bird Trap" width="48"></a> | **[Quad's Bird Trap](https://thunderstore.io/c/valheim/p/Quads_Lab/Quads_Bird_Trap/)**<br>Trap birds for feathers |
 
 ## 🧩 Other mods
 

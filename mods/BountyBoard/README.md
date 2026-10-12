@@ -53,12 +53,12 @@ The contracts are kept by the host's game, so BountyBoard has to be installed on
 
 ## 🤝 Goes well with
 
-<a href="https://thunderstore.io/c/valheim/p/Quads_Lab/Quads_Party_HUD/"><img src="https://raw.githubusercontent.com/HardHeadHackerHead/valheim-mods/main/mods/PartyHud/thunderstore/icon.png" alt="Quad&#x27;s Party HUD" title="Quad&#x27;s Party HUD" width="72"></a> <a href="https://thunderstore.io/c/valheim/p/Quads_Lab/Quads_Map_Share/"><img src="https://raw.githubusercontent.com/HardHeadHackerHead/valheim-mods/main/mods/MapShare/thunderstore/icon.png" alt="Quad&#x27;s Map Share" title="Quad&#x27;s Map Share" width="72"></a> <a href="https://thunderstore.io/c/valheim/p/Quads_Lab/Quads_Arena/"><img src="https://raw.githubusercontent.com/HardHeadHackerHead/valheim-mods/main/mods/Arena/thunderstore/icon.png" alt="Quad&#x27;s Arena" title="Quad&#x27;s Arena" width="72"></a> <a href="https://thunderstore.io/c/valheim/p/Quads_Lab/Quads_Companion/"><img src="https://raw.githubusercontent.com/HardHeadHackerHead/valheim-mods/main/mods/AICompanion/thunderstore/icon.png" alt="Quad&#x27;s Companion" title="Quad&#x27;s Companion" width="72"></a>
-
-- **[Quad's Party HUD](https://thunderstore.io/c/valheim/p/Quads_Lab/Quads_Party_HUD/)**: Health and stamina frames for your party
-- **[Quad's Map Share](https://thunderstore.io/c/valheim/p/Quads_Lab/Quads_Map_Share/)**: One shared map for everyone
-- **[Quad's Arena](https://thunderstore.io/c/valheim/p/Quads_Lab/Quads_Arena/)**: Fight waves and champions in a colosseum
-- **[Quad's Companion](https://thunderstore.io/c/valheim/p/Quads_Lab/Quads_Companion/)**: A viking companion who plays like a player
+| | |
+|:-:|:--|
+| <a href="https://thunderstore.io/c/valheim/p/Quads_Lab/Quads_Party_HUD/"><img src="https://raw.githubusercontent.com/HardHeadHackerHead/valheim-mods/main/mods/PartyHud/thunderstore/icon.png" alt="Quad&#x27;s Party HUD" width="48"></a> | **[Quad's Party HUD](https://thunderstore.io/c/valheim/p/Quads_Lab/Quads_Party_HUD/)**<br>Health and stamina frames for your party |
+| <a href="https://thunderstore.io/c/valheim/p/Quads_Lab/Quads_Map_Share/"><img src="https://raw.githubusercontent.com/HardHeadHackerHead/valheim-mods/main/mods/MapShare/thunderstore/icon.png" alt="Quad&#x27;s Map Share" width="48"></a> | **[Quad's Map Share](https://thunderstore.io/c/valheim/p/Quads_Lab/Quads_Map_Share/)**<br>One shared map for everyone |
+| <a href="https://thunderstore.io/c/valheim/p/Quads_Lab/Quads_Arena/"><img src="https://raw.githubusercontent.com/HardHeadHackerHead/valheim-mods/main/mods/Arena/thunderstore/icon.png" alt="Quad&#x27;s Arena" width="48"></a> | **[Quad's Arena](https://thunderstore.io/c/valheim/p/Quads_Lab/Quads_Arena/)**<br>Fight waves and champions in a colosseum |
+| <a href="https://thunderstore.io/c/valheim/p/Quads_Lab/Quads_Companion/"><img src="https://raw.githubusercontent.com/HardHeadHackerHead/valheim-mods/main/mods/AICompanion/thunderstore/icon.png" alt="Quad&#x27;s Companion" width="48"></a> | **[Quad's Companion](https://thunderstore.io/c/valheim/p/Quads_Lab/Quads_Companion/)**<br>A viking companion who plays like a player |
 
 ## 🧩 Other mods
 

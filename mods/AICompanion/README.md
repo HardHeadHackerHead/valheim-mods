@@ -68,13 +68,13 @@
 
 ## 🤝 Goes well with
 
-<a href="https://thunderstore.io/c/valheim/p/Quads_Lab/Quads_Party_HUD/"><img src="https://raw.githubusercontent.com/HardHeadHackerHead/valheim-mods/main/mods/PartyHud/thunderstore/icon.png" alt="Quad&#x27;s Party HUD" title="Quad&#x27;s Party HUD" width="72"></a> <a href="https://thunderstore.io/c/valheim/p/Quads_Lab/Quads_Gear_Slots/"><img src="https://raw.githubusercontent.com/HardHeadHackerHead/valheim-mods/main/mods/GearSlots/thunderstore/icon.png" alt="Quad&#x27;s Gear Slots" title="Quad&#x27;s Gear Slots" width="72"></a> <a href="https://thunderstore.io/c/valheim/p/Quads_Lab/Quads_Arena/"><img src="https://raw.githubusercontent.com/HardHeadHackerHead/valheim-mods/main/mods/Arena/thunderstore/icon.png" alt="Quad&#x27;s Arena" title="Quad&#x27;s Arena" width="72"></a> <a href="https://thunderstore.io/c/valheim/p/Quads_Lab/Quads_Bounty_Board/"><img src="https://raw.githubusercontent.com/HardHeadHackerHead/valheim-mods/main/mods/BountyBoard/thunderstore/icon.png" alt="Quad&#x27;s Bounty Board" title="Quad&#x27;s Bounty Board" width="72"></a> <a href="https://github.com/HardHeadHackerHead/valheim-mods/tree/main/mods/Dungeons"><img src="https://raw.githubusercontent.com/HardHeadHackerHead/valheim-mods/main/mods/Dungeons/thunderstore/icon.png" alt="Quad&#x27;s Dungeons" title="Quad&#x27;s Dungeons" width="72"></a>
-
-- **[Quad's Party HUD](https://thunderstore.io/c/valheim/p/Quads_Lab/Quads_Party_HUD/)**: Health and stamina frames for your party
-- **[Quad's Gear Slots](https://thunderstore.io/c/valheim/p/Quads_Lab/Quads_Gear_Slots/)**: Equipment and quick slots
-- **[Quad's Arena](https://thunderstore.io/c/valheim/p/Quads_Lab/Quads_Arena/)**: Fight waves and champions in a colosseum
-- **[Quad's Bounty Board](https://thunderstore.io/c/valheim/p/Quads_Lab/Quads_Bounty_Board/)**: Group bounties and hunting contracts
-- **[Quad's Dungeons](https://github.com/HardHeadHackerHead/valheim-mods/tree/main/mods/Dungeons)**: Seeded dungeons with puzzles and bosses
+| | |
+|:-:|:--|
+| <a href="https://thunderstore.io/c/valheim/p/Quads_Lab/Quads_Party_HUD/"><img src="https://raw.githubusercontent.com/HardHeadHackerHead/valheim-mods/main/mods/PartyHud/thunderstore/icon.png" alt="Quad&#x27;s Party HUD" width="48"></a> | **[Quad's Party HUD](https://thunderstore.io/c/valheim/p/Quads_Lab/Quads_Party_HUD/)**<br>Health and stamina frames for your party |
+| <a href="https://thunderstore.io/c/valheim/p/Quads_Lab/Quads_Gear_Slots/"><img src="https://raw.githubusercontent.com/HardHeadHackerHead/valheim-mods/main/mods/GearSlots/thunderstore/icon.png" alt="Quad&#x27;s Gear Slots" width="48"></a> | **[Quad's Gear Slots](https://thunderstore.io/c/valheim/p/Quads_Lab/Quads_Gear_Slots/)**<br>Equipment and quick slots |
+| <a href="https://thunderstore.io/c/valheim/p/Quads_Lab/Quads_Arena/"><img src="https://raw.githubusercontent.com/HardHeadHackerHead/valheim-mods/main/mods/Arena/thunderstore/icon.png" alt="Quad&#x27;s Arena" width="48"></a> | **[Quad's Arena](https://thunderstore.io/c/valheim/p/Quads_Lab/Quads_Arena/)**<br>Fight waves and champions in a colosseum |
+| <a href="https://thunderstore.io/c/valheim/p/Quads_Lab/Quads_Bounty_Board/"><img src="https://raw.githubusercontent.com/HardHeadHackerHead/valheim-mods/main/mods/BountyBoard/thunderstore/icon.png" alt="Quad&#x27;s Bounty Board" width="48"></a> | **[Quad's Bounty Board](https://thunderstore.io/c/valheim/p/Quads_Lab/Quads_Bounty_Board/)**<br>Group bounties and hunting contracts |
+| <a href="https://github.com/HardHeadHackerHead/valheim-mods/tree/main/mods/Dungeons"><img src="https://raw.githubusercontent.com/HardHeadHackerHead/valheim-mods/main/mods/Dungeons/thunderstore/icon.png" alt="Quad&#x27;s Dungeons" width="48"></a> | **[Quad's Dungeons](https://github.com/HardHeadHackerHead/valheim-mods/tree/main/mods/Dungeons)**<br>Seeded dungeons with puzzles and bosses |
 
 ## 🧩 Other mods
 

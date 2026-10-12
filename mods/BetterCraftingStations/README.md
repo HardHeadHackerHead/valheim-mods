@@ -46,12 +46,12 @@ The only setting is Enabled.
 
 ## 🤝 Goes well with
 
-<a href="https://thunderstore.io/c/valheim/p/Quads_Lab/Quads_Craft_From_Chests/"><img src="https://raw.githubusercontent.com/HardHeadHackerHead/valheim-mods/main/mods/CraftFromChests/thunderstore/icon.png" alt="Quad&#x27;s Craft From Chests" title="Quad&#x27;s Craft From Chests" width="72"></a> <a href="https://thunderstore.io/c/valheim/p/Quads_Lab/Quads_Recycler/"><img src="https://raw.githubusercontent.com/HardHeadHackerHead/valheim-mods/main/mods/Recycler/thunderstore/icon.png" alt="Quad&#x27;s Recycler" title="Quad&#x27;s Recycler" width="72"></a> <a href="https://thunderstore.io/c/valheim/p/Quads_Lab/Quads_Quality_Of_Life/"><img src="https://raw.githubusercontent.com/HardHeadHackerHead/valheim-mods/main/mods/QualityOfLife/thunderstore/icon.png" alt="Quad&#x27;s Quality of Life" title="Quad&#x27;s Quality of Life" width="72"></a> <a href="https://thunderstore.io/c/valheim/p/Quads_Lab/Quads_Gear_Slots/"><img src="https://raw.githubusercontent.com/HardHeadHackerHead/valheim-mods/main/mods/GearSlots/thunderstore/icon.png" alt="Quad&#x27;s Gear Slots" title="Quad&#x27;s Gear Slots" width="72"></a>
-
-- **[Quad's Craft From Chests](https://thunderstore.io/c/valheim/p/Quads_Lab/Quads_Craft_From_Chests/)**: Craft with materials from nearby chests
-- **[Quad's Recycler](https://thunderstore.io/c/valheim/p/Quads_Lab/Quads_Recycler/)**: Turn old gear back into materials
-- **[Quad's Quality of Life](https://thunderstore.io/c/valheim/p/Quads_Lab/Quads_Quality_Of_Life/)**: Sorting, stacking and small conveniences
-- **[Quad's Gear Slots](https://thunderstore.io/c/valheim/p/Quads_Lab/Quads_Gear_Slots/)**: Equipment and quick slots
+| | |
+|:-:|:--|
+| <a href="https://thunderstore.io/c/valheim/p/Quads_Lab/Quads_Craft_From_Chests/"><img src="https://raw.githubusercontent.com/HardHeadHackerHead/valheim-mods/main/mods/CraftFromChests/thunderstore/icon.png" alt="Quad&#x27;s Craft From Chests" width="48"></a> | **[Quad's Craft From Chests](https://thunderstore.io/c/valheim/p/Quads_Lab/Quads_Craft_From_Chests/)**<br>Craft with materials from nearby chests |
+| <a href="https://thunderstore.io/c/valheim/p/Quads_Lab/Quads_Recycler/"><img src="https://raw.githubusercontent.com/HardHeadHackerHead/valheim-mods/main/mods/Recycler/thunderstore/icon.png" alt="Quad&#x27;s Recycler" width="48"></a> | **[Quad's Recycler](https://thunderstore.io/c/valheim/p/Quads_Lab/Quads_Recycler/)**<br>Turn old gear back into materials |
+| <a href="https://thunderstore.io/c/valheim/p/Quads_Lab/Quads_Quality_Of_Life/"><img src="https://raw.githubusercontent.com/HardHeadHackerHead/valheim-mods/main/mods/QualityOfLife/thunderstore/icon.png" alt="Quad&#x27;s Quality of Life" width="48"></a> | **[Quad's Quality of Life](https://thunderstore.io/c/valheim/p/Quads_Lab/Quads_Quality_Of_Life/)**<br>Sorting, stacking and small conveniences |
+| <a href="https://thunderstore.io/c/valheim/p/Quads_Lab/Quads_Gear_Slots/"><img src="https://raw.githubusercontent.com/HardHeadHackerHead/valheim-mods/main/mods/GearSlots/thunderstore/icon.png" alt="Quad&#x27;s Gear Slots" width="48"></a> | **[Quad's Gear Slots](https://thunderstore.io/c/valheim/p/Quads_Lab/Quads_Gear_Slots/)**<br>Equipment and quick slots |
 
 ## 🧩 Other mods
 

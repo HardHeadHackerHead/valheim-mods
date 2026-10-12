@@ -70,12 +70,12 @@ Only the players who want it need it: movement is each player's own, the mod isn
 
 ## 🤝 Goes well with
 
-<a href="https://thunderstore.io/c/valheim/p/Quads_Lab/Quads_Ziplines/"><img src="https://raw.githubusercontent.com/HardHeadHackerHead/valheim-mods/main/mods/Ziplines/thunderstore/icon.png" alt="Quad&#x27;s Ziplines" title="Quad&#x27;s Ziplines" width="72"></a> <a href="https://thunderstore.io/c/valheim/p/Quads_Lab/Quads_Jet_Skis/"><img src="https://raw.githubusercontent.com/HardHeadHackerHead/valheim-mods/main/mods/JetSkis/thunderstore/icon.png" alt="Quad&#x27;s Jet Skis" title="Quad&#x27;s Jet Skis" width="72"></a> <a href="https://thunderstore.io/c/valheim/p/Quads_Lab/Quads_Quiver/"><img src="https://raw.githubusercontent.com/HardHeadHackerHead/valheim-mods/main/mods/Quiver/thunderstore/icon.png" alt="Quad&#x27;s Quiver" title="Quad&#x27;s Quiver" width="72"></a> <a href="https://github.com/HardHeadHackerHead/valheim-mods/tree/main/mods/Dungeons"><img src="https://raw.githubusercontent.com/HardHeadHackerHead/valheim-mods/main/mods/Dungeons/thunderstore/icon.png" alt="Quad&#x27;s Dungeons" title="Quad&#x27;s Dungeons" width="72"></a>
-
-- **[Quad's Ziplines](https://thunderstore.io/c/valheim/p/Quads_Lab/Quads_Ziplines/)**: Zip lines between posts, even kilometres apart
-- **[Quad's Jet Skis](https://thunderstore.io/c/valheim/p/Quads_Lab/Quads_Jet_Skis/)**: A fast jet ski for two
-- **[Quad's Quiver](https://thunderstore.io/c/valheim/p/Quads_Lab/Quads_Quiver/)**: Pick your arrows back up
-- **[Quad's Dungeons](https://github.com/HardHeadHackerHead/valheim-mods/tree/main/mods/Dungeons)**: Seeded dungeons with puzzles and bosses
+| | |
+|:-:|:--|
+| <a href="https://thunderstore.io/c/valheim/p/Quads_Lab/Quads_Ziplines/"><img src="https://raw.githubusercontent.com/HardHeadHackerHead/valheim-mods/main/mods/Ziplines/thunderstore/icon.png" alt="Quad&#x27;s Ziplines" width="48"></a> | **[Quad's Ziplines](https://thunderstore.io/c/valheim/p/Quads_Lab/Quads_Ziplines/)**<br>Zip lines between posts, even kilometres apart |
+| <a href="https://thunderstore.io/c/valheim/p/Quads_Lab/Quads_Jet_Skis/"><img src="https://raw.githubusercontent.com/HardHeadHackerHead/valheim-mods/main/mods/JetSkis/thunderstore/icon.png" alt="Quad&#x27;s Jet Skis" width="48"></a> | **[Quad's Jet Skis](https://thunderstore.io/c/valheim/p/Quads_Lab/Quads_Jet_Skis/)**<br>A fast jet ski for two |
+| <a href="https://thunderstore.io/c/valheim/p/Quads_Lab/Quads_Quiver/"><img src="https://raw.githubusercontent.com/HardHeadHackerHead/valheim-mods/main/mods/Quiver/thunderstore/icon.png" alt="Quad&#x27;s Quiver" width="48"></a> | **[Quad's Quiver](https://thunderstore.io/c/valheim/p/Quads_Lab/Quads_Quiver/)**<br>Pick your arrows back up |
+| <a href="https://github.com/HardHeadHackerHead/valheim-mods/tree/main/mods/Dungeons"><img src="https://raw.githubusercontent.com/HardHeadHackerHead/valheim-mods/main/mods/Dungeons/thunderstore/icon.png" alt="Quad&#x27;s Dungeons" width="48"></a> | **[Quad's Dungeons](https://github.com/HardHeadHackerHead/valheim-mods/tree/main/mods/Dungeons)**<br>Seeded dungeons with puzzles and bosses |
 
 ## 🧩 Other mods
 

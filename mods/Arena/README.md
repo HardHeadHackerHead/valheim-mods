@@ -77,13 +77,13 @@ Crowd sounds from OpenGameArt: "Free Crowd Cheering Sounds" by Gregor Quendel (C
 
 ## 🤝 Goes well with
 
-<a href="https://thunderstore.io/c/valheim/p/Quads_Lab/Quads_Companion/"><img src="https://raw.githubusercontent.com/HardHeadHackerHead/valheim-mods/main/mods/AICompanion/thunderstore/icon.png" alt="Quad&#x27;s Companion" title="Quad&#x27;s Companion" width="72"></a> <a href="https://thunderstore.io/c/valheim/p/Quads_Lab/Quads_Bounty_Board/"><img src="https://raw.githubusercontent.com/HardHeadHackerHead/valheim-mods/main/mods/BountyBoard/thunderstore/icon.png" alt="Quad&#x27;s Bounty Board" title="Quad&#x27;s Bounty Board" width="72"></a> <a href="https://thunderstore.io/c/valheim/p/Quads_Lab/Quads_Quiver/"><img src="https://raw.githubusercontent.com/HardHeadHackerHead/valheim-mods/main/mods/Quiver/thunderstore/icon.png" alt="Quad&#x27;s Quiver" title="Quad&#x27;s Quiver" width="72"></a> <a href="https://github.com/HardHeadHackerHead/valheim-mods/tree/main/mods/Dungeons"><img src="https://raw.githubusercontent.com/HardHeadHackerHead/valheim-mods/main/mods/Dungeons/thunderstore/icon.png" alt="Quad&#x27;s Dungeons" title="Quad&#x27;s Dungeons" width="72"></a> <a href="https://thunderstore.io/c/valheim/p/Quads_Lab/Quads_Parkour/"><img src="https://raw.githubusercontent.com/HardHeadHackerHead/valheim-mods/main/mods/Parkour/thunderstore/icon.png" alt="Quad&#x27;s Parkour" title="Quad&#x27;s Parkour" width="72"></a>
-
-- **[Quad's Companion](https://thunderstore.io/c/valheim/p/Quads_Lab/Quads_Companion/)**: A viking companion who plays like a player
-- **[Quad's Bounty Board](https://thunderstore.io/c/valheim/p/Quads_Lab/Quads_Bounty_Board/)**: Group bounties and hunting contracts
-- **[Quad's Quiver](https://thunderstore.io/c/valheim/p/Quads_Lab/Quads_Quiver/)**: Pick your arrows back up
-- **[Quad's Dungeons](https://github.com/HardHeadHackerHead/valheim-mods/tree/main/mods/Dungeons)**: Seeded dungeons with puzzles and bosses
-- **[Quad's Parkour](https://thunderstore.io/c/valheim/p/Quads_Lab/Quads_Parkour/)**: Wall runs, wall jumps, climbing and ledges
+| | |
+|:-:|:--|
+| <a href="https://thunderstore.io/c/valheim/p/Quads_Lab/Quads_Companion/"><img src="https://raw.githubusercontent.com/HardHeadHackerHead/valheim-mods/main/mods/AICompanion/thunderstore/icon.png" alt="Quad&#x27;s Companion" width="48"></a> | **[Quad's Companion](https://thunderstore.io/c/valheim/p/Quads_Lab/Quads_Companion/)**<br>A viking companion who plays like a player |
+| <a href="https://thunderstore.io/c/valheim/p/Quads_Lab/Quads_Bounty_Board/"><img src="https://raw.githubusercontent.com/HardHeadHackerHead/valheim-mods/main/mods/BountyBoard/thunderstore/icon.png" alt="Quad&#x27;s Bounty Board" width="48"></a> | **[Quad's Bounty Board](https://thunderstore.io/c/valheim/p/Quads_Lab/Quads_Bounty_Board/)**<br>Group bounties and hunting contracts |
+| <a href="https://thunderstore.io/c/valheim/p/Quads_Lab/Quads_Quiver/"><img src="https://raw.githubusercontent.com/HardHeadHackerHead/valheim-mods/main/mods/Quiver/thunderstore/icon.png" alt="Quad&#x27;s Quiver" width="48"></a> | **[Quad's Quiver](https://thunderstore.io/c/valheim/p/Quads_Lab/Quads_Quiver/)**<br>Pick your arrows back up |
+| <a href="https://github.com/HardHeadHackerHead/valheim-mods/tree/main/mods/Dungeons"><img src="https://raw.githubusercontent.com/HardHeadHackerHead/valheim-mods/main/mods/Dungeons/thunderstore/icon.png" alt="Quad&#x27;s Dungeons" width="48"></a> | **[Quad's Dungeons](https://github.com/HardHeadHackerHead/valheim-mods/tree/main/mods/Dungeons)**<br>Seeded dungeons with puzzles and bosses |
+| <a href="https://thunderstore.io/c/valheim/p/Quads_Lab/Quads_Parkour/"><img src="https://raw.githubusercontent.com/HardHeadHackerHead/valheim-mods/main/mods/Parkour/thunderstore/icon.png" alt="Quad&#x27;s Parkour" width="48"></a> | **[Quad's Parkour](https://thunderstore.io/c/valheim/p/Quads_Lab/Quads_Parkour/)**<br>Wall runs, wall jumps, climbing and ledges |
 
 ## 🧩 Other mods
 

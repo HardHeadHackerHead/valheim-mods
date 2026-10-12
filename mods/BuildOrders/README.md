@@ -77,12 +77,12 @@ Fetching materials: with the hammer out and a piece selected, a hint appears whe
 
 ## 🤝 Goes well with
 
-<a href="https://thunderstore.io/c/valheim/p/Quads_Lab/Quads_Build_From_Chests/"><img src="https://raw.githubusercontent.com/HardHeadHackerHead/valheim-mods/main/mods/BuildFromChests/thunderstore/icon.png" alt="Quad&#x27;s Build From Chests" title="Quad&#x27;s Build From Chests" width="72"></a> <a href="https://thunderstore.io/c/valheim/p/Quads_Lab/Quads_Ledger_Chest/"><img src="https://raw.githubusercontent.com/HardHeadHackerHead/valheim-mods/main/mods/LedgerChest/thunderstore/icon.png" alt="Quad&#x27;s Ledger Chest" title="Quad&#x27;s Ledger Chest" width="72"></a> <a href="https://thunderstore.io/c/valheim/p/Quads_Lab/Quads_Ziplines/"><img src="https://raw.githubusercontent.com/HardHeadHackerHead/valheim-mods/main/mods/Ziplines/thunderstore/icon.png" alt="Quad&#x27;s Ziplines" title="Quad&#x27;s Ziplines" width="72"></a> <a href="https://thunderstore.io/c/valheim/p/Quads_Lab/Quads_Portal_Hub/"><img src="https://raw.githubusercontent.com/HardHeadHackerHead/valheim-mods/main/mods/PortalHub/thunderstore/icon.png" alt="Quad&#x27;s Portal Hub" title="Quad&#x27;s Portal Hub" width="72"></a>
-
-- **[Quad's Build From Chests](https://thunderstore.io/c/valheim/p/Quads_Lab/Quads_Build_From_Chests/)**: Build with materials from nearby chests
-- **[Quad's Ledger Chest](https://thunderstore.io/c/valheim/p/Quads_Lab/Quads_Ledger_Chest/)**: See and search every chest around you
-- **[Quad's Ziplines](https://thunderstore.io/c/valheim/p/Quads_Lab/Quads_Ziplines/)**: Zip lines between posts, even kilometres apart
-- **[Quad's Portal Hub](https://thunderstore.io/c/valheim/p/Quads_Lab/Quads_Portal_Hub/)**: Pick a portal's destination from a list
+| | |
+|:-:|:--|
+| <a href="https://thunderstore.io/c/valheim/p/Quads_Lab/Quads_Build_From_Chests/"><img src="https://raw.githubusercontent.com/HardHeadHackerHead/valheim-mods/main/mods/BuildFromChests/thunderstore/icon.png" alt="Quad&#x27;s Build From Chests" width="48"></a> | **[Quad's Build From Chests](https://thunderstore.io/c/valheim/p/Quads_Lab/Quads_Build_From_Chests/)**<br>Build with materials from nearby chests |
+| <a href="https://thunderstore.io/c/valheim/p/Quads_Lab/Quads_Ledger_Chest/"><img src="https://raw.githubusercontent.com/HardHeadHackerHead/valheim-mods/main/mods/LedgerChest/thunderstore/icon.png" alt="Quad&#x27;s Ledger Chest" width="48"></a> | **[Quad's Ledger Chest](https://thunderstore.io/c/valheim/p/Quads_Lab/Quads_Ledger_Chest/)**<br>See and search every chest around you |
+| <a href="https://thunderstore.io/c/valheim/p/Quads_Lab/Quads_Ziplines/"><img src="https://raw.githubusercontent.com/HardHeadHackerHead/valheim-mods/main/mods/Ziplines/thunderstore/icon.png" alt="Quad&#x27;s Ziplines" width="48"></a> | **[Quad's Ziplines](https://thunderstore.io/c/valheim/p/Quads_Lab/Quads_Ziplines/)**<br>Zip lines between posts, even kilometres apart |
+| <a href="https://thunderstore.io/c/valheim/p/Quads_Lab/Quads_Portal_Hub/"><img src="https://raw.githubusercontent.com/HardHeadHackerHead/valheim-mods/main/mods/PortalHub/thunderstore/icon.png" alt="Quad&#x27;s Portal Hub" width="48"></a> | **[Quad's Portal Hub](https://thunderstore.io/c/valheim/p/Quads_Lab/Quads_Portal_Hub/)**<br>Pick a portal's destination from a list |
 
 ## 🧩 Other mods
 

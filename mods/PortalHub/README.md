@@ -52,12 +52,12 @@ A portal network: press E on a portal and pick where it goes from a list. No mor
 
 ## 🤝 Goes well with
 
-<a href="https://thunderstore.io/c/valheim/p/Quads_Lab/Quads_Map_Share/"><img src="https://raw.githubusercontent.com/HardHeadHackerHead/valheim-mods/main/mods/MapShare/thunderstore/icon.png" alt="Quad&#x27;s Map Share" title="Quad&#x27;s Map Share" width="72"></a> <a href="https://thunderstore.io/c/valheim/p/Quads_Lab/Quads_Party_HUD/"><img src="https://raw.githubusercontent.com/HardHeadHackerHead/valheim-mods/main/mods/PartyHud/thunderstore/icon.png" alt="Quad&#x27;s Party HUD" title="Quad&#x27;s Party HUD" width="72"></a> <a href="https://thunderstore.io/c/valheim/p/Quads_Lab/Quads_Ziplines/"><img src="https://raw.githubusercontent.com/HardHeadHackerHead/valheim-mods/main/mods/Ziplines/thunderstore/icon.png" alt="Quad&#x27;s Ziplines" title="Quad&#x27;s Ziplines" width="72"></a> <a href="https://thunderstore.io/c/valheim/p/Quads_Lab/Quads_Jet_Skis/"><img src="https://raw.githubusercontent.com/HardHeadHackerHead/valheim-mods/main/mods/JetSkis/thunderstore/icon.png" alt="Quad&#x27;s Jet Skis" title="Quad&#x27;s Jet Skis" width="72"></a>
-
-- **[Quad's Map Share](https://thunderstore.io/c/valheim/p/Quads_Lab/Quads_Map_Share/)**: One shared map for everyone
-- **[Quad's Party HUD](https://thunderstore.io/c/valheim/p/Quads_Lab/Quads_Party_HUD/)**: Health and stamina frames for your party
-- **[Quad's Ziplines](https://thunderstore.io/c/valheim/p/Quads_Lab/Quads_Ziplines/)**: Zip lines between posts, even kilometres apart
-- **[Quad's Jet Skis](https://thunderstore.io/c/valheim/p/Quads_Lab/Quads_Jet_Skis/)**: A fast jet ski for two
+| | |
+|:-:|:--|
+| <a href="https://thunderstore.io/c/valheim/p/Quads_Lab/Quads_Map_Share/"><img src="https://raw.githubusercontent.com/HardHeadHackerHead/valheim-mods/main/mods/MapShare/thunderstore/icon.png" alt="Quad&#x27;s Map Share" width="48"></a> | **[Quad's Map Share](https://thunderstore.io/c/valheim/p/Quads_Lab/Quads_Map_Share/)**<br>One shared map for everyone |
+| <a href="https://thunderstore.io/c/valheim/p/Quads_Lab/Quads_Party_HUD/"><img src="https://raw.githubusercontent.com/HardHeadHackerHead/valheim-mods/main/mods/PartyHud/thunderstore/icon.png" alt="Quad&#x27;s Party HUD" width="48"></a> | **[Quad's Party HUD](https://thunderstore.io/c/valheim/p/Quads_Lab/Quads_Party_HUD/)**<br>Health and stamina frames for your party |
+| <a href="https://thunderstore.io/c/valheim/p/Quads_Lab/Quads_Ziplines/"><img src="https://raw.githubusercontent.com/HardHeadHackerHead/valheim-mods/main/mods/Ziplines/thunderstore/icon.png" alt="Quad&#x27;s Ziplines" width="48"></a> | **[Quad's Ziplines](https://thunderstore.io/c/valheim/p/Quads_Lab/Quads_Ziplines/)**<br>Zip lines between posts, even kilometres apart |
+| <a href="https://thunderstore.io/c/valheim/p/Quads_Lab/Quads_Jet_Skis/"><img src="https://raw.githubusercontent.com/HardHeadHackerHead/valheim-mods/main/mods/JetSkis/thunderstore/icon.png" alt="Quad&#x27;s Jet Skis" width="48"></a> | **[Quad's Jet Skis](https://thunderstore.io/c/valheim/p/Quads_Lab/Quads_Jet_Skis/)**<br>A fast jet ski for two |
 
 ## 🧩 Other mods
 

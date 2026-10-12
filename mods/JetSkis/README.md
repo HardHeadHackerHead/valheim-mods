@@ -79,12 +79,12 @@ Everyone in the world needs it installed.
 
 ## 🤝 Goes well with
 
-<a href="https://thunderstore.io/c/valheim/p/Quads_Lab/Quads_Ziplines/"><img src="https://raw.githubusercontent.com/HardHeadHackerHead/valheim-mods/main/mods/Ziplines/thunderstore/icon.png" alt="Quad&#x27;s Ziplines" title="Quad&#x27;s Ziplines" width="72"></a> <a href="https://thunderstore.io/c/valheim/p/Quads_Lab/Quads_Portal_Hub/"><img src="https://raw.githubusercontent.com/HardHeadHackerHead/valheim-mods/main/mods/PortalHub/thunderstore/icon.png" alt="Quad&#x27;s Portal Hub" title="Quad&#x27;s Portal Hub" width="72"></a> <a href="https://thunderstore.io/c/valheim/p/Quads_Lab/Quads_Parkour/"><img src="https://raw.githubusercontent.com/HardHeadHackerHead/valheim-mods/main/mods/Parkour/thunderstore/icon.png" alt="Quad&#x27;s Parkour" title="Quad&#x27;s Parkour" width="72"></a> <a href="https://thunderstore.io/c/valheim/p/Quads_Lab/Quads_Map_Share/"><img src="https://raw.githubusercontent.com/HardHeadHackerHead/valheim-mods/main/mods/MapShare/thunderstore/icon.png" alt="Quad&#x27;s Map Share" title="Quad&#x27;s Map Share" width="72"></a>
-
-- **[Quad's Ziplines](https://thunderstore.io/c/valheim/p/Quads_Lab/Quads_Ziplines/)**: Zip lines between posts, even kilometres apart
-- **[Quad's Portal Hub](https://thunderstore.io/c/valheim/p/Quads_Lab/Quads_Portal_Hub/)**: Pick a portal's destination from a list
-- **[Quad's Parkour](https://thunderstore.io/c/valheim/p/Quads_Lab/Quads_Parkour/)**: Wall runs, wall jumps, climbing and ledges
-- **[Quad's Map Share](https://thunderstore.io/c/valheim/p/Quads_Lab/Quads_Map_Share/)**: One shared map for everyone
+| | |
+|:-:|:--|
+| <a href="https://thunderstore.io/c/valheim/p/Quads_Lab/Quads_Ziplines/"><img src="https://raw.githubusercontent.com/HardHeadHackerHead/valheim-mods/main/mods/Ziplines/thunderstore/icon.png" alt="Quad&#x27;s Ziplines" width="48"></a> | **[Quad's Ziplines](https://thunderstore.io/c/valheim/p/Quads_Lab/Quads_Ziplines/)**<br>Zip lines between posts, even kilometres apart |
+| <a href="https://thunderstore.io/c/valheim/p/Quads_Lab/Quads_Portal_Hub/"><img src="https://raw.githubusercontent.com/HardHeadHackerHead/valheim-mods/main/mods/PortalHub/thunderstore/icon.png" alt="Quad&#x27;s Portal Hub" width="48"></a> | **[Quad's Portal Hub](https://thunderstore.io/c/valheim/p/Quads_Lab/Quads_Portal_Hub/)**<br>Pick a portal's destination from a list |
+| <a href="https://thunderstore.io/c/valheim/p/Quads_Lab/Quads_Parkour/"><img src="https://raw.githubusercontent.com/HardHeadHackerHead/valheim-mods/main/mods/Parkour/thunderstore/icon.png" alt="Quad&#x27;s Parkour" width="48"></a> | **[Quad's Parkour](https://thunderstore.io/c/valheim/p/Quads_Lab/Quads_Parkour/)**<br>Wall runs, wall jumps, climbing and ledges |
+| <a href="https://thunderstore.io/c/valheim/p/Quads_Lab/Quads_Map_Share/"><img src="https://raw.githubusercontent.com/HardHeadHackerHead/valheim-mods/main/mods/MapShare/thunderstore/icon.png" alt="Quad&#x27;s Map Share" width="48"></a> | **[Quad's Map Share](https://thunderstore.io/c/valheim/p/Quads_Lab/Quads_Map_Share/)**<br>One shared map for everyone |
 
 ## 🧩 Other mods
 

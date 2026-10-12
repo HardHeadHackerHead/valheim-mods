@@ -55,12 +55,12 @@
 
 ## 🤝 Goes well with
 
-<a href="https://thunderstore.io/c/valheim/p/Quads_Lab/Quads_Craft_From_Chests/"><img src="https://raw.githubusercontent.com/HardHeadHackerHead/valheim-mods/main/mods/CraftFromChests/thunderstore/icon.png" alt="Quad&#x27;s Craft From Chests" title="Quad&#x27;s Craft From Chests" width="72"></a> <a href="https://thunderstore.io/c/valheim/p/Quads_Lab/Quads_Build_From_Chests/"><img src="https://raw.githubusercontent.com/HardHeadHackerHead/valheim-mods/main/mods/BuildFromChests/thunderstore/icon.png" alt="Quad&#x27;s Build From Chests" title="Quad&#x27;s Build From Chests" width="72"></a> <a href="https://thunderstore.io/c/valheim/p/Quads_Lab/Quads_Ledger_Chest/"><img src="https://raw.githubusercontent.com/HardHeadHackerHead/valheim-mods/main/mods/LedgerChest/thunderstore/icon.png" alt="Quad&#x27;s Ledger Chest" title="Quad&#x27;s Ledger Chest" width="72"></a> <a href="https://thunderstore.io/c/valheim/p/Quads_Lab/Quads_Quality_Of_Life/"><img src="https://raw.githubusercontent.com/HardHeadHackerHead/valheim-mods/main/mods/QualityOfLife/thunderstore/icon.png" alt="Quad&#x27;s Quality of Life" title="Quad&#x27;s Quality of Life" width="72"></a>
-
-- **[Quad's Craft From Chests](https://thunderstore.io/c/valheim/p/Quads_Lab/Quads_Craft_From_Chests/)**: Craft with materials from nearby chests
-- **[Quad's Build From Chests](https://thunderstore.io/c/valheim/p/Quads_Lab/Quads_Build_From_Chests/)**: Build with materials from nearby chests
-- **[Quad's Ledger Chest](https://thunderstore.io/c/valheim/p/Quads_Lab/Quads_Ledger_Chest/)**: See and search every chest around you
-- **[Quad's Quality of Life](https://thunderstore.io/c/valheim/p/Quads_Lab/Quads_Quality_Of_Life/)**: Sorting, stacking and small conveniences
+| | |
+|:-:|:--|
+| <a href="https://thunderstore.io/c/valheim/p/Quads_Lab/Quads_Craft_From_Chests/"><img src="https://raw.githubusercontent.com/HardHeadHackerHead/valheim-mods/main/mods/CraftFromChests/thunderstore/icon.png" alt="Quad&#x27;s Craft From Chests" width="48"></a> | **[Quad's Craft From Chests](https://thunderstore.io/c/valheim/p/Quads_Lab/Quads_Craft_From_Chests/)**<br>Craft with materials from nearby chests |
+| <a href="https://thunderstore.io/c/valheim/p/Quads_Lab/Quads_Build_From_Chests/"><img src="https://raw.githubusercontent.com/HardHeadHackerHead/valheim-mods/main/mods/BuildFromChests/thunderstore/icon.png" alt="Quad&#x27;s Build From Chests" width="48"></a> | **[Quad's Build From Chests](https://thunderstore.io/c/valheim/p/Quads_Lab/Quads_Build_From_Chests/)**<br>Build with materials from nearby chests |
+| <a href="https://thunderstore.io/c/valheim/p/Quads_Lab/Quads_Ledger_Chest/"><img src="https://raw.githubusercontent.com/HardHeadHackerHead/valheim-mods/main/mods/LedgerChest/thunderstore/icon.png" alt="Quad&#x27;s Ledger Chest" width="48"></a> | **[Quad's Ledger Chest](https://thunderstore.io/c/valheim/p/Quads_Lab/Quads_Ledger_Chest/)**<br>See and search every chest around you |
+| <a href="https://thunderstore.io/c/valheim/p/Quads_Lab/Quads_Quality_Of_Life/"><img src="https://raw.githubusercontent.com/HardHeadHackerHead/valheim-mods/main/mods/QualityOfLife/thunderstore/icon.png" alt="Quad&#x27;s Quality of Life" width="48"></a> | **[Quad's Quality of Life](https://thunderstore.io/c/valheim/p/Quads_Lab/Quads_Quality_Of_Life/)**<br>Sorting, stacking and small conveniences |
 
 ## 🧩 Other mods
 

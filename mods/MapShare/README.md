@@ -40,12 +40,12 @@ Shared map: share the map you uncover with everyone in the world, live, as you e
 
 ## 🤝 Goes well with
 
-<a href="https://thunderstore.io/c/valheim/p/Quads_Lab/Quads_Party_HUD/"><img src="https://raw.githubusercontent.com/HardHeadHackerHead/valheim-mods/main/mods/PartyHud/thunderstore/icon.png" alt="Quad&#x27;s Party HUD" title="Quad&#x27;s Party HUD" width="72"></a> <a href="https://thunderstore.io/c/valheim/p/Quads_Lab/Quads_Portal_Hub/"><img src="https://raw.githubusercontent.com/HardHeadHackerHead/valheim-mods/main/mods/PortalHub/thunderstore/icon.png" alt="Quad&#x27;s Portal Hub" title="Quad&#x27;s Portal Hub" width="72"></a> <a href="https://thunderstore.io/c/valheim/p/Quads_Lab/Quads_Bounty_Board/"><img src="https://raw.githubusercontent.com/HardHeadHackerHead/valheim-mods/main/mods/BountyBoard/thunderstore/icon.png" alt="Quad&#x27;s Bounty Board" title="Quad&#x27;s Bounty Board" width="72"></a> <a href="https://thunderstore.io/c/valheim/p/Quads_Lab/Quads_Jet_Skis/"><img src="https://raw.githubusercontent.com/HardHeadHackerHead/valheim-mods/main/mods/JetSkis/thunderstore/icon.png" alt="Quad&#x27;s Jet Skis" title="Quad&#x27;s Jet Skis" width="72"></a>
-
-- **[Quad's Party HUD](https://thunderstore.io/c/valheim/p/Quads_Lab/Quads_Party_HUD/)**: Health and stamina frames for your party
-- **[Quad's Portal Hub](https://thunderstore.io/c/valheim/p/Quads_Lab/Quads_Portal_Hub/)**: Pick a portal's destination from a list
-- **[Quad's Bounty Board](https://thunderstore.io/c/valheim/p/Quads_Lab/Quads_Bounty_Board/)**: Group bounties and hunting contracts
-- **[Quad's Jet Skis](https://thunderstore.io/c/valheim/p/Quads_Lab/Quads_Jet_Skis/)**: A fast jet ski for two
+| | |
+|:-:|:--|
+| <a href="https://thunderstore.io/c/valheim/p/Quads_Lab/Quads_Party_HUD/"><img src="https://raw.githubusercontent.com/HardHeadHackerHead/valheim-mods/main/mods/PartyHud/thunderstore/icon.png" alt="Quad&#x27;s Party HUD" width="48"></a> | **[Quad's Party HUD](https://thunderstore.io/c/valheim/p/Quads_Lab/Quads_Party_HUD/)**<br>Health and stamina frames for your party |
+| <a href="https://thunderstore.io/c/valheim/p/Quads_Lab/Quads_Portal_Hub/"><img src="https://raw.githubusercontent.com/HardHeadHackerHead/valheim-mods/main/mods/PortalHub/thunderstore/icon.png" alt="Quad&#x27;s Portal Hub" width="48"></a> | **[Quad's Portal Hub](https://thunderstore.io/c/valheim/p/Quads_Lab/Quads_Portal_Hub/)**<br>Pick a portal's destination from a list |
+| <a href="https://thunderstore.io/c/valheim/p/Quads_Lab/Quads_Bounty_Board/"><img src="https://raw.githubusercontent.com/HardHeadHackerHead/valheim-mods/main/mods/BountyBoard/thunderstore/icon.png" alt="Quad&#x27;s Bounty Board" width="48"></a> | **[Quad's Bounty Board](https://thunderstore.io/c/valheim/p/Quads_Lab/Quads_Bounty_Board/)**<br>Group bounties and hunting contracts |
+| <a href="https://thunderstore.io/c/valheim/p/Quads_Lab/Quads_Jet_Skis/"><img src="https://raw.githubusercontent.com/HardHeadHackerHead/valheim-mods/main/mods/JetSkis/thunderstore/icon.png" alt="Quad&#x27;s Jet Skis" width="48"></a> | **[Quad's Jet Skis](https://thunderstore.io/c/valheim/p/Quads_Lab/Quads_Jet_Skis/)**<br>A fast jet ski for two |
 
 ## 🧩 Other mods
 
