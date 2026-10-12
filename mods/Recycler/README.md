@@ -56,10 +56,9 @@ Build a Recycler and turn old weapons, armor and tools back into a share of thei
 - **Adventure Backpacks** (or any mod that refuses to let an item go): a backpack that still holds things gives nothing back, because it never leaves your inventory.
 - **Epic Loot** and other mods that keep data on items: such gear (enchantments, a bag's contents) asks for a second click, because recycling destroys it.
 
-**Works with our mods**
+**Better together**
 
-- [Quad's Quality of Life](https://thunderstore.io/c/valheim/p/Quads_Lab/Quads_Quality_Of_Life/): items locked with L can't be recycled.
-- Our chest mods never treat the Recycler as a storage chest.
+- With [Quad's Quality of Life](https://thunderstore.io/c/valheim/p/Quads_Lab/Quads_Quality_Of_Life/): items locked with L can't be recycled.
 
 Battle idols are never handed back, and levels gained at the upgrader station return nothing.
 <!-- END HAND-WRITTEN: other-mods -->

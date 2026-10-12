@@ -62,10 +62,9 @@
 
 It moves items with the game's own moves, and never lists graves, carts, ships or companions' chests.
 
-**Works with our mods**
+**Better together**
 
-- [Quad's Quality of Life](https://thunderstore.io/c/valheim/p/Quads_Lab/Quads_Quality_Of_Life/): what you put in the Ledger Chest goes on to the chest assigned that item or kind (it works without Quality of Life too).
-- [Quad's Gear Slots](https://thunderstore.io/c/valheim/p/Quads_Lab/Quads_Gear_Slots/): items you take go into your ordinary rows.
+- With [Quad's Quality of Life](https://thunderstore.io/c/valheim/p/Quads_Lab/Quads_Quality_Of_Life/): what you put in the Ledger Chest goes on to the chest assigned that item or kind (it works without Quality of Life too).
 <!-- END HAND-WRITTEN: other-mods -->
 
 Found a clash with another mod? [Tell us](https://github.com/HardHeadHackerHead/valheim-mods/issues/new?template=bug.yml&title=%5BQuad%27s%20Ledger%20Chest%5D%20) which one and what happened.

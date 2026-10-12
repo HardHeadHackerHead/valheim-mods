@@ -77,13 +77,12 @@
 <!-- HAND-WRITTEN: other-mods -->
 **Known clashes:** none known.
 
-**Works with our mods**
+**Better together**
 
-- [Quad's Build Orders](https://thunderstore.io/c/valheim/p/Quads_Lab/Quads_Build_Orders/): a home duty, *Build our plans*: it builds your planned ghosts near its home, paying from its own bag and your chests, never from you.
-- [Quad's Quality of Life](https://thunderstore.io/c/valheim/p/Quads_Lab/Quads_Quality_Of_Life/): what it brings home goes into the right chests by your chest assignments (K).
-- [Quad's Party HUD](https://thunderstore.io/c/valheim/p/Quads_Lab/Quads_Party_HUD/): it shows under you in the party panel (face, health, what it's doing).
-- [Quad's Skal Tavern](https://thunderstore.io/c/valheim/p/Quads_Lab/Quads_Skal_Tavern/): companions within 12 m count as drinking partners for a Skål!
-- Our chest mods ([Quad's Craft From Chests](https://thunderstore.io/c/valheim/p/Quads_Lab/Quads_Craft_From_Chests/), [Quad's Build From Chests](https://thunderstore.io/c/valheim/p/Quads_Lab/Quads_Build_From_Chests/), [Quad's Feed From Chests](https://thunderstore.io/c/valheim/p/Quads_Lab/Quads_Feed_From_Chests/), [Quad's Ledger Chest](https://thunderstore.io/c/valheim/p/Quads_Lab/Quads_Ledger_Chest/)) never take from its bag or its own chests.
+- With [Quad's Build Orders](https://thunderstore.io/c/valheim/p/Quads_Lab/Quads_Build_Orders/): it builds your planned ghosts near its home (a home duty, *Build our plans*), paying from its own bag and your chests, never from you.
+- With [Quad's Quality of Life](https://thunderstore.io/c/valheim/p/Quads_Lab/Quads_Quality_Of_Life/): what it brings home goes into the chests you assigned with K.
+- With [Quad's Party HUD](https://thunderstore.io/c/valheim/p/Quads_Lab/Quads_Party_HUD/): it shows under you in the party panel (face, health, what it's doing).
+- With [Quad's Skal Tavern](https://thunderstore.io/c/valheim/p/Quads_Lab/Quads_Skal_Tavern/): companions within 12 m count as drinking partners for a Skål!
 <!-- END HAND-WRITTEN: other-mods -->
 
 Found a clash with another mod? [Tell us](https://github.com/HardHeadHackerHead/valheim-mods/issues/new?template=bug.yml&title=%5BQuad%27s%20Companion%5D%20) which one and what happened.

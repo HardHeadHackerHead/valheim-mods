@@ -56,9 +56,9 @@ No keys to remember. Drink as you would any drink: use it from the bag or the ho
 <!-- HAND-WRITTEN: other-mods -->
 **Known clashes:** none known.
 
-**Works with our mods**
+**Better together**
 
-- [Quad's Companion](https://thunderstore.io/c/valheim/p/Quads_Lab/Quads_Companion/): companions within 12 m count as drinking partners for a Skål!
+- With [Quad's Companion](https://thunderstore.io/c/valheim/p/Quads_Lab/Quads_Companion/): companions within 12 m count as drinking partners for a Skål!
 <!-- END HAND-WRITTEN: other-mods -->
 
 Found a clash with another mod? [Tell us](https://github.com/HardHeadHackerHead/valheim-mods/issues/new?template=bug.yml&title=%5BQuad%27s%20Skal%20Tavern%5D%20) which one and what happened.

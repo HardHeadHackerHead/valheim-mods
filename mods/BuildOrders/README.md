@@ -88,11 +88,11 @@ Fetching materials: with the hammer out and a piece selected, a hint appears whe
 
 - **Adventure Backpacks** and other backpack mods: building ghosts with E or *Build all* pays from your inventory and nearby chests (with [Quad's Build From Chests](https://thunderstore.io/c/valheim/p/Quads_Lab/Quads_Build_From_Chests/)), not from a backpack.
 
-**Works with our mods**
+**Better together**
 
-- [Quad's Build From Chests](https://thunderstore.io/c/valheim/p/Quads_Lab/Quads_Build_From_Chests/): ghosts are paid from nearby chests, and the fetch key takes one piece's worth out of them.
-- [Quad's Companion](https://thunderstore.io/c/valheim/p/Quads_Lab/Quads_Companion/): a companion can build your plans near its home.
-- [Claude Tools](https://github.com/HardHeadHackerHead/valheim-claude-tools): an AI assistant can design blueprints, place them, photograph and check them.
+- With [Quad's Build From Chests](https://thunderstore.io/c/valheim/p/Quads_Lab/Quads_Build_From_Chests/): ghosts are paid from nearby chests, and the fetch key takes one piece's worth out of them.
+- With [Quad's Companion](https://thunderstore.io/c/valheim/p/Quads_Lab/Quads_Companion/): a companion builds your plans near its home.
+- With [Claude Tools](https://github.com/HardHeadHackerHead/valheim-claude-tools): an AI assistant can design blueprints, place them, photograph and check them.
 - Other mods can add to it through its planning API ([docs/buildorders-api.md](../../docs/buildorders-api.md)).
 <!-- END HAND-WRITTEN: other-mods -->
 

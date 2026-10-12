@@ -67,11 +67,9 @@
 - **ValheimPlus** (`autoDeposit`) and other mods that deliver a station's output: what they already delivered isn't delivered again.
 - **Any mod that already paid** for fuel or ore: it runs after them and does nothing if they did.
 
-**Works with our mods**
+**Better together**
 
-- [Quad's Quality of Life](https://thunderstore.io/c/valheim/p/Quads_Lab/Quads_Quality_Of_Life/): output from smelters, kilns, fermenters, cooking stations, beehives and sap goes to the chests you assigned with K. Without it, only honey and sap go to a chest already holding them; the rest drops as in the game.
-- [Quad's Craft From Chests](https://thunderstore.io/c/valheim/p/Quads_Lab/Quads_Craft_From_Chests/) and [Quad's Build From Chests](https://thunderstore.io/c/valheim/p/Quads_Lab/Quads_Build_From_Chests/): fine together.
-- [Quad's Recycler](https://thunderstore.io/c/valheim/p/Quads_Lab/Quads_Recycler/) and companions' chests ([Quad's Companion](https://thunderstore.io/c/valheim/p/Quads_Lab/Quads_Companion/)) are never used.
+- With [Quad's Quality of Life](https://thunderstore.io/c/valheim/p/Quads_Lab/Quads_Quality_Of_Life/): output from smelters, kilns, fermenters, cooking stations, beehives and sap goes to the chests you assigned with K. Without it, only honey and sap go to a chest already holding them; the rest drops as it always has.
 <!-- END HAND-WRITTEN: other-mods -->
 
 Found a clash with another mod? [Tell us](https://github.com/HardHeadHackerHead/valheim-mods/issues/new?template=bug.yml&title=%5BQuad%27s%20Feed%20From%20Chests%5D%20) which one and what happened.

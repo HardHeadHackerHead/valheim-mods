@@ -69,12 +69,10 @@ Keys are configurable. Q and B work while you are running.
 - **ExtraSlots, Equipment and Quick Slots, AzuExtendedPlayerInventory, Extended Player Inventory, ComfyQuickSlots, BetterArchery** (quiver on): the Sort button turns off while one is installed.
 - **ValheimPlus** extra rows count as ordinary bag rows.
 
-**Works with our mods**
+**Better together**
 
-- Its chest assignments (K) are used by [Quad's Feed From Chests](https://thunderstore.io/c/valheim/p/Quads_Lab/Quads_Feed_From_Chests/), [Quad's Ledger Chest](https://thunderstore.io/c/valheim/p/Quads_Lab/Quads_Ledger_Chest/) and [Quad's Companion](https://thunderstore.io/c/valheim/p/Quads_Lab/Quads_Companion/).
-- [Quad's Gear Slots](https://thunderstore.io/c/valheim/p/Quads_Lab/Quads_Gear_Slots/): Sort and Stack to chests leave the gear slots alone.
-- [Quad's Recycler](https://thunderstore.io/c/valheim/p/Quads_Lab/Quads_Recycler/): items locked with L can't be recycled.
-
+- With [Quad's Feed From Chests](https://thunderstore.io/c/valheim/p/Quads_Lab/Quads_Feed_From_Chests/), [Quad's Ledger Chest](https://thunderstore.io/c/valheim/p/Quads_Lab/Quads_Ledger_Chest/) and [Quad's Companion](https://thunderstore.io/c/valheim/p/Quads_Lab/Quads_Companion/): they use your chest assignments (K).
+- With [Quad's Recycler](https://thunderstore.io/c/valheim/p/Quads_Lab/Quads_Recycler/): items locked with L can't be recycled.
 **Removing it:** a game key it freed (Q, auto-run) stays unbound; set it again in the game's controls.
 <!-- END HAND-WRITTEN: other-mods -->
 

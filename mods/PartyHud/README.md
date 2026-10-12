@@ -59,9 +59,9 @@ A party HUD: health bars, stamina and distance for every player in your group, l
 <!-- HAND-WRITTEN: other-mods -->
 **Known clashes:** none known.
 
-**Works with our mods**
+**Better together**
 
-- [Quad's Companion](https://thunderstore.io/c/valheim/p/Quads_Lab/Quads_Companion/): each player's companion shows under them (health, distance, what it's doing).
+- With [Quad's Companion](https://thunderstore.io/c/valheim/p/Quads_Lab/Quads_Companion/): each player's companion shows under them (health, distance, what it's doing).
 <!-- END HAND-WRITTEN: other-mods -->
 
 Found a clash with another mod? [Tell us](https://github.com/HardHeadHackerHead/valheim-mods/issues/new?template=bug.yml&title=%5BQuad%27s%20Party%20HUD%5D%20) which one and what happened.

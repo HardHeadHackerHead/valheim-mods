@@ -60,13 +60,6 @@ Every key and option is in the settings (the manager's Mod settings tab).
 - **ValheimPlus** (extra inventory rows): works. You keep all of its rows and the gear rows sit below them.
 - **ExtraSlots, Equipment and Quick Slots, AzuExtendedPlayerInventory, Extended Player Inventory, ComfyQuickSlots**: they keep their own slots in the same inventory cells, so the gear slots switch off while one is installed. What was in them moves into your bag, and you're told in chat.
 - **BetterArchery**: the gear slots switch off while its quiver is on.
-
-**Works with our mods**
-
-- [Quad's Quality of Life](https://thunderstore.io/c/valheim/p/Quads_Lab/Quads_Quality_Of_Life/): Sort and Stack to chests leave the gear slots alone.
-- [Quad's Ledger Chest](https://thunderstore.io/c/valheim/p/Quads_Lab/Quads_Ledger_Chest/): items you take go into your ordinary rows.
-- [Quad's Companion](https://thunderstore.io/c/valheim/p/Quads_Lab/Quads_Companion/): what's in your gear slots isn't offered to your companion.
-
 **Removing it:** take everything out of the gear slots first, or the game drops it at your feet the next time you spawn.
 <!-- END HAND-WRITTEN: other-mods -->
 
