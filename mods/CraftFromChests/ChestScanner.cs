@@ -28,7 +28,9 @@ namespace CraftFromChests
 
         internal static void Register(Container c)
         {
-            if (c != null && !c.name.StartsWith("piece_recycler") && !AllContainers.Contains(c)) AllContainers.Add(c); // the Recycler is not a storage chest
+            if (c == null || c.name.StartsWith("piece_recycler")) return; // the Recycler is not a storage chest
+            if (!AllContainers.Contains(c)) AllContainers.Add(c);
+            RegisterRpcs(c);
         }
 
         // ---- are we crafting? (worked out once per frame) ---------------------------------------------
@@ -117,101 +119,152 @@ namespace CraftFromChests
 
         /// <summary>
         /// Someone has this chest open. IsInUse() is only right on the chest's owner; everyone else has to read the flag the owner
-        /// keeps in the chest's save data.
+        /// keeps in the chest's save data. With Multi User Chest several players use a chest at once and the chest's owner decides
+        /// what changes, so an open chest is no reason to leave it out there.
         /// </summary>
         private static bool InUse(Container c)
         {
+            if (OtherChestMods.MultiUserChest) return false;
             if (c.IsInUse()) return true;
             ZNetView nview = NView.GetValue(c) as ZNetView;
             return nview != null && nview.IsValid() && !nview.IsOwner() && nview.GetZDO().GetInt(ZDOVars.s_inUse) == 1;
         }
 
-        // ---- whose chest is it? (multiplayer) ---------------------------------------------------------
+        // ---- paying ------------------------------------------------------------------------------------
+        //
+        // Only the game that owns a chest can change it, so a chest is never taken from its owner. Chests this game owns are paid from
+        // directly. For any other chest the owner is asked to take the items out (RPC "CFC_Take": which item, how many), and answers with
+        // what it really took ("CFC_Took"). Two players crafting from the same chest at once are served one after the other by that
+        // owner, so no item is paid twice, and nobody takes the chest from anybody. What the owners took waits in Prepaid for the
+        // few moments until the craft is paid, and whatever is left over is given back.
 
-        // Only the game that owns a chest can save its contents, so a chest is claimed before it is paid from. But a claim takes a
-        // moment to reach the other games: until it does, the old owner may still pay from its copy, and then both payments come out
-        // of the same items (only one save survives: a free craft). So a chest we claimed is only paid from once it has been ours for
-        // Settle seconds, by when anything the old owner did has reached us. Chests are claimed ahead, as soon as a count asks for
-        // their items (when the crafting window opens), and only count once they are ours, so what you are shown is what can really
-        // be paid. A chest taken from us again (another player crafting from it as well) is left to them for Retry seconds, so two
-        // games don't keep taking it from each other. In single player, and for chests this game has owned all along, nothing changes.
-        private const float Settle = 1f, Retry = 5f, Forget = 10f;
+        private const string TakeRpc = "CFC_Take", TookRpc = "CFC_Took";
+        private const float AnswerWithin = 3f;
 
-        private class Claim { public float At; public float RetryAt = -1f; }
-        // (by the chest's object id as its two numbers: a ZDOID works out its hash from a table the game empties each time you join a
-        // world, so one kept from before you left for the main menu can't be looked up again, and can throw)
-        private static readonly Dictionary<(long, uint), Claim> Claims = new Dictionary<(long, uint), Claim>();
-        private static (long, uint) Id(ZDOID uid) => (uid.UserID, uid.ID);
-        private static float _prunedAt, _refreshAt = -1f;
-
-        /// <summary>Our recent claim on a chest, or null (an old one no longer matters and is forgotten).</summary>
-        private static Claim ClaimOn((long, uint) id, float now)
+        /// <summary>A material to fetch from a chest another game owns.</summary>
+        internal struct Ask
         {
-            if (!Claims.TryGetValue(id, out Claim claim)) return null;
-            if (claim.RetryAt >= 0f ? now < claim.RetryAt : now - claim.At < Forget) return claim;
-            Claims.Remove(id);
-            return null;
+            public Container Chest;
+            public string Name;
+            public int Quality, Amount;
         }
 
-        /// <summary>This chest is ours to change: this game owns it, and didn't claim it only a moment ago.</summary>
-        private static bool Settled(Container c)
+        private class PendingCraft
+        {
+            public int Id, Waiting;
+            public float At;
+            public Player Player;
+            public Recipe Recipe;
+            public ItemDrop.ItemData Upgrade;
+        }
+
+        private static PendingCraft Pending;
+        private static int _nextId;
+        private static float _creditedAt;
+        /// <summary>True while the craft is run again with the fetched materials: it must not fetch a second time.</summary>
+        internal static bool Replaying;
+        /// <summary>A craft is waiting for the chests' owners to answer.</summary>
+        internal static bool Waiting => Pending != null;
+
+        private static readonly Dictionary<(string, int), int> Prepaid = new Dictionary<(string, int), int>();
+
+        private static void RegisterRpcs(Container c)
+        {
+            ZNetView nview = NView.GetValue(c) as ZNetView;
+            if (nview == null || !nview.IsValid()) return;
+            try
+            {
+                nview.Unregister(TakeRpc); // (a hot reload registers again: the old copy's handler goes first)
+                nview.Unregister(TookRpc);
+                nview.Register<ZPackage>(TakeRpc, (sender, pkg) => OnTake(c, nview, sender, pkg));
+                nview.Register<ZPackage>(TookRpc, (sender, pkg) => OnTook(pkg));
+            }
+            catch (Exception e) { Plugin.Log.LogWarning("Could not register the chest messages: " + e.Message); }
+        }
+
+        /// <summary>The chest's owner: take up to the asked amount out of the chest and say what was taken.</summary>
+        private static void OnTake(Container c, ZNetView nview, long sender, ZPackage pkg)
+        {
+            int id = pkg.ReadInt();
+            string name = pkg.ReadString();
+            int quality = pkg.ReadInt();
+            int amount = pkg.ReadInt();
+            bool worldLevel = pkg.ReadBool();
+
+            var took = new Dictionary<int, int>();
+            try
+            {
+                if (c != null && nview.IsValid() && nview.IsOwner() && amount > 0 && IsStorage(c) && !InUse(c))
+                {
+                    Load?.Invoke(c, null); // the latest saved contents
+                    Inventory inv = c.GetInventory();
+                    foreach (ItemDrop.ItemData item in new List<ItemDrop.ItemData>(inv.GetAllItems()))
+                    {
+                        if (amount <= 0) break;
+                        if (item.m_shared.m_name != name || (quality >= 0 && item.m_quality != quality) || (worldLevel && item.m_worldLevel < Game.m_worldLevel)) continue;
+                        int q = item.m_quality, take = Math.Min(item.m_stack, amount);
+                        if (!inv.RemoveItem(item, take)) continue;   // (the chest saves itself when its contents change)
+                        amount -= take;
+                        took[q] = (took.TryGetValue(q, out int n) ? n : 0) + take;
+                    }
+                }
+            }
+            catch (Exception e) { Plugin.Log.LogWarning("Could not take from a chest for another player: " + e.Message); }
+
+            var reply = new ZPackage();
+            reply.Write(id);
+            reply.Write(name);
+            reply.Write(took.Count);
+            foreach (KeyValuePair<int, int> kv in took) { reply.Write(kv.Key); reply.Write(kv.Value); }
+            nview.InvokeRPC(sender, TookRpc, reply);
+        }
+
+        /// <summary>The crafter: an owner has taken (some of) what we asked for.</summary>
+        private static void OnTook(ZPackage pkg)
+        {
+            int id = pkg.ReadInt();
+            string name = pkg.ReadString();
+            int count = pkg.ReadInt();
+            for (int i = 0; i < count; i++)
+            {
+                int quality = pkg.ReadInt(), n = pkg.ReadInt();
+                if (n > 0) Prepaid[(name, quality)] = (Prepaid.TryGetValue((name, quality), out int have) ? have : 0) + n;
+            }
+            _creditedAt = Time.unscaledTime;
+            if (Pending != null && Pending.Id == id) Pending.Waiting--;   // (an answer after we stopped waiting is given back by Tick)
+        }
+
+        private static int PrepaidCount(string name, int quality)
+        {
+            int total = 0;
+            foreach (KeyValuePair<(string, int), int> kv in Prepaid)
+                if (kv.Key.Item1 == name && (quality < 0 || kv.Key.Item2 == quality)) total += kv.Value;
+            return total;
+        }
+
+        /// <summary>Use up to <paramref name="amount"/> of what the owners already took; returns what is still to pay.</summary>
+        private static int UsePrepaid(string name, int amount, int quality)
+        {
+            foreach ((string, int) key in new List<(string, int)>(Prepaid.Keys))
+            {
+                if (amount <= 0) break;
+                if (key.Item1 != name || (quality >= 0 && key.Item2 != quality)) continue;
+                int take = Math.Min(Prepaid[key], amount);
+                amount -= take;
+                if (Prepaid[key] == take) Prepaid.Remove(key); else Prepaid[key] -= take;
+            }
+            return amount;
+        }
+
+        /// <summary>This game owns the chest and can change it now. (A chest nobody owns is taken: there is no one to ask.)</summary>
+        private static bool Owned(Container c)
         {
             ZNetView nview = NView.GetValue(c) as ZNetView;
             if (nview == null || !nview.IsValid()) return false;
-            float now = Time.unscaledTime;
-            Claim claim = ClaimOn(Id(nview.GetZDO().m_uid), now);
-            if (!nview.IsOwner())
-            {
-                if (claim != null && claim.RetryAt < 0f) claim.RetryAt = now + Retry; // another player's game has taken it from us
-                return false;
-            }
-            return claim == null || now - claim.At >= Settle;
-        }
-
-        /// <summary>Ours to pay from now (see <see cref="Settled"/>), with its contents reloaded from the save data first.</summary>
-        private static bool Ready(Container c)
-        {
-            if (!Settled(c)) return false;
-            Load?.Invoke(c, null); // the game's own reload: does nothing if our copy is already the latest
-            return true;
-        }
-
-        /// <summary>Claim a chest another game owns, so that it is ours to pay from in a moment (not one taken from us just now).</summary>
-        private static void Request(Container c)
-        {
-            ZNetView nview = NView.GetValue(c) as ZNetView;
-            if (nview == null || !nview.IsValid() || nview.IsOwner() || InUse(c)) return;
-            float now = Time.unscaledTime;
-            if (now - _prunedAt > 30f)
-            {
-                _prunedAt = now;
-                foreach (var id in new List<(long, uint)>(Claims.Keys)) ClaimOn(id, now);
-            }
-            var uid = Id(nview.GetZDO().m_uid);
-            Claim claim = ClaimOn(uid, now);
-            if (claim != null)
-            {
-                if (claim.RetryAt < 0f) claim.RetryAt = now + Retry; // (taken from us a moment ago: leave it to them for now)
-                return;
-            }
+            if (nview.IsOwner()) return true;
+            if (nview.GetZDO().HasOwner()) return false;
             nview.ClaimOwnership();
-            Claims[uid] = new Claim { At = now };
-            _refreshAt = now + Settle + 0.1f;
-        }
-
-        private static readonly System.Reflection.MethodInfo UpdateCraftingPanel = AccessTools.Method(typeof(InventoryGui), "UpdateCraftingPanel");
-
-        /// <summary>
-        /// Called every frame: once chests claimed for the open crafting window are ours, list the recipes again. (The game decides which
-        /// recipes look affordable only when the window opens; the materials and the Craft button update by themselves.)
-        /// </summary>
-        internal static void RefreshWhenSettled()
-        {
-            if (_refreshAt < 0f || Time.unscaledTime < _refreshAt) return;
-            _refreshAt = -1f;
-            if (UpdateCraftingPanel == null || InventoryGui.instance == null || !InventoryGui.IsVisible() || !CraftingNow()) return;
-            try { UpdateCraftingPanel.Invoke(InventoryGui.instance, new object[] { false }); }
-            catch (Exception e) { Plugin.Log.LogWarning("Could not refresh the recipe list: " + e.Message); }
+            return nview.IsOwner();
         }
 
         // ---- how many of an item the chests hold (remembered within a frame) --------------------------
@@ -221,6 +274,10 @@ namespace CraftFromChests
 
         private static void InvalidateCounts() { _countFrame = -1; }
 
+        /// <summary>
+        /// What the chests in range hold, as every game sees it (a chest another game owns is at most a second old). Whether it can really
+        /// be paid is settled when Craft is pressed, so the numbers shown don't change when someone else crafts from the same chests.
+        /// </summary>
         internal static int CountInChests(string name, int quality, bool matchWorldLevel)
         {
             if (_countFrame != Time.frameCount) { Counts.Clear(); _countFrame = Time.frameCount; }
@@ -229,14 +286,9 @@ namespace CraftFromChests
             int kind = quality * 2 + (matchWorldLevel ? 1 : 0);
             if (byKind.TryGetValue(kind, out int cached)) return cached; // the game asks the same question many times in a frame
 
-            int total = 0;
+            int total = PrepaidCount(name, quality);
             foreach (Container c in GetNearby())
-            {
-                int n = c.GetInventory().CountItems(name, quality, matchWorldLevel);
-                if (n <= 0 || InUse(c)) continue; // (opened since the list was made: it can't pay)
-                if (Settled(c)) total += n;
-                else Request(c); // another game's chest: claimed now, it counts (and pays) once it's ours, a moment from now
-            }
+                if (!InUse(c)) total += c.GetInventory().CountItems(name, quality, matchWorldLevel);
             byKind[kind] = total;
             return total;
         }
@@ -274,10 +326,11 @@ namespace CraftFromChests
         /// <summary>
         /// The game hands over what you craft before it charges for it, so a shortfall found while paying is too late to refuse. So check
         /// first: what the chests must supply (what's needed minus what you carry and what other mods' sources, such as a backpack, will
-        /// pay) must really be in them, counted only in chests that are ours to pay from (<see cref="Settled"/>), each reloaded first
-        /// (another player may have emptied it). Returns the first material that's short, or null when everything is there.
+        /// pay) must really be there: in what the owners already took, in chests this game owns (each reloaded first, another player may
+        /// have emptied it), or in chests another game owns, which are listed in <paramref name="asks"/> to be asked for. Returns the
+        /// first material that's short, or null when everything can be had.
         /// </summary>
-        internal static string FindShortfall(Inventory inv, List<Need> needs)
+        internal static string FindShortfall(Inventory inv, List<Need> needs, List<Ask> asks)
         {
             foreach (Need need in needs)
             {
@@ -288,15 +341,24 @@ namespace CraftFromChests
                 int fromChests = need.Amount - others;
                 if (fromChests <= 0) continue;
 
-                int found = 0;
-                foreach (Container c in GetNearby())
+                int found = PrepaidCount(need.Name, need.Quality);
+                foreach (Container c in GetNearby())   // chests this game owns first: no asking
                 {
                     if (found >= fromChests) break;
-                    if (c == null || InUse(c)) continue;
-                    Inventory chest = c.GetInventory();
-                    if (chest.CountItems(need.Name, need.Quality, true) <= 0) continue;
-                    if (!Ready(c)) { Request(c); continue; } // not ours yet: it can't pay this time
-                    found += chest.CountItems(need.Name, need.Quality, true); // counted again: the reload may have changed it
+                    if (c == null || InUse(c) || c.GetInventory().CountItems(need.Name, need.Quality, true) <= 0) continue;
+                    if (!Owned(c)) continue;
+                    Load?.Invoke(c, null);
+                    found += c.GetInventory().CountItems(need.Name, need.Quality, true); // counted after the reload
+                }
+                foreach (Container c in GetNearby())   // then the others', through their owners
+                {
+                    if (found >= fromChests) break;
+                    if (c == null || InUse(c) || Owned(c)) continue;
+                    int n = c.GetInventory().CountItems(need.Name, need.Quality, true);
+                    if (n <= 0) continue;
+                    int want = Math.Min(n, fromChests - found);
+                    asks.Add(new Ask { Chest = c, Name = need.Name, Quality = need.Quality, Amount = want });
+                    found += want;
                 }
                 InvalidateCounts();
                 if (found < fromChests) return need.Name;
@@ -304,27 +366,121 @@ namespace CraftFromChests
             return null;
         }
 
+        /// <summary>Ask the owners of these chests for their items. The craft is run again by <see cref="Tick"/> when they have answered.</summary>
+        internal static void Fetch(List<Ask> asks, Player player, Recipe recipe, ItemDrop.ItemData upgrade)
+        {
+            var pending = new PendingCraft { Id = ++_nextId, At = Time.unscaledTime, Player = player, Recipe = recipe, Upgrade = upgrade };
+            foreach (Ask ask in asks)
+            {
+                ZNetView nview = NView.GetValue(ask.Chest) as ZNetView;
+                if (nview == null || !nview.IsValid()) continue;
+                var pkg = new ZPackage();
+                pkg.Write(pending.Id);
+                pkg.Write(ask.Name);
+                pkg.Write(ask.Quality);
+                pkg.Write(ask.Amount);
+                pkg.Write(true);
+                nview.InvokeRPC(nview.GetZDO().GetOwner(), TakeRpc, pkg);
+                pending.Waiting++;
+            }
+            Pending = pending;
+        }
+
+        private static readonly System.Reflection.MethodInfo DoCrafting = AccessTools.Method(typeof(InventoryGui), "DoCrafting");
+        private static readonly AccessTools.FieldRef<InventoryGui, Recipe> CraftRecipe = AccessTools.FieldRefAccess<InventoryGui, Recipe>("m_craftRecipe");
+        private static readonly AccessTools.FieldRef<InventoryGui, ItemDrop.ItemData> CraftUpgrade = AccessTools.FieldRefAccess<InventoryGui, ItemDrop.ItemData>("m_craftUpgradeItem");
+
+        /// <summary>
+        /// Called every frame. Once the owners have answered (or three seconds have gone by) the craft is run again, now with the
+        /// materials in hand; what is left over afterwards, or what came too late, is given back.
+        /// </summary>
+        internal static void Tick()
+        {
+            PendingCraft p = Pending;
+            if (p == null)
+            {
+                if (Prepaid.Count > 0 && Time.unscaledTime - _creditedAt > 0.5f) GiveBack();
+                return;
+            }
+            bool answered = p.Waiting <= 0;
+            if (!answered && Time.unscaledTime - p.At < AnswerWithin) return;
+            Pending = null;
+
+            InventoryGui gui = InventoryGui.instance;
+            bool same = gui != null && InventoryGui.IsVisible() && p.Player != null && p.Player == Player.m_localPlayer
+                        && CraftRecipe(gui) == p.Recipe && CraftUpgrade(gui) == p.Upgrade;
+            if (!same || DoCrafting == null) { GiveBack(); return; }   // (the window was closed or the recipe changed meanwhile)
+
+            Replaying = true;
+            try { DoCrafting.Invoke(gui, new object[] { p.Player }); }
+            catch (Exception e) { Plugin.Log.LogWarning("Crafting from chests: " + e.Message); }
+            finally { Replaying = false; GiveBack(); }
+        }
+
+        private static Dictionary<string, GameObject> _prefabs;
+
+        private static GameObject PrefabOf(string name)
+        {
+            if (_prefabs == null && ObjectDB.instance != null)
+            {
+                _prefabs = new Dictionary<string, GameObject>();
+                foreach (GameObject go in ObjectDB.instance.m_items)
+                {
+                    ItemDrop drop = go != null ? go.GetComponent<ItemDrop>() : null;
+                    if (drop != null && !_prefabs.ContainsKey(drop.m_itemData.m_shared.m_name)) _prefabs[drop.m_itemData.m_shared.m_name] = go;
+                }
+            }
+            return _prefabs != null && _prefabs.TryGetValue(name, out GameObject prefab) ? prefab : null;
+        }
+
+        /// <summary>Hand back what the owners took and the craft did not use: into the inventory, or on the ground if it is full.</summary>
+        private static void GiveBack()
+        {
+            if (Prepaid.Count == 0) return;
+            Player player = Player.m_localPlayer;
+            foreach (KeyValuePair<(string, int), int> kv in new List<KeyValuePair<(string, int), int>>(Prepaid))
+            {
+                GameObject prefab = PrefabOf(kv.Key.Item1);
+                ItemDrop drop = prefab != null ? prefab.GetComponent<ItemDrop>() : null;
+                if (player == null || drop == null) { Plugin.Log.LogWarning($"Could not give back {kv.Value} {kv.Key.Item1} taken from a chest"); continue; }
+                int left = kv.Value, max = Mathf.Max(1, drop.m_itemData.m_shared.m_maxStackSize);
+                while (left > 0)
+                {
+                    int stack = Math.Min(left, max);
+                    left -= stack;
+                    if (player.GetInventory().AddItem(prefab.name, stack, kv.Key.Item2, 0, 0L, "", false, true) != null) continue;
+                    ItemDrop.ItemData item = drop.m_itemData.Clone();
+                    item.m_quality = kv.Key.Item2;
+                    ItemDrop.DropItem(item, stack, player.transform.position + player.transform.forward + Vector3.up, Quaternion.identity);
+                }
+            }
+            Prepaid.Clear();
+            InvalidateCounts();
+        }
+
         /// <summary>An item of this kind in a chest in range (for the game to read its name and quality from), or null.</summary>
         internal static ItemDrop.ItemData FindInChests(string name, int quality)
         {
             foreach (Container c in GetNearby())
             {
-                ItemDrop.ItemData item = c != null && Settled(c) ? c.GetInventory().GetItem(name, quality) : null;
+                ItemDrop.ItemData item = c != null ? c.GetInventory().GetItem(name, quality) : null;
                 if (item != null) return item;
             }
             return null;
         }
 
-        /// <summary>Remove up to <paramref name="amount"/> of an item from nearby chests; returns how many were left unfound.</summary>
+        /// <summary>Pay up to <paramref name="amount"/> of an item from what the owners took, then from the chests this game owns; returns how many were left unfound.</summary>
         internal static int RemoveFromChests(string name, int amount, int quality, bool matchWorldLevel)
         {
+            amount = UsePrepaid(name, amount, quality);
             foreach (Container c in GetNearby())
             {
                 if (amount <= 0) break;
                 if (c == null || InUse(c)) continue; // someone opened it since we last looked
                 Inventory inv = c.GetInventory();
                 if (inv.CountItems(name, quality, matchWorldLevel) <= 0) continue;
-                if (!Ready(c)) { Request(c); continue; } // only chests that are ours to pay from
+                if (!Owned(c)) continue;             // another game's chest: asked for before (Fetch), never taken
+                Load?.Invoke(c, null);
                 int take = Math.Min(inv.CountItems(name, quality, matchWorldLevel), amount); // counted again: the reload may have changed it
                 if (take <= 0) continue;
 

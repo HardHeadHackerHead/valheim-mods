@@ -27,6 +27,9 @@ namespace CraftFromChests
         };
         private const string ValheimPlus = "org.bepinex.plugins.valheim_plus";
 
+        /// <summary>Multi User Chest (several players in one chest) is installed.</summary>
+        internal static bool MultiUserChest => Chainloader.PluginInfos.ContainsKey("com.maxsch.valheim.MultiUserChest");
+
         private static bool _looked;
         private static string _always;              // a mod that crafts from chests whenever it is installed
         private static PropertyInfo _vpCurrent, _vpSection, _vpEnabled; // ValheimPlus: Configuration.Current.CraftFromChest.IsEnabled (off by default)

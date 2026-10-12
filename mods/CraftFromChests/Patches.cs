@@ -63,6 +63,7 @@ namespace CraftFromChests
         {
             __state = ChestScanner.Consuming;
             if (!__runOriginal) return false; // another mod already said no
+            if (ChestScanner.Waiting && !ChestScanner.Replaying) return false; // (still waiting for a chest's owner: this craft is run again when it answers)
             if (player == null || ___m_craftRecipe == null || !ChestScanner.Applies(player.GetInventory())) return true;
             if (player.NoCostCheat() || ZoneSystem.instance.GetGlobalKey(GlobalKeys.NoCraftCost)) return true; // nothing will be charged
 
@@ -90,7 +91,18 @@ namespace CraftFromChests
                 }
             }
 
-            string missing = ChestScanner.FindShortfall(player.GetInventory(), needs);
+            var asks = new List<ChestScanner.Ask>();
+            string missing = ChestScanner.FindShortfall(player.GetInventory(), needs, asks);
+            if (missing == null && asks.Count > 0)
+            {
+                if (!ChestScanner.Replaying)
+                {
+                    // Some of it is in chests another player's game owns: ask the owners to take it out, then run this craft again.
+                    ChestScanner.Fetch(asks, player, ___m_craftRecipe, ___m_craftUpgradeItem);
+                    return false;
+                }
+                missing = asks[0].Name; // (run again, and an owner gave less than it had: someone else took it first)
+            }
             if (missing != null)
             {
                 player.Message(MessageHud.MessageType.Center, T("craftfromchests_short", Localization.instance.Localize(missing)));
