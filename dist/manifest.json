@@ -177,6 +177,22 @@
                              ]
                  },
                  {
+                     "guid":  "com.quad.fourwheelers",
+                     "name":  "FourWheelers",
+                     "version":  "0.1.0",
+                     "description":  "A four wheeler for Valheim: a rugged all-terrain quad for you and a friend, driven by a surtling core\u0027s fire. Fast over meadows and hills, with headlights for the night, a rack for your gear and colours to choose from.\n\nRiding it\n- Build it with the hammer on dry land, near a workbench: 10 Fine Wood, 10 Iron, 2 Surtling Cores and 8 Leather Scraps.\n- Press E on its seat and you climb on and take the handlebars.\n- Hold W to go, Shift+W for full speed, S to brake (and back up once stopped); let go and it coasts to a stop. A and D steer.\n- It steers like a car: a tight circle at a crawl, a wide one at speed, and it holds its line in a turn instead of sliding.\n- Its springs soak up bumps and it stays on the ground over rough country. Deep water stalls it and it floats.\n- Jump or E gets you off. Leave it on a slope and it stays where you left it. If it ends up on its side, E on it stands it back on its wheels.\n- Run into an enemy at speed and it takes blunt damage (more the faster you go: 90 at 12 m/s, 250 at full speed) and is knocked away, and you lose a little speed. Players and tamed animals are never hurt.\n- A gauge at the bottom right shows your speed and what you are asking for, as on the Jet Ski.\n- The hammer takes it apart again (not while someone is on it).\n\nRoom for two, and their things\n- A passenger seat behind the rider (E on the back of the seat).\n- A rack at the back holds 8 stacks: E on it. If the four wheeler breaks, what is in it drops in a cargo crate.\n\nThe look and the sound\n- Sculpted red bodywork with cream rally stripes and curved fenders, a chrome tube bumper and racks front and back, A-arm suspension with coil-over shocks, a finned engine and chrome exhaust, floorboards, a long leather seat, mirrors and handlebars that turn as you steer, and fat chevron-tread tyres on silver rims.\n- Two headlights and two tail lights: they come on at night (and in caves) while someone rides it, and the tail lights glow brighter when you brake.\n- Paint it: E on the hood gives the next colour (red, blue, green, yellow, black, cream, orange). Everyone sees it.\n- A one-cylinder engine that climbs through four gears as you speed up, tyre squeal in hard corners, a thump and a burst of dust when you land a jump, the sound of tyres on the ground, and dust kicked up from each wheel, coloured to the ground you are on: brown earth, pale sand on the plains, white snow in the mountains, grey ash.\n\nSettings: cruise and full speed, reverse speed, acceleration, coasting, turn rate, grip and cost are the server\u0027s in multiplayer; the controls hint and the engine\u0027s volume are each player\u0027s own.\nEveryone in the world needs it installed.",
+                     "notes":  "0.1.0: First release: a four wheeler built with the hammer on dry land. W go, Shift+W full speed, S brake and reverse, A and D steer, E on the seat to climb on, Jump or E to get off. Springs on each wheel, a turning circle that opens up with speed (it holds its line, it doesn\u0027t slide), a passenger seat, a rack that holds 8 stacks, headlights and tail lights at night, a gauge at the bottom right, an engine sound, tyre sound and dust coloured to the ground, paint (E on the hood), and E on a flipped one stands it back on its wheels. In your language: Russian, German, Chinese, Portuguese, Spanish, French, Polish and Turkish (translated by AI; corrections welcome).",
+                     "restart":  "",
+                     "cover":  "FourWheelers.cover.png",
+                     "files":  [
+                                   "FourWheelers.dll",
+                                   "FourWheelers.pdb"
+                               ],
+                     "was":  [
+
+                             ]
+                 },
+                 {
                      "guid":  "com.quad.gearslots",
                      "name":  "GearSlots",
                      "version":  "1.3.1",
@@ -238,6 +254,22 @@
                                ],
                      "was":  [
                                  "com.dhack.mapshare"
+                             ]
+                 },
+                 {
+                     "guid":  "com.quad.mountainbikes",
+                     "name":  "MountainBikes",
+                     "version":  "0.1.0",
+                     "description":  "A mountain bike for Valheim: a sturdy trail bike that you pedal yourself. It tires you out like running does, needs no fuel and goes where a walker would crawl, with a headlamp for the night and colours to choose from.\n\nRiding it\n- Build it with the hammer on dry land, near a workbench: 6 Fine Wood, 4 Bronze, 4 Leather Scraps and 6 Resin.\n- Press E on its saddle and you climb on.\n- Hold W to pedal, Shift+W to sprint (it costs stamina, three times as much as pedalling); out of breath you drop to a walking pace. Coasting and braking are free, so downhill is a rest. S brakes (and backs up once stopped). A and D steer.\n- It leans into corners and holds its line: sharp at a crawl, a wide arc at speed, no sliding through the turns.\n- It stands up by itself when you leave it, and if it ends up on its side, E on it stands it back on its wheels.\n- Jump or E gets you off. Ride into an enemy and it takes a little damage and is knocked away. The hammer takes it apart again (not while someone is on it). A gauge at the bottom right shows your speed and whether you are pedalling, sprinting or braking.\n\nThe look and the sound\n- A trail bike with a green sloping-top-tube frame, a suspension fork with chrome stanchions and white lowers, disc brakes, spoked wheels with knobbly tyres, a slim saddle, chain ring, chain, cassette and derailleur, a bottle and a kickstand that tucks up when you ride. The handlebars turn as you steer and the pedals go round as you pedal.\n- A small headlamp and a red tail reflector: the lamp comes on at night (and in caves) while someone rides it, and the tail light glows brighter when you brake.\n- Paint it: E on the frame in front of the saddle gives the next colour (green, red, blue, orange, black, cream, purple). Everyone sees it.\n- Hard cornering squeals the tyres, a landing after a jump thumps and kicks up dust, plus the sound of the tyres on the ground and a puff of dust off each wheel, coloured to the ground you are on: brown earth, pale sand on the plains, white snow in the mountains, grey ash.\n\nSettings: cruise and sprint speed, reverse speed, acceleration, coasting, turn rate, grip, how tiring pedalling is and cost are the server\u0027s in multiplayer; the controls hint is each player\u0027s own.\nEveryone in the world needs it installed.",
+                     "notes":  "0.1.0: First release: a mountain bike built with the hammer on dry land. W pedal, Shift+W sprint (both cost stamina; coasting and braking are free), S brake and back up, A and D steer, E on the saddle to climb on, Jump or E to get off. It leans into corners, holds its line (no sliding), stands up by itself when parked, and E on a flipped one stands it back on its wheels. Handlebars that turn and pedals that go round, a headlamp and tail light at night, a gauge at the bottom right, tyre sound, dust coloured to the ground, and paint (E on the frame). In your language: Russian, German, Chinese, Portuguese, Spanish, French, Polish and Turkish (translated by AI; corrections welcome).",
+                     "restart":  "",
+                     "cover":  "MountainBikes.cover.png",
+                     "files":  [
+                                   "MountainBikes.dll",
+                                   "MountainBikes.pdb"
+                               ],
+                     "was":  [
+
                              ]
                  },
                  {
