@@ -70,7 +70,7 @@ namespace FourWheelers
 
             // what you bump into, and what you look at to climb on
             VehicleKit.Box(root, "hull", new Vector3(0f, 0.62f, -0.05f), new Vector3(0.8f, 0.4f, 1.8f), layer);
-            VehicleKit.Box(root, "use", new Vector3(0f, 0.7f, -0.4f), new Vector3(1.1f, 0.9f, 1.4f), handles);
+            VehicleKit.Box(root, "use", new Vector3(0f, 0.7f, -0.03f), new Vector3(1.1f, 0.9f, 0.6f), handles);   // (the rider's seat only: the passenger's and the rack's boxes sit behind it, not inside it)
             VehicleKit.Box(root, "paintspot", new Vector3(0f, 0.8f, 0.62f), new Vector3(0.7f, 0.4f, 0.7f), handles).gameObject.AddComponent<VehiclePaintSpot>();   // (E on the hood: the next colour)
 
             // the look (it never stops the piece being registered: without it, the host would delete the four wheelers in the world)
@@ -83,8 +83,8 @@ namespace FourWheelers
             var back = new GameObject("passengerseat") { layer = handles };
             back.transform.SetParent(root, false);
             var backBox = back.AddComponent<BoxCollider>();
-            backBox.center = Model.PassengerPoint + new Vector3(0f, 0.4f, 0f);
-            backBox.size = new Vector3(0.6f, 0.5f, 0.55f);
+            backBox.center = new Vector3(0f, 0.9f, -0.55f);
+            backBox.size = new Vector3(0.8f, 0.55f, 0.4f);
             Chair chair = back.AddComponent<Chair>();
             chair.m_name = "$fourwheelers_passenger";
             chair.m_useDistance = 3.5f;
@@ -97,8 +97,8 @@ namespace FourWheelers
             var rack = new GameObject("rack") { layer = handles };
             rack.transform.SetParent(root, false);
             var rackBox = rack.AddComponent<BoxCollider>();
-            rackBox.center = new Vector3(0f, 1.0f, -0.82f);
-            rackBox.size = new Vector3(0.7f, 0.3f, 0.45f);
+            rackBox.center = new Vector3(0f, 1.0f, -0.9f);
+            rackBox.size = new Vector3(0.7f, 0.3f, 0.3f);
             Container hold = rack.AddComponent<Container>();
             hold.m_name = "$fourwheelers_bags";
             hold.m_width = 4;

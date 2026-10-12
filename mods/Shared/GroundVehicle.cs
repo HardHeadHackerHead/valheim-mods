@@ -21,6 +21,8 @@ namespace DHack.Shared
         public float Upright = 1.5f;            // how hard it rights itself (a bike needs a lot, a four wheeler a little)
         public string RideKey, TooFarKey, TooHeavyKey, PassengerKey;   // "$mymod_ride" ...
         public float UseRange = 3.5f;
+        public Dictionary<string, float> Pose;   // the rider's pose numbers (VehicleRider.cs): lean, head, kneeOut ... (null: its defaults)
+        public string Command;                  // the Claude Tools test command's name (VehicleTools.cs): "atv", "bike"
         public Func<float> RamDamage;           // blunt damage to an enemy it runs over, for each m/s over 3 (null or 0: none)
         public Vector3 RamCenter, RamSize;      // the box in front of it that hits (in its own space)
         public float MinRadius = 4f;            // its tightest turning circle (metres); wider at speed
@@ -53,6 +55,7 @@ namespace DHack.Shared
     internal class GroundVehicle : MonoBehaviour, Interactable, Hoverable, IDoodadController
     {
         internal static VehicleSpec Spec;   // (this mod's private copy of the class: one spec each)
+        internal static string AttachAnimation = "attach_chair";   // the game's seat animation the rider sits in (the pose goes on top: VehicleRider.cs)
 
         private static readonly List<GroundVehicle> All = new List<GroundVehicle>();
         internal static IEnumerable<GroundVehicle> Loaded => All;
@@ -82,6 +85,72 @@ namespace DHack.Shared
         private float _wheelsOnGround;
 
         internal float Speed { get; private set; }
+        internal float Steer => _steerShown;                      // -1 to 1, as drawn (every game)
+        internal Transform Seat => _seat;                         // where the rider sits
+        internal Transform PassengerSeat => _passenger;           // and the passenger (null: none)
+        internal Transform PoseFrame => _lean != null ? _lean : transform;   // the part that leans: the pose is measured in it
+        internal Rigidbody Body => _body;
+
+        private readonly Dictionary<string, Transform> _markers = new Dictionary<string, Transform>();
+
+        /// <summary>A named spot in the model (grip_l, foot_r, pgrip_l...: where hands and feet go), or null.</summary>
+        internal Transform Marker(string name)
+        {
+            if (!_markers.TryGetValue(name, out Transform t) || t == null) _markers[name] = t = FindDeep(transform, name);
+            return t;
+        }
+
+        /// <summary>Who sits at the controls now (anyone's game can tell: the rider is in its saved data), or null.</summary>
+        internal Player RiderNow()
+        {
+            if (_seat == null || !_nview.IsValid()) return null;
+            long user = GetUser();
+            if (user == 0L) return null;
+            foreach (Player p in Player.GetAllPlayers())
+                if (p != null && p.GetZDOID().UserID == user)
+                {
+                    if (p == Player.m_localPlayer) return p.IsAttached() && Vector3.Distance(p.transform.position, _seat.position) < 1f ? p : null;
+                    return Vector3.Distance(p.transform.position, _seat.position) < 6f ? p : null;   // (another game's: their place arrives late)
+                }
+            return null;
+        }
+
+        internal string PassengerMarkKey => Spec.Id + "_passenger";
+
+        /// <summary>
+        /// Who sits behind the rider now, or null. This game's player: attached next to the passenger seat. Another game's: marked so on
+        /// their own data by their game (VehicleRider.MarkLocal), as their body's place reaches this game late and lags behind a moving vehicle.
+        /// </summary>
+        internal Player PassengerNow()
+        {
+            if (_passenger == null || !_nview.IsValid()) return null;
+            long mine = VehicleId;
+            if (mine == 0L) return null;
+            foreach (Player p in Player.GetAllPlayers())
+            {
+                if (p == null) continue;
+                if (p == Player.m_localPlayer)
+                {
+                    if (p.IsAttached() && Vector3.Distance(p.transform.position, _passenger.position) < 0.35f) return p;
+                    continue;
+                }
+                ZDO zdo = p.GetComponent<ZNetView>()?.GetZDO();
+                if (zdo != null && zdo.GetLong(PassengerMarkKey, 0L) == mine && Vector3.Distance(p.transform.position, _passenger.position) < 6f) return p;
+            }
+            return null;
+        }
+
+        /// <summary>
+        /// This vehicle's own random id (saved on it by its owner's game the first time: 0 until then), for the passenger mark on a player's own
+        /// data. Never a ZDOID: the game numbers those again every time the world loads.
+        /// </summary>
+        internal long VehicleId => _nview.IsValid() ? _nview.GetZDO().GetLong(Spec.Id + "_vid", 0L) : 0L;
+
+        private void EnsureId()
+        {
+            if (_nview.IsOwner() && _nview.GetZDO().GetLong(Spec.Id + "_vid", 0L) == 0L)
+                _nview.GetZDO().Set(Spec.Id + "_vid", (UnityEngine.Random.Range(1, int.MaxValue) * 4294967296L) | (long)UnityEngine.Random.Range(1, int.MaxValue));
+        }
         internal float Lean { get; private set; }   // degrees it leans into the turn now
         internal float WheelsOnGround => _wheelsOnGround;
 
@@ -256,11 +325,18 @@ namespace DHack.Shared
                 if (PrivateArea.CheckAccess(transform.position)) _nview.InvokeRPC(_rpcRight);
                 return true;
             }
-            if (player.IsEncumbered()) { player.Message(MessageHud.MessageType.Center, Spec.TooHeavyKey); return false; }
-            if (Vector3.Distance(player.transform.position, _seat.position) > Spec.UseRange) { player.Message(MessageHud.MessageType.Center, Spec.TooFarKey); return false; }
-            if (!PrivateArea.CheckAccess(transform.position)) return true;   // (someone else's ward: the game says so)
-            _nview.InvokeRPC(_rpcRequest, player.GetZDOID().UserID);
+            Mount(player, false);
             return true;
+        }
+
+        /// <summary>Climb on (what E does): <paramref name="anyDistance"/> skips the reach check (for the test command).</summary>
+        internal void Mount(Player player, bool anyDistance)
+        {
+            if (player == null || player.IsAttached() || !_nview.IsValid()) return;
+            if (player.IsEncumbered()) { player.Message(MessageHud.MessageType.Center, Spec.TooHeavyKey); return; }
+            if (!anyDistance && Vector3.Distance(player.transform.position, _seat.position) > Spec.UseRange) { player.Message(MessageHud.MessageType.Center, Spec.TooFarKey); return; }
+            if (!PrivateArea.CheckAccess(transform.position)) return;   // (someone else's ward: the game says so)
+            _nview.InvokeRPC(_rpcRequest, player.GetZDOID().UserID);
         }
 
         /// <summary>The owner's game: the rider is free to take it, or already the rider. The owner hands the vehicle (its physics) to them.</summary>
@@ -301,7 +377,7 @@ namespace DHack.Shared
             if (Player.m_localPlayer == null) return;
             if (!granted) { Player.m_localPlayer.Message(MessageHud.MessageType.Center, "$msg_inuse"); return; }
             Player.m_localPlayer.StartDoodadControl(this);
-            Player.m_localPlayer.AttachStart(_seat, null, hideWeapons: true, isBed: false, onShip: false, "attach_chair", new Vector3(0f, 0.5f, 0f));
+            Player.m_localPlayer.AttachStart(_seat, null, hideWeapons: true, isBed: false, onShip: false, AttachAnimation, new Vector3(0f, 0.5f, 0f));
             if (!_helped && Spec.HelpKey != null && (Spec.ShowHelp == null || Spec.ShowHelp()))
             {
                 _helped = true;
@@ -569,6 +645,7 @@ namespace DHack.Shared
         {
             float dt = Time.deltaTime;
             if (dt <= 0f || !_nview.IsValid()) return;
+            EnsureId();
             Vector3 pos = transform.position;
             _velocity = Vector3.Lerp(_velocity, (pos - _lastPos) / dt, Mathf.Clamp01(dt * 6f));
             _lastPos = pos;

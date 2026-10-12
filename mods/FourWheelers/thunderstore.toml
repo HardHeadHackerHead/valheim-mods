@@ -6,7 +6,7 @@ schemaVersion = "0.0.1"
 [package]
 namespace = "Quads_Lab"
 name = "Quads_Four_Wheelers"
-versionNumber = "0.1.0"
+versionNumber = "0.1.1"
 description = "Four wheeler (ATV, quad bike) for a rider and a passenger: a fast all-terrain vehicle driven by a surtling core. Springs, headlights, tail lights, rack storage, paint colours, engine sound and dust. Built with the hammer."
 websiteUrl = "https://github.com/HardHeadHackerHead/valheim-mods/tree/main/mods/FourWheelers"
 containsNsfwContent = false

@@ -23,7 +23,7 @@ namespace FourWheelers
     {
         public const string Guid = "com.quad.fourwheelers";
         public const string Name = "FourWheelers";
-        public const string Version = "0.1.0";
+        public const string Version = "0.1.1";
 
         internal static Plugin Instance;
         internal static ManualLogSource Log;
@@ -78,12 +78,14 @@ namespace FourWheelers
                 Upright = 1.2f,
                 RamDamage = () => RamDamage.Value, RamCenter = new Vector3(0f, 0.65f, 0.95f), RamSize = new Vector3(1.6f, 1.1f, 1.3f),
                 MinRadius = 3.6f, LateralAccel = 15f, Engine = true, EngineVolume = () => EngineVolume.Value,
+                Pose = new System.Collections.Generic.Dictionary<string, float> { { "lean", 22f }, { "head", 14f }, { "kneeOut", 0.55f }, { "steerLean", 6f } }, Command = "atv",
                 RideKey = "$fourwheelers_ride", TooFarKey = "$fourwheelers_too_far", TooHeavyKey = "$fourwheelers_too_heavy", PassengerKey = "$fourwheelers_passenger",
                 HelpKey = "$fourwheelers_help", ShowHelp = () => Help.Value,
                 PaintKey = "$fourwheelers_paint", RightKey = "$fourwheelers_right", DustSize = 1f,
                 Paints = new[] { new Color(0.66f, 0.10f, 0.08f), new Color(0.15f, 0.3f, 0.65f), new Color(0.18f, 0.5f, 0.25f), new Color(0.85f, 0.65f, 0.1f), new Color(0.08f, 0.08f, 0.09f), new Color(0.9f, 0.88f, 0.8f), new Color(0.85f, 0.4f, 0.1f) },
             };
 
+            VehicleRider.Init(GroundVehicle.Spec);
             _harmony = new Harmony(Guid);
             _harmony.PatchAll(typeof(Plugin).Assembly);
             Things.Register(); // a hot reload while in a world
@@ -94,6 +96,7 @@ namespace FourWheelers
         {
             Synced?.Update();
             VehicleHud.Tick();
+            VehicleTools.Update(Name);
             if (_tellNoServer && Player.m_localPlayer != null)
             {
                 _tellNoServer = false;
@@ -101,8 +104,12 @@ namespace FourWheelers
             }
         }
 
+        private void LateUpdate() => VehicleRider.Late();   // (after the animation: the riders' pose on top of it)
+
         private void OnDestroy()
         {
+            VehicleRider.Reset();
+            VehicleTools.Unregister();
             _harmony?.UnpatchSelf();
             VehicleHud.Destroy();
             Things.Unregister();

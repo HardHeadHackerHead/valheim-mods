@@ -22,7 +22,7 @@ namespace MountainBikes
             new Vector3(0f, 0.36f, 0.62f),    // front (steered)
             new Vector3(0f, 0.36f, -0.62f),   // back
         };
-        internal static readonly Vector3 SeatPoint = new Vector3(0f, 0.51f, -0.24f);   // the rider's feet-level origin: the seat animation lifts the hips about 0.5 above it, onto the saddle
+        internal static readonly Vector3 SeatPoint = new Vector3(0f, 0.51f, -0.13f);   // the rider's feet-level origin: the seat animation lifts the hips about 0.5 above it, onto the saddle
 
         /// <summary>An empty marker where the rider sits.</summary>
         internal static Transform Seat(Transform parent, string name, Vector3 at)
@@ -49,8 +49,8 @@ namespace MountainBikes
             var bb = new Vector3(0f, 0.31f, -0.02f);
             var headTop = new Vector3(0f, 0.925f, 0.40f);
             var headLow = new Vector3(0f, 0.785f, 0.45f);
-            var seatTop = new Vector3(0f, 0.905f, -0.205f);
-            var seatJoint = new Vector3(0f, 0.855f, -0.19f);
+            var seatTop = new Vector3(0f, 0.905f, -0.125f);
+            var seatJoint = new Vector3(0f, 0.855f, -0.11f);
             var rear = Wheels[1];
             var front = Wheels[0];
             Tu("paint_headtube", headLow, headTop, 0.036f, 0.036f, frame);
@@ -64,17 +64,17 @@ namespace MountainBikes
                 S(PrimitiveType.Cube, "paint_dropout_" + side, rear + new Vector3(side * 0.058f, 0.0f, 0.0f), new Vector3(0.012f, 0.07f, 0.05f), frame);
             }
             // seat post and a slim saddle
-            Tu("seatpost", seatTop, new Vector3(0f, 1.075f, -0.245f), 0.015f, 0.015f, dark);
+            Tu("seatpost", seatTop, new Vector3(0f, 1.075f, -0.165f), 0.015f, 0.015f, dark);
             S(PrimitiveType.Cube, "seat_clamp", seatTop + new Vector3(0f, 0.012f, 0f), new Vector3(0.05f, 0.022f, 0.03f), silver);
             VehicleMesh.Add(lean, "saddle", VehicleMesh.Loft(new[]
             {
-                new Station(-0.37f, 0.05f, 1.075f, 1.104f, 2.8f),
-                new Station(-0.32f, 0.075f, 1.072f, 1.108f, 3f),
-                new Station(-0.22f, 0.05f, 1.073f, 1.105f, 3f),
-                new Station(-0.12f, 0.026f, 1.078f, 1.1f, 2.6f),
-                new Station(-0.08f, 0.016f, 1.08f, 1.098f, 2.4f),
+                new Station(-0.29f, 0.05f, 1.075f, 1.104f, 2.8f),
+                new Station(-0.24f, 0.075f, 1.072f, 1.108f, 3f),
+                new Station(-0.14f, 0.05f, 1.073f, 1.105f, 3f),
+                new Station(-0.04f, 0.026f, 1.078f, 1.1f, 2.6f),
+                new Station(0.0f, 0.016f, 1.08f, 1.098f, 2.4f),
             }, 14), seat);
-            S(PrimitiveType.Cube, "saddle_rails", new Vector3(0f, 1.07f, -0.24f), new Vector3(0.04f, 0.01f, 0.2f), silver);
+            S(PrimitiveType.Cube, "saddle_rails", new Vector3(0f, 1.07f, -0.16f), new Vector3(0.04f, 0.01f, 0.2f), silver);
 
             // ---- the fork: a crown, chrome stanchions into white lowers, a brace, a disc brake -----------------------------------
             var crown = new Vector3(0f, 0.755f, 0.46f);
@@ -110,6 +110,7 @@ namespace MountainBikes
                 TB("bar", new Vector3(side * 0.04f, 0.978f, 0.46f), new Vector3(side * 0.34f, 0.99f, 0.405f), 0.0115f, 0.0115f, dark);
                 TB("grip", new Vector3(side * 0.22f, 0.9865f, 0.4275f), new Vector3(side * 0.37f, 0.992f, 0.4f), 0.0185f, 0.0185f, dark, false);
                 TB("lever", new Vector3(side * 0.205f, 0.985f, 0.43f), new Vector3(side * 0.2f, 0.965f, 0.52f), 0.007f, 0.005f, silver);
+                Seat(bars, side < 0 ? "grip_l" : "grip_r", new Vector3(side * 0.295f, 0.989f, 0.414f) - pivot);
                 SB(PrimitiveType.Cube, "shifter", new Vector3(side * 0.15f, 0.97f, 0.445f), new Vector3(0.04f, 0.022f, 0.045f), dark);
                 TB("cable", new Vector3(side * 0.2f, 0.968f, 0.47f), new Vector3(side * 0.03f, 0.88f, 0.44f), 0.003f, 0.003f, dark, false);
             }
@@ -132,6 +133,7 @@ namespace MountainBikes
             {
                 VehicleKit.Tube(cranks, "crank", new Vector3(side * 0.095f, 0f, 0f), new Vector3(side * 0.095f, -side * 0.17f, 0f), 0.014f, 0.011f, chrome);
                 var pedal = VehicleKit.Shape(cranks, PrimitiveType.Cube, "pedal", new Vector3(side * 0.175f, -side * 0.17f, 0f), new Vector3(0.1f, 0.022f, 0.095f), dark);
+                Seat(pedal, side < 0 ? "foot_l" : "foot_r", new Vector3(0f, 0.09f / 0.022f, 0f));   // (the ankle, above the pedal: it rides the pedal, so the legs pedal round)
             }
             VehicleKit.Shape(cranks, PrimitiveType.Cylinder, "chainring", new Vector3(0.085f, 0f, 0f), new Vector3(0.2f, 0.007f, 0.2f), silver, new Vector3(0f, 0f, 90f));
             VehicleKit.Shape(cranks, PrimitiveType.Cylinder, "chainring_inner", new Vector3(0.07f, 0f, 0f), new Vector3(0.13f, 0.007f, 0.13f), dark, new Vector3(0f, 0f, 90f));
@@ -163,10 +165,10 @@ namespace MountainBikes
             VehicleKit.Tube(kick, "kickstand_leg", Vector3.zero, new Vector3(-0.01f, -0.30f, -0.09f), 0.012f, 0.012f, dark, false);
             VehicleKit.Shape(kick, PrimitiveType.Cube, "kickstand_foot", new Vector3(-0.012f, -0.298f, -0.095f), new Vector3(0.05f, 0.012f, 0.05f), dark);
 
-            S(PrimitiveType.Cube, "lens_tail", new Vector3(0f, 0.97f, -0.285f), new Vector3(0.05f, 0.045f, 0.02f), lensTail);
+            S(PrimitiveType.Cube, "lens_tail", new Vector3(0f, 0.97f, -0.205f), new Vector3(0.05f, 0.045f, 0.02f), lensTail);
             var tail = new GameObject("taillight").transform;
             tail.SetParent(lean, false);
-            tail.localPosition = new Vector3(0f, 0.97f, -0.33f);
+            tail.localPosition = new Vector3(0f, 0.97f, -0.25f);
             var tl = tail.gameObject.AddComponent<Light>();
             tl.type = LightType.Point; tl.range = 2.5f; tl.intensity = 0.4f; tl.color = new Color(1f, 0.1f, 0.05f); tl.shadows = LightShadows.None; tl.enabled = false;
 

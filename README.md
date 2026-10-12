@@ -391,6 +391,34 @@ caged core that lights the water at night. Everyone in the world needs it.
 
 </td>
 </tr>
+<tr>
+<td valign="top">
+
+### 🏍️ Four Wheelers
+<img src="dist/FourWheelers.cover.png" alt="Four Wheelers" width="100%">
+
+A rugged four-wheeled quad for a rider and a passenger, built with the hammer on dry land and driven by a surtling core's fire. Press **E** on its
+seat to climb on, hold **W** to go (**Shift** for full speed), and lean over the bars with your boots on the floorboards. Springs on every wheel, a
+turning circle that opens up with speed, headlights and tail lights for the night, a rack that holds 8 stacks, seven paints, an engine that climbs
+through four gears, and dust in the colour of the ground. It runs over enemies too. Everyone in the world needs it.
+
+**[More: how it works, settings and screenshots →](mods/FourWheelers/README.md)**
+
+</td>
+<td valign="top">
+
+### 🚵 Mountain Bikes
+<img src="dist/MountainBikes.cover.png" alt="Mountain Bikes" width="100%">
+
+A trail bike you pedal yourself, built with the hammer on dry land. Press **E** on its saddle to climb on, hold **W** to pedal (**Shift** to sprint:
+both cost stamina; coasting and braking are free) and watch your boots go round on the pedals. It leans into corners, holds its line, stands up
+by itself with its kickstand, and climbs the hills a walker would crawl up. A headlamp for the night, seven paints, and dust in the colour of the
+ground. Everyone in the world needs it.
+
+**[More: how it works, settings and screenshots →](mods/MountainBikes/README.md)**
+
+</td>
+</tr>
 </table>
 
 ## ⌨️ Keys at a glance
@@ -428,8 +456,10 @@ caged core that lights the water at night. Everyone in the world needs it.
 | **E** on a jet ski | Jet Skis | Climb on (from the water or the shore) and take the handlebars |
 | **W** / **Shift**+**W** / **S** | Jet Skis | Go / full speed / back up (let go to coast); **A** / **D** steer, **Jump** gets off |
 | **E** on a jet ski's cowl / saddlebags | Jet Skis | Paint it the next colour / open the saddlebags (**Tab** while riding opens them too) |
-| **E** on a four wheeler or mountain bike | Four Wheelers, Mountain Bikes | Climb on and take the handlebars (**E** on its hood or frame instead: paint it the next colour; **E** on one lying on its side: stand it up) |
-| **W** / **Shift**+**W** / **S** | Four Wheelers, Mountain Bikes | Go / full speed (a bike: pedal / sprint, both cost stamina) / brake, then back up; **A** / **D** steer, **Jump** or **E** gets off |
+| **E** on a four wheeler | Four Wheelers | Climb on and take the handlebars (**E** on its rear seat: ride as a passenger; **E** on its hood: paint it the next colour; **E** on one lying on its side: stand it up) |
+| **W** / **Shift**+**W** / **S** | Four Wheelers | Go / full speed / brake, then back up (let go to coast); **A** / **D** steer, **Jump** or **E** gets off |
+| **E** on a mountain bike | Mountain Bikes | Climb on (**E** on its frame in front of the saddle: paint it the next colour; **E** on one lying on its side: stand it up) |
+| **W** / **Shift**+**W** / **S** | Mountain Bikes | Pedal / sprint (both cost stamina; coasting and braking are free) / brake, then back up; **A** / **D** steer, **Jump** or **E** gets off |
 | **F8** | PartyHud | Show or hide the party panel |
 
 Every key and setting is configurable in `BepInEx/config`.

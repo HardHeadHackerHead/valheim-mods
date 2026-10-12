@@ -6,7 +6,7 @@ schemaVersion = "0.0.1"
 [package]
 namespace = "Quads_Lab"
 name = "Quads_Mountain_Bikes"
-versionNumber = "0.1.0"
+versionNumber = "0.1.1"
 description = "Mountain bike (bicycle, bike) you pedal yourself: it costs stamina, needs no fuel and goes where a walker would crawl. Leans into corners, headlamp, tail light, paint colours, tyre sound and dust. Built with the hammer."
 websiteUrl = "https://github.com/HardHeadHackerHead/valheim-mods/tree/main/mods/MountainBikes"
 containsNsfwContent = false

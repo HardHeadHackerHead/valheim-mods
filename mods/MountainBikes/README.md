@@ -1,13 +1,13 @@
 <!-- This page is made by tools/modpages/make_pages.py from the mod's thunderstore.toml, DESCRIPTION.txt, CHANGELOG.txt,
      settings and the repo's README. Change those, or the HAND-WRITTEN parts, not the rest of this page. -->
 
-# Quad's Mountain Bikes
+# 🚵 Quad's Mountain Bikes
 
 <img src="cover.png" alt="Quad's Mountain Bikes" width="100%">
 
 **Mountain bike (bicycle, bike) you pedal yourself: it costs stamina, needs no fuel and goes where a walker would crawl. Leans into corners, headlamp, tail light, paint colours, tyre sound and dust. Built with the hammer.**
 
-![version: 0.1.0](https://img.shields.io/badge/version-0.1.0-3b6e8f?style=flat-square)  ![multiplayer: everyone + host](https://img.shields.io/badge/multiplayer-everyone%20%2B%20host-7a5c2e?style=flat-square)  ![made with: Claude Code](https://img.shields.io/badge/made%20with-Claude%20Code-c26a3d?style=flat-square)
+![version: 0.1.1](https://img.shields.io/badge/version-0.1.1-3b6e8f?style=flat-square)  ![multiplayer: everyone + host](https://img.shields.io/badge/multiplayer-everyone%20%2B%20host-7a5c2e?style=flat-square)  ![made with: Claude Code](https://img.shields.io/badge/made%20with-Claude%20Code-c26a3d?style=flat-square)
 
 [Source code](https://github.com/HardHeadHackerHead/valheim-mods/tree/main/mods/MountainBikes)  ·  [Report a bug](https://github.com/HardHeadHackerHead/valheim-mods/issues/new?template=bug.yml&title=%5BQuad%27s%20Mountain%20Bikes%5D%20)  ·  [Discord](https://discord.gg/EwTjQxEZPy)
 
@@ -40,18 +40,25 @@ Everyone in the world needs it installed.
 ## 📸 Screenshots
 
 <!-- HAND-WRITTEN: screenshots -->
-**From the front three-quarter: the green frame, suspension fork and the spoked wheels with knobbly tyres**
+**Down a meadow trail: leaning over the bars with both hands on the grips and boots on the pedals**
 
-<img src="images/1.png" alt="From the front three-quarter: the green frame, suspension fork and the spoked wheels with knobbly tyres" width="100%">
+<img src="images/1.png" alt="Down a meadow trail: leaning over the bars with both hands on the grips and boots on the pedals" width="100%">
 
-**From the other side: chain, chain ring, disc brake and the rear shock**
+**From the side: the green frame, suspension fork with white lowers, spoked wheels and knobbly tyres**
 
-<img src="images/2.png" alt="From the other side: chain, chain ring, disc brake and the rear shock" width="100%">
+<img src="images/2.png" alt="From the side: the green frame, suspension fork with white lowers, spoked wheels and knobbly tyres" width="100%">
 
-**From the side: the whole bike, with the headlamp and tail reflector**
+**From the front at sunset: the headlamp, bars and fork, with the rider's head turned where they steer**
 
-<img src="images/3.png" alt="From the side: the whole bike, with the headlamp and tail reflector" width="100%">
+<img src="images/3.png" alt="From the front at sunset: the headlamp, bars and fork, with the rider's head turned where they steer" width="100%">
 <!-- END HAND-WRITTEN: screenshots -->
+
+## 🎮 How to use
+
+| Key | What it does |
+|---|---|
+| **E** on a mountain bike | Climb on (**E** on its frame in front of the saddle: paint it the next colour; **E** on one lying on its side: stand it up) |
+| **W** / **Shift**+**W** / **S** | Pedal / sprint (both cost stamina; coasting and braking are free) / brake, then back up; **A** / **D** steer, **Jump** or **E** gets off |
 
 <!-- HAND-WRITTEN: how-to-use -->
 
@@ -162,6 +169,7 @@ helps me make new mods and keep improving the ones you already play. It's 100% o
 
 ## 📜 Recent changes
 
+- **0.1.1** You ride it properly now: leaning forward over the bars with both hands on the grips (they follow the bars as they turn) and your boots on the pedals, so your legs pedal round with the cranks; your head turns where you steer. Everyone sees it. Plus: the front wheel can no longer get stuck going up a steep hill (the wheels' ground check starts above the suspension and rolls over a rise), a stuck rider gets a small hop free, a new model built after a real hardtail (tapered welded-looking frame, suspension fork, disc brakes, derailleur and kickstand, which tucks up when you ride), tyre squeal in hard corners and a thump and dust burst on landing.
 - **0.1.0** First release: a mountain bike built with the hammer on dry land. W pedal, Shift+W sprint (both cost stamina; coasting and braking are free), S brake and back up, A and D steer, E on the saddle to climb on, Jump or E to get off. It leans into corners, holds its line (no sliding), stands up by itself when parked, and E on a flipped one stands it back on its wheels. Handlebars that turn and pedals that go round, a headlamp and tail light at night, a gauge at the bottom right, tyre sound, dust coloured to the ground, and paint (E on the frame). In your language: Russian, German, Chinese, Portuguese, Spanish, French, Polish and Turkish (translated by AI; corrections welcome).
 
 <!-- GITHUB-ONLY -->[Every change](CHANGELOG.txt)<!-- END GITHUB-ONLY --><!-- THUNDERSTORE-ONLY: Every change is on the Changelog tab. -->

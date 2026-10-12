@@ -23,7 +23,7 @@ namespace MountainBikes
     {
         public const string Guid = "com.quad.mountainbikes";
         public const string Name = "MountainBikes";
-        public const string Version = "0.1.0";
+        public const string Version = "0.1.1";
 
         internal static Plugin Instance;
         internal static ManualLogSource Log;
@@ -78,12 +78,14 @@ namespace MountainBikes
                 Upright = 4f,
                 RamDamage = () => RamDamage.Value, RamCenter = new Vector3(0f, 0.7f, 0.75f), RamSize = new Vector3(0.6f, 1.0f, 0.9f),
                 MinRadius = 2.0f, LateralAccel = 11f, LeansWithTurn = true,
+                Pose = new System.Collections.Generic.Dictionary<string, float> { { "lean", 44f }, { "head", 34f }, { "hipsDown", 0.06f }, { "gripBack", 0f }, { "gripDown", 0.02f }, { "kneeOut", 0.12f }, { "steerLean", 3f }, { "toeDown", 0.15f }, { "rock", 0.05f }, { "elbowOut", 0.6f } }, Command = "bike",
                 RideKey = "$mountainbikes_ride", TooFarKey = "$mountainbikes_too_far", TooHeavyKey = "$mountainbikes_too_heavy",
                 HelpKey = "$mountainbikes_help", ShowHelp = () => Help.Value,
                 PaintKey = "$mountainbikes_paint", RightKey = "$mountainbikes_right", DustSize = 0.55f,
                 Paints = new[] { new Color(0.18f, 0.5f, 0.25f), new Color(0.66f, 0.10f, 0.08f), new Color(0.15f, 0.3f, 0.65f), new Color(0.85f, 0.4f, 0.1f), new Color(0.08f, 0.08f, 0.09f), new Color(0.9f, 0.88f, 0.8f), new Color(0.5f, 0.2f, 0.6f) },
             };
 
+            VehicleRider.Init(GroundVehicle.Spec);
             _harmony = new Harmony(Guid);
             _harmony.PatchAll(typeof(Plugin).Assembly);
             Things.Register(); // a hot reload while in a world
@@ -94,6 +96,7 @@ namespace MountainBikes
         {
             Synced?.Update();
             VehicleHud.Tick();
+            VehicleTools.Update(Name);
             if (_tellNoServer && Player.m_localPlayer != null)
             {
                 _tellNoServer = false;
@@ -101,8 +104,12 @@ namespace MountainBikes
             }
         }
 
+        private void LateUpdate() => VehicleRider.Late();   // (after the animation: the riders' pose on top of it)
+
         private void OnDestroy()
         {
+            VehicleRider.Reset();
+            VehicleTools.Unregister();
             _harmony?.UnpatchSelf();
             VehicleHud.Destroy();
             Things.Unregister();

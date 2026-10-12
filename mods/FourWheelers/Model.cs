@@ -215,6 +215,14 @@ namespace FourWheelers
                 BB("mirror_stalk", new Vector3(side * 0.28f, 1.09f, 0.24f), new Vector3(side * 0.33f, 1.22f, 0.2f), 0.014f, frame);
                 VehicleMesh.Add(bars, "mirror", VehicleMesh.RoundedBox(new Vector3(0.1f, 0.065f, 0.016f), 0.008f), frame, new Vector3(side * 0.34f, 1.25f, 0.19f) - pivot, new Vector3(-12f, side * 10f, 0f));
             }
+            // where the hands go (on the grips: they turn with the bars) and the feet (on the floorboards)
+            foreach (float side in new[] { -1f, 1f })
+            {
+                Seat(bars, side < 0 ? "grip_l" : "grip_r", new Vector3(side * 0.46f, 1.0775f, 0.135f) - pivot);
+                Seat(body, side < 0 ? "foot_l" : "foot_r", new Vector3(side * 0.32f, 0.51f, 0.10f));
+                Seat(body, side < 0 ? "pfoot_l" : "pfoot_r", new Vector3(side * 0.33f, 0.51f, -0.28f));
+                Seat(body, side < 0 ? "pgrip_l" : "pgrip_r", new Vector3(side * 0.2f, 1.0f, -0.4f));
+            }
             SB(PrimitiveType.Cylinder, "gauge_bezel", new Vector3(0f, 1.14f, 0.3f), new Vector3(0.12f, 0.03f, 0.12f), chrome, new Vector3(-60f, 0f, 0f));
             SB(PrimitiveType.Cylinder, "gauge_face", new Vector3(0f, 1.145f, 0.298f), new Vector3(0.10f, 0.03f, 0.10f), frame, new Vector3(-60f, 0f, 0f));
 
