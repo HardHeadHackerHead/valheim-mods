@@ -48,6 +48,15 @@ A party HUD: health bars, stamina and distance for every player in your group, l
 
 <!-- END HAND-WRITTEN: how-to-use -->
 
+## 🤝 Goes well with
+
+<a href="https://thunderstore.io/c/valheim/p/Quads_Lab/Quads_Map_Share/"><img src="https://raw.githubusercontent.com/HardHeadHackerHead/valheim-mods/main/mods/MapShare/thunderstore/icon.png" alt="Quad&#x27;s Map Share" title="Quad&#x27;s Map Share" width="72"></a> <a href="https://thunderstore.io/c/valheim/p/Quads_Lab/Quads_Bounty_Board/"><img src="https://raw.githubusercontent.com/HardHeadHackerHead/valheim-mods/main/mods/BountyBoard/thunderstore/icon.png" alt="Quad&#x27;s Bounty Board" title="Quad&#x27;s Bounty Board" width="72"></a> <a href="https://thunderstore.io/c/valheim/p/Quads_Lab/Quads_Portal_Hub/"><img src="https://raw.githubusercontent.com/HardHeadHackerHead/valheim-mods/main/mods/PortalHub/thunderstore/icon.png" alt="Quad&#x27;s Portal Hub" title="Quad&#x27;s Portal Hub" width="72"></a> <a href="https://thunderstore.io/c/valheim/p/Quads_Lab/Quads_Companion/"><img src="https://raw.githubusercontent.com/HardHeadHackerHead/valheim-mods/main/mods/AICompanion/thunderstore/icon.png" alt="Quad&#x27;s Companion" title="Quad&#x27;s Companion" width="72"></a>
+
+- **[Quad's Map Share](https://thunderstore.io/c/valheim/p/Quads_Lab/Quads_Map_Share/)**: One shared map for everyone
+- **[Quad's Bounty Board](https://thunderstore.io/c/valheim/p/Quads_Lab/Quads_Bounty_Board/)**: Group bounties and hunting contracts
+- **[Quad's Portal Hub](https://thunderstore.io/c/valheim/p/Quads_Lab/Quads_Portal_Hub/)**: Pick a portal's destination from a list
+- **[Quad's Companion](https://thunderstore.io/c/valheim/p/Quads_Lab/Quads_Companion/)**: A viking companion who plays like a player
+
 ## 🧩 Other mods
 
 <!-- HAND-WRITTEN: other-mods -->

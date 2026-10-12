@@ -55,6 +55,16 @@ Keys are configurable. Q and B work while you are running.
 
 <!-- END HAND-WRITTEN: how-to-use -->
 
+## 🤝 Goes well with
+
+<a href="https://thunderstore.io/c/valheim/p/Quads_Lab/Quads_Craft_From_Chests/"><img src="https://raw.githubusercontent.com/HardHeadHackerHead/valheim-mods/main/mods/CraftFromChests/thunderstore/icon.png" alt="Quad&#x27;s Craft From Chests" title="Quad&#x27;s Craft From Chests" width="72"></a> <a href="https://thunderstore.io/c/valheim/p/Quads_Lab/Quads_Ledger_Chest/"><img src="https://raw.githubusercontent.com/HardHeadHackerHead/valheim-mods/main/mods/LedgerChest/thunderstore/icon.png" alt="Quad&#x27;s Ledger Chest" title="Quad&#x27;s Ledger Chest" width="72"></a> <a href="https://thunderstore.io/c/valheim/p/Quads_Lab/Quads_Gear_Slots/"><img src="https://raw.githubusercontent.com/HardHeadHackerHead/valheim-mods/main/mods/GearSlots/thunderstore/icon.png" alt="Quad&#x27;s Gear Slots" title="Quad&#x27;s Gear Slots" width="72"></a> <a href="https://thunderstore.io/c/valheim/p/Quads_Lab/Quads_Quiver/"><img src="https://raw.githubusercontent.com/HardHeadHackerHead/valheim-mods/main/mods/Quiver/thunderstore/icon.png" alt="Quad&#x27;s Quiver" title="Quad&#x27;s Quiver" width="72"></a> <a href="https://thunderstore.io/c/valheim/p/Quads_Lab/Quads_Crafting_Filters/"><img src="https://raw.githubusercontent.com/HardHeadHackerHead/valheim-mods/main/mods/BetterCraftingStations/thunderstore/icon.png" alt="Quad&#x27;s Crafting Filters" title="Quad&#x27;s Crafting Filters" width="72"></a>
+
+- **[Quad's Craft From Chests](https://thunderstore.io/c/valheim/p/Quads_Lab/Quads_Craft_From_Chests/)**: Craft with materials from nearby chests
+- **[Quad's Ledger Chest](https://thunderstore.io/c/valheim/p/Quads_Lab/Quads_Ledger_Chest/)**: See and search every chest around you
+- **[Quad's Gear Slots](https://thunderstore.io/c/valheim/p/Quads_Lab/Quads_Gear_Slots/)**: Equipment and quick slots
+- **[Quad's Quiver](https://thunderstore.io/c/valheim/p/Quads_Lab/Quads_Quiver/)**: Pick your arrows back up
+- **[Quad's Crafting Filters](https://thunderstore.io/c/valheim/p/Quads_Lab/Quads_Crafting_Filters/)**: Filter chips for every crafting station
+
 ## 🧩 Other mods
 
 <!-- HAND-WRITTEN: other-mods -->

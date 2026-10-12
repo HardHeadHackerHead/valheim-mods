@@ -39,6 +39,15 @@ It works on the game that shoots, so it does not need the other players to have 
 
 <!-- END HAND-WRITTEN: how-to-use -->
 
+## 🤝 Goes well with
+
+<a href="https://thunderstore.io/c/valheim/p/Quads_Lab/Quads_Gear_Slots/"><img src="https://raw.githubusercontent.com/HardHeadHackerHead/valheim-mods/main/mods/GearSlots/thunderstore/icon.png" alt="Quad&#x27;s Gear Slots" title="Quad&#x27;s Gear Slots" width="72"></a> <a href="https://thunderstore.io/c/valheim/p/Quads_Lab/Quads_Quality_Of_Life/"><img src="https://raw.githubusercontent.com/HardHeadHackerHead/valheim-mods/main/mods/QualityOfLife/thunderstore/icon.png" alt="Quad&#x27;s Quality of Life" title="Quad&#x27;s Quality of Life" width="72"></a> <a href="https://thunderstore.io/c/valheim/p/Quads_Lab/Quads_Bird_Trap/"><img src="https://raw.githubusercontent.com/HardHeadHackerHead/valheim-mods/main/mods/BirdTrap/thunderstore/icon.png" alt="Quad&#x27;s Bird Trap" title="Quad&#x27;s Bird Trap" width="72"></a> <a href="https://thunderstore.io/c/valheim/p/Quads_Lab/Quads_Arena/"><img src="https://raw.githubusercontent.com/HardHeadHackerHead/valheim-mods/main/mods/Arena/thunderstore/icon.png" alt="Quad&#x27;s Arena" title="Quad&#x27;s Arena" width="72"></a>
+
+- **[Quad's Gear Slots](https://thunderstore.io/c/valheim/p/Quads_Lab/Quads_Gear_Slots/)**: Equipment and quick slots
+- **[Quad's Quality of Life](https://thunderstore.io/c/valheim/p/Quads_Lab/Quads_Quality_Of_Life/)**: Sorting, stacking and small conveniences
+- **[Quad's Bird Trap](https://thunderstore.io/c/valheim/p/Quads_Lab/Quads_Bird_Trap/)**: Trap birds for feathers
+- **[Quad's Arena](https://thunderstore.io/c/valheim/p/Quads_Lab/Quads_Arena/)**: Fight waves and champions in a colosseum
+
 ## 🧩 Other mods
 
 <!-- HAND-WRITTEN: other-mods -->

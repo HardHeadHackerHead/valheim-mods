@@ -42,6 +42,15 @@ Only you need it: the sky is drawn for you from the weather the game already has
 
 <!-- END HAND-WRITTEN: how-to-use -->
 
+## 🤝 Goes well with
+
+<a href="https://thunderstore.io/c/valheim/p/Quads_Lab/Quads_Skal_Tavern/"><img src="https://raw.githubusercontent.com/HardHeadHackerHead/valheim-mods/main/mods/SkalTavern/thunderstore/icon.png" alt="Quad&#x27;s Skal Tavern" title="Quad&#x27;s Skal Tavern" width="72"></a> <a href="https://thunderstore.io/c/valheim/p/Quads_Lab/Quads_Cigars/"><img src="https://raw.githubusercontent.com/HardHeadHackerHead/valheim-mods/main/mods/CigarSmoking/thunderstore/icon.png" alt="Quad&#x27;s Cigars" title="Quad&#x27;s Cigars" width="72"></a> <a href="https://thunderstore.io/c/valheim/p/Quads_Lab/Quads_Bird_Trap/"><img src="https://raw.githubusercontent.com/HardHeadHackerHead/valheim-mods/main/mods/BirdTrap/thunderstore/icon.png" alt="Quad&#x27;s Bird Trap" title="Quad&#x27;s Bird Trap" width="72"></a> <a href="https://thunderstore.io/c/valheim/p/Quads_Lab/Quads_Slot_Machine/"><img src="https://raw.githubusercontent.com/HardHeadHackerHead/valheim-mods/main/mods/SlotMachine/thunderstore/icon.png" alt="Quad&#x27;s Slot Machine" title="Quad&#x27;s Slot Machine" width="72"></a>
+
+- **[Quad's Skal Tavern](https://thunderstore.io/c/valheim/p/Quads_Lab/Quads_Skal_Tavern/)**: Ale, mead and wine that get you drunk
+- **[Quad's Cigars](https://thunderstore.io/c/valheim/p/Quads_Lab/Quads_Cigars/)**: Grow, cure and smoke cigars for buffs
+- **[Quad's Bird Trap](https://thunderstore.io/c/valheim/p/Quads_Lab/Quads_Bird_Trap/)**: Trap birds for feathers
+- **[Quad's Slot Machine](https://thunderstore.io/c/valheim/p/Quads_Lab/Quads_Slot_Machine/)**: A viking slot machine for your coins
+
 ## 🧩 Other mods
 
 <!-- HAND-WRITTEN: other-mods -->

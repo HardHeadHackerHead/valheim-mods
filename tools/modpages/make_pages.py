@@ -4,6 +4,7 @@ package, which makes its links absolute):
 
     title, cover, one-line pitch, badges, links
     Features (DESCRIPTION.txt)        Screenshots (hand-written)       How to use (keys from the repo's README, hand-written notes)
+    Goes well with (related.json: our related mods as a row of icons, each with its tagline)
     Other mods (hand-written: known clashes, "none known" until there are some)
     Multiplayer (who needs it, from the repo's README; hand-written notes)            Settings (the mod's config file, or its code)
     Made with AI      Join us on Discord (community.md)      About Quads Lab (tools/modpages/about.md, the same on every page)
@@ -40,6 +41,10 @@ SUPPORT = "https://buymeacoffee.com/quadh"
 SUPPORT_WORDS = os.path.join(os.path.dirname(__file__), "support.md")
 SUPPORT_BANNER = "https://raw.githubusercontent.com/HardHeadHackerHead/valheim-mods/main/tools/modpages/support-banner.jpg"
 SUPPORT_BANNER_FILE = os.path.join(os.path.dirname(__file__), "support-banner.jpg")
+# Our mods that go with each one (related.json, written by hand): icons in a row, linking to their Thunderstore pages (Hexium's upload
+# rewrites those links to Hexium's pages, tools/hexium_publish.py), the icons loaded from GitHub like the banners
+RELATED = json.load(io.open(os.path.join(os.path.dirname(__file__), "related.json"), encoding="utf-8"))
+ICON_URL = "https://raw.githubusercontent.com/HardHeadHackerHead/valheim-mods/main/mods/%s/thunderstore/icon.png"
 THUNDERSTORE_TEAM = "Quads_Lab"  # our team on Thunderstore: each mod is its own package there
 REPO = "https://github.com/HardHeadHackerHead/valheim-mods"
 MANAGER = "https://github.com/HardHeadHackerHead/valheim-mod-manager"
@@ -228,6 +233,28 @@ def block(name, body):
     return ["<!-- HAND-WRITTEN: %s -->" % name, body, "<!-- END HAND-WRITTEN: %s -->" % name, ""]
 
 
+def package_of(folder):
+    """A mod's Thunderstore package name and its title (Quad's <Name>), from its thunderstore.toml."""
+    toml = read(os.path.join(MODS, folder, "thunderstore.toml")) or ""
+    named = re.search(r'(?m)^name\s*=\s*"([^"]+)"', toml)
+    package = named.group(1) if named else folder
+    return package, "Quad's " + re.sub(r"^Quads_", "", package).replace("_", " ").replace(" Of ", " of ")
+
+
+def related_section(folder):
+    """The 'Goes well with' row: the related mods' icons left to right, then each one's name and tagline."""
+    mods = [m for m in RELATED.get("related", {}).get(folder, []) if os.path.exists(os.path.join(MODS, m, "thunderstore", "icon.png"))]
+    if not mods:
+        return []
+    icons, lines = [], []
+    for m in mods:
+        package, title = package_of(m)
+        link = ("%s/tree/main/mods/%s" % (REPO, m)) if m in RELATED.get("notOnThunderstore", [])             else "https://thunderstore.io/c/valheim/p/%s/%s/" % (THUNDERSTORE_TEAM, package)
+        icons.append('<a href="%s"><img src="%s" alt="%s" title="%s" width="72"></a>' % (link, ICON_URL % m, html.escape(title), html.escape(title)))
+        lines.append("- **[%s](%s)**: %s" % (title, link, RELATED.get("taglines", {}).get(m, "")))
+    return ["## 🤝 Goes well with", "", " ".join(icons), ""] + lines + [""]
+
+
 def badge(label, value, colour):
     esc = lambda s: quote(s.replace("-", "--").replace("_", "__"), safe="")
     return "![%s: %s](https://img.shields.io/badge/%s-%s-%s?style=flat-square)" % (label, value, esc(label), esc(value), colour)
@@ -316,6 +343,7 @@ def page(folder, cards, keys, who, default_who, about):
             out += [""]
     out += block("how-to-use", use)
 
+    out += related_section(folder)
     out += ["## 🧩 Other mods", ""] + block("other-mods", hand.get("other-mods") or "**Known clashes:** none known.")
     out += ["Found a clash with another mod? [Tell us](%s) which one and what happened." % bug, ""]
 

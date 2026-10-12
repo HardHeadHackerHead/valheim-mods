@@ -46,6 +46,15 @@ Every key and option is in the settings (the manager's Mod settings tab).
 
 <!-- END HAND-WRITTEN: how-to-use -->
 
+## 🤝 Goes well with
+
+<a href="https://thunderstore.io/c/valheim/p/Quads_Lab/Quads_Quiver/"><img src="https://raw.githubusercontent.com/HardHeadHackerHead/valheim-mods/main/mods/Quiver/thunderstore/icon.png" alt="Quad&#x27;s Quiver" title="Quad&#x27;s Quiver" width="72"></a> <a href="https://thunderstore.io/c/valheim/p/Quads_Lab/Quads_Quality_Of_Life/"><img src="https://raw.githubusercontent.com/HardHeadHackerHead/valheim-mods/main/mods/QualityOfLife/thunderstore/icon.png" alt="Quad&#x27;s Quality of Life" title="Quad&#x27;s Quality of Life" width="72"></a> <a href="https://thunderstore.io/c/valheim/p/Quads_Lab/Quads_Companion/"><img src="https://raw.githubusercontent.com/HardHeadHackerHead/valheim-mods/main/mods/AICompanion/thunderstore/icon.png" alt="Quad&#x27;s Companion" title="Quad&#x27;s Companion" width="72"></a> <a href="https://thunderstore.io/c/valheim/p/Quads_Lab/Quads_Party_HUD/"><img src="https://raw.githubusercontent.com/HardHeadHackerHead/valheim-mods/main/mods/PartyHud/thunderstore/icon.png" alt="Quad&#x27;s Party HUD" title="Quad&#x27;s Party HUD" width="72"></a>
+
+- **[Quad's Quiver](https://thunderstore.io/c/valheim/p/Quads_Lab/Quads_Quiver/)**: Pick your arrows back up
+- **[Quad's Quality of Life](https://thunderstore.io/c/valheim/p/Quads_Lab/Quads_Quality_Of_Life/)**: Sorting, stacking and small conveniences
+- **[Quad's Companion](https://thunderstore.io/c/valheim/p/Quads_Lab/Quads_Companion/)**: A viking companion who plays like a player
+- **[Quad's Party HUD](https://thunderstore.io/c/valheim/p/Quads_Lab/Quads_Party_HUD/)**: Health and stamina frames for your party
+
 ## 🧩 Other mods
 
 <!-- HAND-WRITTEN: other-mods -->
