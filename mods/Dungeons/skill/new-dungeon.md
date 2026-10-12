@@ -53,6 +53,10 @@ to it:
   The same job made again with another seed gives another room (below).
 - **A theme is architecture, not textures.** A theme decides shapes (how walls, floors, roofs, doorways, stairs and supports are built,
   how big things are), not just which stone they're made of. Swapping grausten for black marble makes the same dungeon.
+- **The vault's reward is a real chest worth the climb.** Shifting Halls' vault holds the game's biggest chest, the Jotunn's
+  `Morkhalla_ChestAncient` (32 slots, saved at scale 1), emptied when it's made and filled by the builder from the pack's `vault` loot
+  (and the giant's cogs). The lever vault and the secret cache use it too. A theme's vault chest is its own choice (the Dvergr test
+  theme: `TreasureChest_dvergr_loose_stone`).
 - **Every kind has its own signature rooms and mechanics.** Shifting Halls has its four-storey hall of turning stairs and the rotunda
   drum; a new kind needs its own, not the same puzzle in new stone.
 - **The gate fails a re-colour.** A pack whose rooms are another pack's rooms with other pieces doesn't pass: "this is X in another
@@ -237,6 +241,8 @@ around one job in a shell. Shifting Halls' hand-made rooms (`shifting_halls.py`,
 - the rotunda (a turning drum) and the crane shaft;
 - the entrance and the vault: the start and the end.
 
+Shifting Halls is **recipe-built**: `specs/shiftinghalls.toml` → `make_dungeon.py`, installed by the gate (`make_pack.py specs/shiftinghalls.toml --install`). About 36 of its rooms come from recipes; its signature rooms are hand-made (`shifting_halls.py`: the entrance, rotunda, great hall, the three turning-stair halls, the vault and its caps, the secret rooms, the shortcut's doors, the end caps), and its boss rooms (the Warden's hall, the Cog-Thrall's guardian room) come from `boss_rooms.py`.
+
 Recipes are the backbone; every kind still needs 1-3 signature rooms of its own (the gate checks one is on the way in 90% of layouts).
 
 ## Recipes and jobs (`tools/dungeons/authoring/`)
@@ -269,15 +275,17 @@ recipe can't block a way.
 
 **The jobs** (`JOBS` in `recipes.py`): `breather`, `corridor` (plain, arches or hammers), `hub`, `stairhall`, `nook`, `fight`, `lever`
 (a key), `gate`, `plate` (a held gate, a siege, a lone ledge lever), `guardian`, `timing` (a turning or sinking bridge over a pit), `drop`,
-`twolevers`, `ambush`, `timeddoor`. Brazier order and push block wait for their mechanisms in the recipes.
+`twolevers`, `ambush`, `timeddoor`, and two quieter kinds that still aren't plain walk-throughs: `pillarhall` and `machineroom`. Brazier order and push block wait for their mechanisms in the recipes.
 
 **Side jobs** (`sidejobs.py`): something to do in a room that's on the way but isn't a plan step, so no room is just walked across. A room
 says which it can take (`side_jobs`), and its seed picks one:
 - `guard`: a chest of the land's loot in the open; lifting its lid wakes a short ambush (two small waves, no doors shut);
 - `sentries`: a few keepers who come for you as you step in (one wave);
 - `alcove`: a closet shut by an iron leaf, raised by a lever elsewhere in the room;
-- `stash`: a closet walled up with cracked stone, broken open for its chest. **Off** until the pack reader accepts a breakable that closes
-  no doorway (`STASH` in `sidejobs.py`).
+- `stash`: a closet walled up with cracked stone, broken open for its chest.
+
+A side job's creatures always have a path to the way in. Fights always have cover and pillars or machinery, and two rooms of the same
+job differ clearly (shape, size, galleries, features, dressing).
 
 **When `make()` fails**, the message names the stage that failed.
 

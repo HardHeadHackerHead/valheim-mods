@@ -10,8 +10,8 @@ Going in and out
 - Once someone has been in, the entrance shows the day the dungeon comes back new.
 
 The dungeons
-- Shifting Halls: a Giants' clockwork vault. Ancient Jotunn machinery in grausten and black marble, bronze and iron gears, chains, and cold blue light. A hall four storeys high with turning staircases driven by gears, levers, a round drum room that turns every 12 seconds, and a vault at the top behind a gate. Every room in it is new, made for this mod.
-- On the way: fight rooms that lock until their waves are beaten, secret rooms behind walls a pickaxe or a club can break, a shortcut back to the entrance once you've come far enough, and the Clockwork Warden, a boss with its own health bar.
+- Shifting Halls: a Giants' clockwork vault. Ancient Jotunn machinery in grausten and black marble, bronze and iron gears, chains, and cold blue light. A hall four storeys high with turning staircases driven by gears, levers, a round drum room that turns every 12 seconds, and a vault at the top behind a gate, where the Jotunn's great carved chest holds the reward. Every room in it is new, made for this mod, and most are built fresh for each dungeon: two rooms with the same job (a fight, a lever, a pit to cross) look and play differently.
+- On the way: fight rooms that lock until their waves are beaten (with cover and pillars to fight round), quieter rooms with something of their own (a guarded chest, a lever alcove, a hidden stash behind a cracked wall), secret rooms behind walls a pickaxe or a club can break, a shortcut back to the entrance once you've come far enough, and the Clockwork Warden, a boss with its own health bar.
 - Its entrance is a giant iron door in a hill. Beside it lie the bones of a fallen giant: a skull, a sword and a huge cogwheel.
 - Test Crypt: the game's own Black Forest crypt rooms, joined in new ways. Made to test the dungeon system.
 - Test Mechanisms: a small dungeon with one of each moving part: a lever, a pressure plate, a turning stair, a lift and a gate.

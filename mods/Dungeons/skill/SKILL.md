@@ -163,8 +163,8 @@ Read `docs/modding-pitfalls.md` too before changing the mod's code: it has the r
 1. **Look at what the game has.** In the game, `dungeon rooms [theme]` writes every DungeonDB room (size, doorways, types, networked
    parts) to `BepInEx/claude/dungeon-rooms.json`; the harness reads that file as its catalogue. Check every prefab name you mean to use
    exists **in ZNetScene** (`prefabs <text>` from Claude Tools, or `dungeon check` after building).
-2. **Write a generator, not JSON.** `tools/dungeons/shifting_halls.py` (with `giant_kit.py`, its style sheet, and `dungeon_parts.py`, the
-   building blocks) writes `packs/shiftinghalls.json`; `testmechs.py` writes `packs/testmechs.json`. Copy that shape for a new pack.
+2. **Write a spec, not JSON**: for a new kind, follow new-dungeon.md (a spec, a theme, recipes, the gate). Shifting Halls is recipe-built: `specs/shiftinghalls.toml` → `make_dungeon.py`, installed by the gate (`make_pack.py specs/shiftinghalls.toml --install`). About 36 of its rooms come from recipes; its signature rooms are hand-made (`shifting_halls.py`: the entrance, rotunda, great hall, the three turning-stair halls, the vault and its caps, the secret rooms, the shortcut's doors, the end caps), and its boss rooms (the Warden's hall, the Cog-Thrall's guardian room) come from `boss_rooms.py`.
+   Small test packs are still written by a script of their own (`testmechs.py`, `testblocks.py`).
 3. **Check offline** (no game needed once `prefab_bounds.json` has your prefabs):
    - `python walk_check.py packs/<pack>.json [width]`: every pair of doorways a room says are joined can be walked.
    - `python prop_check.py packs/<pack>.json`: nothing floats; encounters' spawn points stand on floors.

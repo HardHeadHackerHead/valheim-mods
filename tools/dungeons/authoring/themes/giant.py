@@ -174,7 +174,7 @@ class Giant(Theme):
 
     def signatures(self):
         import shifting_halls as sh
-        out = {"entrance": sh.entrance, "greathall": sh.great_hall, "warden": sh.warden_hall, "vault": sh.vault,
+        out = {"entrance": sh.entrance, "greathall": sh.great_hall, "warden": sh.warden_hall, "guardian": sh.guardian_room, "vault": sh.vault,
                "vault_cap": sh.vault_cap, "warden_cap": sh.warden_cap, "rotunda": sh.rotunda,
                "secret_cache": sh.secret_cache, "secret_shrine": sh.secret_shrine,
                "shortcut_near": lambda: sh.shortcut_door("shortcut_near", False),

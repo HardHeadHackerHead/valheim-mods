@@ -25,7 +25,7 @@ plan = [
   {id = "drop1", job = "drop"},
   {id = "plate1", job = "plate"},
   {id = "rotunda", room = "rotunda"},                                  # (four ways out: the big hall finds room off it more easily)
-  {id = "guardian1", job = "guardian", variants = 1},
+  {id = "guardian1", room = "guardian"},                              # (boss_rooms.guardian_room: the Cog-Thrall, as the user tested it)
   {id = "hall", rooms = ["hall_a", "hall_b", "hall_c"]},
   {id = "warden", room = "warden"},
   {id = "vault", room = "vault"},

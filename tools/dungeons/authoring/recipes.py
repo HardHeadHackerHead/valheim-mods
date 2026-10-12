@@ -10,6 +10,7 @@ Order (see core.py): shell -> doorways -> walls/levels -> the job's mechanisms a
 -> features -> dressing -> lights -> ambient enemies. Things that only look go on FREE cells, so they never block a way.
 """
 import math
+import os
 
 import numpy as np
 
@@ -143,6 +144,10 @@ def make(job_name, theme, seed, name=None, vi=None, **over):
             failed("after the ways (spawn points...)")
             continue
         finish(c)
+        stray = through_walls(c)
+        if stray:
+            failed("a part through a wall (" + stray[0] + ")")
+            continue
         c.info["name"] = nm
         c.info["seed"] = seed
         return shell.room, c.info
@@ -207,7 +212,7 @@ def pick_doors(c, ids, pattern="any", levels=None):
 
 # ---------------------------------------------------------------- features, dressing, lights
 
-def spawn_ways(c):
+def spawn_ways(c, width=1.6):
     """Keeps a way (1.6 m wide) from every spawn point to a doorway, before anything is put down: what comes out of a spawn point
     must be able to walk to the player (props and cover round it would make it an island)."""
     sh = c.shell
@@ -220,7 +225,42 @@ def spawn_ways(c):
             doors = sorted(sh.doors.values(), key=lambda d: (d.id != m.reached_from, d.level != lv))
             if doors:
                 d = doors[0]
-                sh.way_between(p, lv, sh.door_at(d.id, 2.0), d.level, width=1.6)
+                sh.way_between(p, lv, sh.door_at(d.id, 2.0), d.level, width=width)
+
+
+def through_walls(c):
+    """The parts that leave the room or pass through its walls: every part but the shell's floors, walls, ceilings and solid blocks
+    (an L's notch and a round room's corners are walled off, and the floor and ceiling run under them), sampled along its box every
+    0.5 m; a sample beyond the walls' outer face (the room's shape, the wall's thickness and 0.3 m on) is out. [prefab names]"""
+    import json as _json
+    from dungeon_parts import euler_matrix
+    global _BOUNDS
+    try:
+        _BOUNDS
+    except NameError:
+        _BOUNDS = _json.load(open(os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "prefab_bounds.json")))
+    t, sh = c.theme, c.shell
+    skip = {t.p(role) for role in ("wall", "floor", "ceiling") if t.p(role)} | set(getattr(t, "structure_prefabs", ()))
+    out = []
+    H = np.array(sh.size) / 2
+    for p in c.room.parts:
+        if p.prefab in skip or p.prefab not in _BOUNDS:
+            continue
+        lo, hi = (np.array(v) for v in _BOUNDS[p.prefab])
+        R = euler_matrix(*p.euler)
+        sc = np.array(p.scale, float)
+        n = [max(1, int(np.ceil((hi[i] - lo[i]) * abs(sc[i]) / 0.5))) for i in range(3)]
+        for u in np.linspace(lo[0], hi[0], n[0] + 1):
+            for w in np.linspace(lo[2], hi[2], n[2] + 1):
+                q = np.array(p.at, float) + R @ (sc * np.array([u, (lo[1] + hi[1]) / 2, w]))
+                # (a round room's corners are behind its wall and inside its box: hidden from both sides, only the box counts there)
+                if (np.abs(q[[0, 2]]) > H[[0, 2]] + 0.3).any() or                         (sh.shape != "round" and not sh.in_shape(q[0], q[2], margin=-(t.wall_t + 0.3))):
+                    out.append(p.prefab)
+                    break
+            else:
+                continue
+            break
+    return out
 
 
 def finish(c):
@@ -228,9 +268,10 @@ def finish(c):
     if jb.side_jobs and c.vary.flag("side job", jb.side_chance):
         from .sidejobs import add_side_job
         add_side_job(c, jb.side_jobs)
-    spawn_ways(c)
+    spawn_ways(c, 1.0)                 # (a narrow way first, that the big features keep clear of...)
     if jb.features:
         add_features(c, jb.features)
+    spawn_ways(c)                      # (...then the full width round them, before the many small props)
     if jb.dressing:
         dress(c)
     if jb.lights:
@@ -244,6 +285,17 @@ def add_features(c, allowed):
     rng, t, sh = c.rng, c.theme, c.shell
     area = (sh.inner[1] - sh.inner[0]) * (sh.inner[3] - sh.inner[2])
     chosen = [f for f in allowed if f in getattr(c.job, "always", ()) or c.vary.flag(f, 0.5)]
+    one_of = [f for f in getattr(c.job, "one_of", ()) if f in allowed]
+    if one_of and not any(f in chosen for f in one_of):      # (a job that needs one of these always gets one)
+        chosen.append(c.vary.choice("needed feature", one_of))
+    _place_features(c, chosen, area)
+    # what the job needs and didn't get (no room for it where it was tried): the others of its kind
+    if one_of and not any(f in c.info["features"] for f in one_of):
+        _place_features(c, [f for f in one_of if f not in chosen], area)
+
+
+def _place_features(c, chosen, area):
+    rng, t, sh = c.rng, c.theme, c.shell
     for f in chosen:
         if f == "pillars":
             n = pillars(c, area)
@@ -275,15 +327,19 @@ def pillars(c, area):
     pattern = "ring" if sh.shape == "round" else c.vary.choice("pillar pattern", ("rows", "scatter", "rows"))
     c.note("pillar_pattern", pattern)
     if pattern == "ring":
-        R = (sh.half[0] - t.wall_t) * rng.uniform(0.45, 0.62)
         n = rng.choice((4, 6, 8))
         off = rng.uniform(0, 360 / n)
-        for i in range(n):
-            a = math.radians(off + 360.0 * i / n)
-            p = (math.sin(a) * R, sh.floor_y, math.cos(a) * R)
-            if plan.take(0, p, (w, w), margin=0.3):
-                t.pillar(c.room, p, h, w)
-                placed += 1
+        # (a ring that finds the ways in its path tries another radius)
+        for f in (rng.uniform(0.45, 0.62), 0.7, 0.35):
+            if placed >= 3:
+                break
+            R = (sh.half[0] - t.wall_t) * f
+            for i in range(n):
+                a = math.radians(off + 360.0 * i / n)
+                p = (math.sin(a) * R, sh.floor_y, math.cos(a) * R)
+                if plan.take(0, p, (w, w), margin=0.3):
+                    t.pillar(c.room, p, h, w)
+                    placed += 1
     elif pattern == "rows":
         x0, x1, z0, z1 = sh.inner
         along_x = (x1 - x0) >= (z1 - z0)
@@ -299,7 +355,7 @@ def pillars(c, area):
                 if sh.on_level(p[0], p[2], 0) and plan.take(0, p, (w, w), margin=0.3):
                     t.pillar(c.room, p, h, w)
                     placed += 1
-    else:
+    if pattern == "scatter" or placed == 0:            # (and where a ring or rows found no room: wherever there is some)
         for x, z in plan.spots(0, (w, w), rng, margin=0.8, wall=False, count=rng.randint(2, 4), gap=t.grid * 0.75):
             p = (x, sh.floor_y, z)
             if plan.take(0, p, (w, w), margin=0.3):
@@ -315,7 +371,9 @@ def machinery(c):
         return 0
     m = None
     n = 0
-    for k in rng.sample(range(4), 2):
+    for k in rng.sample(range(4), 4):
+        if n >= 2:
+            break
         depth = sh.half[2] if k % 2 == 0 else sh.half[0]
         across = sh.half[0] if k % 2 == 0 else sh.half[2]
         lat = rng.uniform(-across * 0.3, across * 0.3)
@@ -323,9 +381,10 @@ def machinery(c):
             continue
         if sh.notch and not sh.in_shape(*side_xz(k, lat, depth - t.wall_t - 1.0)):
             continue
-        dia = rng.uniform(0.35, 0.55) * (sh.top - sh.floor_y)
-        y = sh.floor_y + 3.0 + dia / 2
-        if y + dia / 2 > sh.top - 1.2:
+        h = sh.top - t.floor_t - sh.floor_y
+        dia = min(rng.uniform(0.35, 0.55) * h, h - 2.4 - 0.6)       # (over the heads, under the ceiling: a low room has a small one)
+        y = sh.floor_y + 2.4 + dia / 2
+        if dia < 1.2:
             continue
         m = m or t.machine(c.room, "gears")
         t.big_gear_wall(c.room, m, k, lat, y, depth - t.wall_t - 0.4, dia, rng.choice((-1, 1)) * rng.uniform(8, 18))
@@ -354,7 +413,8 @@ def cover(c):
         return 0
     n = 0
     size = (t.door_w * 0.5, t.door_w * 0.25)
-    for x, z in plan.spots(0, size, rng, margin=1.0, wall=False, count=rng.randint(2, 3), gap=t.grid):
+    spots = plan.spots(0, size, rng, margin=1.0, wall=False, count=rng.randint(2, 3), gap=t.grid) or         plan.spots(0, size, rng, margin=0.5, wall=False, count=rng.randint(2, 3), gap=t.grid * 0.6)
+    for x, z in spots:
         yaw = rng.choice((0, 90))
         if plan.take(0, (x, 0, z), size, yaw=yaw, margin=0.5):
             from dungeon_parts import box

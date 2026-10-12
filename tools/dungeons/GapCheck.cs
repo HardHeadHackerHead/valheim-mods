@@ -14,7 +14,8 @@ namespace Dungeons
     ///   - every part is a box (tools/dungeons/prefab_bounds.json: each prefab's box in its own frame, scaled, turned and moved as the part;
     ///     a prefab in prefab_shapes.json is several boxes instead, its collider's shape: a hollow ribcage can be walked through)
     ///     is; a mechanism's parts as they stand in that state's pose), made axis-aligned again (a tilted beam counts as its whole box);
-    ///   - the room is cut into 0.5 m columns; a box's top is a place to stand where it covers a column's middle and nothing else is in
+    ///   - the room is cut into 0.5 m columns; a box's top is a place to stand (not a thin standing part's, under 0.3 m: bars, a grate; and
+    ///     for a palette piece standing upright, only at a height where the palette measured a foothold) where it covers a column's middle and nothing else is in
     ///     the column from just above it to 1.8 m up (anything touching a column at all counts there, so a thin wall still splits a floor);
     ///   - a prop (not a structure piece: a stair, floor or wall is a surface like any other) with footholds (the palettes' "climb.top": upward faces a jump apart, measured from the game's colliders; standing as the
     ///     prefab stands) is climbed: from the floor beside its foot to any place within a jump of it (and of that foot spot, across at most 3 m of the prop),
@@ -22,8 +23,9 @@ namespace Dungeons
     ///   - with Quad's Parkour (when the pack allows it), a wall climb or ledge grab reaches 6 m up within 2 m: "only with Parkour", its own
     ///     section; a failure only when the pack says "parkour": true itself, information when it's left to the default;
     ///   - places join by walking (next columns, at most 0.6 m up or down), by jumping (one jump, the game's: up to 3.1 m up at Jump 100 (1.6 m at
-    ///     Jump 0), and across as far as a sprinter flies to that height, 10.9 m on the level at Jump 100 and Run 100, further down; nothing in the
-    ///     way at body height: a rail can be jumped over, a wall can't) and by falling (as a jump, any height down: one way);
+    ///     Jump 0), and across as far as a sprinter flies to that height, 10.9 m on the level at Jump 100 and Run 100, further down; the body (1.8 m)
+    ///     clear all along the real arc, or along a run off the edge with no jump: a rail under the arc is jumped over, bars across it or
+    ///     a lintel over a fall's mouth aren't) and by falling (as a jump, any height down: one way);
     ///   - each doorway stands on the place under its point a metre into the room (or two or three, past a gate standing in it).
     /// Then, against the solver in the same state ("inside" joins, the mechanisms' joins, "drops"), each way from one doorway to another
     /// that the player has and the solver doesn't, "->" (or "<->" both ways):
@@ -52,10 +54,22 @@ namespace Dungeons
         private static float V = 11.2f, S = 8.75f;
         public static float JumpUp => V * V / 40f;
         /// <summary>How far across a jump reaches landing h higher (lower: negative); -1 if it can't get that high.</summary>
-        public static float Reach(float h)
+        public static float Reach(float h, float speed = -1f)
         {
             float d = V * V - 40f * h;
-            return d < 0f ? -1f : S * (V + (float)Math.Sqrt(d)) / 20f + 0.4f * (1f + 0.4f * JumpSkill / 100f) + BodyRadius;
+            return d < 0f ? -1f : (speed < 0f ? S : speed) * (V + (float)Math.Sqrt(d)) / 20f + 0.4f * (1f + 0.4f * JumpSkill / 100f) + BodyRadius;
+        }
+
+        /// <summary>"--run-up" (a test, not the gate's rule): a jump leaves at the speed a sprint reaches on its own place's longest run, from
+        /// standing (the game: each physics step, 50 a second, the speed aimed at moves 1 m/s nearer the run speed, m_acceleration 1, and the
+        /// body's speed goes half way to it). Off by default: a player who lands on a step from a jump keeps the speed (on the ground the
+        /// speed aimed at is the run speed already, in the air the air control pulls towards it), so hopping on keeps a sprint's speed.</summary>
+        public static bool RunUp;
+        public static float SpeedAfter(float run)
+        {
+            float v = 0f, x = 0f;
+            for (int i = 0; i < 200 && x < run && v < S - 0.001f; i++) { v += (Math.Min(S, v + 1f) - v) * 0.5f; x += v * 0.02f; }
+            return x >= run ? v : S;
         }
         public static float JumpAcross => Reach(0f);
         public static void Skills(int jump, int run)
@@ -75,6 +89,14 @@ namespace Dungeons
         /// walls, arches): they're the room's own surfaces, walked and jumped from as they are. Set by Palettes().</summary>
         public static readonly Dictionary<string, KeyValuePair<float, float>> Climbers = new Dictionary<string, KeyValuePair<float, float>>(StringComparer.Ordinal);
         private sealed class Climb { public string Prefab; public float Top; }
+
+        /// <summary>Each palette piece's measured footholds ("climb.ledges": height bands, from its foot, of faces 38° or flatter with room
+        /// for the feet): a box top of a piece in a palette is a place to stand only where one of them is (a grate's or a pole's top isn't).
+        /// Set by Palettes().</summary>
+        private static readonly Dictionary<string, List<Vector2>> Ledges = new Dictionary<string, List<Vector2>>(StringComparer.Ordinal);
+        private static readonly System.Runtime.CompilerServices.ConditionalWeakTable<Vector3[], string> NoTop =
+            new System.Runtime.CompilerServices.ConditionalWeakTable<Vector3[], string>();
+        public const float Thin = 0.3f;   // a standing part thinner than this (and taller than 1 m) has no top to stand on: bars, a grate on edge
         private static readonly System.Runtime.CompilerServices.ConditionalWeakTable<Vector3[], Climb> Climbable =
             new System.Runtime.CompilerServices.ConditionalWeakTable<Vector3[], Climb>();
 
@@ -93,6 +115,8 @@ namespace Dungeons
                     foreach (JObject e in (JObject.Parse(File.ReadAllText(f))["pieces"] as JArray ?? new JArray()).OfType<JObject>())
                     {
                         var climb = e["climb"] as JObject;
+                        if (climb?["ledges"] is JArray bands && !string.IsNullOrEmpty((string)e["prefab"]))
+                            Ledges[(string)e["prefab"]] = bands.OfType<JArray>().Where(l => l.Count == 2).Select(l => new Vector2((float)l[0], (float)l[1])).ToList();
                         float top = (float?)climb?["top"] ?? 0f, skilled = (float?)climb?["top_skilled"] ?? top;
                         if ((top > 0f || skilled > 0f) && (string)e["mount"] != "structure" && !string.IsNullOrEmpty((string)e["prefab"])
                             && !NoClimb.Contains((string)e["prefab"])) Climbers[(string)e["prefab"]] = new KeyValuePair<float, float>(top, skilled);
@@ -101,8 +125,8 @@ namespace Dungeons
                 catch (Exception) { }
             return Climbers.Count;
         }
-        private const float ClearLow = 1.2f, ClearHigh = 2.4f;   // a jump's body passes this high above the higher of its two ends
-        // (and its feet go over anything up to a jump above where it leaves: a rail or bars stop a jump only if they stand higher than that)
+        private const float ClearLow = 1.2f, ClearHigh = 2.4f;   // the jump off a climbed prop: its body passes this high above where it lands
+        // (a jump between places is checked on its arc: Arc in OneState)
         private const int MaxStates = 512;                        // combinations checked per room at most
         private static readonly System.Runtime.CompilerServices.ConditionalWeakTable<Vector3[], string> Names =
             new System.Runtime.CompilerServices.ConditionalWeakTable<Vector3[], string>();
@@ -129,8 +153,11 @@ namespace Dungeons
         }
 
         /// <summary>A part's boxes in its room's frame (one per box of its prefab's shape).</summary>
-        private static IEnumerable<Vector3[]> Boxes(PartDef p, Dictionary<string, List<Vector3[]>> bounds, MechDef mech, Pose pose) =>
-            bounds[p.Prefab].Select(local => Box(p, local, mech, pose));
+        private static IEnumerable<Vector3[]> Boxes(PartDef p, Dictionary<string, List<Vector3[]>> bounds, MechDef mech, Pose pose)
+        {
+            float foot = bounds[p.Prefab].Min(b => b[0].y);
+            return bounds[p.Prefab].Select(local => Box(p, local, mech, pose, foot));
+        }
 
         /// <summary>One line per finding for a room (each with how many of its states show it), "unchecked..." lines, or nothing.</summary>
         public static List<string> Check(Pack pack, RoomDef room, Dictionary<string, List<Vector3[]>> bounds)
@@ -216,7 +243,7 @@ namespace Dungeons
                     {
                         solid[x * nz + z].Add(new Vector2(b[0].y, b[1].y));
                         float cx = -half.x + (x + 0.5f) * Cell, cz = -half.z + (z + 0.5f) * Cell;
-                        if (cx >= b[0].x && cx <= b[1].x && cz >= b[0].z && cz <= b[1].z) { tops[x * nz + z].Add(b[1].y); topBox[((long)(x * nz + z) << 20) ^ (long)Math.Round(b[1].y * 100)] = b; }
+                        if (cx >= b[0].x && cx <= b[1].x && cz >= b[0].z && cz <= b[1].z && !NoTop.TryGetValue(b, out _)) { tops[x * nz + z].Add(b[1].y); topBox[((long)(x * nz + z) << 20) ^ (long)Math.Round(b[1].y * 100)] = b; }
                     }
             }
             var spots = new List<KeyValuePair<int, float>>();   // (column, height)
@@ -259,9 +286,18 @@ namespace Dungeons
 
             // Jumps and falls: from each area, the areas it reaches (and on from them).
             int reachCells = (int)Math.Ceiling(Reach(-room.Size.y) / Cell);   // (the farthest: a jump down the room's whole height)
+            var runSpeed = new Dictionary<int, float>();   // (--run-up: an area's speed after its longest straight run, its box's diagonal)
+            if (RunUp)
+                foreach (var m in members)
+                {
+                    int x0 = m.Value.Min(sp => spots[sp].Key / nz), x1 = m.Value.Max(sp => spots[sp].Key / nz);
+                    int z0 = m.Value.Min(sp => spots[sp].Key % nz), z1 = m.Value.Max(sp => spots[sp].Key % nz);
+                    float dx = (x1 - x0) * Cell, dz = (z1 - z0) * Cell;
+                    runSpeed[m.Key] = SpeedAfter((float)Math.Sqrt(dx * dx + dz * dz));
+                }
             bool Reaches(int from, int to)   // (one jump from spot to spot: across against the height it lands at)
             {
-                float r = Reach(spots[to].Value - spots[from].Value);
+                float r = Reach(spots[to].Value - spots[from].Value, RunUp ? runSpeed[Find(from)] : -1f);
                 if (r < 0f) return false;
                 int ax = spots[from].Key / nz - spots[to].Key / nz, az = spots[from].Key % nz - spots[to].Key % nz;
                 return (ax * ax + az * az) * Cell * Cell <= r * r;
@@ -291,9 +327,40 @@ namespace Dungeons
             float lowest = spots.Count > 0 ? spots.Min(sp => sp.Value) : 0f;
             for (int s = 0; s < spots.Count; s++)
                 if (edge[s]) (edgeAt[spots[s].Key] ?? (edgeAt[spots[s].Key] = new List<int>())).Add(s);
+            // A jump's way through the air: the feet on the real arc (up at V, gravity 20, across at an even speed, landing on the way down,
+            // or on the way up onto something higher), or a run off the edge with no jump (no rise: under a lintel a jump would hit), and
+            // the body (1.8 m) clear of everything in each column it passes. Clear if any of them is, at a speed the run allows.
+            bool Arc(int from, int to)
+            {
+                float y0 = spots[from].Value, h = spots[to].Value - y0;
+                int ax = spots[from].Key / nz, az = spots[from].Key % nz, bx = spots[to].Key / nz, bz = spots[to].Key % nz;
+                int steps = Math.Max(Math.Abs(bx - ax), Math.Abs(bz - az));
+                float across = (float)Math.Sqrt((bx - ax) * (bx - ax) + (bz - az) * (bz - az)) * Cell;
+                float need = Math.Max(0f, across - BodyRadius - 0.4f * (1f + 0.4f * JumpSkill / 100f));   // (the push forward and the body's reach)
+                foreach (float v in new[] { V, 0f })
+                {
+                    if (v == 0f && h >= 0f) continue;
+                    float disc = v * v - 40f * h;
+                    if (disc < 0f) continue;
+                    foreach (float sign in v > 0f && h > 0f ? new[] { 1f, -1f } : new[] { 1f })
+                    {
+                        float t1 = (v + sign * (float)Math.Sqrt(disc)) / 20f;
+                        if (t1 <= 0f || need > S * t1 + 1e-3f) continue;
+                        bool clear = true;
+                        for (int k = 1; k < steps && clear; k++)
+                        {
+                            float f = (float)k / steps, t = f * t1, y = y0 + v * t - 10f * t * t;
+                            int x = (int)Math.Round(ax + (bx - ax) * f), z = (int)Math.Round(az + (bz - az) * f);
+                            if (solid[x * nz + z].Any(s => s.x < y + Headroom - 0.1f && s.y > y + 0.05f)) clear = false;
+                        }
+                        if (clear) return true;
+                    }
+                }
+                return false;
+            }
             bool Clear(int from, int to, float hi, Vector3[] over = null)
             {
-                float low = over != null ? hi + ClearLow : Math.Max(hi + ClearLow, spots[from].Value + JumpUp);
+                float low = hi + ClearLow;
                 int ax = spots[from].Key / nz, az = spots[from].Key % nz, bx = spots[to].Key / nz, bz = spots[to].Key % nz;
                 int steps = Math.Max(Math.Abs(bx - ax), Math.Abs(bz - az));
                 for (int k = 1; k < steps; k++)
@@ -364,7 +431,7 @@ namespace Dungeons
                                 float dy = spots[t].Value - spots[s].Value;
                                 bool climbUp = parkour && dy > JumpUp && dy <= ParkourUp && (x - sx) * (x - sx) + (z - sz) * (z - sz) <= (ParkourAcross / Cell) * (ParkourAcross / Cell);
                                 if (b == a || set.Contains(b) || (safe && dy < -SafeFall) || !(climbUp || Reaches(s, t))) continue;
-                                if (Clear(s, t, Math.Max(spots[s].Value, spots[t].Value))) set.Add(b);
+                                if (climbUp ? Clear(s, t, Math.Max(spots[s].Value, spots[t].Value)) : Arc(s, t)) set.Add(b);
                             }
                         }
                 }
@@ -467,7 +534,7 @@ namespace Dungeons
                                     int b = Find(t);
                                     if (via.ContainsKey(b) || !Reaches(s, t)) continue;
                                     if (safeOnly && spots[t].Value - spots[s].Value < -SafeFall) continue;
-                                    if (!Clear(s, t, Math.Max(spots[s].Value, spots[t].Value))) continue;
+                                    if (!Arc(s, t)) continue;
                                     via[b] = new KeyValuePair<int, int>(s, t);
                                     q.Enqueue(b);
                                 }
@@ -532,7 +599,7 @@ namespace Dungeons
                     {
                         float hi = Math.Max(spots[bestS].Value, spots[bestT].Value);
                         Console.WriteLine($"GAPDEBUG {room.Name} state {string.Join(",", state)}: {e.Key} -> {e.Value} blocked; nearest: {Spot(bestS)} to {Spot(bestT)}" +
-                                          $" ({bestD:0.0}), {(Clear(bestS, bestT, hi) ? "nothing in the way at body height" : "something in the way at body height")}");
+                                          $" ({bestD:0.0}), {(Arc(bestS, bestT) ? "nothing in the way of a jump" : "something in the way of a jump")}");
                     }
                 }
             }
@@ -571,7 +638,7 @@ namespace Dungeons
         /// <summary>A part's box in its room's frame: its prefab's box scaled and placed as the part, then (a mechanism's) by the pose and
         /// the mechanism, turned as Unity's Quaternion.Euler does (z, then x, then y), then made axis-aligned. Plain arithmetic: the
         /// engine's rotation code doesn't run outside the game.</summary>
-        private static Vector3[] Box(PartDef p, Vector3[] local, MechDef mech, Pose pose)
+        private static Vector3[] Box(PartDef p, Vector3[] local, MechDef mech, Pose pose, float foot)
         {
             Vector3 min = new Vector3(float.MaxValue, float.MaxValue, float.MaxValue), max = -min;
             for (int c = 0; c < 8; c++)
@@ -585,9 +652,14 @@ namespace Dungeons
             }
             var box = new[] { min, max };
             Names.Add(box, p.Prefab + (mech != null ? " (" + mech.Id + ")" : ""));
+            bool upright = Upright(p.Euler) && (pose == null || Upright(pose.Euler)) && (mech == null || Upright(mech.Euler));
+            // (its top a place to stand: not on a thin standing part, and, upright, only where the palette measured a foothold)
+            float top = local[1].y - foot;
+            if ((Math.Min(max.x - min.x, max.z - min.z) < Thin && max.y - min.y > 1f)
+                || (upright && Ledges.TryGetValue(p.Prefab, out var bands) && !bands.Any(l => top >= l.x - 0.25f && top <= l.y + 0.25f)))
+                NoTop.Add(box, p.Prefab);
             // (footholds only as the prefab stands: turned off upright, a part is climbed by its top end alone, as any box)
-            if (Climbers.TryGetValue(p.Prefab, out var tops) && (JumpSkill >= 100 ? tops.Value : tops.Key) > 0f
-                && Upright(p.Euler) && (pose == null || Upright(pose.Euler)) && (mech == null || Upright(mech.Euler)))
+            if (Climbers.TryGetValue(p.Prefab, out var tops) && (JumpSkill >= 100 ? tops.Value : tops.Key) > 0f && upright)
                 Climbable.Add(box, new Climb { Prefab = p.Prefab, Top = (JumpSkill >= 100 ? tops.Value : tops.Key) * p.Scale.y });
             return box;
         }

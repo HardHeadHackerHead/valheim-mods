@@ -237,6 +237,10 @@ class Drop(Job):
         gh = min(sh.top - t.floor_t - (y1 - 1.0), t.door_h + 1.0, (y1 - 1.0) - sh.bottom - 0.4)   # (too tall to jump over, short
         #                                                                                             enough to sink away in its box)
         g.fill(t.p("grate"), (0, gh / 2, 0), (sh.sw + 0.2, gh, 0.25))
+        if (y1 - 1.0) + gh < y1 + JUMP_UP + 0.2:
+            # too low to stop a jump over it from the stair's head: fixed bars over the gateway, from a head's height over the ledge to
+            # the ceiling (the gate, shut, reaches up behind them; sunk, it leaves the way under them)
+            t.bars(r, (sh.sx - sh.sw / 2 - 0.1, 0, sh.zl + 0.4), (sh.sx + sh.sw / 2 + 0.1, 0, sh.zl + 0.4), y1 + 2.2, sh.top - t.floor_t)
         g.pose().pose(at=(0, -(gh + 0.2), 0))
         g.seconds = 2.5
         g.join("bottom", "top", state=1)

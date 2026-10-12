@@ -167,6 +167,8 @@ class Fight(Job):
     max = 1
     door_ids = ("in", "out")
     features = ("pillars", "cover", "remains", "machinery")
+    always = ("cover",)                  # (something to fight round, and a reason to move: pillars or the machine)
+    one_of = ("pillars", "machinery")
     ambient = (0, 0)
 
     def doors(self, c):

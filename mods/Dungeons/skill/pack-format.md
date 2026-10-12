@@ -8,8 +8,8 @@ The code that reads packs: `PackReader.cs`, which reads every field below, and `
 authors keep it. If this file and `Packs.cs` disagree, `Packs.cs` is right: fix this file. The data classes are in `Model.cs`, and pack
 JSON uses their field names in camelCase.
 
-Don't write pack JSON by hand for rooms of your own: write a generator script (`tools/dungeons/shifting_halls.py` is the model, with
-`dungeon_parts.py`). Hand-writing works for a pack made only of the game's rooms (`packs/testcrypt.json`).
+Don't write pack JSON by hand for rooms of your own: write a spec and let the recipes build it (new-dungeon.md), or for a small test
+pack a generator script (`tools/dungeons/testmechs.py`, with `dungeon_parts.py`). Hand-writing works for a pack made only of the game's rooms (`packs/testcrypt.json`).
 
 ## The pack
 

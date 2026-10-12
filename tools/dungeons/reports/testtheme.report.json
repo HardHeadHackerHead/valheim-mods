@@ -8,6 +8,7 @@
    "recipe": "fight",
    "shell": "balcony",
    "features": [
+    "pillars",
     "remains",
     "machinery"
    ],
@@ -40,12 +41,13 @@
     "lever": "far",
     "points": 6,
     "pillar_pattern": "rows",
-    "gears": 1,
+    "pillars": 1,
+    "gears": 2,
     "dressing": "tavern",
     "props": 13,
     "lights": [
-     5,
-     7
+     7,
+     11
     ]
    }
   },
@@ -53,7 +55,10 @@
    "name": "fight_rect_2",
    "recipe": "fight",
    "shell": "rect",
-   "features": [],
+   "features": [
+    "cover",
+    "machinery"
+   ],
    "params": {
     "shape": "rect",
     "size": [
@@ -76,11 +81,13 @@
     "lever": "far",
     "points": 4,
     "pillar_pattern": "scatter",
+    "cover": 2,
+    "gears": 2,
     "dressing": "workshop",
-    "props": 21,
+    "props": 18,
     "lights": [
      0,
-     6
+     5
     ]
    }
   },
@@ -88,7 +95,10 @@
    "name": "fight_L_3",
    "recipe": "fight",
    "shell": "L",
-   "features": [],
+   "features": [
+    "cover",
+    "machinery"
+   ],
    "params": {
     "shape": "L",
     "size": [
@@ -115,11 +125,14 @@
     ],
     "lever": "far",
     "points": 4,
+    "cover": 1,
+    "pillar_pattern": "rows",
+    "gears": 1,
     "dressing": "barracks",
-    "props": 9,
+    "props": 11,
     "lights": [
      0,
-     3
+     2
     ]
    }
   },
@@ -128,7 +141,9 @@
    "recipe": "hub",
    "shell": "balcony",
    "features": [
-    "sentries"
+    "sentries",
+    "machinery",
+    "pillars"
    ],
    "params": {
     "shape": "balcony",
@@ -167,12 +182,14 @@
      ]
     ],
     "side_job": "sentries",
+    "gears": 1,
     "pillar_pattern": "rows",
+    "pillars": 1,
     "dressing": "tavern",
     "props": 13,
     "lights": [
      3,
-     10
+     11
     ]
    }
   },
@@ -278,7 +295,9 @@
    "recipe": "lever",
    "shell": "rect",
    "features": [
-    "pillars"
+    "pillars",
+    "machinery",
+    "cover"
    ],
    "params": {
     "shape": "rect",
@@ -298,6 +317,8 @@
     "lever_level": 0,
     "pillar_pattern": "rows",
     "pillars": 1,
+    "gears": 2,
+    "cover": 2,
     "dressing": "tavern",
     "props": 15,
     "lights": [
@@ -355,7 +376,9 @@
    "name": "lever_L_9",
    "recipe": "lever",
    "shell": "L",
-   "features": [],
+   "features": [
+    "machinery"
+   ],
    "params": {
     "shape": "L",
     "size": [
@@ -377,6 +400,7 @@
      ]
     ],
     "lever_level": 0,
+    "gears": 2,
     "dressing": "workshop",
     "props": 12,
     "lights": [
@@ -420,12 +444,12 @@
     "winch": true,
     "pillar_pattern": "rows",
     "pillars": 1,
-    "gears": 1,
+    "gears": 2,
     "dressing": "tavern",
     "props": 13,
     "lights": [
-     1,
-     3
+     2,
+     2
     ]
    }
   },
@@ -513,7 +537,7 @@
      12.0,
      32.0
     ],
-    "gap": 11.0,
+    "gap": 11.5,
     "pit_at": -2.0,
     "doors": [
      [
@@ -557,7 +581,7 @@
      12.0,
      28.0
     ],
-    "gap": 12.0,
+    "gap": 12.5,
     "pit_at": 0.0,
     "doors": [
      [
@@ -599,9 +623,9 @@
     "size": [
      8.0,
      12.0,
-     32.0
+     36.0
     ],
-    "gap": 13.0,
+    "gap": 13.5,
     "pit_at": 2.0,
     "doors": [
      [
@@ -626,7 +650,7 @@
     ],
     "cycle": 6.0,
     "dressing": "store",
-    "props": 5,
+    "props": 4,
     "lights": [
      0,
      0
@@ -637,7 +661,9 @@
    "name": "plate_rect_16",
    "recipe": "plate",
    "shell": "rect",
-   "features": [],
+   "features": [
+    "cover"
+   ],
    "params": {
     "shape": "rect",
     "size": [
@@ -665,6 +691,7 @@
     "screen_z": 5.0,
     "gap": -2,
     "ledge": 1,
+    "cover": 2,
     "dressing": "tavern",
     "props": 13,
     "lights": [
@@ -677,9 +704,7 @@
    "name": "plate_rect_17",
    "recipe": "plate",
    "shell": "rect",
-   "features": [
-    "remains"
-   ],
+   "features": [],
    "params": {
     "shape": "rect",
     "size": [
@@ -690,25 +715,25 @@
     "doors": [
      [
       2,
-      -1.0,
+      1.0,
       0
      ],
      [
       0,
-      0.0,
+      1.0,
       0
      ],
      [
       1,
-      -6.820253111190993,
+      -6.698944812850259,
       0
      ]
     ],
     "screen_z": 2.0,
     "gap": 0,
     "ledge": 1,
-    "dressing": "barracks",
-    "props": 12,
+    "dressing": "workshop",
+    "props": 10,
     "lights": [
      0,
      0
@@ -831,6 +856,7 @@
    "features": [
     "guard",
     "pillars",
+    "machinery",
     "remains"
    ],
    "params": {
@@ -867,11 +893,12 @@
     "side_job": "guard",
     "pillar_pattern": "rows",
     "pillars": 2,
+    "gears": 1,
     "dressing": "tavern",
     "props": 13,
     "lights": [
      5,
-     10
+     11
     ]
    }
   },
@@ -879,7 +906,9 @@
    "name": "breather_rect_22",
    "recipe": "breather",
    "shell": "rect",
-   "features": [],
+   "features": [
+    "cover"
+   ],
    "params": {
     "shape": "rect",
     "size": [
@@ -905,11 +934,12 @@
      ]
     ],
     "pillar_pattern": "scatter",
+    "cover": 1,
     "dressing": "workshop",
     "props": 9,
     "lights": [
      0,
-     3
+     4
     ]
    }
   },
@@ -989,10 +1019,10 @@
     "side_job": "guard",
     "pillar_pattern": "rows",
     "dressing": "tavern",
-    "props": 11,
+    "props": 10,
     "lights": [
      0,
-     6
+     5
     ]
    }
   },
@@ -1070,12 +1100,12 @@
      ]
     ],
     "side_job": "sentries",
-    "gears": 1,
+    "gears": 2,
     "dressing": "tavern",
     "props": 13,
     "lights": [
      2,
-     4
+     3
     ]
    }
   },
@@ -1084,7 +1114,8 @@
    "recipe": "machineroom",
    "shell": "L",
    "features": [
-    "sentries"
+    "sentries",
+    "machinery"
    ],
    "params": {
     "shape": "L",
@@ -1116,6 +1147,7 @@
      ]
     ],
     "side_job": "sentries",
+    "gears": 1,
     "dressing": "workshop",
     "props": 3,
     "lights": [
@@ -1129,7 +1161,8 @@
    "recipe": "machineroom",
    "shell": "rect",
    "features": [
-    "sentries"
+    "sentries",
+    "machinery"
    ],
    "params": {
     "shape": "rect",
@@ -1151,11 +1184,12 @@
      ]
     ],
     "side_job": "sentries",
+    "gears": 2,
     "dressing": "barracks",
     "props": 12,
     "lights": [
      0,
-     3
+     2
     ]
    }
   },
@@ -1163,7 +1197,9 @@
    "name": "corridor_rect_29",
    "recipe": "corridor",
    "shell": "rect",
-   "features": [],
+   "features": [
+    "machinery"
+   ],
    "params": {
     "shape": "rect",
     "size": [
@@ -1186,6 +1222,7 @@
     "variant": "hammers",
     "bays": 1,
     "pillar_pattern": "rows",
+    "gears": 2,
     "dressing": "tavern",
     "props": 0,
     "lights": [
@@ -1263,12 +1300,12 @@
     ],
     "side_job": "guard",
     "pillar_pattern": "rows",
-    "gears": 1,
+    "gears": 2,
     "dressing": "tavern",
     "props": 13,
     "lights": [
-     3,
-     5
+     2,
+     4
     ]
    }
   },
@@ -1313,7 +1350,7 @@
     "props": 22,
     "lights": [
      0,
-     9
+     10
     ]
    }
   },
@@ -1454,7 +1491,7 @@
     ],
     "pillar_pattern": "rows",
     "dressing": "tavern",
-    "props": 13,
+    "props": 15,
     "lights": [
      0,
      4
@@ -1474,17 +1511,17 @@
   "jobs": 15,
   "shells": 6,
   "spread": {
-   "fight": 0.52,
-   "hub": 0.57,
-   "lever": 0.68,
+   "fight": 0.5,
+   "hub": 0.58,
+   "lever": 0.71,
    "gate": 0.74,
-   "timing": 0.31,
-   "plate": 0.31,
+   "timing": 0.32,
+   "plate": 0.35,
    "drop": 0.36,
-   "breather": 0.73,
+   "breather": 0.75,
    "pillarhall": 0.7,
-   "machineroom": 0.6,
-   "corridor": 0.35,
+   "machineroom": 0.53,
+   "corridor": 0.46,
    "stairhall": 0.47,
    "nook": 0.45
   },

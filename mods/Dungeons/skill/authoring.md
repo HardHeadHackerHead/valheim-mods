@@ -1,9 +1,11 @@
 # Authoring rooms with the generators (tools/dungeons)
 
-> For a **new dungeon kind**, start with new-dungeon.md: specs, themes and recipes (`tools/dungeons/authoring/`) make most rooms
-> now. This file is the library underneath them, the checks, and how Shifting Halls' hand-made rooms are written.
+> For a **new dungeon kind**, start with new-dungeon.md: specs, themes and recipes (`tools/dungeons/authoring/`) make most rooms.
+> This file is the library underneath them, the checks, and how hand-made (signature) rooms are written.
 
-How the Shifting Halls rooms are made, and how to make a pack of your own the same way. Packs of our own rooms are written by Python
+Shifting Halls is **recipe-built**: `specs/shiftinghalls.toml` → `make_dungeon.py`, installed by the gate (`make_pack.py specs/shiftinghalls.toml --install`). About 36 of its rooms come from recipes; its signature rooms are hand-made (`shifting_halls.py`: the entrance, rotunda, great hall, the three turning-stair halls, the vault and its caps, the secret rooms, the shortcut's doors, the end caps), and its boss rooms (the Warden's hall, the Cog-Thrall's guardian room) come from `boss_rooms.py`.
+
+How hand-made rooms are written, and the library the recipes use. Packs of our own rooms are written by Python
 scripts, never by hand: a room is hundreds of parts, and the checks below read the same data.
 
 ## The files
@@ -21,7 +23,8 @@ scripts, never by hand: a room is hundreds of parts, and the checks below read t
     `hang_chain`.
   - Machinery: `gear` (turning or spinning), `machine` (kind `machine`: spinning parts), `axle`, `bar`, `girder`, `stairs` (solid or open),
     `giant_lever`, `grate_wall`, `part_box`.
-- **`shifting_halls.py`**, the pack: one function per room; `build()` ends with the plan's steps. The halls are puzzles searched offline
+- **`shifting_halls.py`**, the old generator, kept as the source of Shifting Halls' hand-made signature rooms (the spec now builds the
+  pack): one function per room. The halls are puzzles searched offline
   and kept in a `HALLS` table with their declared falls. `solve(room, entry, falls="declared" | "free" | None)` proves each hall with the
   declared drops, with free descent and with no falls. Helpers: `encounter`, `door_gate`, `cracked_panel`, `secret_room`,
   `shortcut_door`.
@@ -48,9 +51,10 @@ scripts, never by hand: a room is hundreds of parts, and the checks below read t
 
 ## The workflow
 
-1. Edit the generator.
-2. `python shifting_halls.py`: writes the pack and prints each hall's uses.
-3. The three checks, then the harness on 1000 seeds.
+1. Edit the room (a signature room in `shifting_halls.py` or `boss_rooms.py`; a recipe or theme in `authoring/`) or the spec.
+2. `python make_dungeon.py specs/<name>.toml`: writes the pack and its variety report.
+3. The checks (walk, prop, lever, box, creatures), then the gate: `python make_pack.py specs/<name>.toml` (new-dungeon.md), with
+   `--install` once it passes.
 4. `dotnet build mods/Dungeons -c Release -p:DeployToGame=false` (a plain build copies the DLL into the game's `BepInEx/scripts`,
    `mods/Directory.Build.props`). **Never deploy while a player is in the game.**
 5. Pictures (`--preview DIR`), then the game.

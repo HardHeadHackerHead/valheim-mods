@@ -48,6 +48,7 @@ namespace Dungeons
                     case "--dump": dump = args[++i]; break;       // (one JSON line per good layout, for make_pack's variety check)
                     case "--jump-skill": GapCheck.Skills(int.Parse(args[++i]), GapCheck.RunSkill); break;   // (the gap check for a player with this Jump skill; 100 unless said)
                     case "--run-skill": GapCheck.Skills(GapCheck.JumpSkill, int.Parse(args[++i])); break;   // (and this Run skill; 100 unless said)
+                    case "--run-up": GapCheck.RunUp = true; break;   // (a test: jumps leave at the speed a sprint from standing reaches on the place's longest run)
                     case "--stage": stage = args[++i]; break;     // read (pack problems, looks) | gaps (the gap check) | seeds (the seeds); all: every one
                     case "--look":   // one look file checked, nothing else
                         string lf = args[++i];

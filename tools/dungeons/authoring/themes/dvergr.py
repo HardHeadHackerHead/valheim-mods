@@ -54,7 +54,7 @@ class Dvergr(Theme):
     shells = {"rect": 2, "L": 2, "split": 3, "balcony": 3}
     sizes = {"nook": ((2, 2), (2, 3)), "small": ((2, 3), (2, 3)), "medium": ((3, 4), (3, 4)), "large": ((4, 5), (4, 5)),
              "corridor": ((1, 1), (3, 4)), "hall": ((5, 5), (6, 7)), "plate": ((3, 4), (5, 6))}
-    pit_gaps = (11.0, 12.0, 13.0)        # (more than the best jump across: 10.4 m)
+    pit_gaps = (11.5, 12.5, 13.5)        # (more than the best jump across: 10.9 m)
     dense = 2.2
     forbid = set()
 
@@ -122,7 +122,8 @@ class Dvergr(Theme):
                 if any(d.k == k and abs(d.lateral - mid) < self.door_w / 2 + (pb - pa) / 2 + 0.5 for d in doors):
                     continue
                 x, z = sxz(k, mid, depth - 0.15)
-                if not sh.on_level(x, z, 0):
+                # the whole bay on the floor (an L's notch walls off part of a side: no rail or brace runs into it)
+                if not all(sh.on_level(*sxz(k, u, depth - 0.6), 0) for u in (pa, mid, pb)):
                     continue
                 y0 = sh.levels[0]
                 hb = min(self.door_h, top - y0 - 0.5)
@@ -153,8 +154,24 @@ class Dvergr(Theme):
         n = max(1, int(round(2 * span / 4.0)))
         for i in range(1, n):
             u = -span + i * 2 * span / n
-            c = (0, top - 0.3, u) if along_x else (u, top - 0.3, 0)
-            box(r, BEAM, c, (2 * width, 0.5, 0.45), yaw=0 if along_x else 90)
+            # only over the room's own floor (an L's notch, a round room's corners are outside its walls): a beam per stretch inside
+            ts = np.arange(-width, width + 0.01, 0.25)
+            inside = [sh.in_shape(*((t, u) if along_x else (u, t)), margin=-0.2) for t in ts]
+            runs, start = [], None
+            for t, ok in zip(ts, inside):
+                if ok and start is None:
+                    start = t
+                if not ok and start is not None:
+                    runs.append((start, t - 0.25))
+                    start = None
+            if start is not None:
+                runs.append((start, ts[-1]))
+            for t0, t1 in runs:
+                if t1 - t0 < 1.0:
+                    continue
+                m = (t0 + t1) / 2
+                c = (m, top - 0.3, u) if along_x else (u, top - 0.3, m)
+                box(r, BEAM, c, (t1 - t0, 0.5, 0.45), yaw=0 if along_x else 90)
 
     def stairs(self, holder, foot, rise, run, width, yaw=0.0, fill_below=None):
         """Steep black marble flights: a stair block per metre of rise, solid underneath."""
@@ -315,8 +332,9 @@ class Dvergr(Theme):
         """The end: a small strongroom with the chest on a marble plinth, crates of what the Dvergr kept."""
         sh = self._shell("vault", (12, 6, 12), [("in", 2, 0.0, -2.5)], tags=["end"], max=1)
         r = sh.room
-        box(r, TRIM, (0, -2.25, 3.0), (3.0, 0.5, 2.0))
-        r.stand(CHEST, (0, -2.0, 3.2), yaw=180, saved=True)
+        box(r, TRIM, (0, -2.25, 3.0), (2.8, 0.5, 2.8))
+        # the Dvergr stone chest (2 x 1 x 2 m, its origin at its middle): the vault's, on the plinth
+        r.stand("TreasureChest_dvergr_loose_stone", (0, -1.5, 3.0), yaw=180, saved=True)
         for x in (-4.0, 4.0):
             r.stand("dvergrprops_crate", (x, -2.5, 4.0))
             self.light_stand(r, (x, -2.5, -3.5))

@@ -8,8 +8,8 @@
    "recipe": "fight",
    "shell": "L",
    "features": [
+    "pillars",
     "cover",
-    "remains",
     "machinery"
    ],
    "params": {
@@ -39,12 +39,13 @@
     "lever": "far",
     "points": 6,
     "pillar_pattern": "rows",
+    "pillars": 2,
     "cover": 2,
-    "gears": 1,
+    "gears": 2,
     "dressing": "archive",
     "props": 8,
     "lights": [
-     5,
+     6,
      5
     ]
    }
@@ -89,7 +90,7 @@
     "dressing": "armoury",
     "props": 4,
     "lights": [
-     7,
+     6,
      5
     ]
    }
@@ -99,7 +100,9 @@
    "recipe": "hub",
    "shell": "balcony",
    "features": [
-    "stash"
+    "stash",
+    "machinery",
+    "pillars"
    ],
    "params": {
     "shape": "balcony",
@@ -142,7 +145,9 @@
      -10.5
     ],
     "side_job": "stash",
+    "gears": 1,
     "pillar_pattern": "rows",
+    "pillars": 3,
     "dressing": "archive",
     "props": 8,
     "lights": [
@@ -202,7 +207,10 @@
    "name": "lever_L_5",
    "recipe": "lever",
    "shell": "L",
-   "features": [],
+   "features": [
+    "machinery",
+    "cover"
+   ],
    "params": {
     "shape": "L",
     "size": [
@@ -225,10 +233,12 @@
     ],
     "lever_level": 0,
     "pillar_pattern": "rows",
+    "gears": 2,
+    "cover": 2,
     "dressing": "archive",
     "props": 6,
     "lights": [
-     1,
+     0,
      1
     ]
    }
@@ -283,6 +293,7 @@
    "recipe": "gate",
    "shell": "rect",
    "features": [
+    "pillars",
     "machinery",
     "cover"
    ],
@@ -307,10 +318,11 @@
     ],
     "winch": true,
     "pillar_pattern": "rows",
-    "gears": 1,
-    "cover": 1,
+    "pillars": 1,
+    "gears": 2,
+    "cover": 2,
     "dressing": "archive",
-    "props": 6,
+    "props": 4,
     "lights": [
      2,
      1
@@ -346,7 +358,7 @@
     "pillar_pattern": "ring",
     "pillars": 2,
     "dressing": "armoury",
-    "props": 3,
+    "props": 4,
     "lights": [
      0,
      1
@@ -522,7 +534,8 @@
    "recipe": "plate",
    "shell": "rect",
    "features": [
-    "remains"
+    "remains",
+    "cover"
    ],
    "params": {
     "shape": "rect",
@@ -551,10 +564,11 @@
     "screen_z": 5.0,
     "gap": -4,
     "ledge": 1,
+    "cover": 1,
     "dressing": "archive",
-    "props": 6,
+    "props": 5,
     "lights": [
-     1,
+     0,
      0
     ]
    }
@@ -563,9 +577,7 @@
    "name": "plate_rect_14",
    "recipe": "plate",
    "shell": "rect",
-   "features": [
-    "cover"
-   ],
+   "features": [],
    "params": {
     "shape": "rect",
     "size": [
@@ -586,69 +598,23 @@
      ],
      [
       1,
-      -7.279050191677706,
+      -6.37616679163396,
       0
      ]
     ],
     "screen_z": 1.0,
-    "gap": -2,
+    "gap": -1,
     "ledge": 1,
-    "cover": 2,
-    "dressing": "ossuary",
-    "props": 6,
+    "dressing": "armoury",
+    "props": 2,
     "lights": [
-     0,
+     4,
      0
     ]
    }
   },
   {
-   "name": "guardian_round_15",
-   "recipe": "guardian",
-   "shell": "round",
-   "features": [
-    "pillars"
-   ],
-   "params": {
-    "shape": "round",
-    "size": [
-     32.0,
-     12.0,
-     32.0
-    ],
-    "doors": [
-     [
-      2,
-      0,
-      0
-     ],
-     [
-      0,
-      0,
-      0
-     ],
-     [
-      3,
-      0.0,
-      0
-     ]
-    ],
-    "dais": [
-     6.8,
-     10.0
-    ],
-    "pillar_pattern": "ring",
-    "pillars": 1,
-    "dressing": "archive",
-    "props": 8,
-    "lights": [
-     4,
-     5
-    ]
-   }
-  },
-  {
-   "name": "breather_split_16",
+   "name": "breather_split_15",
    "recipe": "breather",
    "shell": "split",
    "features": [
@@ -688,17 +654,17 @@
     "side_job": "stash",
     "pillar_pattern": "rows",
     "pillars": 2,
-    "gears": 1,
+    "gears": 2,
     "dressing": "archive",
     "props": 8,
     "lights": [
-     6,
+     4,
      4
     ]
    }
   },
   {
-   "name": "breather_balcony_17",
+   "name": "breather_balcony_16",
    "recipe": "breather",
    "shell": "balcony",
    "features": [
@@ -752,7 +718,7 @@
    }
   },
   {
-   "name": "breather_rect_18",
+   "name": "breather_rect_17",
    "recipe": "breather",
    "shell": "rect",
    "features": [
@@ -780,21 +746,22 @@
      ]
     ],
     "side_job": "sentries",
-    "gears": 1,
+    "gears": 2,
     "dressing": "forge",
     "props": 12,
     "lights": [
-     3,
+     4,
      3
     ]
    }
   },
   {
-   "name": "breather_round_19",
+   "name": "breather_round_18",
    "recipe": "breather",
    "shell": "round",
    "features": [
     "sentries",
+    "pillars",
     "cover"
    ],
    "params": {
@@ -823,9 +790,10 @@
     ],
     "side_job": "sentries",
     "pillar_pattern": "ring",
+    "pillars": 1,
     "cover": 1,
     "dressing": "ossuary",
-    "props": 3,
+    "props": 4,
     "lights": [
      0,
      3
@@ -833,7 +801,7 @@
    }
   },
   {
-   "name": "pillarhall_rect_20",
+   "name": "pillarhall_rect_19",
    "recipe": "pillarhall",
    "shell": "rect",
    "features": [
@@ -881,7 +849,7 @@
    }
   },
   {
-   "name": "pillarhall_round_21",
+   "name": "pillarhall_round_20",
    "recipe": "pillarhall",
    "shell": "round",
    "features": [
@@ -922,7 +890,7 @@
    }
   },
   {
-   "name": "pillarhall_L_22",
+   "name": "pillarhall_L_21",
    "recipe": "pillarhall",
    "shell": "L",
    "features": [
@@ -963,7 +931,7 @@
    }
   },
   {
-   "name": "machineroom_split_23",
+   "name": "machineroom_split_22",
    "recipe": "machineroom",
    "shell": "split",
    "features": [
@@ -999,7 +967,7 @@
      2.5
     ],
     "side_job": "stash",
-    "gears": 1,
+    "gears": 2,
     "dressing": "archive",
     "props": 8,
     "lights": [
@@ -1009,11 +977,13 @@
    }
   },
   {
-   "name": "machineroom_rect_24",
+   "name": "machineroom_rect_23",
    "recipe": "machineroom",
    "shell": "rect",
    "features": [
-    "sentries"
+    "sentries",
+    "machinery",
+    "cover"
    ],
    "params": {
     "shape": "rect",
@@ -1040,20 +1010,23 @@
      ]
     ],
     "side_job": "sentries",
+    "gears": 1,
+    "cover": 1,
     "dressing": "armoury",
     "props": 4,
     "lights": [
-     2,
+     1,
      1
     ]
    }
   },
   {
-   "name": "machineroom_L_25",
+   "name": "machineroom_L_24",
    "recipe": "machineroom",
    "shell": "L",
    "features": [
     "stash",
+    "machinery",
     "cover"
    ],
    "params": {
@@ -1090,17 +1063,18 @@
      -3.0
     ],
     "side_job": "stash",
-    "cover": 1,
+    "gears": 1,
+    "cover": 2,
     "dressing": "ossuary",
     "props": 8,
     "lights": [
-     4,
+     3,
      3
     ]
    }
   },
   {
-   "name": "corridor_rect_26",
+   "name": "corridor_rect_25",
    "recipe": "corridor",
    "shell": "rect",
    "features": [
@@ -1128,7 +1102,7 @@
     "variant": "hammers",
     "bays": 1,
     "pillar_pattern": "rows",
-    "gears": 1,
+    "gears": 2,
     "dressing": "archive",
     "props": 0,
     "lights": [
@@ -1138,7 +1112,7 @@
    }
   },
   {
-   "name": "corridor_rect_27",
+   "name": "corridor_rect_26",
    "recipe": "corridor",
    "shell": "rect",
    "features": [],
@@ -1173,7 +1147,7 @@
    }
   },
   {
-   "name": "corridor_rect_28",
+   "name": "corridor_rect_27",
    "recipe": "corridor",
    "shell": "rect",
    "features": [],
@@ -1207,7 +1181,7 @@
    }
   },
   {
-   "name": "stairhall_split_29",
+   "name": "stairhall_split_28",
    "recipe": "stairhall",
    "shell": "split",
    "features": [
@@ -1247,17 +1221,17 @@
     "side_job": "stash",
     "pillar_pattern": "rows",
     "pillars": 1,
-    "gears": 1,
+    "gears": 2,
     "dressing": "archive",
     "props": 8,
     "lights": [
-     8,
+     4,
      4
     ]
    }
   },
   {
-   "name": "stairhall_balcony_30",
+   "name": "stairhall_balcony_29",
    "recipe": "stairhall",
    "shell": "balcony",
    "features": [
@@ -1306,7 +1280,7 @@
    }
   },
   {
-   "name": "nook_rect_31",
+   "name": "nook_rect_30",
    "recipe": "nook",
    "shell": "rect",
    "features": [],
@@ -1335,7 +1309,7 @@
    }
   },
   {
-   "name": "nook_round_32",
+   "name": "nook_round_31",
    "recipe": "nook",
    "shell": "round",
    "features": [],
@@ -1364,7 +1338,7 @@
    }
   },
   {
-   "name": "nook_rect_33",
+   "name": "nook_rect_32",
    "recipe": "nook",
    "shell": "rect",
    "features": [],
@@ -1393,7 +1367,7 @@
    }
   },
   {
-   "name": "nook_round_34",
+   "name": "nook_round_33",
    "recipe": "nook",
    "shell": "round",
    "features": [],
@@ -1422,7 +1396,7 @@
    }
   },
   {
-   "name": "twolevers_rect_35",
+   "name": "twolevers_rect_34",
    "recipe": "twolevers",
    "shell": "rect",
    "features": [],
@@ -1451,10 +1425,12 @@
    }
   },
   {
-   "name": "ambush_rect_36",
+   "name": "ambush_rect_35",
    "recipe": "ambush",
    "shell": "rect",
-   "features": [],
+   "features": [
+    "pillars"
+   ],
    "params": {
     "shape": "rect",
     "size": [
@@ -1470,16 +1446,17 @@
      ]
     ],
     "pillar_pattern": "rows",
+    "pillars": 2,
     "dressing": "archive",
     "props": 8,
     "lights": [
-     4,
+     3,
      3
     ]
    }
   },
   {
-   "name": "timeddoor_rect_37",
+   "name": "timeddoor_rect_36",
    "recipe": "timeddoor",
    "shell": "rect",
    "features": [
@@ -1513,6 +1490,7 @@
  "signatures": [
   "entrance",
   "rotunda",
+  "guardian",
   "hall_a",
   "hall_b",
   "hall_c",
@@ -1529,9 +1507,9 @@
   "warden_cap"
  ],
  "variety": {
-  "recipeRooms": 37,
-  "signatureRooms": 16,
-  "jobs": 17,
+  "recipeRooms": 36,
+  "signatureRooms": 17,
+  "jobs": 16,
   "shells": 7,
   "spread": {
    "fight": 0.66,
@@ -1540,10 +1518,10 @@
    "gate": 0.68,
    "timing": 0.36,
    "drop": 0.48,
-   "plate": 0.32,
+   "plate": 0.35,
    "breather": 0.75,
    "pillarhall": 0.61,
-   "machineroom": 0.73,
+   "machineroom": 0.67,
    "corridor": 0.43,
    "stairhall": 0.53,
    "nook": 0.5

@@ -698,8 +698,8 @@ def lever_vault():
     d.seconds = 1.5
     giant_lever(r, "raise", (-5.0, -5, -3.0), 0, [("stonedoor", "next")])
     giant_lever(r, "drop", (5.0, -5, -3.0), 0, [("stonedoor", "set:0")])
-    r.stand("TreasureChest_trollcave", (0, -5, 5.5), yaw=180, saved=True)
-    for x in (-5.0, 5.0):
+    r.stand("Morkhalla_ChestAncient", (0, -5, 5.6), yaw=180, saved=True)
+    for x in (-5.5, 5.5):
         crystal(r, (x, -5, 5.5))
     m = machine(r, "gears")
     gear(m, (0, 3.6, 1.4), 4.0, axis="z", thickness=0.4, turn=20)
@@ -885,8 +885,7 @@ def secret_cache():
     """A forgotten store: a chest of the land's better things on a stone shelf, giant cogs heaped, a lantern."""
     r = secret_room("secret_cache", (12, 12, 12), None, 1.0)
     r.fill(DARK, (0, -4.5, 3.5), (6.0, 1.0, 3.0))
-    r.stand("TreasureChest_trollcave", (0, -4.0, 3.6), yaw=180, saved=True)
-    r.stand("Morkhalla_ChestAncient", (-3.8, -5, 3.8), yaw=150)
+    r.stand("Morkhalla_ChestAncient", (0, -4.0, 3.6), yaw=180, saved=True)         # (the big chest is the real one)
     r.stand("bar_iron_stack", (3.6, -5, 3.0), scale=(1.4, 1.4, 1.4))
     r.stand("Morkhalla_Stonepile", (3.5, -5, -2.5), yaw=80)
     for x in (-4.0, 4.0):
@@ -919,8 +918,7 @@ def vault():
     r = s.r
     r.doorways[0]["door"] = False
     r.fill(DARK, (0, -4.5, 0.5), (8.0, 1.0, 7.0))                                   # the dais
-    r.stand("Morkhalla_ChestAncient", (0, -4.0, 2.4), yaw=180)                     # the giants' chest: scenery
-    r.stand("TreasureChest_trollcave", (0, -4.0, -0.6), yaw=180, saved=True)        # the treasure that opens
+    r.stand("Morkhalla_ChestAncient", (0, -4.0, 1.4), yaw=180, saved=True)         # the giants' chest, the hoard (32 slots; saved, scale 1)
     for x in (-5.5, 5.5):
         r.stand(PILLAR, (x, -5, 2.0), scale=(0.4, 0.4, 0.4))
         crystal(r, (x, -5 + 3.2, 2.0))
@@ -987,6 +985,7 @@ R_IN, R_OUT = VOID - 0.06, VOID - 0.04  # nothing on a turning stair reaches pas
 FLIGHT_LAT = (-2.75, -0.5)              # a stair's width, beside the middle (all on the same hand, so two never meet at a storey)
 FLIGHT_RUN = 12.0                       # the steps run from -12 to 12; landings take its ends on to R_IN
 MOUTH = 3.0                             # the balconies' edges are open within this of the middle: where the stairs land
+MOUTH_H = 2.2                           # and up to this over the floor (bars from here to the balcony above)
 BARRIER_FROM = VOID                     # a fallen corner's bars: along both balconies' ends, from the void's edge to the wall
 
 
@@ -1037,9 +1036,7 @@ def flight(room, s, start):
         if z > FLIGHT_RUN + 0.02:
             m.fill(STONE, ((l0 + l1) / 2, 5.75, (FLIGHT_RUN + z) / 2), (l1 - l0, 0.5, z - FLIGHT_RUN))
             m.fill(STONE, ((l0 + l1) / 2, -5.95, -(FLIGHT_RUN + z) / 2), (l1 - l0, 0.1, z - FLIGHT_RUN))
-    # on the axle above the stair (spins while it turns): 3 m across and high enough that a man walking up under it keeps his head
-    # (its sweep reaches the steps 2 m up), low enough that its top is no stepping stone to the next stair up
-    gear(m, (0, 4.3, 0), 3.0, thickness=0.5, turn=45)
+    # (no gear on the flight: its top was a perch over the middle of the void, a leap from any balcony's mouth)
     for k in range(4):
         m.pose(euler=(0, (180 + 90 * k) % 360, 0))
     m.start = start
@@ -1076,6 +1073,11 @@ def hall(name, corners, levers, start, falls, weight=1.0):
         wall(r, k, HALF, BOTTOM + 1.0, TOP, openings, STONE, thickness=WALL, cell=10.0, size=(DOOR_W, DOOR_H))
         for s, y in enumerate(STOREYS):
             door_frame(r, k, door_lateral(s), y, WALL_IN)
+            if s < 3:
+                # the frame's lintel carried on up to the balcony above (no ledge under the balcony to stand on and drop from)
+                y0 = y + DOOR_H + 1.2
+                r.fill(DARK, side_point(k, door_lateral(s), (y0 + STOREYS[s + 1] - 1.0) / 2, WALL_IN - 0.9),
+                       np.abs(yaw_turn((DOOR_W + 2.4, STOREYS[s + 1] - 1.0 - y0, 1.8), 90 * k)))      # (over the carved head too)
     slab(r, -HALF, HALF, -HALF, HALF, STOREYS[0], STONE, thickness=1.0, cell=10.0)
     slab(r, -HALF, HALF, -HALF, HALF, TOP, STONE, thickness=1.0, cell=10.0, ceiling=True)
     for s in (1, 2, 3):
@@ -1093,7 +1095,12 @@ def hall(name, corners, levers, start, falls, weight=1.0):
             # the void's edge: iron bars from the floor to the balcony above (the ceiling), but for the stairs' mouth
             top = (STOREYS[s + 1] - 1.0) if s < 3 else TOP - 1.0
             for l0, l1 in ((-VOID, -MOUTH), (MOUTH, VOID)):
-                grate_wall(r, side_point(k, l0, 0, VOID + 0.15), side_point(k, l1, 0, VOID + 0.15), y, top)
+                grate_wall(r, side_point(k, l0, 0, VOID - 0.25), side_point(k, l1, 0, VOID - 0.25), y, top)   # (just off the edge)
+            # over the mouth: bars from a head's height over the floor to the balcony above (the mouth is a doorway onto the stairs,
+            # not a window into the void: nothing higher up on a stair comes down through it)
+            box(r, GRATE, side_point(k, 0.0, (y + MOUTH_H + top) / 2, VOID - 0.3), (2 * MOUTH + 0.2, top - y - MOUTH_H, 0.25),
+                yaw=(90 * k) % 360)
+            bar(r, side_point(k, -MOUTH, y + MOUTH_H, VOID - 0.3), side_point(k, MOUTH, y + MOUTH_H, VOID - 0.3), 0.45)
             if not corners[s - 1][k]:
                 # a fallen corner: iron bars from the floor to the balcony above along both balconies' ends, closing the barred edges
                 # (the hole below can't be reached; the two sides only meet through the air, beyond any jump)

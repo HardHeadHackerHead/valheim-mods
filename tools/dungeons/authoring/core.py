@@ -272,7 +272,7 @@ class Vary:
 
 
 # What the best player can do (Jump 100 + Run 100; the user's rule: puzzles hold at any skill; layout2's gap check, worst case):
-JUMP_UP = 3.1              # up onto a ledge
-JUMP_ACROSS = 10.4         # across, landing level
-JUMP_ACROSS_DOWN = 12.9    # across, landing 4 m lower
+JUMP_UP = 3.14             # up onto a ledge (bars stop a jump only if they stand higher than this over the takeoff)
+JUMP_ACROSS = 10.9         # across, landing level (edge to edge, the body's radius in: layout2's table)
+JUMP_ACROSS_DOWN = 13.4    # across, landing 4 m lower
 PROP_TOP = 1.7             # the tallest standable dressing (barrels, shelves 1.6: builder2's climb.top)
