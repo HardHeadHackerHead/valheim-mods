@@ -83,7 +83,7 @@ namespace Guns
 
         private static void ApplyDamage(ItemDrop.ItemData.SharedData s, GunDef d)
         {
-            s.m_damages = new HitData.DamageTypes { m_pierce = d.DamageNow };
+            s.m_damages = d.Flame ? new HitData.DamageTypes { m_fire = d.DamageNow } : new HitData.DamageTypes { m_pierce = d.DamageNow };
             s.m_damagesPerLevel = new HitData.DamageTypes();
         }
 

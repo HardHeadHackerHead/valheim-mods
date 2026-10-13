@@ -126,6 +126,15 @@ namespace Guns
                 Tracer = new Color(1f, 0.55f, 0.20f), TracerLength = 0.6f, FlashSize = 1.2f, CasingSize = 0.9f,
                 Sound = Snd(0.20f, 0.7f, 0.004f, 0.8f, 0.035f, 0.8f, 130f, 0.04f, 0.25f, 0.07f, 1.6f, 0.95f, 1.05f),
             });
+            // Damage is the fire of each puff (Flame.cs): fifteen a second, burning on after the stream moves away. Speed and Ttl are the puff's: about 7 m of flame.
+            Arsenal.Add(new GunDef
+            {
+                Id = "dh_flamethrower", Station = 2, Cost = "Iron:20, Bronze:6, Resin:20, SurtlingCore:3", Flame = true, CanDodge = false, Cues = new[] { new Cue(0f, Sound.Click.MagOut), new Cue(0.5f, Sound.Click.MagIn), new Cue(0.85f, Sound.Click.Rack) }, Stance = Stance.Heavy, Support = new Vector3(0f, 0.01f, 0.62f), Key = "flamethrower", Section = "Flamethrower", BuildModel = Models.Flamethrower, Weight = 8f,
+                Auto = true, Rate = 15f, Damage = 8f, Mag = 150, Reload = 3.5f,
+                MinSpread = 2.5f, MaxSpread = 4f, PerShot = 0.02f, Recovery = 2f, AimSpread = 0.8f, Zoom = 1.15f,
+                Speed = 20f, Gravity = 0f, Ttl = 0.7f, Kick = 0f, Noise = 20f, Force = 0.5f, Stagger = 0f, IconRoll = 14f,
+                TracerLength = 0f, FlashSize = 0f, CasingSize = 0f,
+            });
         }
     }
 }

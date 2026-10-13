@@ -426,8 +426,8 @@ ground. Everyone in the world needs it.
 ### 🔫 Guns
 <img src="dist/Guns.cover.png" alt="Guns" width="100%">
 
-Eleven firearms for the forge: a pistol, revolver, dual pistols, submachine gun, shotgun, rifle, lever action, AR-15, sniper rifle, machine gun and
-a minigun. Magazines and reloading (middle mouse, or pull the trigger on an empty gun), aiming with right mouse (a rifle comes to your shoulder, the
+Twelve guns for the forge: a pistol, revolver, dual pistols, submachine gun, shotgun, rifle, lever action, AR-15, sniper rifle, machine gun,
+a minigun and a flamethrower that sets whatever it touches burning (never your buildings). Magazines and reloading (middle mouse, or pull the trigger on an empty gun), aiming with right mouse (a rifle comes to your shoulder, the
 sniper rifle shows a scope), recoil, brass, tracers, real recorded gunshots, and a dive instead of a roll that you can shoot through. Your hands
 hold each gun. No ammunition to craft yet. Everyone in the world needs it.
 

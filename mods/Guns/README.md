@@ -7,7 +7,7 @@
 
 **Firearms and guns: pistol, revolver, dual pistols, SMG, shotgun, rifle, lever action, AR-15, sniper, machine gun and minigun, with reloading, aiming down the sights, recoil, real gun sounds and diving while you shoot. Made at the forge.**
 
-![version: 0.2.2](https://img.shields.io/badge/version-0.2.2-3b6e8f?style=flat-square)  ![multiplayer: everyone + host](https://img.shields.io/badge/multiplayer-everyone%20%2B%20host-7a5c2e?style=flat-square)  ![made with: Claude Code](https://img.shields.io/badge/made%20with-Claude%20Code-c26a3d?style=flat-square)
+![version: 0.3.0](https://img.shields.io/badge/version-0.3.0-3b6e8f?style=flat-square)  ![multiplayer: everyone + host](https://img.shields.io/badge/multiplayer-everyone%20%2B%20host-7a5c2e?style=flat-square)  ![made with: Claude Code](https://img.shields.io/badge/made%20with-Claude%20Code-c26a3d?style=flat-square)
 
 <!-- GITHUB-ONLY -->[Thunderstore](https://thunderstore.io/c/valheim/p/Quads_Lab/Quads_Guns/)  ·  <!-- END GITHUB-ONLY -->[Source code](https://github.com/HardHeadHackerHead/valheim-mods/tree/main/mods/Guns)  ·  [Report a bug](https://github.com/HardHeadHackerHead/valheim-mods/issues/new?template=bug.yml&title=%5BQuad%27s%20Guns%5D%20)  ·  [Discord](https://discord.gg/EwTjQxEZPy)
 
@@ -17,7 +17,7 @@
 
 ## ✨ Features
 
-Firearms for Valheim: pistol, revolver, dual pistols, SMG, shotgun, rifle, lever action, AR-15, sniper, machine gun and minigun, with reloading, aiming down the sights, recoil, real gun sounds and diving while you shoot. Made at the forge.
+Firearms for Valheim: pistol, revolver, dual pistols, SMG, shotgun, rifle, lever action, AR-15, sniper, machine gun, minigun and a flamethrower, with reloading, aiming down the sights, recoil, real gun sounds and diving while you shoot. Made at the forge.
 
 ### The guns
 
@@ -32,22 +32,23 @@ Firearms for Valheim: pistol, revolver, dual pistols, SMG, shotgun, rifle, lever
 - Sniper Rifle: a heavy bolt-action with a scope: hold the aim button to look through it. One round hits for a great deal from very far away.
 - Machine Gun: 75 rounds of sustained fire; the real sound of a long burst.
 - Minigun: six rotating barrels and 400 rounds. It spools up with a rising whine, then never stops. Heavy: it slows you down.
+- Flamethrower: hold the trigger for a roaring stream of fire about seven metres long (the Cultist's own flames). Whatever it touches catches fire and keeps burning after the stream moves on, so the longer you hold it on them the harder they burn. Its tank holds ten seconds of flame. It never sets buildings alight, so your base is safe.
 
 ### How they handle
 
 - Hold the attack button to fire (an automatic gun keeps firing; the others fire once for each pull). The spread grows the longer you keep firing and settles when you stop.
 - Right mouse (the block button) aims: the camera zooms in, the spread tightens, a rifle comes up to your shoulder and a pistol goes out at arm's length. Shots fly to the spot under the crosshair, with a little lift for drop.
 - Reload with the middle mouse button, or just pull the trigger on an empty gun. Each gun has its own magazine, kept on the gun itself, and its own reload: a magazine out and in, a slide racked, a bolt worked, a shell at a time. Put the gun away and the reload stops without losing anything. The rounds left show at the bottom right, with a bar while you reload.
-- Dive: block + jump with a light gun throws you into a dive instead of a roll: forward, to a side or backward, the way you are moving. You keep your gun up and can fire the whole way through. (The sniper rifle, machine gun and minigun are too heavy to dive with.)
+- Dive: block + jump with a light gun throws you into a dive instead of a roll: forward, to a side or backward, the way you are moving. You keep your gun up and can fire the whole way through. (The sniper rifle, machine gun, minigun and flamethrower are too heavy to dive with.)
 - Your hands hold the guns: the right on the grip, the left on the foregrip, cupped under a pistol, or down at the magazine when you reload. Sprinting drops the gun to a low ready, and it kicks back with every shot.
 - It sounds real: the gunshots, reloads, clicks and brass bouncing on the floor are recordings of real guns and mechanisms, a machine gun and a minigun play a real burst, and a round makes its own sound where it lands, different from the shot.
 - Muzzle flash, brass flying out of the ejection port, a tracer behind every round, a scope picture for the sniper rifle, and an inventory picture drawn from each gun's model.
 
 ### What they cost
 
-- Every gun is made at the forge: a pistol from iron, wood and leather scraps at level 1; revolvers, shotguns, rifles and the lever action at level 2; the AR-15, sniper rifle and machine gun from black metal at level 3; the minigun at level 4 from black metal, iron, chains and silver.
+- Every gun is made at the forge: a pistol from iron, wood and leather scraps at level 1; revolvers, shotguns, rifles and the lever action at level 2, and the flamethrower there from iron, bronze, resin and Surtling cores; the AR-15, sniper rifle and machine gun from black metal at level 3; the minigun at level 4 from black metal, iron, chains and silver.
 - There is no ammunition to craft yet: reloading is free. Real bullets are planned.
-- Rounds use the Crossbows skill, which rises as you shoot.
+- Rounds (and flame) use the Crossbows skill, which rises as you shoot.
 
 ## 📸 Screenshots
 
@@ -160,6 +161,16 @@ In `BepInEx/config/com.quad.guns.cfg`, made the first time the game runs with th
 | `MagazineSize` | `24` | How many rounds a full magazine holds. In multiplayer the server's value applies. |
 | `ReloadSeconds` | `2.4` | Seconds a reload takes. In multiplayer the server's value applies. |
 | `RoundsPerSecond` | `9` | The most rounds it fires each second, one for each pull of the trigger. In multiplayer the server's value applies. |
+
+**Flamethrower**
+
+| Setting | Default | What it does |
+|---|---|---|
+| `Damage` | `8` | Fire damage of each puff of flame, before skill: it sets what it touches burning (the game burns it off over the next seconds), and a quarter of it again lands at once. In multiplayer the server's value applies. |
+| `Cost` | `Iron:20, Bronze:6, Resin:20, SurtlingCore:3` | What it takes to make at the forge (level 2). Item prefab names and amounts, separated by commas, like FineWood:12, BronzeNails:30 (Claude Tools' `prefabs <text>` shows exact names). A cost with a mistake in it keeps the last good one. [Synced with Server] |
+| `Fuel` | `150` | How many puffs of flame a full tank holds. In multiplayer the server's value applies. |
+| `ReloadSeconds` | `3.5` | Seconds a reload takes. In multiplayer the server's value applies. |
+| `PuffsPerSecond` | `15` | How many puffs of flame it sends out each second while the attack button is held (each uses one of the fuel). In multiplayer the server's value applies. |
 
 **Lever-Action Rifle**
 
@@ -289,6 +300,6 @@ helps me make new mods and keep improving the ones you already play. It's 100% o
 
 ## 📜 Recent changes
 
-- **0.2.2** No more lag for other players while someone shoots. Each shot, click, reload and bullet hit sent the sound itself over the network as an object the other games couldn't build, and every one of them logged a warning every frame until the sound ended (tens of thousands a minute in a firefight). The sounds are now made on each player's own game only; other players still hear your shots as before. 0.2.1: No game restart needed to update it any more (the guns and their recipes reload while you play). Other players now see your guns being used: your arms holding the gun (shouldered when you aim, low when you sprint, the left hand down at the magazine when you reload), the gun kicking and its slide, bolt, pump or lever working, the barrels of the minigun turning, your dive, and a shot's sound, muzzle flash and brass on their screens too (a burst of fire from the machine gun and minigun is heard as the real recorded burst). Other players need this version to see it; reload sounds and the minigun's motor are still only heard by the player firing. 0.2.0: First release. Eleven guns, made at the forge: Pistol, Revolver, Dual Pistols, Submachine Gun, Shotgun, Rifle, Lever-Action Rifle, AR-15, Sniper Rifle, Machine Gun and Minigun. Magazines kept on the gun and reloading (middle mouse, or pull the trigger on an empty gun; reloading is free, no ammunition item yet), with the rounds left shown on screen. Aiming with right mouse (a rifle comes up to the shoulder, a pistol goes out at arm's length, the sniper rifle shows a scope), recoil, brass, muzzle flash and tracers. Your hands hold each gun (both arms bent to reach it, low when you sprint, the left hand down at the magazine when you reload); the dual pistols fire left then right. Block + jump with a light gun is a dive you can shoot through (forward, sideways or backward) instead of a roll. Real recorded gunshots, reloads and clicks (CC0, credited on the page), a real burst for the machine gun and the minigun with its spool-up, and a round makes its own sound where it lands. Heavy guns (minigun) slow you down. Settings for every gun's damage, magazine, reload, rate and cost (the server's in multiplayer). Not yet: the shot sound, flash, arm poses and dive on other players' screens, and bullets as items. In your language: English, Russian, German, Chinese (Simplified), Portuguese (Brazil), Spanish, French, Polish and Turkish (made with AI).
+- **0.3.0** A flamethrower, made at the forge (level 2) from iron, bronze, resin and Surtling cores. Hold the trigger for a roaring stream of fire about seven metres long, the Cultist's own flames: whatever it touches catches fire and keeps burning after the stream moves on, the longer you hold it on them the harder they burn. Its tank holds ten seconds of flame and refills like a magazine. It never sets buildings alight. Other players with this version see and hear your flame. 0.2.2: No more lag for other players while someone shoots. Each shot, click, reload and bullet hit sent the sound itself over the network as an object the other games couldn't build, and every one of them logged a warning every frame until the sound ended (tens of thousands a minute in a firefight). The sounds are now made on each player's own game only; other players still hear your shots as before. 0.2.1: No game restart needed to update it any more (the guns and their recipes reload while you play). Other players now see your guns being used: your arms holding the gun (shouldered when you aim, low when you sprint, the left hand down at the magazine when you reload), the gun kicking and its slide, bolt, pump or lever working, the barrels of the minigun turning, your dive, and a shot's sound, muzzle flash and brass on their screens too (a burst of fire from the machine gun and minigun is heard as the real recorded burst). Other players need this version to see it; reload sounds and the minigun's motor are still only heard by the player firing. 0.2.0: First release. Eleven guns, made at the forge: Pistol, Revolver, Dual Pistols, Submachine Gun, Shotgun, Rifle, Lever-Action Rifle, AR-15, Sniper Rifle, Machine Gun and Minigun. Magazines kept on the gun and reloading (middle mouse, or pull the trigger on an empty gun; reloading is free, no ammunition item yet), with the rounds left shown on screen. Aiming with right mouse (a rifle comes up to the shoulder, a pistol goes out at arm's length, the sniper rifle shows a scope), recoil, brass, muzzle flash and tracers. Your hands hold each gun (both arms bent to reach it, low when you sprint, the left hand down at the magazine when you reload); the dual pistols fire left then right. Block + jump with a light gun is a dive you can shoot through (forward, sideways or backward) instead of a roll. Real recorded gunshots, reloads and clicks (CC0, credited on the page), a real burst for the machine gun and the minigun with its spool-up, and a round makes its own sound where it lands. Heavy guns (minigun) slow you down. Settings for every gun's damage, magazine, reload, rate and cost (the server's in multiplayer). Not yet: the shot sound, flash, arm poses and dive on other players' screens, and bullets as items. In your language: English, Russian, German, Chinese (Simplified), Portuguese (Brazil), Spanish, French, Polish and Turkish (made with AI).
 
 <!-- GITHUB-ONLY -->[Every change](CHANGELOG.txt)<!-- END GITHUB-ONLY --><!-- THUNDERSTORE-ONLY: Every change is on the Changelog tab. -->

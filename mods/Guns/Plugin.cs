@@ -14,7 +14,7 @@ namespace Guns
     /// and it fires on its own, faster than any animation could, with a spread that grows the longer you hold (see Fire.cs).
     ///
     /// Split across files: Plugin.cs (setup, hooks), Defs.cs (every gun, as data), Models.cs (their models), Things.cs (registering), Gun.cs (the
-    /// item and its round), Fire.cs (firing and spread), Ammo.cs (magazines, reloading), Aim.cs (aiming, posing), AmmoHud.cs (the numbers and the scope).
+    /// item and its round), Fire.cs (firing and spread), Flame.cs (the flamethrower's stream), Ammo.cs (magazines, reloading), Aim.cs (aiming, posing), AmmoHud.cs (the numbers and the scope).
     /// A new gun is one more GunDef in Defs.cs and a model in Models.cs.
     /// </summary>
     [BepInPlugin(Guid, Name, Version)]
@@ -22,7 +22,7 @@ namespace Guns
     {
         public const string Guid = "com.quad.guns";
         public const string Name = "Quad's Guns";
-        public const string Version = "0.2.2";
+        public const string Version = "0.3.0";
 
         // the server's in multiplayer: they decide how hard a player can hit
         internal static ConfigEntry<float> SpreadScale, ShotStamina, DiveStamina;
@@ -47,13 +47,15 @@ namespace Guns
             DiveStamina = Synced.Add(Config.Bind("0 - All guns", "DiveStamina", 0f, new ConfigDescription("Stamina a dive costs (block + jump with a light gun). 0 for none (the default while the dive is being tried out). In multiplayer the server's value applies.", new AcceptableValueRange<float>(0f, 50f))));
             foreach (GunDef d in Arsenal.All)
             {
-                d.CDamage = Synced.Add(Config.Bind(d.Section, "Damage", d.Damage, new ConfigDescription(d.Pellets > 1 ? "Piercing damage of one pellet, before skill. In multiplayer the server's value applies." : "Piercing damage of one round, before skill. In multiplayer the server's value applies.", new AcceptableValueRange<float>(1f, 1000f))));
+                string damage = d.Flame ? "Fire damage of each puff of flame, before skill: it sets what it touches burning (the game burns it off over the next seconds), and a quarter of it again lands at once. In multiplayer the server's value applies."
+                              : d.Pellets > 1 ? "Piercing damage of one pellet, before skill. In multiplayer the server's value applies." : "Piercing damage of one round, before skill. In multiplayer the server's value applies.";
+                d.CDamage = Synced.Add(Config.Bind(d.Section, "Damage", d.Damage, new ConfigDescription(damage, new AcceptableValueRange<float>(1f, 1000f))));
                 d.CCost = Synced.Bind(d.Section, "Cost", d.Cost, "What it takes to make at the forge (level " + d.Station + "). " + DHack.Shared.Costs.Help);
                 d.CCost.SettingChanged += (s, e) => Things.ApplyCosts();
-                d.CMag = Synced.Add(Config.Bind(d.Section, "MagazineSize", d.Mag, new ConfigDescription("How many rounds a full magazine holds. In multiplayer the server's value applies.", new AcceptableValueRange<int>(1, 1000))));
+                d.CMag = Synced.Add(Config.Bind(d.Section, d.Flame ? "Fuel" : "MagazineSize", d.Mag, new ConfigDescription(d.Flame ? "How many puffs of flame a full tank holds. In multiplayer the server's value applies." : "How many rounds a full magazine holds. In multiplayer the server's value applies.", new AcceptableValueRange<int>(1, 1000))));
                 d.CReload = Synced.Add(Config.Bind(d.Section, d.PerRound ? "SecondsPerRound" : "ReloadSeconds", d.Reload, new ConfigDescription(d.PerRound ? "Seconds to load each round. In multiplayer the server's value applies." : "Seconds a reload takes. In multiplayer the server's value applies.", new AcceptableValueRange<float>(0.1f, 20f))));
                 if (d.Auto || d.Cycle <= 0f)
-                    d.CRate = Synced.Add(Config.Bind(d.Section, "RoundsPerSecond", d.Rate, new ConfigDescription(d.Auto ? "How many rounds it fires each second while the attack button is held. In multiplayer the server's value applies." : "The most rounds it fires each second, one for each pull of the trigger. In multiplayer the server's value applies.", new AcceptableValueRange<float>(0.5f, 40f))));
+                    d.CRate = Synced.Add(Config.Bind(d.Section, d.Flame ? "PuffsPerSecond" : "RoundsPerSecond", d.Rate, new ConfigDescription(d.Flame ? "How many puffs of flame it sends out each second while the attack button is held (each uses one of the fuel). In multiplayer the server's value applies." : d.Auto ? "How many rounds it fires each second while the attack button is held. In multiplayer the server's value applies." : "The most rounds it fires each second, one for each pull of the trigger. In multiplayer the server's value applies.", new AcceptableValueRange<float>(0.5f, 40f))));
             }
             AimZoom = Config.Bind("1 - Your own", "AimZoomScale", 1f, new ConfigDescription("Multiplies how far the camera zooms in while you aim (hold the block button: right mouse). 1 for each gun's own zoom. Your own setting.", new AcceptableValueRange<float>(0.5f, 2f)));
             ArmPosing = Config.Bind("1 - Your own", "ArmPosing", true, new ConfigDescription("The mod bends your arms to hold each gun with both hands (shouldered when you aim, low when you sprint). Switch off to use the game's own crossbow carry. Your own setting."));
@@ -77,6 +79,8 @@ namespace Guns
             Aim.Tick();
             Fire.Tick();
             Ammo.Tick(Player.m_localPlayer);
+            Flame.Tick();
+            Requests.Tick();
             AmmoHud.Tick();
             if (_tellNoServer && Player.m_localPlayer != null)
             {
@@ -85,12 +89,14 @@ namespace Guns
             }
         }
 
-        private void LateUpdate() { Dive.Pose(Player.m_localPlayer); Aim.Pose(); Share.Late(); }
+        private void LateUpdate() { Dive.Pose(Player.m_localPlayer); Aim.Pose(); Share.Late(); Flame.Late(); }
 
         private void OnDestroy()
         {
             Dive.End(Player.m_localPlayer);
             Share.Reset();
+            Flame.Clear();   // (every stream stops, even when a reload in a world keeps the prefabs)
+            Requests.Unregister();
             Aim.Stop();
             Ammo.Cancel();
             AmmoHud.Destroy();

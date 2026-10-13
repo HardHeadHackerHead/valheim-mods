@@ -21,6 +21,8 @@
   "guns_machinegun_desc": "Tire tant que vous maintenez le bouton d'attaque. Si vous insistez, le canon se relève : les rafales courtes restent précises.",
   "guns_minigun": "Minigun",
   "guns_minigun_desc": "Six canons rotatifs et une bande de quatre cents balles. Elle met un instant à monter en régime, puis ne s'arrête plus. Vous ralentit.",
+  "guns_flamethrower": "Lance-flammes",
+  "guns_flamethrower_desc": "Un réservoir de carburant et une longue buse : maintenez la détente pour un jet de feu rugissant. Tout ce qu'il touche prend feu et continue de brûler quand vous arrêtez. Portée d'environ sept mètres. N'enflamme jamais les bâtiments.",
   "guns_reloading": "Rechargement",
   "guns_empty": "Vide : appuyez sur la détente pour recharger",
   "guns_server_missing": "Quad's Guns n'est pas installé sur ce serveur : les armes ne peuvent pas y être fabriquées."

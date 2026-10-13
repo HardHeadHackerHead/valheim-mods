@@ -21,6 +21,8 @@
   "guns_machinegun_desc": "Saldırı tuşunu basılı tuttuğun sürece ateş eder. Uzun basarsan namlu yükselir: kısa seriler isabetli kalır.",
   "guns_minigun": "Minigun",
   "guns_minigun_desc": "Altı dönen namlu ve dört yüz mermilik bir kemer. Hızlanması biraz sürer, sonra hiç durmaz. Seni yavaşlatır.",
+  "guns_flamethrower": "Alev Makinesi",
+  "guns_flamethrower_desc": "Bir yakıt tankı ve uzun bir namlu: kükreyen bir ateş akımı için tetiği basılı tut. Değdiği her şey alev alır ve sen bıraktıktan sonra da yanmaya devam eder. Yaklaşık yedi metreye ulaşır. Yapıları asla tutuşturmaz.",
   "guns_reloading": "Dolduruluyor",
   "guns_empty": "Boş: doldurmak için tetiğe çek",
   "guns_server_missing": "Quad's Guns bu sunucuda kurulu değil: silahlar burada üretilemez."

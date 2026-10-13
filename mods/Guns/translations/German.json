@@ -21,6 +21,8 @@
   "guns_machinegun_desc": "Feuert, solange du die Angriffstaste hältst. Hältst du lange, wandert der Lauf hoch: kurze Feuerstöße bleiben genau.",
   "guns_minigun": "Minigun",
   "guns_minigun_desc": "Sechs rotierende Läufe und ein Gurt mit vierhundert Patronen. Sie braucht einen Moment zum Hochfahren, dann hört sie nie auf. Bremst dich ab.",
+  "guns_flamethrower": "Flammenwerfer",
+  "guns_flamethrower_desc": "Ein Tank voller Brennstoff und eine lange Düse: Halte den Abzug für einen fauchenden Feuerstrahl. Was er trifft, fängt Feuer und brennt weiter, auch wenn du aufhörst. Reicht etwa sieben Meter. Gebäude setzt er nie in Brand.",
   "guns_reloading": "Nachladen",
   "guns_empty": "Leer: Abzug ziehen zum Nachladen",
   "guns_server_missing": "Quad's Guns ist auf diesem Server nicht installiert: Die Waffen können hier nicht hergestellt werden."

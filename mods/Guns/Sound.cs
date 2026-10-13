@@ -386,6 +386,52 @@ namespace Guns
             return new[] { Loop("dh_minigun_hum", hum), Loop("dh_minigun_whine", whine), Loop("dh_minigun_air", airLoop) };
         }
 
+        /// <summary>
+        /// The flamethrower's roar, a loop: a deep rumble of low noise and a hiss of brighter noise, both fluttering as burning gas does
+        /// (a few slow wobbles laid together, each a whole number of cycles in the loop), with the crackle of droplets bursting. The noise's
+        /// extra tenth of a second is faded over the start, so the loop has no seam.
+        /// </summary>
+        internal static AudioClip FlameLoop()
+        {
+            const int n = Rate * 2;   // two seconds: the wobbles below are whole cycles in it
+            int over = Rate / 10;
+            var rumble = new float[n + over];
+            var hiss = new float[n + over];
+            var rng = new System.Random(5150);
+            float a = 0f, b = 0f, c = 0f, e = 0f, kA = OnePole(420f), kB = OnePole(70f), kC = OnePole(3200f), kE = OnePole(900f);
+            for (int i = 0; i < n + over; i++)
+            {
+                float noise = (float)(rng.NextDouble() * 2.0 - 1.0);
+                a += (noise - a) * kA; b += (a - b) * kB;   // 70-420 Hz: the body of the roar
+                c += (noise - c) * kC; e += (c - e) * kE;   // 900-3200 Hz: the hiss of the jet
+                rumble[i] = (a - b) * 3.2f;
+                hiss[i] = (c - e) * 0.55f;
+            }
+            var d = new float[n];
+            for (int i = 0; i < n; i++)
+            {
+                float t = i / (float)Rate;
+                float r = rumble[i], h = hiss[i];
+                if (i < over) { float f = i / (float)over; r = r * f + rumble[n + i] * (1f - f); h = h * f + hiss[n + i] * (1f - f); }
+                float flutter = 1f + 0.22f * Mathf.Sin(2f * Mathf.PI * 7f * t) * Mathf.Sin(2f * Mathf.PI * 2.5f * t + 1f) + 0.12f * Mathf.Sin(2f * Mathf.PI * 13f * t + 2f);
+                d[i] = (r * flutter + h * (2f - flutter)) * 0.9f;
+            }
+            for (int k = 0; k < 70; k++)   // the crackle: short bright pops scattered through the loop
+            {
+                int at = rng.Next(n);
+                float amp = 0.15f + (float)rng.NextDouble() * 0.35f, hz = 1800f + (float)rng.NextDouble() * 2500f;
+                for (int j = 0; j < Rate / 100; j++)
+                {
+                    float t = j / (float)Rate;
+                    d[(at + j) % n] += amp * Mathf.Exp(-t / 0.0015f) * Mathf.Sin(2f * Mathf.PI * hz * t) * (float)(rng.NextDouble() * 2.0 - 1.0);
+                }
+            }
+            float peak = 0f;
+            for (int i = 0; i < n; i++) peak = Mathf.Max(peak, Mathf.Abs(d[i]));
+            if (peak > 0f) for (int i = 0; i < n; i++) d[i] = d[i] / peak * 0.85f;
+            return Loop("dh_flame_roar", d);
+        }
+
         private static AudioClip Loop(string name, float[] d)
         {
             int n = d.Length, at = 0;

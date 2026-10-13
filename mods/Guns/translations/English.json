@@ -21,6 +21,8 @@
   "guns_machinegun_desc": "Fires for as long as you hold the attack button. Hold it long and the barrel climbs: short bursts stay accurate.",
   "guns_minigun": "Minigun",
   "guns_minigun_desc": "Six rotating barrels and a belt of four hundred rounds. It takes a moment to spin up, then it never stops. Slows you down.",
+  "guns_flamethrower": "Flamethrower",
+  "guns_flamethrower_desc": "A tank of fuel and a long nozzle: hold the trigger for a roaring stream of fire. Whatever it touches catches fire and keeps burning after you stop. Reaches about seven metres. It never sets buildings alight.",
   "guns_reloading": "Reloading",
   "guns_empty": "Empty: pull the trigger to reload",
   "guns_server_missing": "Quad's Guns isn't installed on this server: the guns can't be crafted here."

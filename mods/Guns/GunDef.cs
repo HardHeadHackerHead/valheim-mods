@@ -50,6 +50,7 @@ namespace Guns
         public int Station = 1;            // the forge level it is made at
         public string Cost = "Iron:10";    // what it takes, as the setting writes it (Costs.cs)
         public bool Dual;          // two guns, one in each hand, firing in turn
+        public bool Flame;         // a flamethrower: each "round" is a puff of flame (Flame.cs) doing fire damage, not a bullet; the magazine is its fuel
 
         // ---- spread (degrees) ----
         public float MinSpread = 1f, MaxSpread = 5f, PerShot = 0.1f, Recovery = 1.5f;
@@ -92,6 +93,8 @@ namespace Guns
         public float ReloadNow => CReload != null ? CReload.Value : Reload;
         public int MagNow => CMag != null ? CMag.Value : Mag;
         public float Interval => Mathf.Max(1f / Mathf.Max(0.5f, RateNow), Cycle);
+        /// <summary>It fires too fast to send every shot to the other players: they get a tick a few times a second (Share.cs).</summary>
+        public bool Stream => LoopRate > 0f || Flame;
     }
 
     internal static class Arsenal

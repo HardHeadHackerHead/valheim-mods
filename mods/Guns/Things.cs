@@ -35,8 +35,9 @@ namespace Guns
             {
                 try
                 {
-                    foreach (GunDef d in Arsenal.All) Bullets[d.Id] = Gun.BuildBullet(scene, _holder.transform, d);
+                    foreach (GunDef d in Arsenal.All) if (!d.Flame) Bullets[d.Id] = Gun.BuildBullet(scene, _holder.transform, d);   // (a flamethrower's puffs are no objects: Flame.cs)
                     Fx.Build(scene, _holder.transform, Gun.Glow);   // (the sounds and flashes the items' trigger effects play)
+                    Flame.Build(scene, _holder.transform);
                     foreach (GameObject bullet in Bullets.Values)   // where a round lands is heard there, with its own sound
                     {
                         Projectile p = bullet != null ? bullet.GetComponent<Projectile>() : null;

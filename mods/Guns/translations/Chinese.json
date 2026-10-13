@@ -21,6 +21,8 @@
   "guns_machinegun_desc": "按住攻击键就持续射击。按得太久枪口会上跳:短点射才能保持精准。",
   "guns_minigun": "加特林机枪",
   "guns_minigun_desc": "六根旋转枪管和四百发弹链。需要片刻加速旋转,之后便停不下来。会使你移动变慢。",
+  "guns_flamethrower": "火焰喷射器",
+  "guns_flamethrower_desc": "一罐燃料和一根长喷管:按住扳机,喷出咆哮的火焰。被它碰到的东西都会着火,停手后仍会继续燃烧。射程约七米。不会点燃建筑。",
   "guns_reloading": "装弹中",
   "guns_empty": "已空:扣动扳机装弹",
   "guns_server_missing": "此服务器未安装 Quad's Guns:这里无法制作枪械。"

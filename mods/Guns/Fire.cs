@@ -28,8 +28,11 @@ namespace Guns
         internal static float LastShot => _lastShot;
         internal static bool LastWasSecond { get; private set; }
 
+        /// <summary>Until then the trigger is held for the player (Claude Tools' `guns fire`, Requests.cs).</summary>
+        internal static float HoldUntil;
+
         /// <summary>The attack button is down (and no window has the keyboard).</summary>
-        internal static bool TriggerHeld(Player p) => Aim.InputAllowed(p) && (ZInput.GetButton("Attack") || ZInput.GetButton("JoyAttack"));
+        internal static bool TriggerHeld(Player p) => Time.time < HoldUntil || Aim.InputAllowed(p) && (ZInput.GetButton("Attack") || ZInput.GetButton("JoyAttack"));
 
         /// <summary>Every frame from the plugin: the trigger being let go, a rotary gun spinning, brass coming out.</summary>
         internal static void Tick()
@@ -46,8 +49,10 @@ namespace Guns
             }
             if (d == null) { Fx.Whirr(0f); Fx.StopBurst(p); return; }
             if (Fx.HasBurst(d)) Fx.Fire(p, d, !Ammo.Reloading && Time.time - _lastShot < 2.2f / d.RateNow);
+            if (d.Flame) Flame.Stream(p, !Ammo.Reloading && Time.time - _lastShot < d.Interval + 0.08f);   // (flames while the puffs keep coming)
             bool held = TriggerHeld(p);
             if (!held) _released = true;
+            if (Time.time < HoldUntil && item != null) Try(p, item, d);   // (held for the player: the game's own input would call this)
             if (Aim.InputAllowed(p) && (ZInput.GetButtonDown("SecondaryAttack") || ZInput.GetButtonDown("JoySecondaryAttack")) && CanShoot(p)) Ammo.Begin(p, item, d);   // reload (the game's own attack input also asks, in StartAttack)
             if (d.SpinUp > 0f)
             {
@@ -184,7 +189,7 @@ namespace Guns
 
         private static readonly int Mask = LayerMask.GetMask("Default", "static_solid", "Default_small", "piece", "piece_nonsolid", "terrain", "character", "character_net", "character_ghost", "vehicle");
 
-        private static HitData MakeHit(Player p, ItemDrop.ItemData weapon, GunDef d)
+        internal static HitData MakeHit(Player p, ItemDrop.ItemData weapon, GunDef d)
         {
             float skill = p.GetRandomSkillFactor(weapon.m_shared.m_skillType);
             var hit = new HitData
@@ -211,6 +216,7 @@ namespace Guns
 
         private static void Shoot(Player p, ItemDrop.ItemData weapon, GunDef d, float spread, bool second)
         {
+            if (d.Flame) { Spray(p, weapon, d, spread); return; }
             GameObject bullet = ZNetScene.instance != null ? ZNetScene.instance.GetPrefab(d.BulletId) : null;
             if (bullet == null) return;
 
@@ -231,6 +237,18 @@ namespace Guns
                 GameObject shot = Object.Instantiate(bullet, spawn, Quaternion.LookRotation(dir));
                 shot.GetComponent<IProjectile>()?.Setup(p, dir * d.Speed, 15f, MakeHit(p, weapon, d), weapon, null);
             }
+            p.AddNoise(d.Noise);
+        }
+
+        /// <summary>A flamethrower's "round": a puff of flame from the nozzle towards the crosshair (Flame.cs works out what it catches).</summary>
+        private static void Spray(Player p, ItemDrop.ItemData weapon, GunDef d, float spread)
+        {
+            Transform muzzle = Fx.Muzzle(p);
+            Transform t = p.transform;
+            Vector3 spawn = muzzle != null ? muzzle.position : t.position + t.up * 1.3f + t.forward * 0.8f;
+            Vector3 aim = AimAtCrosshair(p, d, spawn);
+            Vector2 off = Random.insideUnitCircle * spread;
+            Flame.Emit(p, weapon, d, spawn, Quaternion.LookRotation(aim) * Quaternion.Euler(-off.y, off.x, 0f) * Vector3.forward);
             p.AddNoise(d.Noise);
         }
     }

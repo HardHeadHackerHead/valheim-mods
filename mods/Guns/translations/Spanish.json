@@ -21,6 +21,8 @@
   "guns_machinegun_desc": "Dispara mientras mantengas pulsado el botón de ataque. Si disparas mucho rato, el cañón se levanta: las ráfagas cortas siguen siendo precisas.",
   "guns_minigun": "Minigun",
   "guns_minigun_desc": "Seis cañones giratorios y una cinta de cuatrocientas balas. Tarda un momento en acelerar, y luego no para. Te ralentiza.",
+  "guns_flamethrower": "Lanzallamas",
+  "guns_flamethrower_desc": "Un depósito de combustible y una larga boquilla: mantén el gatillo para lanzar un rugiente chorro de fuego. Todo lo que toca se prende y sigue ardiendo cuando paras. Alcanza unos siete metros. Nunca prende fuego a los edificios.",
   "guns_reloading": "Recargando",
   "guns_empty": "Vacía: aprieta el gatillo para recargar",
   "guns_server_missing": "Quad's Guns no está instalado en este servidor: aquí no se pueden fabricar armas."

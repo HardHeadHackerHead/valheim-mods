@@ -299,5 +299,42 @@ namespace Guns
             b.Point("dh_eject", V(0.075f, 0.0f, 0.04f));
             return b.Bounds;
         }
+
+        // ---- the flamethrower -----------------------------------------------------------------------------------------
+
+        /// <summary>A red fuel tank slung under a long wand with a ribbed heat shield, a valve block with its wheel, pistol and front grips, and a pilot flame always lit under the nozzle.</summary>
+        internal static Bounds Flamethrower(Transform root, Material mat)
+        {
+            var b = new Builder(root, mat, V(0f, 0.12f, 0.14f));
+            b.Cube("body", V(0f, 0f, -0.06f), V(0.06f, 0.07f, 0.26f), Steel, metal: 0.5f);
+            b.Tube("valve", V(0f, 0.055f, -0.02f), 0.035f, 0.05f, Brass, 'y', metal: 0.8f, gloss: 0.6f);
+            b.Tube("wheel", V(0f, 0.085f, -0.02f), 0.07f, 0.012f, Red, 'y');
+            b.Tube("tank", V(0f, -0.115f, 0.16f), 0.13f, 0.36f, Red, metal: 0.3f, gloss: 0.5f);
+            b.Tube("tankcapF", V(0f, -0.115f, 0.345f), 0.12f, 0.02f, Black);
+            b.Tube("tankcapR", V(0f, -0.115f, -0.025f), 0.12f, 0.02f, Black);
+            b.Tube("band1", V(0f, -0.115f, 0.06f), 0.136f, 0.015f, Black);
+            b.Tube("band2", V(0f, -0.115f, 0.26f), 0.136f, 0.015f, Black);
+            b.Tube("filler", V(0f, -0.045f, 0.30f), 0.03f, 0.03f, Brass, 'y', metal: 0.8f, gloss: 0.6f);
+            b.Tube("gauge", V(0.068f, -0.10f, 0.10f), 0.045f, 0.015f, Nickel, 'x', metal: 0.7f);
+            b.Tube("gaugeface", V(0.076f, -0.10f, 0.10f), 0.036f, 0.004f, new Color(0.85f, 0.83f, 0.76f), 'x', 0f, 0.8f);
+            b.Cube("hose", V(0f, -0.035f, 0.39f), V(0.022f, 0.022f, 0.10f), Black, V(-49f, 0f, 0f), 0.1f, 0.3f);
+            b.Tube("wand", V(0f, 0f, 0.40f), 0.034f, 0.70f, Steel, metal: 0.6f);
+            b.Tube("shield", V(0f, 0f, 0.55f), 0.07f, 0.30f, Black, metal: 0.3f);
+            for (int i = 0; i < 4; i++) b.Tube("rib" + i, V(0f, 0f, 0.44f + i * 0.072f), 0.076f, 0.012f, Steel, metal: 0.6f);
+            b.Tube("nozzle", V(0f, 0f, 0.77f), 0.05f, 0.05f, Brass, metal: 0.8f, gloss: 0.6f);
+            b.Tube("tip", V(0f, 0f, 0.80f), 0.036f, 0.02f, Black);
+            b.Tube("igniter", V(0f, -0.038f, 0.745f), 0.014f, 0.07f, Nickel, metal: 0.7f);
+            GameObject pilot = b.Ball("pilot", V(0f, -0.038f, 0.79f), V(0.02f, 0.022f, 0.032f), PilotFlame);
+            Paint(pilot, mat, PilotFlame, emissive: true);   // (always lit)
+            Fx.Own(pilot.GetComponent<Renderer>().sharedMaterial);
+            b.Cube("grip", V(0f, -0.12f, -0.14f), V(0.04f, 0.14f, 0.055f), Wood, V(15f, 0f, 0f), 0.1f, 0.5f);
+            b.Cube("guard", V(0f, -0.06f, -0.085f), V(0.008f, 0.008f, 0.08f), Black);
+            b.Cube("trigger", V(0f, -0.045f, -0.095f), V(0.007f, 0.024f, 0.007f), Black);
+            b.Cube("foregrip", V(0f, -0.075f, 0.48f), V(0.035f, 0.12f, 0.045f), Wood, metal: 0.1f, gloss: 0.5f);
+            b.Point("dh_muzzle", V(0f, 0f, 0.81f));
+            return b.Bounds;
+        }
+
+        private static readonly Color PilotFlame = new Color(1f, 0.55f, 0.15f);
     }
 }

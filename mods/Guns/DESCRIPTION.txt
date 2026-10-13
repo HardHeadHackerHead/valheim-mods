@@ -1,4 +1,4 @@
-Firearms for Valheim: pistol, revolver, dual pistols, SMG, shotgun, rifle, lever action, AR-15, sniper, machine gun and minigun, with reloading, aiming down the sights, recoil, real gun sounds and diving while you shoot. Made at the forge.
+Firearms for Valheim: pistol, revolver, dual pistols, SMG, shotgun, rifle, lever action, AR-15, sniper, machine gun, minigun and a flamethrower, with reloading, aiming down the sights, recoil, real gun sounds and diving while you shoot. Made at the forge.
 
 The guns
 - Pistol: a light semi-automatic, 12 rounds, one for each pull of the trigger. Quick to reload.
@@ -12,19 +12,20 @@ The guns
 - Sniper Rifle: a heavy bolt-action with a scope: hold the aim button to look through it. One round hits for a great deal from very far away.
 - Machine Gun: 75 rounds of sustained fire; the real sound of a long burst.
 - Minigun: six rotating barrels and 400 rounds. It spools up with a rising whine, then never stops. Heavy: it slows you down.
+- Flamethrower: hold the trigger for a roaring stream of fire about seven metres long (the Cultist's own flames). Whatever it touches catches fire and keeps burning after the stream moves on, so the longer you hold it on them the harder they burn. Its tank holds ten seconds of flame. It never sets buildings alight, so your base is safe.
 
 How they handle
 - Hold the attack button to fire (an automatic gun keeps firing; the others fire once for each pull). The spread grows the longer you keep firing and settles when you stop.
 - Right mouse (the block button) aims: the camera zooms in, the spread tightens, a rifle comes up to your shoulder and a pistol goes out at arm's length. Shots fly to the spot under the crosshair, with a little lift for drop.
 - Reload with the middle mouse button, or just pull the trigger on an empty gun. Each gun has its own magazine, kept on the gun itself, and its own reload: a magazine out and in, a slide racked, a bolt worked, a shell at a time. Put the gun away and the reload stops without losing anything. The rounds left show at the bottom right, with a bar while you reload.
-- Dive: block + jump with a light gun throws you into a dive instead of a roll: forward, to a side or backward, the way you are moving. You keep your gun up and can fire the whole way through. (The sniper rifle, machine gun and minigun are too heavy to dive with.)
+- Dive: block + jump with a light gun throws you into a dive instead of a roll: forward, to a side or backward, the way you are moving. You keep your gun up and can fire the whole way through. (The sniper rifle, machine gun, minigun and flamethrower are too heavy to dive with.)
 - Your hands hold the guns: the right on the grip, the left on the foregrip, cupped under a pistol, or down at the magazine when you reload. Sprinting drops the gun to a low ready, and it kicks back with every shot.
 - It sounds real: the gunshots, reloads, clicks and brass bouncing on the floor are recordings of real guns and mechanisms, a machine gun and a minigun play a real burst, and a round makes its own sound where it lands, different from the shot.
 - Muzzle flash, brass flying out of the ejection port, a tracer behind every round, a scope picture for the sniper rifle, and an inventory picture drawn from each gun's model.
 
 What they cost
-- Every gun is made at the forge: a pistol from iron, wood and leather scraps at level 1; revolvers, shotguns, rifles and the lever action at level 2; the AR-15, sniper rifle and machine gun from black metal at level 3; the minigun at level 4 from black metal, iron, chains and silver.
+- Every gun is made at the forge: a pistol from iron, wood and leather scraps at level 1; revolvers, shotguns, rifles and the lever action at level 2, and the flamethrower there from iron, bronze, resin and Surtling cores; the AR-15, sniper rifle and machine gun from black metal at level 3; the minigun at level 4 from black metal, iron, chains and silver.
 - There is no ammunition to craft yet: reloading is free. Real bullets are planned.
-- Rounds use the Crossbows skill, which rises as you shoot.
+- Rounds (and flame) use the Crossbows skill, which rises as you shoot.
 
 Settings: every gun has its own damage, magazine size, reload time, rate of fire and what it costs at the forge, and the spread of all guns and what a dive costs (the server's in multiplayer); aiming zoom, recoil, volume and whether the mod bends your arms to hold the guns, for you.

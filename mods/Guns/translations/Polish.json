@@ -21,6 +21,8 @@
   "guns_machinegun_desc": "Strzela, dopóki trzymasz przycisk ataku. Przy długiej serii lufa się unosi: krótkie serie pozostają celne.",
   "guns_minigun": "Minigun",
   "guns_minigun_desc": "Sześć obrotowych luf i taśma czterystu naboi. Chwilę się rozkręca, a potem nie przestaje. Spowalnia cię.",
+  "guns_flamethrower": "Miotacz ognia",
+  "guns_flamethrower_desc": "Zbiornik paliwa i długa dysza: przytrzymaj spust, by wypuścić ryczący strumień ognia. Wszystko, czego dotknie, zapala się i płonie dalej, gdy przestaniesz. Sięga około siedmiu metrów. Nigdy nie podpala budynków.",
   "guns_reloading": "Przeładowanie",
   "guns_empty": "Pusto: pociągnij za spust, by przeładować",
   "guns_server_missing": "Quad's Guns nie jest zainstalowany na tym serwerze: nie można tu wytwarzać broni."

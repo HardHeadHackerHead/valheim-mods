@@ -38,6 +38,7 @@ namespace Guns
             foreach (GunDef d in Arsenal.All)
             {
                 var e = new Effects();
+                if (d.Flame) { ByGun[d.Id] = e; continue; }   // (a flamethrower's sound and flame are its stream: Flame.cs)
                 if (source != null)
                 {
                     e.Sound = SoundPrefab(source, holder, "dh_sfx_" + d.Id + "_fire", Sound.Shots(d), d.Sound.MinPitch, d.Sound.MaxPitch, true, 6f * Mathf.Sqrt(d.Noise / 25f), 90f + d.Noise * 3f);
@@ -241,6 +242,7 @@ namespace Guns
             gone = null;
             foreach (Player p in Voices.Keys) if (p == null) (gone ?? (gone = new List<Player>())).Add(p);
             if (gone != null) foreach (Player p in gone) { if (Voices[p].Go != null) Object.Destroy(Voices[p].Go); Voices.Remove(p); }
+            Flame.Prune();
         }
 
         internal static bool HasReload(string name) => name != null && Reloads.ContainsKey(name);
@@ -253,8 +255,12 @@ namespace Guns
             return r.Value;
         }
 
+        /// <summary>A clip or material made elsewhere (Flame.cs), destroyed with the rest.</summary>
+        internal static void Own(Object o) { if (o != null) Owned.Add(o); }
+
         internal static void Clear()
         {
+            Flame.Clear();
             Whirr(0f);
             if (_spin[0] != null) { Object.Destroy(_spin[0].gameObject); _spin[0] = _spin[1] = _spin[2] = null; }
             foreach (Object o in Owned) if (o != null) Object.Destroy(o);
@@ -302,6 +308,7 @@ namespace Guns
         /// <summary>The little push the camera gets with every shot: up, and a touch sideways. Less when aiming.</summary>
         internal static void Kick(Player p, GunDef d)
         {
+            if (d.Kick <= 0f) return;   // (a flamethrower doesn't kick)
             Recoil = Mathf.Min(1.5f, Recoil + Mathf.Clamp(d.Kick, 0.4f, 2f) * 0.6f);
             float k = Plugin.Recoil.Value * d.Kick * (Aim.Active ? 0.6f : 1f);
             if (k <= 0f) return;

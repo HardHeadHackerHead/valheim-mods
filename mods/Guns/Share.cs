@@ -106,7 +106,7 @@ namespace Guns
             ZNetView nview = NView(p);
             if (nview == null || !nview.IsValid()) return;
             int kind = 0;
-            if (d.LoopRate > 0f)
+            if (d.Stream)
             {
                 if (Time.time < _nextBurst) return;
                 _nextBurst = Time.time + 0.2f;
@@ -158,7 +158,10 @@ namespace Guns
             else Fx.Casing(p, d, second);
         }
 
-        private static void Kick(Carry c, GunDef d) => c.Recoil = Mathf.Min(1.5f, c.Recoil + Mathf.Clamp(d.Kick, 0.4f, 2f) * 0.6f);
+        private static void Kick(Carry c, GunDef d)
+        {
+            if (d.Kick > 0f) c.Recoil = Mathf.Min(1.5f, c.Recoil + Mathf.Clamp(d.Kick, 0.4f, 2f) * 0.6f);   // (a flamethrower doesn't kick)
+        }
 
         // ---- theirs, in ----------------------------------------------------------------------------------------------------
 
@@ -220,6 +223,7 @@ namespace Guns
                     Fx.Casing(p, d, false);
                 }
                 if (Fx.HasBurst(d)) Fx.Fire(p, d, burst);
+                if (d.Flame) Flame.Stream(p, burst);
                 if (d.SpinUp > 0f)
                 {
                     c.Spin = Mathf.Clamp01(c.Spin + (burst ? 1f / d.SpinUp : -1f / (d.SpinUp * 2.4f)) * dt);

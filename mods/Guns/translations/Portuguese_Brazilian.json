@@ -21,6 +21,8 @@
   "guns_machinegun_desc": "Atira enquanto você segurar o botão de ataque. Se segurar por muito tempo, o cano sobe: rajadas curtas continuam precisas.",
   "guns_minigun": "Minigun",
   "guns_minigun_desc": "Seis canos giratórios e uma cinta de quatrocentas balas. Leva um instante para acelerar e depois não para mais. Deixa você mais lento.",
+  "guns_flamethrower": "Lança-chamas",
+  "guns_flamethrower_desc": "Um tanque de combustível e um bico longo: segure o gatilho para um jato de fogo rugindo. Tudo o que ele toca pega fogo e continua queimando depois que você para. Alcança cerca de sete metros. Nunca incendeia construções.",
   "guns_reloading": "Recarregando",
   "guns_empty": "Vazia: puxe o gatilho para recarregar",
   "guns_server_missing": "Quad's Guns não está instalado neste servidor: as armas não podem ser fabricadas aqui."
