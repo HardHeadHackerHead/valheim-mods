@@ -17,12 +17,13 @@ namespace Guns
         private static readonly Dictionary<string, KeyValuePair<EffectList, float>> Reloads = new Dictionary<string, KeyValuePair<EffectList, float>>();   // a recording of a whole reload, and its length
         private sealed class Burst { public AudioClip Loop, Tail; }
         private static readonly Dictionary<string, Burst> Bursts = new Dictionary<string, Burst>();   // a real burst of fire, looped, and its tail
-        private static AudioSource _burst, _tail;
+        private sealed class Voice { public GameObject Go; public AudioSource Burst, Tail; }
+        private static readonly Dictionary<Player, Voice> Voices = new Dictionary<Player, Voice>();   // a burst of fire for each player who is firing one (others' too, Share.cs)
         /// <summary>What a round makes where it lands (the sound of it hitting, and a spark): put on every round, so the hit is heard where it happens, not at the gun.</summary>
         internal static EffectList Impact;
         private static readonly Dictionary<Sound.Click, EffectList> Clicks = new Dictionary<Sound.Click, EffectList>();
         private static readonly List<Object> Owned = new List<Object>();   // clips and materials made here, destroyed with the prefabs
-        private static readonly Dictionary<string, Transform> Found = new Dictionary<string, Transform>();
+        private static readonly Dictionary<Player, Dictionary<string, Transform>> Found = new Dictionary<Player, Dictionary<string, Transform>>();
         private static readonly Dictionary<Color, Material> Brass = new Dictionary<Color, Material>();
         private static readonly AudioSource[] _spin = new AudioSource[3];
 
@@ -167,6 +168,17 @@ namespace Guns
             if (Clicks.TryGetValue(kind, out EffectList list)) list.Create(at, Quaternion.identity);
         }
 
+        private static readonly Dictionary<string, EffectList> Played = new Dictionary<string, EffectList>();
+
+        /// <summary>What another player's shot makes at their muzzle (the gun's sound and flash, as FireEffects lists them for the item).</summary>
+        internal static void Shot(Player p, GunDef d, bool second)
+        {
+            Transform muzzle = Muzzle(p, second);
+            if (muzzle == null) return;
+            if (!Played.TryGetValue(d.Id, out EffectList list)) Played[d.Id] = list = new EffectList { m_effectPrefabs = FireEffects(d) };
+            list.Create(muzzle.position, muzzle.rotation);
+        }
+
         internal static bool HasBurst(GunDef d) => Bursts.ContainsKey(d.Id);
 
         /// <summary>
@@ -175,44 +187,56 @@ namespace Guns
         /// </summary>
         internal static void Fire(Player p, GunDef d, bool firing)
         {
-            if (!Bursts.TryGetValue(d.Id, out Burst b)) return;
+            if (p == null || !Bursts.TryGetValue(d.Id, out Burst b)) return;
+            Voices.TryGetValue(p, out Voice v);
             if (!firing)
             {
-                if (_burst != null && _burst.isPlaying)
+                if (v != null && v.Burst != null && v.Burst.isPlaying)
                 {
-                    _burst.Stop();
-                    _tail.transform.position = _burst.transform.position;
-                    _tail.clip = b.Tail;
-                    _tail.pitch = _burst.pitch;
-                    _tail.volume = _burst.volume;
-                    _tail.Play();
+                    v.Burst.Stop();
+                    v.Tail.transform.position = v.Burst.transform.position;
+                    v.Tail.clip = b.Tail;
+                    v.Tail.pitch = v.Burst.pitch;
+                    v.Tail.volume = v.Burst.volume;
+                    v.Tail.Play();
                 }
                 return;
             }
-            if (_burst == null)
+            if (v == null || v.Go == null)
             {
                 var go = new GameObject("QuadsGunsBurst");
                 Object.DontDestroyOnLoad(go);
-                _burst = go.AddComponent<AudioSource>();
-                _tail = go.AddComponent<AudioSource>();
-                foreach (AudioSource s in new[] { _burst, _tail })
+                v = new Voice { Go = go, Burst = go.AddComponent<AudioSource>(), Tail = go.AddComponent<AudioSource>() };
+                foreach (AudioSource s in new[] { v.Burst, v.Tail })
                 {
                     s.spatialBlend = 1f; s.rolloffMode = AudioRolloffMode.Logarithmic; s.minDistance = 6f; s.maxDistance = 160f; s.dopplerLevel = 0f;
                 }
-                _burst.loop = true;
+                v.Burst.loop = true;
+                Voices[p] = v;
             }
             Transform muzzle = Muzzle(p);
-            if (muzzle != null) _burst.transform.position = muzzle.position;
-            _burst.clip = b.Loop;
-            _burst.pitch = Mathf.Clamp(d.RateNow / d.LoopRate, 0.6f, 2.5f);
-            _burst.volume = Mathf.Clamp01(0.95f * Plugin.Volume.Value * AudioMan.GetSFXVolume());
-            if (!_burst.isPlaying) { if (_tail.isPlaying) _tail.Stop(); _burst.Play(); }
+            if (muzzle != null) v.Burst.transform.position = muzzle.position;
+            v.Burst.clip = b.Loop;
+            v.Burst.pitch = Mathf.Clamp(d.RateNow / d.LoopRate, 0.6f, 2.5f);
+            v.Burst.volume = Mathf.Clamp01(0.95f * Plugin.Volume.Value * AudioMan.GetSFXVolume());
+            if (!v.Burst.isPlaying) { if (v.Tail.isPlaying) v.Tail.Stop(); v.Burst.Play(); }
         }
 
-        /// <summary>The burst stops at once, with no tail (the gun was put away).</summary>
-        internal static void StopBurst()
+        /// <summary>This player's burst stops at once, with no tail (the gun was put away).</summary>
+        internal static void StopBurst(Player p)
         {
-            if (_burst != null && _burst.isPlaying) _burst.Stop();
+            if (p != null && Voices.TryGetValue(p, out Voice v) && v.Burst != null && v.Burst.isPlaying) v.Burst.Stop();
+        }
+
+        /// <summary>Forgets what belongs to players who are gone (their parts, their burst's sound source).</summary>
+        internal static void Prune()
+        {
+            List<Player> gone = null;
+            foreach (Player p in Found.Keys) if (p == null) (gone ?? (gone = new List<Player>())).Add(p);
+            if (gone != null) foreach (Player p in gone) Found.Remove(p);
+            gone = null;
+            foreach (Player p in Voices.Keys) if (p == null) (gone ?? (gone = new List<Player>())).Add(p);
+            if (gone != null) foreach (Player p in gone) { if (Voices[p].Go != null) Object.Destroy(Voices[p].Go); Voices.Remove(p); }
         }
 
         internal static bool HasReload(string name) => name != null && Reloads.ContainsKey(name);
@@ -232,7 +256,8 @@ namespace Guns
             foreach (Object o in Owned) if (o != null) Object.Destroy(o);
             Owned.Clear();
             ByGun.Clear(); Clicks.Clear(); Reloads.Clear(); Bursts.Clear(); Impact = null;
-            if (_burst != null) { Object.Destroy(_burst.gameObject); _burst = _tail = null; } Found.Clear(); Brass.Clear();
+            foreach (Voice v in Voices.Values) if (v.Go != null) Object.Destroy(v.Go);
+            Voices.Clear(); Found.Clear(); Brass.Clear(); Played.Clear();
             Model.Clear();
         }
 
@@ -241,9 +266,10 @@ namespace Guns
         /// <summary>A named empty or part of the model in this player's hand (the game copies the model there when the gun is equipped). Null when the gun isn't shown yet.</summary>
         internal static Transform Part(Player p, string name)
         {
-            if (Found.TryGetValue(name, out Transform t) && t != null && t.IsChildOf(p.transform)) return t;
+            if (!Found.TryGetValue(p, out Dictionary<string, Transform> parts)) Found[p] = parts = new Dictionary<string, Transform>();
+            if (parts.TryGetValue(name, out Transform t) && t != null && t.IsChildOf(p.transform)) return t;
             t = Search(p.transform, name);
-            Found[name] = t;
+            parts[name] = t;
             return t;
         }
 

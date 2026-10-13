@@ -1,3 +1,4 @@
+using HarmonyLib;
 using System;
 using System.Collections.Generic;
 using BepInEx.Configuration;
@@ -98,7 +99,19 @@ namespace Guns
         internal static readonly List<GunDef> All = new List<GunDef>();
         private static readonly Dictionary<string, GunDef> ById = new Dictionary<string, GunDef>();
 
-        internal static void Add(GunDef d) { All.Add(d); ById[d.Id] = d; }
+        private static readonly Dictionary<int, GunDef> ByHash = new Dictionary<int, GunDef>();
+        private static readonly AccessTools.FieldRef<VisEquipment, int> RightItem = AccessTools.FieldRefAccess<VisEquipment, int>("m_rightItem");
+
+        internal static void Add(GunDef d) { All.Add(d); ById[d.Id] = d; ByHash[d.Id.GetStableHashCode()] = d; }
+
+        /// <summary>The gun in any player's right hand, from what their equipment shows (the other players' items are not in our game, only what they wear).</summary>
+        internal static GunDef HeldBy(Player p)
+        {
+            if (p == null) return null;
+            if (p == Player.m_localPlayer) return Held(p, out ItemDrop.ItemData _);
+            VisEquipment ve = p.GetComponent<VisEquipment>();
+            return ve != null && ByHash.TryGetValue(RightItem(ve), out GunDef d) ? d : null;
+        }
 
         internal static GunDef Of(string prefab) => prefab != null && ById.TryGetValue(prefab, out GunDef d) ? d : null;
 

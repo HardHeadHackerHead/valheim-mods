@@ -66,10 +66,9 @@ namespace Guns
 
         // ---- posing the model -----------------------------------------------------------------------------------------
 
-        private static float _run;   // 0 walking, 1 sprinting: how far the pair of pistols is in its sprint pose
-        private static Transform _model;
         private static readonly Dictionary<Transform, KeyValuePair<Vector3, Quaternion>> Bases = new Dictionary<Transform, KeyValuePair<Vector3, Quaternion>>();
         private static readonly Vector3 PistolGrip = new Vector3(0f, -0.075f, -0.085f);   // (the pistol's grip in its own parts' coordinates, Models.PistolParts)
+        internal static readonly Carry Mine = new Carry();
 
         /// <summary>The part's resting place, noted the first time it is seen, put back before each frame's pose is worked out.</summary>
         private static void Rest(Transform t)
@@ -79,33 +78,60 @@ namespace Guns
             t.localRotation = b.Value;
         }
 
+        /// <summary>Forgets the resting places of parts that are gone (a player's gun swapped, a player who left).</summary>
+        internal static void PruneBases()
+        {
+            if (Bases.Count < 64) return;
+            var gone = new List<Transform>();
+            foreach (Transform t in Bases.Keys) if (t == null) gone.Add(t);
+            foreach (Transform t in gone) Bases.Remove(t);
+        }
+
         /// <summary>
         /// After the animation has posed the arms (the game's crossbow carry lowers the gun across the chest when you walk), the gun in the
         /// hand is turned to point where you look, pivoting about the grip so it stays in the hand, kicked back by a shot and dipped while it
-        /// is reloaded. Called every frame (LateUpdate).
+        /// is reloaded. Called every frame (LateUpdate) for the local player; Share.Late does the same for the others from what they share.
         /// </summary>
         internal static void Pose()
         {
             Player p = Player.m_localPlayer;
             GunDef d = Arsenal.Held(p, out ItemDrop.ItemData item);
-            if (d == null || p.IsDead()) { _model = null; return; }
+            Carry c = Mine;
+            if (d == null || p.IsDead()) { c.Model = null; return; }
+            c.Def = d;
+            c.Look = p.GetLookDir();
+            c.Aiming = Active || Dive.Active;
+            c.Sprinting = p.IsRunning();
+            c.Dip = Ammo.Dip;
+            c.Recoil = Fx.Recoil;
+            c.LastShot = Fire.LastShot;
+            c.Second = Fire.LastWasSecond;
+            c.SpinAngle = Fire.SpinAngle;
+            c.Arms = Plugin.ArmPosing.Value;
+            PoseOn(p, c);
+        }
+
+        /// <summary>One player's gun posed from their carry's state (the local player's, or another's as their game shares it).</summary>
+        internal static void PoseOn(Player p, Carry c)
+        {
+            GunDef d = c.Def;
             Transform model = Fx.ModelRoot(p);
             if (model == null) return;
-            if (model != _model) { _model = model; Bases.Clear(); }
+            c.Model = model;
             Rest(model);
             if (p.InDodge())   // rolling: the animation has the arms, and the gun goes back to how it sits in the hand
             {
                 if (d.Dual) { Transform l = Fx.Part(p, "pistolL"); if (l != null) Rest(l); }
                 return;
             }
-            Vector3 look = p.GetLookDir();
+            Vector3 look = c.Look;
             if (look.sqrMagnitude < 0.0001f) return;
 
-            float dip = Ammo.Dip;
-            if (!d.Dual && Plugin.ArmPosing.Value && PoseHeld(p, d, model, look, dip)) { Tail(p, d); return; }
+            float dip = c.Dip;
+            if (!d.Dual && c.Arms && PoseHeld(p, c, model, look, dip)) { Tail(p, c); return; }
             // a pair kicks one pistol at a time: the one that fired, the other only a little
-            float kickR = Fx.Recoil, kickL = Fx.Recoil;
-            if (d.Dual) { if (Fire.LastWasSecond) kickR *= 0.3f; else kickL *= 0.3f; }
+            float kickR = c.Recoil, kickL = c.Recoil;
+            if (d.Dual) { if (c.Second) kickR *= 0.3f; else kickL *= 0.3f; }
             Quaternion aim = Quaternion.LookRotation(look, Vector3.up);
             // a pair of pistols: each arm reaches out and forward to its own gun, spread to the sides (the hands go where the pistols are)
             Vector3? rightAt = null, leftAt = null;
@@ -117,8 +143,8 @@ namespace Guns
                 {
                     Vector3 side = Vector3.Cross(Vector3.up, look).normalized;   // (to the right of where you look)
                     // sprinting or aiming (right mouse): the arms straighten, come in and reach further in front of you (eased in and out)
-                    _run = Mathf.MoveTowards(_run, (p.IsRunning() || Active || Dive.Active) ? 1f : 0f, Time.deltaTime * 6f);
-                    float spread = Mathf.Lerp(0.22f, 0.08f, _run), reach = Mathf.Lerp(0.46f, 0.64f, _run);
+                    c.Run = Mathf.MoveTowards(c.Run, (c.Sprinting || c.Aiming) ? 1f : 0f, Time.deltaTime * 6f);
+                    float spread = Mathf.Lerp(0.22f, 0.08f, c.Run), reach = Mathf.Lerp(0.46f, 0.64f, c.Run);
                     Vector3 tr = ur.position + side * spread + look * reach, tl = ul.position - side * spread + look * reach;
                     if (Arms.Reach(ve.m_rightHand, tr, side * 0.6f + Vector3.down)) rightAt = tr;
                     if (Arms.Reach(ve.m_leftHand, tl, -side * 0.6f + Vector3.down)) leftAt = tl;
@@ -131,10 +157,10 @@ namespace Guns
             model.position += held - model.TransformPoint(d.Grip) + push;
             if (rightAt.HasValue) model.position = rightAt.Value + push;
 
-            Moving(p, d, "dh_action", d.Dual && Fire.LastWasSecond);
+            Moving(p, c, "dh_action", d.Dual && c.Second);
             if (d.Dual)
             {
-                Moving(p, d, "dh_action2", !Fire.LastWasSecond);
+                Moving(p, c, "dh_action2", !c.Second);
                 Transform left = Fx.Part(p, "pistolL");
                 Transform hand = ve != null ? ve.m_leftHand : null;
                 if (left != null && hand != null)
@@ -145,21 +171,20 @@ namespace Guns
                     left.position = (leftAt ?? hand.position) - rotL * PistolGrip + rotL * new Vector3(0f, -dip * 0.12f, -kickL * 0.035f);
                 }
             }
-            if (d.SpinUp > 0f) Tail(p, d);
+            if (d.SpinUp > 0f) Tail(p, c);
         }
 
         /// <summary>The moving parts of a single gun: a slide, bolt, pump or lever, and a rotary gun's barrels.</summary>
-        private static void Tail(Player p, GunDef d)
+        private static void Tail(Player p, Carry c)
         {
-            if (!d.Dual) Moving(p, d, "dh_action", false);
+            GunDef d = c.Def;
+            if (!d.Dual) Moving(p, c, "dh_action", false);
             if (d.SpinUp > 0f)
             {
                 Transform spin = Fx.Part(p, "dh_spin");
-                if (spin != null) { Rest(spin); spin.localRotation = Quaternion.Euler(0f, 0f, Fire.SpinAngle); }
+                if (spin != null) { Rest(spin); spin.localRotation = Quaternion.Euler(0f, 0f, c.SpinAngle); }
             }
         }
-
-        private static float _aimT, _sprintT;   // how far into the aiming and the sprinting carry (eased)
 
         /// <summary>
         /// Holds a gun with both hands: the right on the grip, the left on the foregrip (or cupped under a pistol's grip), the arms bent to
@@ -168,15 +193,17 @@ namespace Guns
         /// left hand goes down to the magazine. If the left hand cannot reach its place the gun is drawn back until it can. Returns false when
         /// the rig's arm bones are not found (the game's own carry is left alone then).
         /// </summary>
-        private static bool PoseHeld(Player p, GunDef d, Transform model, Vector3 look, float dip)
+        private static bool PoseHeld(Player p, Carry c, Transform model, Vector3 look, float dip)
         {
+            GunDef d = c.Def;
             VisEquipment ve = p.GetComponent<VisEquipment>();
             if (ve == null || ve.m_rightHand == null || ve.m_leftHand == null) return false;
             Transform ur = Arms.Upper(ve.m_rightHand), ul = Arms.Upper(ve.m_leftHand);
             if (ur == null || ul == null) return false;
 
-            _aimT = Mathf.MoveTowards(_aimT, Active || Dive.Active ? 1f : 0f, Time.deltaTime * 7f);
-            _sprintT = Mathf.MoveTowards(_sprintT, p.IsRunning() && !Active && !Dive.Active ? 1f : 0f, Time.deltaTime * 5f);
+            c.AimT = Mathf.MoveTowards(c.AimT, c.Aiming ? 1f : 0f, Time.deltaTime * 7f);
+            c.SprintT = Mathf.MoveTowards(c.SprintT, c.Sprinting && !c.Aiming ? 1f : 0f, Time.deltaTime * 5f);
+            float aimT = c.AimT, sprintT = c.SprintT;
             // where the grip is from the right shoulder: (to the right, forward, up), and how far the muzzle drops when sprinting
             Vector3 walk, aim, sprint;
             float drop;
@@ -186,9 +213,9 @@ namespace Guns
                 case Stance.Heavy: walk = new Vector3(0.11f, 0.08f, -0.60f); aim = new Vector3(0.09f, 0.14f, -0.52f); sprint = new Vector3(0.11f, 0.05f, -0.62f); drop = 20f; break;   // (down at the right hip)
                 default: walk = new Vector3(-0.10f, 0.30f, -0.24f); aim = new Vector3(-0.10f, 0.18f, -0.10f); sprint = new Vector3(-0.12f, 0.26f, -0.30f); drop = 35f; break;
             }
-            Vector3 offset = Vector3.Lerp(Vector3.Lerp(walk, aim, _aimT), sprint, _sprintT);
-            float kick = Fx.Recoil;
-            Quaternion rot = Quaternion.LookRotation(look, Vector3.up) * Quaternion.Euler(-kick * 5f + dip * 32f + drop * _sprintT, 0f, 0f);
+            Vector3 offset = Vector3.Lerp(Vector3.Lerp(walk, aim, aimT), sprint, sprintT);
+            float kick = c.Recoil;
+            Quaternion rot = Quaternion.LookRotation(look, Vector3.up) * Quaternion.Euler(-kick * 5f + dip * 32f + drop * sprintT, 0f, 0f);
             Vector3 side = Vector3.Cross(Vector3.up, look).normalized;   // (to the right of where you look)
             Vector3 fwd = look.normalized;
             Vector3 grip = ur.position + side * offset.x + fwd * offset.y + Vector3.up * offset.z;
@@ -213,18 +240,19 @@ namespace Guns
         }
 
         /// <summary>A part that moves when the gun fires: it slides back and returns (a slide, bolt or pump), or swings (a lever).</summary>
-        private static void Moving(Player p, GunDef d, string name, bool resting)
+        private static void Moving(Player p, Carry c, string name, bool resting)
         {
+            GunDef d = c.Def;
             if (d.ActionTravel <= 0f && d.ActionTurn <= 0f) return;
             Transform part = Fx.Part(p, name);
             if (part == null) return;
             Rest(part);
             if (resting) return;
-            float u = (Time.time - Fire.LastShot) / Mathf.Max(0.02f, d.ActionTime);
+            float u = (Time.time - c.LastShot) / Mathf.Max(0.02f, d.ActionTime);
             if (u < 0f || u > 1f) return;
-            float c = Mathf.Sin(u * Mathf.PI);
-            part.localPosition += new Vector3(0f, 0f, -d.ActionTravel * c);
-            if (d.ActionTurn > 0f) part.localRotation *= Quaternion.Euler(d.ActionTurn * c, 0f, 0f);
+            float swing = Mathf.Sin(u * Mathf.PI);
+            part.localPosition += new Vector3(0f, 0f, -d.ActionTravel * swing);
+            if (d.ActionTurn > 0f) part.localRotation *= Quaternion.Euler(d.ActionTurn * swing, 0f, 0f);
         }
 
         /// <summary>Stops aiming and gives the camera its field of view back (the plugin unloading, the gun put away).</summary>

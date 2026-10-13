@@ -22,7 +22,7 @@ namespace Guns
     {
         public const string Guid = "com.quad.guns";
         public const string Name = "Quad's Guns";
-        public const string Version = "0.2.0";
+        public const string Version = "0.2.1";
 
         // the server's in multiplayer: they decide how hard a player can hit
         internal static ConfigEntry<float> SpreadScale, ShotStamina, DiveStamina;
@@ -64,6 +64,7 @@ namespace Guns
             _harmony = new Harmony(Guid);
             _harmony.PatchAll();
             Things.Register();   // a hot reload while in a world
+            foreach (Player p in Player.GetAllPlayers()) Share.Register(p);   // (a hot reload: the players already in the world)
             ItemReload.Repoint(Things.Current);   // guns made by the copy this replaces
             Things.Refresh();                      // and the ones the game gave their own copy of the data (the give command)
             Logger.LogInfo($"{Name} {Version} loaded");
@@ -72,6 +73,7 @@ namespace Guns
         private void Update()
         {
             Synced?.Update();
+            Share.Publish();
             Aim.Tick();
             Fire.Tick();
             Ammo.Tick(Player.m_localPlayer);
@@ -83,11 +85,12 @@ namespace Guns
             }
         }
 
-        private void LateUpdate() { Dive.Pose(Player.m_localPlayer); Aim.Pose(); }
+        private void LateUpdate() { Dive.Pose(Player.m_localPlayer); Aim.Pose(); Share.Late(); }
 
         private void OnDestroy()
         {
             Dive.End(Player.m_localPlayer);
+            Share.Reset();
             Aim.Stop();
             Ammo.Cancel();
             AmmoHud.Destroy();

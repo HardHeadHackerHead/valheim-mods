@@ -39,12 +39,12 @@ namespace Guns
             if (d != _last)
             {
                 _last = d;
-                Fx.StopBurst();
+                Fx.StopBurst(p);
                 _heat = 0f; _released = true; Spin = 0f; _casingAt = 0f; _cycleAt = 0f; _second = true;
                 if (d != null && p != null) Fx.Click(Sound.Click.Draw, p.transform.position + Vector3.up);
                 Fx.Recoil = 0f;
             }
-            if (d == null) { Fx.Whirr(0f); Fx.StopBurst(); return; }
+            if (d == null) { Fx.Whirr(0f); Fx.StopBurst(p); return; }
             if (Fx.HasBurst(d)) Fx.Fire(p, d, !Ammo.Reloading && Time.time - _lastShot < 2.2f / d.RateNow);
             bool held = TriggerHeld(p);
             if (!held) _released = true;
@@ -147,6 +147,7 @@ namespace Guns
             if (d.Dual) _second = !_second;
             LastWasSecond = second;
             Shoot(p, weapon, d, spread, second);
+            Share.SendShot(p, d, second);   // (the other players hear and see it too)
             if (d.CycleClick.HasValue) _cycleAt = now + d.Cycle * 0.3f;
             if (d.Cycle >= 0.4f) { _casingAt = now + d.Cycle * 0.4f; _casingSecond = second; }   // (worked by hand: the brass comes out as it is worked)
             else Fx.Casing(p, d, second);
