@@ -72,6 +72,15 @@ namespace Scripts.Mp
 
         internal static string NameOf(long peer) => Find(peer)?.Name ?? "";
 
+        /// <summary>A player for the log: the character's name once the game knows it (it does not yet when the mods first greet), and always the account id, so a line can be matched to a player.</summary>
+        private static string Who(PeerInfo info)
+        {
+            string name = info.Name;
+            ZNetPeer peer = ZNet.instance != null ? ZNet.instance.GetPeer(info.Uid) : null;
+            if (string.IsNullOrEmpty(name) && peer != null) name = info.Name = peer.m_playerName ?? "";
+            return (string.IsNullOrEmpty(name) ? "a player" : name) + " (" + info.Host + ")";
+        }
+
         /// <summary>This game's own connection id (what a character this game owns says its owner is).</summary>
         internal static long LocalPeer => ZDOMan.GetSessionID();
 
@@ -187,7 +196,7 @@ namespace Scripts.Mp
                 Peers.Remove(gone);
                 ServerParts.Forget(info.Uid.ToString());
                 Remote.PeerLeft(info.Uid);
-                if (info.Hello) { Core.Log.LogInfo("Scripts (multiplayer): " + info.Name + " left"); RaiseChanged(); }
+                if (info.Hello) { Core.Log.LogInfo("Scripts (multiplayer): " + Who(info) + " left"); RaiseChanged(); }
             }
         }
 
@@ -271,7 +280,7 @@ namespace Scripts.Mp
                 bool first = !info.Hello;
                 info.Hello = true;
                 info.Version = Math.Max(1, Math.Min(Protocol, (int)f.N("v", 1)));
-                if (first) Core.Log.LogInfo("Scripts (multiplayer): " + info.Name + " has the mod (version " + f.S("version") + ")");
+                if (first) Core.Log.LogInfo("Scripts (multiplayer): " + Who(info) + " has the mod (version " + f.S("version") + ")");
                 Send(info.Uid, new Frame("welcome", 0, Remote.WelcomeFor(info.Uid)));
                 if (first) RaiseChanged();
                 return;
