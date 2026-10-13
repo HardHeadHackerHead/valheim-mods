@@ -97,6 +97,10 @@ namespace Guns
         {
             GameObject go = Object.Instantiate(source, holder);
             go.name = name;
+            // Local only: the copy isn't in ZNetScene, so a networked one made a ZDO per shot that no other game could build
+            // ("Missing prefab hash" logged every frame until it died). Every player plays the sound themselves (Share.OnShot).
+            ZNetView view = go.GetComponent<ZNetView>();
+            if (view != null) Object.DestroyImmediate(view);
             ZSFX z = go.GetComponent<ZSFX>();
             if (z != null)
             {

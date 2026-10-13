@@ -22,7 +22,7 @@ namespace Guns
     {
         public const string Guid = "com.quad.guns";
         public const string Name = "Quad's Guns";
-        public const string Version = "0.2.1";
+        public const string Version = "0.2.2";
 
         // the server's in multiplayer: they decide how hard a player can hit
         internal static ConfigEntry<float> SpreadScale, ShotStamina, DiveStamina;
