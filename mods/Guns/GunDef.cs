@@ -103,7 +103,6 @@ namespace Guns
         private static readonly Dictionary<string, GunDef> ById = new Dictionary<string, GunDef>();
 
         private static readonly Dictionary<int, GunDef> ByHash = new Dictionary<int, GunDef>();
-        private static readonly AccessTools.FieldRef<VisEquipment, int> RightItem = AccessTools.FieldRefAccess<VisEquipment, int>("m_rightItem");
 
         internal static void Add(GunDef d) { All.Add(d); ById[d.Id] = d; ByHash[d.Id.GetStableHashCode()] = d; }
 
@@ -112,8 +111,9 @@ namespace Guns
         {
             if (p == null) return null;
             if (p == Player.m_localPlayer) return Held(p, out ItemDrop.ItemData _);
-            VisEquipment ve = p.GetComponent<VisEquipment>();
-            return ve != null && ByHash.TryGetValue(RightItem(ve), out GunDef d) ? d : null;
+            // (from their ZDO, as the game's VisEquipment reads it: its m_rightItem field is only ever set on the player's own game, 0 on everyone else's)
+            ZDO zdo = Share.ZdoOf(p);
+            return zdo != null && ByHash.TryGetValue(zdo.GetInt(ZDOVars.s_rightItem), out GunDef d) ? d : null;
         }
 
         internal static GunDef Of(string prefab) => prefab != null && ById.TryGetValue(prefab, out GunDef d) ? d : null;
