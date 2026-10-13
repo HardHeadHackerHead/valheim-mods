@@ -147,6 +147,27 @@ namespace Scripts
                 yield break;
             }
             if (sub == "spike") { output(Spike.Run()); yield break; }
+            if (sub == "unstick")
+            {
+                // a teleport that never finished leaves the game's black screen up: read the state, and end it where the player stands
+                Player me = Player.m_localPlayer;
+                if (me == null) { error("no local player"); yield break; }
+                var f = typeof(Player);
+                System.Reflection.FieldInfo tp = f.GetField("m_teleporting", BindingFlags.Instance | BindingFlags.NonPublic | BindingFlags.Public),
+                    tt = f.GetField("m_teleportTimer", BindingFlags.Instance | BindingFlags.NonPublic | BindingFlags.Public),
+                    td = f.GetField("m_distantTeleport", BindingFlags.Instance | BindingFlags.NonPublic | BindingFlags.Public),
+                    tg = f.GetField("m_teleportTargetPos", BindingFlags.Instance | BindingFlags.NonPublic | BindingFlags.Public);
+                var before = new JObject { ["teleporting"] = (bool)(tp?.GetValue(me) ?? false), ["timer"] = (float)(tt?.GetValue(me) ?? 0f), ["distant"] = (bool)(td?.GetValue(me) ?? false), ["target"] = tg?.GetValue(me)?.ToString(), ["pos"] = me.transform.position.ToString(), ["dead"] = me.IsDead(), ["sleeping"] = me.IsSleeping() };
+                bool fix = args.Length > 1 && args[1] == "fix";
+                if (fix && (bool)(tp?.GetValue(me) ?? false))
+                {
+                    if (ZoneSystem.instance != null && ZoneSystem.instance.GetSolidHeight(me.transform.position, out float h)) { Vector3 p = me.transform.position; p.y = h + 0.2f; me.transform.position = p; }
+                    typeof(Character).GetField("m_maxAirAltitude", BindingFlags.Instance | BindingFlags.NonPublic | BindingFlags.Public)?.SetValue(me, me.transform.position.y);   // (no fall damage from where it stood)
+                    tp.SetValue(me, false); tt?.SetValue(me, 0f);
+                }
+                output(new JObject { ["before"] = before, ["fixed"] = fix, ["teleportingNow"] = (bool)(tp?.GetValue(me) ?? false) });
+                yield break;
+            }
             if (sub == "players" || sub == "admin")
             {
                 output(Admins(args));

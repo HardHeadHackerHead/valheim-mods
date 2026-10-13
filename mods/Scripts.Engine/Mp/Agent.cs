@@ -310,7 +310,7 @@ namespace Scripts.Mp
                 return true;
             }
 
-            public bool TeleportTo(double x, double y, double z) => _p.TeleportTo(new Vector3((float)x, (float)y, (float)z), _p.transform.rotation, false);
+            public bool TeleportTo(double x, double y, double z) => SafeTeleport.Go(_p, new Vector3((float)x, (float)y, (float)z));
 
             public void Banner(string text) { if (MessageHud.instance != null) MessageHud.instance.ShowBiomeFoundMsg(text, true); }
         }

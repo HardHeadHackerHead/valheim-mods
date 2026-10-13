@@ -225,7 +225,13 @@ namespace Scripts
             int per = Limits.StatusEffectsPerMinute;
             if (!Players.Rate(s, "effects", per / 60.0, per)) { Host.Refuse(s, "too many status effects a minute (" + per + " is the limit; the owner can change it in the Blockscript settings)"); return false; }
             seconds = Math.Max(5.0, Math.Min(most, seconds));
-            StatusEffect se = c.GetSEMan().AddStatusEffect(name.GetStableHashCode(), true);
+            // some of the game's effects only work on a player (Rested reads the player's comfort, and fails inside the game on a creature)
+            StatusEffect kind = ObjectDB.instance.GetStatusEffect(name.GetStableHashCode());
+            if (!(c is Player) && (kind is SE_Rested || name == "Resting" || name == "Shelter" || name == "Warm" || name == "Cold" || name == "Freezing"))
+            { Host.Refuse(s, "'" + name + "' only works on players"); return false; }
+            StatusEffect se;
+            try { se = c.GetSEMan().AddStatusEffect(name.GetStableHashCode(), true); }
+            catch (Exception e) { Host.Refuse(s, "the game could not put '" + name + "' on " + Handles.PrefabName(c) + " (" + e.GetType().Name + ")"); return false; }
             if (se == null) return false;
             se.m_ttl = (float)seconds;
             Audit.Add(s, $"gave {name} for {seconds:0} s to {Handles.PrefabName(c)}");

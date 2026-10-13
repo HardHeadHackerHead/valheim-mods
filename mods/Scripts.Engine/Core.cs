@@ -10,7 +10,7 @@ namespace Scripts
     /// </summary>
     internal static class Core
     {
-        public const string Guid = "com.quad.blockscript", Name = "Quad's Blockscript", Version = "0.1.1";
+        public const string Guid = "com.quad.blockscript", Name = "Quad's Blockscript", Version = "0.1.2";
         internal static ManualLogSource Log;
         internal static MonoBehaviour Plugin;   // (for coroutines)
     }

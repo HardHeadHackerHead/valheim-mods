@@ -252,8 +252,8 @@ namespace Scripts
             if (!Rate(s, "tp-" + Handles.Id(p), 0.1, 1.0)) { Host.Refuse(s, "teleports more than once in ten seconds"); return false; }
             // the height the script gave is ignored: a landing a few metres off the ground kills
             if (!ZoneSystem.instance.IsZoneLoaded(pos) || !ZoneSystem.instance.GetSolidHeight(pos, out float h)) { Host.Refuse(s, "no ground to land on there"); return false; }
-            pos.y = h + 1f;
-            bool ok = p.TeleportTo(pos, p.transform.rotation, false);
+            pos.y = h + 0.2f;
+            bool ok = SafeTeleport.Go(p, pos);
             if (ok) Audit.Add(s, $"teleported {p.GetPlayerName()} to {pos.x:0},{pos.z:0}");
             return ok;
         }

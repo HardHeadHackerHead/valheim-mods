@@ -186,9 +186,20 @@ namespace Scripts.Mp
             {
                 if (peer?.m_rpc == null) continue;
                 live.Add(peer.m_rpc);
-                if (Peers.ContainsKey(peer.m_rpc)) continue;
-                Peers[peer.m_rpc] = new PeerInfo { Rpc = peer.m_rpc, Uid = peer.m_uid, Host = peer.m_rpc.GetSocket()?.GetHostName() ?? "", Name = peer.m_playerName ?? "" };
+                if (Peers.TryGetValue(peer.m_rpc, out PeerInfo known))
+                {
+                    // the game fills in the player's id and name only after the connection appears: keep them up to date, or the player's
+                    // character (found by its owner, the id) cannot be matched to the connection that greeted us
+                    if (peer.m_uid != 0 && known.Uid != peer.m_uid) { long was = known.Uid; known.Uid = peer.m_uid; if (was != 0) ServerParts.Forget(was.ToString()); }
+                    if (!string.IsNullOrEmpty(peer.m_playerName)) known.Name = peer.m_playerName;
+                    if (known.Host.Length == 0) known.Host = peer.m_rpc.GetSocket()?.GetHostName() ?? "";
+                    continue;
+                }
+                var fresh = new PeerInfo { Rpc = peer.m_rpc, Uid = peer.m_uid, Host = peer.m_rpc.GetSocket()?.GetHostName() ?? "", Name = peer.m_playerName ?? "" };
+                Peers[peer.m_rpc] = fresh;
                 peer.m_rpc.Register<ZPackage>(RpcName, OnServerPackage);
+                // a player who greeted an earlier copy of the server's mod (it was reloaded) will not greet again by itself: ask
+                SendOn(peer.m_rpc, new Frame("again", 0, new JObject()), ref fresh.Number);
             }
             foreach (ZRpc gone in Peers.Keys.Where(k => !live.Contains(k)).ToList())
             {
@@ -333,6 +344,7 @@ namespace Scripts.Mp
                     if (f.D["lists"] is JObject lists) Lists.Apply(lists);
                     RaiseChanged();
                     return;
+                case "again": _serverHello = false; _helloTries = 0; SendHello(); return;   // (the server's mod was reloaded and forgot us)
                 case "act": Agent.OnAct(f); return;
                 case "fx": Agent.OnFx(f); return;
                 case "listen": Agent.OnListen(f); return;
