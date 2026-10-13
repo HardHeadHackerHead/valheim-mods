@@ -377,7 +377,7 @@ but the sites' rules decide, so read them and ask before building the gallery.
 
 ## Remote editing (a server's scripts, from another game)
 
-Contract: `docs/scripting-multiplayer.md` sections 7 and 8. Built 2026-10-12 (unit-tested, not yet tried against a real server).
+Contract: `docs/scripting-multiplayer.md` sections 7 and 8. Built 2026-10-12; tried by two players on 2026-10-13 (an admin editing the host's scripts from their own game, and editing one block script together).
 
 **The idea.** The scripts live on the server. A player's editor never touches the host or the disk itself: it asks a **backend**
 (`Mp/Backend.cs`). On the game that runs the scripts that is `LocalBackend`, which does what the editor always did. On a game connected to a

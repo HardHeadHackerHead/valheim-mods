@@ -164,6 +164,23 @@ on("kill", e => {
 ### Claude Tools
 
 If you also have [Claude Tools](https://github.com/HardHeadHackerHead/valheim-claude-tools), it gains a `blockscript` command: `blockscript list`, `run NAME`, `stop NAME`, `log NAME [error|limit|warn|did|mine] [grep=text]`, `trace NAME on|off`, `stats NAME`, `panel page library|blocks|code|log NAME`, `server`, `collab`. Nothing in the mod needs it.
+
+### Status and known limits
+
+This is an early release, tested in single player (with a real restart) and by two players on a listen server; see Multiplayer for what was checked there.
+
+- **Some effect names:** every listed visual effect (46), sound (24), status effect (14) and decoration (27) was tried in the game and works. Rested, Resting, Shelter, Warm, Cold and Freezing work on players only and are refused on creatures.
+- **Not built:** a gallery of shared scripts, a world backup before a script's first run, a safe mode after a crash, an editable text editor inside the game (type in any editor and use **Paste code**, or save the file), and turning code back into blocks. `wait` is compiled to timers, so a handler that waits cannot be used for `hit` or `stop`.
+- **Web messages (`net.send`)** are off unless the world's owner lists web addresses in the settings; a script can only send short text to those, nothing else leaves the game.
+
+### Troubleshooting
+
+- **Something did less than it should (two boars became one).** Open the log page and look at the orange **LIMIT** lines: they name the limit and the setting that changes it. The script was told no, not broken. Raise the limit in `com.quad.blockscript.cfg`, or have the script do less.
+- **A red block.** Click it in the problems list on the right: it says what is wrong (an empty socket, a value of the wrong kind, a block used outside the "when" it belongs to).
+- **An error in the log.** Errors name the event it happened in and the line of the generated code; open the line for the stack and use **Go to the block**. Five errors in a minute pauses the script (it says so); fix it and press **Run**.
+- **Nothing happens when I press Home.** You must be in a world, not at the menu; check the hotkey in the settings; try the console command `blockscript`. If the window ever fails it closes itself and the game's log (`BepInEx/LogOutput.log`) says why.
+- **Stuck on a black screen or a respawn that never finishes** (versions before 0.1.4 and 0.1.2): update. 0.1.4 also removes the leftover effect records older versions left in a world, when the world loads.
+- **There is no undo for what a script did** (items it gave, creatures it spawned). Try new scripts in a test world first.
 <!-- END HAND-WRITTEN: how-to-use -->
 
 ## 🧩 Other mods
@@ -191,7 +208,7 @@ Found a clash with another mod? [Tell us](https://github.com/HardHeadHackerHead/
 It carries its scripting engine inside its own DLL and loads it when the game starts, and the game cannot swap that out while it runs. Restart the game after installing it or updating it (a reload in the mod manager is not enough the first time).
 
 <!-- HAND-WRITTEN: multiplayer -->
-**Status: built and unit-tested, but not yet run between two real games. Bob is the first test.** Everything below is how it is meant to work; if it does not, please tell us.
+**Status (0.1.5): tested with two players on a listen server** (the host and one other player, both with the mod). What was checked in the game: scripts acting on the other player through their game (reading their health, bag and gear; a banner, a speech bubble, giving an item, a status effect; taking an item and a shove refused by their settings), every event their game reports (picking up, building, hits, kills, eating, chat), kills reaching scripts one after another, an admin editing the server's scripts from their own game, and two people editing one block script live. The first two-player session found and fixed eight problems (0.1.1 to 0.1.5, see Recent changes). **Not tested yet:** a dedicated server, a player who is not an admin (the read-only view), the stale-save check on plain code, and a long session with many players.
 
 **Where scripts run.** On the game that runs the world: single player, the host of a listen server, or a dedicated server. Other players' games do not run scripts; they are asked to do things.
 
@@ -206,7 +223,9 @@ It carries its scripting engine inside its own DLL and loads it when the game st
 
 **Dedicated servers.** There is no screen on a dedicated server to press Run on, so list the scripts to start in the server's `com.quad.blockscript.cfg`, `Server` section, `Scripts to start when the world starts` (names, comma separated); they start about ten seconds after the world is ready. Put the scripts in the server's `BepInEx/config/Blockscript/` and allow their powers once (the `approvals.txt` next to them is what holds the allowed powers; copy it from a game where you allowed them).
 
-**Not done in multiplayer:** the Terminal's Proxy over a network, the in-world "refused" note on a dedicated server (the server's log still has it), and `talk`, `shake`, `ping` and `setName` show only on the host's own game for now.
+**Good to know.** An action on another player (give, take, heal, teleport...) is answered by their game a moment later: the value a script gets back at once is what was asked for, and if their game says no (their settings, a full bag) the script's log gets a LIMIT line naming them. Speech bubbles, camera shake and creature names are sent to every game with the mod; the map ping is the game's own and everyone sees it.
+
+**Not done in multiplayer:** the Terminal's Proxy over a network, and the in-world "refused" note on a dedicated server (the server's log still has it).
 <!-- END HAND-WRITTEN: multiplayer -->
 
 ## 🌍 Languages

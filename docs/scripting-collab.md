@@ -1,6 +1,6 @@
 # Editing a block script together (design and contract, 2026-10-12)
 
-> **Status (2026-10-12):** design of live co-editing in **Quad's Blockscript**. The logic is built and tested (9159 checks, plus 217 for the network layer); **not yet tried with two real players**.
+> **Status (2026-10-13):** design of live co-editing in **Quad's Blockscript**. Built and tested (9159 checks, plus 217 for the network layer), and **tried by two players in the game** (the host and an admin editing one block script together): it worked. Two people changing the same box at once, and the look of the presence outlines over a long session, have had little real use yet.
 
 Several people open the same block script and change it at the same time, and see each other's changes as they happen. This file is the
 exact design of the **pure logic** (`mods/Scripts.Engine/Collab/*.cs`, no Unity, tested by `tests/Scripts.Collab.Tests`). A later piece wires it

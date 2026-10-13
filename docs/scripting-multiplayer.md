@@ -1,6 +1,6 @@
 # Quad's Blockscript on a multiplayer server (design and contract, 2026-10-12)
 
-> **Status (2026-10-12):** design and contract for **Quad's Blockscript** on a multiplayer server. Built and unit-tested; **not yet run between two real games**. See the status section at the end.
+> **Status (2026-10-13):** design and contract for **Quad's Blockscript** on a multiplayer server. **Tested with two players on a listen server** (0.1.5): actions on the other player, every forwarded event, admin editing, live co-editing; the first session found eight bugs, fixed in 0.1.1 to 0.1.5 (see the test log at the end). Not tested: a dedicated server, a non-admin player, the stale-save check.
 
 Today scripts run only on the **server** (single player, the host of a listen server, or a dedicated server) and can only change the
 character whose game is the server's own. Other players' characters, inventories and screens belong to their own games, so a script can only
@@ -194,3 +194,18 @@ game is then a remote player to the server).
 Not built: remote editing of scripts by an admin (the ADMIN agent), a Limits panel that says it shows the server's (`Limits.FromServer`
 tells it), `inventory()` beyond 100 items, the in-world "refused" message on a dedicated server (it goes only to a player on the server's own
 game), the Proxy (the Terminal) in multiplayer, and any sharing of the Terminal's editor between players.
+
+## Two-player test log (2026-10-12/13, the host and Bob, listen server)
+
+| Found | Cause | Fixed in |
+|---|---|---|
+| Only the first kill in a minute reached scripts | OnDeath's postfix ran after the ZDO was gone, every victim id was 0:0, the duplicate filter dropped the rest | 0.1.1 (snapshot in a prefix; empty ids never deduplicated) |
+| A script teleport left the host under the black teleport screen | TeleportTo(distant=false) only ends when FindFloor succeeds at the exact target | 0.1.2 (SafeTeleport) |
+| Every action on the other player refused as "no mod" | the connection was recorded before ZNetPeer.m_uid and m_playerName were set | 0.1.2 (refreshed each poll) |
+| After the server's mod reloaded it forgot who has the mod | clients greet once | 0.1.2 ("again") |
+| Rested on a creature threw inside the game | SE_Rested needs a Player | 0.1.2 |
+| Pickups, building, hits, eating from the other player never arrived | NewEvents.Hook only ran on the server | 0.1.3 |
+| The host could not respawn: nine never-loading objects near the temple | networked effect prefabs left their ZDOs behind | 0.1.4 (no record for effects; EffectSweep) |
+| The other player's pieceBuilt dropped | the event arrived before the piece synced | 0.1.5 (wait up to 5 s) |
+| playerLeave had no name | it was never set | 0.1.5 |
+
