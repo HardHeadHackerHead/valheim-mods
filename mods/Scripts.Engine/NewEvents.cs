@@ -57,10 +57,32 @@ namespace Scripts
         internal static void FireRespawn(Player player) => Host.Fire("playerRespawn", e => Obj(e, ("player", Handles.Actor(ScriptOf(e), player))));
         internal static void FireTamed(Character creature, Player tamer) => Host.Fire("tamed", e => { Script s = ScriptOf(e); return Obj(e, ("creature", Handles.Actor(s, creature)), ("player", Handles.Actor(s, tamer))); });
 
+        /// <summary>
+        /// A piece a player's game says it built. The message usually arrives before the piece itself does (the world's own sync is
+        /// slower), so it waits for the piece to show up here, up to five seconds, and says so in the log if it never does.
+        /// </summary>
         internal static void FirePiece(Player player, string pieceId)
         {
             Piece piece = Pieces.Find(pieceId);
-            if (piece == null) return;
+            if (piece != null) { FirePieceNow(player, piece); return; }
+            if (Core.Plugin != null) Core.Plugin.StartCoroutine(WaitForPiece(player, pieceId));
+        }
+
+        private static System.Collections.IEnumerator WaitForPiece(Player player, string pieceId)
+        {
+            float until = UnityEngine.Time.unscaledTime + 5f;
+            while (UnityEngine.Time.unscaledTime < until)
+            {
+                yield return new UnityEngine.WaitForSeconds(0.2f);
+                Piece piece = Pieces.Find(pieceId);
+                if (piece != null) { FirePieceNow(player, piece); yield break; }
+            }
+            Core.Log.LogInfo("Scripts (multiplayer): a piece " + (player != null ? player.GetPlayerName() : "a player") + " built never arrived here, so pieceBuilt was not fired for it");
+        }
+
+        private static void FirePieceNow(Player player, Piece piece)
+        {
+            if (player == null || piece == null) return;
             Host.Fire("pieceBuilt", e => { Script s = ScriptOf(e); return Obj(e, ("player", Handles.Actor(s, player)), ("piece", Pieces.Handle(s, piece))); });
         }
 

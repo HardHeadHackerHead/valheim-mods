@@ -50,6 +50,7 @@ namespace Scripts
 
         private static float _next;
         private static HashSet<long> _online = new HashSet<long>();
+        private static readonly Dictionary<long, string> _names = new Dictionary<long, string>();   // (a player who has left is gone: their name is kept from when they were here)
         private static HashSet<string> _bosses = new HashSet<string>();
         private static bool? _night;
         private static string _weather;
@@ -72,10 +73,15 @@ namespace Scripts
 
             var now = new HashSet<long>(Player.GetAllPlayers().Select(p => p.GetPlayerID()));
             foreach (Player p in Player.GetAllPlayers())
+            {
+                string pn = p.GetPlayerName();
+                if (!string.IsNullOrEmpty(pn)) _names[p.GetPlayerID()] = pn;
                 if (!_online.Contains(p.GetPlayerID())) { Player joined = p; Host.Fire("playerJoin", e => Obj(e, ("player", Handles.Actor(Script(e), joined)))); }
+            }
             foreach (long id in _online.Where(x => !now.Contains(x)).ToList())
             {
-                string name = "";
+                string name = _names.TryGetValue(id, out string known) ? known : "";
+                _names.Remove(id);
                 Host.Fire("playerLeave", e => Obj(e, ("player", Obj(e, ("id", Text("p" + id)), ("name", Text(name)), ("valid", Bool(false)), ("prefab", Text("Player"))))));
             }
             _online = now;
