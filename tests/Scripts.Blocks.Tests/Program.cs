@@ -327,6 +327,13 @@ function _pump(limit) {
             e = Run(Js("lucky-boars.js"));
             e.Execute("handlers.kill[0]({ victim: mkCreature('Boar'), killer: mkPlayer('Bob'), pos: {x:0,y:0,z:0} });");
             Check(Log(e) == "give:Bob:Honey:2|say:Bob:Lucky boar!", "lucky boars: " + Log(e));
+
+            e = Run(Js("fine-wood.js"));
+            e.Execute("handlers.logBroken[0]({ player: mkPlayer('Bob'), log: 'beech_log_half', kind: 'beech', wood: 'Wood', splits: false, pos: {x:1,y:2,z:3} });");
+            Check(Log(e) == "drop:FineWood:2", "fine wood: a beech half log gives two: " + Log(e));
+            e.Execute("_log.length = 0; handlers.logBroken[0]({ player: null, log: 'beech_log', kind: 'beech', wood: 'Wood', splits: true, pos: {x:1,y:2,z:3} });");
+            e.Execute("handlers.logBroken[0]({ player: mkPlayer('Bob'), log: 'Birch_log_half', kind: 'birch', wood: 'FineWood', splits: false, pos: {x:1,y:2,z:3} });");
+            Check(Log(e) == "", "fine wood: a log that splits, or a birch log, gives none: " + Log(e));
         }
 
         /// <summary>The translation key of a palette heading: lower case, letters and digits, other runs become one underscore ("Time and weather" is time_and_weather).</summary>

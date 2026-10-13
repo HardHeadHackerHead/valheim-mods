@@ -195,7 +195,7 @@ namespace Scripts.Mp
             ["id"] = s.Id, ["pf"] = s.Prefab, ["nm"] = s.Name, ["x"] = s.Pos.x, ["y"] = s.Pos.y, ["z"] = s.Pos.z, ["mhp"] = s.MaxHp, ["lv"] = s.Level, ["pl"] = s.IsPlayer, ["bs"] = s.IsBoss, ["tm"] = s.IsTamed, ["by"] = s.SpawnedBy ?? "",
         };
 
-        private static bool Wants(string name) => Wire.IsAgent && _listen.Contains(name);
+        internal static bool Wants(string name) => Wire.IsAgent && _listen.Contains(name);
 
         private static void Send(JObject d)
         {
@@ -248,6 +248,17 @@ namespace Scripts.Mp
         {
             if (!Wants("hit") || !Owned(target)) return;
             Send(new JObject { ["e"] = "hit", ["sub"] = Handles.Id(target), ["t"] = SnapJson(Handles.Take(target)), ["a"] = SnapJson(Handles.Take(attacker)), ["x"] = pos.x, ["y"] = pos.y, ["z"] = pos.z, ["weapon"] = weapon, ["damage"] = damage });
+        }
+
+        /// <summary>A tree this game owned came down, or a log it owned broke (trees and logs belong to the game of a player near them).</summary>
+        internal static void ForwardWood(string name, NewEvents.Felled w, Player by)
+        {
+            if (!Wants(name) || w == null || w.Id.Length == 0) return;
+            Send(new JObject
+            {
+                ["e"] = name, ["id"] = w.Id, ["sub"] = w.Id, ["by"] = by != null ? Handles.Id(by) : "", ["pf"] = w.Prefab, ["wood"] = w.Wood, ["split"] = w.Splits,
+                ["x"] = w.Pos.x, ["y"] = w.Pos.y, ["z"] = w.Pos.z,
+            });
         }
 
         // ================================================================ this game's character, for the actions

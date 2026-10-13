@@ -498,12 +498,14 @@ at `on(...)` and in the log, and the others work.
 | `playerRespawn` | `player` | |
 | `command` | `player`, `name`, `args` | Also fired, to the script that registered `command(name, fn)`, when the player types `/name args` (in addition to calling `fn`) |
 | `tamed` | `creature`, `player` | `player` is the nearest one within 30 m |
+| `treeFelled` | `player`, `tree`, `kind`, `wood`, `pos` | A standing tree came down, on the game that owns it. `player` is who felled it, or `null` (another tree, a troll, fire). `tree` is the prefab (`Beech1`), `kind` is `beech`, `birch`, `fir`, `oak`, `pine`, `ancient` (the swamp's trees), `yggdrasil` or the prefab's first word, `wood` is what its logs give (`Wood`, `FineWood`, `RoundLog`, `ElderBark`, `YggdrasilWood`) |
+| `logBroken` | `player`, `log`, `kind`, `wood`, `splits`, `pos` | A fallen log broke, on the game that owns it. `splits` is true when it broke into smaller logs (a whole log), false when it broke into its wood (the last piece). `log` is the prefab (`beech_log_half`); `kind` and `wood` as above |
 
 ### 12.8 Settings and lists (data, not code)
 
 Settings (BepInEx `com.quad.blockscript.cfg`): `Limits`: `Spawns per minute per script` (5), `Creatures alive per script` (20), `Effects and sounds per
 second per script` (10), `Pieces placed per minute per script` (20), `Pieces alive per script` (200), `Status effects per minute per script`
-(20); `Allowed`: `Random events a script may start`, `Web addresses scripts may send to`. Lists in `Lists.cs`: `Allow` (items, widened to the
+(20), `Items given per hour per script` (50: each player's gifts, and the script's drops for everyone together); `Allowed`: `Random events a script may start`, `Web addresses scripts may send to`. Lists in `Lists.cs`: `Allow` (items, widened to the
 Meadows, Black Forest and Swamp food and materials), `StatusEffects`, `VisualEffects`, `Sounds`, `Pieces`. The editor's Limits panel
 (`Limits.Lines`) describes each of these for the powers a script uses.
 
@@ -554,7 +556,8 @@ messages and not the effects, banners, bubbles, forced weather or camera shake. 
 **Events**. The server sees these itself on every game: `playerJoin`, `playerLeave`, `chat` (and a `/command` typed by any player),
 `bossSpawn`, `dayStart`, `nightStart`, `weatherChange`, `raidStart`, `raidEnd`. A player's game tells the server about what only it can see,
 and only when a running script listens: `kill` and `bossDeath` (of what that game owns, which is most creatures near the player),
-`playerDeath`, `playerRespawn`, `itemPickup`, `eat`, `skillUp`, `pieceBuilt`, `tamed` and `hit`. The server checks each one: the thing it is
+`playerDeath`, `playerRespawn`, `itemPickup`, `eat`, `skillUp`, `pieceBuilt`, `tamed`, `hit`, `treeFelled` and `logBroken` (a forwarded
+one's `player` is dropped when that player is over 80 m from the tree). The server checks each one: the thing it is
 about must belong to that connection, no more than 50 a second, and the same kill told twice is one event. `hit` forwarded from a player's
 game is **read-only** (the damage was settled on the game that owns the target, so a script's change to `e.damage` is ignored); a hit on
 something the server owns is writable as before. A kill that the server's own game and a player's game both see is fired once.

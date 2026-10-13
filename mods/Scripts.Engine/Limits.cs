@@ -12,7 +12,7 @@ namespace Scripts
     /// </summary>
     internal static class Limits
     {
-        private static ConfigEntry<int> _spawns, _alive, _effects, _pieces, _piecesAlive, _statusEffects;
+        private static ConfigEntry<int> _spawns, _alive, _effects, _pieces, _piecesAlive, _statusEffects, _itemsHour;
         private static ConfigEntry<string> _events, _endpoints, _autostart;
         private static ConfigEntry<bool> _mayGive, _mayHealHurt, _mayEffects, _maySee, _mayTake, _mayTeleport, _mayShove;
 
@@ -31,6 +31,7 @@ namespace Scripts
         internal static int PiecesPerMinute => Num("pieces", _pieces, 20);
         internal static int PiecesAlive => Num("piecesAlive", _piecesAlive, 200);
         internal static int StatusEffectsPerMinute => Num("status", _statusEffects, 20);
+        internal static int ItemsPerHour => Num("items", _itemsHour, 50);
 
         /// <summary>True while the numbers shown are a server's, not this game's own.</summary>
         internal static bool FromServer => _server != null;
@@ -38,7 +39,7 @@ namespace Scripts
         /// <summary>The numbers a server sends to the players who have the mod (never the web addresses).</summary>
         internal static JObject ToJson() => new JObject
         {
-            ["spawns"] = SpawnsPerMinute, ["alive"] = Alive, ["effects"] = EffectsPerSecond, ["pieces"] = PiecesPerMinute, ["piecesAlive"] = PiecesAlive, ["status"] = StatusEffectsPerMinute,
+            ["spawns"] = SpawnsPerMinute, ["alive"] = Alive, ["effects"] = EffectsPerSecond, ["pieces"] = PiecesPerMinute, ["piecesAlive"] = PiecesAlive, ["status"] = StatusEffectsPerMinute, ["items"] = ItemsPerHour,
             ["events"] = new JArray(Events.Cast<object>().ToArray()),
         };
 
@@ -89,9 +90,12 @@ namespace Scripts
                 {
                     case "messages": lines.Add(Editor.Words.L("scripts_limit_messages", "Messages: 5 a second; announcements: 1 a second")); break;
                     case "effects": lines.Add(Editor.Words.L("scripts_limit_effects", "Effects and sounds: {0} a second, within 100 m of a player", EffectsPerSecond)); break;
-                    case "items": lines.Add(Editor.Words.L("scripts_limit_items", "Give: 10 at a time, 50 an hour for each player")); break;
+                    case "items": lines.Add(Editor.Words.L("scripts_limit_items", "Give: 10 at a time, {0} an hour for each player", ItemsPerHour)); break;
                     case "takeItems": lines.Add(Editor.Words.L("scripts_limit_take", "Take: 20 an hour for each player")); break;
-                    case "spawn": lines.Add(Editor.Words.L("scripts_limit_spawn", "Spawn: {0} a minute, {1} alive, within 60 m of a player", SpawnsPerMinute, Alive)); break;
+                    case "spawn":
+                        lines.Add(Editor.Words.L("scripts_limit_spawn", "Spawn: {0} a minute, {1} alive, within 60 m of a player", SpawnsPerMinute, Alive));
+                        lines.Add(Editor.Words.L("scripts_limit_drop", "Drop items: 10 at a time, {0} an hour", ItemsPerHour));
+                        break;
                     case "combat": lines.Add(Editor.Words.L("scripts_limit_combat", "Hurting a player: once a second, never the last point")); break;
                     case "weather": lines.Add(Editor.Words.L("scripts_limit_weather", "Weather: once a minute; time of day: once every 20 seconds")); break;
                     case "world": lines.Add(Editor.Words.L("scripts_limit_world", "Pieces: {0} a minute, {1} alive, decorations only", PiecesPerMinute, PiecesAlive)); break;
@@ -133,6 +137,7 @@ namespace Scripts
             _pieces = config.Bind("Limits", "Pieces placed per minute per script", 20, new ConfigDescription("How many decorations one script may place in a minute.", new AcceptableValueRange<int>(1, 200)));
             _piecesAlive = config.Bind("Limits", "Pieces alive per script", 200, new ConfigDescription("How many decorations placed by one script may stand at once.", new AcceptableValueRange<int>(1, 1000)));
             _statusEffects = config.Bind("Limits", "Status effects per minute per script", 20, new ConfigDescription("How many status effects (rested, wet, burning...) one script may hand out in a minute.", new AcceptableValueRange<int>(1, 200)));
+            _itemsHour = config.Bind("Limits", "Items given per hour per script", 50, new ConfigDescription("How many items one script may give each player in an hour, and drop on the ground in an hour (for everyone together). Raise it for scripts that reward work, like extra wood for every log.", new AcceptableValueRange<int>(10, 5000)));
             _events = config.Bind("Allowed", "Random events a script may start", "army_eikthyr,army_theelder,foresttrolls", "The game's random event names (raids) that world.startEvent may start, comma separated. Keep to the ones your players can survive.");
             _endpoints = config.Bind("Allowed", "Web addresses scripts may send to", "", "Names for web addresses, like discord=https://example.com/hook;stats=https://example.com/in . Scripts use the name (net.send(\"discord\", text)); only https; nothing is read back.");
         }

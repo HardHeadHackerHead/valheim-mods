@@ -18,6 +18,9 @@ namespace Scripts.Blocks
             Hat("on_pickup", "when a player picks something up", "", (g, b) => Handler(g, b, "on(\"itemPickup\", e => {"));
             Hat("on_eat", "when a player eats", "", (g, b) => Handler(g, b, "on(\"eat\", e => {"));
             Hat("on_skill_up", "when a skill goes up", "", (g, b) => Handler(g, b, "on(\"skillUp\", e => {"));
+            Grp("Trees and wood");
+            Hat("on_tree_felled", "when a tree falls", "", (g, b) => Handler(g, b, "on(\"treeFelled\", e => {"));
+            Hat("on_log_broken", "when a log breaks", "", (g, b) => Handler(g, b, "on(\"logBroken\", e => {"));
             Grp("The world");
             Hat("on_raid_start", "when a raid begins", "", (g, b) => Handler(g, b, "on(\"raidStart\", e => {"));
             Hat("on_raid_end", "when a raid ends", "", (g, b) => Handler(g, b, "on(\"raidEnd\", e => {"));
@@ -49,6 +52,10 @@ namespace Scripts.Blocks
             Value("ev_args", "list", "the words typed after the command", null, "e.args", Under("on_command"));
             Value("ev_arg", "text", "word {n:num:1:1:20} typed after the command", null, "_bItem(e.args, @n)", Under("on_command"));
             Value("ev_creature", "creature", "the creature tamed", null, "e.creature", Under("on_tamed"));
+            Value("ev_wood_kind", "text", "the kind of tree (beech, birch, fir, oak, pine...)", null, "e.kind", Under("on_tree_felled", "on_log_broken"));
+            Value("ev_wood", "text", "the wood it gives (Wood, FineWood, RoundLog...)", null, "e.wood", Under("on_tree_felled", "on_log_broken"));
+            Value("ev_wood_name", "text", "its name in the game", null, "(e.tree || e.log)", Under("on_tree_felled", "on_log_broken"));
+            Value("ev_splits", "bool", "it splits into smaller logs", null, "e.splits", Under("on_log_broken"));
             Value("item_of", "any", "{field:pick:itemfields} of {item:sock:item}", null, "_bField(@item, @field)", null, "values");
             Value("piece_kind", "text", "kind of {p:sock:piece}", null, "_bField(@p, \"prefab\")", null, "values");
 

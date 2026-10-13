@@ -188,8 +188,8 @@ namespace Scripts.Blocks
             Move("memory", "Saved in the world", "the_world", "remember", "remember_text", "recall", "recall_text");
 
             // the event values that older blocks offered also work under the newer events
-            AlsoUnder("ev_player", "on_piece_built", "on_pickup", "on_eat", "on_skill_up", "on_respawn", "on_command", "on_tamed");
-            AlsoUnder("ev_pos", "on_hit");
+            AlsoUnder("ev_player", "on_piece_built", "on_pickup", "on_eat", "on_skill_up", "on_respawn", "on_command", "on_tamed", "on_tree_felled", "on_log_broken");
+            AlsoUnder("ev_pos", "on_hit", "on_tree_felled", "on_log_broken");
         }
 
         private static void Move(string category, string group, params string[] ids)

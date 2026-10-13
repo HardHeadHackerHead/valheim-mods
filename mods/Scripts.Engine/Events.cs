@@ -21,7 +21,7 @@ namespace Scripts
         private static readonly HashSet<string> Listed = new HashSet<string>
         {
             "start", "stop", "playerJoin", "playerLeave", "playerDeath", "kill", "hit", "pieceBuilt", "itemPickup", "bossSpawn", "bossDeath", "chat", "dayStart", "nightStart", "proxyEvent",
-            "eat", "skillUp", "raidStart", "raidEnd", "weatherChange", "playerRespawn", "command", "tamed",
+            "eat", "skillUp", "raidStart", "raidEnd", "weatherChange", "playerRespawn", "command", "tamed", "treeFelled", "logBroken",
         };
 
         /// <summary>An event the patches in NewEvents managed to hook (or that is watched, not patched).</summary>

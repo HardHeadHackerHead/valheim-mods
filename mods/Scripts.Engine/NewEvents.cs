@@ -33,14 +33,16 @@ namespace Scripts
             Try(h, "raidStart", typeof(RandEventSystem), "SetRandomEvent", postfix: nameof(RaidPostfix));
             Try(h, "playerRespawn", typeof(Player), nameof(Player.OnRespawn), postfix: nameof(RespawnPostfix));
             Try(h, "tamed", typeof(Tameable), "Tame", postfix: nameof(TamedPostfix));
+            Try(h, "treeFelled", typeof(TreeBase), "RPC_Damage", prefix: nameof(TreePrefix), postfix: nameof(TreePostfix));
+            Try(h, "logBroken", typeof(TreeLog), "Destroy", prefix: nameof(LogPrefix), args: new[] { typeof(HitData), typeof(bool) });
             Events.Mark("raidEnd"); Events.Mark("weatherChange"); Events.Mark("command");   // (the last three are watched or routed, not patched)
         }
 
-        private static void Try(Harmony h, string eventName, Type type, string method, string prefix = null, string postfix = null)
+        private static void Try(Harmony h, string eventName, Type type, string method, string prefix = null, string postfix = null, Type[] args = null)
         {
             try
             {
-                MethodInfo target = AccessTools.Method(type, method);
+                MethodInfo target = AccessTools.Method(type, method, args);
                 if (target == null) { Core.Log.LogWarning($"Scripts: the event '{eventName}' is not hooked: {type.Name}.{method} was not found in this version of the game"); return; }
                 MethodInfo pre = prefix != null ? AccessTools.Method(typeof(NewEvents), prefix) : null, post = postfix != null ? AccessTools.Method(typeof(NewEvents), postfix) : null;
                 h.Patch(target, pre != null ? new HarmonyMethod(pre) : null, post != null ? new HarmonyMethod(post) : null);
@@ -85,6 +87,14 @@ namespace Scripts
             if (player == null || piece == null) return;
             Host.Fire("pieceBuilt", e => { Script s = ScriptOf(e); return Obj(e, ("player", Handles.Actor(s, player)), ("piece", Pieces.Handle(s, piece))); });
         }
+
+        /// <summary>A tree came down (here, or on the player's game that owns it). `player` is who felled it, or null (another tree, a troll, fire).</summary>
+        internal static void FireTree(Felled w, Player player) =>
+            Host.Fire("treeFelled", e => Obj(e, ("player", player != null ? Handles.Actor(ScriptOf(e), player) : JsValue.Null), ("tree", Text(w.Prefab)), ("kind", Text(w.Kind)), ("wood", Text(w.Wood)), ("pos", Vec(e, w.Pos))));
+
+        /// <summary>A fallen log broke: into smaller logs (`splits`), or into the wood it gives.</summary>
+        internal static void FireLog(Felled w, Player player) =>
+            Host.Fire("logBroken", e => Obj(e, ("player", player != null ? Handles.Actor(ScriptOf(e), player) : JsValue.Null), ("log", Text(w.Prefab)), ("kind", Text(w.Kind)), ("wood", Text(w.Wood)), ("splits", Bool(w.Splits)), ("pos", Vec(e, w.Pos))));
 
         /// <summary>A hit a player's game told us about: scripts see it, and cannot change it (the damage was settled on the game that owns the target).</summary>
         internal static void FireHit(Handles.Snap target, Handles.Snap attacker, Vector3 pos, string weapon, double damage) =>
@@ -278,6 +288,100 @@ namespace Scripts
                 FireTamed(creature, tamer);
             }
             catch (Exception ex) { Core.Log.LogWarning("Scripts: the tamed event failed: " + ex.Message); }
+        }
+    
+        // ---- trees and logs ----
+
+        /// <summary>What the tree and log events tell, taken before the object is gone (a forwarded one is rebuilt from the message).</summary>
+        internal sealed class Felled { public string Id = "", Prefab = "", Kind = "", Wood = ""; public bool Splits; public Vector3 Pos; }
+
+        /// <summary>"beech", "birch", "fir", "oak", "pine", "ancient" (the swamp's trees), "yggdrasil" (the Mistlands' shoots), else the name's first word.</summary>
+        internal static string KindOf(string prefab)
+        {
+            string n = (prefab ?? "").ToLowerInvariant();
+            if (n.Contains("birch")) return "birch";
+            if (n.Contains("beech")) return "beech";
+            if (n.Contains("oak")) return "oak";
+            if (n.Contains("pine")) return "pine";
+            if (n.Contains("fir")) return "fir";
+            if (n.Contains("swamp")) return "ancient";
+            if (n.Contains("ygga")) return "yggdrasil";
+            string first = n.Split('_')[0].TrimEnd('0', '1', '2', '3', '4', '5', '6', '7', '8', '9');
+            return first.Length > 0 ? first : n;
+        }
+
+        /// <summary>The wood a log gives: its own drop, or (a whole log drops nothing, it splits) its smaller logs' drop.</summary>
+        private static string WoodOf(TreeLog log, int depth = 0)
+        {
+            if (log == null || depth > 3) return "";
+            string own = FirstDrop(log.m_dropWhenDestroyed);
+            if (own.Length > 0) return own;
+            return log.m_subLogPrefab != null ? WoodOf(log.m_subLogPrefab.GetComponent<TreeLog>(), depth + 1) : "";
+        }
+
+        private static string FirstDrop(DropTable table)
+        {
+            if (table == null || table.m_drops == null) return "";
+            foreach (DropTable.DropData d in table.m_drops) if (d.m_item != null) return Utils.GetPrefabName(d.m_item);
+            return "";
+        }
+
+        private static Felled WoodInfo(MonoBehaviour thing, ZNetView view, TreeLog log, bool splits) => new Felled
+        {
+            Id = view.GetZDO().m_uid.ToString(), Prefab = Utils.GetPrefabName(thing.gameObject), Kind = KindOf(Utils.GetPrefabName(thing.gameObject)),
+            Wood = WoodOf(log), Splits = splits, Pos = thing.transform.position,
+        };
+
+        private static bool Listening(string name)
+        {
+            if (Mp.Wire.IsAgent) return Mp.Agent.Wants(name);
+            foreach (Script s in Host.Scripts) if (s.State == RunState.Running && s.Handlers.ContainsKey(name)) return true;
+            return false;
+        }
+
+        // the tree's own damage RPC runs on its owner's game; the tree is felled when its health went from above zero to zero or below
+        private static void TreePrefix(TreeBase __instance, out Felled __state)
+        {
+            __state = null;
+            try
+            {
+                if (__instance == null || !Listening("treeFelled")) return;
+                ZNetView view = __instance.GetComponent<ZNetView>();
+                if (view == null || !view.IsValid() || !view.IsOwner()) return;
+                if (view.GetZDO().GetFloat(ZDOVars.s_health, __instance.m_health) <= 0f) return;
+                __state = WoodInfo(__instance, view, __instance.m_logPrefab != null ? __instance.m_logPrefab.GetComponent<TreeLog>() : null, false);
+            }
+            catch (Exception) { }
+        }
+
+        private static void TreePostfix(TreeBase __instance, HitData hit, Felled __state)
+        {
+            try
+            {
+                if (__state == null) return;
+                ZNetView view = __instance != null ? __instance.GetComponent<ZNetView>() : null;
+                if (view != null && view.IsValid() && view.GetZDO().GetFloat(ZDOVars.s_health, 1f) > 0f) return;   // (still standing)
+                Player player = hit != null ? hit.GetAttacker() as Player : null;
+                if (Mp.Wire.IsAgent) { Mp.Agent.ForwardWood("treeFelled", __state, player); return; }
+                FireTree(__state, player);
+            }
+            catch (Exception ex) { Core.Log.LogWarning("Scripts: the treeFelled event failed: " + ex.Message); }
+        }
+
+        // the log's Destroy runs once, on its owner's game, when its health reaches zero
+        private static void LogPrefix(TreeLog __instance, HitData hitData)
+        {
+            try
+            {
+                if (__instance == null || !Listening("logBroken")) return;
+                ZNetView view = __instance.GetComponent<ZNetView>();
+                if (view == null || !view.IsValid()) return;
+                Felled w = WoodInfo(__instance, view, __instance, __instance.m_subLogPrefab != null);
+                Player player = hitData != null ? hitData.GetAttacker() as Player : null;
+                if (Mp.Wire.IsAgent) { Mp.Agent.ForwardWood("logBroken", w, player); return; }
+                FireLog(w, player);
+            }
+            catch (Exception ex) { Core.Log.LogWarning("Scripts: the logBroken event failed: " + ex.Message); }
         }
     }
 }

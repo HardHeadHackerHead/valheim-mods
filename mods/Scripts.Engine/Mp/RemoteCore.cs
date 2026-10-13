@@ -122,7 +122,7 @@ namespace Scripts.Mp
     {
         internal static readonly HashSet<string> Names = new HashSet<string>
         {
-            "kill", "bossDeath", "playerDeath", "playerRespawn", "itemPickup", "eat", "skillUp", "pieceBuilt", "tamed", "hit",
+            "kill", "bossDeath", "playerDeath", "playerRespawn", "itemPickup", "eat", "skillUp", "pieceBuilt", "tamed", "hit", "treeFelled", "logBroken",
         };
 
         private readonly Dedup _dedup = new Dedup();

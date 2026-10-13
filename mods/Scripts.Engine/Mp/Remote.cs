@@ -61,7 +61,7 @@ namespace Scripts.Mp
         internal static int Give(Script s, Player p, string prefab, int n)
         {
             long peer = p.GetOwner(); string who = Handles.Id(p), name = p.GetPlayerName();
-            Outcome o = Asker.Give(peer, prefab, n, Players.HourlyLeft(s, who, "give", 50), k => Players.HourlyUse(s, who, "give", k), (got, why) =>
+            Outcome o = Asker.Give(peer, prefab, n, Players.HourlyLeft(s, who, "give", Limits.ItemsPerHour), k => Players.HourlyUse(s, who, "give", k), (got, why) =>
             {
                 if (got > 0) Audit.Add(s, $"gave {got} {prefab} to {name}");
                 else Fail(s, name, "no " + prefab + " given - " + why);
@@ -396,6 +396,20 @@ namespace Scripts.Mp
                         Character creature = Handles.Find(subject);
                         Player tamer = Handles.Find(f.S("by")) as Player;
                         if (creature != null && tamer != null) NewEvents.FireTamed(creature, tamer);
+                        return;
+                    }
+                case "treeFelled":
+                case "logBroken":
+                    {
+                        // the tree or log is gone (or going) on that player's game; who did it must be a player, and near it
+                        var w = new NewEvents.Felled
+                        {
+                            Id = subject, Prefab = Validate.Text(f.S("pf"), 60), Wood = Validate.Text(f.S("wood"), 60), Splits = f.B("split"), Pos = PosOf(f),
+                        };
+                        w.Kind = NewEvents.KindOf(w.Prefab);
+                        Player by = f.S("by").Length > 0 ? Handles.Find(f.S("by")) as Player : null;
+                        if (by != null && Vector3.Distance(by.transform.position, w.Pos) > 80f) by = null;
+                        if (name == "treeFelled") NewEvents.FireTree(w, by); else NewEvents.FireLog(w, by);
                         return;
                     }
                 case "hit":

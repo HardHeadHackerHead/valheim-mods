@@ -22,6 +22,7 @@ namespace Scripts.Blocks
                 new KeyValuePair<string, Program>("wild-hunt.js", WildHunt()),
                 new KeyValuePair<string, Program>("meteor-shower.js", MeteorShower()),
                 new KeyValuePair<string, Program>("treasure-hunt.js", TreasureHunt()),
+                new KeyValuePair<string, Program>("fine-wood.js", FineWood()),
             };
         }
 
@@ -65,6 +66,12 @@ namespace Scripts.Blocks
                 Inside(With(B("if"), "cond", B("chance", "p", "10")),
                     With(B("give", "n", "2", "item", "Honey"), "who", B("ev_killer")),
                     With(B("say", "text", "Lucky boar!"), "who", B("ev_killer")))));
+
+        // a beech or fir log that breaks into Wood (not into smaller logs) leaves two Fine Wood too
+        private static Program FineWood() => Make("Fine Wood from logs", "Ordinary logs give two Fine Wood as well when they break into wood.",
+            Inside(B("on_log_broken"),
+                Inside(With(B("if"), "cond", With(With(B("and"), "a", With(B("text_test", "op", "is", "b", "Wood"), "a", B("ev_wood"))), "b", With(B("not"), "a", B("ev_splits")))),
+                    With(B("drop_item", "n", "2", "item", "FineWood"), "pos", B("ev_pos")))));
 
         private static Program WelcomeWagon() => Make("Welcome Wagon", "Greets players by name when they join, and says what day it is.",
             Inside(B("on_join"),

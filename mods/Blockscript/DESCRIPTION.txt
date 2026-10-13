@@ -3,13 +3,13 @@ Scratch-style visual scripting (block coding): snap blocks into events, quests, 
 Press Home and make your own game rules out of blocks, or type JavaScript if you prefer: "when a boar dies, maybe give honey", "every 20 minutes turn the weather", a three-minute monster hunt with a leaderboard. Scripts are plain files, they run on the server, and they start the moment you press Run, with no restart.
 
 The editor
-- A palette of 215 blocks in 11 tabs (events, control, values, text, lists, players, world, effects, actions, memory, my blocks) with a search box. Drag blocks onto a stack, change a number or pick an item from a list, and press Run.
+- A palette of 221 blocks in 11 tabs (events, control, values, text, lists, players, world, effects, actions, memory, my blocks) with a search box. Drag blocks onto a stack, change a number or pick an item from a list, and press Run.
 - Waits, signals, lists, loops, your own blocks with inputs, math and text, all compiled to the same JavaScript you could type. Open the Code page to see it.
 - Zoom, tidy up, collapse a stack, undo and redo, copy a block, and red blocks that point at what is wrong.
 - A log page for whoever writes the script: levels, the script's own lines, errors with their line (and the block they came from), a trace switch, filters and a copy button. A limits panel shows what the world's owner allows.
 
 What a script can do
-- React to kills, deaths, joins, chat, bosses, day and night, picking things up, eating, building, hits, raids and weather, or to a timer.
+- React to kills, deaths, joins, chat, bosses, day and night, picking things up, eating, building, hits, raids and weather, trees falling and logs breaking, or to a timer.
 - Say things, show banners and speech bubbles, ping the map, give and take small amounts of items, spawn creatures and decorations, change the weather, wind and time, play lightning, fire and sounds, shake the screen, heal and hurt, start a raid.
 - Remember things between sessions, per player or for the world.
 
@@ -22,6 +22,6 @@ Together
 - Admins edit the server's scripts from their own game, and several admins can edit one script live: you see each other's blocks, pointers and names, and blocks someone is moving are held for them.
 - Works with Quad's Terminal: a Blockscript program on the computer, and scripts that steer its Proxy character.
 
-Eight example scripts come with it, all made of blocks: The Wild Hunt, Meteor Shower, Treasure Hunt, Lucky Boars, Welcome Wagon, Boss Announcer, Weather Event and Kill Streaks.
+Nine example scripts come with it, all made of blocks: The Wild Hunt, Meteor Shower, Treasure Hunt, Lucky Boars, Fine Wood from logs, Welcome Wagon, Boss Announcer, Weather Event and Kill Streaks.
 
-Settings: the limits (spawns, effects, pieces and status effects a minute, creatures alive), which raids a script may start, web addresses it may send to, scripts a dedicated server starts by itself, and the switches for what a server's scripts may do to your character; the editor's hotkey, for you.
+Settings: the limits (spawns, effects, pieces and status effects a minute, creatures alive, items an hour), which raids a script may start, web addresses it may send to, scripts a dedicated server starts by itself, and the switches for what a server's scripts may do to your character; the editor's hotkey, for you.

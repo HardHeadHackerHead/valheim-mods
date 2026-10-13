@@ -111,8 +111,8 @@ namespace Scripts
             if (item == null) { Host.Refuse(s, "no item called '" + prefab + "'"); return 0; }
             n = Mathf.Clamp(n, 1, most);
             string who = Handles.Id(p);
-            int left = HourlyLeft(s, who, "give", 50);
-            if (left <= 0) { Host.Refuse(s, "the hourly limit for items"); return 0; }
+            int left = HourlyLeft(s, who, "give", Limits.ItemsPerHour);
+            if (left <= 0) { Host.Refuse(s, "the hourly limit for items (" + Limits.ItemsPerHour + "; the owner can change it in the Blockscript settings)"); return 0; }
             n = Mathf.Min(n, left);
             int give = AddToBag(p, prefab, n);
             if (give == 0) { Host.Refuse(s, "the bag is full"); return 0; }
@@ -151,8 +151,8 @@ namespace Scripts
             GameObject item = ItemPrefab(prefab);
             if (item == null) { Host.Refuse(s, "no item called '" + prefab + "'"); return 0; }
             if (!NearAPlayer(pos, 60f)) { Host.Refuse(s, "that place is too far from every player"); return 0; }
-            int left = HourlyLeft(s, "world", "give", 50);
-            if (left <= 0) { Host.Refuse(s, "the hourly limit for items"); return 0; }
+            int left = HourlyLeft(s, "world", "give", Limits.ItemsPerHour);
+            if (left <= 0) { Host.Refuse(s, "the hourly limit for items (" + Limits.ItemsPerHour + "; the owner can change it in the Blockscript settings)"); return 0; }
             n = Mathf.Min(Mathf.Clamp(n, 1, most), left);
             GameObject drop = UnityEngine.Object.Instantiate(item, pos + Vector3.up * 0.5f, Quaternion.identity);
             var itemDrop = drop.GetComponent<ItemDrop>();
