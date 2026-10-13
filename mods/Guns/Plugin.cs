@@ -3,8 +3,8 @@ using BepInEx.Configuration;
 using HarmonyLib;
 using UnityEngine;
 
-// The guns go in through ItemReload (see ItemReload.cs), but their recipes go into ObjectDB: reload at the main menu.
-[assembly: System.Reflection.AssemblyMetadata("ClaudeTools.Reload", "menu")]
+// The guns go in through ItemReload (see ItemReload.cs) and their recipes through Shared/Content.cs (put back by name each time): reload in a world.
+[assembly: System.Reflection.AssemblyMetadata("ClaudeTools.Reload", "world")]
 
 namespace Guns
 {
