@@ -22,7 +22,7 @@ namespace Scripts
     {
         public const string Guid = "com.quad.blockscript";
         public const string Name = "Quad's Blockscript";
-        public const string Version = "0.1.0";
+        public const string Version = "0.1.1";
 
         private Type _entry;
 

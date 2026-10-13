@@ -121,15 +121,32 @@ namespace Scripts
 
         private static readonly AccessTools.FieldRef<Character, HitData> LastHit = AccessTools.FieldRefAccess<Character, HitData>("m_lastHit");
 
-        internal static void Died(Character victim)
+        /// <summary>
+        /// Before the game handles a death: what died and who killed it, while the creature still has its network record (OnDeath removes
+        /// it, and after that every dead creature has the same empty id, so kills could not be told apart).
+        /// </summary>
+        internal static Handles.Snap[] BeforeDeath(Character victim)
+        {
+            try
+            {
+                if (victim == null) return null;
+                Character killer = null;
+                try { killer = LastHit(victim)?.GetAttacker(); } catch (Exception) { }
+                return new[] { Handles.Take(victim), Handles.Take(killer) };
+            }
+            catch (Exception) { return null; }
+        }
+
+        internal static void Died(Character victim, Handles.Snap[] before = null)
         {
             try
             {
                 if (victim == null) return;
                 Character killer = null;
                 try { killer = LastHit(victim)?.GetAttacker(); } catch (Exception) { }
-                // Snapshots taken now: scripts get the event a frame later, when what died is already gone.
-                Handles.Snap v = Handles.Take(victim), k = Handles.Take(killer);
+                // Snapshots taken before the death (the record still there), else now: scripts get the event a frame later, when what died is already gone.
+                Handles.Snap v = before != null && before[0] != null ? before[0] : Handles.Take(victim);
+                Handles.Snap k = before != null && before[1] != null ? before[1] : Handles.Take(killer);
                 Vector3 pos = victim.transform.position;
                 bool boss = victim.IsBoss();
                 string cause = "other";
@@ -233,7 +250,8 @@ namespace Scripts
     [HarmonyPatch(typeof(Character), nameof(Character.OnDeath))]
     internal static class Character_OnDeath_Scripts
     {
-        private static void Postfix(Character __instance) => Events.Died(__instance);
+        private static void Prefix(Character __instance, out Handles.Snap[] __state) { __state = Events.BeforeDeath(__instance); }
+        private static void Postfix(Character __instance, Handles.Snap[] __state) => Events.Died(__instance, __state);
     }
 
     [HarmonyPatch(typeof(Chat), nameof(Chat.OnNewChatMessage))]

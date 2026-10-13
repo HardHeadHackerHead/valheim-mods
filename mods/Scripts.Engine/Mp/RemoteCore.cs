@@ -140,12 +140,12 @@ namespace Scripts.Mp
             string subject = f.S("sub");
             if (subject.Length == 0 || !owns(name, subject)) { why = "not theirs"; Refused++; return false; }
             string id = f.S("id");
-            if (id.Length > 0 && !_dedup.IsNew(name + "|" + id, now)) { why = "duplicate"; return false; }
+            if (id.Length > 0 && id != "0:0" && !_dedup.IsNew(name + "|" + id, now)) { why = "duplicate"; return false; }
             return true;
         }
 
         /// <summary>The server's own game saw the event: true when this is the first of it (a copy a player's game forwards later is a duplicate).</summary>
-        internal bool Own(string name, string id, double now) => id.Length == 0 || _dedup.IsNew(name + "|" + id, now);
+        internal bool Own(string name, string id, double now) => string.IsNullOrEmpty(id) || id == "0:0" || _dedup.IsNew(name + "|" + id, now);
 
         internal void PeerLeft(long peer) { _rates.Remove(peer); }
     }

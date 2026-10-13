@@ -378,6 +378,8 @@ namespace Scripts.Mp.Tests
             // the server's own game saw the kill first
             Check(gate.Own("kill", "c9", 3.0) && !gate.Accept(1, Ev("kill", "c9", "c9"), Yes, 3.5, out string late) && late == "duplicate", "the server's own kill makes the player's copy a duplicate");
             Check(gate.Accept(1, Ev("kill", "c10", "c10"), Yes, 4.0, out _) && !gate.Own("kill", "c10", 4.1), "and the other way round");
+            Check(gate.Own("kill", "", 5.0) && gate.Own("kill", "", 5.1) && gate.Own("kill", "0:0", 5.2) && gate.Own("kill", "0:0", 5.3), "kills with no id (a record already removed) are never taken for duplicates of each other");
+            Check(gate.Accept(1, Ev("kill", "0:0", "0:0"), Yes, 6.0, out _) && gate.Accept(1, Ev("kill", "0:0", "0:0"), Yes, 6.1, out _), "and neither are forwarded ones");
 
             // a flood
             var flood = new EventGate(); int ok = 0;

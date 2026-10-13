@@ -21,7 +21,8 @@ namespace Scripts
         internal static string Id(Character c)
         {
             if (c is Player p) return "p" + p.GetPlayerID();
-            return c.GetZDOID().ToString();
+            ZDOID z = c.GetZDOID();
+            return z.IsNone() ? "" : z.ToString();   // (a creature whose record the game already removed has no id: never "0:0", which every such creature would share)
         }
 
         /// <summary>The character with that id, if it is loaded and alive in the world.</summary>

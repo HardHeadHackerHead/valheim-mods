@@ -45,6 +45,60 @@ namespace Scripts
             catch (Exception) { }
         }
 
+        /// <summary>
+        /// Who is connected and whether each is on the server's admin list (blockscript players), and putting one on it or taking one off
+        /// (blockscript admin NAME [on|off]) through the game's own list, which saves adminlist.txt and is read again by the game within
+        /// seconds, so nobody has to restart. The id comes from the player's own connection, never from what they typed.
+        /// </summary>
+        private static JObject Admins(string[] args)
+        {
+            var result = new JObject();
+            ZNet net = ZNet.instance;
+            if (net == null) { result["problem"] = "not in a world"; return result; }
+            bool isAdminSub = args.Length > 0 && args[0].ToLowerInvariant() == "admin";
+            if (isAdminSub && !(net.IsServer() || Cheats())) { result["problem"] = "only the server's owner can change the admin list"; return result; }
+            System.Reflection.FieldInfo listField = typeof(ZNet).GetField("m_adminList", BindingFlags.Instance | BindingFlags.NonPublic | BindingFlags.Public);
+            object adminList = listField?.GetValue(net);
+            var rows = new JArray();
+            var found = new System.Collections.Generic.List<(string name, string id)>();
+            foreach (ZNetPeer peer in net.GetPeers())
+            {
+                string host = peer?.m_rpc?.GetSocket()?.GetHostName() ?? "";
+                string name = peer?.m_playerName ?? "";
+                if (host.Length == 0) continue;
+                found.Add((name, host));
+                rows.Add(new JObject { ["name"] = name, ["id"] = host, ["admin"] = net.IsAdmin(host) });
+            }
+            string me = Player.m_localPlayer != null ? Player.m_localPlayer.GetPlayerName() : "";
+            result["players"] = rows;
+            result["host"] = me;
+            if (!isAdminSub) return result;
+
+            string want = args.Length > 1 ? args[1] : "";
+            bool turnOff = args.Length > 2 && args[2].ToLowerInvariant() == "off";
+            var matches = found.Where(f => string.Equals(f.name, want, StringComparison.OrdinalIgnoreCase)).ToList();
+            if (matches.Count == 0) matches = found.Where(f => f.name.IndexOf(want, StringComparison.OrdinalIgnoreCase) >= 0).ToList();
+            if (want.Length == 0 || matches.Count != 1) { result["problem"] = want.Length == 0 ? "name a player: blockscript admin <name> [on|off]" : matches.Count == 0 ? "no connected player called '" + want + "' (blockscript players lists who is here)" : "more than one player matches '" + want + "': use the full name"; return result; }
+            if (adminList == null) { result["problem"] = "this game version keeps its admin list somewhere else"; return result; }
+
+            string id = matches[0].id;
+            string plain = id.StartsWith("Steam_") ? id.Substring(6) : id;    // (adminlist.txt lines are the plain SteamID64)
+            try
+            {
+                System.Type t = adminList.GetType();
+                if (turnOff) { t.GetMethod("Remove")?.Invoke(adminList, new object[] { plain }); t.GetMethod("Remove")?.Invoke(adminList, new object[] { id }); }
+                else if (!net.IsAdmin(id)) t.GetMethod("Add")?.Invoke(adminList, new object[] { plain });
+                t.GetMethod("Save")?.Invoke(adminList, null);
+                Core.Log.LogInfo("Blockscript: " + (turnOff ? "removed " : "added ") + matches[0].name + " (" + plain + ") " + (turnOff ? "from" : "to") + " the admin list");
+                result["changed"] = matches[0].name;
+                result["id"] = plain;
+                result["admin"] = !turnOff;
+                result["note"] = "saved to adminlist.txt; the game reads it again within a few seconds";
+            }
+            catch (Exception e) { result["problem"] = e.Message; }
+            return result;
+        }
+
         private static bool IsLogFilter(string a) => a.StartsWith("grep=") || Array.IndexOf(new[] { "debug", "info", "did", "limit", "warn", "error", "mine" }, a.ToLowerInvariant()) >= 0;
 
         private static bool Cheats() =>
@@ -54,7 +108,7 @@ namespace Scripts
         {
             args = args.Skip(1).ToArray();
             string sub = args.Length > 0 ? args[0].ToLowerInvariant() : "list";
-            if (Array.IndexOf(new[] { "list", "log", "audit", "spike" }, sub) < 0 && !(sub == "autoreload" && args.Length < 2) && !Cheats()) { error("blockscript " + sub + " changes what runs, so it only works in single player, for the host, or with devcommands on"); yield break; }
+            if (Array.IndexOf(new[] { "list", "log", "audit", "spike", "players" }, sub) < 0 && !(sub == "autoreload" && args.Length < 2) && !Cheats()) { error("blockscript " + sub + " changes what runs, so it only works in single player, for the host, or with devcommands on"); yield break; }
 
             if (sub == "panel")
             {
@@ -93,6 +147,11 @@ namespace Scripts
                 yield break;
             }
             if (sub == "spike") { output(Spike.Run()); yield break; }
+            if (sub == "players" || sub == "admin")
+            {
+                output(Admins(args));
+                yield break;
+            }
             if (sub == "scan") { Host.Scan(); output(new JObject { ["scripts"] = Host.Scripts.Count }); yield break; }
             if (sub == "audit") { output(new JObject { ["audit"] = new JArray(Audit.Lines.Skip(Math.Max(0, Audit.Lines.Count - 40)).ToArray()) }); yield break; }
             if (sub == "list")
