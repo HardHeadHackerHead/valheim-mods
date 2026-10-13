@@ -146,6 +146,7 @@ In `BepInEx/config/com.quad.guns.cfg`, made the first time the game runs with th
 | Setting | Default | What it does |
 |---|---|---|
 | `Damage` | `26` | Piercing damage of one round, before skill. In multiplayer the server's value applies. |
+| `Cost` | `BlackMetal:14, Iron:10, LeatherScraps:4` | What it takes to make at the forge (level 3). Item prefab names and amounts, separated by commas, like FineWood:12, BronzeNails:30 (Claude Tools' `prefabs <text>` shows exact names). A cost with a mistake in it keeps the last good one. [Synced with Server] |
 | `MagazineSize` | `30` | How many rounds a full magazine holds. In multiplayer the server's value applies. |
 | `ReloadSeconds` | `2.2` | Seconds a reload takes. In multiplayer the server's value applies. |
 | `RoundsPerSecond` | `8` | The most rounds it fires each second, one for each pull of the trigger. In multiplayer the server's value applies. |
@@ -155,6 +156,7 @@ In `BepInEx/config/com.quad.guns.cfg`, made the first time the game runs with th
 | Setting | Default | What it does |
 |---|---|---|
 | `Damage` | `22` | Piercing damage of one round, before skill. In multiplayer the server's value applies. |
+| `Cost` | `Iron:16, Wood:5, LeatherScraps:4` | What it takes to make at the forge (level 2). Item prefab names and amounts, separated by commas, like FineWood:12, BronzeNails:30 (Claude Tools' `prefabs <text>` shows exact names). A cost with a mistake in it keeps the last good one. [Synced with Server] |
 | `MagazineSize` | `24` | How many rounds a full magazine holds. In multiplayer the server's value applies. |
 | `ReloadSeconds` | `2.4` | Seconds a reload takes. In multiplayer the server's value applies. |
 | `RoundsPerSecond` | `9` | The most rounds it fires each second, one for each pull of the trigger. In multiplayer the server's value applies. |
@@ -164,6 +166,7 @@ In `BepInEx/config/com.quad.guns.cfg`, made the first time the game runs with th
 | Setting | Default | What it does |
 |---|---|---|
 | `Damage` | `55` | Piercing damage of one round, before skill. In multiplayer the server's value applies. |
+| `Cost` | `Iron:16, FineWood:8, Bronze:4, LeatherScraps:3` | What it takes to make at the forge (level 2). Item prefab names and amounts, separated by commas, like FineWood:12, BronzeNails:30 (Claude Tools' `prefabs <text>` shows exact names). A cost with a mistake in it keeps the last good one. [Synced with Server] |
 | `MagazineSize` | `10` | How many rounds a full magazine holds. In multiplayer the server's value applies. |
 | `SecondsPerRound` | `0.45` | Seconds to load each round. In multiplayer the server's value applies. |
 
@@ -172,6 +175,7 @@ In `BepInEx/config/com.quad.guns.cfg`, made the first time the game runs with th
 | Setting | Default | What it does |
 |---|---|---|
 | `Damage` | `14` | Piercing damage of one round, before skill. In multiplayer the server's value applies. |
+| `Cost` | `BlackMetal:30, Iron:20, Chain:2, LeatherScraps:4` | What it takes to make at the forge (level 3). Item prefab names and amounts, separated by commas, like FineWood:12, BronzeNails:30 (Claude Tools' `prefabs <text>` shows exact names). A cost with a mistake in it keeps the last good one. [Synced with Server] |
 | `MagazineSize` | `75` | How many rounds a full magazine holds. In multiplayer the server's value applies. |
 | `ReloadSeconds` | `4.2` | Seconds a reload takes. In multiplayer the server's value applies. |
 | `RoundsPerSecond` | `10` | How many rounds it fires each second while the attack button is held. In multiplayer the server's value applies. |
@@ -181,6 +185,7 @@ In `BepInEx/config/com.quad.guns.cfg`, made the first time the game runs with th
 | Setting | Default | What it does |
 |---|---|---|
 | `Damage` | `10` | Piercing damage of one round, before skill. In multiplayer the server's value applies. |
+| `Cost` | `BlackMetal:50, Iron:40, Chain:6, Silver:10` | What it takes to make at the forge (level 4). Item prefab names and amounts, separated by commas, like FineWood:12, BronzeNails:30 (Claude Tools' `prefabs <text>` shows exact names). A cost with a mistake in it keeps the last good one. [Synced with Server] |
 | `MagazineSize` | `400` | How many rounds a full magazine holds. In multiplayer the server's value applies. |
 | `ReloadSeconds` | `7` | Seconds a reload takes. In multiplayer the server's value applies. |
 | `RoundsPerSecond` | `25` | How many rounds it fires each second while the attack button is held. In multiplayer the server's value applies. |
@@ -190,6 +195,7 @@ In `BepInEx/config/com.quad.guns.cfg`, made the first time the game runs with th
 | Setting | Default | What it does |
 |---|---|---|
 | `Damage` | `28` | Piercing damage of one round, before skill. In multiplayer the server's value applies. |
+| `Cost` | `Iron:8, Wood:3, LeatherScraps:2` | What it takes to make at the forge (level 1). Item prefab names and amounts, separated by commas, like FineWood:12, BronzeNails:30 (Claude Tools' `prefabs <text>` shows exact names). A cost with a mistake in it keeps the last good one. [Synced with Server] |
 | `MagazineSize` | `12` | How many rounds a full magazine holds. In multiplayer the server's value applies. |
 | `ReloadSeconds` | `1.6` | Seconds a reload takes. In multiplayer the server's value applies. |
 | `RoundsPerSecond` | `6` | The most rounds it fires each second, one for each pull of the trigger. In multiplayer the server's value applies. |
@@ -199,6 +205,7 @@ In `BepInEx/config/com.quad.guns.cfg`, made the first time the game runs with th
 | Setting | Default | What it does |
 |---|---|---|
 | `Damage` | `70` | Piercing damage of one round, before skill. In multiplayer the server's value applies. |
+| `Cost` | `Iron:14, Wood:4, LeatherScraps:3` | What it takes to make at the forge (level 2). Item prefab names and amounts, separated by commas, like FineWood:12, BronzeNails:30 (Claude Tools' `prefabs <text>` shows exact names). A cost with a mistake in it keeps the last good one. [Synced with Server] |
 | `MagazineSize` | `6` | How many rounds a full magazine holds. In multiplayer the server's value applies. |
 | `ReloadSeconds` | `2.6` | Seconds a reload takes. In multiplayer the server's value applies. |
 | `RoundsPerSecond` | `2.5` | The most rounds it fires each second, one for each pull of the trigger. In multiplayer the server's value applies. |
@@ -208,6 +215,7 @@ In `BepInEx/config/com.quad.guns.cfg`, made the first time the game runs with th
 | Setting | Default | What it does |
 |---|---|---|
 | `Damage` | `90` | Piercing damage of one round, before skill. In multiplayer the server's value applies. |
+| `Cost` | `Iron:14, FineWood:8, LeatherScraps:3` | What it takes to make at the forge (level 2). Item prefab names and amounts, separated by commas, like FineWood:12, BronzeNails:30 (Claude Tools' `prefabs <text>` shows exact names). A cost with a mistake in it keeps the last good one. [Synced with Server] |
 | `MagazineSize` | `5` | How many rounds a full magazine holds. In multiplayer the server's value applies. |
 | `ReloadSeconds` | `3` | Seconds a reload takes. In multiplayer the server's value applies. |
 
@@ -216,6 +224,7 @@ In `BepInEx/config/com.quad.guns.cfg`, made the first time the game runs with th
 | Setting | Default | What it does |
 |---|---|---|
 | `Damage` | `9` | Piercing damage of one pellet, before skill. In multiplayer the server's value applies. |
+| `Cost` | `Iron:16, Wood:10, LeatherScraps:3` | What it takes to make at the forge (level 2). Item prefab names and amounts, separated by commas, like FineWood:12, BronzeNails:30 (Claude Tools' `prefabs <text>` shows exact names). A cost with a mistake in it keeps the last good one. [Synced with Server] |
 | `MagazineSize` | `6` | How many rounds a full magazine holds. In multiplayer the server's value applies. |
 | `SecondsPerRound` | `0.55` | Seconds to load each round. In multiplayer the server's value applies. |
 
@@ -224,6 +233,7 @@ In `BepInEx/config/com.quad.guns.cfg`, made the first time the game runs with th
 | Setting | Default | What it does |
 |---|---|---|
 | `Damage` | `240` | Piercing damage of one round, before skill. In multiplayer the server's value applies. |
+| `Cost` | `BlackMetal:20, Iron:12, FineWood:10, Silver:4` | What it takes to make at the forge (level 3). Item prefab names and amounts, separated by commas, like FineWood:12, BronzeNails:30 (Claude Tools' `prefabs <text>` shows exact names). A cost with a mistake in it keeps the last good one. [Synced with Server] |
 | `MagazineSize` | `5` | How many rounds a full magazine holds. In multiplayer the server's value applies. |
 | `ReloadSeconds` | `3.4` | Seconds a reload takes. In multiplayer the server's value applies. |
 
@@ -232,6 +242,7 @@ In `BepInEx/config/com.quad.guns.cfg`, made the first time the game runs with th
 | Setting | Default | What it does |
 |---|---|---|
 | `Damage` | `11` | Piercing damage of one round, before skill. In multiplayer the server's value applies. |
+| `Cost` | `Iron:16, Copper:4, LeatherScraps:3` | What it takes to make at the forge (level 2). Item prefab names and amounts, separated by commas, like FineWood:12, BronzeNails:30 (Claude Tools' `prefabs <text>` shows exact names). A cost with a mistake in it keeps the last good one. [Synced with Server] |
 | `MagazineSize` | `32` | How many rounds a full magazine holds. In multiplayer the server's value applies. |
 | `ReloadSeconds` | `1.8` | Seconds a reload takes. In multiplayer the server's value applies. |
 | `RoundsPerSecond` | `14` | How many rounds it fires each second while the attack button is held. In multiplayer the server's value applies. |
