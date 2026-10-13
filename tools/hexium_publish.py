@@ -61,6 +61,7 @@ EXTRA = {
     "Quads_Map_Share": ["Networking"],
     "Quads_Quiver": ["Weapons"],
     "Quads_Gear_Slots": ["User Interface", "Storage"],
+    "Quads_Blockscript": ["User Interface", "Mechanics", "Networking"],
 }
 
 

@@ -68,6 +68,7 @@ Every player installs the mods they want for themselves. A few need more than th
 | **AICompanion** | Everyone in the world, **the host too**: without it the game deletes saved companions. |
 | **Recycler, BountyBoard, SlotMachine, BirdTrap, LedgerChest, Quad's Cigars, SkalTavern, Ziplines, Arena, Jet Skis, Four Wheelers, Mountain Bikes, Guns** (new build pieces and items; the Arena's host also picks where it stands) | Everyone, and **the host above all**: a game without the mod deletes the pieces when their area loads. Restart after installing or updating them. |
 | **PortalHub** | The host (it keeps the portal links), and everyone who wants the portal menu. |
+| **Blockscript** (scripts run on the server) | The server: the host, or the dedicated server. Players who also have it get items, healing and effects from scripts on their own game and can see (admins: edit) the server's scripts; players without it still see messages, weather and creatures. |
 | Everything else | Only the players who want it. |
 
 On a dedicated server, put the host's mods in the server's `BepInEx\scripts` (with BepInEx and ScriptEngine installed there too).
@@ -433,6 +434,30 @@ hold each gun. No ammunition to craft yet. Everyone in the world needs it.
 **[More: how it works, settings and screenshots →](mods/Guns/README.md)**
 
 </td>
+<td valign="top">
+
+### 🧱 Blockscript
+<img src="dist/Blockscript.cover.png" alt="Quad's Blockscript" width="100%">
+
+Make your own game rules by snapping blocks together, no coding needed: "when a boar dies, maybe give honey", "every 20 minutes turn the weather", a
+three-minute monster hunt with a leaderboard. Press **Home** for the editor (palette, workspace, code view, log and limits), or write JavaScript if you prefer.
+Scripts run on the server in a safe sandbox with limits the owner sets, admins edit them from their own game, and several people can edit one script
+together. The server needs it; players who have it get items, healing and effects on their own game. Not yet tested between two real games.
+
+**[More: how it works, settings and screenshots →](mods/Blockscript/README.md)**
+
+</td>
+</tr>
+<tr>
+<td valign="top">
+
+### 🖥️ Terminal
+A computer you build in the game. Sit at it, start Valheim on its screen, and steer the Proxy: a second character out in the world that every player nearby
+sees on the monitor. It also has a browser and a Blockscript program. Not released yet (source only, not on Thunderstore or the mod manager's list).
+
+**[Source: mods/Terminal](mods/Terminal)**
+
+</td>
 <td valign="top"></td>
 </tr>
 </table>
@@ -473,6 +498,7 @@ hold each gun. No ammunition to craft yet. Everyone in the world needs it.
 | **Block** (right mouse) | Guns | Aim: the camera zooms, the spread tightens; the sniper rifle shows its scope |
 | **Secondary attack** (middle mouse), or the trigger on an empty gun | Guns | Reload |
 | **Block** + **Jump** | Guns | A dive (forward, sideways or backward) you can shoot through, with the lighter guns |
+| **Home** (a setting) | Blockscript | Open or close the Blockscript editor (also the console command `blockscript`) |
 | **E** on a jet ski | Jet Skis | Climb on (from the water or the shore) and take the handlebars |
 | **W** / **Shift**+**W** / **S** | Jet Skis | Go / full speed / back up (let go to coast); **A** / **D** steer, **Jump** gets off |
 | **E** on a jet ski's cowl / saddlebags | Jet Skis | Paint it the next colour / open the saddlebags (**Tab** while riding opens them too) |

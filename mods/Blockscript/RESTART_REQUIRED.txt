@@ -1,0 +1,1 @@
+It carries its scripting engine inside its own DLL and loads it when the game starts, and the game cannot swap that out while it runs. Restart the game after installing it or updating it (a reload in the mod manager is not enough the first time).

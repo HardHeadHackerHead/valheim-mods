@@ -1,11 +1,12 @@
 {
   "_about": "Each mod's 'Goes well with' row on its page (make_pages.py): the mods it links to, in order, and every mod's short tagline under its icon. Mods not on Thunderstore yet link to their GitHub page.",
-  "notOnThunderstore": ["Dungeons"],
+  "notOnThunderstore": ["Dungeons", "Terminal"],
   "taglines": {
     "AICompanion": "A viking companion who plays like a player",
     "Arena": "Fight waves and champions in a colosseum",
     "BetterCraftingStations": "Filter chips for every crafting station",
     "BirdTrap": "Trap birds for feathers",
+    "Blockscript": "Build game rules from visual blocks",
     "BountyBoard": "Group bounties and hunting contracts",
     "BuildFromChests": "Build with materials from nearby chests",
     "BuildOrders": "Shared ghost blueprints for your party",
@@ -45,6 +46,7 @@
     "FeedFromChests": ["CraftFromChests", "BuildFromChests", "LedgerChest", "QualityOfLife"],
     "FourWheelers": ["JetSkis", "MountainBikes", "Ziplines", "Parkour"],
     "GearSlots": ["Quiver", "QualityOfLife", "AICompanion", "PartyHud"],
+    "Blockscript": ["Arena", "BountyBoard", "AICompanion", "Parkour"],
     "Guns": ["Parkour", "Arena", "Quiver", "GearSlots"],
     "JetSkis": ["Ziplines", "PortalHub", "Parkour", "MapShare"],
     "LedgerChest": ["CraftFromChests", "BuildFromChests", "FeedFromChests", "QualityOfLife"],
