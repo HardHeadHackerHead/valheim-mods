@@ -147,6 +147,7 @@ namespace Scripts
                 yield break;
             }
             if (sub == "spike") { output(Spike.Run()); yield break; }
+            if (sub == "sweep") { EffectSweep.Soon(); output(new JObject { ["removedSoFar"] = EffectSweep.Removed, ["note"] = "a sweep starts within a frame; see the log" }); yield break; }
             if (sub == "unstick")
             {
                 // a teleport that never finished leaves the game's black screen up: read the state, and end it where the player stands

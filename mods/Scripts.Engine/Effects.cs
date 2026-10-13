@@ -60,16 +60,22 @@ namespace Scripts
             if (opts != null && opts.IsObject() && opts.AsObject().Get("scale") is JsValue sc && sc.IsNumber()) scale = Mathf.Clamp((float)sc.AsNumber(), 0.5f, 3f);
             // one with a network view is shown to everyone by the game itself; one without is only on the screen that makes it, so every
             // player's game that has the mod is asked to make its own copy (a server with no screen of its own makes none)
-            bool networked = prefab.GetComponent<ZNetView>() != null;
-            if (networked || Player.m_localPlayer != null) SpawnLocal(prefab, pos, scale);
-            if (!networked) Mp.Remote.FxEffect(name, pos, scale, sound);
+            // an effect is never a world object: each screen makes its own copy with no network record (one made with a record leaves that
+            // record behind when the effect ends, and the game then waits for it forever: a respawn next to it never finished). This game's
+            // screen plays it here, and every player's game that has the mod is asked to play its own copy.
+            if (Player.m_localPlayer != null) SpawnLocal(prefab, pos, scale);
+            Mp.Remote.FxEffect(name, pos, scale, sound);
             return true;
         }
 
-        /// <summary>Makes an effect on this game's screen only.</summary>
+        /// <summary>Makes an effect on this game's screen only, with no network record (ZNetView.m_forceDisableInit while it is made).</summary>
         internal static void SpawnLocal(GameObject prefab, Vector3 pos, float scale)
         {
-            GameObject go = UnityEngine.Object.Instantiate(prefab, pos, Quaternion.identity);
+            GameObject go;
+            bool was = ZNetView.m_forceDisableInit;
+            ZNetView.m_forceDisableInit = true;
+            try { go = UnityEngine.Object.Instantiate(prefab, pos, Quaternion.identity); }
+            finally { ZNetView.m_forceDisableInit = was; }
             if (Math.Abs(scale - 1f) > 0.01f) go.transform.localScale *= scale;
             UnityEngine.Object.Destroy(go, 30f);   // (they destroy themselves; this is only for one that doesn't)
         }
