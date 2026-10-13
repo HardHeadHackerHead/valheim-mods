@@ -10,7 +10,7 @@ namespace Scripts
     /// </summary>
     internal static class Core
     {
-        public const string Guid = "com.quad.blockscript", Name = "Quad's Blockscript", Version = "0.1.2";
+        public const string Guid = "com.quad.blockscript", Name = "Quad's Blockscript", Version = "0.1.3";
         internal static ManualLogSource Log;
         internal static MonoBehaviour Plugin;   // (for coroutines)
     }
@@ -46,6 +46,7 @@ namespace Scripts
             Mp.Wire.Tick();    // (finding each other: every game)
             Mp.Agent.Tick();   // (a player's game on a server with the mod: the report, the weather the server forced)
             Mp.CollabGame.Update();   // (live co-editing: the server's clock and the host's own editor)
+            if (ZNet.instance != null) NewEvents.Hook();   // (every game: a player's game forwards what only it sees: pickups, building, hits, eating...)
             if (ZNet.instance != null && !ZNet.instance.IsServer()) return;   // (scripts run on the server: a client only shows what they say)
             Mp.Remote.Tick();
             Autostart();

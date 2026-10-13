@@ -298,11 +298,17 @@ namespace Scripts.Mp
         /// <summary>The server's own game saw a death: false when the player's game already told us (the same kill is one event).</summary>
         internal static bool FirstOwn(string name, string id) => !_anyAgentEver || Gate.Own(name, id, Time.timeAsDouble);
 
+        private static readonly HashSet<string> RefusedSaid = new HashSet<string>();
+
         internal static void OnEvent(long peer, Frame f)
         {
             try
             {
-                if (!Gate.Accept(peer, f, (name, subject) => Owns(peer, subject), Time.timeAsDouble, out string why)) return;
+                if (!Gate.Accept(peer, f, (name, subject) => Owns(peer, subject), Time.timeAsDouble, out string why))
+                {
+                    if (why != "duplicate" && RefusedSaid.Add(f.S("e") + "|" + why)) Core.Log.LogInfo("Scripts (multiplayer): an event '" + f.S("e") + "' from " + Wire.NameOf(peer) + "'s game was not used: " + why + " (said once)");
+                    return;
+                }
                 Dispatch(f);
             }
             catch (Exception e) { Core.Log.LogWarning("Scripts (multiplayer): an event from a player could not be used: " + e.Message); }

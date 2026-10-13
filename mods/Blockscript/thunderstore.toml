@@ -6,7 +6,7 @@ schemaVersion = "0.0.1"
 [package]
 namespace = "Quads_Lab"
 name = "Quads_Blockscript"
-versionNumber = "0.1.2"
+versionNumber = "0.1.3"
 description = "Scratch-style visual scripting (block coding): snap blocks into events, quests, minigames and server rules. No-code automation and admin tools, or write JavaScript. Safe sandbox with limits, live co-editing, runs on the server."
 websiteUrl = "https://github.com/HardHeadHackerHead/valheim-mods/tree/main/mods/Blockscript"
 containsNsfwContent = false
