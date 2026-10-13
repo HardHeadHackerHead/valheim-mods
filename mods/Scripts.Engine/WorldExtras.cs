@@ -37,10 +37,10 @@ namespace Scripts
             }
             if (!Limits.Events.Contains(name)) { Host.Refuse(s, "'" + name + "' is not one of the events scripts may start (the owner lists them in the Blockscript settings)"); return false; }
             if (!RandEventSystem.instance.HaveEvent(name)) { Host.Refuse(s, "this game has no event called '" + name + "'"); return false; }
-            Player first = Player.m_localPlayer != null ? Player.m_localPlayer : Player.GetAllPlayers().FirstOrDefault();
+            Who first = Roster.All().FirstOrDefault();
             if (first == null) return false;
             if (!Players.Rate(s, "event", 1.0 / 120.0, 1.0)) { Host.Refuse(s, "events more than once in two minutes"); return false; }
-            RandEventSystem.instance.SetRandomEventByName(name, first.transform.position);
+            RandEventSystem.instance.SetRandomEventByName(name, first.Pos);
             Audit.Add(s, $"started the event {name}");
             return true;
         }

@@ -36,7 +36,8 @@ namespace Scripts.Mp
         internal static Verdict Give(string prefab, int n)
         {
             if (string.IsNullOrEmpty(prefab) || prefab.Length > 60) return Verdict.No("no such item");
-            if (!Lists.Allow.TryGetValue(prefab, out int most) || Lists.NeverGive.Contains(prefab) || Lists.Trophy(prefab)) return Verdict.No("'" + prefab + "' can't be given");
+            int most = Lists.Most(prefab);
+            if (most <= 0) return Verdict.No("'" + prefab + "' can't be given");
             return Verdict.Yes(Math.Max(1, Math.Min(most, n)));
         }
 

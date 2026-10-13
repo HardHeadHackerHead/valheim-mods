@@ -71,12 +71,13 @@ namespace Scripts
             if (Proxies.Bridge != null && Proxies.Call("TakeEvents") is string[] proxyEvents)
                 foreach (string kind in proxyEvents) { string k = kind; Host.Fire("proxyEvent", e => Obj(e, ("kind", Text(k)))); }
 
-            var now = new HashSet<long>(Player.GetAllPlayers().Select(p => p.GetPlayerID()));
-            foreach (Player p in Player.GetAllPlayers())
+            // (by connection, not by the characters loaded here: a player walking far from this game's own does not leave and come back)
+            List<Who> everyone = Roster.All();
+            var now = new HashSet<long>(everyone.Select(w => w.PlayerId));
+            foreach (Who w in everyone)
             {
-                string pn = p.GetPlayerName();
-                if (!string.IsNullOrEmpty(pn)) _names[p.GetPlayerID()] = pn;
-                if (!_online.Contains(p.GetPlayerID())) { Player joined = p; Host.Fire("playerJoin", e => Obj(e, ("player", Handles.Actor(Script(e), joined)))); }
+                if (!string.IsNullOrEmpty(w.Name)) _names[w.PlayerId] = w.Name;
+                if (!_online.Contains(w.PlayerId)) { Who joined = w; Host.Fire("playerJoin", e => Obj(e, ("player", Handles.PlayerActor(Script(e), joined)))); }
             }
             foreach (long id in _online.Where(x => !now.Contains(x)).ToList())
             {
@@ -179,22 +180,22 @@ namespace Scripts
                 Host.Fire("playerDeath", e => { Script s = Script(e); return Obj(e, ("player", Handles.ActorOrFrozen(s, v)), ("pos", Vec(e, pos)), ("biome", Text(BiomeName(pos))), ("cause", Text(cause)), ("killer", Handles.ActorOrFrozen(s, k))); });
         }
 
-        internal static void Said(Player player, string text, string channel)
+        internal static void Said(Who player, string text, string channel)
         {
             try
             {
                 if (player == null || text == null) return;
                 if (text.Length > 300) text = text.Substring(0, 300);
-                Host.Fire("chat", e => Obj(e, ("player", Handles.Actor(Script(e), player)), ("text", Text(text)), ("channel", Text(channel))));
+                Host.Fire("chat", e => Obj(e, ("player", Handles.PlayerActor(Script(e), player)), ("text", Text(text)), ("channel", Text(channel))));
             }
             catch (Exception ex) { Core.Log.LogWarning("Scripts: a chat line could not be passed on: " + ex.Message); }
         }
 
         /// <summary>"/name args" typed by the local player: a script's command, if one has that name. True when it was one (the game does not also see it).</summary>
-        internal static bool Command(string text) => Player.m_localPlayer != null && RunCommand(Player.m_localPlayer, text);
+        internal static bool Command(string text) => Player.m_localPlayer != null && RunCommand(Roster.Of(Player.m_localPlayer), text);
 
         /// <summary>"/name args" typed by a player (on this game, or on another one: the chat line reaches the server too).</summary>
-        internal static bool RunCommand(Player me, string text)
+        internal static bool RunCommand(Who me, string text)
         {
             if (text == null || !text.StartsWith("/") || me == null) return false;
             string[] parts = text.Substring(1).Split(new[] { ' ' }, StringSplitOptions.RemoveEmptyEntries);
@@ -206,13 +207,13 @@ namespace Scripts
                 string[] args = parts.Skip(1).ToArray();
                 if (s.Handlers.ContainsKey("command"))
                 {
-                    Player who = me; string typed = name; string[] words = args; Script owner = s;
-                    Host.Enqueue(s, "command", e => Obj(e, ("player", Handles.Actor(owner, who)), ("name", Text(typed)), ("args", Array(e, words.Select(w => Text(w)).ToArray()))));
+                    Who who = me; string typed = name; string[] words = args; Script owner = s;
+                    Host.Enqueue(s, "command", e => Obj(e, ("player", Handles.PlayerActor(owner, who)), ("name", Text(typed)), ("args", Array(e, words.Select(w => Text(w)).ToArray()))));
                 }
                 try
                 {
                     s.Budget.Arm(Host.CallMs, Host.CallGrowthBytes, Host.CallStatements);
-                    s.Engine.Invoke(fn, JsValue.Undefined, new JsValue[] { Handles.Actor(s, me), Array(s.Engine, args.Select(a => Text(a)).ToArray()) });
+                    s.Engine.Invoke(fn, JsValue.Undefined, new JsValue[] { Handles.PlayerActor(s, me), Array(s.Engine, args.Select(a => Text(a)).ToArray()) });
                 }
                 catch (Exception ex) { s.Say("ERROR: " + Sandbox.Plain(ex)); }
                 finally { s.Budget.Disarm(); }
@@ -246,10 +247,11 @@ namespace Scripts
         internal static void ChatLine(long senderID, Talker.Type type, string text)
         {
             if (Effects.Sending || type == Talker.Type.Ping || text == null) return;
-            Player sender = Player.GetAllPlayers().FirstOrDefault(p => p.GetOwner() == senderID);
+            // (who said it, by their connection: a player far from this game's own has no character loaded here, and their chat still counts)
+            Who sender = Roster.OfPeer(senderID);
             string channel = type == Talker.Type.Shout ? "shout" : type == Talker.Type.Whisper ? "whisper" : "normal";
             Said(sender, text, channel);
-            if (sender != null && sender != Player.m_localPlayer && Mp.Remote.IsRemote(sender) && text.StartsWith("/")) RunCommand(sender, text);
+            if (sender != null && sender.Remote && text.StartsWith("/")) RunCommand(sender, text);
         }
     }
 

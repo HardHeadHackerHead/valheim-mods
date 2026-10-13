@@ -120,7 +120,7 @@ A capability the script listed but the player or admin did not approve makes tha
 
 | Call | Returns | Notes |
 |---|---|---|
-| `players()` | `Player[]` | Everyone online. |
+| `players()` | `Player[]` | Everyone online, wherever they are (by connection: a player far from the host has no character loaded on the host, and is still here; their place and health come from the world, the rest from what their game reports). |
 | `findPlayer(name)` | `Player` or `null` | Case-insensitive, exact name. |
 | `findById(id)` | `Actor`, `Piece` or `null` | For an id kept in `store`. |
 | `nearbyCreatures(pos, radius, opts?)` | `Creature[]` | `radius` up to 50 m (clamped); at most 50 results, nearest first. `opts`: `{prefab: "Boar", hostile: true}`. Loaded zones only. |
@@ -505,7 +505,7 @@ at `on(...)` and in the log, and the others work.
 
 Settings (BepInEx `com.quad.blockscript.cfg`): `Limits`: `Spawns per minute per script` (5), `Creatures alive per script` (20), `Effects and sounds per
 second per script` (10), `Pieces placed per minute per script` (20), `Pieces alive per script` (200), `Status effects per minute per script`
-(20), `Items given per hour per script` (50: each player's gifts, and the script's drops for everyone together); `Allowed`: `Random events a script may start`, `Web addresses scripts may send to`. Lists in `Lists.cs`: `Allow` (items, widened to the
+(20), `Items given per hour per script` (50: each player's gifts, and the script's drops for everyone together), `Most items in one gift or drop` (10: keeps each item's own amount from `Lists.Allow`; under 10 lowers every item to it, over 10 raises every item to it); `Allowed`: `Random events a script may start`, `Web addresses scripts may send to`. Lists in `Lists.cs`: `Allow` (items, widened to the
 Meadows, Black Forest and Swamp food and materials), `StatusEffects`, `VisualEffects`, `Sounds`, `Pieces`. The editor's Limits panel
 (`Limits.Lines`) describes each of these for the powers a script uses.
 

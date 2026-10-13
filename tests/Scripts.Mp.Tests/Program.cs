@@ -182,6 +182,12 @@ namespace Scripts.Mp.Tests
             Check(Validate.Give("Honey", 99).Ok && Validate.Give("Honey", 99).N == 10, "give is cut to the list's most");
             Check(!Validate.Give("Wishbone", 1).Ok && !Validate.Give("TrophyEikthyr", 1).Ok && !Validate.Give("SwordCheat", 1).Ok && !Validate.Give("Nonsense", 1).Ok && !Validate.Give("", 1).Ok && !Validate.Give(new string('a', 100), 1).Ok, "never-give, trophies and strangers are refused");
             Check(Validate.Give("Honey", -5).N == 1 && Validate.Give("Honey", 0).N == 1, "a bad count becomes one");
+            Lists.PerCall = () => 100;
+            Check(Validate.Give("Wood", 100).N == 100 && Validate.Give("CookedMeat", 100).N == 100 && Validate.Give("Wood", 500).N == 100, "the owner's 'most in one gift' raises every item to it");
+            Lists.PerCall = () => 3;
+            Check(Validate.Give("Wood", 100).N == 3 && Validate.Give("CookedMeat", 100).N == 3 && Validate.Give("Pancakes", 100).N == 3, "under ten it lowers every item to it");
+            Lists.PerCall = () => 10;
+            Check(Validate.Give("Wood", 100).N == 10 && Validate.Give("CookedMeat", 100).N == 5 && !Validate.Give("Wishbone", 1).Ok, "ten keeps each item's own amount, and never-give stays never");
             Check(!Validate.Take("Hammer", 1).Ok && Validate.Take("Wood", 999).N == 20, "take: a tool is never taken, the amount is cut");
             Check(Validate.Hurt(100, 30).N == 29 && Validate.Hurt(100, 200).N == 50 && !Validate.Hurt(5, 1).Ok && !Validate.Hurt(-1, 30).Ok && !Validate.Hurt(double.NaN, 30).Ok, "hurt never kills and never more than 50");
             Check(!Validate.Heal(0).Ok && Validate.Heal(9999).N == 500, "heal is capped");

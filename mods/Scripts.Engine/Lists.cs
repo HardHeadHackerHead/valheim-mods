@@ -27,6 +27,19 @@ namespace Scripts
             ["Tar"] = 5, ["Needle"] = 5, ["CarrotSoup"] = 3, ["TurnipStew"] = 3, ["FishAndBread"] = 3, ["MinceMeatSauce"] = 3, ["Pancakes"] = 3,
         };
 
+        /// <summary>
+        /// The most of an item one give or drop may hand out, 0 when it may not be given at all: the list's own amount, which the owner's
+        /// "Most items in one gift or drop" lowers (under 10) or raises for every item (over 10).
+        /// </summary>
+        internal static Func<int> PerCall = () => 10;   // (Limits sets it: the owner's setting, or the server's while connected)
+
+        internal static int Most(string prefab)
+        {
+            if (string.IsNullOrEmpty(prefab) || !Allow.TryGetValue(prefab, out int most) || NeverGive.Contains(prefab) || Trophy(prefab)) return 0;
+            int setting = PerCall();
+            return setting > 10 ? Math.Max(most, setting) : Math.Max(1, Math.Min(most, setting));
+        }
+
         /// <summary>Always refused, even if somebody lists them in Allow: trophies, boss items, keys, gates of progression, rare gear.</summary>
         internal static readonly HashSet<string> NeverGive = new HashSet<string>
         {

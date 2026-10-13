@@ -293,7 +293,11 @@ namespace Scripts.Blocks
         }
 
         internal void Error(Block b, string message) => _problems.Add(new Problem { Block = b, Message = message, Fatal = true });
-        internal void Warn(Block b, string message) => _problems.Add(new Problem { Block = b, Message = message, Fatal = false });
+        internal void Warn(Block b, string message)
+        {
+            if (_problems.Any(p => p.Block == b && p.Message == message)) return;   // (a block's code can be made twice, e.g. for a wait)
+            _problems.Add(new Problem { Block = b, Message = message, Fatal = false });
+        }
 
         /// <summary>One block as lines (a stack block, a C block or a hat).</summary>
         private void Visit(Block b)
@@ -360,7 +364,13 @@ namespace Scripts.Blocks
             if (b.Inputs.TryGetValue(key, out Block child)) return Plugged(b, slot, child);
             switch (slot.Kind)
             {
-                case SlotKind.Num: return Number(b.Field(key, slot.Default), slot);
+                case SlotKind.Num:
+                    {
+                        string typed = b.Field(key, slot.Default);
+                        string range = OutOfRange(typed, slot);
+                        if (range != null) Warn(b, range);
+                        return Number(typed, slot);
+                    }
                 case SlotKind.Text: return Str(Program.Clip(b.Field(key, slot.Default), 120));
                 case SlotKind.Socket:
                     if (slot.Optional) return "undefined";
@@ -449,6 +459,21 @@ namespace Scripts.Blocks
             }
             return sb.Append('"').ToString();
         }
+
+        /// <summary>
+        /// Why a typed number does not fit its slot ("at most 10 here"), or null when it fits (or is not a number: that falls back to the
+        /// default, as before). The code still runs with the nearest number that fits, so this is a warning the editor shows, not a stop.
+        /// </summary>
+        internal static string OutOfRange(string text, Slot slot)
+        {
+            if (slot == null || !double.TryParse(text, NumberStyles.Float, CultureInfo.InvariantCulture, out double d) || double.IsNaN(d) || double.IsInfinity(d)) return null;
+            d = Math.Round(d, 4);
+            if (d > slot.Max) return "This number is " + Fmt(d) + ", but here it can be at most " + Fmt(slot.Max) + ", so it runs as " + Fmt(slot.Max) + ".";
+            if (d < slot.Min) return "This number is " + Fmt(d) + ", but here it must be at least " + Fmt(slot.Min) + ", so it runs as " + Fmt(slot.Min) + ".";
+            return null;
+        }
+
+        private static string Fmt(double d) => d.ToString("0.####", CultureInfo.InvariantCulture);
 
         internal static string Number(string text, Slot slot)
         {

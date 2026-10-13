@@ -65,6 +65,7 @@ namespace Scripts
         internal static JsValue ActorOrFrozen(Script s, Snap snap)
         {
             if (snap == null) return JsValue.Null;
+            if (snap.IsPlayer && Roster.Of(snap.Id) is Who player) return PlayerActor(s, player);   // (a player is still there after dying, wherever they are)
             Character now = Find(snap.Id);
             if (now != null) return Actor(s, now);
             Engine e = s.Engine;
@@ -83,6 +84,7 @@ namespace Scripts
 
         internal static JsValue Actor(Script s, Character c)
         {
+            if (c is Player player) return PlayerActor(s, Roster.Of(player));
             Engine e = s.Engine;
             string id = Id(c);
             var o = new JsObject(e);
@@ -103,23 +105,47 @@ namespace Scripts
             Method(s, o, "heal", a => { Need(s, "combat"); Act(s); if (!Allowed(s, "combat")) return Refused(s, "combat not approved"); Character x = Find(id); return x == null ? Num(0) : Num(Players.Heal(s, x, N(a, 0))); });
             Method(s, o, "damage", a => { Need(s, "combat"); Act(s); if (!Allowed(s, "combat")) return Refused(s, "combat not approved"); Character x = Find(id); return x == null ? Num(0) : Num(Players.Damage(s, x, N(a, 0))); });
 
-            if (c is Player)
-            {
-                Getter(e, o, "isDodging", () => Live(x => Bool(x.InDodge())));
-                Getter(e, o, "isAdmin", () => Live(x => Bool(x is Player p && Players.IsAdmin(p))));
-                Getter(e, o, "biome", () => Live(x => Text(Biome(x.transform.position))));
-                Method(s, o, "say", a => { Need(s, "messages"); Act(s); if (!Allowed(s, "messages")) return Refused(s, "messages not approved"); Player p = Find(id) as Player; if (p != null) Players.Say(s, p, Str(a, 0, 120), a.Length > 1 ? a[1] : JsValue.Undefined); return JsValue.Undefined; });
-                Method(s, o, "give", a => { Need(s, "items"); Act(s); if (!Allowed(s, "items")) return Refused(s, "items not approved"); Player p = Find(id) as Player; return p == null ? Num(0) : Num(Players.Give(s, p, Str(a, 0, 40), a.Length > 1 ? (int)N(a, 1) : 1)); });
-                Method(s, o, "take", a => { Need(s, "takeItems"); Act(s); if (!Allowed(s, "takeItems")) return Refused(s, "takeItems not approved"); Player p = Find(id) as Player; return p == null ? Num(0) : Num(Players.Take(s, p, Str(a, 0, 40), a.Length > 1 ? (int)N(a, 1) : 1)); });
-                Method(s, o, "count", a => { if (!s.Manifest.Needs.Contains("items") && !s.Manifest.Needs.Contains("takeItems")) Need(s, "items"); Player p = Find(id) as Player; return p == null ? Num(0) : Num(Players.Count(p, Str(a, 0, 40))); });
-                Method(s, o, "has", a => { if (!s.Manifest.Needs.Contains("items") && !s.Manifest.Needs.Contains("takeItems")) Need(s, "items"); Player p = Find(id) as Player; return p == null ? Bool(false) : Bool(Players.Count(p, Str(a, 0, 40)) >= (a.Length > 1 ? (int)N(a, 1) : 1)); });
-                Method(s, o, "teleport", a => { Need(s, "teleport"); Act(s); if (!Allowed(s, "teleport")) return Refused(s, "teleport not approved"); Player p = Find(id) as Player; return p == null ? Bool(false) : Bool(Players.Teleport(s, p, Where(s, Arg(a, 0)))); });
-            }
-            else
-            {
-                o.Set("spawnedBy", Players.SpawnedBy(c) is string by ? Text(by) : JsValue.Null);
-            }
+            o.Set("spawnedBy", Players.SpawnedBy(c) is string by ? Text(by) : JsValue.Null);
             ActorExtras.Add(s, o, c, id);
+            return o;
+        }
+
+        /// <summary>
+        /// A player's handle, wherever they are (Roster.cs): read from their character when it is loaded here, else from their world record and
+        /// what their game reports; what is done to them goes to their own game. A player who has left is not valid and every call does nothing.
+        /// </summary>
+        internal static JsValue PlayerActor(Script s, Who first)
+        {
+            if (first == null) return JsValue.Null;
+            Engine e = s.Engine;
+            string id = first.Id;
+            var o = new JsObject(e);
+            o.Set("id", Text(id));
+            o.Set("prefab", Text("Player"));
+            o.Set("isPlayer", Bool(true));
+            JsValue Live(Func<Who, JsValue> read) { Who now = Roster.Of(id); return now == null ? JsValue.Null : read(now); }
+            Getter(e, o, "valid", () => Bool(Roster.Of(id) != null));
+            Getter(e, o, "name", () => Live(w => Text(w.Loaded is Player p ? p.GetPlayerName() : w.Name)));
+            Getter(e, o, "pos", () => Live(w => Vec(e, w.Pos)));
+            Getter(e, o, "hp", () => Live(w => Num(w.Health)));
+            Getter(e, o, "maxHp", () => Live(w => Num(w.MaxHealth)));
+            Getter(e, o, "level", () => Live(w => Num(1)));
+            Getter(e, o, "isBoss", () => Live(w => Bool(false)));
+            Getter(e, o, "isTamed", () => Live(w => Bool(false)));
+            Getter(e, o, "isDead", () => Live(w => Bool(w.Dead)));
+            Getter(e, o, "isDodging", () => Live(w => Bool(w.Loaded is Player p && p.InDodge())));
+            Getter(e, o, "isAdmin", () => Live(w => Bool(Players.IsAdmin(w))));
+            Getter(e, o, "biome", () => Live(w => Text(Biome(w.Pos))));
+            Method(s, o, "distanceTo", a => { Who w = Roster.Of(id); return w == null ? JsValue.Null : Num(Vector3.Distance(w.Pos, Where(s, Arg(a, 0)))); });
+            Method(s, o, "heal", a => { Need(s, "combat"); Act(s); if (!Allowed(s, "combat")) return Refused(s, "combat not approved"); return Num(Players.Heal(s, Roster.Of(id), N(a, 0))); });
+            Method(s, o, "damage", a => { Need(s, "combat"); Act(s); if (!Allowed(s, "combat")) return Refused(s, "combat not approved"); return Num(Players.Damage(s, Roster.Of(id), N(a, 0))); });
+            Method(s, o, "say", a => { Need(s, "messages"); Act(s); if (!Allowed(s, "messages")) return Refused(s, "messages not approved"); Players.Say(s, Roster.Of(id), Str(a, 0, 120), a.Length > 1 ? a[1] : JsValue.Undefined); return JsValue.Undefined; });
+            Method(s, o, "give", a => { Need(s, "items"); Act(s); if (!Allowed(s, "items")) return Refused(s, "items not approved"); return Num(Players.Give(s, Roster.Of(id), Str(a, 0, 40), a.Length > 1 ? (int)N(a, 1) : 1)); });
+            Method(s, o, "take", a => { Need(s, "takeItems"); Act(s); if (!Allowed(s, "takeItems")) return Refused(s, "takeItems not approved"); return Num(Players.Take(s, Roster.Of(id), Str(a, 0, 40), a.Length > 1 ? (int)N(a, 1) : 1)); });
+            Method(s, o, "count", a => { if (!s.Manifest.Needs.Contains("items") && !s.Manifest.Needs.Contains("takeItems")) Need(s, "items"); return Num(Players.Count(Roster.Of(id), Str(a, 0, 40))); });
+            Method(s, o, "has", a => { if (!s.Manifest.Needs.Contains("items") && !s.Manifest.Needs.Contains("takeItems")) Need(s, "items"); return Bool(Players.Count(Roster.Of(id), Str(a, 0, 40)) >= (a.Length > 1 ? (int)N(a, 1) : 1)); });
+            Method(s, o, "teleport", a => { Need(s, "teleport"); Act(s); if (!Allowed(s, "teleport")) return Refused(s, "teleport not approved"); return Bool(Players.Teleport(s, Roster.Of(id), Where(s, Arg(a, 0)))); });
+            ActorExtras.AddPlayer(s, o, id);
             return o;
         }
 

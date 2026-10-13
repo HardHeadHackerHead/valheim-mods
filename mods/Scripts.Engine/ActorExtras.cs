@@ -68,7 +68,6 @@ namespace Scripts
         {
             Engine e = s.Engine;
             JsValue Live(Func<Character, JsValue> read) { Character now = Handles.Find(id); return now == null ? JsValue.Null : read(now); }
-            Player AsPlayer() => Handles.Find(id) as Player;
 
             // ---- reads ----
             // (a player on another game: what their game last reported, up to a few seconds old; everything else is read live)
@@ -103,7 +102,7 @@ namespace Scripts
                 if (x == null) return Bool(false);
                 string name = Str(a, 0, 40);
                 if (!Lists.StatusEffects.ContainsKey(name)) { Host.Refuse(s, "'" + name + "' is not a status effect a script may handle"); return Bool(false); }
-                if (x is Player rp && Mp.Remote.IsRemote(rp)) return Bool(Mp.Remote.RemoveEffect(s, rp, name));
+                if (x is Player rp && Mp.Remote.IsRemote(rp)) return Bool(Mp.Remote.RemoveEffect(s, Roster.Of(rp), name));
                 if (!x.GetComponent<ZNetView>().IsOwner()) return Bool(Mp.Remote.OnceOwned(s, x, "removing an effect", y => y.GetSEMan().RemoveStatusEffect(name.GetStableHashCode(), true)));
                 return Bool(x.GetSEMan().RemoveStatusEffect(name.GetStableHashCode(), true));
             });
@@ -114,7 +113,7 @@ namespace Scripts
                 if (x == null) return Bool(false);
                 if (x.IsBoss()) { Host.Refuse(s, "a shove on a boss"); return Bool(false); }
                 Vector3 dir = Where(s, Arg(a, 0));
-                if (x is Player rp && Mp.Remote.IsRemote(rp)) return Bool(Mp.Remote.Launch(s, rp, dir, N(a, 1)));
+                if (x is Player rp && Mp.Remote.IsRemote(rp)) return Bool(Mp.Remote.Launch(s, Roster.Of(rp), dir, N(a, 1)));
                 if (!Players.Rate(s, "launch", 2.0, 2.0)) { Host.Refuse(s, "shoves more than twice a second"); return Bool(false); }
                 float force = (float)Math.Max(0.0, Math.Min(15.0, N(a, 1)));
                 if (dir.sqrMagnitude < 0.0001f || force <= 0f) return Bool(false);
@@ -130,59 +129,6 @@ namespace Scripts
                 return Bool(shove(x));
             });
 
-            if (first is Player)
-            {
-                Handles.Getter(e, o, "deaths", () => Live(x => Num(Events.Deaths(id))));
-                Handles.Method(s, o, "skill", a =>
-                {
-                    Player p = AsPlayer();
-                    if (p == null) return JsValue.Null;
-                    if (!Enum.TryParse(Str(a, 0, 30), true, out Skills.SkillType type)) return JsValue.Null;
-                    Mp.PlayerState reported = Reported(p);
-                    if (Mp.Remote.IsRemote(p)) return reported != null && reported.Skills.TryGetValue(type.ToString(), out double level) ? Num(level) : JsValue.Null;
-                    return Num(Math.Round(p.GetSkills().GetSkillLevel(type), 1));
-                });
-                Handles.Method(s, o, "inventory", a =>
-                {
-                    if (!s.Manifest.Needs.Contains("items") && !s.Manifest.Needs.Contains("takeItems")) Need(s, "items");
-                    Player p = AsPlayer();
-                    if (p != null && Mp.Remote.IsRemote(p))
-                    {
-                        Mp.PlayerState st = Mp.Remote.StateOf(p);
-                        return Array(e, st == null ? new JsValue[0] : st.Inventory.Take(100).Select(i => (JsValue)Obj(e, ("prefab", Text(i.Prefab)), ("name", Text(i.Name)), ("count", Num(i.Count)), ("quality", Num(i.Quality)))).ToArray());
-                    }
-                    if (p == null || p != Player.m_localPlayer) return Array(e, new JsValue[0]);
-                    return Array(e, p.GetInventory().GetAllItems().Take(100).Select(i => (JsValue)Obj(e, ("prefab", Text(PrefabOf(i))), ("name", Text(Localization.instance.Localize(i.m_shared.m_name))), ("count", Num(i.m_stack)), ("quality", Num(i.m_quality)))).ToArray());
-                });
-                Handles.Method(s, o, "equipped", a =>
-                {
-                    Player p = AsPlayer();
-                    if (p == null) return JsValue.Null;
-                    if (Mp.Remote.IsRemote(p))
-                    {
-                        string[] worn = Mp.Remote.StateOf(p)?.Equipped ?? new[] { "", "", "", "", "" };
-                        return Obj(e, ("right", Text(worn[0])), ("left", Text(worn[1])), ("chest", Text(worn[2])), ("legs", Text(worn[3])), ("head", Text(worn[4])));
-                    }
-                    return Obj(e, ("right", Text(PrefabOf(Right(p)))), ("left", Text(PrefabOf(Left(p)))), ("chest", Text(PrefabOf(Chest(p)))), ("legs", Text(PrefabOf(Legs(p)))), ("head", Text(PrefabOf(Head(p)))));
-                });
-                Handles.Method(s, o, "banner", a =>
-                {
-                    if (!Extras.Gate(s, "messages")) return JsValue.Null;
-                    Player p = AsPlayer();
-                    return p == null ? Bool(false) : Bool(Effects.Banner(s, p, Str(a, 0, 60)));
-                });
-                Handles.Method(s, o, "setStamina", a =>
-                {
-                    if (!Extras.Gate(s, "combat")) return JsValue.Null;
-                    Player p = AsPlayer();
-                    if (p == null) return Bool(false);
-                    if (Mp.Remote.IsRemote(p)) return Bool(Mp.Remote.Stamina(s, p, N(a, 0)));
-                    if (!Mine(s, p, "setting stamina")) return Bool(false);
-                    StaminaField(p) = Mathf.Clamp((float)N(a, 0), 0f, p.GetMaxStamina());
-                    return Bool(true);
-                });
-            }
-            else
             {
                 Handles.Method(s, o, "tame", a =>
                 {
@@ -216,10 +162,129 @@ namespace Scripts
             }
         }
 
+        /// <summary>The members a player's handle adds, wherever the player is (Roster.cs): another game's player reads from what their game reports, and is acted on through it.</summary>
+        internal static void AddPlayer(Script s, JsObject o, string id)
+        {
+            Engine e = s.Engine;
+            JsValue Live(Func<Who, JsValue> read) { Who now = Roster.Of(id); return now == null ? JsValue.Null : read(now); }
+            Mp.PlayerState Rep(Who w) => Mp.Remote.StateOf(w);
+
+            // ---- reads ----
+            Handles.Getter(e, o, "stamina", () => Live(w => Num(Rep(w)?.Stamina ?? (w.Loaded is Player p ? p.GetStamina() : 0f))));
+            Handles.Getter(e, o, "maxStamina", () => Live(w => Num(Rep(w)?.MaxStamina ?? (w.Loaded is Player p ? p.GetMaxStamina() : 0f))));
+            Handles.Getter(e, o, "isSwimming", () => Live(w => Bool(Rep(w)?.Swimming ?? (w.Loaded is Player p && p.IsSwimming()))));
+            Handles.Getter(e, o, "isSitting", () => Live(w => Bool(Rep(w)?.Sitting ?? (w.Loaded is Player p && p.IsSitting()))));
+            Handles.Getter(e, o, "isRunning", () => Live(w => Bool(Rep(w)?.Running ?? (w.Loaded is Player p && p.IsRunning()))));
+            Handles.Getter(e, o, "isBlocking", () => Live(w => Bool(Rep(w)?.Blocking ?? (w.Loaded is Player p && p.IsBlocking()))));
+            Handles.Getter(e, o, "isInWater", () => Live(w => Bool(w.Loaded is Player p ? p.InWater() : Rep(w)?.Swimming ?? false)));
+            Handles.Getter(e, o, "faction", () => Live(w => Text("players")));
+            Handles.Getter(e, o, "facing", () => Live(w => Vec(e, w.Facing)));
+            Handles.Getter(e, o, "speed", () => Live(w => Num(w.Loaded is Player p ? p.GetVelocity().magnitude : 0f)));
+            Handles.Getter(e, o, "deaths", () => Live(w => Num(Events.Deaths(id))));
+
+            // ---- doing ----
+            Handles.Method(s, o, "talk", a =>
+            {
+                if (!Extras.Gate(s, "messages")) return JsValue.Null;
+                Who w = Roster.Of(id);
+                return w == null ? Bool(false) : Bool(Effects.Talk(s, w, Str(a, 0, 120)));
+            });
+            Handles.Method(s, o, "applyEffect", a =>
+            {
+                if (!Extras.Gate(s, "combat")) return JsValue.Null;
+                Who w = Roster.Of(id);
+                if (w == null) return Bool(false);
+                string name = Str(a, 0, 40);
+                double seconds = a.Length > 1 ? N(a, 1) : 30.0;
+                if (w.Remote)
+                {
+                    if (!Lists.StatusEffects.ContainsKey(name)) { Host.Refuse(s, "'" + name + "' is not a status effect a script may hand out"); return Bool(false); }
+                    return Bool(Mp.Remote.Effect(s, w, name, seconds));
+                }
+                return w.Loaded is Player p ? Bool(ApplyEffect(s, p, name, seconds)) : Bool(false);
+            });
+            Handles.Method(s, o, "removeEffect", a =>
+            {
+                if (!Extras.Gate(s, "combat")) return JsValue.Null;
+                Who w = Roster.Of(id);
+                if (w == null) return Bool(false);
+                string name = Str(a, 0, 40);
+                if (!Lists.StatusEffects.ContainsKey(name)) { Host.Refuse(s, "'" + name + "' is not a status effect a script may handle"); return Bool(false); }
+                if (w.Remote) return Bool(Mp.Remote.RemoveEffect(s, w, name));
+                return Bool(w.Loaded is Player p && p.GetSEMan().RemoveStatusEffect(name.GetStableHashCode(), true));
+            });
+            Handles.Method(s, o, "launch", a =>
+            {
+                if (!Extras.Gate(s, "combat")) return JsValue.Null;
+                Who w = Roster.Of(id);
+                if (w == null) return Bool(false);
+                Vector3 dir = Where(s, Arg(a, 0));
+                if (w.Remote) return Bool(Mp.Remote.Launch(s, w, dir, N(a, 1)));
+                if (!Players.Rate(s, "launch", 2.0, 2.0)) { Host.Refuse(s, "shoves more than twice a second"); return Bool(false); }
+                float force = (float)Math.Max(0.0, Math.Min(15.0, N(a, 1)));
+                Rigidbody body = w.Loaded is Player p ? BodyField(p) : null;
+                if (body == null || dir.sqrMagnitude < 0.0001f || force <= 0f) return Bool(false);
+                body.AddForce(dir.normalized * force, ForceMode.VelocityChange);
+                Audit.Add(s, "shoved " + w.Name + " at " + force.ToString("0") + " m/s");
+                return Bool(true);
+            });
+            Handles.Method(s, o, "skill", a =>
+            {
+                Who w = Roster.Of(id);
+                if (w == null || !Enum.TryParse(Str(a, 0, 30), true, out Skills.SkillType type)) return JsValue.Null;
+                if (w.Remote) return Rep(w) is Mp.PlayerState st && st.Skills.TryGetValue(type.ToString(), out double level) ? Num(level) : JsValue.Null;
+                return w.Loaded is Player p ? Num(Math.Round(p.GetSkills().GetSkillLevel(type), 1)) : JsValue.Null;
+            });
+            Handles.Method(s, o, "inventory", a =>
+            {
+                if (!s.Manifest.Needs.Contains("items") && !s.Manifest.Needs.Contains("takeItems")) Need(s, "items");
+                Who w = Roster.Of(id);
+                if (w == null) return Array(e, new JsValue[0]);
+                if (w.Remote)
+                {
+                    Mp.PlayerState st = Rep(w);
+                    return Array(e, st == null ? new JsValue[0] : st.Inventory.Take(100).Select(i => (JsValue)Obj(e, ("prefab", Text(i.Prefab)), ("name", Text(i.Name)), ("count", Num(i.Count)), ("quality", Num(i.Quality)))).ToArray());
+                }
+                Player p = w.Loaded;
+                if (p == null || p != Player.m_localPlayer) return Array(e, new JsValue[0]);
+                return Array(e, p.GetInventory().GetAllItems().Take(100).Select(i => (JsValue)Obj(e, ("prefab", Text(PrefabOf(i))), ("name", Text(Localization.instance.Localize(i.m_shared.m_name))), ("count", Num(i.m_stack)), ("quality", Num(i.m_quality)))).ToArray());
+            });
+            Handles.Method(s, o, "equipped", a =>
+            {
+                Who w = Roster.Of(id);
+                if (w == null) return JsValue.Null;
+                if (w.Remote)
+                {
+                    string[] worn = Rep(w)?.Equipped ?? new[] { "", "", "", "", "" };
+                    return Obj(e, ("right", Text(worn[0])), ("left", Text(worn[1])), ("chest", Text(worn[2])), ("legs", Text(worn[3])), ("head", Text(worn[4])));
+                }
+                Player p = w.Loaded;
+                if (p == null) return JsValue.Null;
+                return Obj(e, ("right", Text(PrefabOf(Right(p)))), ("left", Text(PrefabOf(Left(p)))), ("chest", Text(PrefabOf(Chest(p)))), ("legs", Text(PrefabOf(Legs(p)))), ("head", Text(PrefabOf(Head(p)))));
+            });
+            Handles.Method(s, o, "banner", a =>
+            {
+                if (!Extras.Gate(s, "messages")) return JsValue.Null;
+                Who w = Roster.Of(id);
+                return w == null ? Bool(false) : Bool(Effects.Banner(s, w, Str(a, 0, 60)));
+            });
+            Handles.Method(s, o, "setStamina", a =>
+            {
+                if (!Extras.Gate(s, "combat")) return JsValue.Null;
+                Who w = Roster.Of(id);
+                if (w == null) return Bool(false);
+                if (w.Remote) return Bool(Mp.Remote.Stamina(s, w, N(a, 0)));
+                Player p = w.Loaded;
+                if (p == null || p != Player.m_localPlayer) return Bool(false);
+                StaminaField(p) = Mathf.Clamp((float)N(a, 0), 0f, p.GetMaxStamina());
+                return Bool(true);
+            });
+        }
+
         private static bool ApplyEffect(Script s, Character c, string name, double seconds)
         {
             if (!Lists.StatusEffects.TryGetValue(name, out int most)) { Host.Refuse(s, "'" + name + "' is not a status effect a script may hand out"); return false; }
-            if (c is Player rp && Mp.Remote.IsRemote(rp)) return Mp.Remote.Effect(s, rp, name, seconds);
+            if (c is Player rp && Mp.Remote.IsRemote(rp)) return Mp.Remote.Effect(s, Roster.Of(rp), name, seconds);
             if (!c.GetComponent<ZNetView>().IsOwner()) return Mp.Remote.OnceOwned(s, c, "an effect", y => ApplyEffect(s, y, name, seconds));
             if (ObjectDB.instance == null || ObjectDB.instance.GetStatusEffect(name.GetStableHashCode()) == null) { Host.Refuse(s, "this game has no status effect called '" + name + "'"); return false; }
             int per = Limits.StatusEffectsPerMinute;

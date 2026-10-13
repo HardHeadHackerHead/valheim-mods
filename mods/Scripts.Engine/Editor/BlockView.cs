@@ -100,6 +100,11 @@ namespace Scripts.Editor
         private Menu _menu;
         private Block _clipBlock;    // Ctrl+C
 
+        // ---- what the selected event gives (shown at the top of the palette) ----
+        private Block _hatSel, _hatOf;   // the selected block the hat was found for, and its stack's hat
+        private int _hatVersion = -1;
+        private string _shownHat;        // the hat whose section the palette showed last (a new one scrolls the palette to the top)
+
         private sealed class Menu { internal Block B; internal Slot S; internal string[] Choices; internal Rect Anchor; internal float Scroll; internal bool NewVar; }
 
         // ---- the names panel (variables, lists, my blocks) ----
@@ -411,8 +416,9 @@ namespace Scripts.Editor
                 case SlotKind.Num: case SlotKind.Text:
                     {
                         string t = Shown(b, s);
-                        _p.Rect(x, y, size.x, size.y, Style.PillFill);
-                        _p.Text(t.Length == 0 ? "..." : t, x + 2f, y, size.x - 4f, size.y, Style.Font - 1f, t.Length == 0 ? Style.Dim : Style.PillText, TextAlignmentOptions.Midline);
+                        bool outside = s.Kind == SlotKind.Num && Gen.OutOfRange(t, s) != null;   // (a number the slot can't take: red, and the problems list says why)
+                        _p.Rect(x, y, size.x, size.y, outside ? Style.Bad : Style.PillFill);
+                        _p.Text(t.Length == 0 ? "..." : t, x + 2f, y, size.x - 4f, size.y, Style.Font - 1f, t.Length == 0 ? Style.Dim : outside ? Color.white : Style.PillText, TextAlignmentOptions.Midline);
                         break;
                     }
                 case SlotKind.Pick:
@@ -556,6 +562,10 @@ namespace Scripts.Editor
             float y = listTop + 6f - _palY, x = r.x + 14f;
             // the blocks, first (the header is drawn over what scrolls under it, and its nodes are found first)
             bool searching = Query.Length > 0;
+            Block hat = searching ? null : SelectedHat();
+            string hatType = hat != null ? hat.Type : null;
+            if (hatType != _shownHat) { _shownHat = hatType; if (hatType != null) _palY = 0f; }
+            if (hat != null) y = DrawGives(hat, x, y, r);
             if (!ReadOnly && !searching && (Category == "memory" || Category == "lists" || Category == "functions"))
             {
                 _p.To("palette", 1);
@@ -664,6 +674,74 @@ namespace Scripts.Editor
             }
         }
 
+        /// <summary>The 'when' block of the stack the selected block is in (the hat itself, a block under it, or a round block in one), or null.</summary>
+        private Block SelectedHat()
+        {
+            if (Selected == _hatSel && _hatVersion == _layoutVersion) return _hatOf;
+            _hatSel = Selected; _hatVersion = _layoutVersion; _hatOf = null;
+            if (Selected == null) return null;
+            foreach (Program.Top top in Prog.Tops)
+            {
+                if (top.Chain.Count == 0) continue;
+                Block first = top.Chain[0];
+                if (first.Def == null || first.Def.Shape != Shape.Hat) continue;
+                foreach (Block b in top.Chain)
+                    if (b == Selected || b.All().Contains(Selected)) { _hatOf = first; return first; }
+            }
+            return null;
+        }
+
+        /// <summary>The hat's words for a heading: its label without the slots ("when a player says ...").</summary>
+        private string HatWords(BlockDef def)
+        {
+            var sb = new System.Text.StringBuilder();
+            foreach (Part part in PartsOf(def))
+            {
+                if (part.Text != null) sb.Append(part.Text);
+                else if (part.Slot != null && part.Slot.Kind != SlotKind.Body) sb.Append("...");
+            }
+            return System.Text.RegularExpressions.Regex.Replace(sb.ToString(), @"\s+", " ").Trim();
+        }
+
+        /// <summary>
+        /// "This event gives you": the blocks that only work under the selected stack's 'when' block (the player, what was said, the place...),
+        /// at the top of the palette, ready to drag like any palette block. Returns the y below it.
+        /// </summary>
+        private float DrawGives(Block hat, float x, float y, Rect r)
+        {
+            List<BlockDef> gives = Defs.Gives(hat.Type);
+            float w = r.width - 28f;
+            float h = 50f + (gives.Count == 0 ? 24f : 0f);
+            foreach (BlockDef d in gives) h += Size(Template(d.Id)).y + 8f;
+            if (gives.Count > 0) h += 22f;
+            _p.To("palette", 0);
+            _p.Rect(x - 8f, y - 4f, w + 8f, h, new Color(Style.Good.r, Style.Good.g, Style.Good.b, 0.12f), false);
+            _p.Rect(x - 8f, y - 4f, 3f, h, Style.Good, false);
+            _p.To("palette", 1);
+            _p.Text(Words("scripts_event_gives"), x, y, w - 8f, 20f, 15f, Style.Good);
+            _p.Text(hat.Def != null ? HatWords(hat.Def) : hat.Type, x, y + 20f, w - 8f, 20f, 12f, Style.Dim);
+            y += 46f;
+            if (gives.Count == 0)
+            {
+                _p.Text(Words("scripts_event_gives_none"), x, y, w - 8f, 22f, 13f, Style.Dim);
+                y += 24f;
+            }
+            foreach (BlockDef d in gives)
+            {
+                Block t = Template(d.Id);
+                Vector2 s = Size(t);
+                if (Overlaps(_palVis, x, y, s)) DrawBlock(t, x, y, 1, true, true);
+                y += s.y + 8f;
+            }
+            if (gives.Count > 0)
+            {
+                _p.To("palette", 1);
+                _p.Text(Words("scripts_event_gives_hint"), x, y - 2f, w - 8f, 20f, 12f, Style.Dim);
+                y += 22f;
+            }
+            return y + 14f;
+        }
+
         private void OpenSearch()
         {
             Ask(Words("scripts_search_title"), Query, 30, v => { Query = (v ?? "").Trim(); _palY = 0f; });
@@ -702,6 +780,11 @@ namespace Scripts.Editor
                     else { _p.Rect(ar.x + 3f, ar.y + 6f, 12f, 2f, Color.white, false); _p.Rect(ar.x + 5f, ar.y + 8f, 8f, 2f, Color.white, false); _p.Rect(ar.x + 7f, ar.y + 10f, 4f, 2f, Color.white, false); }
                     Program.Top t = top;
                     AddNode(NodeKind.Toggle, ar, null, null, false, null, null, t);
+                }
+                if (first != null && first == Selected && first.Def != null && first.Def.Shape == Shape.Hat && _mode != Mode.Dragging)
+                {
+                    _p.To("work", 2);
+                    _p.Text(Words("scripts_event_gives_see"), x + Size(first).x + 28f, y + 3f, 300f, 24f, 13f, Style.Good);
                 }
             }
             ClampView();
@@ -1055,8 +1138,11 @@ namespace Scripts.Editor
                         string t = (v ?? "").Trim().Replace(',', '.');
                         if (!double.TryParse(t, NumberStyles.Float, CultureInfo.InvariantCulture, out double d) || double.IsNaN(d) || double.IsInfinity(d)) { Note(Words("scripts_not_a_number")); return; }
                         Snapshot();
-                        b.Fields[s.Key] = Math.Round(d, 4).ToString("0.####", CultureInfo.InvariantCulture);
+                        d = Math.Round(d, 4);
+                        b.Fields[s.Key] = d.ToString("0.####", CultureInfo.InvariantCulture);
                         Fire();
+                        if (d > s.Max) Note(Words("scripts_num_at_most").Replace("{0}", s.Max.ToString("0.####", CultureInfo.InvariantCulture)));
+                        else if (d < s.Min) Note(Words("scripts_num_at_least").Replace("{0}", s.Min.ToString("0.####", CultureInfo.InvariantCulture)));
                     });
                     break;
                 case SlotKind.Text:

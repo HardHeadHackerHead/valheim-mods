@@ -53,24 +53,24 @@ namespace Scripts
 
         // ---- firing: from this game's own events, and from the ones a player's game forwards ----
 
-        internal static void FirePickup(Player player, ItemInfo item) => Host.Fire("itemPickup", e => Obj(e, ("player", Handles.Actor(ScriptOf(e), player)), ("item", ItemObject(e, item))));
-        internal static void FireEat(Player player, ItemInfo item) => Host.Fire("eat", e => Obj(e, ("player", Handles.Actor(ScriptOf(e), player)), ("item", ItemObject(e, item))));
-        internal static void FireSkill(Player player, string name, int level) => Host.Fire("skillUp", e => Obj(e, ("player", Handles.Actor(ScriptOf(e), player)), ("skill", Text(name)), ("level", Num(level))));
-        internal static void FireRespawn(Player player) => Host.Fire("playerRespawn", e => Obj(e, ("player", Handles.Actor(ScriptOf(e), player))));
-        internal static void FireTamed(Character creature, Player tamer) => Host.Fire("tamed", e => { Script s = ScriptOf(e); return Obj(e, ("creature", Handles.Actor(s, creature)), ("player", Handles.Actor(s, tamer))); });
+        internal static void FirePickup(Who player, ItemInfo item) => Host.Fire("itemPickup", e => Obj(e, ("player", Handles.PlayerActor(ScriptOf(e), player)), ("item", ItemObject(e, item))));
+        internal static void FireEat(Who player, ItemInfo item) => Host.Fire("eat", e => Obj(e, ("player", Handles.PlayerActor(ScriptOf(e), player)), ("item", ItemObject(e, item))));
+        internal static void FireSkill(Who player, string name, int level) => Host.Fire("skillUp", e => Obj(e, ("player", Handles.PlayerActor(ScriptOf(e), player)), ("skill", Text(name)), ("level", Num(level))));
+        internal static void FireRespawn(Who player) => Host.Fire("playerRespawn", e => Obj(e, ("player", Handles.PlayerActor(ScriptOf(e), player))));
+        internal static void FireTamed(Character creature, Who tamer) => Host.Fire("tamed", e => { Script s = ScriptOf(e); return Obj(e, ("creature", Handles.Actor(s, creature)), ("player", Handles.PlayerActor(s, tamer))); });
 
         /// <summary>
         /// A piece a player's game says it built. The message usually arrives before the piece itself does (the world's own sync is
         /// slower), so it waits for the piece to show up here, up to five seconds, and says so in the log if it never does.
         /// </summary>
-        internal static void FirePiece(Player player, string pieceId)
+        internal static void FirePiece(Who player, string pieceId)
         {
             Piece piece = Pieces.Find(pieceId);
             if (piece != null) { FirePieceNow(player, piece); return; }
             if (Core.Plugin != null) Core.Plugin.StartCoroutine(WaitForPiece(player, pieceId));
         }
 
-        private static System.Collections.IEnumerator WaitForPiece(Player player, string pieceId)
+        private static System.Collections.IEnumerator WaitForPiece(Who player, string pieceId)
         {
             float until = UnityEngine.Time.unscaledTime + 5f;
             while (UnityEngine.Time.unscaledTime < until)
@@ -79,22 +79,22 @@ namespace Scripts
                 Piece piece = Pieces.Find(pieceId);
                 if (piece != null) { FirePieceNow(player, piece); yield break; }
             }
-            Core.Log.LogInfo("Scripts (multiplayer): a piece " + (player != null ? player.GetPlayerName() : "a player") + " built never arrived here, so pieceBuilt was not fired for it");
+            Core.Log.LogInfo("Scripts (multiplayer): a piece " + (player != null ? player.Name : "a player") + " built never arrived here, so pieceBuilt was not fired for it");
         }
 
-        private static void FirePieceNow(Player player, Piece piece)
+        private static void FirePieceNow(Who player, Piece piece)
         {
             if (player == null || piece == null) return;
-            Host.Fire("pieceBuilt", e => { Script s = ScriptOf(e); return Obj(e, ("player", Handles.Actor(s, player)), ("piece", Pieces.Handle(s, piece))); });
+            Host.Fire("pieceBuilt", e => { Script s = ScriptOf(e); return Obj(e, ("player", Handles.PlayerActor(s, player)), ("piece", Pieces.Handle(s, piece))); });
         }
 
         /// <summary>A tree came down (here, or on the player's game that owns it). `player` is who felled it, or null (another tree, a troll, fire).</summary>
-        internal static void FireTree(Felled w, Player player) =>
-            Host.Fire("treeFelled", e => Obj(e, ("player", player != null ? Handles.Actor(ScriptOf(e), player) : JsValue.Null), ("tree", Text(w.Prefab)), ("kind", Text(w.Kind)), ("wood", Text(w.Wood)), ("pos", Vec(e, w.Pos))));
+        internal static void FireTree(Felled w, Who player) =>
+            Host.Fire("treeFelled", e => Obj(e, ("player", player != null ? Handles.PlayerActor(ScriptOf(e), player) : JsValue.Null), ("tree", Text(w.Prefab)), ("kind", Text(w.Kind)), ("wood", Text(w.Wood)), ("pos", Vec(e, w.Pos))));
 
         /// <summary>A fallen log broke: into smaller logs (`splits`), or into the wood it gives.</summary>
-        internal static void FireLog(Felled w, Player player) =>
-            Host.Fire("logBroken", e => Obj(e, ("player", player != null ? Handles.Actor(ScriptOf(e), player) : JsValue.Null), ("log", Text(w.Prefab)), ("kind", Text(w.Kind)), ("wood", Text(w.Wood)), ("splits", Bool(w.Splits)), ("pos", Vec(e, w.Pos))));
+        internal static void FireLog(Felled w, Who player) =>
+            Host.Fire("logBroken", e => Obj(e, ("player", player != null ? Handles.PlayerActor(ScriptOf(e), player) : JsValue.Null), ("log", Text(w.Prefab)), ("kind", Text(w.Kind)), ("wood", Text(w.Wood)), ("splits", Bool(w.Splits)), ("pos", Vec(e, w.Pos))));
 
         /// <summary>A hit a player's game told us about: scripts see it, and cannot change it (the damage was settled on the game that owns the target).</summary>
         internal static void FireHit(Handles.Snap target, Handles.Snap attacker, Vector3 pos, string weapon, double damage) =>
@@ -177,7 +177,7 @@ namespace Scripts
                 if (player == null) return;
                 Piece piece = __instance;
                 if (Mp.Wire.IsAgent) { Mp.Agent.ForwardPiece(player, piece); return; }
-                Host.Fire("pieceBuilt", e => { Script s = ScriptOf(e); return Obj(e, ("player", Handles.Actor(s, player)), ("piece", Pieces.Handle(s, piece))); });
+                FirePieceNow(Roster.Of(player), piece);
             }
             catch (Exception ex) { Core.Log.LogWarning("Scripts: the pieceBuilt event failed: " + ex.Message); }
         }
@@ -202,7 +202,7 @@ namespace Scripts
             {
                 if (!__result || __state == null || !(__instance is Player player)) return;
                 if (Mp.Wire.IsAgent) { Mp.Agent.ForwardItem("itemPickup", player, __state); return; }
-                FirePickup(player, __state);
+                FirePickup(Roster.Of(player), __state);
             }
             catch (Exception ex) { Core.Log.LogWarning("Scripts: the itemPickup event failed: " + ex.Message); }
         }
@@ -218,7 +218,7 @@ namespace Scripts
                 if (!__result || __state == null) return;
                 Player player = __instance;
                 if (Mp.Wire.IsAgent) { Mp.Agent.ForwardItem("eat", player, __state); return; }
-                FireEat(player, __state);
+                FireEat(Roster.Of(player), __state);
             }
             catch (Exception ex) { Core.Log.LogWarning("Scripts: the eat event failed: " + ex.Message); }
         }
@@ -232,7 +232,7 @@ namespace Scripts
                 Player player = __instance;
                 string name = skill.ToString();
                 if (Mp.Wire.IsAgent) { Mp.Agent.ForwardSkill(player, name, (int)Math.Floor(level)); return; }
-                FireSkill(player, name, (int)Math.Floor(level));
+                FireSkill(Roster.Of(player), name, (int)Math.Floor(level));
             }
             catch (Exception ex) { Core.Log.LogWarning("Scripts: the skillUp event failed: " + ex.Message); }
         }
@@ -269,7 +269,7 @@ namespace Scripts
             {
                 Player player = __instance;
                 if (Mp.Wire.IsAgent) { Mp.Agent.ForwardRespawn(player); return; }
-                FireRespawn(player);
+                FireRespawn(Roster.Of(player));
             }
             catch (Exception ex) { Core.Log.LogWarning("Scripts: the playerRespawn event failed: " + ex.Message); }
         }
@@ -285,7 +285,7 @@ namespace Scripts
                 Player tamer = Player.GetAllPlayers().OrderBy(p => Vector3.Distance(p.transform.position, creature.transform.position)).FirstOrDefault();
                 if (tamer == null || Vector3.Distance(tamer.transform.position, creature.transform.position) > 30f) return;
                 if (Mp.Wire.IsAgent) { Mp.Agent.ForwardTamed(creature, tamer); return; }
-                FireTamed(creature, tamer);
+                FireTamed(creature, Roster.Of(tamer));
             }
             catch (Exception ex) { Core.Log.LogWarning("Scripts: the tamed event failed: " + ex.Message); }
         }
@@ -363,7 +363,7 @@ namespace Scripts
                 if (view != null && view.IsValid() && view.GetZDO().GetFloat(ZDOVars.s_health, 1f) > 0f) return;   // (still standing)
                 Player player = hit != null ? hit.GetAttacker() as Player : null;
                 if (Mp.Wire.IsAgent) { Mp.Agent.ForwardWood("treeFelled", __state, player); return; }
-                FireTree(__state, player);
+                FireTree(__state, Roster.Of(player));
             }
             catch (Exception ex) { Core.Log.LogWarning("Scripts: the treeFelled event failed: " + ex.Message); }
         }
@@ -379,7 +379,7 @@ namespace Scripts
                 Felled w = WoodInfo(__instance, view, __instance, __instance.m_subLogPrefab != null);
                 Player player = hitData != null ? hitData.GetAttacker() as Player : null;
                 if (Mp.Wire.IsAgent) { Mp.Agent.ForwardWood("logBroken", w, player); return; }
-                FireLog(w, player);
+                FireLog(w, Roster.Of(player));
             }
             catch (Exception ex) { Core.Log.LogWarning("Scripts: the logBroken event failed: " + ex.Message); }
         }

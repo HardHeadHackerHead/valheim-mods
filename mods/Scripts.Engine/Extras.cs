@@ -92,7 +92,7 @@ namespace Scripts
             Fn(s, "nearbyPlayers", a =>
             {
                 Vector3 c = Where(s, Arg(a, 0)); double r = Math.Min(200.0, Math.Max(1.0, N(a, 1)));
-                return Array(e, Player.GetAllPlayers().Where(p => Vector3.Distance(p.transform.position, c) <= r).OrderBy(p => Vector3.Distance(p.transform.position, c)).Take(50).Select(p => Handles.Actor(s, p)).ToArray());
+                return Array(e, Roster.All().Where(w => Vector3.Distance(w.Pos, c) <= r).OrderBy(w => Vector3.Distance(w.Pos, c)).Take(50).Select(w => Handles.PlayerActor(s, w)).ToArray());
             });
             Fn(s, "nearbyPieces", a =>
             {
@@ -125,6 +125,7 @@ namespace Scripts
         /// <summary>Finds a built piece or creature by the id a script was given.</summary>
         internal static JsValue FindById(Script s, string id)
         {
+            if (Roster.Of(id) is Who w) return Handles.PlayerActor(s, w);   // (a player, wherever they are)
             Character c = Handles.Find(id);
             if (c != null) return Handles.Actor(s, c);
             Piece p = Pieces.Find(id);

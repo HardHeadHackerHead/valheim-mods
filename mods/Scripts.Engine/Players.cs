@@ -46,6 +46,38 @@ namespace Scripts
 
         internal static void HourlyUse(Script s, string player, string what, int n) { HourlyLeft(s, player, what, int.MaxValue); Hourly[s.File + "|" + player + "|" + what][1] += n; }
 
+        internal static bool IsAdmin(Who w) => w != null && (w.Peer == 0L ? (ZNet.instance == null || ZNet.instance.IsServer() || Mp.Wire.LocalIsAdmin) : w.Remote && Mp.Wire.IsAdmin(w.Peer));
+
+        // ---- a player wherever they are (Roster.cs): another game's player is asked through their game, this game's own directly ----
+
+        internal static int Give(Script s, Who w, string prefab, int n) => w == null ? 0 : w.Remote ? Mp.Remote.Give(s, w, prefab, n) : w.Loaded is Player p ? Give(s, p, prefab, n) : 0;
+        internal static int Take(Script s, Who w, string prefab, int n) => w == null ? 0 : w.Remote ? Mp.Remote.Take(s, w, prefab, n) : w.Loaded is Player p ? Take(s, p, prefab, n) : 0;
+        internal static int Count(Who w, string prefab) => w == null ? 0 : w.Remote ? Mp.Remote.Count(w, prefab) : w.Loaded is Player p ? Count(p, prefab) : 0;
+        internal static bool Teleport(Script s, Who w, Vector3 pos) => w != null && (w.Remote ? Mp.Remote.Teleport(s, w, pos) : w.Loaded is Player p && Teleport(s, p, pos));
+        internal static double Heal(Script s, Who w, double n) => w == null ? 0.0 : w.Remote ? Mp.Remote.Heal(s, w, n) : w.Loaded is Player p ? Heal(s, p, n) : 0.0;
+        internal static double Damage(Script s, Who w, double n)
+        {
+            if (w == null) return 0.0;
+            if (!w.Remote) return w.Loaded is Player p ? Damage(s, p, n) : 0.0;
+            return Mp.Remote.Hurt(s, w, n);   // (it keeps the once-a-second rate itself)
+        }
+
+        /// <summary>The game's own centre or corner message on one player's screen, wherever they are (the message goes to their character's own game).</summary>
+        internal static void MessageTo(Who w, MessageHud.MessageType type, string text)
+        {
+            if (w == null) return;
+            Player p = w.Loaded;
+            if (p != null) { p.Message(type, text); return; }
+            if (w.Remote && ZRoutedRpc.instance != null) ZRoutedRpc.instance.InvokeRoutedRPC(w.Peer, w.Character, "Message", (int)type, text, 0);
+        }
+
+        internal static void Say(Script s, Who w, string text, JsValue opts)
+        {
+            if (!Rate(s, "say", 5.0, 5.0)) { Host.Refuse(s, "too many messages a second"); return; }
+            bool corner = opts.IsObject() && opts.AsObject().Get("style") is JsValue st && st.IsString() && st.AsString() == "corner";
+            MessageTo(w, corner ? MessageHud.MessageType.TopLeft : MessageHud.MessageType.Center, text);
+        }
+
         internal static bool IsAdmin(Player p) => p == Player.m_localPlayer ? (ZNet.instance == null || ZNet.instance.IsServer() || Mp.Wire.LocalIsAdmin) : Mp.Remote.IsRemote(p) && Mp.Wire.IsAdmin(p.GetOwner());
 
         private static bool Mine(Script s, Player p, string what)
@@ -67,7 +99,7 @@ namespace Scripts
         internal static void Broadcast(Script s, string text)
         {
             if (!Rate(s, "broadcast", 1.0, 1.0)) { Host.Refuse(s, "too many announcements a second"); return; }
-            foreach (Player p in Player.GetAllPlayers()) p.Message(MessageHud.MessageType.Center, text);
+            foreach (Who w in Roster.All()) MessageTo(w, MessageHud.MessageType.Center, text);
         }
 
         // ---- items ----
@@ -104,12 +136,13 @@ namespace Scripts
 
         internal static int Give(Script s, Player p, string prefab, int n)
         {
-            if (Mp.Remote.IsRemote(p)) return Mp.Remote.Give(s, p, prefab, n);
+            if (Mp.Remote.IsRemote(p)) return Mp.Remote.Give(s, Roster.Of(p), prefab, n);
             if (!Mine(s, p, "items")) return 0;
-            if (!Lists.Allow.TryGetValue(prefab, out int most) || Lists.NeverGive.Contains(prefab) || Lists.Trophy(prefab)) { Host.Refuse(s, "'" + prefab + "' can't be given"); return 0; }
+            int most = Lists.Most(prefab);
+            if (most <= 0) { Host.Refuse(s, "'" + prefab + "' can't be given"); return 0; }
             GameObject item = ItemPrefab(prefab);
             if (item == null) { Host.Refuse(s, "no item called '" + prefab + "'"); return 0; }
-            n = Mathf.Clamp(n, 1, most);
+            n = Cut(s, prefab, n, most, "gift");
             string who = Handles.Id(p);
             int left = HourlyLeft(s, who, "give", Limits.ItemsPerHour);
             if (left <= 0) { Host.Refuse(s, "the hourly limit for items (" + Limits.ItemsPerHour + "; the owner can change it in the Blockscript settings)"); return 0; }
@@ -123,7 +156,7 @@ namespace Scripts
 
         internal static int Take(Script s, Player p, string prefab, int n)
         {
-            if (Mp.Remote.IsRemote(p)) return Mp.Remote.Take(s, p, prefab, n);
+            if (Mp.Remote.IsRemote(p)) return Mp.Remote.Take(s, Roster.Of(p), prefab, n);
             if (!Mine(s, p, "items")) return 0;
             if (Lists.NeverTake.Contains(prefab)) { Host.Refuse(s, "'" + prefab + "' can't be taken"); return 0; }
             string who = Handles.Id(p);
@@ -137,7 +170,7 @@ namespace Scripts
 
         internal static int Count(Player p, string prefab)
         {
-            if (Mp.Remote.IsRemote(p)) return Mp.Remote.Count(p, prefab);
+            if (Mp.Remote.IsRemote(p)) return Mp.Remote.Count(Roster.Of(p), prefab);
             if (p != Player.m_localPlayer) return 0;
             int n = 0;
             foreach (ItemDrop.ItemData item in p.GetInventory().GetAllItems())
@@ -147,13 +180,14 @@ namespace Scripts
 
         internal static int DropItem(Script s, string prefab, int n, Vector3 pos)
         {
-            if (!Lists.Allow.TryGetValue(prefab, out int most) || Lists.NeverGive.Contains(prefab) || Lists.Trophy(prefab)) { Host.Refuse(s, "'" + prefab + "' can't be dropped"); return 0; }
+            int most = Lists.Most(prefab);
+            if (most <= 0) { Host.Refuse(s, "'" + prefab + "' can't be dropped"); return 0; }
             GameObject item = ItemPrefab(prefab);
             if (item == null) { Host.Refuse(s, "no item called '" + prefab + "'"); return 0; }
             if (!NearAPlayer(pos, 60f)) { Host.Refuse(s, "that place is too far from every player"); return 0; }
             int left = HourlyLeft(s, "world", "give", Limits.ItemsPerHour);
             if (left <= 0) { Host.Refuse(s, "the hourly limit for items (" + Limits.ItemsPerHour + "; the owner can change it in the Blockscript settings)"); return 0; }
-            n = Mathf.Min(Mathf.Clamp(n, 1, most), left);
+            n = Mathf.Min(Cut(s, prefab, n, most, "drop"), left);
             GameObject drop = UnityEngine.Object.Instantiate(item, pos + Vector3.up * 0.5f, Quaternion.identity);
             var itemDrop = drop.GetComponent<ItemDrop>();
             if (itemDrop == null) { UnityEngine.Object.Destroy(drop); return 0; }
@@ -163,7 +197,14 @@ namespace Scripts
             return n;
         }
 
-        internal static bool NearAPlayer(Vector3 pos, float range) => Player.GetAllPlayers().Any(p => Vector3.Distance(p.transform.position, pos) <= range);
+        /// <summary>A count cut to the most one gift or drop may hold, saying so in the log when it was cut (a script asking for 100 gets 10, and its author learns why).</summary>
+        internal static int Cut(Script s, string prefab, int n, int most, string what)
+        {
+            if (n > most) Host.Refuse(s, "only " + most + " " + prefab + " in one " + what + " (asked for " + n + "; the owner can raise 'Most items in one gift or drop' in the Blockscript settings)");
+            return Mathf.Clamp(n, 1, most);
+        }
+
+        internal static bool NearAPlayer(Vector3 pos, float range) => Roster.Near(pos, range);
 
         // ---- creatures ----
 
@@ -182,7 +223,7 @@ namespace Scripts
             GameObject creature = ZNetScene.instance != null ? ZNetScene.instance.GetPrefab(prefab) : null;
             if (creature == null || creature.GetComponent<Character>() == null) return Refused(s, "no creature called '" + prefab + "'");
             if (!NearAPlayer(pos, 60f)) return Refused(s, "that place is too far from every player");
-            if (!ZoneSystem.instance.IsZoneLoaded(pos)) return Refused(s, "that place is not loaded");
+            if (!ZoneSystem.instance.IsZoneLoaded(pos)) return Refused(s, "that place is not loaded on the game that runs the scripts (it is far from its own player: placing things near a player who is far away is not possible yet)");
             if (!Rate(s, "spawn", Limits.SpawnsPerMinute / 60.0, Limits.SpawnsPerMinute)) return Refused(s, "too many spawns a minute (" + Limits.SpawnsPerMinute + " is the limit; the owner can change it in the Blockscript settings)");
             if (!Alive.TryGetValue(s.File, out List<ZDOID> list)) Alive[s.File] = list = new List<ZDOID>();
             list.RemoveAll(id => ZDOMan.instance.GetZDO(id) == null);
@@ -217,7 +258,7 @@ namespace Scripts
 
         internal static double Heal(Script s, Character c, double n)
         {
-            if (c is Player rp && Mp.Remote.IsRemote(rp)) return Mp.Remote.Heal(s, rp, n);
+            if (c is Player rp && Mp.Remote.IsRemote(rp)) return Mp.Remote.Heal(s, Roster.Of(rp), n);
             if (!c.GetComponent<ZNetView>().IsOwner()) return Mp.Remote.OnceOwned(s, c, "healing", x => Heal(s, x, n)) ? Math.Min(500.0, Math.Max(0.0, n)) : 0.0;
             float before = c.GetHealth();
             c.Heal((float)Math.Min(500.0, Math.Max(0.0, n)), true);
@@ -227,7 +268,7 @@ namespace Scripts
         internal static double Damage(Script s, Character c, double n)
         {
             if (c.IsBoss()) { Host.Refuse(s, "damage to a boss"); return 0; }
-            if (c is Player rp && Mp.Remote.IsRemote(rp)) return Mp.Remote.Hurt(s, rp, n);
+            if (c is Player rp && Mp.Remote.IsRemote(rp)) return Mp.Remote.Hurt(s, Roster.Of(rp), n);
             if (!c.GetComponent<ZNetView>().IsOwner()) return Mp.Remote.OnceOwned(s, c, "damage", x => Damage(s, x, n)) ? Math.Min(500.0, Math.Max(0.0, n)) : 0.0;
             double amount = Math.Min(500.0, Math.Max(0.0, n));
             if (c is Player p)
@@ -247,7 +288,7 @@ namespace Scripts
 
         internal static bool Teleport(Script s, Player p, Vector3 pos)
         {
-            if (Mp.Remote.IsRemote(p)) return Mp.Remote.Teleport(s, p, pos);
+            if (Mp.Remote.IsRemote(p)) return Mp.Remote.Teleport(s, Roster.Of(p), pos);
             if (!Mine(s, p, "teleport")) return false;
             if (!Rate(s, "tp-" + Handles.Id(p), 0.1, 1.0)) { Host.Refuse(s, "teleports more than once in ten seconds"); return false; }
             // the height the script gave is ignored: a landing a few metres off the ground kills

@@ -935,6 +935,12 @@ namespace Scripts.Editor
                 case "scripts_type_number": return "Type a number";
                 case "scripts_type_words": return "Type the words";
                 case "scripts_not_a_number": return "That is not a number.";
+                case "scripts_num_at_most": return "At most {0} here: it runs as {0}.";
+                case "scripts_num_at_least": return "At least {0} here: it runs as {0}.";
+                case "scripts_event_gives": return "This event gives you:";
+                case "scripts_event_gives_none": return "Nothing extra: any block works here.";
+                case "scripts_event_gives_hint": return "Drag one into a slot under this 'when' block.";
+                case "scripts_event_gives_see": return "What it gives you: top of the block list";
                 case "scripts_deleted_blocks": return "Removed.";
                 case "scripts_empty_hint": return "Drag a 'when' block here to start. Everything under it runs when that happens.";
                 default: return key;

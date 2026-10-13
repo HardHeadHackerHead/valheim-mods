@@ -206,7 +206,7 @@ namespace Scripts
             if (sub == "chat")
             {
                 if (Player.m_localPlayer == null) { error("no player in the world"); yield break; }
-                Events.Said(Player.m_localPlayer, string.Join(" ", args.Skip(1).ToArray()), "normal");
+                Events.Said(Roster.Of(Player.m_localPlayer), string.Join(" ", args.Skip(1).ToArray()), "normal");
                 output(new JObject { ["said"] = true });
                 yield break;
             }

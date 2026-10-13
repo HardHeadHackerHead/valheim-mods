@@ -108,19 +108,31 @@ namespace Scripts
         }
 
         /// <summary>The big banner in the middle of the screen (the one a new biome gets). To one player, or to everyone with player == null.</summary>
-        internal static bool Banner(Script s, Player player, string text)
+        internal static bool Banner(Script s, Who player, string text)
         {
-            if (!Players.Rate(s, player == null ? "banner" : "banner-" + Handles.Id(player), 1.0 / 3.0, 1.0)) { Host.Refuse(s, "banners more than once in three seconds"); return false; }
+            if (!Players.Rate(s, player == null ? "banner" : "banner-" + player.Id, 1.0 / 3.0, 1.0)) { Host.Refuse(s, "banners more than once in three seconds"); return false; }
             if (player != null)
             {
-                if (Mp.Remote.IsRemote(player)) return Mp.Remote.Banner(s, player, text);
+                if (player.Remote) return Mp.Remote.Banner(s, player, text);
                 if (MessageHud.instance != null) MessageHud.instance.ShowBiomeFoundMsg(text, true);
                 return true;
             }
             if (Player.m_localPlayer != null && MessageHud.instance != null) MessageHud.instance.ShowBiomeFoundMsg(text, true);
             Mp.Remote.FxBanner(text);   // (the games that have the mod show the banner; the others get the plain centre message)
-            foreach (Player p in Player.GetAllPlayers().ToArray())
-                if (p != Player.m_localPlayer && !Mp.Wire.HasAgent(p.GetOwner())) p.Message(MessageHud.MessageType.Center, text);
+            foreach (Who w in Roster.All())
+                if (w.Remote && !Mp.Wire.HasAgent(w.Peer)) Players.MessageTo(w, MessageHud.MessageType.Center, text);
+            return true;
+        }
+
+        /// <summary>A speech bubble above a player, wherever they are: on this game when their character is loaded here, and on the games near them that have the mod.</summary>
+        internal static bool Talk(Script s, Who w, string text)
+        {
+            if (Chat.instance == null && !Mp.Remote.AnyAgent) return false;
+            if (!Players.Rate(s, "talk", 5.0, 5.0)) { Host.Refuse(s, "speech bubbles more than five times a second"); return false; }
+            string cut = text.Length > 120 ? text.Substring(0, 120) : text;
+            Player p = w.Loaded;
+            if (Chat.instance != null && p != null) Chat.instance.SetNpcText(p.gameObject, Vector3.up * 2.2f, 30f, 6f, w.Name, cut, false);
+            Mp.Remote.FxTalk(w.Id, w.Pos, w.Name, cut);
             return true;
         }
 

@@ -189,6 +189,34 @@ function _pump(limit) {
             Compiled u = Compiler.Compile(Prog(Do(B("on_join"), unknown)));
             Check(!u.Ok && u.Problems.Any(p => p.Block == unknown), "an unknown block is a problem");
 
+            // a number outside its slot's range: a warning on the block that says the limit, and the code uses the nearest number that fits
+            Block big = B("wait", ("n", "5000"));
+            Compiled bc = Compiler.Compile(Prog(Do(B("on_join"), big, B("announce", ("text", "x")))));
+            Problem bp = bc.Problems.FirstOrDefault(p => p.Block == big);
+            Check(bc.Ok && bp != null && !bp.Fatal && bp.Message.Contains("at most"), "a number over its slot's most is a warning on the block: " + (bp != null ? bp.Message : "none"));
+            Block small = B("drop_item", ("n", "0"), ("item", "Wood"));
+            Compiled sc = Compiler.Compile(Prog(Do(B("on_kill"), In(small, "pos", B("ev_pos")))));
+            Check(sc.Problems.Any(p => p.Block == small && !p.Fatal && p.Message.Contains("at least 1")) && sc.Js.Contains("_bDrop(\"Wood\", 1,"), "a number under its slot's least is a warning and runs as the least: " + string.Join("; ", sc.Problems.Select(p => p.Message)));
+            Block hundred = B("drop_item", ("n", "100"), ("item", "Wood"));
+            Compiled hc = Compiler.Compile(Prog(Do(B("on_kill"), In(hundred, "pos", B("ev_pos")))));
+            Check(hc.Ok && !hc.Problems.Any(p => p.Block == hundred) && hc.Js.Contains("_bDrop(\"Wood\", 100,"), "drop takes 100 (the owner's setting decides how many really fall)");
+            Block thousand = In(B("give", ("n", "5000"), ("item", "Wood")), "who", B("ev_player"));
+            Compiled tc = Compiler.Compile(Prog(Do(B("on_join"), thousand)));
+            Check(tc.Ok && tc.Problems.Any(p => p.Block == thousand && p.Message.Contains("at most 1000")) && tc.Js.Contains("1000"), "give over 1000 says so and gives 1000");
+            Block fine = B("wait", ("n", "2"));
+            Check(!Compiler.Compile(Prog(Do(B("on_join"), fine))).Problems.Any(p => p.Block == fine), "a number inside its range is no problem");
+
+            // what each 'when' block gives (the editor shows these at the top of the palette while its stack is selected)
+            Check(Defs.Gives("on_chat").Any(d => d.Id == "ev_player") && Defs.Gives("on_chat").Any(d => d.Id == "ev_text"), "saying something gives the player and the words");
+            Check(new[] { "ev_player", "ev_pos", "ev_wood_kind", "ev_wood" }.All(id => Defs.Gives("on_tree_felled").Any(d => d.Id == id)) && Defs.Gives("on_log_broken").Any(d => d.Id == "ev_splits"), "the tree and log events give the player, the place, the kind and the wood");
+            Check(Defs.Gives("on_command").Any(d => d.Id == "ev_args") && Defs.Gives("on_signal").Any(d => d.Id == "ev_signal"), "a command gives its words, a signal its value");
+            List<BlockDef> hit = Defs.Gives("on_hit");
+            Check(hit.Any(d => d.Id == "set_damage") && hit.FindIndex(d => d.Id == "set_damage") > hit.FindIndex(d => d.Id == "ev_damage"), "a hit gives its values first, then what only it can do");
+            Check(!Defs.Gives("on_morning").Any(d => d.Id == "ev_player") && Defs.Gives("every").Count == 0, "morning has no player, a timer gives nothing");
+            foreach (BlockDef h in Defs.All.Where(d => d.Shape == Shape.Hat))
+                foreach (BlockDef g in Defs.Gives(h.Id))
+                    Check(g.Scope.Contains(h.Id) && g.Shape != Shape.Hat, h.Id + " gives " + g.Id);
+
             Compiled loose = Compiler.Compile(new Program { Tops = { new Program.Top { Chain = { B("announce", ("text", "x")) } } } });
             Check(loose.Ok && loose.Problems.Any(p => !p.Fatal), "loose blocks are only a warning");
             Check(!loose.Js.Contains("broadcast"), "loose blocks make no code");
@@ -200,7 +228,7 @@ function _pump(limit) {
         private static void NumbersAreClamped()
         {
             Compiled c = Compiler.Compile(Prog(Do(B("on_join"), In(In(B("give", ("n", "99999"), ("item", "Wood")), "who", B("ev_player")), "who", B("ev_player")))));
-            Check(c.Ok && c.Js.Contains("_bGive(e.player, \"Wood\", 10)"), "the amount is cut to the slot's top (10): " + c.Js);
+            Check(c.Ok && c.Js.Contains("_bGive(e.player, \"Wood\", 1000)") && c.Problems.Any(p => !p.Fatal && p.Message.Contains("at most 1000")), "the amount is cut to the slot's top (1000), and the block says so: " + c.Js);
             Compiled w = Compiler.Compile(Prog(Do(B("on_start"), B("weather", ("kind", "rain"), ("n", "-4")))));
             Check(w.Ok && w.Js.Contains("world.setWeather(\"rain\", 1 * 60)"), "a negative time is raised to the lowest");
             Compiled nan = Compiler.Compile(Prog(Do(B("on_start"), B("weather", ("kind", "rain"), ("n", "abc")))));

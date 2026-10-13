@@ -61,12 +61,12 @@ namespace Scripts
             Fn(s, "biomeAt", a => Text(WorldGen(Where(s, Arg(a, 0)))));
 
             // looking things up
-            Fn(s, "players", a => Array(e, Player.GetAllPlayers().Select(p => Handles.Actor(s, p)).ToArray()));
+            Fn(s, "players", a => Array(e, Roster.All().Select(w => Handles.PlayerActor(s, w)).ToArray()));   // (every player in the world, not only those near this game's own)
             Fn(s, "findPlayer", a =>
             {
                 string name = Str(a, 0, 40);
-                Player p = Player.GetAllPlayers().FirstOrDefault(x => string.Equals(x.GetPlayerName(), name, StringComparison.OrdinalIgnoreCase));
-                return p == null ? JsValue.Null : Handles.Actor(s, p);
+                Who w = Roster.Named(name);
+                return w == null ? JsValue.Null : Handles.PlayerActor(s, w);
             });
             Fn(s, "findById", a => Extras.FindById(s, Str(a, 0, 64)));
             Fn(s, "nearbyCreatures", a => NearbyCreatures(s, Where(s, Arg(a, 0)), N(a, 1), Arg(a, 2)));

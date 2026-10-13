@@ -47,7 +47,7 @@ namespace Scripts.Blocks
         internal Slot SlotOf(string key) => Parts.Where(p => p.Slot != null && p.Slot.Key == key).Select(p => p.Slot).FirstOrDefault();
 
         /// <summary>
-        /// "give {who:sock:player} {n:num:1:1:10} {item:pick:items}": words and {key:kind:args} slots. num: default:min:max. text: default.
+        /// "give {who:sock:player} {n:num:1:1:1000} {item:pick:items}": words and {key:kind:args} slots. num: default:min:max. text: default.
         /// pick: list:default. sock: type. body: nothing more. Translations use the same markup, and must keep the same slot keys.
         /// </summary>
         internal static List<Part> ParseLabel(string label)
@@ -283,9 +283,9 @@ namespace Scripts.Blocks
             Stack("say", "actions", "say {text:text:Hello!} to {who:sock:player}", "messages", "_bSay(@who, @text)");
             Stack("announce", "actions", "announce {text:text:Hello!}", "messages", "broadcast(@text)");
             Stack("log", "actions", "write {text:text} in the log", null, "log(@text)");
-            Stack("give", "actions", "give {who:sock:player} {n:num:1:1:10} {item:pick:items}", "items", "_bGive(@who, @item, @n)");
+            Stack("give", "actions", "give {who:sock:player} {n:num:1:1:1000} {item:pick:items}", "items", "_bGive(@who, @item, @n)");
             Stack("take", "actions", "take {n:num:1:1:10} {item:pick:items} from {who:sock:player}", "takeItems", "_bTake(@who, @item, @n)", danger: true);
-            Stack("drop_item", "actions", "drop {n:num:1:1:10} {item:pick:items} at {pos:sock:pos}", "spawn", "_bDrop(@item, @n, @pos)");
+            Stack("drop_item", "actions", "drop {n:num:1:1:1000} {item:pick:items} at {pos:sock:pos}", "spawn", "_bDrop(@item, @n, @pos)");
             Stack("spawn", "actions", "spawn a {creature:pick:creatures} near {pos:sock:pos}", "spawn", "_bSpawn(@creature, @pos)");
             Stack("spawn_star", "actions", "spawn a {stars:num:1:1:3}-star {creature:pick:creatures} near {pos:sock:pos}", "spawn", "_bSpawn(@creature, @pos, @stars)");
             Stack("weather", "actions", "set the weather to {kind:pick:weathers} for {n:num:2:1:30} minutes", "weather", "world.setWeather(@kind, @n * 60)");
@@ -338,5 +338,13 @@ namespace Scripts.Blocks
         }
 
         internal static IEnumerable<BlockDef> In(string category) => All.Where(d => d.Category == category);
+
+        /// <summary>
+        /// What a 'when' block gives the blocks under it: the blocks that only work under that hat (its values first: the player, what was
+        /// said, the place...; then the actions only it has, like changing a hit's damage). The editor shows these at the top of the palette
+        /// while a block of that stack is selected.
+        /// </summary>
+        internal static List<BlockDef> Gives(string hat) =>
+            All.Where(d => d.Shape != Shape.Hat && d.Scope != null && d.Scope.Contains(hat)).OrderBy(d => d.Shape == Shape.Value ? 0 : 1).ToList();
     }
 }

@@ -53,7 +53,7 @@ namespace Scripts
             string why = Unsafe(go, prefab);
             if (why.Length > 0) return Refused(s, why);
             if (!Players.NearAPlayer(pos, 100f)) return Refused(s, "that place is too far from every player");
-            if (!ZoneSystem.instance.IsZoneLoaded(pos)) return Refused(s, "that place is not loaded");
+            if (!ZoneSystem.instance.IsZoneLoaded(pos)) return Refused(s, "that place is not loaded on the game that runs the scripts (it is far from its own player: placing things near a player who is far away is not possible yet)");
             if (!PrivateArea.CheckAccess(pos, 0f, false, false)) return Refused(s, "that place is inside a ward");
             int per = Limits.PiecesPerMinute;
             if (!Players.Rate(s, "piece", per / 60.0, per)) return Refused(s, "too many pieces a minute (" + per + " is the limit; the owner can change it in the Blockscript settings)");

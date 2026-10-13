@@ -44,6 +44,10 @@ namespace Scripts.Mp
 
         internal static PlayerState StateOf(Player p) => p == null ? null : States.Get(p.GetOwner());
 
+        internal static bool IsRemote(Who w) => w != null && w.Remote;
+
+        internal static PlayerState StateOf(Who w) => w == null || !w.Remote ? null : States.Get(w.Peer);
+
         private static string NoAgent(string name) => name + "'s game does not have Quad's Blockscript, so this cannot reach them";
 
         private static void Fail(Script s, string who, string why) => Host.Refuse(s, who + ": " + why);
@@ -58,9 +62,11 @@ namespace Scripts.Mp
             Audit.Add(s, string.Format(audit, f.N("n")));
         }
 
-        internal static int Give(Script s, Player p, string prefab, int n)
+        internal static int Give(Script s, Who p, string prefab, int n)
         {
-            long peer = p.GetOwner(); string who = Handles.Id(p), name = p.GetPlayerName();
+            long peer = p.Peer; string who = p.Id, name = p.Name;
+            int most = Lists.Most(prefab);
+            if (most > 0) n = Players.Cut(s, prefab, n, most, "gift");
             Outcome o = Asker.Give(peer, prefab, n, Players.HourlyLeft(s, who, "give", Limits.ItemsPerHour), k => Players.HourlyUse(s, who, "give", k), (got, why) =>
             {
                 if (got > 0) Audit.Add(s, $"gave {got} {prefab} to {name}");
@@ -70,9 +76,9 @@ namespace Scripts.Mp
             return (int)o.Value;
         }
 
-        internal static int Take(Script s, Player p, string prefab, int n)
+        internal static int Take(Script s, Who p, string prefab, int n)
         {
-            long peer = p.GetOwner(); string who = Handles.Id(p), name = p.GetPlayerName();
+            long peer = p.Peer; string who = p.Id, name = p.Name;
             PlayerState st = States.Get(peer);
             Outcome o = Asker.Take(peer, prefab, n, st != null ? st.Count(prefab) : -1, Players.HourlyLeft(s, who, "take", 20), k => Players.HourlyUse(s, who, "take", k), (got, why) =>
             {
@@ -84,82 +90,82 @@ namespace Scripts.Mp
         }
 
         /// <summary>How many of an item a player has, from the report their game sent (up to a few seconds old; 0 and one note in the log when none came yet).</summary>
-        internal static int Count(Player p, string prefab)
+        internal static int Count(Who p, string prefab)
         {
-            PlayerState st = States.Get(p.GetOwner());
+            PlayerState st = States.Get(p.Peer);
             if (st == null)
             {
-                if (WarnedNoState.Add(p.GetOwner())) Core.Log.LogInfo("Scripts (multiplayer): no report from " + p.GetPlayerName() + "'s game yet, so their bag reads as empty until one comes");
+                if (WarnedNoState.Add(p.Peer)) Core.Log.LogInfo("Scripts (multiplayer): no report from " + p.Name + "'s game yet, so their bag reads as empty until one comes");
                 return 0;
             }
             return st.Count(prefab);
         }
 
-        private static bool Ask(Script s, Player p, string op, JObject args, string what, string audit)
+        private static bool Ask(Script s, Who p, string op, JObject args, string what, string audit)
         {
-            string name = p.GetPlayerName();
-            string why = Asker.Act(p.GetOwner(), op, args, f => Done(s, name, what, f, audit));
+            string name = p.Name;
+            string why = Asker.Act(p.Peer, op, args, f => Done(s, name, what, f, audit));
             if (why.Length > 0) { Fail(s, name, NoAgent(name)); return false; }
             return true;
         }
 
-        internal static double Heal(Script s, Player p, double n)
+        internal static double Heal(Script s, Who p, double n)
         {
             Verdict v = Validate.Heal(n);
             if (!v.Ok) return 0.0;
-            return Ask(s, p, "heal", new JObject { ["n"] = v.N }, "heal", "healed " + p.GetPlayerName() + " by {0:0}") ? v.N : 0.0;
+            return Ask(s, p, "heal", new JObject { ["n"] = v.N }, "heal", "healed " + p.Name + " by {0:0}") ? v.N : 0.0;
         }
 
-        internal static double Hurt(Script s, Player p, double n)
+        internal static double Hurt(Script s, Who p, double n)
         {
-            if (!Players.Rate(s, "hurt-" + Handles.Id(p), 1.0, 1.0)) { Host.Refuse(s, "damage to a player more than once a second"); return 0.0; }
-            Verdict v = Validate.Hurt(n, p.GetHealth());
+            if (!Players.Rate(s, "hurt-" + p.Id, 1.0, 1.0)) { Host.Refuse(s, "damage to a player more than once a second"); return 0.0; }
+            Verdict v = Validate.Hurt(n, p.Health);
             if (!v.Ok) return 0.0;
-            return Ask(s, p, "hurt", new JObject { ["n"] = v.N }, "hurt", "hurt " + p.GetPlayerName() + " by {0:0}") ? v.N : 0.0;
+            return Ask(s, p, "hurt", new JObject { ["n"] = v.N }, "hurt", "hurt " + p.Name + " by {0:0}") ? v.N : 0.0;
         }
 
-        internal static bool Teleport(Script s, Player p, Vector3 pos)
+        internal static bool Teleport(Script s, Who p, Vector3 pos)
         {
-            if (!Players.Rate(s, "tp-" + Handles.Id(p), 0.1, 1.0)) { Host.Refuse(s, "teleports more than once in ten seconds"); return false; }
-            return Ask(s, p, "teleport", new JObject { ["x"] = pos.x, ["z"] = pos.z }, "teleport", "teleported " + p.GetPlayerName() + " to " + pos.x.ToString("0") + "," + pos.z.ToString("0"));
+            if (!Players.Rate(s, "tp-" + p.Id, 0.1, 1.0)) { Host.Refuse(s, "teleports more than once in ten seconds"); return false; }
+            return Ask(s, p, "teleport", new JObject { ["x"] = pos.x, ["z"] = pos.z }, "teleport", "teleported " + p.Name + " to " + pos.x.ToString("0") + "," + pos.z.ToString("0"));
         }
 
-        internal static bool Stamina(Script s, Player p, double value)
+        internal static bool Stamina(Script s, Who p, double value)
         {
             Verdict v = Validate.Stamina(value, 10000.0);
-            return v.Ok && Ask(s, p, "stamina", new JObject { ["n"] = v.N }, "stamina", "set " + p.GetPlayerName() + "'s stamina to {0:0}");
+            return v.Ok && Ask(s, p, "stamina", new JObject { ["n"] = v.N }, "stamina", "set " + p.Name + "'s stamina to {0:0}");
         }
 
-        internal static bool Effect(Script s, Player p, string name, double seconds)
+        internal static bool Effect(Script s, Who p, string name, double seconds)
         {
             Verdict v = Validate.Effect(name, seconds);
             if (!v.Ok) { Host.Refuse(s, v.Why); return false; }
             int per = Limits.StatusEffectsPerMinute;
             if (!Players.Rate(s, "effects", per / 60.0, per)) { Host.Refuse(s, "too many status effects a minute (" + per + " is the limit; the owner can change it in the Scripts settings)"); return false; }
-            return Ask(s, p, "effect+", new JObject { ["name"] = name, ["s"] = v.N }, "status effect", "gave " + name + " to " + p.GetPlayerName() + " for {0:0} s");
+            return Ask(s, p, "effect+", new JObject { ["name"] = name, ["s"] = v.N }, "status effect", "gave " + name + " to " + p.Name + " for {0:0} s");
         }
 
-        internal static bool RemoveEffect(Script s, Player p, string name)
+        internal static bool RemoveEffect(Script s, Who p, string name)
         {
             Verdict v = Validate.EffectOff(name);
             if (!v.Ok) { Host.Refuse(s, v.Why); return false; }
-            return Ask(s, p, "effect-", new JObject { ["name"] = name }, "removing an effect", "took " + name + " off " + p.GetPlayerName());
+            return Ask(s, p, "effect-", new JObject { ["name"] = name }, "removing an effect", "took " + name + " off " + p.Name);
         }
 
-        internal static bool Launch(Script s, Player p, Vector3 dir, double force)
+        internal static bool Launch(Script s, Who p, Vector3 dir, double force)
         {
             if (!Players.Rate(s, "launch", 2.0, 2.0)) { Host.Refuse(s, "shoves more than twice a second"); return false; }
             Verdict v = Validate.Launch(dir.x, dir.y, dir.z, force);
             if (!v.Ok) return false;
-            return Ask(s, p, "launch", new JObject { ["dx"] = dir.x, ["dy"] = dir.y, ["dz"] = dir.z, ["f"] = v.N }, "a shove", "shoved " + p.GetPlayerName() + " at {0:0} m/s");
+            return Ask(s, p, "launch", new JObject { ["dx"] = dir.x, ["dy"] = dir.y, ["dz"] = dir.z, ["f"] = v.N }, "a shove", "shoved " + p.Name + " at {0:0} m/s");
         }
 
         /// <summary>The big banner on one player's screen: their game shows it (when it allows), else the plain centre message every game understands.</summary>
-        internal static bool Banner(Script s, Player p, string text)
+        internal static bool Banner(Script s, Who p, string text)
         {
             text = Validate.Text(text, 60);
-            if (Wire.HasAgent(p.GetOwner())) return Ask(s, p, "banner", new JObject { ["text"] = text }, "a banner", "showed a banner to " + p.GetPlayerName());
-            p.Message(MessageHud.MessageType.Center, text);   // (a vanilla game: the game's own message, which reaches them)
+            if (Wire.HasAgent(p.Peer)) return Ask(s, p, "banner", new JObject { ["text"] = text }, "a banner", "showed a banner to " + p.Name);
+            Players.MessageTo(p, MessageHud.MessageType.Center, text);   // (a vanilla game: the game's own message, which reaches them)
             return true;
         }
 
@@ -199,7 +205,7 @@ namespace Scripts.Mp
         // ================================================================ what every player's game shows
 
         private static IEnumerable<long> AgentsNear(Vector3 pos, float range) =>
-            Wire.AgentPeers().Where(peer => PlayerOf(peer) is Player pl && Vector3.Distance(pl.transform.position, pos) <= range).ToList();
+            Wire.AgentPeers().Where(peer => Roster.OfPeer(peer) is Who w && Vector3.Distance(w.Pos, pos) <= range).ToList();   // (wherever the player is, loaded here or not)
 
         private static void Fx(IEnumerable<long> to, JObject args) { if (Wire.IsServer) Asker.Fx(to, args); }
 
@@ -223,8 +229,10 @@ namespace Scripts.Mp
 
         internal static void FxBanner(string text) => Fx(Wire.AgentPeers(), new JObject { ["op"] = "banner", ["text"] = Validate.Text(text, 60) });
 
-        internal static void FxTalk(Character c, string name, string text) =>
-            Fx(AgentsNear(c.transform.position, 60f), new JObject { ["op"] = "talk", ["id"] = Handles.Id(c), ["name"] = Validate.Text(name, 30), ["text"] = Validate.Text(text, 120) });
+        internal static void FxTalk(Character c, string name, string text) => FxTalk(Handles.Id(c), c.transform.position, name, text);
+
+        internal static void FxTalk(string id, Vector3 pos, string name, string text) =>
+            Fx(AgentsNear(pos, 60f), new JObject { ["op"] = "talk", ["id"] = id, ["name"] = Validate.Text(name, 30), ["text"] = Validate.Text(text, 120) });
 
         internal static void FxName(Character c, string text) => Fx(Wire.AgentPeers(), new JObject { ["op"] = "name", ["id"] = Handles.Id(c), ["text"] = Validate.Text(text, 24) });
 
@@ -371,7 +379,7 @@ namespace Scripts.Mp
         private static void Dispatch(Frame f)
         {
             string name = f.S("e"), subject = f.S("sub");
-            Player player = subject.IndexOf(':') < 0 ? Handles.Find(subject) as Player : null;
+            Who player = subject.IndexOf(':') < 0 ? Roster.Of(subject) : null;   // (a player wherever they are: their character need not be loaded here)
             switch (name)
             {
                 case "kill":
@@ -394,7 +402,7 @@ namespace Scripts.Mp
                 case "tamed":
                     {
                         Character creature = Handles.Find(subject);
-                        Player tamer = Handles.Find(f.S("by")) as Player;
+                        Who tamer = Roster.Of(f.S("by"));
                         if (creature != null && tamer != null) NewEvents.FireTamed(creature, tamer);
                         return;
                     }
@@ -407,8 +415,8 @@ namespace Scripts.Mp
                             Id = subject, Prefab = Validate.Text(f.S("pf"), 60), Wood = Validate.Text(f.S("wood"), 60), Splits = f.B("split"), Pos = PosOf(f),
                         };
                         w.Kind = NewEvents.KindOf(w.Prefab);
-                        Player by = f.S("by").Length > 0 ? Handles.Find(f.S("by")) as Player : null;
-                        if (by != null && Vector3.Distance(by.transform.position, w.Pos) > 80f) by = null;
+                        Who by = Roster.Of(f.S("by"));
+                        if (by != null && Vector3.Distance(by.Pos, w.Pos) > 80f) by = null;
                         if (name == "treeFelled") NewEvents.FireTree(w, by); else NewEvents.FireLog(w, by);
                         return;
                     }

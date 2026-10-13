@@ -24,4 +24,4 @@ Together
 
 Nine example scripts come with it, all made of blocks: The Wild Hunt, Meteor Shower, Treasure Hunt, Lucky Boars, Fine Wood from logs, Welcome Wagon, Boss Announcer, Weather Event and Kill Streaks.
 
-Settings: the limits (spawns, effects, pieces and status effects a minute, creatures alive, items an hour), which raids a script may start, web addresses it may send to, scripts a dedicated server starts by itself, and the switches for what a server's scripts may do to your character; the editor's hotkey, for you.
+Settings: the limits (spawns, effects, pieces and status effects a minute, creatures alive, items an hour and in one gift), which raids a script may start, web addresses it may send to, scripts a dedicated server starts by itself, and the switches for what a server's scripts may do to your character; the editor's hotkey, for you.
