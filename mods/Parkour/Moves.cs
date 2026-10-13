@@ -96,6 +96,8 @@ namespace Parkour
             _wall = _touch = default;
             _ledge = default;
             _sheathed = _kicked = _forwardFresh = false;
+            _offLedgeAt = -10f;
+            _putAwayAgain = 0;
             _touchAt = _kickAt = _letGoAt = _climbEndAt = _otherClimbAt = _jumpAt = _crouchAt = _slideAt = _slideEndAt = -10f;
             _kicks = 0;
             _record = null;
@@ -165,22 +167,58 @@ namespace Parkour
 
         private static readonly Action<Humanoid, bool, bool> ShowHandItems =
             AccessTools.MethodDelegate<Action<Humanoid, bool, bool>>(AccessTools.Method(typeof(Humanoid), "ShowHandItems"));
+        private static readonly AccessTools.FieldRef<Humanoid, ItemDrop.ItemData> RightItem = AccessTools.FieldRefAccess<Humanoid, ItemDrop.ItemData>("m_rightItem");
+        private static readonly AccessTools.FieldRef<Humanoid, ItemDrop.ItemData> LeftItem = AccessTools.FieldRefAccess<Humanoid, ItemDrop.ItemData>("m_leftItem");
         private static bool _sheathed;   // we put the weapons away for a hang: they come back out when it's over
+        private static float _offLedgeAt = -10f;   // when the hands left the edge with the weapons still away (below 0: on it, or nothing away)
+        private static int _putAwayAgain;          // weapons drawn and put away again during this hang
+        private static bool _toldFight, _toldRegrab;
+        private const float DrawAfter = 0.3f;      // off the edge this long before the weapons come back out
+        private const int PutAwayAgainMax = 2;     // then whatever keeps drawing them wins (no fight, every step, with another mod)
 
         /// <summary>
         /// Hanging and pulling up, the hands hold the edge: what they held goes on the back, as the game's own "hide weapons" does (shared with
-        /// everyone), and again if a hotbar key draws something meanwhile. Off the ledge, it comes back out.
+        /// everyone), and again if a hotbar key draws something meanwhile. Off the ledge a moment, it comes back out: a hang that ends and
+        /// starts again at once (a step that refused the move, then caught the edge again) left them drawn and put away every step.
         /// </summary>
         private static void Hands(Player p)
         {
             bool onLedge = State == Move.Hang || State == Move.PullUp;
             if (onLedge)
             {
-                if (p.HideHandItems(false, false)) _sheathed = true;   // (does nothing, and says false, when the hands are empty)
+                if (_offLedgeAt >= 0f && !_toldRegrab)
+                {
+                    _toldRegrab = true;
+                    Plugin.Log.LogInfo($"Parkour: back on a ledge {Time.time - _offLedgeAt:0.00} s after the last move ended ({LastEnded()}): the weapons stay away");
+                }
+                _offLedgeAt = -10f;
+                if (!_sheathed) { if (p.HideHandItems(false, false)) { _sheathed = true; _putAwayAgain = 0; } return; }   // (false: the hands were empty)
+                if (RightItem(p) == null && LeftItem(p) == null) return;
+                // drawn again on the edge: a hotbar key, or another mod drawing them every step (then they stay out, and the log says so)
+                if (_putAwayAgain >= PutAwayAgainMax)
+                {
+                    if (!_toldFight) { _toldFight = true; Plugin.Log.LogWarning($"Parkour: something keeps drawing {Held(p)} during a hang (another mod?): left in the hands"); }
+                    return;
+                }
+                _putAwayAgain++;
+                p.HideHandItems(false, false);
                 return;
             }
-            if (_sheathed) { _sheathed = false; if (!p.IsDead()) ShowHandItems?.Invoke(p, false, true); }
+            if (!_sheathed) { _offLedgeAt = -10f; return; }
+            if (_offLedgeAt < 0f) _offLedgeAt = Time.time;
+            if (Time.time - _offLedgeAt < DrawAfter && !p.IsDead()) return;
+            _sheathed = false;
+            _offLedgeAt = -10f;
+            if (!p.IsDead()) ShowHandItems?.Invoke(p, false, true);
         }
+
+        private static string Held(Player p)
+        {
+            ItemDrop.ItemData right = RightItem(p), left = LeftItem(p);
+            return right != null && left != null ? right.m_shared.m_name + " and " + left.m_shared.m_name : (right ?? left).m_shared.m_name;
+        }
+
+        private static string LastEnded() => Done.Count > 0 ? Done[Done.Count - 1].Move + ": " + Done[Done.Count - 1].Ended : "none";
 
         /// <summary>On unload: what a hang put away comes back out.</summary>
         public static void GiveHandsBack()

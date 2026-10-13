@@ -6,7 +6,7 @@ schemaVersion = "0.0.1"
 [package]
 namespace = "Quads_Lab"
 name = "Quads_Parkour"
-versionNumber = "0.1.2"
+versionNumber = "0.1.3"
 description = "Parkour and free running: wall run, wall jump, climb walls, grab and hang from ledges, shimmy, vault, slide and roll, with a Parkour skill and a blue parkour bar instead of stamina."
 websiteUrl = "https://github.com/HardHeadHackerHead/valheim-mods/tree/main/mods/Parkour"
 containsNsfwContent = false
