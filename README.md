@@ -442,7 +442,7 @@ hold each gun. No ammunition to craft yet. Everyone in the world needs it.
 Make your own game rules by snapping blocks together, no coding needed: "when a boar dies, maybe give honey", "every 20 minutes turn the weather", a
 three-minute monster hunt with a leaderboard. Press **Home** for the editor (palette, workspace, code view, log and limits), or write JavaScript if you prefer.
 Scripts run on the server in a safe sandbox with limits the owner sets, admins edit them from their own game, and several people can edit one script
-together. The server needs it; players who have it get items, healing and effects on their own game. Not yet tested between two real games.
+together. The server needs it; players who have it get items, healing and effects on their own game. Tested with two players on a listen server; not yet on a dedicated server.
 
 **[More: how it works, settings and screenshots →](mods/Blockscript/README.md)**
 

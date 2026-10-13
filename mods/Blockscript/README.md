@@ -24,6 +24,7 @@ Press Home and make your own game rules out of blocks, or type JavaScript if you
 - A palette of 221 blocks in 11 tabs (events, control, values, text, lists, players, world, effects, actions, memory, my blocks) with a search box. Drag blocks onto a stack, change a number or pick an item from a list, and press Run.
 - Waits, signals, lists, loops, your own blocks with inputs, math and text, all compiled to the same JavaScript you could type. Open the Code page to see it.
 - Zoom, tidy up, collapse a stack, undo and redo, copy a block, and red blocks that point at what is wrong.
+- Click a "when" block and the top of the palette shows what that event gives you (the player, what was said, the place...), ready to drag. A number too big or too small for its block turns red and says what it will run as.
 - A log page for whoever writes the script: levels, the script's own lines, errors with their line (and the block they came from), a trace switch, filters and a copy button. A limits panel shows what the world's owner allows.
 
 ### What a script can do
@@ -39,7 +40,7 @@ Press Home and make your own game rules out of blocks, or type JavaScript if you
 
 ### Together
 
-- Scripts run on the server (single player, the host, or a dedicated server). Players who have the mod get items, healing and effects on their own game, with their own switches for the risky ones; players without it still see the messages, the weather and the creatures.
+- Scripts run on the server (single player, the host, or a dedicated server) and know every player wherever they are in the world, not only those near the host. Players who have the mod get items, healing and effects on their own game, with their own switches for the risky ones; players without it still see the messages, the weather and the creatures.
 - Admins edit the server's scripts from their own game, and several admins can edit one script live: you see each other's blocks, pointers and names, and blocks someone is moving are held for them.
 - Works with Quad's Terminal: a Blockscript program on the computer, and scripts that steer its Proxy character.
 
@@ -95,6 +96,8 @@ Your scripts are plain files in `BepInEx/config/Blockscript/`: `NAME.blocks.json
 - **Palette tabs** on the left: Events (the yellow "when" blocks), Control (if, repeat, for each, after), Values, Text, Lists, Players, World, Effects, Actions, Memory and My blocks. The **Search** box finds a block in any tab by its words. Dragging a block back onto the palette deletes it.
 - **Workspace** in the middle: drag blocks onto a stack and they snap in. **-** and **+** zoom (50% to 150%), **Fit** shows everything, **Tidy up** puts the stacks in columns. The arrow beside a "when" block collapses the stack to one line. A **note** block is a sticky comment.
 - **Toolbar:** Undo, Redo, Copy (duplicates the selected block), Remove, **Code** (the generated JavaScript, with line numbers and colours, Find and Copy code), **Run**, **Stop**. The header shows how many blocks and how much code the script has (at most 1500 blocks and 120 KB).
+- **What an event gives you:** click a "when" block (or any block under it) and the top of the palette shows "This event gives you": the player, what was said, the place, the kind of tree and so on, ready to drag into a socket. When nothing is selected, the palette says where to look.
+- **Numbers out of range:** every number box has a smallest and a largest value (give and drop take 1 to 1000, for example). A number outside it turns red, the block says what it will run as ("At most 1000 here: it runs as 1000."), and it shows in the problems list as a warning.
 - **Names...** (in the Memory, Lists and My blocks tabs) lists your variables, lists and my-blocks with how often each is used, and renames or deletes them.
 - **Side panel:** the **problems** list (click one to jump to the red block), the **powers** the script wants, the world's **limits** for those powers, and the **log**.
 
@@ -172,11 +175,14 @@ This is an early release, tested in single player (with a real restart) and by t
 
 - **Some effect names:** every listed visual effect (46), sound (24), status effect (14) and decoration (27) was tried in the game and works. Rested, Resting, Shelter, Warm, Cold and Freezing work on players only and are refused on creatures.
 - **Not built:** a gallery of shared scripts, a world backup before a script's first run, a safe mode after a crash, an editable text editor inside the game (type in any editor and use **Paste code**, or save the file), and turning code back into blocks. `wait` is compiled to timers, so a handler that waits cannot be used for `hit` or `stop`.
+- **Far from the host:** a player far from the host counts for everything (chat, events, gifts, banners, healing, effects), but spawning creatures or placing decorations next to them is refused while the host is far away, because that ground is not loaded on the host's game. The log says so.
 - **Web messages (`net.send`)** are off unless the world's owner lists web addresses in the settings; a script can only send short text to those, nothing else leaves the game.
 
 ### Troubleshooting
 
 - **Something did less than it should (two boars became one).** Open the log page and look at the orange **LIMIT** lines: they name the limit and the setting that changes it. The script was told no, not broken. Raise the limit in `com.quad.blockscript.cfg`, or have the script do less.
+- **It gave 10 when I asked for 100.** One gift or drop is at most 10 of an item by default (less for some: 5 cooked meat). Raise **Most items in one gift or drop** in the settings (up to 1000), and **Items given per hour per script** if it gives often. The log says how many it got and which setting to change.
+- **A red number.** It is outside what that block takes; the block says what it runs as. Type a number in range.
 - **A red block.** Click it in the problems list on the right: it says what is wrong (an empty socket, a value of the wrong kind, a block used outside the "when" it belongs to).
 - **An error in the log.** Errors name the event it happened in and the line of the generated code; open the line for the stack and use **Go to the block**. Five errors in a minute pauses the script (it says so); fix it and press **Run**.
 - **Nothing happens when I press Home.** You must be in a world, not at the menu; check the hotkey in the settings; try the console command `blockscript`. If the window ever fails it closes itself and the game's log (`BepInEx/LogOutput.log`) says why.
@@ -209,7 +215,7 @@ Found a clash with another mod? [Tell us](https://github.com/HardHeadHackerHead/
 It carries its scripting engine inside its own DLL and loads it when the game starts, and the game cannot swap that out while it runs. Restart the game after installing it or updating it (a reload in the mod manager is not enough the first time).
 
 <!-- HAND-WRITTEN: multiplayer -->
-**Status (0.1.5): tested with two players on a listen server** (the host and one other player, both with the mod). What was checked in the game: scripts acting on the other player through their game (reading their health, bag and gear; a banner, a speech bubble, giving an item, a status effect; taking an item and a shove refused by their settings), every event their game reports (picking up, building, hits, kills, eating, chat), kills reaching scripts one after another, an admin editing the server's scripts from their own game, and two people editing one block script live. The first two-player session found and fixed eight problems (0.1.1 to 0.1.5, see Recent changes). **Not tested yet:** a dedicated server, a player who is not an admin (the read-only view), the stale-save check on plain code, and a long session with many players.
+**Status (0.1.5): tested with two players on a listen server** (the host and one other player, both with the mod). What was checked in the game: scripts acting on the other player through their game (reading their health, bag and gear; a banner, a speech bubble, giving an item, a status effect; taking an item and a shove refused by their settings), every event their game reports (picking up, building, hits, kills, eating, chat), kills reaching scripts one after another, an admin editing the server's scripts from their own game, and two people editing one block script live. The first two-player session found and fixed eight problems (0.1.1 to 0.1.5, see Recent changes). **Players far from the host (0.1.7):** before 0.1.7 the scripts only knew players within about a hundred metres of the host (chat, events and `players()` missed anyone further away). They now know every player by their connection, wherever they are. Both players were listed with their place and health in the game; a far-away player's chat and gifts are built but not yet tried at a distance. **Not tested yet:** a dedicated server, a player who is not an admin (the read-only view), the stale-save check on plain code, and a long session with many players.
 
 **Where scripts run.** On the game that runs the world: single player, the host of a listen server, or a dedicated server. Other players' games do not run scripts; they are asked to do things.
 
@@ -224,7 +230,7 @@ It carries its scripting engine inside its own DLL and loads it when the game st
 
 **Dedicated servers.** There is no screen on a dedicated server to press Run on, so list the scripts to start in the server's `com.quad.blockscript.cfg`, `Server` section, `Scripts to start when the world starts` (names, comma separated); they start about ten seconds after the world is ready. Put the scripts in the server's `BepInEx/config/Blockscript/` and allow their powers once (the `approvals.txt` next to them is what holds the allowed powers; copy it from a game where you allowed them).
 
-**Good to know.** An action on another player (give, take, heal, teleport...) is answered by their game a moment later: the value a script gets back at once is what was asked for, and if their game says no (their settings, a full bag) the script's log gets a LIMIT line naming them. Speech bubbles, camera shake and creature names are sent to every game with the mod; the map ping is the game's own and everyone sees it.
+**Good to know.** An action on another player (give, take, heal, teleport...) is answered by their game a moment later: the value a script gets back at once is what was asked for, and if their game says no (their settings, a full bag) the script's log gets a LIMIT line naming them. Speech bubbles, camera shake and creature names are sent to every game with the mod; the map ping is the game's own and everyone sees it. A player far from the host is known by their connection: their place and health come from the world, and gifts, messages, healing and effects go to their own game. Spawning creatures or placing things next to a player far from the host is refused (that ground is not loaded there).
 
 **Not done in multiplayer:** the Terminal's Proxy over a network, and the in-world "refused" note on a dedicated server (the server's log still has it).
 <!-- END HAND-WRITTEN: multiplayer -->
