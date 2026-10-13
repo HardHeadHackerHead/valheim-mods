@@ -23,6 +23,7 @@ namespace Arena
 
         // what another player's fight looks like (for the spectators); its title as Words make it
         internal static string RemoteName = "", RemoteTitle = "";
+        internal static string RemoteKind = "";   // (road, champion, endless or trial; "" for a duel, or from an Arena before 0.4.4)
         internal static int RemoteRound, RemoteRounds, RemoteFoes;
         internal static float RemoteFavour;
 
@@ -59,6 +60,7 @@ namespace Arena
                 else { pkg.Write(0); pkg.Write(0); pkg.Write(0); }
                 pkg.Write(Crowd.Favour);
                 pkg.Write(Contest.Active ? Contest.TitleLine : Words.Line("arena_title_duel", Duel.OpponentName));
+                pkg.Write(Contest.Active ? Contest.KindWord(Contest.Kind) : "");   // (after the title: an older Arena stops reading there)
                 Send(RpcState, pkg);
             }
             // a fight we were watching has ended: the crowd goes home
@@ -87,6 +89,7 @@ namespace Arena
             if (sender == ZDOMan.GetSessionID() || Duel.Involves(sender)) return;
             RemoteName = pkg.ReadString(); RemoteTitle = pkg.ReadString(); RemoteRound = pkg.ReadInt(); RemoteRounds = pkg.ReadInt(); RemoteFoes = pkg.ReadInt(); RemoteFavour = pkg.ReadSingle();
             if (pkg.GetPos() < pkg.Size()) RemoteTitle = pkg.ReadString();   // (from an older Arena: its English title, as it is)
+            RemoteKind = pkg.GetPos() < pkg.Size() ? pkg.ReadString() : "";
             _remoteFrom = sender; _remoteAt = Time.time;
             if (MeNear && !Contest.Active && !Duel.Active)
             {
@@ -99,7 +102,16 @@ namespace Arena
 
         // (Shout: a call in words, from an older Arena; Say: a call in Words, each game showing it in its player's language. An older Arena
         // ignores a kind it does not know.)
-        internal enum Kind { Shout = 1, Sound = 2, Gate = 3, Props = 4, Fireworks = 5, Celebrate = 6, Door = 7, Effect = 8, Say = 9 }
+        internal enum Kind { Shout = 1, Sound = 2, Gate = 3, Props = 4, Fireworks = 5, Celebrate = 6, Door = 7, Effect = 8, Say = 9, Result = 10 }
+
+        /// <summary>A contest has ended: every game hears it (for other mods, through Api), wherever its player is.</summary>
+        internal static void Result(string fighter, string data)
+        {
+            Api.Heard(fighter, data);
+            var pkg = new ZPackage();
+            pkg.Write((int)Kind.Result); pkg.Write(data ?? ""); pkg.Write(fighter ?? ""); pkg.Write(0f);
+            Send(RpcEvent, pkg);
+        }
 
         /// <summary>Does it here and tells the players near the arena.</summary>
         internal static void Event(Kind kind, string a, string b = "", float f = 0f)
@@ -114,6 +126,7 @@ namespace Arena
         {
             if (sender == ZDOMan.GetSessionID()) return;
             var kind = (Kind)pkg.ReadInt(); string a = pkg.ReadString(), b = pkg.ReadString(); float f = pkg.ReadSingle();
+            if (kind == Kind.Result) { Api.Heard(b, a); return; }   // (for every game, near the arena or not: Api)
             if (!MeNear) return;
             Apply(kind, a, b, f, false);
         }
