@@ -1,0 +1,22 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup><OutputType>Exe</OutputType><TargetFramework>net8.0</TargetFramework><ImplicitUsings>disable</ImplicitUsings><Nullable>disable</Nullable><RootNamespace>Scripts.CollabNet.Tests</RootNamespace></PropertyGroup>
+  <ItemGroup>
+    <!-- Live co-editing's server and editor session have no game in them: tested here, joined by an in-memory network that delays and drops. -->
+    <Compile Include="../../mods/Scripts.Engine/Collab/*.cs" Link="Collab/%(Filename)%(Extension)" />
+    <Compile Include="../../mods/Scripts.Engine/Mp/CollabNet.cs" Link="Mp/CollabNet.cs" />
+    <Compile Include="../../mods/Scripts.Engine/Mp/CollabServer.cs" Link="Mp/CollabServer.cs" />
+    <Compile Include="../../mods/Scripts.Engine/Mp/CollabClient.cs" Link="Mp/CollabClient.cs" />
+    <Compile Include="../../mods/Scripts.Engine/Mp/LastWriter.cs" Link="Mp/LastWriter.cs" />
+    <Compile Include="../../mods/Scripts.Engine/Mp/AdminCore.cs" Link="Mp/AdminCore.cs" />
+    <Compile Include="../../mods/Scripts.Engine/Blocks/Model.cs" Link="Blocks/Model.cs" />
+    <Compile Include="../../mods/Scripts.Engine/Blocks/Defs.cs" Link="Blocks/Defs.cs" />
+    <Compile Include="../../mods/Scripts.Engine/Blocks/Compiler.cs" Link="Blocks/Compiler.cs" />
+    <Compile Include="../../mods/Scripts.Engine/Blocks/DefsApi.cs" Link="Blocks/DefsApi.cs" />
+    <Compile Include="../../mods/Scripts.Engine/Blocks/DefsLanguage.cs" Link="Blocks/DefsLanguage.cs" />
+    <Compile Include="../../mods/Scripts.Engine/Blocks/Cps.cs" Link="Blocks/Cps.cs" />
+    <Compile Include="../../mods/Scripts.Engine/Blocks/BlockLists.cs" Link="Blocks/BlockLists.cs" />
+    <Compile Include="../../mods/Scripts.Engine/Manifest.cs" Link="Manifest.cs" />
+    <Compile Include="../../mods/Scripts.Engine/Lists.cs" Link="Lists.cs" />
+    <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
+  </ItemGroup>
+</Project>

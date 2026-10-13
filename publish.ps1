@@ -14,7 +14,7 @@ $manifestFile = Join-Path $dist "manifest.json"
 
 # (-Mods A,B from another PowerShell arrives as one "A,B" string)
 $Mods = @($Mods | ForEach-Object { $_ -split ',' } | ForEach-Object { $_.Trim() } | Where-Object { $_ })
-$projects = @(Get-ChildItem (Join-Path $root "mods") -Directory | Where-Object { Test-Path (Join-Path $_.FullName "$($_.Name).csproj") })
+$projects = @(Get-ChildItem (Join-Path $root "mods") -Directory | Where-Object { (Test-Path (Join-Path $_.FullName "$($_.Name).csproj")) -and $_.Name -notin @("Scripts.Engine") })   # (Scripts.Engine is carried inside Blockscript.dll: never a mod of its own)
 $unknown = @($Mods | Where-Object { $projects.Name -notcontains $_ })
 if ($unknown.Count -gt 0) { Write-Error "No such mod: $($unknown -join ', ') (the folder names in mods/)"; exit 1 }
 

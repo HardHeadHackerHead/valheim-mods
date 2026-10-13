@@ -1,0 +1,20 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <AssemblyName>Blockscript</AssemblyName>
+    <RootNamespace>Scripts</RootNamespace>
+  </PropertyGroup>
+  <ItemGroup>
+    <!-- Built first, then carried inside this DLL with the engine's own dependencies (Deps.cs loads them from here). This project refers
+         to none of them: nothing in the shell may name a Jint type. -->
+    <ProjectReference Include="../Scripts.Engine/Scripts.Engine.csproj" ReferenceOutputAssembly="false" />
+    <EmbeddedResource Include="lib/Jint.dll" LogicalName="lib/Jint.dll" />
+    <EmbeddedResource Include="lib/Esprima.dll" LogicalName="lib/Esprima.dll" />
+    <EmbeddedResource Include="lib/System.Buffers.dll" LogicalName="lib/System.Buffers.dll" />
+    <Reference Include="netstandard"><HintPath>$(ManagedDir)/netstandard.dll</HintPath><Private>false</Private></Reference>
+  </ItemGroup>
+  <Target Name="EmbedEngine" BeforeTargets="PrepareResources" AfterTargets="ResolveProjectReferences">
+    <ItemGroup>
+      <EmbeddedResource Include="$(MSBuildThisFileDirectory)../Scripts.Engine/bin/$(Configuration)/net48/Scripts.Engine.dll" LogicalName="lib/Scripts.Engine.dll" />
+    </ItemGroup>
+  </Target>
+</Project>

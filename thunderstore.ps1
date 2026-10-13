@@ -47,7 +47,7 @@ if (-not (Test-Path $modkit) -and (Test-Path $toolkit)) {
 if (-not (Test-Path $modkit) -and $env:VALHEIM_DIR) { $modkit = Join-Path $env:VALHEIM_DIR "BepInEx\claude\modkit\modkit.exe" }
 if (-not (Test-Path $modkit)) { Write-Error "modkit not found: clone https://github.com/HardHeadHackerHead/valheim-claude-tools beside this repo, or run the game once with Claude Tools"; exit 1 }
 
-$all = Get-ChildItem (Join-Path $root "mods") -Directory | Where-Object { Test-Path (Join-Path $_.FullName "$($_.Name).csproj") }
+$all = Get-ChildItem (Join-Path $root "mods") -Directory | Where-Object { (Test-Path (Join-Path $_.FullName "$($_.Name).csproj")) -and $_.Name -notin @("Scripts.Engine") }   # (Scripts.Engine is carried inside Blockscript.dll: never a mod of its own)
 $chosen = if ($Mods.Count -gt 0) { $all | Where-Object { $Mods -contains $_.Name } } else { $all }
 $missing = $Mods | Where-Object { $all.Name -notcontains $_ }
 if ($missing) { Write-Error "No such mod: $($missing -join ', ')"; exit 1 }

@@ -1,0 +1,14 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <AssemblyName>Scripts.Engine</AssemblyName>
+    <RootNamespace>Scripts</RootNamespace>
+    <!-- Never copied into BepInEx/scripts: it is carried inside Scripts.dll and loaded from there (see mods/Blockscript/Deps.cs). On its own the
+         dev loader would scan it and fail on every type that names Jint before the loader exists. -->
+    <DeployToGame>false</DeployToGame>
+  </PropertyGroup>
+  <ItemGroup>
+    <Reference Include="Jint"><HintPath>../Blockscript/lib/Jint.dll</HintPath><Private>false</Private></Reference>
+    <Reference Include="Esprima"><HintPath>../Blockscript/lib/Esprima.dll</HintPath><Private>false</Private></Reference>
+    <Reference Include="netstandard"><HintPath>$(ManagedDir)/netstandard.dll</HintPath><Private>false</Private></Reference>
+  </ItemGroup>
+</Project>

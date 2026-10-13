@@ -1,0 +1,9 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup><OutputType>Exe</OutputType><TargetFramework>net8.0</TargetFramework><ImplicitUsings>disable</ImplicitUsings><Nullable>disable</Nullable></PropertyGroup>
+  <ItemGroup>
+    <!-- Remote editing's rules are plain C# with no game in it: the frames, who may ask what, the rate limit, the client's cache and its
+         waiting requests, and the server's dispatcher. A loopback joins a client to a server in memory. -->
+    <Compile Include="../../mods/Scripts.Engine/Mp/AdminCore.cs" Link="AdminCore.cs" />
+    <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
+  </ItemGroup>
+</Project>

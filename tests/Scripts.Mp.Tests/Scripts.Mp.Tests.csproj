@@ -1,0 +1,13 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup><OutputType>Exe</OutputType><TargetFramework>net8.0</TargetFramework><ImplicitUsings>disable</ImplicitUsings><Nullable>disable</Nullable><RootNamespace>Scripts.Mp.Tests</RootNamespace></PropertyGroup>
+  <ItemGroup>
+    <!-- The multiplayer logic with the Unity parts taken out: frames, limits, validation, the player's side (ActEngine) and the server's side (RemoteCore), wired together here by a loopback. -->
+    <Compile Include="../../mods/Scripts.Engine/Mp/Frames.cs" Link="Mp/Frames.cs" />
+    <Compile Include="../../mods/Scripts.Engine/Mp/Basics.cs" Link="Mp/Basics.cs" />
+    <Compile Include="../../mods/Scripts.Engine/Mp/Validate.cs" Link="Mp/Validate.cs" />
+    <Compile Include="../../mods/Scripts.Engine/Mp/ActEngine.cs" Link="Mp/ActEngine.cs" />
+    <Compile Include="../../mods/Scripts.Engine/Mp/RemoteCore.cs" Link="Mp/RemoteCore.cs" />
+    <Compile Include="../../mods/Scripts.Engine/Lists.cs" Link="Lists.cs" />
+    <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
+  </ItemGroup>
+</Project>
