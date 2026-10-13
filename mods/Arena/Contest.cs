@@ -110,7 +110,7 @@ namespace Arena
         internal static string KindName(KindOf kind) => T(KindKey(kind));
         internal static string KindKey(KindOf kind) => "arena_kind_" + KindWord(kind);
         /// <summary>The contest's word, as the Hall keeps it ("road", "champion"...).</summary>
-        private static string KindWord(KindOf kind) => kind == KindOf.Road ? "road" : kind == KindOf.Champion ? "champion" : kind == KindOf.Endless ? "endless" : "trial";
+        internal static string KindWord(KindOf kind) => kind == KindOf.Road ? "road" : kind == KindOf.Champion ? "champion" : kind == KindOf.Endless ? "endless" : "trial";
 
         /// <summary>What it costs to enter (nothing for a character's first fight).</summary>
         internal static int FeeFor(KindOf kind, int tier)
@@ -812,6 +812,7 @@ namespace Arena
             bool crowned = _crowned = outcome != Outcome.Aborted && outcome != Outcome.CalledOff && Ladder.Enter(KindWord(Kind), player.GetPlayerName(), what, score, _look);   // (as they fought: their statue wears it)
             string hall = crowned ? Words.Then(Words.Dash, Words.Line("arena_call_new_champion_" + KindWord(Kind))) : "";
             if (crowned) Net.Sound("roar");
+            Net.Result(player.GetPlayerName(), Api.Pack(KindWord(Kind), outcome.ToString().ToLowerInvariant(), crowned, coins));   // (for other mods: Api)
 
             string half = Words.Line("arena_call_half_purse", prize);
             switch (outcome)
