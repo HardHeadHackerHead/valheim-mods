@@ -25,7 +25,7 @@ namespace BuildOrders
         public const string Guid = "com.quad.buildorders";
         public const string OldGuid = "com.dhack.buildorders"; // (its id until 2026-10: settings move over by themselves, see Shared/Migration.cs)
         public const string Name = "BuildOrders";
-        public const string Version = "1.14.6";
+        public const string Version = "1.14.7";
 
         internal static Plugin Instance;
         internal static DHack.Shared.ServerSettings Synced;   // the gameplay settings the server decides in multiplayer
@@ -534,17 +534,27 @@ namespace BuildOrders
             var noStation = new Dictionary<string, int>();
             try
             {
-                List<Order> chosen = AffordableNearby(player, out noMaterials, out int all, noStation);
-                List<Order> ordered = StandingOrder(player, chosen, out int fell);
-                unsupported += fell;
-
-                var failed = new HashSet<string>();
-                foreach (Order o in ordered)
+                // A station built in this pass (a forge in the plan) is not near you yet when the pass is chosen, so what needs it waits;
+                // once a station went up and something waited for one, go round again (a few times at most: a station can need another).
+                for (int pass = 0; pass < 4; pass++)
                 {
-                    if (!_orders.ContainsKey(o.Id)) continue;
-                    if (_stability.TryGetValue(o.Id, out Stab st) && st.From.Any(failed.Contains)) { failed.Add(o.Id); waited++; continue; }
-                    if (TryBuild(player, o, quiet: true)) { built++; if (built % 2 == 0) yield return null; } // two per frame, so the effects are not all at once
-                    else failed.Add(o.Id);
+                    noStation.Clear();
+                    List<Order> chosen = AffordableNearby(player, out noMaterials, out int all, noStation);
+                    List<Order> ordered = StandingOrder(player, chosen, out int fell);
+                    unsupported = fell; waited = 0;
+
+                    var failed = new HashSet<string>();
+                    bool stationBuilt = false;
+                    foreach (Order o in ordered)
+                    {
+                        if (!_orders.ContainsKey(o.Id)) continue;
+                        if (_stability.TryGetValue(o.Id, out Stab st) && st.From.Any(failed.Contains)) { failed.Add(o.Id); waited++; continue; }
+                        bool station = PieceOf(o)?.GetComponent<CraftingStation>() != null;
+                        if (TryBuild(player, o, quiet: true)) { built++; stationBuilt |= station; if (built % 2 == 0) yield return null; } // two per frame, so the effects are not all at once
+                        else failed.Add(o.Id);
+                    }
+                    if (!stationBuilt || noStation.Count == 0) break;
+                    yield return null; // (the new station registers before the next pass looks for it)
                 }
             }
             finally { _building = false; }
