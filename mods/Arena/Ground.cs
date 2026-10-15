@@ -150,30 +150,44 @@ namespace Arena
             return _paint;
         }
 
-        /// <summary>Takes away the trees, rocks, bushes and anything else the world grew inside the footprint.</summary>
+        internal static readonly AccessTools.FieldRef<ZNetScene, Dictionary<ZDO, ZNetView>> Instances =
+            AccessTools.FieldRefAccess<ZNetScene, Dictionary<ZDO, ZNetView>>("m_instances");
+        private static readonly List<GameObject> _doomed = new List<GameObject>();
+
+        /// <summary>
+        /// Takes away the trees, rocks, bushes and anything else the world grew inside the footprint. Walks the game's own list of loaded
+        /// objects and looks only at those standing near the arena (six scene-wide searches every 4 s cost 60-75 ms in a big build).
+        /// </summary>
         private static void Clear()
         {
-            int gone = 0;
-            var seen = new HashSet<GameObject>();
-            void Take(Component c)
+            ZNetScene scene = ZNetScene.instance;
+            if (scene == null) return;
+            float reach = Mathf.Max(Layout.Footprint, Mathf.Abs(Layout.CourtZ0), Mathf.Abs(Layout.CourtZ1), Mathf.Abs(Layout.CourtX0), Mathf.Abs(Layout.CourtX1)) + 3f;
+            float reach2 = reach * reach;
+            Vector3 o = Site.Origin;
+            _doomed.Clear();
+            foreach (ZNetView view in Instances(scene).Values)
             {
-                if (c == null || !seen.Add(c.gameObject)) return;
-                GameObject go = c.gameObject;
-                if (go.GetComponent<Piece>() != null || go.GetComponent<WearNTear>() != null || go.GetComponent<Character>() != null || go.GetComponent<ItemDrop>() != null) return;
-                if (!Layout.InFootprint(Site.Local(go.transform.position), 1.5f)) return;
-                ZNetView view = go.GetComponent<ZNetView>();
-                if (view == null || !view.IsValid()) return;
+                if (view == null) continue;
+                Vector3 at = view.transform.position;
+                float dx = at.x - o.x, dz = at.z - o.z;
+                if (dx * dx + dz * dz > reach2) continue;
+                GameObject go = view.gameObject;
+                if (go.GetComponent<TreeBase>() == null && go.GetComponent<TreeLog>() == null && go.GetComponent<MineRock>() == null
+                    && go.GetComponent<MineRock5>() == null && go.GetComponent<Destructible>() == null && go.GetComponent<Pickable>() == null) continue;
+                if (go.GetComponent<Piece>() != null || go.GetComponent<WearNTear>() != null || go.GetComponent<Character>() != null || go.GetComponent<ItemDrop>() != null) continue;
+                if (!Layout.InFootprint(Site.Local(at), 1.5f) || !view.IsValid()) continue;
+                _doomed.Add(go);
+            }
+            foreach (GameObject go in _doomed)   // (destroying changes the list being walked: gather first)
+            {
+                ZNetView view = go != null ? go.GetComponent<ZNetView>() : null;
+                if (view == null || !view.IsValid()) continue;
                 if (!view.IsOwner()) view.ClaimOwnership();
                 ZNetScene.instance.Destroy(go);
-                gone++;
             }
-            foreach (TreeBase t in Object.FindObjectsByType<TreeBase>(FindObjectsSortMode.None)) Take(t);
-            foreach (TreeLog t in Object.FindObjectsByType<TreeLog>(FindObjectsSortMode.None)) Take(t);
-            foreach (MineRock t in Object.FindObjectsByType<MineRock>(FindObjectsSortMode.None)) Take(t);
-            foreach (MineRock5 t in Object.FindObjectsByType<MineRock5>(FindObjectsSortMode.None)) Take(t);
-            foreach (Destructible t in Object.FindObjectsByType<Destructible>(FindObjectsSortMode.None)) Take(t);
-            foreach (Pickable t in Object.FindObjectsByType<Pickable>(FindObjectsSortMode.None)) Take(t);
-            if (gone > 0) Plugin.Log.LogInfo($"Cleared {gone} trees, rocks and plants from the arena's ground");
+            if (_doomed.Count > 0) Plugin.Log.LogInfo($"Cleared {_doomed.Count} trees, rocks and plants from the arena's ground");
+            _doomed.Clear();
         }
 
         /// <summary>For testing: shape the ground again.</summary>

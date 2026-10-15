@@ -128,8 +128,20 @@ namespace Arena
         {
             // (never while anyone fights: another player's chest is that player's, standing in the ring for them right now)
             if (!Site.Known || Net.Busy || Player.m_localPlayer == null || Travel.Distance(Player.m_localPlayer.transform.position) > 300f) return;
+            if (ZNetScene.instance == null) return;
             long now = ZNet.instance.GetTime().Ticks;
-            foreach (Container c in Object.FindObjectsOfType<Container>())
+            // (the game's list of loaded objects, gathered first: taking one away changes it; FindObjectsOfType cost ~24 ms in a big build)
+            var chests = new List<Container>();
+            var tombs = new List<TombStone>();
+            foreach (ZNetView v in Ground.Instances(ZNetScene.instance).Values)
+            {
+                if (v == null) continue;
+                Container box = v.GetComponent<Container>();
+                if (box != null) chests.Add(box);
+                TombStone grave = v.GetComponent<TombStone>();
+                if (grave != null) tombs.Add(grave);
+            }
+            foreach (Container c in chests)
             {
                 if (c == null || c.gameObject == _chest) continue;
                 ZNetView view = c.GetComponent<ZNetView>();
@@ -140,7 +152,7 @@ namespace Arena
                 view.ClaimOwnership();
                 view.Destroy();
             }
-            foreach (TombStone tomb in Object.FindObjectsOfType<TombStone>())
+            foreach (TombStone tomb in tombs)
             {
                 ZNetView view = tomb != null ? tomb.GetComponent<ZNetView>() : null;
                 if (view == null || !view.IsValid()) continue;
