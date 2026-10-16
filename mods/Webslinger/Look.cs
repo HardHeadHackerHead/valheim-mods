@@ -83,7 +83,7 @@ namespace Webslinger
         public static void Stick(Player p, Vector3 anchor)
         {
             Sounds.Play(Sfx.Stick, anchor);
-            Fx.SplatAt(Hand(p), anchor);
+            Fx.SplatAt(Hand(p), anchor, Suit.IsVenom(p));
         }
 
         /// <summary>The hand a new web leaves from: the one on the anchor's side; straight ahead, the other hand from the last web.</summary>
@@ -270,7 +270,7 @@ namespace Webslinger
             line.numCapVertices = 2;
             line.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
             line.receiveShadows = false;
-            line.sharedMaterial = Material();
+            line.sharedMaterial = Material(Suit.IsVenom(owner));
             var s = new Strand { Go = go, Line = line, Owner = owner, Anchor = anchor, Hand = Hand(owner, right), ShotAt = Time.time, Travel = travel, Loose = loose, Shot = shot, Right = right };
             Strands[owner] = s;
             Draw(s, 0f, 0f);
@@ -401,7 +401,19 @@ namespace Webslinger
             return p != null ? Anchors.Pivot(p) : Vector3.zero;
         }
 
-        /// <summary>A plain white web: the game's grappling hook wire, whitened (else a plain material).</summary>
+        private static Material _venom;
+
+        /// <summary>A plain white web: the game's grappling hook wire, whitened (else a plain material); black for the Venom suit.</summary>
+        private static Material Material(bool venom)
+        {
+            Material white = Material();
+            if (!venom || white == null) return white;
+            if (_venom != null) return _venom;
+            _venom = new Material(white) { name = "webslinger_web_venom", color = new Color(0.05f, 0.05f, 0.07f) };
+            if (_venom.HasProperty("_EmissionColor")) _venom.SetColor("_EmissionColor", new Color(0.03f, 0.035f, 0.06f));
+            return _venom;
+        }
+
         private static Material Material()
         {
             if (_material != null) return _material;

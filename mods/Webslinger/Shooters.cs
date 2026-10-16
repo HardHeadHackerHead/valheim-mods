@@ -250,6 +250,10 @@ namespace Webslinger
             Animator anim = p.GetComponentInChildren<Animator>();
             if (anim == null || !anim.isHuman) return;
             var pair = new GameObject[2];
+            // The cartridge goes on the palm side of the wrist. The palm faces along cross(wrist->middle finger, little->index finger),
+            // mirrored on the left hand; its sign is set by the right hand, where the hand bone's up already pointed the right way.
+            Vector3 rightPalm = PalmOf(anim, false), rightUp = anim.GetBoneTransform(HumanBodyBones.RightHand)?.up ?? Vector3.up;
+            float sign = Vector3.Dot(rightPalm, rightUp) < 0f ? -1f : 1f;
             for (int i = 0; i < 2; i++)
             {
                 Transform fore = anim.GetBoneTransform(i == 0 ? HumanBodyBones.LeftLowerArm : HumanBodyBones.RightLowerArm);
@@ -257,9 +261,10 @@ namespace Webslinger
                 if (fore == null || hand == null) { foreach (GameObject g in pair) if (g != null) Object.Destroy(g); return; }
                 GameObject one = Model(p.gameObject.layer);
                 foreach (Renderer r in one.GetComponentsInChildren<Renderer>()) r.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
-                // round the wrist, a little back from the hand, the cartridge on the back of the forearm
+                // round the wrist, a little back from the hand, the cartridge on the inside (palm side) of the wrist
                 Vector3 along = hand.position - fore.position;
-                Vector3 back = Vector3.ProjectOnPlane(hand.up, along.normalized);
+                Vector3 palm = PalmOf(anim, i == 0) * sign;
+                Vector3 back = Vector3.ProjectOnPlane(palm.sqrMagnitude > 0.0001f ? palm : hand.up, along.normalized);
                 if (back.sqrMagnitude < 0.0001f) back = Vector3.ProjectOnPlane(Vector3.up, along.normalized);
                 one.transform.position = fore.position + along * 0.78f;
                 one.transform.rotation = Quaternion.LookRotation(back.normalized, along.normalized);
@@ -267,6 +272,34 @@ namespace Webslinger
                 pair[i] = one;
             }
             Worn_[p] = pair;
+        }
+
+        /// <summary>The way a hand's palm faces (unit length; zero without finger bones), the same rule for both hands, mirrored.</summary>
+        private static Vector3 PalmOf(Animator anim, bool left)
+        {
+            Transform hand = anim.GetBoneTransform(left ? HumanBodyBones.LeftHand : HumanBodyBones.RightHand);
+            Transform index = anim.GetBoneTransform(left ? HumanBodyBones.LeftIndexProximal : HumanBodyBones.RightIndexProximal);
+            Transform little = anim.GetBoneTransform(left ? HumanBodyBones.LeftLittleProximal : HumanBodyBones.RightLittleProximal);
+            Transform middle = anim.GetBoneTransform(left ? HumanBodyBones.LeftMiddleProximal : HumanBodyBones.RightMiddleProximal);
+            if (hand == null || index == null || little == null || middle == null) return Vector3.zero;
+            Vector3 n = Vector3.Cross(middle.position - hand.position, index.position - little.position);
+            return (left ? -n : n).normalized;
+        }
+
+        /// <summary>For the status command: for each worn shooter, how much its cartridge faces the body's middle (1: straight at it).</summary>
+        public static string Facing(Player p)
+        {
+            if (p == null || !Worn_.TryGetValue(p, out GameObject[] pair)) return "";
+            var parts = new List<string>();
+            for (int i = 0; i < 2; i++)
+            {
+                if (pair[i] == null) continue;
+                Vector3 at = pair[i].transform.position, mid = p.transform.position;
+                Vector3 toBody = at - mid; toBody.y = 0f;
+                Vector3 cart = pair[i].transform.forward; cart.y = 0f;
+                parts.Add((i == 0 ? "left " : "right ") + (-Vector3.Dot(cart.normalized, toBody.normalized)).ToString("0.00"));
+            }
+            return string.Join(", ", parts);
         }
 
         /// <summary>For the status command.</summary>

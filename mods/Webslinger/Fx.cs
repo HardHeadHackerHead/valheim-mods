@@ -41,13 +41,13 @@ namespace Webslinger
 
         // ---- splats ----
 
-        private sealed class Splat { public GameObject Go; public Material Mat; public float Born, Size; }
+        private sealed class Splat { public GameObject Go; public Material Mat; public float Born, Size; public bool Dark; }
         private static readonly List<Splat> Splats = new List<Splat>();
         private static Texture2D _splatTex;
         private const float SplatSeconds = 12f, SplatFade = 2f;
 
         /// <summary>A web patch where a web stuck: from the hand, the surface found along the web (its facing), else facing back along it.</summary>
-        public static void SplatAt(Vector3 hand, Vector3 anchor)
+        public static void SplatAt(Vector3 hand, Vector3 anchor, bool dark = false)
         {
             if (!Plugin.Splats.Value) return;
             Vector3 dir = anchor - hand;
@@ -75,9 +75,9 @@ namespace Webslinger
             r.receiveShadows = false;
             Shader shader = Shader.Find("Sprites/Default");
             var mat = new Material(shader) { name = "webslinger_splat", mainTexture = SplatTexture() };
-            mat.color = Tint(1f);
+            mat.color = Tint(1f, dark);
             r.sharedMaterial = mat;
-            Splats.Add(new Splat { Go = go, Mat = mat, Born = Time.time, Size = size });
+            Splats.Add(new Splat { Go = go, Mat = mat, Born = Time.time, Size = size, Dark = dark });
         }
 
         private static void Fade()
@@ -95,13 +95,14 @@ namespace Webslinger
                 }
                 float grow = Mathf.Clamp01(age / 0.08f);   // (spreads out as it hits)
                 s.Go.transform.localScale = Vector3.one * s.Size * Mathf.Lerp(0.2f, 1f, grow);
-                s.Mat.color = Tint(1f - Mathf.Clamp01((age - SplatSeconds) / SplatFade));
+                s.Mat.color = Tint(1f - Mathf.Clamp01((age - SplatSeconds) / SplatFade), s.Dark);
             }
         }
 
         /// <summary>White, dimmed at night (the material isn't lit: it would glow in the dark otherwise).</summary>
-        private static Color Tint(float alpha)
+        private static Color Tint(float alpha, bool dark = false)
         {
+            if (dark) return new Color(0.05f, 0.05f, 0.07f, alpha * 0.92f);   // (the Venom suit's black webbing)
             Color amb = RenderSettings.ambientLight;
             float light = Mathf.Clamp(Mathf.Max(amb.r, Mathf.Max(amb.g, amb.b)) * 2.2f, 0.3f, 0.95f);
             return new Color(light, light, light * 0.98f, alpha * 0.9f);

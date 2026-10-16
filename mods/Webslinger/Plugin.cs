@@ -19,7 +19,7 @@ namespace Webslinger
     ///
     /// Split across files: Plugin.cs (settings, setup), Controls.cs (the player's input, and test driving), Anchors.cs (finding what a web
     /// sticks to, and walls), Web.cs (the moves: swing, zip, crawl, flight), Look.cs (the webs drawn, the body's lean, sounds, the camera),
-    /// Shooters.cs (the Web Shooters item, and the shooters on the wrists), ItemReload.cs (the item across a reload),
+    /// Shooters.cs (the Web Shooters item, and the shooters on the wrists), Suit.cs (the Spider-Viking and Venom suits), SuitProbe.cs (pictures of the body's textures), ItemReload.cs (the item across a reload),
     /// Share.cs (the web shared with other players), Sense.cs (spider-sense), Marks.cs (the web marks on screen), Body.cs (the poses and flips), Fx.cs (web splats, speed lines, the camera), Sounds.cs (the web's sounds), Skill.cs (the Webslinging skill), Compat.cs (other mods),
     /// Tools.cs (Claude Tools commands).
     /// </summary>
@@ -28,7 +28,7 @@ namespace Webslinger
     {
         public const string Guid = "com.quad.webslinger";
         public const string Name = "Webslinger";
-        public const string Version = "0.2.0";
+        public const string Version = "0.3.0";
 
         internal static Plugin Instance;
         internal static ManualLogSource Log;
@@ -44,7 +44,7 @@ namespace Webslinger
             CrawlSpeed, FallDamage, WebLandingDamage, Steer, LeapForward, LeapUp, SkillGain, SenseRange, SwingSpeed, SwingSpeedAt100;
         internal static ConfigEntry<int> AirZips, AirZipsAt100;
         internal static ConfigEntry<bool> SkyWebs, NeedsShooters;
-        internal static ConfigEntry<string> ShootersCost;
+        internal static ConfigEntry<string> ShootersCost, SuitCost, VenomCost;
         internal static ConfigEntry<float> WebCost, SwingCostPerSecond, ZipCost, AirZipCost, CrawlCostPerSecond, SkillCostCut;
         internal static DHack.Shared.ServerSettings Synced;   // how strong and how dear the moves are is the server's in multiplayer
 
@@ -64,6 +64,10 @@ namespace Webslinger
             NeedsShooters = Synced.Add(Config.Bind("1 - Moves", "NeedsWebShooters", true, "Webs (swings and zips) shoot only while the Web Shooters are worn (the utility slot); the leap, the wall crawl and spider-sense never need them. Off: webs always work, and the Web Shooters do nothing. [Synced with Server]"));
             ShootersCost = Synced.Bind("1 - Moves", "WebShootersCost", "LeatherScraps:4, Resin:10, Flint:2", "What the Web Shooters take to make at the workbench. " + DHack.Shared.Costs.Help);
             ShootersCost.SettingChanged += (o, e) => Shooters.ApplyCost();
+            SuitCost = Synced.Bind("1 - Moves", "SpiderVikingSuitCost", "LeatherScraps:6, DeerHide:4, Raspberry:10, Blueberries:10", "What the Spider-Viking suit takes to make at the workbench (level 2). " + DHack.Shared.Costs.Help);
+            SuitCost.SettingChanged += (o, e) => Suit.ApplyCost();
+            VenomCost = Synced.Bind("1 - Moves", "VenomSuitCost", "LeatherScraps:6, DeerHide:4, Ooze:10, Coal:10", "What the Venom suit takes to make at the workbench (level 2). " + DHack.Shared.Costs.Help);
+            VenomCost.SettingChanged += (o, e) => Suit.ApplyCost();
             Swing = Config.Bind("1 - Moves", "Swing", true, "Swing: press and hold Jump in the air to shoot a web up ahead and swing from it; let go to fly off. Only when something is in reach to stick to: otherwise a jump is just a jump.");
             HoldToSwing = Config.Bind("1 - Moves", "HoldToKeepSwinging", true, "Keep holding Jump and, at the top of each swing, the next web shoots ahead by itself. Off: one web per press.");
             Zip = Config.Bind("1 - Moves", "Zip", true, "Zip: press Sprint in the air to pull yourself to the spot under the crosshair (a top: land on it; a wall: stick to it). Nothing in reach: a short zip forward.");
@@ -119,8 +123,11 @@ namespace Webslinger
             _harmony.PatchAll(typeof(Plugin).Assembly);
             Skill.Create();   // (after the translations; also puts it on the player already in the world after a hot reload)
             Shooters.Register();                 // a hot reload while in a world
-            ItemReload.Repoint(Shooters.Current);   // shooters made by the copy this replaces
+            Suit.Register();
+            ItemReload.Repoint(name => Shooters.Current(name) ?? Suit.Current(name));   // items made by the copy this replaces
             Shooters.Refresh();                     // and the ones the game gave their own copy of the data (the give command)
+            Suit.RefreshBag();
+            Suit.Refresh();                         // a suit worn: shown by this copy
             Skill.Gain = SkillGain.Value;
             Logger.LogInfo($"{Name} {Version} loaded");
         }
@@ -155,23 +162,25 @@ namespace Webslinger
             Controls.Reset();
             Compat.Reset();
             Skill.Reset();
-            Shooters.Unregister();
             Synced?.Dispose();
             _harmony?.UnpatchSelf();
+            Suit.Refresh();   // (unpatched: the real armour shows again)
+            Shooters.Unregister();
+            Suit.Unregister();
             Tools.Unregister();
             DHack.Shared.Translations.Unload();
             if (Instance == this) Instance = null;
         }
     }
 
-    // Whichever of ZNetScene and ObjectDB wakes first, the Web Shooters are registered before a saved pair is loaded.
+    // Whichever of ZNetScene and ObjectDB wakes first, the Web Shooters and the suit are registered before a saved pair is loaded.
     [HarmonyPatch(typeof(ZNetScene), "Awake")]
-    internal static class ZNetScene_Awake { private static void Postfix() => Shooters.Register(); }
+    internal static class ZNetScene_Awake { private static void Postfix() { Shooters.Register(); Suit.Register(); } }
 
     [HarmonyPatch(typeof(ObjectDB), "Awake")]
-    internal static class ObjectDB_Awake { private static void Postfix() => Shooters.Register(); }
+    internal static class ObjectDB_Awake { private static void Postfix() { Shooters.Register(); Suit.Register(); } }
 
     // The game swaps in another ObjectDB's item lists when a world loads, which drops what was added to the old ones.
     [HarmonyPatch(typeof(ObjectDB), nameof(ObjectDB.CopyOtherDB))]
-    internal static class ObjectDB_CopyOtherDB { private static void Postfix() => Shooters.Register(); }
+    internal static class ObjectDB_CopyOtherDB { private static void Postfix() { Shooters.Register(); Suit.Register(); } }
 }

@@ -59,6 +59,8 @@ namespace Webslinger
             _next = 0f;
         }
 
+        private static float F(string s) => float.Parse(s, NumberStyles.Float, CultureInfo.InvariantCulture);
+
         private static IEnumerator Command(string[] args, Action<JObject> output, Action<string> error)
         {
             Player player = Player.m_localPlayer;
@@ -142,6 +144,44 @@ namespace Webslinger
                     output(new JObject { ["played"] = names });
                     yield break;
                 }
+                case "suit":
+                    if (args.Length > 1 && args[1] == "probe") { output(SuitProbe.Run(player, args.Length > 2 ? args[2] : null)); yield break; }
+                    if (args.Length > 1 && (args[1] == "preview" || args[1] == "off"))
+                    {
+                        Suit.Preview = args[1] == "off" ? (Suit.Style?)null : args.Contains("venom") ? Suit.Style.Venom : Suit.Style.Spider;
+                        Suit.Refresh();
+                        output(new JObject { ["preview"] = Suit.Preview?.ToString() ?? "off", ["wearing"] = Suit.Wears(player) });
+                        yield break;
+                    }
+                    if (args.Length > 1 && args[1] == "status") { output(new JObject { ["registered"] = Suit.Registered, ["wearing"] = Suit.Wears(player), ["preview"] = Suit.Preview?.ToString() ?? "off", ["frame"] = Suit.Describe() }); yield break; }
+                    if (args.Length > 1 && args[1] == "dye")
+                    {
+                        // web suit dye cape=r,g,b capeKeep=0.15 helm=r,g,b helmKeep=0.35 spider=2.6 down=0.38 [flip]
+                        Color Col(string name, Color fallback)
+                        {
+                            string v = args.FirstOrDefault(a => a.StartsWith(name + "="))?.Substring(name.Length + 1);
+                            if (v == null) return fallback;
+                            string[] c = v.Split(',');
+                            return c.Length == 3 ? new Color(F(c[0]), F(c[1]), F(c[2])) : fallback;
+                        }
+                        Suit.CapeColour = Col("cape", Suit.CapeColour); Suit.HelmColour = Col("helm", Suit.HelmColour);
+                        Suit.CapeKeep = Option(args, "capeKeep", Suit.CapeKeep); Suit.HelmKeep = Option(args, "helmKeep", Suit.HelmKeep);
+                        Suit.CapeSpiderSize = Option(args, "spider", Suit.CapeSpiderSize); Suit.CapeSpiderDown = Option(args, "down", Suit.CapeSpiderDown);
+                        if (args.Contains("flip")) Suit.CapeSpiderFlip = !Suit.CapeSpiderFlip;
+                        output(new JObject { ["cape"] = Suit.CapeColour.ToString(), ["helm"] = Suit.HelmColour.ToString(), ["result"] = Suit.Rebuild(cape: true, paint: false) });
+                        yield break;
+                    }
+                    if (args.Length > 1 && args[1] == "tune")
+                    {
+                        // web suit tune eyeUp=0.085 eyeSide=0.034 eyeWide=0.024 eyeTall=0.015 eyeTilt=25 spiderFront=1.7 spiderBack=2.3
+                        Suit.EyeUp = Option(args, "eyeUp", Suit.EyeUp); Suit.EyeSide = Option(args, "eyeSide", Suit.EyeSide);
+                        Suit.EyeWide = Option(args, "eyeWide", Suit.EyeWide); Suit.EyeTall = Option(args, "eyeTall", Suit.EyeTall);
+                        Suit.EyeTilt = Option(args, "eyeTilt", Suit.EyeTilt);
+                        Suit.SpiderFront = Option(args, "spiderFront", Suit.SpiderFront); Suit.SpiderBack = Option(args, "spiderBack", Suit.SpiderBack);
+                        output(new JObject { ["result"] = Suit.Rebuild(cape: false, paint: true) });
+                        yield break;
+                    }
+                    error("web suit status | preview [venom] | off | probe [armour item] | dye cape=r,g,b capeKeep= helm=r,g,b helmKeep= spider= down= [flip] | tune eyeUp= eyeSide= eyeWide= eyeTall= eyeTilt= spiderFront= spiderBack="); yield break;
                 case "try": break;
                 default: error("web status | try swing|zip|crawl|chain | skill <level> | sense | pose <flag> | hand left|right|auto | watch <move> | sound [name] | bones | flip | splat"); yield break;
             }
@@ -274,7 +314,7 @@ namespace Webslinger
                 ["skill"] = Math.Round(Skill.Level(p), 2), ["webReach"] = Math.Round(reach, 1), ["zipReach"] = Math.Round(zipReach, 1),
                 ["airZipsUsed"] = Web.AirZipsUsed, ["spiderSenseTingles"] = Sense.Tingles, ["lastTingle"] = Sense.Last,
                 ["webPose"] = Look.WebPose, ["crawlPose"] = Look.CrawlPose, ["hand"] = HandName(), ["cruise"] = Math.Round(Web.Cruise(p), 1),
-                ["shootersWorn"] = Shooters.WornBy(p), ["shootersItem"] = Shooters.Registered, ["wristsDressed"] = Shooters.Dressed,
+                ["shootersWorn"] = Shooters.WornBy(p), ["shootersItem"] = Shooters.Registered, ["wristsDressed"] = Shooters.Dressed, ["cartridgeFacesBody"] = Shooters.Facing(p),
             };
             if (Anchors.SwingAnchor(p, reach, out Anchors.Spot spot))
                 o["swingAnchor"] = new JObject { ["at"] = Vec(spot.Point), ["what"] = Name(spot.What), ["distance"] = Math.Round(Vector3.Distance(Anchors.Pivot(p), spot.Point), 1),

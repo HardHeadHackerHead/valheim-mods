@@ -12,6 +12,12 @@ The moves
 - Spider-sense: wavy lines round your head, a glow on the side it comes from and a tingle, a moment before an enemy's attack or an arrow reaches you (only for those you can't see, or every one: a setting).
 - No damage landing from a web move, and half the game's fall damage from other falls.
 
+The suits
+- Two suits for the trinket slot, made at the workbench (level 2). They change how you look, not what you wear: your armour stays equipped and keeps protecting you, and the suit shows instead. Your own helmet and cape stay, in the suit's colours.
+- Spider-Viking suit (Leather scraps, Deer hide, Raspberries, Blueberries): red and blue with black web lines, a mask with white spider eyes, spiders on chest and back, a leather belt with a gold buckle, leather bracers, leg wraps and fur-topped boots. Your helmet turns red, your cape blue with a red spider on its back.
+- Venom suit (Leather scraps, Deer hide, Ooze, Coal): symbiote black with a blue sheen, a huge white spider, jagged white eyes and a grin of fangs, black leather and silver. Your helmet and cape turn black (a white spider on the cape), and your webs turn black.
+- Others with the mod see your suit; others without it see you without your armour's look.
+
 How it looks and sounds
 - Your own web sounds: a thwip as a web shoots, a thunk as it sticks, a snap as you let go, wind rushing past at speed.
 - The pose on a web: your arm up the web (the hand on the web's side, so long chains alternate hands), legs trailing and tucking at the top of a swing, both arms up a zip, hand over hand with knees out on a wall, and a flip on a perfect release.

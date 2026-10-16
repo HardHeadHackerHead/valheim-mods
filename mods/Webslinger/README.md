@@ -7,7 +7,7 @@
 
 **Swing through the world on webs, Spider-Man style: put on the Web Shooters to web-swing from trees, cliffs and buildings and zip to rooftops; crawl on walls, leap far ahead, and a spider-sense that warns you of attacks, with a Webslinging skill.**
 
-![version: 0.2.0](https://img.shields.io/badge/version-0.2.0-3b6e8f?style=flat-square)  ![multiplayer: only who wants it](https://img.shields.io/badge/multiplayer-only%20who%20wants%20it-7a5c2e?style=flat-square)  ![made with: Claude Code](https://img.shields.io/badge/made%20with-Claude%20Code-c26a3d?style=flat-square)
+![version: 0.3.0](https://img.shields.io/badge/version-0.3.0-3b6e8f?style=flat-square)  ![multiplayer: only who wants it](https://img.shields.io/badge/multiplayer-only%20who%20wants%20it-7a5c2e?style=flat-square)  ![made with: Claude Code](https://img.shields.io/badge/made%20with-Claude%20Code-c26a3d?style=flat-square)
 
 <!-- GITHUB-ONLY -->[Thunderstore](https://thunderstore.io/c/valheim/p/Quads_Lab/Webslinger/)  ·  <!-- END GITHUB-ONLY -->[Source code](https://github.com/HardHeadHackerHead/valheim-mods/tree/main/mods/Webslinger)  ·  [Report a bug](https://github.com/HardHeadHackerHead/valheim-mods/issues/new?template=bug.yml&title=%5BQuad%27s%20Webslinger%5D%20)  ·  [Discord](https://discord.gg/EwTjQxEZPy)
 
@@ -30,6 +30,13 @@
 - Wall crawl: move into a wall in the air (or swing into one) and you stick to it. Crawl with the move keys, faster with Sprint, over the top at its edge; Jump kicks off it, Crouch lets go.
 - Spider-sense: wavy lines round your head, a glow on the side it comes from and a tingle, a moment before an enemy's attack or an arrow reaches you (only for those you can't see, or every one: a setting).
 - No damage landing from a web move, and half the game's fall damage from other falls.
+
+### The suits
+
+- Two suits for the trinket slot, made at the workbench (level 2). They change how you look, not what you wear: your armour stays equipped and keeps protecting you, and the suit shows instead. Your own helmet and cape stay, in the suit's colours.
+- Spider-Viking suit (Leather scraps, Deer hide, Raspberries, Blueberries): red and blue with black web lines, a mask with white spider eyes, spiders on chest and back, a leather belt with a gold buckle, leather bracers, leg wraps and fur-topped boots. Your helmet turns red, your cape blue with a red spider on its back.
+- Venom suit (Leather scraps, Deer hide, Ooze, Coal): symbiote black with a blue sheen, a huge white spider, jagged white eyes and a grin of fangs, black leather and silver. Your helmet and cape turn black (a white spider on the cape), and your webs turn black.
+- Others with the mod see your suit; others without it see you without your armour's look.
 
 ### How it looks and sounds
 
@@ -82,6 +89,8 @@ In `BepInEx/config/com.quad.webslinger.cfg`, made the first time the game runs w
 | `Enabled` | `true` | Webslinger on or off (all the moves). |
 | `NeedsWebShooters` | `true` | Webs (swings and zips) shoot only while the Web Shooters are worn (the utility slot); the leap, the wall crawl and spider-sense never need them. Off: webs always work, and the Web Shooters do nothing. [Synced with Server] |
 | `WebShootersCost` | `LeatherScraps:4, Resin:10, Flint:2` | What the Web Shooters take to make at the workbench. Item prefab names and amounts, separated by commas, like FineWood:12, BronzeNails:30 (Claude Tools' `prefabs <text>` shows exact names). A cost with a mistake in it keeps the last good one. [Synced with Server] |
+| `SpiderVikingSuitCost` | `LeatherScraps:6, DeerHide:4, Raspberry:10, Blueberries:10` | What the Spider-Viking suit takes to make at the workbench (level 2). Item prefab names and amounts, separated by commas, like FineWood:12, BronzeNails:30 (Claude Tools' `prefabs <text>` shows exact names). A cost with a mistake in it keeps the last good one. [Synced with Server] |
+| `VenomSuitCost` | `LeatherScraps:6, DeerHide:4, Ooze:10, Coal:10` | What the Venom suit takes to make at the workbench (level 2). Item prefab names and amounts, separated by commas, like FineWood:12, BronzeNails:30 (Claude Tools' `prefabs <text>` shows exact names). A cost with a mistake in it keeps the last good one. [Synced with Server] |
 | `Swing` | `true` | Swing: press and hold Jump in the air to shoot a web up ahead and swing from it; let go to fly off. Only when something is in reach to stick to: otherwise a jump is just a jump. |
 | `HoldToKeepSwinging` | `true` | Keep holding Jump and, at the top of each swing, the next web shoots ahead by itself. Off: one web per press. |
 | `Zip` | `true` | Zip: press Sprint in the air to pull yourself to the spot under the crosshair (a top: land on it; a wall: stick to it). Nothing in reach: a short zip forward. |
@@ -190,6 +199,6 @@ helps me make new mods and keep improving the ones you already play. It's 100% o
 
 ## 📜 Recent changes
 
-- **0.2.0** The Web Shooters: a utility item made at the workbench (Leather scraps, Resin, Flint); swings and zips need them (a server setting can turn that off), and a shooter shows on each wrist; the leap, the wall crawl and spider-sense work without. A plain jump is the game's own again, and never shoots a web (a web could fire right after a jump off the ground); a jump while sprinting is a Spider-Man leap far ahead, in a high, long arc. Press Jump in the air to swing. 0.1.0: First release: web-swinging from trees, cliffs and buildings (hold Jump in the air), zips to the spot under the crosshair (Sprint in the air), wall crawling, a higher Spider-Man jump, spider-sense, and a Webslinging skill. Web marks show where a web would stick. Its own web sounds, poses and flips, web patches and hanging webs, speed lines and camera motion. No stamina costs by default. Works with Quad's Parkour.
+- **0.3.0** Two suits for the trinket slot that change how you look, not what you wear (your armour stays on and keeps protecting you): the Spider-Viking suit (red and blue web suit with a mask and white eyes, leather belt with a gold buckle, bracers, leg wraps and fur-topped boots; your own helmet turns red and your cape blue with a red spider on its back) and the Venom suit (symbiote black with a huge white spider, jagged eyes and fangs, black leather and silver; your helmet and cape turn black, and your webs turn black). The Web Shooters now show on both wrists with the cartridge on the inside. 0.2.0: The Web Shooters: a utility item made at the workbench (Leather scraps, Resin, Flint); swings and zips need them (a server setting can turn that off), and a shooter shows on each wrist; the leap, the wall crawl and spider-sense work without. A plain jump is the game's own again, and never shoots a web (a web could fire right after a jump off the ground); a jump while sprinting is a Spider-Man leap far ahead, in a high, long arc. Press Jump in the air to swing. 0.1.0: First release: web-swinging from trees, cliffs and buildings (hold Jump in the air), zips to the spot under the crosshair (Sprint in the air), wall crawling, a higher Spider-Man jump, spider-sense, and a Webslinging skill. Web marks show where a web would stick. Its own web sounds, poses and flips, web patches and hanging webs, speed lines and camera motion. No stamina costs by default. Works with Quad's Parkour.
 
 <!-- GITHUB-ONLY -->[Every change](CHANGELOG.txt)<!-- END GITHUB-ONLY --><!-- THUNDERSTORE-ONLY: Every change is on the Changelog tab. -->

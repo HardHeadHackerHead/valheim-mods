@@ -9,5 +9,9 @@
   "webslinger_perfect": "Perfect release!",
   "webslinger_shooters": "Web Shooters",
   "webslinger_shooters_desc": "A pair of wrist gadgets that shoot webs. Wear them to swing on webs (Jump in the air) and zip to the spot under the crosshair (Sprint in the air).",
-  "webslinger_hint_leap": "Spider leap! With the Web Shooters on, press Jump in the air to swing from a web."
+  "webslinger_hint_leap": "Spider leap! With the Web Shooters on, press Jump in the air to swing from a web.",
+  "webslinger_suit": "Spider-Viking Suit",
+  "webslinger_suit_desc": "A red and blue web suit with a mask, a leather belt, leather bracers and fur-topped boots. Worn in the trinket slot, it changes how you look, not what you wear: your armour stays on and keeps protecting you, and your helmet and cape take the suit's colours.",
+  "webslinger_suit_venom": "Venom Suit",
+  "webslinger_suit_venom_desc": "A living black suit with a huge white spider, jagged white eyes and a grin of fangs, in black leather, silver and grey fur. Your webs turn black. Worn in the trinket slot, it changes how you look, not what you wear: your armour stays on, and your helmet and cape turn black."
 }
