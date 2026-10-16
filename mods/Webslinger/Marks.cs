@@ -31,7 +31,7 @@ namespace Webslinger
             Player p = Player.m_localPlayer;
             Camera cam = Utils.GetMainCamera();
             bool on = Plugin.ShowMarks.Value && Plugin.Enabled.Value && p != null && cam != null && !Hud.IsUserHidden()
-                && !InventoryGui.IsVisible() && !Menu.IsVisible() && !Minimap.IsOpen() && Web.CanAct(p, out _);
+                && !InventoryGui.IsVisible() && !Menu.IsVisible() && !Minimap.IsOpen() && Web.CanAct(p, out _) && Shooters.Worn(p);
             if (!on)
             {
                 _hasSwing = _hasZip = false;

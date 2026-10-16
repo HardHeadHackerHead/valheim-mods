@@ -105,7 +105,7 @@ namespace Webslinger
 
         public static bool TakingInput(Player p) => p != null && TakeInput(p);
 
-        /// <summary>No webs while dead, swimming, sitting or riding, too heavy, building, flying with the debug fly, or in a cutscene.</summary>
+        /// <summary>No moves while dead, swimming, sitting or riding, too heavy, building, flying with the debug fly, or in a cutscene.</summary>
         public static bool CanAct(Player p, out string why)
         {
             why = null;
@@ -127,7 +127,7 @@ namespace Webslinger
         {
             if (!Plugin.Enabled.Value) return false;
             if (State == Move.Crawl || State == Move.Swing || State == Move.Zip) return true;
-            if (p.IsOnGround() || !Plugin.Swing.Value || !CanAct(p, out _) || Compat.Busy(p)) return false;
+            if (p.IsOnGround() || !Plugin.Swing.Value || !Shooters.Worn(p) || !CanAct(p, out _) || Compat.Busy(p)) return false;
             // in the air, only when there is something to web to: otherwise the press is the game's (and other mods' double jumps)
             if (Plugin.SkyWebs.Value) return true;
             float f = Skill.Factor(p);
@@ -163,6 +163,7 @@ namespace Webslinger
                 Controls.TakeJump(); Controls.TakeZip(); Controls.TakeCrouch();
                 return;
             }
+            if ((State == Move.Swing || State == Move.Zip) && !Shooters.Worn(p)) End(p, "Web Shooters taken off", Move.Fly);
             bool ground = p.IsOnGround();
             if (ground) _airZips = 0;
             if (_record != null) _record.Seconds = Time.time - _record.Started;
@@ -192,7 +193,7 @@ namespace Webslinger
             bool busy = Compat.Busy(p);
             if (busy) { Controls.TakeJump(); Controls.TakeZip(); return; }
 
-            // a fresh press of Jump in the air (a jump off the ground is only a jump, a Spider-Man one: SpiderJump)
+            // a fresh press of Jump in the air (a jump off the ground is only the game's jump, or a sprint's leap: never a web)
             if (Controls.TakeJump() && Plugin.Swing.Value && StartSwing(p)) return;
             if (Plugin.Zip.Value && Controls.TakeZip() && StartZip(p)) return;
             if (Plugin.Crawl.Value && TryStick(p)) return;
@@ -206,6 +207,7 @@ namespace Webslinger
         /// </summary>
         private static bool StartSwing(Player p)
         {
+            if (!Shooters.Worn(p)) { Refuse(p, "no Web Shooters on"); return false; }
             float f = Skill.Factor(p);
             float reach = Mathf.Lerp(Plugin.WebReach.Value, Plugin.WebReachAt100.Value, f);
             bool sky = false;
@@ -375,6 +377,8 @@ namespace Webslinger
             if ((ground && _since > 0.15f) || p.InWater()) { End(p, ground ? "landed" : "in the water", Move.None); return false; }
             Vector3 input = InputDir(p);
             if (input.sqrMagnitude > 0.01f) v += input * (5f * dt);
+            // a leap hangs on the way up (part of the game's gravity taken back), then drops: a high, long arc, not a hop
+            if (_leaping && v.y > 0f) v.y += LeapLift * dt;
             // well over cruising speed, the air slows the flight (gently: a release carries far)
             float over = flat.magnitude - (Cruise(p) + 4f);
             if (over > 0f) v -= flat.normalized * (over * 0.3f * dt);
@@ -387,6 +391,7 @@ namespace Webslinger
         /// <summary>A zip to the spot under the crosshair; with none in reach, a zip forward.</summary>
         private static bool StartZip(Player p)
         {
+            if (!Shooters.Worn(p)) return false;   // (Sprint in the air without them: nothing)
             float f = Skill.Factor(p);
             float reach = Mathf.Lerp(Plugin.ZipReach.Value, Plugin.ZipReachAt100.Value, f);
             Rigidbody body = Body(p);
@@ -597,6 +602,7 @@ namespace Webslinger
             if (State != Move.None && State != move) Finish(p, _record?.Ended is string e && e.Length > 0 ? e : "into " + move);
             if (State == Move.Swing || State == Move.Zip) Look.LetGo(p);
             State = move;
+            _leaping = false;
             _since = 0f;
             Stuck = false;
             _record = new Record { Move = move.ToString(), Started = Time.time, From = p.transform.position };
@@ -611,6 +617,7 @@ namespace Webslinger
             if (State == Move.Swing || State == Move.Zip) Look.LetGo(p);
             if (State == Move.Crawl) Look.Unstick(p);
             State = next;
+            _leaping = false;
             Stuck = false;
             _since = 0f;
             _endAt = Time.time;
@@ -689,29 +696,64 @@ namespace Webslinger
             }
         }
 
-        // The Spider-Man jump: a jump off the ground goes higher and a little further (the server's SpiderJumpPercent), for the local
-        // player only. The game's jump force is raised for that one call and put back after (other mods' jump changes still apply on top).
-        private static readonly AccessTools.FieldRef<Character, float> JumpForce = AccessTools.FieldRefAccess<Character, float>("m_jumpForce");
-        private static readonly AccessTools.FieldRef<Character, float> JumpForward = AccessTools.FieldRefAccess<Character, float>("m_jumpForceForward");
+        // The Spider-Man leap: a jump off the ground while sprinting throws the body far ahead (the server's SprintLeapForward and
+        // SprintLeapUp), and flies on (Move.Fly: the game's air control off, so the speed holds) until the ground. A jump without sprinting
+        // is the game's own. The game's jump still runs (its stamina, skill, animation and sound): only the velocity it hands to ForceJump
+        // is ours, and only inside that one Jump call (other mods' own ForceJumps, Parkour's wall kicks, are left alone).
+        private static bool _leapNext, _leapt, _leaping;
+        /// <summary>Upward pull while a leap rises (m/s each second): the game's gravity on a player is about 20, so it rises at about half.</summary>
+        private const float LeapLift = 9f;
+
+        private static bool WantsLeap(Player p)
+        {
+            if (!Plugin.Enabled.Value || Plugin.LeapForward.Value <= 0f || State != Move.None) return false;
+            if (!Controls.RunHeld || Controls.Move.sqrMagnitude < 0.09f) return false;
+            if (!p.IsOnGround() || !CanAct(p, out _) || Compat.Busy(p)) return false;
+            return true;
+        }
 
         [HarmonyPatch(typeof(Character), nameof(Character.Jump))]
         private static class Character_Jump
         {
-            private static void Prefix(Character __instance, out Vector2 __state)
+            private static void Prefix(Character __instance)
             {
-                __state = Vector2.zero;
-                if (!ReferenceEquals(__instance, Player.m_localPlayer) || !Plugin.Enabled.Value || Plugin.SpiderJump.Value <= 0f || !__instance.IsOnGround()) return;
-                __state = new Vector2(JumpForce(__instance), JumpForward(__instance));
-                float more = 1f + Plugin.SpiderJump.Value / 100f;
-                JumpForce(__instance) = __state.x * more;
-                JumpForward(__instance) = __state.y * Mathf.Sqrt(more);
+                _leapNext = _leapt = false;
+                if (ReferenceEquals(__instance, Player.m_localPlayer)) _leapNext = WantsLeap((Player)__instance);
             }
 
-            private static void Postfix(Character __instance, Vector2 __state)
+            private static void Postfix(Character __instance)
             {
-                if (__state == Vector2.zero) return;
-                JumpForce(__instance) = __state.x;
-                JumpForward(__instance) = __state.y;
+                bool leapt = _leapt;
+                _leapNext = _leapt = false;
+                if (!leapt || !ReferenceEquals(__instance, Player.m_localPlayer)) return;
+                Player p = (Player)__instance;
+                Begin(p, Move.Fly);
+                _leaping = true;
+                if (_record != null) _record.Move = "Leap";
+                Look.Kick(p);
+                Raise(p, 0.3f);
+                Hint(p, "leap");
+            }
+        }
+
+        [HarmonyPatch(typeof(Character), nameof(Character.ForceJump))]
+        private static class Character_ForceJump
+        {
+            private static void Prefix(Character __instance, ref Vector3 vel)
+            {
+                if (!_leapNext || !ReferenceEquals(__instance, Player.m_localPlayer)) return;
+                _leapNext = false;
+                Player p = (Player)__instance;
+                Vector3 dir = InputDir(p);
+                dir = dir.sqrMagnitude > 0.01f ? dir.normalized : Anchors.LookFlat(p);
+                float f = Skill.Factor(p);
+                float pitch = Mathf.Clamp(Mathf.Asin(Mathf.Clamp(p.GetLookDir().y, -1f, 1f)) * Mathf.Rad2Deg, -15f, 45f);
+                float ahead = Mathf.Max(Plugin.LeapForward.Value * (1f + 0.2f * f) * (1f - Mathf.Max(0f, pitch) / 150f), Vector3.Dot(Flat(vel), dir));
+                float up = Plugin.LeapUp.Value * (1f + 0.1f * f) * (1f + pitch / 90f);
+                // (a tired jump, out of stamina, stays the game's weaker one)
+                if (vel.y < 1f) return;
+                vel = Cap(dir * ahead + Vector3.up * Mathf.Max(vel.y, up));
+                _leapt = true;
             }
         }
 

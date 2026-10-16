@@ -6,5 +6,8 @@
   "webslinger_hint_airzip": "Nothing in reach: a zip forward. A few per jump.",
   "webslinger_hint_perch": "Perched.",
   "webslinger_hint_crawl": "On the wall: move keys crawl, Sprint faster, Jump kicks off, Crouch lets go.",
-  "webslinger_perfect": "Perfect release!"
+  "webslinger_perfect": "Perfect release!",
+  "webslinger_shooters": "Web Shooters",
+  "webslinger_shooters_desc": "A pair of wrist gadgets that shoot webs. Wear them to swing on webs (Jump in the air) and zip to the spot under the crosshair (Sprint in the air).",
+  "webslinger_hint_leap": "Spider leap! With the Web Shooters on, press Jump in the air to swing from a web."
 }

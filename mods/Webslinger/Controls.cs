@@ -105,7 +105,9 @@ namespace Webslinger
                 RunHeld = run;
                 JumpHeld = drive != null ? drive.JumpDown
                     : Web.TakingInput(__instance) && !InventoryGui.IsVisible() && (ZInput.GetButton("Jump") || ZInput.GetButton("JoyJump"));
-                if (jump) _jumpAt = Time.time;
+                // A press on the ground is the game's jump (or a sprint's leap), never a web: it isn't kept for the moves, which would
+                // otherwise see it a step later, already in the air, and shoot a web at once.
+                if (jump && (!__instance.IsOnGround() || Web.OwnsMovement)) _jumpAt = Time.time;
                 if (crouch) _crouchAt = Time.time;
 
                 // what a move takes is ours: the game doesn't jump or crouch too (nor another mod's air jump)

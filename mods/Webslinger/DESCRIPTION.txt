@@ -1,9 +1,12 @@
-Swing through the world on webs, Spider-Man style: web-swing from trees, cliffs and buildings, zip to rooftops, crawl on walls, a higher jump, and a spider-sense that warns you of attacks, with a Webslinging skill.
+Swing through the world on webs, Spider-Man style: put on the Web Shooters to web-swing from trees, cliffs and buildings and zip to rooftops; crawl on walls, leap far ahead, and a spider-sense that warns you of attacks, with a Webslinging skill.
+
+The Web Shooters
+- A pair of wrist gadgets, made at the workbench (4 Leather scraps, 10 Resin, 2 Flint), worn in the utility slot. Swings and zips need them (the leap, the wall crawl and spider-sense don't), and others with the mod see a shooter on each of your wrists.
 
 The moves
 - Swing: jump, then press and hold Jump in the air. A web shoots up and ahead to the best spot in reach (a tree, a cliff, a roof, a tower) and you swing from it. Keep holding and the next web fires by itself at the top of each swing; let go to fly off. Let go near the top of a swing while still rising for a perfect release: a bigger fling and a flip. A quick tap gives one short swing. Steer with the move keys.
 - Webs stick to real things only: something solid that stays put, up and ahead of you, high enough to swing under (about 8 metres over the ground below it). In the air, a small white web mark shows where your web would stick: no mark, nothing to swing from, and Jump is just Jump.
-- Spider-Man jump: a jump off the ground goes about twice as high. It never shoots a web.
+- Spider-Man leap: jump while sprinting and you leap far ahead in a high arc (look up to leap higher). A jump without sprinting is the game's own. A jump off the ground never shoots a web: press Jump again in the air to swing.
 - Zip: press Sprint in the air to pull yourself to the spot under your crosshair: onto a roof or a ledge (you land on it), onto a wall (you stick to it), or under something. A light blue ring shows when a spot is in reach. With nothing in reach, a short zip forward (2 before you touch the ground, 3 with the skill).
 - Wall crawl: move into a wall in the air (or swing into one) and you stick to it. Crawl with the move keys, faster with Sprint, over the top at its edge; Jump kicks off it, Crouch lets go.
 - Spider-sense: wavy lines round your head, a glow on the side it comes from and a tingle, a moment before an enemy's attack or an arrow reaches you (only for those you can't see, or every one: a setting).
@@ -19,4 +22,4 @@ How it looks and sounds
 The Webslinging skill rises with every web, zip and crawl: longer webs and zips, faster swings, more zips forward.
 
 Settings: each move on or off, keep swinging while Jump is held, the web marks, hints, the sounds and their volume, the web patches and hanging webs, the speed lines, the camera motion and view widening (turn those off if motion on screen makes you feel sick), the poses, and spider-sense, for you; how far webs and zips reach, how fast swings go, the jump, the steering, the flings, the crawl speed, fall damage, stamina costs (none by default) and how fast the skill rises are the server's in multiplayer.
-Works with Quad's Parkour: Jump in the air is a web whenever a web is possible, otherwise Parkour's wall kick. Only the players who want it need it: movement is each player's own, and the mod isn't needed on the server.
+Works with Quad's Parkour: Jump in the air is a web whenever a web is possible, otherwise Parkour's wall kick. Only the players who want it need it: movement is each player's own. The Web Shooters can only be made where the server (or host) has the mod too, since a server without it would delete a dropped pair; its NeedsWebShooters setting turns the item off.

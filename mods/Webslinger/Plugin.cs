@@ -3,21 +3,23 @@ using BepInEx.Configuration;
 using BepInEx.Logging;
 using HarmonyLib;
 
-// It only patches methods and adds a skill (nothing saved in the world, no prefabs; the skill's backup is on the character): safe to
-// reload in a world.
+// It patches methods, adds a skill (its backup is on the character) and one item, the Web Shooters, which goes in through ItemReload.cs
+// (kept registered across a reload, the new copy's put in its place) with its recipe through Shared/Content.cs: safe to reload in a world.
 [assembly: System.Reflection.AssemblyMetadata("ClaudeTools.Reload", "world")]
 
 namespace Webslinger
 {
     /// <summary>
-    /// Webslinger: be Spider-Man in Valheim. Hold Jump in the air to shoot a web and swing (let go to fly off), press Sprint in the air to
-    /// zip to the spot under the crosshair, stick to any wall you hit in the air and crawl along it, and feel attacks coming (spider-sense).
-    /// Every move costs a little stamina and trains a new Webslinging skill: longer webs, faster zips, cheaper moves.
+    /// Webslinger: be Spider-Man in Valheim. Sprint and jump to leap far ahead; wear the Web Shooters (a utility item made at the workbench) to
+    /// press Jump in the air to shoot a web and swing (let go to fly off), press Sprint in the air to zip to the spot under the
+    /// crosshair, stick to any wall you hit in the air and crawl along it, and feel attacks coming (spider-sense). A plain jump stays the
+    /// game's own. The moves train a new Webslinging skill: longer webs, faster zips and swings.
     /// Movement is each player's own game's job, so only the players who want it need the mod; with it, they also see each other's webs.
     /// The whole plan, with the phases still to come (web combat, suits, web building), is docs/webslinger-design.md.
     ///
     /// Split across files: Plugin.cs (settings, setup), Controls.cs (the player's input, and test driving), Anchors.cs (finding what a web
     /// sticks to, and walls), Web.cs (the moves: swing, zip, crawl, flight), Look.cs (the webs drawn, the body's lean, sounds, the camera),
+    /// Shooters.cs (the Web Shooters item, and the shooters on the wrists), ItemReload.cs (the item across a reload),
     /// Share.cs (the web shared with other players), Sense.cs (spider-sense), Marks.cs (the web marks on screen), Body.cs (the poses and flips), Fx.cs (web splats, speed lines, the camera), Sounds.cs (the web's sounds), Skill.cs (the Webslinging skill), Compat.cs (other mods),
     /// Tools.cs (Claude Tools commands).
     /// </summary>
@@ -26,7 +28,7 @@ namespace Webslinger
     {
         public const string Guid = "com.quad.webslinger";
         public const string Name = "Webslinger";
-        public const string Version = "0.1.0";
+        public const string Version = "0.2.0";
 
         internal static Plugin Instance;
         internal static ManualLogSource Log;
@@ -39,9 +41,10 @@ namespace Webslinger
         internal static ConfigEntry<float> WebTrailSeconds;
         // the server's
         internal static ConfigEntry<float> WebReach, WebReachAt100, ZipReach, ZipReachAt100, ZipSpeed, MaxSpeed, Pump, ReleaseBoost, PerfectBoost,
-            CrawlSpeed, FallDamage, WebLandingDamage, Steer, SpiderJump, SkillGain, SenseRange, SwingSpeed, SwingSpeedAt100;
+            CrawlSpeed, FallDamage, WebLandingDamage, Steer, LeapForward, LeapUp, SkillGain, SenseRange, SwingSpeed, SwingSpeedAt100;
         internal static ConfigEntry<int> AirZips, AirZipsAt100;
-        internal static ConfigEntry<bool> SkyWebs;
+        internal static ConfigEntry<bool> SkyWebs, NeedsShooters;
+        internal static ConfigEntry<string> ShootersCost;
         internal static ConfigEntry<float> WebCost, SwingCostPerSecond, ZipCost, AirZipCost, CrawlCostPerSecond, SkillCostCut;
         internal static DHack.Shared.ServerSettings Synced;   // how strong and how dear the moves are is the server's in multiplayer
 
@@ -58,6 +61,9 @@ namespace Webslinger
             Config.SaveOnConfigSet = false;
 
             Enabled = Config.Bind("1 - Moves", "Enabled", true, "Webslinger on or off (all the moves).");
+            NeedsShooters = Synced.Add(Config.Bind("1 - Moves", "NeedsWebShooters", true, "Webs (swings and zips) shoot only while the Web Shooters are worn (the utility slot); the leap, the wall crawl and spider-sense never need them. Off: webs always work, and the Web Shooters do nothing. [Synced with Server]"));
+            ShootersCost = Synced.Bind("1 - Moves", "WebShootersCost", "LeatherScraps:4, Resin:10, Flint:2", "What the Web Shooters take to make at the workbench. " + DHack.Shared.Costs.Help);
+            ShootersCost.SettingChanged += (o, e) => Shooters.ApplyCost();
             Swing = Config.Bind("1 - Moves", "Swing", true, "Swing: press and hold Jump in the air to shoot a web up ahead and swing from it; let go to fly off. Only when something is in reach to stick to: otherwise a jump is just a jump.");
             HoldToSwing = Config.Bind("1 - Moves", "HoldToKeepSwinging", true, "Keep holding Jump and, at the top of each swing, the next web shoots ahead by itself. Off: one web per press.");
             Zip = Config.Bind("1 - Moves", "Zip", true, "Zip: press Sprint in the air to pull yourself to the spot under the crosshair (a top: land on it; a wall: stick to it). Nothing in reach: a short zip forward.");
@@ -79,7 +85,8 @@ namespace Webslinger
             WebReach = Synced.Add(Config.Bind("3 - Strengths", "WebReach", 40f, new ConfigDescription("How far a swing web reaches at Webslinging skill 0 (metres). [Synced with Server]", new AcceptableValueRange<float>(10f, 150f))));
             WebReachAt100 = Synced.Add(Config.Bind("3 - Strengths", "WebReachAtSkill100", 60f, new ConfigDescription("The same at Webslinging skill 100 (metres). [Synced with Server]", new AcceptableValueRange<float>(10f, 150f))));
             SkyWebs = Synced.Add(Config.Bind("3 - Strengths", "SkyWebs", false, "With nothing in reach high enough to swing from (open plains, the sea), a swing web sticks to the sky up ahead, as in The Amazing Spider-Man. Off: webs need something solid, and with nothing in reach a jump is just a jump. [Synced with Server]"));
-            SpiderJump = Synced.Add(Config.Bind("3 - Strengths", "SpiderJumpPercent", 50f, new ConfigDescription("How much stronger a jump off the ground is (percent of the game's jump speed; 50 jumps about twice as high). 0: the game's own jump. [Synced with Server]", new AcceptableValueRange<float>(0f, 200f))));
+            LeapForward = Synced.Add(Config.Bind("3 - Strengths", "SprintLeapForward", 22f, new ConfigDescription("The Spider-Man leap: a jump while sprinting throws you this fast ahead (metres per second; the game's sprint is about 7). 0: a sprint jump is the game's own. A jump without sprinting is always the game's own. [Synced with Server]", new AcceptableValueRange<float>(0f, 40f))));
+            LeapUp = Synced.Add(Config.Bind("3 - Strengths", "SprintLeapUp", 13f, new ConfigDescription("How fast the leap goes up (metres per second; the game's gravity on a player is about 20, eased while the leap rises). Looking up leaps higher and shorter. [Synced with Server]", new AcceptableValueRange<float>(0f, 30f))));
             ZipReach = Synced.Add(Config.Bind("3 - Strengths", "ZipReach", 35f, new ConfigDescription("How far a zip reaches at Webslinging skill 0 (metres). [Synced with Server]", new AcceptableValueRange<float>(5f, 150f))));
             ZipReachAt100 = Synced.Add(Config.Bind("3 - Strengths", "ZipReachAtSkill100", 50f, new ConfigDescription("The same at Webslinging skill 100 (metres). [Synced with Server]", new AcceptableValueRange<float>(5f, 150f))));
             ZipSpeed = Synced.Add(Config.Bind("3 - Strengths", "ZipSpeed", 30f, new ConfigDescription("How fast a zip pulls you (metres per second). [Synced with Server]", new AcceptableValueRange<float>(5f, 80f))));
@@ -111,6 +118,9 @@ namespace Webslinger
             _harmony = new Harmony(Guid);
             _harmony.PatchAll(typeof(Plugin).Assembly);
             Skill.Create();   // (after the translations; also puts it on the player already in the world after a hot reload)
+            Shooters.Register();                 // a hot reload while in a world
+            ItemReload.Repoint(Shooters.Current);   // shooters made by the copy this replaces
+            Shooters.Refresh();                     // and the ones the game gave their own copy of the data (the give command)
             Skill.Gain = SkillGain.Value;
             Logger.LogInfo($"{Name} {Version} loaded");
         }
@@ -128,6 +138,7 @@ namespace Webslinger
         private void LateUpdate()
         {
             Look.Late();   // after the animation has posed the players: the webs from their hands
+            Shooters.Late();
             Sense.Late();
         }
 
@@ -144,6 +155,7 @@ namespace Webslinger
             Controls.Reset();
             Compat.Reset();
             Skill.Reset();
+            Shooters.Unregister();
             Synced?.Dispose();
             _harmony?.UnpatchSelf();
             Tools.Unregister();
@@ -151,4 +163,15 @@ namespace Webslinger
             if (Instance == this) Instance = null;
         }
     }
+
+    // Whichever of ZNetScene and ObjectDB wakes first, the Web Shooters are registered before a saved pair is loaded.
+    [HarmonyPatch(typeof(ZNetScene), "Awake")]
+    internal static class ZNetScene_Awake { private static void Postfix() => Shooters.Register(); }
+
+    [HarmonyPatch(typeof(ObjectDB), "Awake")]
+    internal static class ObjectDB_Awake { private static void Postfix() => Shooters.Register(); }
+
+    // The game swaps in another ObjectDB's item lists when a world loads, which drops what was added to the old ones.
+    [HarmonyPatch(typeof(ObjectDB), nameof(ObjectDB.CopyOtherDB))]
+    internal static class ObjectDB_CopyOtherDB { private static void Postfix() => Shooters.Register(); }
 }

@@ -274,6 +274,7 @@ namespace Webslinger
                 ["skill"] = Math.Round(Skill.Level(p), 2), ["webReach"] = Math.Round(reach, 1), ["zipReach"] = Math.Round(zipReach, 1),
                 ["airZipsUsed"] = Web.AirZipsUsed, ["spiderSenseTingles"] = Sense.Tingles, ["lastTingle"] = Sense.Last,
                 ["webPose"] = Look.WebPose, ["crawlPose"] = Look.CrawlPose, ["hand"] = HandName(), ["cruise"] = Math.Round(Web.Cruise(p), 1),
+                ["shootersWorn"] = Shooters.WornBy(p), ["shootersItem"] = Shooters.Registered, ["wristsDressed"] = Shooters.Dressed,
             };
             if (Anchors.SwingAnchor(p, reach, out Anchors.Spot spot))
                 o["swingAnchor"] = new JObject { ["at"] = Vec(spot.Point), ["what"] = Name(spot.What), ["distance"] = Math.Round(Vector3.Distance(Anchors.Pivot(p), spot.Point), 1),
