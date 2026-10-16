@@ -17,7 +17,9 @@ namespace Arena
         internal static readonly string[] SlotWords = { "weapon", "shield", "helmet", "chest", "legs" };   // (arena_upgrade_weapon...)
 
         // what an upgrade to a land's piece costs, by land, steeper and steeper; a shield is cheaper, armour in between
-        private static readonly int[] Base = { 20, 80, 200, 400, 700, 1100, 1600 };
+        // (about what a land's fighters drop, after its food: one piece of the next land's a land, or two of armour; it was up to twice that,
+        // and by the Plains a weapon cost more than a whole land paid)
+        private static readonly int[] Base = { 20, 60, 130, 220, 330, 460, 600 };
 
         private static string[] List(Slot slot, int style)
         {
@@ -61,11 +63,11 @@ namespace Arena
         internal static int Price(Slot slot, int tier) => Mathf.RoundToInt(Base[Mathf.Clamp(tier, 0, Base.Length - 1)] * (slot == Slot.Weapon ? 1f : slot == Slot.Shield ? 0.4f : 0.6f));
 
         /// <summary>The next piece for a slot (with <paramref name="capped"/>, only if it is no more than a land ahead of the fight).</summary>
-        internal static bool Next(Player player, Slot slot, int style, out int tier, out string prefab, out int quality, bool capped = false)
+        internal static bool Next(Player player, Slot slot, int style, out int tier, out string prefab, out int quality, bool capped = false, bool ahead = true)
         {
             tier = TierOf(player, slot, style) + 1;
             prefab = null; quality = 2;
-            if (capped && tier > Cap || tier >= Roster.TierNames.Length) return false;
+            if (capped && tier > (ahead ? Cap : Contest.Tier) || tier >= Roster.TierNames.Length) return false;
             string[] list = List(slot, style);
             // (a list can name the same piece twice, at a better quality: skip to the next one that is really better)
             prefab = PrefabOf(list[tier]); quality = QualityOf(list[tier]);
@@ -80,13 +82,16 @@ namespace Arena
             return Contest.ItemName(PrefabOf(list[t])) + (QualityOf(list[t]) > 2 ? " ★" + QualityOf(list[t]) : "");
         }
 
-        /// <summary>One upgrade picked at random from the slots that can take one (null: everything is as good as it may be yet).</summary>
-        internal static (string Prefab, int Amount, int Quality, string Loan)? Random(Player player, int style, bool fists, string loan)
+        /// <summary>
+        /// One upgrade picked at random from the slots that can take one (null: everything is as good as it may be yet): up to a land ahead
+        /// of the fight, or (not <paramref name="ahead"/>) only up to this land's, the weakest piece first.
+        /// </summary>
+        internal static (string Prefab, int Amount, int Quality, string Loan)? Random(Player player, int style, bool fists, string loan, bool ahead = true)
         {
-            var open = Slots(style, fists).Where(s => Next(player, s, style, out _, out _, out _, true)).ToList();
+            var open = Slots(style, fists).Where(s => Next(player, s, style, out _, out _, out _, true, ahead)).ToList();
             if (open.Count == 0) return null;
-            Slot pick = open[UnityEngine.Random.Range(0, open.Count)];
-            Next(player, pick, style, out _, out string prefab, out int quality, true);
+            Slot pick = ahead ? open[UnityEngine.Random.Range(0, open.Count)] : open.OrderBy(s => TierOf(player, s, style)).ThenBy(_ => UnityEngine.Random.value).First();
+            Next(player, pick, style, out _, out string prefab, out int quality, true, ahead);
             return (prefab, 1, quality, loan);
         }
 
@@ -104,6 +109,38 @@ namespace Arena
             item.m_customData[Kit.LoanKey] = tier.ToString();
             player.EquipItem(item, false);
             Tidy(player, style);
+        }
+
+        private static readonly HashSet<ItemDrop.ItemData> Known = new HashSet<ItemDrop.ItemData>();
+
+        /// <summary>
+        /// A piece of the arena's steel just come into the bag (taken out of a chest, picked up from the crowd) that is better than what is
+        /// worn in its slot goes on at once, and what it replaces goes back. Only what has just come in: a piece you take off yourself stays
+        /// off.
+        /// </summary>
+        internal static void WearNew(Player player, int style, bool fists)
+        {
+            List<ItemDrop.ItemData> items = player.GetInventory().GetAllItems();
+            bool changed = false;
+            foreach (Slot slot in Slots(style, fists))
+            {
+                string[] list = List(slot, style);
+                int worn = -1, bestAt = -1;
+                ItemDrop.ItemData best = null;
+                foreach (ItemDrop.ItemData item in items)
+                {
+                    if (!Kit.IsLoan(item) || item.m_dropPrefab == null) continue;
+                    string name = item.m_dropPrefab.name;
+                    int at = System.Array.FindLastIndex(list, e => PrefabOf(e) == name && item.m_quality >= QualityOf(e));
+                    if (at < 0) continue;
+                    if (item.m_equipped) worn = Mathf.Max(worn, at);
+                    else if (!Known.Contains(item) && at > bestAt) { best = item; bestAt = at; }
+                }
+                if (best != null && bestAt > worn && player.EquipItem(best, true)) changed = true;
+            }
+            Known.Clear();
+            foreach (ItemDrop.ItemData item in items) Known.Add(item);
+            if (changed) Tidy(player, style);
         }
 
         /// <summary>The lent pieces you have outgrown (a better one of the same slot in the bag, and this one not worn) go back.</summary>
@@ -169,6 +206,9 @@ namespace Arena
             Drop("Coins", coins, at);
         }
 
+        /// <summary>Marks (in its saved data) a thing an arena fighter dropped: what is left on the floor is gathered for the prize (Contest.Sweep).</summary>
+        internal const string DropKey = "dh_arena_drop";
+
         internal static void Drop(string prefab, int amount, Vector3 at)
         {
             GameObject go = ZNetScene.instance != null ? ZNetScene.instance.GetPrefab(prefab) : null;
@@ -181,6 +221,8 @@ namespace Arena
                 amount -= n;
                 GameObject made = Object.Instantiate(go, at + Vector3.up * 0.8f + Random3(), Quaternion.identity);
                 made.GetComponent<ItemDrop>()?.SetStack(n);
+                ZNetView view = made.GetComponent<ZNetView>();
+                if (view != null && view.IsValid()) view.GetZDO().Set(DropKey, true);
                 made.GetComponent<Rigidbody>()?.AddForce(Vector3.up * 3f + Random3() * 2f, ForceMode.VelocityChange);
             }
         }

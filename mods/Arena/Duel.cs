@@ -325,12 +325,15 @@ namespace Arena
                 if (_pvpSet) me.SetPVP(_prevPvp);
                 _pvpSet = false;
                 me.Heal(me.GetMaxHealth(), true);
+                if (win != null) History.Add(me, "duel:" + _opponentName, 0, 0, 0, win == true ? "duelwin" : "duelloss", win == true, "",
+                                             win == true ? _wager * 2 - _wager * 2 / 10 : 0);
                 if (win == true)
                 {
+                    // (the pot, less the house's tenth, is the Arena Master's to hand over at his desk: Prize)
                     int pot = _wager * 2, cut = pot / 10;
-                    if (pot - cut > 0) Contest.Give("Coins", pot - cut, me);
+                    if (pot - cut > 0) Prize.Hold(me, "Coins", pot - cut);
                     Ladder.Add("duelwins", 1);
-                    Hud.Shout(T("arena_call_you_win"), why + (pot > 0 ? "   -   " + T("arena_coins", pot - cut) : ""), 5f);
+                    Hud.Shout(T("arena_call_you_win"), why + (pot > 0 ? "   -   " + T("arena_duel_pot_held", pot - cut) : ""), 5f);
                     Crowd.Roar(); Crowd.Horn();
                 }
                 else if (win == false)

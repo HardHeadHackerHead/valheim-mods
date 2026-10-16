@@ -372,7 +372,7 @@ namespace Arena
             {
                 ["active"] = Contest.Active, ["phase"] = Contest.Phase.ToString(), ["title"] = Contest.Title, ["round"] = Contest.Round, ["rounds"] = Contest.Rounds,
                 ["foesLeft"] = Contest.FoesLeft, ["purse"] = Contest.PurseText(), ["mood"] = Crowd.Mood, ["kills"] = Contest.Kills, ["favour"] = Crowd.Favour, ["rules"] = Rules.Text(), ["stake"] = Contest.Stake,
-                ["site"] = Site.Known ? Site.Origin.ToString() : "none", ["siteYaw"] = Site.Yaw, ["ground"] = Ground.Done ? "done" : Ground.Status, ["built"] = Scenery.Built, ["cover"] = Scenery.PropSet, ["busy"] = Net.Busy, ["away"] = Travel.Distance(player.transform.position), ["duel"] = Duel.Active, ["title_you"] = Ladder.Title(), ["wins"] = Ladder.Wins, ["stage"] = Roster.Stage(),
+                ["site"] = Site.Known ? Site.Origin.ToString() : "none", ["siteYaw"] = Site.Yaw, ["ground"] = Ground.Done ? "done" : Ground.Status, ["built"] = Scenery.Built, ["cover"] = Scenery.PropSet, ["busy"] = Net.Busy, ["away"] = Travel.Distance(player.transform.position), ["duel"] = Duel.Active, ["title_you"] = Ladder.Title(), ["wins"] = Ladder.Wins, ["stage"] = Roster.Stage(), ["prizeHeld"] = string.Join(", ", Prize.Held(player).Select(h => h.Key + " x" + h.Value)),
             });
         }
     }

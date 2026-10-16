@@ -7,11 +7,12 @@ namespace Arena
 {
     /// <summary>
     /// The show around a fight: chests that rise out of the floor in the middle of the ring (the armourer's, with the next land's steel and
-    /// meals; the prize chest after a win), and fireworks over the stands.
+    /// meals; the reward chest between lands), and fireworks over the stands. (A win's prize is the Arena Master's to hand over: Prize.)
     ///
     /// The chests are the game's own chests, real ones (so you open them and take what is in them as from any chest), marked in their saved
     /// data: the armourer's is taken away when the round begins (anything left in it was lent, and goes back), and should the game close with
-    /// one still standing it is cleared away the next time the arena is seen. A prize chest is yours: it stays until it is empty.
+    /// one still standing it is cleared away the next time the arena is seen. A prize chest (older versions put a win's prize in one) stays
+    /// until it is empty.
     /// </summary>
     internal static class Show
     {
@@ -80,14 +81,38 @@ namespace Arena
             return chest;
         }
 
+        /// <summary>Marks (in its saved data) a thing the crowd threw into the ring.</summary>
+        internal const string GiftKey = "dh_arena_gift";
+
+        /// <summary>
+        /// Takes away what the crowd threw that nobody picked up: when a contest ends (however it ends) and when the Long Road moves on to the
+        /// next land, so the ring is never left littered with food, meads and arrows.
+        /// </summary>
+        internal static void ClearGifts()
+        {
+            if (ZNetScene.instance == null || !Site.Known) return;
+            var found = new List<ZNetView>();   // (gathered first: taking one away changes the list being walked)
+            foreach (ZNetView view in Ground.Instances(ZNetScene.instance).Values)
+                if (view != null && view.IsValid() && view.GetZDO().GetBool(GiftKey, false) && Site.OnFloor(view.transform.position, 3f)) found.Add(view);
+            foreach (ZNetView view in found)
+            {
+                if (view == null || !view.IsValid()) continue;
+                view.ClaimOwnership();
+                view.Destroy();
+            }
+            if (found.Count > 0) Plugin.Log.LogInfo($"Cleared {found.Count} of the crowd's gifts left in the ring");
+        }
+
         /// <summary>Clears what lies about on the floor of the ring from the last fight (thrown gifts, dropped things nobody picked up).</summary>
         internal static void ClearFloor()
         {
             int n = 0;
-            foreach (ItemDrop drop in Object.FindObjectsOfType<ItemDrop>())
+            if (ZNetScene.instance == null) return;
+            var found = new List<ZNetView>();   // (gathered first: taking one away changes the list being walked)
+            foreach (ZNetView view in Ground.Instances(ZNetScene.instance).Values)
+                if (view != null && view.IsValid() && Site.OnFloor(view.transform.position, 0.5f) && view.GetComponent<ItemDrop>() != null) found.Add(view);
+            foreach (ZNetView view in found)
             {
-                if (drop == null || !Site.OnFloor(drop.transform.position, 0.5f)) continue;
-                ZNetView view = drop.GetComponent<ZNetView>();
                 if (view == null || !view.IsValid()) continue;
                 view.ClaimOwnership();
                 view.Destroy();
@@ -96,22 +121,25 @@ namespace Arena
             if (n > 0) Plugin.Log.LogInfo($"Cleared {n} things left lying in the ring");
         }
 
-        /// <summary>Takes the chest standing in the ring away (whatever is left in an armourer's chest was lent, and goes with it).</summary>
+        /// <summary>Takes the chest standing in the ring away (whatever is left in an armourer's chest was lent, and goes with it; a reward chest's goes in your bag).</summary>
         internal static void TakeChest()
         {
             if (_chest == null) return;
             GameObject go = _chest;
             _chest = null;
             Container chest = go.GetComponent<Container>();
-            if (_chestKind == Prize && chest != null && chest.GetInventory().NrOfItems() > 0)
+            if ((_chestKind == Prize || _chestKind == Reward) && chest != null && chest.GetInventory().NrOfItems() > 0)
             {
-                // the prize is yours: what is still in the chest goes in your bag
+                // a reward is yours: what is still in the chest goes in your bag (anything lent goes back after the fight, as ever)
                 Player p = Player.m_localPlayer;
                 if (p != null)
                     foreach (ItemDrop.ItemData item in chest.GetInventory().GetAllItems().ToList())
                     {
-                        if (!p.GetInventory().AddItem(item)) ItemDrop.DropItem(item, item.m_stack, p.transform.position + Vector3.up, Quaternion.identity);
+                        if (!p.GetInventory().AddItem(item)) { ItemDrop.DropItem(item, item.m_stack, p.transform.position + Vector3.up, Quaternion.identity); continue; }
+                        // (a piece of the arena's steel left in the reward chest: put on, as if you had taken it)
+                        if (_chestKind == Reward && Kit.IsLoan(item) && item.IsEquipable() && !p.IsDead()) p.EquipItem(item, false);
                     }
+                if (p != null && _chestKind == Reward) Arena.Armoury.Tidy(p, Contest.Style);   // (Show.Armoury is the chest kind)
                 chest.GetInventory().RemoveAll();
             }
             if (InventoryGui.IsVisible() && InventoryGui.instance != null) InventoryGui.instance.Hide();
@@ -133,9 +161,13 @@ namespace Arena
             // (the game's list of loaded objects, gathered first: taking one away changes it; FindObjectsOfType cost ~24 ms in a big build)
             var chests = new List<Container>();
             var tombs = new List<TombStone>();
+            float reach = Layout.Footprint + 5f;
             foreach (ZNetView v in Ground.Instances(ZNetScene.instance).Values)
             {
                 if (v == null) continue;
+                // (only what stands at the arena: its chests are in the ring, the tombstones it carries out within its walls)
+                Vector3 p = v.transform.position;
+                if ((p.x - Site.Origin.x) * (p.x - Site.Origin.x) + (p.z - Site.Origin.z) * (p.z - Site.Origin.z) > reach * reach) continue;
                 Container box = v.GetComponent<Container>();
                 if (box != null) chests.Add(box);
                 TombStone grave = v.GetComponent<TombStone>();
@@ -216,6 +248,42 @@ namespace Arena
         {
             GameObject fx = ZNetScene.instance != null ? ZNetScene.instance.GetPrefab(prefab) : null;
             if (fx != null) Object.Instantiate(fx, at, Quaternion.identity);
+        }
+
+        // ---- where a gift came down ----------------------------------------------------------------------------------------------
+
+        private static Material _giftGlow;
+
+        /// <summary>A gift from the crowd has landed here: a puff, and a shaft of golden light over it that fades in a few seconds.</summary>
+        internal static void GiftMarker(Vector3 at)
+        {
+            Effect("vfx_spawn", at);
+            if (_giftGlow == null) _giftGlow = Fx.Glow(new Color(1f, 0.8f, 0.35f, 0.45f));
+            if (_giftGlow == null) return;
+            GameObject beam = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
+            beam.name = "ArenaGiftMarker";
+            Object.Destroy(beam.GetComponent<Collider>());
+            beam.transform.position = at + Vector3.up * 1.6f;
+            beam.transform.localScale = new Vector3(0.5f, 1.6f, 0.5f);
+            var r = beam.GetComponent<Renderer>();
+            r.sharedMaterial = _giftGlow;
+            r.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
+            r.receiveShadows = false;
+            Plugin.Instance.StartCoroutine(Fade(beam.transform, 3.5f));
+        }
+
+        private static IEnumerator Fade(Transform beam, float seconds)
+        {
+            float t = 0f;
+            Vector3 full = beam.localScale;
+            while (t < seconds && beam != null)
+            {
+                t += Time.deltaTime;
+                float k = 1f - t / seconds;   // (it narrows to nothing)
+                beam.localScale = new Vector3(full.x * k, full.y, full.z * k);
+                yield return null;
+            }
+            if (beam != null) Object.Destroy(beam.gameObject);
         }
 
         // ---- the Armourer -----------------------------------------------------------------------------------------------------------

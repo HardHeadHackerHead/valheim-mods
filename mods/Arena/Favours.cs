@@ -103,7 +103,8 @@ namespace Arena
                 if (Crowd.Throw(u.Prefab, 1, d => { d.m_itemData.m_quality = u.Quality; d.m_itemData.m_durability = d.m_itemData.GetMaxDurability(); d.m_itemData.m_customData[Kit.LoanKey] = Kit.CrowdLoan; }))
                 {
                     _steelLand = land;
-                    Net.Shout(Words.Line("arena_call_gear"), Words.Line("arena_call_gear_sub", Words.Item(u.Prefab)), 3f);
+                    Net.Shout(Words.Line("arena_call_gear"), Words.Line("arena_call_gear_sub", Words.Item(u.Prefab)), 3f,
+                              Words.Line("arena_watch_gear", player.GetPlayerName()), "");
                     Net.Sound("roar");
                     return;
                 }
@@ -145,7 +146,8 @@ namespace Arena
             else if (r < 0.87f) { _demand = Demand.Parry; _call = "arena_chant_parry"; _until = Time.time + 15f; }
             else { _demand = Demand.Untouched; _call = "arena_chant_untouched"; _until = Time.time + 12f; }
             Net.Shout(Words.Line("arena_call_chant", Words.Word(_call)),
-                      Words.Line(_demand == Demand.Emote ? "arena_call_chant_emote" : _demand == Demand.Untouched ? "arena_call_chant_untouched" : "arena_call_chant_quick"), 3f);
+                      Words.Line(_demand == Demand.Emote ? "arena_call_chant_emote" : _demand == Demand.Untouched ? "arena_call_chant_untouched" : "arena_call_chant_quick"), 3f,
+                      Words.Line("arena_call_chant", Words.Word(_call)), "");   // (what to do is the fighter's to hear)
             Net.Sound("horn");
         }
 
@@ -191,6 +193,7 @@ namespace Arena
             Player player = Player.m_localPlayer;
             if (!Open || player == null || !Site.OnFloor(player.transform.position, 0f)) return;
             emote = (emote ?? "").ToLowerInvariant();
+            if (emote == "challenge" && Contest.ReadyEarly()) { Crowd.Mirror(emote); return; }   // (between rounds: "bring them on!")
             if (_demand == Demand.Emote && emote == _emote) { Answered(); Crowd.Mirror(emote); return; }
             if (Time.time - _lastEmote < 3f) return;
             _lastEmote = Time.time;

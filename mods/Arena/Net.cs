@@ -36,6 +36,8 @@ namespace Arena
 
         private static bool NearArena(Vector3 p) => Site.Known && new Vector2(p.x - Site.Origin.x, p.z - Site.Origin.z).magnitude < Near;
         private static bool MeNear => Player.m_localPlayer != null && NearArena(Player.m_localPlayer.transform.position);
+        /// <summary>This player is near enough the arena to see and hear its fights.</summary>
+        internal static bool InRange => MeNear;
 
         internal static void Tick()
         {
@@ -113,12 +115,18 @@ namespace Arena
             Send(RpcEvent, pkg);
         }
 
-        /// <summary>Does it here and tells the players near the arena.</summary>
-        internal static void Event(Kind kind, string a, string b = "", float f = 0f)
+        /// <summary>
+        /// Does it here and tells the players near the arena. A call can say something else to those watching (watchText and watchSub: the
+        /// fighter is told to pick up their coins, the stands that a round is won); a null watchText keeps it from them altogether.
+        /// </summary>
+        internal static void Event(Kind kind, string a, string b = "", float f = 0f, bool forWatchers = false, string watchText = null, string watchSub = null)
         {
             Apply(kind, a, b, f, true);
             var pkg = new ZPackage();
             pkg.Write((int)kind); pkg.Write(a ?? ""); pkg.Write(b ?? ""); pkg.Write(f);
+            // (after the rest: an older Arena stops reading before it, and shows the fighter's words)
+            pkg.Write(forWatchers);
+            if (forWatchers) { pkg.Write(watchText != null); pkg.Write(watchText ?? ""); pkg.Write(watchSub ?? ""); }
             Send(RpcEvent, pkg);
         }
 
@@ -128,6 +136,12 @@ namespace Arena
             var kind = (Kind)pkg.ReadInt(); string a = pkg.ReadString(), b = pkg.ReadString(); float f = pkg.ReadSingle();
             if (kind == Kind.Result) { Api.Heard(b, a); return; }   // (for every game, near the arena or not: Api)
             if (!MeNear) return;
+            if (pkg.GetPos() < pkg.Size() && pkg.ReadBool())
+            {
+                bool shown = pkg.ReadBool(); string wa = pkg.ReadString(), wb = pkg.ReadString();
+                if (!shown) return;   // (for the fighter alone)
+                a = wa; b = wb;
+            }
             Apply(kind, a, b, f, false);
         }
 
@@ -136,7 +150,7 @@ namespace Arena
             switch (kind)
             {
                 case Kind.Shout: Hud.Shout(a, b, f > 0f ? f : 4f); break;
-                case Kind.Say: Hud.Shout(Words.Show(a), Words.Show(b), f > 0f ? f : 4f); break;
+                case Kind.Say: Hud.Shout(Words.Show(a), Words.ShowStacked(b), f > 0f ? f : 4f); break;
                 case Kind.Sound: Crowd.Play(a); break;
                 case Kind.Gate: if (int.TryParse(a, out int g)) { if (f > 0f) Scenery.OpenGate(g, f); else Scenery.CloseGate(g); } break;
                 case Kind.Props: if (string.IsNullOrEmpty(a)) Scenery.ClearProps(); else Scenery.ShowProps(a); break;
@@ -163,6 +177,12 @@ namespace Arena
 
         /// <summary>The announcer, to everyone near the arena: the call and the line under it as Words (Words.Line, Words.Then).</summary>
         internal static void Shout(string text, string sub = "", float seconds = 4f) => Event(Kind.Say, text, sub, seconds);
+
+        /// <summary>
+        /// The announcer, with other words for those watching (the stands, the forecourt) than for the fighter: watchText null keeps the call
+        /// from them altogether, watchSub "" gives them the call alone.
+        /// </summary>
+        internal static void Shout(string text, string sub, float seconds, string watchText, string watchSub) => Event(Kind.Say, text, sub, seconds, true, watchText, watchSub);
         internal static void Sound(string name) => Event(Kind.Sound, name);
         internal static void Gate(int index, float seconds) => Event(Kind.Gate, index.ToString(), "", seconds);
         internal static void Props(string set) => Event(Kind.Props, set ?? "");

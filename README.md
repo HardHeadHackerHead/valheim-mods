@@ -474,8 +474,9 @@ sees on the monitor. It also has a browser and a Blockscript program. Not releas
 | **B** | QualityOfLife | Jump into construction mode with your hammer, and back |
 | **K** / **L** | QualityOfLife | Assign what a chest receives / lock an item |
 | **E** at a Ledger Chest | LedgerChest | See and search everything in the chests around it; click to take, Shift-click to choose how many |
-| **E** at the Arena Master | Arena | Pick a contest (the Long Road, a Champion Bout, the Endless Horde, today's trial), duel a player, see the champions |
-| **Backspace** twice | Arena | In a contest: take your purse and leave between rounds (in a round you give up for half of it) |
+| **E** at the Arena Master | Arena | Collect your prize, pick a contest (the Long Road, a Champion Bout, the Endless Horde, today's trial), duel a player, see the champions and your history |
+| **Backspace** twice | Arena | In a contest: before the first round, back out (your fee and stake back); between rounds, leave with your winnings; in a round, give up for half |
+| **Challenge** emote | Arena | Between rounds (or while arming): the next round starts now (ReadyKey in the settings does it too, unset by default) |
 | **E** at a Bounty Board | BountyBoard | Read the day's notices, take a contract, hand one in |
 | **E** / alternate-use + **E** at a slot machine | SlotMachine | Pull the lever / change the bet |
 | **E** at a portal | PortalHub | Open the portal menu and choose where it goes |

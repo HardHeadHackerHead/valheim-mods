@@ -35,6 +35,10 @@ namespace Arena
         /// <summary>A call in this player's language.</summary>
         internal static string Show(string said) => string.IsNullOrEmpty(said) ? "" : string.Join("   ", said.Split(Lines).Select(ShowLine));
 
+        /// <summary>A call in this player's language, each of its lines on a line of its own (the dashes between them left out).</summary>
+        internal static string ShowStacked(string said) =>
+            string.IsNullOrEmpty(said) ? "" : string.Join("\n", said.Split(Lines).Where(l => l != Dash && l.Length > 0).Select(ShowLine));
+
         private static string ShowLine(string line)
         {
             if (line.Length > 0 && line[0] == Typed) return Arg(line);

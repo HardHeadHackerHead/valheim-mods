@@ -19,6 +19,13 @@ namespace Arena
     internal static class Scenery
     {
         internal const float BuildWithin = 260f, DropBeyond = 330f;
+        private const float BuildBudget = 0.004f, BuildBudgetClose = 0.025f;   // (seconds of building a frame: from afar, and arrived at it)
+
+        private static bool Close()
+        {
+            Player p = Player.m_localPlayer;
+            return p != null && new Vector2(p.transform.position.x - Site.Origin.x, p.transform.position.z - Site.Origin.z).magnitude < Layout.Footprint + 40f;
+        }
 
         private sealed class Grate { public Transform T; public Vector3 Closed; public float Open, Until; public bool Main; public Collider[] Solid; }
 
@@ -83,13 +90,14 @@ namespace Arena
             _root = root;
             var missing = new HashSet<string>();
             var made = new List<GameObject>(Layout.Parts.Count);
-            int n = 0;
-            float started = Time.realtimeSinceStartup;
+            float started = Time.realtimeSinceStartup, frame = started;
             foreach (Layout.Part part in Layout.Parts)
             {
                 if (root == null) { _building = false; yield break; }
                 made.Add(Make(part, root.transform, missing));
-                if (++n % 60 == 0) yield return null;
+                // (a few milliseconds of it a frame: sixty pieces a frame took 20-40 ms, a stutter as you came near; arrived right at it, by
+                // the waystone or a teleport, faster, so it is not seen going up piece by piece)
+                if (Time.realtimeSinceStartup - frame > (Close() ? BuildBudgetClose : BuildBudget)) { yield return null; frame = Time.realtimeSinceStartup; }
             }
             // the grates in the podium, and the main gate standing open
             Grates.Clear();
@@ -145,6 +153,14 @@ namespace Arena
                 if (f.m_emptyObject != null) f.m_emptyObject.SetActive(false);
                 Object.Destroy(f);
             }
+            // the game's fires puff smoke (a body with physics, two a second from each, within 64 m) and spit cinders: from some eighty fires
+            // in the arena that was a constant load, and the fires' own flames and smoke trails stay
+            foreach (SmokeSpawner smoke in go.GetComponentsInChildren<SmokeSpawner>(true)) Object.Destroy(smoke);
+            foreach (CinderSpawner cinders in go.GetComponentsInChildren<CinderSpawner>(true)) Object.Destroy(cinders);
+            // the fires' lights still light, but cast no shadows: in the ring every one of them is near enough to (the game's shadows are for
+            // within 20 m), and each shadowing light draws everything round it six times over
+            foreach (LightLod lod in go.GetComponentsInChildren<LightLod>(true)) lod.m_shadowLod = false;
+            foreach (Light l in go.GetComponentsInChildren<Light>(true)) { l.shadows = LightShadows.None; }
             foreach (Rigidbody b in go.GetComponentsInChildren<Rigidbody>(true)) Object.Destroy(b);
             foreach (Joint j in go.GetComponentsInChildren<Joint>(true)) Object.Destroy(j);
             foreach (TerrainModifier t in go.GetComponentsInChildren<TerrainModifier>(true)) Object.Destroy(t);
@@ -396,13 +412,17 @@ namespace Arena
         }
     }
 
-    /// <summary>The Arena Master at his desk in the forecourt: press E to enter a contest, challenge a player, or see the standings.</summary>
+    /// <summary>
+    /// The Arena Master at his desk in the forecourt: press E to enter a contest, challenge a player, or see the standings. He holds what you
+    /// won (Prize) and hands it over when you speak to him.
+    /// </summary>
     internal class Master : MonoBehaviour, Hoverable, Interactable
     {
         public string GetHoverText()
         {
             string busy = Net.Busy ? $"\n<color=#e8a060>{Net.BusyText}</color>" : "";
-            return Localization.instance.Localize("$arena_master\n[<color=yellow><b>$KEY_Use</b></color>] $arena_master_hover") + busy;
+            string prize = Prize.Waiting(Player.m_localPlayer) ? $"\n<color=#ffd27a>{T("arena_prize_waiting_hover")}</color>" : "";
+            return Localization.instance.Localize("$arena_master\n[<color=yellow><b>$KEY_Use</b></color>] $arena_master_hover") + prize + busy;
         }
 
         public string GetHoverName() => T("arena_master");
@@ -410,7 +430,7 @@ namespace Arena
         public bool Interact(Humanoid user, bool hold, bool alt)
         {
             if (hold || user != Player.m_localPlayer) return false;
-            Window.Open(Window.Context.Master);
+            Window.Open(Window.Context.Master);   // (on his Prize tab when he holds something for you)
             return true;
         }
         public bool UseItem(Humanoid user, ItemDrop.ItemData item) => false;

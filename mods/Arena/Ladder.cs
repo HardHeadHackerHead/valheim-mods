@@ -61,6 +61,9 @@ namespace Arena
         {
             public string Name, What, Look, Kind, Said;
             public int Score;
+            /// <summary>Scored as now (the run itself, 0.5.0 on). An older entry was scored mostly by the coins it paid: it stands until any run of
+            /// today's scoring takes its place.</summary>
+            public bool Current;
             /// <summary>The run, in the player's language (an entry from an older Arena: its words as they are).</summary>
             public string Run => string.IsNullOrEmpty(Said) ? What : Words.Show(Said);
         }
@@ -79,7 +82,8 @@ namespace Arena
 
         // The hall is a world key (saved with the world, known to all): its entries written as hex, as world keys are lower-cased.
         // (Entries from before there was a champion for each contest have no contest and are left out. The run's Words, a sixth field, came
-        // later: an older Arena reads the first five.)
+        // later: an older Arena reads the first five. The seventh says the score is of today's kind: ScoreEra.)
+        private const string ScoreEra = "2";
         internal static List<Entry> Hall()
         {
             var list = new List<Entry>();
@@ -91,7 +95,7 @@ namespace Arena
                 string[] f = line.Split('|');
                 if (f.Length < 5 || !int.TryParse(f[2], NumberStyles.Integer, CultureInfo.InvariantCulture, out int score) || !Kinds.Contains(f[4])) continue;
                 if (list.Any(e => e.Kind == f[4])) continue;
-                list.Add(new Entry { Name = f[0], What = f[1], Score = score, Look = f[3], Kind = f[4], Said = f.Length > 5 ? f[5] : "" });
+                list.Add(new Entry { Name = f[0], What = f[1], Score = score, Look = f[3], Kind = f[4], Said = f.Length > 5 ? f[5] : "", Current = f.Length > 6 && f[6] == ScoreEra });
             }
             return list;
         }
@@ -101,11 +105,12 @@ namespace Arena
         {
             if (ZoneSystem.instance == null || score <= 0 || !Kinds.Contains(kind)) return false;
             List<Entry> list = Hall();
-            if (list.Any(e => e.Kind == kind && e.Score >= score)) return false;
+            // (an older entry, scored by its coins, gives way to the first run scored as now, whatever its number)
+            if (list.Any(e => e.Kind == kind && e.Current && e.Score >= score)) return false;
             list.RemoveAll(e => e.Kind == kind);
-            list.Add(new Entry { Name = Clean(name), What = Clean(Words.Show(said)), Score = score, Look = Clean(look), Kind = kind, Said = Clean(said) });
+            list.Add(new Entry { Name = Clean(name), What = Clean(Words.Show(said)), Score = score, Look = Clean(look), Kind = kind, Said = Clean(said), Current = true });
             string text = string.Join("\n", list.Select(e => e.Name + "|" + e.What + "|" + e.Score.ToString(CultureInfo.InvariantCulture) + "|" + (e.Look ?? "") + "|" + e.Kind
-                                                            + (string.IsNullOrEmpty(e.Said) ? "" : "|" + e.Said)));
+                                                            + (e.Current ? "|" + (e.Said ?? "") + "|" + ScoreEra : string.IsNullOrEmpty(e.Said) ? "" : "|" + e.Said)));
             ZoneSystem.instance.SetGlobalKey(HallKey + " " + ToHex(text));
             return true;
         }

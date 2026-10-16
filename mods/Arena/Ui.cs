@@ -116,6 +116,37 @@ namespace Arena
             return r;
         }
 
+        /// <summary>The dark backing of a HUD panel or a slot (the inventory's sunken look), a little see-through.</summary>
+        internal static Image Backing(RectTransform r, float alpha = 0.85f)
+        {
+            var img = r.gameObject.AddComponent<Image>();
+            if (_sunken != null) Copy(_sunken, img); else img.color = new Color(0f, 0f, 0f, 0.5f);
+            Color c = img.color; c.a *= alpha; img.color = c;
+            img.raycastTarget = false;
+            return img;
+        }
+
+        /// <summary>A bar (a health bar, the crowd's favour): a dark trough and a fill of this colour; set it with SetBar.</summary>
+        internal static RectTransform Bar(Transform parent, Vector2 pos, Vector2 size, Color fill)
+        {
+            RectTransform trough = Rect(parent, "Bar", new Vector2(0f, 1f), new Vector2(0f, 1f), pos, size);
+            var back = trough.gameObject.AddComponent<Image>();
+            back.color = new Color(0f, 0f, 0f, 0.6f); back.raycastTarget = false;
+            RectTransform f = Rect(trough, "Fill", Vector2.zero, Vector2.zero, Vector2.zero, Vector2.zero);
+            f.anchorMin = new Vector2(0f, 0f); f.anchorMax = new Vector2(1f, 1f); f.offsetMin = new Vector2(1f, 1f); f.offsetMax = new Vector2(-1f, -1f);
+            var img = f.gameObject.AddComponent<Image>();
+            img.color = fill; img.raycastTarget = false;
+            return trough;
+        }
+
+        internal static void SetBar(RectTransform bar, float value, Color? colour = null)
+        {
+            if (bar == null || bar.childCount == 0) return;
+            var f = (RectTransform)bar.GetChild(0);
+            f.anchorMax = new Vector2(Mathf.Clamp01(value), 1f);
+            if (colour != null) f.GetComponent<Image>().color = colour.Value;
+        }
+
         internal static void Braid(Transform parent, Vector2 pos, float width)
         {
             if (_braid == null) return;

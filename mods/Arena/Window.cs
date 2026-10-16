@@ -37,6 +37,7 @@ namespace Arena
         {
             if (!Ui.Ready()) { Hud.Say(T("arena_ui_not_ready")); return; }
             _context = context; _stone = stone; _tab = tab; _message = "";
+            if (context == Context.Master && tab == 0 && Prize.Waiting(Player.m_localPlayer)) _tab = PrizeTab;   // (what he holds for you, first)
             _openedAt = Player.m_localPlayer != null ? Player.m_localPlayer.transform.position : Vector3.zero;
             if (!_tierSet) { _tier = Roster.Stage(); _tierSet = true; }
             _tier = Mathf.Min(_tier, Roster.Stage());
@@ -68,7 +69,10 @@ namespace Arena
         private static string Signature()
         {
             Player p = Player.m_localPlayer;
-            return $"{Net.RemoteFight}{Duel.HasIncoming}{Duel.Active}{Scenery.Built}{(p != null ? p.GetInventory().CountItems("$item_coins") + "/" + p.GetInventory().NrOfItems() : "")}{Ladder.Hall().Count}";
+            // (and what the window shows of you that can change while it is open: a prize held, the blessing's minutes, this week's and today's counts)
+            int blessing = Blessing.Active(p, out float left);
+            return $"{Net.RemoteFight}{Duel.HasIncoming}{Duel.Active}{Scenery.Built}{(p != null ? p.GetInventory().CountItems("$item_coins") + "/" + p.GetInventory().NrOfItems() : "")}{Ladder.Hall().Count}"
+                   + $"|{Prize.Held(p).Count}|{blessing}:{(int)(left / 60f)}|{Spoils.RoadBest}|{Spoils.PaidToday}|{History.All(p).Count}|{Ladder.DailyDone}";
         }
 
         // ---- the window --------------------------------------------------------------------------------------------------------
@@ -91,12 +95,18 @@ namespace Arena
             if (_context == Context.Master)
             {
                 Ui.Fit(Ui.Label(w, "<i>" + T("arena_master_quote") + "</i>", new Vector2(Pad, -86f), new Vector2(W - 2 * Pad, 24f), 16f, Ui.Dim, Ui.Serif, TextAlignmentOptions.Center));
-                string[] tabs = { T("arena_tab_contests"), T("arena_tab_duel"), T("arena_tab_standing") };
-                float tw = (W - 2 * Pad) / tabs.Length;
-                for (int i = 0; i < tabs.Length; i++) { int k = i; Ui.Tab(w, tabs[i], new Vector2(Pad + i * tw, -116f), new Vector2(tw - 4f, 38f), i == _tab, () => { _tab = k; _message = ""; Changed(); }, true, 18f); }
+                // (the tabs by their ids: 0 contests, 1 duel, 2 standing, 3 history, and the prize first while he holds one)
+                var ids = new List<int> { 0, 1, 2, 3 };
+                if (Prize.Waiting(Player.m_localPlayer)) ids.Insert(0, PrizeTab);
+                else if (_tab == PrizeTab) _tab = 0;
+                string[] names = { T("arena_tab_contests"), T("arena_tab_duel"), T("arena_tab_standing"), T("arena_tab_history"), T("arena_tab_prize") };
+                float tw = (W - 2 * Pad) / ids.Count;
+                for (int i = 0; i < ids.Count; i++) { int k = ids[i]; Ui.Tab(w, names[k], new Vector2(Pad + i * tw, -116f), new Vector2(tw - 4f, 38f), k == _tab, () => { _tab = k; _message = ""; Changed(); }, true, 18f); }
                 if (_tab == 0) Contests(w, -166f);
                 else if (_tab == 1) Duels(w, -166f);
-                else Standing(w, -166f);
+                else if (_tab == 2) Standing(w, -166f);
+                else if (_tab == 3) HistoryTab(w, -166f);
+                else PrizeGrid(w, -166f);
             }
             else if (_context == Context.Waystone) Waystone(w, -92f);
             else Arrival(w, -92f);
@@ -185,15 +195,18 @@ namespace Arena
             }
 
             float mult = Rules.MultiplierOf(fists, noFood, hard, timed) * 1.15f * Plugin.Rewards.Value / 100f;
-            string mat = Roster.Material(tier);
-            string winCoins = Gold(T("arena_coins", Mathf.RoundToInt((20 + 30 * tier) * (daily ? 3.3f : 3f) * mult * 1.25f * (daily && !Ladder.DailyDone ? 1.5f : 1f))));
-            string prize = kind == Contest.KindOf.Endless ? T("arena_prize_endless", Mathf.RoundToInt((20 + 30 * tier) * 0.8f * mult))
-                : kind == Contest.KindOf.Road ? T("arena_prize_road")
-                : mat != null && tier <= Roster.Beaten() ? T("arena_prize_win_mat", winCoins, Contest.ItemName(mat)) : T("arena_prize_win", winCoins);
+            string winCoins = Gold(T("arena_coins", Mathf.RoundToInt((10 + 15 * tier) * (daily ? 3.3f : 3f) * mult * 1.25f * (daily && !Ladder.DailyDone ? 1.5f : 1f))));
+            string prize = kind == Contest.KindOf.Endless ? T("arena_prize_endless", Mathf.RoundToInt((10 + 15 * tier) * 0.8f * mult))
+                : kind == Contest.KindOf.Road ? T("arena_prize_road", Spoils.RoadBest)
+                : daily ? T("arena_prize_win", winCoins)
+                : T("arena_prize_win_mat", winCoins, Gold(Roster.LandName(tier)));
             string entry = fee == 0 ? (Ladder.Get("fights") == 0 ? "<color=#a8e88a>" + T("arena_first_free") + "</color> " : "") : T("arena_entry", Gold(T("arena_coins", fee)), coins) + " ";
             y = Line(w, entry + prize, y - 2f, Ui.Text, 15f);
+            if (kind == Contest.KindOf.Champion || kind == Contest.KindOf.Endless)
+                y = Line(w, T("arena_paid_today", Spoils.PaidToday, Spoils.FullPerDay), y, Spoils.PaidToday < Spoils.FullPerDay ? Ui.Dim : Ui.Warn, 14f);
             y = Line(w, (lent ? T("arena_lent_note") + " " : "") + T(lent ? "arena_death_lent" : "arena_death_own"), y, Ui.Dim, 14f);
             if (Net.RemoteFight) y = Line(w, T("arena_busy_wait", Net.BusyText), y, Ui.Warn);
+
             if (_message.Length > 0) y = Line(w, _message, y, Ui.Warn);
 
             float bottom = -_window.sizeDelta.y + 30f + 48f;
@@ -263,6 +276,13 @@ namespace Arena
             var best = new List<string> { road > 0 ? T("arena_best_road", Roster.LandName((road - 1) / 3), road) : T("arena_best_road_none") };
             for (int t = 0; t <= Roster.Stage(); t++) if (Ladder.Get("bestwave" + t) > 0) best.Add(T("arena_best_horde", Roster.LandName(t), Ladder.Get("bestwave" + t)));
             y = Line(w, T("arena_your_best", string.Join("  ·  ", best)), y, Ui.Dim, 14f);
+            Player me = Player.m_localPlayer;
+            int week = Spoils.RoadBest;
+            y = Line(w, week <= 0 ? T("arena_week_none") : week >= Roster.TierNames.Length ? T("arena_week_all")
+                                  : T("arena_week_best", week, Gold(Roster.LandName(week))), y, Ui.Text, 14f);
+            int blessed = Blessing.Active(me, out float left);
+            if (blessed > 0) y = Line(w, T("arena_blessing_left", blessed, $"{(int)(left / 60f)}:{(int)(left % 60f):00}"), y, Ui.Good, 14f);
+
 
             y = Heading(w, T("arena_head_hall") + "  " + Hint(T("arena_head_hall_hint")), y - 6f);
             RectTransform box = Ui.Box(w, new Vector2(Pad, y), new Vector2(W - 2 * Pad, Ladder.Kinds.Length * 52f + 16f));
@@ -278,6 +298,79 @@ namespace Arena
                 }
                 else Ui.Label(box, T("arena_unclaimed_first"), new Vector2(240f, ry), new Vector2(300f, 26f), 16f, Ui.Dim);
             }
+        }
+
+        // ---- your prize -------------------------------------------------------------------------------------------------------------------
+
+        private const int PrizeTab = 4;
+
+        /// <summary>
+        /// What the Arena Master holds for you, as a chest you can only take from: a slot for each thing (its icon, how many, its name); click
+        /// one to take it, or take everything. What your bag has no room for stays with him.
+        /// </summary>
+        private static void PrizeGrid(Transform w, float y)
+        {
+            Player me = Player.m_localPlayer;
+            y = Heading(w, T("arena_head_prize") + "  " + Hint(T("arena_head_prize_hint")), y);
+            var held = Prize.Held(me);
+            if (held.Count == 0) { Line(w, T("arena_prize_empty"), y, Ui.Dim); return; }
+            const int perRow = 7;
+            const float cell = 88f, gap = 8f, tall = 96f;
+            int rows = (held.Count + perRow - 1) / perRow;
+            RectTransform box = Ui.Box(w, new Vector2(Pad, y), new Vector2(W - 2 * Pad, rows * (tall + gap) + gap));
+            float left = (W - 2 * Pad - perRow * cell - (perRow - 1) * gap) / 2f;
+            int i = 0;
+            foreach (var h in held)
+            {
+                string prefab = h.Key;
+                float cx = left + (i % perRow) * (cell + gap), cy = -gap - (i / perRow) * (tall + gap);
+                RectTransform slot = Ui.Box(box, new Vector2(cx, cy), new Vector2(cell, tall));
+                var icon = new GameObject("Icon", typeof(RectTransform)).AddComponent<Image>();
+                var ir = icon.rectTransform;
+                ir.SetParent(slot, false);
+                ir.anchorMin = ir.anchorMax = new Vector2(0.5f, 1f); ir.pivot = new Vector2(0.5f, 1f);
+                ir.anchoredPosition = new Vector2(0f, -6f); ir.sizeDelta = new Vector2(52f, 52f);
+                icon.preserveAspect = true; icon.raycastTarget = false;
+                icon.sprite = ZNetScene.instance?.GetPrefab(prefab)?.GetComponent<ItemDrop>()?.m_itemData.GetIcon();
+                Ui.Label(slot, h.Value.ToString(), new Vector2(0f, -40f), new Vector2(cell - 6f, 22f), 16f, Ui.Gold, Ui.Serif, TMPro.TextAlignmentOptions.TopRight);
+                Ui.Fit(Ui.Label(slot, Contest.ItemName(prefab), new Vector2(4f, -66f), new Vector2(cell - 8f, 22f), 12f, Ui.Text, null, TMPro.TextAlignmentOptions.Top));
+                // (the slot is a button: a click takes it)
+                var image = slot.GetComponent<Image>();
+                if (image != null) image.raycastTarget = true;
+                var button = slot.gameObject.AddComponent<Button>();
+                button.targetGraphic = image;
+                ColorBlock colors = button.colors; colors.highlightedColor = new Color(1f, 0.92f, 0.75f); button.colors = colors;
+                button.onClick.AddListener(() => { Prize.Take(Player.m_localPlayer, prefab); Changed(); });
+                i++;
+            }
+            y -= rows * (tall + gap) + gap + 14f;
+            Ui.Button(w, T("arena_take_all"), new Vector2(W / 2f - 120f, y), new Vector2(240f, 44f), () => { Prize.Collect(Player.m_localPlayer); Changed(); });
+        }
+
+        // ---- your history ----------------------------------------------------------------------------------------------------------------
+
+        /// <summary>Your last contests and duels, newest first: when, which and how far, how it ended (a win in gold), and what it paid.</summary>
+        private static void HistoryTab(Transform w, float y)
+        {
+            y = Heading(w, T("arena_head_history") + "  " + Hint(T("arena_head_history_hint", Ladder.Wins, Ladder.Get("fights"))), y);
+            List<History.Entry> list = History.All(Player.m_localPlayer);
+            if (list.Count == 0) { Line(w, T("arena_history_none"), y, Ui.Dim); return; }
+            const float row = 52f;
+            int shown = Mathf.Min(list.Count, 9);
+            RectTransform box = Ui.Box(w, new Vector2(Pad, y), new Vector2(W - 2 * Pad, shown * row + 12f));
+            float inner = W - 2 * Pad;
+            for (int i = 0; i < shown; i++)
+            {
+                History.Entry e = list[i];
+                float ry = -8f - i * row;
+                Color colour = e.Won ? Ui.Gold : e.Outcome == "died" || e.Outcome == "duelloss" ? Ui.Warn : Ui.Text;
+                Ui.Label(box, e.When.ToLocalTime().ToString("MM-dd HH:mm", System.Globalization.CultureInfo.InvariantCulture), new Vector2(12f, ry - 2f), new Vector2(100f, 22f), 13f, Ui.Dim);
+                Ui.Fit(Ui.Label(box, History.What(e), new Vector2(116f, ry), new Vector2(inner - 300f, 24f), 16f, colour, Ui.Serif));
+                Ui.Fit(Ui.Label(box, (e.Won ? "★ " : "") + History.How(e), new Vector2(inner - 176f, ry), new Vector2(164f, 24f), 15f, colour, Ui.Serif, TMPro.TextAlignmentOptions.TopRight));
+                string paid = History.Paid(e);
+                if (paid.Length > 0) Ui.Fit(Ui.Label(box, paid, new Vector2(116f, ry - 24f), new Vector2(inner - 128f, 20f), 13f, Ui.Dim));
+            }
+            if (list.Count > shown) Line(w, T("arena_history_more", list.Count - shown), y - shown * row - 18f, Ui.Dim, 13f);
         }
 
         // ---- the waystones ------------------------------------------------------------------------------------------------------------

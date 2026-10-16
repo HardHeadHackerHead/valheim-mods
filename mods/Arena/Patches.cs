@@ -135,6 +135,24 @@ namespace Arena
         }
     }
 
+    /// <summary>
+    /// The game makes creatures tougher for every player within 100 m (each takes 30% less of a player's damage, and hits 4% harder, per
+    /// player past the first). In the arena that counted everyone in the stands and the forecourt, so a friend watching made the fight a
+    /// third harder: on the fighting floor only the players on it count.
+    /// </summary>
+    [HarmonyPatch(typeof(Game), nameof(Game.GetPlayerDifficulty))]
+    internal static class Game_GetPlayerDifficulty_Ring
+    {
+        [HarmonyPriority(Priority.Last)]
+        private static void Postfix(Vector3 pos, ref int __result)
+        {
+            if (__result <= 1 || !Site.Known || !Site.OnFloor(pos, 4f)) return;
+            int fighting = 0;
+            foreach (Player p in Player.GetAllPlayers()) if (p != null && !p.IsDead() && Site.OnFloor(p.transform.position, 2f)) fighting++;
+            __result = Mathf.Clamp(fighting, 1, __result);
+        }
+    }
+
     // Logging out mid-fight: put things back (the weapon in the hand, the stake, the purse) before the character is saved.
     [HarmonyPatch(typeof(Game), "Shutdown")]
     internal static class Game_Shutdown

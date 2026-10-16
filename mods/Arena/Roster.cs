@@ -19,16 +19,18 @@ namespace Arena
             return Localization.instance != null ? Localization.instance.Localize(Biomes[t]) : TierNames[t];
         }
 
-        // Prefab names by tier, easiest first: those the game does not have are left out.
+        // Prefab names by tier, easiest first: those the game does not have are left out. A round's fighters are the land's rank and file:
+        // nothing that flies (a drake, a deathsquito, a gjall: over the wall, or out of reach), and none of its elites or its thousand-health
+        // beasts (a brute, a fenring, a lox, a seeker soldier), who are its champions.
         private static readonly string[][] Fodder =
         {
             new[] { "Boar", "Neck", "Greyling", "Greydwarf" },
-            new[] { "Greydwarf", "Skeleton", "Greydwarf_Shaman", "Greydwarf_Elite" },
-            new[] { "Draugr", "Skeleton", "Blob", "Draugr_Ranged", "Draugr_Elite" },
-            new[] { "Wolf", "Hatchling", "Ulv", "Fenring" },
-            new[] { "Goblin", "Deathsquito", "GoblinArcher", "Lox", "GoblinBrute" },
-            new[] { "Seeker", "Tick", "Gjall", "SeekerBrute" },
-            new[] { "Charred_Melee", "Asksvin", "Charred_Archer", "Charred_Mage" },
+            new[] { "Greydwarf", "Skeleton", "Greydwarf_Shaman" },
+            new[] { "Draugr", "Skeleton", "Blob", "Draugr_Ranged" },
+            new[] { "Wolf", "Ulv" },
+            new[] { "Goblin", "GoblinArcher", "GoblinShaman" },
+            new[] { "Tick", "Seeker" },
+            new[] { "Charred_Twitcher", "Charred_Archer", "Charred_Melee", "Asksvin" },
         };
 
         // Each land's champions, one picked at random for each champion round (not the same one twice running, where there is a choice).
@@ -115,8 +117,11 @@ namespace Arena
 
         // How tough a land's champion may be, after its stars: its health (the game's stars multiply it: two at a star, three at two) and its
         // hardest hit (half again at a star, double at two), against what that land's gear can take.
-        private static readonly float[] ChampionHealth = { 120f, 600f, 900f, 1300f, 1900f, 2700f, 3600f };
-        private static readonly float[] ChampionHit = { 30f, 140f, 200f, 260f, 340f, 450f, 550f };
+        // (the hardest hit is what a land's own big creatures hit for, unstarred: a troll, an abomination, a golem, a berserker... a champion
+        // may be a smaller creature with stars, but never hits harder than those; it was up to three times that, a one-blow kill in the gear
+        // of the land)
+        private static readonly float[] ChampionHealth = { 150f, 600f, 900f, 1300f, 1800f, 2400f, 3200f };
+        private static readonly float[] ChampionHit = { 30f, 80f, 100f, 120f, 140f, 160f, 190f };
         private static readonly Dictionary<string, float> Hits = new Dictionary<string, float>();
 
         /// <summary>The hardest single attack a creature has (its attack items, set or random).</summary>
@@ -146,7 +151,9 @@ namespace Arena
             int t = Mathf.Clamp(tier, 0, ChampionHealth.Length - 1);
             float health = Mathf.Max(1f, ZNetScene.instance?.GetPrefab(prefab)?.GetComponent<Character>()?.m_health ?? 100f);
             float hit = HardestHit(prefab);
-            float more = kind == Contest.KindOf.Champion ? 1.6f : kind == Contest.KindOf.Endless ? 1f + wave / 15f : 1f;
+            // (a Champion Bout's is a step above its land's big creatures, as you bring your own gear: it was 1.6, a 1-star troll in the Black
+            // Forest; the Horde's grow with the waves)
+            float more = kind == Contest.KindOf.Champion ? 1.3f : kind == Contest.KindOf.Endless ? 1f + wave / 15f : 1f;
             int byHealth = Mathf.RoundToInt(ChampionHealth[t] * more / health);
             int byHit = hit <= 0f ? 3 : Mathf.FloorToInt(1f + 2f * (ChampionHit[t] * more / hit - 1f));
             int level = Mathf.Clamp(Mathf.Min(byHealth, byHit), 1, 3);

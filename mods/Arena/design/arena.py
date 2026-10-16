@@ -125,13 +125,16 @@ for i in range(seg):
     else:
         put("piece_walltorch", PODIUM_R - 0.05, a, 2.7, yaw_add=180)
 
-# iron bars along the parapet, 3 m of them: the front row sits right over the fight, but nobody falls (or jumps, or climbs) into the ring
-seg_b = ring_count(PODIUM_R + 0.6, 1.98)
+# iron bars along the parapet, 3 m of them: the front row sits right over the fight, but nobody falls (or jumps, or climbs) into the ring.
+# They stand at the parapet's front, flush with the podium wall's inner face below (the same circle all the way up; they stood in the
+# parapet's middle, 0.6 m back)
+BARS_R = PODIUM_R + 0.05
+seg_b = ring_count(BARS_R, 1.98)
 for i in range(seg_b):
     a = (i + 0.5) * 360.0 / seg_b
     if ang(a, MASTER) < 8:
         continue          # (the Arena Master's box has its own, at its front)
-    put("iron_grate", PODIUM_R + 0.6, a, PODIUM_TOP + 0.5)
+    put("iron_grate", BARS_R, a, PODIUM_TOP + 0.5)
 
 # ---------------------------------------------------------------------------------------------------------------- the stands
 seats = []

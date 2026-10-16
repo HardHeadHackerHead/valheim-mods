@@ -176,18 +176,20 @@ namespace Arena
         // ---- moving them ----------------------------------------------------------------------------------------------------
 
         /// <summary>A one-off emote (cheer, roar, toast, flex, challenge, point, wave, laugh, nonono, thumbsup, bow...).</summary>
-        internal static void Emote(GameObject figure, string emote)
+        internal static void Emote(GameObject figure, string emote) => Emote(figure != null ? figure.GetComponentInChildren<Animator>() : null, emote);
+
+        internal static void Emote(Animator a, string emote)
         {
-            Animator a = figure != null ? figure.GetComponentInChildren<Animator>() : null;
             if (a == null) return;
             a.ResetTrigger("emote_stop");
             a.SetTrigger("emote_" + emote);
         }
 
         /// <summary>A lasting emote (sit, dance, headbang, relax...), or none.</summary>
-        internal static void Hold(GameObject figure, string emote, bool on)
+        internal static void Hold(GameObject figure, string emote, bool on) => Hold(figure != null ? figure.GetComponentInChildren<Animator>() : null, emote, on);
+
+        internal static void Hold(Animator a, string emote, bool on)
         {
-            Animator a = figure != null ? figure.GetComponentInChildren<Animator>() : null;
             if (a == null) return;
             a.SetBool("emote_" + emote, on);
             if (!on) a.SetTrigger("emote_stop");
@@ -224,12 +226,29 @@ namespace Arena
         }
 
         /// <summary>
+        /// A figure that has been dressed (the game puts the clothes on in its own update, a frame after Make, so not before): its cape's
+        /// cloth stops, the equipment code is switched off (it re-colours the body and hair every frame, for nothing: a crowd of them cost
+        /// the frame rate), and what it holds casts no shadow (a torch's light).
+        /// </summary>
+        internal static void Settle(GameObject figure)
+        {
+            if (figure == null) return;
+            NoCloth(figure);
+            VisEquipment vis = figure.GetComponent<VisEquipment>();
+            if (vis != null) vis.enabled = false;
+            foreach (LightLod lod in figure.GetComponentsInChildren<LightLod>(true)) lod.m_shadowLod = false;   // (else it puts them back, near)
+            foreach (Light l in figure.GetComponentsInChildren<Light>(true)) l.shadows = LightShadows.None;
+        }
+
+        /// <summary>
         /// The figure as it stands now, set in stone: the animation holds this pose (every part kept posed, seen or not), the equipment code is
         /// taken off, every part takes the stone, and the statue is set down so its feet stand on the ground.
         /// </summary>
         private static void Bake(GameObject figure, Material stone, float groundY)
         {
             foreach (Animator a in figure.GetComponentsInChildren<Animator>(true)) a.speed = 0f;
+            VisEquipment vis = figure.GetComponent<VisEquipment>();
+            if (vis != null) vis.enabled = false;
             ToStone(figure, stone);
         }
 

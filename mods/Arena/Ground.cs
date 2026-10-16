@@ -153,6 +153,7 @@ namespace Arena
         internal static readonly AccessTools.FieldRef<ZNetScene, Dictionary<ZDO, ZNetView>> Instances =
             AccessTools.FieldRefAccess<ZNetScene, Dictionary<ZDO, ZNetView>>("m_instances");
         private static readonly List<GameObject> _doomed = new List<GameObject>();
+        private static int _lastLoaded = -1;
 
         /// <summary>
         /// Takes away the trees, rocks, bushes and anything else the world grew inside the footprint. Walks the game's own list of loaded
@@ -162,6 +163,10 @@ namespace Arena
         {
             ZNetScene scene = ZNetScene.instance;
             if (scene == null) return;
+            // (nothing new loaded since the last time: nothing new can have grown there)
+            int loaded = Instances(scene).Count;
+            if (loaded == _lastLoaded) return;
+            _lastLoaded = loaded;
             float reach = Mathf.Max(Layout.Footprint, Mathf.Abs(Layout.CourtZ0), Mathf.Abs(Layout.CourtZ1), Mathf.Abs(Layout.CourtX0), Mathf.Abs(Layout.CourtX1)) + 3f;
             float reach2 = reach * reach;
             Vector3 o = Site.Origin;

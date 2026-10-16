@@ -1,0 +1,41 @@
+# Arena 0.5.0: the detailed notes
+
+Everything that changed in 0.5.0, in detail (the changelog keeps a summary). Written as the work was done, in no particular order.
+
+The Long Road is fairer.
+Each land is two fighters, then three, then its champion with one at its side (Hard adds one each time), and never more than two are out at once: the rest wait behind their grates for one to fall.
+A round's fighters are the land's rank and file (no drakes, deathsquitos or gjall, which fly, and no brutes, fenrings, lox or seeker soldiers, who are champions), and a star now and then only at a champion's side, from the Swamp on.
+A champion never hits harder than its land's own big creatures do (a troll, an abomination, a golem, a berserker); it could hit for up to three times that, a one-blow kill in the land's gear.
+Your steel keeps up: after a land's first and second rounds a reward chest raises your weakest piece to that land's, the chest between lands holds one of the next land's and always a fresh meal, and the Armourer's upgrades cost what a land's fighters drop (by the Plains a weapon cost more than the whole land paid).
+What you leave in a reward chest is put on for you when the next round begins.
+Food is kinder: the kitchen's leftovers have 70% of their time left (was 50%) and food burns 1.6 times as fast in the ring (was 2.5); a config still on the old defaults takes the new ones once.
+The Endless Horde climbs instead of hitting walls: a fighter more every second wave (to ten), stars creeping in by chance from wave 4 (a second star from wave 11) where a whole wave used to turn starred at waves 6 and 11, and up to four out at once from wave 8, five from wave 16.
+A Champion Bout's champion is a step above its land's big creatures rather than far beyond them (its limits were 1.6 times the land's, now 1.3).
+With the Timed rule a round has time for how many fighters it has (15 seconds for each past three), as they no longer come out all at once.
+The Hall of Champions scores the run itself (how far, the kills, the crowd, a win, the rules taken, deeper lands worth more outside the Long Road), not the coins it paid; a champion of the old scoring keeps the plinth until the first run scored the new way takes it.
+Players watching from the stands or the forecourt no longer make the fight harder: the game makes creatures 30% tougher for every player within 100 m, and in the ring now only those on the fighting floor count.
+Prizes are worth having: fewer coins (the Bout's and the Horde's purse, and the win bonus, are half what they were), and instead the spoils of a land, its metal, hides and rarer things (a black core in the Mistlands, a molten core in the Ashlands), far better deeper in and only from lands your world has reached.
+The Long Road pays each land's spoils as you walk out (in full the first time you beat it each week, a tenth after, so it cannot be farmed), and the Arena's Blessing goes with you for about a day of the world: faster health and stamina back and harder blows, stronger the further you got.
+Today's trial's first win of the day pays twice its land's spoils and three each of its best meads; a Champion Bout won, and every fifth wave of the Endless Horde, pay the land's spoils, in full for three paid wins a day.
+A champion on the arena's steel drops its trophy but no longer the land's metal (it is in the spoils).
+In the ring a panel of its own at the top of the screen, in the game's look: the contest and round, the crowd's favour as a bar, the foes left, a champion's health bar while one is out, what you would walk out with now as item icons (a gold "+" rising from whatever grows), what a win adds, and the announcer's last word, so the middle of the screen stays clear but for its big calls.
+Between rounds a second panel shows the clock, what comes next, and the keys to start now or leave.
+Better arena steel you take out of a chest or pick up from the crowd goes on at once, and the piece it replaces goes back.
+The Arena Master's Prize tab, first when he holds something for you, is a chest only you can open and only take from: click a thing to take it, or take everything; what your bag has no room for stays with him.
+Between rounds the clock says what comes next (and when it is the champion), how to start it now and how to leave.
+The challenge emote between rounds (or the new ReadyKey setting, unset by default, or Shift+E at the Armourer) starts the next round in 3 seconds; a break whose chest you have emptied ends in 5; arming takes 30 seconds at most (was 40).
+Leaving before the first round (the yield key twice) now backs you out with your fee and stake back, also while arming (it said you would give up for half, and while arming it kept your fee).
+The Arena Master has a History tab (your last fifteen fights and duels: when, how far, how they ended and what they paid), and his Standing tab shows this week's Long Road (from which land the spoils pay in full), the Arena's Blessing and its time left, and a Collect button for a prize he still holds; the Bout and the Horde say how many of today's paid wins are left.
+Your prize waits with the Arena Master.
+Whatever you win in a contest (a win, your purse, half of it, the stake back, the champion's trophy) and a duel's pot are no longer handed over in the ring: speak to the Arena Master at his desk in the forecourt and he hands it over, as much as your bag takes (he keeps the rest until you make room).
+It is kept with your character, so only you can collect it, and it is no longer lost if you leave the game or the mod reloads during the victory show, or you fall before collecting.
+Coins, trophies and metal the fighters dropped that you did not pick up are gathered into your prize instead of being left on the floor, and what you leave in the reward chest between lands goes in your bag instead of vanishing with the chest.
+The coins you picked up on the arena's steel are counted without your own coins (cashing out counted both, and your Hall of Champions score with them).
+What the crowd throws and nobody picks up is cleared from the ring when the contest ends (however it ends) and when the Long Road moves on to the next land.
+The bars along the top of the podium wall now stand flush with its inner face, the same circle as the wall below (they stood in the parapet's middle, 0.6 m back).
+What the crowd throws you sails over the bars and lands on the paved border by the wall, in the middle of its first block (a metre from the wall, never on it or against it, never in front of a gate), below the spectator near you who threw it, and a glow marks where it came down; before, it bounced off the bars or the wall and rolled anywhere.
+The announcer now tells the stands what happens in the ring, by the fighter's name, and keeps what to do (pick up your coins, the yield key, open your reward) for the fighter; a call's parts stand on lines of their own, long lines are broken, and a call too long for the big title lettering is shown in the middle of the screen instead, so nothing runs off the screen in any language.
+The bar at the top keeps your purse on a line of its own, and watching someone else's fight you get a bar too: who is in the ring, the contest and round, the foes left and the crowd's mood.
+Smoother everywhere near the arena: its eighty-odd fires no longer puff smoke (two physics smoke clouds a second each, the game's limit of a hundred always reached) or spit cinders, and their lights no longer cast shadows (each one in the ring drew everything round it six times over); the arena goes up a few milliseconds a frame as you come near instead of in 20-40 ms bursts; and the chest and tombstone tidying, the tree clearing and the floor sweep no longer search everything loaded.
+The crowd is also far lighter on the frame rate during a fight: their capes were meant to hang still, but the cloth was switched off before the game had put the capes on, so up to fifty capes were blowing in the wind the whole fight; now they hang still.
+Each spectator also re-coloured its body and hair every frame for nothing (it now stops once they are dressed), torches in the crowd cast no shadows, and the stands fill one viking a frame instead of three at a time.

@@ -22,7 +22,7 @@ namespace Arena
         public const string Guid = "com.quad.arena";
         public const string OldGuid = "com.dhack.arena"; // (its id until 2026-10: settings move over by themselves, see Shared/Migration.cs)
         public const string Name = "Arena";
-        public const string Version = "0.4.4";
+        public const string Version = "0.5.0";
 
         internal static Plugin Instance;
         internal static ManualLogSource Log;
@@ -32,7 +32,7 @@ namespace Arena
 
         internal static ConfigEntry<float> Rewards, CrowdVolume, CrowdSize, EntryFee, MealFreshness, RingHunger;
         internal static ConfigEntry<bool> RealDeath, Spectators, Announcer, Gifts, MapPin, AllTiers, RespawnAtArena;
-        internal static ConfigEntry<KeyboardShortcut> YieldKey;
+        internal static ConfigEntry<KeyboardShortcut> YieldKey, ReadyKey;
 
         private Harmony _harmony;
 
@@ -51,15 +51,17 @@ namespace Arena
             MapPin = Config.Bind("Arena", "MapPin", true, "The Arena is marked on your map.");
             AllTiers = Synced.Add(Config.Bind("Arena", "AllTiers", false, "Every land's fighters can be chosen in a Champion Bout or the Endless Horde at once (normally each opens as you beat the boss before it). For trying them out: the arena still pays metals and trophies only from lands your world has reached, today's trial stays among them, and what the crowd throws from a land your world has not reached is only lent (it goes back after the fight)." + ServerSays));
             Gifts = Synced.Add(Config.Bind("Crowd", "Gifts", true, "When the crowd likes you it throws you things now and then: food and meads, then arrows, bombs and strong meads, and (on the arena's steel) the next land's weapon, more often and better the more they love you." + ServerSays));
-            MealFreshness = Synced.Add(Config.Bind("Crowd", "LeftoverMeals", 50f, new ConfigDescription("On the arena's steel: how much of its time one of the kitchen's meals (yesterday's leftovers) has left once eaten, percent. 100 is a fresh meal." + ServerSays, new AcceptableValueRange<float>(5f, 100f))));
-            RingHunger = Synced.Add(Config.Bind("Crowd", "RingHunger", 2.5f, new ConfigDescription("On the arena's steel: how many times faster food burns (fighting is hungry work), so a fresh meal lasts about a land and the crowd's gifts matter. 1 is as outside." + ServerSays, new AcceptableValueRange<float>(1f, 6f))));
+            MealFreshness = Synced.Add(Config.Bind("Crowd", "LeftoverMeals", 70f, new ConfigDescription("On the arena's steel: how much of its time one of the kitchen's meals (yesterday's leftovers) has left once eaten, percent. 100 is a fresh meal." + ServerSays, new AcceptableValueRange<float>(5f, 100f))));
+            RingHunger = Synced.Add(Config.Bind("Crowd", "RingHunger", 1.6f, new ConfigDescription("On the arena's steel: how many times faster food burns (fighting is hungry work), so a fresh meal lasts about a land and the crowd's gifts matter. 1 is as outside." + ServerSays, new AcceptableValueRange<float>(1f, 6f))));
             Spectators = Config.Bind("Crowd", "Spectators", true, "A crowd fills the stands during a fight.");
             CrowdSize = Config.Bind("Crowd", "FullHouse", 30f, new ConfigDescription("How full the stands are during a fight (percent of the seats). Fewer is lighter on the frame rate.", new AcceptableValueRange<float>(0f, 100f)));
             Announcer = Config.Bind("Crowd", "Announcer", true, "The announcer's calls across the top of the screen.");
-            YieldKey = Config.Bind("Arena", "YieldKey", new KeyboardShortcut(KeyCode.Backspace), "Press twice to give up a contest (you keep what you have earned so far, at a lower rate).");
+            YieldKey = Config.Bind("Arena", "YieldKey", new KeyboardShortcut(KeyCode.Backspace), "Press twice to leave a contest: before it begins you back out with your fee back; between rounds you walk out with your winnings; in a round you give up (at a lower rate).");
+            ReadyKey = Config.Bind("Arena", "ReadyKey", KeyboardShortcut.Empty, "Press to end a break between rounds (or the arming) at once: the next round starts in 3 seconds. None by default: the challenge emote does it too, and Shift+E at the Armourer.");
             CrowdVolume = Config.Bind("Crowd", "Volume", 0.5f, new ConfigDescription("How loud the crowd is.", new AcceptableValueRange<float>(0f, 1f)));
             WaystoneCost = Synced.Bind("Building", "WaystoneCost", Things.WaystoneDefault, "What an Arena Waystone costs to build with the hammer (at a workbench). " + DHack.Shared.Costs.Help);
             WaystoneCost.SettingChanged += (s, e) => Things.ApplyCost();
+            NewFoodDefaults();
             Synced.ServerChanged += () => _tellNoServer = Synced.Server == DHack.Shared.ServerSettings.ServerMod.Missing;
 
             _harmony = new Harmony(Guid);
@@ -70,6 +72,24 @@ namespace Arena
             Show.ClearLeftovers();   // (a hot reload: what the last copy of the mod left in the world)
             Things.Register();   // a hot reload while in a world
             Logger.LogInfo($"{Name} {Version} loaded");
+        }
+
+        /// <summary>
+        /// 0.5.0 made the ring's food kinder (leftovers 70% left instead of 50%, food burning 1.6 times as fast instead of 2.5): a config
+        /// file still on the old defaults takes the new ones, once (a marker file says it has), so a value someone chose is never touched.
+        /// </summary>
+        private static void NewFoodDefaults()
+        {
+            try
+            {
+                string marker = System.IO.Path.Combine(BepInEx.Paths.CachePath, "Arena", "food-defaults-0.5.0");
+                if (System.IO.File.Exists(marker)) return;
+                if (Mathf.Approximately(MealFreshness.Value, 50f)) MealFreshness.Value = 70f;
+                if (Mathf.Approximately(RingHunger.Value, 2.5f)) RingHunger.Value = 1.6f;
+                System.IO.Directory.CreateDirectory(System.IO.Path.GetDirectoryName(marker));
+                System.IO.File.WriteAllText(marker, "The ring's food settings were moved to the 0.5.0 defaults where they were still on the old ones.");
+            }
+            catch (System.Exception e) { Log.LogWarning("Could not move the food settings to the new defaults: " + e.Message); }
         }
 
         private void Update()
