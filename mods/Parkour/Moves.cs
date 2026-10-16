@@ -348,6 +348,8 @@ namespace Parkour
             if (p.IsTeleporting() || p.InCutscene()) return "teleporting";
             if (!p.CanMove()) return "can't move";                       // (also while Just Vault vaults)
             if (body.isKinematic || !body.useGravity) return "another mod holds the body";
+            int web = Compat.WebMove();
+            if (web >= 1 && web <= 3) return "Webslinger is moving the player";
             if (Compat.SmoothClimbing)
             {
                 if (Compat.SmoothClimbingBusy(p, NView(p) != null ? NView(p).GetZDO() : null)) _otherClimbAt = Time.time;
@@ -377,6 +379,7 @@ namespace Parkour
         {
             if (TakeInput != null && !TakeInput(p) && Controls.Driving == null) { LastRefusal = "typing or in a menu"; return; }
             if (TooFastToCatch(p)) { LastRefusal = TooFast; return; }   // (no grab, run or climb: the fall goes on to the ground)
+            if (Compat.WebMove() == 4) { LastRefusal = "flying off a web (Webslinger's wall crawl takes walls)"; return; }
             Vector3 vel = body.linearVelocity, flat = new Vector3(vel.x, 0f, vel.z);
             Vector3 wish = MoveDir(p);
             Vector3 heading = flat.magnitude > 2f ? flat.normalized : (wish.sqrMagnitude > 0.01f ? wish.normalized : p.transform.forward);

@@ -25,7 +25,7 @@ namespace Parkour
     {
         public const string Guid = "com.quad.parkour";
         public const string Name = "Parkour";
-        public const string Version = "0.1.3";
+        public const string Version = "0.1.4";
 
         internal static Plugin Instance;
         internal static ManualLogSource Log;

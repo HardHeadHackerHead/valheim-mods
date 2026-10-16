@@ -103,7 +103,8 @@ namespace Parkour
             }
             bool pressed = crouched && Plugin.LandingRoll.Value;
             bool forward = Forward(p, flat, 2f);
-            bool auto = !pressed && Plugin.AutoRoll.Value && AutoUnlocked(p) && height > 4f && forward;   // (the game's falls hurt from 4 m)
+            // (the game's falls hurt from 4 m; a landing from a Webslinger web doesn't hurt at all, and rolling would only stop the player dead)
+            bool auto = !pressed && Plugin.AutoRoll.Value && AutoUnlocked(p) && height > 4f && forward && Compat.WebMove() == 0 && !Compat.WebLately(1f);
             if (!pressed && !auto) return false;
             float cost = DodgeCost != null ? DodgeCost(p) : p.m_dodgeStaminaUsage;
             if (!p.HaveStamina(cost))

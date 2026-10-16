@@ -1,0 +1,10 @@
+{
+  "webslinger_skill": "Webslinging",
+  "webslinger_skill_description": "Swinging on webs, zipping to rooftops and crawling on walls. Webs reach further, zips pull faster, swings fling harder and every move costs less. From skill 0 to 100: swing webs of {reach0} to {reach100} m, zips of {zip0} to {zip100} m, and moves up to {cut}% cheaper.",
+  "webslinger_hint_swing": "Swinging! Keep holding Jump to keep swinging, steer with the move keys, let go near the top of a swing to fly.",
+  "webslinger_hint_zip": "Zip! Sprint in the air pulls you to the spot under the crosshair.",
+  "webslinger_hint_airzip": "Nothing in reach: a zip forward. A few per jump.",
+  "webslinger_hint_perch": "Perched.",
+  "webslinger_hint_crawl": "On the wall: move keys crawl, Sprint faster, Jump kicks off, Crouch lets go.",
+  "webslinger_perfect": "Perfect release!"
+}

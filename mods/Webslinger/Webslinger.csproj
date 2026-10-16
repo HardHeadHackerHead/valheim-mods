@@ -1,0 +1,22 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <AssemblyName>Webslinger</AssemblyName>
+    <RootNamespace>Webslinger</RootNamespace>
+  </PropertyGroup>
+  <ItemGroup>
+    <!-- The strengths the server decides in multiplayer, the cheat rule for the test commands, and the skill with its backup (shared with our other mods). -->
+    <Compile Include="../Shared/ServerSettings.cs" Link="Shared/ServerSettings.cs" />
+    <Compile Include="../Shared/TestCommands.cs" Link="Shared/TestCommands.cs" />
+    <Compile Include="../Shared/Skill.cs" Link="Shared/Skill.cs" />
+  </ItemGroup>
+  <ItemGroup>
+    <!-- The web's sounds, made in code (Sounds.cs), and the poses over the animation (Body.cs). -->
+    <Reference Include="netstandard"><HintPath>$(ManagedDir)/netstandard.dll</HintPath><Private>false</Private></Reference>
+    <Reference Include="UnityEngine.AnimationModule"><HintPath>$(ManagedDir)/UnityEngine.AnimationModule.dll</HintPath><Private>false</Private></Reference>
+    <Reference Include="UnityEngine.AudioModule"><HintPath>$(ManagedDir)/UnityEngine.AudioModule.dll</HintPath><Private>false</Private></Reference>
+  </ItemGroup>
+  <ItemGroup>
+    <!-- The Webslinging skill's icon, when the artist's one is in the folder (else one is drawn in code: Skill.cs). -->
+    <EmbeddedResource Include="skill-icon.png" LogicalName="skill-icon.png" Condition="Exists('skill-icon.png')" />
+  </ItemGroup>
+</Project>

@@ -1,0 +1,22 @@
+Swing through the world on webs, Spider-Man style: web-swing from trees, cliffs and buildings, zip to rooftops, crawl on walls, a higher jump, and a spider-sense that warns you of attacks, with a Webslinging skill.
+
+The moves
+- Swing: jump, then press and hold Jump in the air. A web shoots up and ahead to the best spot in reach (a tree, a cliff, a roof, a tower) and you swing from it. Keep holding and the next web fires by itself at the top of each swing; let go to fly off. Let go near the top of a swing while still rising for a perfect release: a bigger fling and a flip. A quick tap gives one short swing. Steer with the move keys.
+- Webs stick to real things only: something solid that stays put, up and ahead of you, high enough to swing under (about 8 metres over the ground below it). In the air, a small white web mark shows where your web would stick: no mark, nothing to swing from, and Jump is just Jump.
+- Spider-Man jump: a jump off the ground goes about twice as high. It never shoots a web.
+- Zip: press Sprint in the air to pull yourself to the spot under your crosshair: onto a roof or a ledge (you land on it), onto a wall (you stick to it), or under something. A light blue ring shows when a spot is in reach. With nothing in reach, a short zip forward (2 before you touch the ground, 3 with the skill).
+- Wall crawl: move into a wall in the air (or swing into one) and you stick to it. Crawl with the move keys, faster with Sprint, over the top at its edge; Jump kicks off it, Crouch lets go.
+- Spider-sense: wavy lines round your head, a glow on the side it comes from and a tingle, a moment before an enemy's attack or an arrow reaches you (only for those you can't see, or every one: a setting).
+- No damage landing from a web move, and half the game's fall damage from other falls.
+
+How it looks and sounds
+- Your own web sounds: a thwip as a web shoots, a thunk as it sticks, a snap as you let go, wind rushing past at speed.
+- The pose on a web: your arm up the web (the hand on the web's side, so long chains alternate hands), legs trailing and tucking at the top of a swing, both arms up a zip, hand over hand with knees out on a wall, and a flip on a perfect release.
+- Webs leave a mark: a web patch where each web sticks, and a web you let go of stays stuck and hangs there, swaying, for a while.
+- Speed lines and a slight camera roll and dip at speed, and the view widens a little.
+- Others with the mod see your webs, your poses and your flips; others without it see you fly and lean.
+
+The Webslinging skill rises with every web, zip and crawl: longer webs and zips, faster swings, more zips forward.
+
+Settings: each move on or off, keep swinging while Jump is held, the web marks, hints, the sounds and their volume, the web patches and hanging webs, the speed lines, the camera motion and view widening (turn those off if motion on screen makes you feel sick), the poses, and spider-sense, for you; how far webs and zips reach, how fast swings go, the jump, the steering, the flings, the crawl speed, fall damage, stamina costs (none by default) and how fast the skill rises are the server's in multiplayer.
+Works with Quad's Parkour: Jump in the air is a web whenever a web is possible, otherwise Parkour's wall kick. Only the players who want it need it: movement is each player's own, and the mod isn't needed on the server.

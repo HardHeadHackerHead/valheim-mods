@@ -22,6 +22,10 @@ namespace Parkour
     ///     Nothing overlaps.
     ///   Quad's Dungeons (ours, com.quad.dungeons): a dungeon whose pack has parkour off forbids the moves inside it (they'd skip its
     ///     puzzle). Asked through its public Dungeons.Api.BlocksParkour(Vector3), found by reflection when a player spawns.
+    ///   Quad's Webslinger (ours, com.quad.webslinger): swings, zips and wall crawls. While one runs nothing of ours does (both would set the
+    ///     body's speed in the same step); while the player flies off a web no ledge grab, wall run or climb starts (its crawl takes
+    ///     walls then); and a landing from a web never rolls by itself (it takes no fall damage: an automatic roll only stopped the
+    ///     player dead and held the next jump back). A roll on crouch still works. Read from its static Web.State and Web.FlowAt.
     /// </summary>
     internal static class Compat
     {
@@ -40,6 +44,9 @@ namespace Parkour
         public static void Reset()
         {
             ForgetDungeons();
+            _web = null;
+            _webState = _webFlowAt = null;
+            _webLookedAt = -10f;
             _checked = false;
             SmoothClimbing = JustVault = Climbing = false;
             _isClimbing = _isMantling = null;
@@ -73,6 +80,54 @@ namespace Parkour
         public static string Summary() =>
             (SmoothClimbing ? "Smooth Climbing: wall climb and ledge grab off; " : "") + (JustVault ? "Just Vault: taking turns; " : "") + (Climbing ? "Climbing: no overlap; " : "") +
             (!SmoothClimbing && !JustVault && !Climbing ? "none of the climbing mods installed" : "");
+
+        // ---- Quad's Webslinger ----
+
+        private static UnityEngine.Object _web;          // its live plugin (a reload destroys it: then looked for again)
+        private static FieldInfo _webState, _webFlowAt;  // Webslinger.Web.State (an enum: None 0, Swing 1, Zip 2, Crawl 3, Fly 4), FlowAt (Time.time)
+        private static float _webLookedAt = -10f;
+
+        /// <summary>Webslinger's move now: 0 none (or not installed), 1 swing, 2 zip, 3 crawl, 4 flying off a web.</summary>
+        public static int WebMove()
+        {
+            if (!FindWebslinger()) return 0;
+            try { return Convert.ToInt32(_webState.GetValue(null)); }
+            catch (Exception) { _webState = null; return 0; }
+        }
+
+        /// <summary>A Webslinger move ran within this many seconds (a landing from a web).</summary>
+        public static bool WebLately(float seconds)
+        {
+            if (!FindWebslinger() || _webFlowAt == null) return false;
+            try { return Time.time - (float)_webFlowAt.GetValue(null) < seconds; }
+            catch (Exception) { _webFlowAt = null; return false; }
+        }
+
+        private static bool FindWebslinger()
+        {
+            if (_web != null && _webState != null) return true;
+            if (Time.time - _webLookedAt < 2f) return false;
+            _webLookedAt = Time.time;
+            _webState = _webFlowAt = null;
+            _web = null;
+            Type plugin = Chainloader.PluginInfos.TryGetValue("com.quad.webslinger", out BepInEx.PluginInfo info) && info.Instance != null ? info.Instance.GetType() : null;
+            UnityEngine.Object live = info?.Instance;
+            if (plugin == null)
+            {
+                // (loaded from scripts: the live plugin object; after a reload the old one is destroyed)
+                live = UnityEngine.Object.FindObjectsByType<BepInEx.BaseUnityPlugin>(FindObjectsSortMode.None).FirstOrDefault(x => x != null && x.GetType().FullName == "Webslinger.Plugin");
+                plugin = live != null ? live.GetType() : null;
+            }
+            Type web = plugin?.Assembly.GetType("Webslinger.Web");
+            if (web == null) return false;
+            const BindingFlags any = BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Static;
+            _webState = web.GetField("State", any);
+            _webFlowAt = web.GetField("FlowAt", any);
+            if (_webState == null) return false;
+            _web = live;
+            Plugin.Log.LogInfo("Quad's Webslinger is installed: no parkour move while it swings, zips or crawls, no ledge grab or wall run while flying off a web, and no automatic roll landing from one.");
+            return true;
+        }
 
         // ---- Quad's Dungeons ----
 
