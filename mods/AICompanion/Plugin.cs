@@ -21,7 +21,7 @@ namespace AICompanion
         public const string Guid = "com.quad.aicompanion";
         public const string OldGuid = "com.dhack.aicompanion"; // (its id until 2026-10: settings move over by themselves, see Shared/Migration.cs)
         public const string Name = "AICompanion";
-        public const string Version = "0.24.6";
+        public const string Version = "0.24.7";
 
         internal static Plugin Instance;
         internal static ConfigEntry<bool> ShowDecisions;

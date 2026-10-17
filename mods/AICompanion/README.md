@@ -7,7 +7,7 @@
 
 **A viking companion, a follower NPC who plays like a player: comes on your adventures, fights beside you, lives its own life at home, and gets better as it goes.**
 
-![version: 0.24.6](https://img.shields.io/badge/version-0.24.6-3b6e8f?style=flat-square)  ![multiplayer: everyone + host](https://img.shields.io/badge/multiplayer-everyone%20%2B%20host-7a5c2e?style=flat-square)  ![made with: Claude Code](https://img.shields.io/badge/made%20with-Claude%20Code-c26a3d?style=flat-square)
+![version: 0.24.7](https://img.shields.io/badge/version-0.24.7-3b6e8f?style=flat-square)  ![multiplayer: everyone + host](https://img.shields.io/badge/multiplayer-everyone%20%2B%20host-7a5c2e?style=flat-square)  ![made with: Claude Code](https://img.shields.io/badge/made%20with-Claude%20Code-c26a3d?style=flat-square)
 
 <!-- GITHUB-ONLY -->[Thunderstore](https://thunderstore.io/c/valheim/p/Quads_Lab/Quads_Companion/)  ·  <!-- END GITHUB-ONLY -->[Source code](https://github.com/HardHeadHackerHead/valheim-mods/tree/main/mods/AICompanion)  ·  [Report a bug](https://github.com/HardHeadHackerHead/valheim-mods/issues/new?template=bug.yml&title=%5BQuad%27s%20Companion%5D%20)  ·  [Discord](https://discord.gg/EwTjQxEZPy)
 
@@ -31,7 +31,7 @@
 - Its bag shows beside your inventory: drag items between you. Hotbar keys give it food, potions or gear.
 - Between jobs it acts like a person: sits by the fire or in a chair, gets out of the rain, takes a stroll, sits with you when you rest, waves when you come back, cheers after a big fight and answers your emotes.
 - A journal of its life, small talk that fits the moment, and chat messages about what it is up to.
-- Its menu: status, stats and every skill, orders, home, gear, looks and journal. Talk to it in chat: "Rádvar, follow me", "Rádvar go home".
+- Its menu: status, stats and every skill, orders, home, gear, looks and journal, and a Companions tab (when you can have more than one) to switch between your companions, release one or add another. Talk to it in chat: "Rádvar, follow me", "Rádvar go home".
 - With PartyHud it shows in the party panel (face, health, food); it shows on the map, and where it fell is marked for everyone.
 - Multiplayer: it belongs to whoever summoned it. Everyone in the world needs the mod (the host too), or the game deletes saved companions.
 
@@ -177,6 +177,7 @@ helps me make new mods and keep improving the ones you already play. It's 100% o
 
 ## 📜 Recent changes
 
+- **0.24.7** A Companions tab in the companion's menu (when more than one companion is allowed): all your companions in one list, each with Open, Call and Release forever (press twice; its gear must be taken out first, and a released companion can't come back), and the summon panel to add another.
 - **0.24.6** Near a fallen companion's map marker, the check for its crate (every 2 seconds) no longer searches every container in the scene: it looks only at the saved objects around the marker. No more small hitch there in a big base.
 - **0.24.5** On a server without AI Companion, no companion can be summoned there, and a message says why: the server would delete the companion and the gear it carries. Settings: edits to the config file now apply while the game runs (a server owner no longer has to restart), and a server's admins can change the server's settings from their own game with Configuration Manager, where other players see them greyed out. Your config file always keeps your own values while you play on a server (saving it there could write the server's in). Players on an older version still get the server's settings. Food it borrows from your chest now goes into a slot of its own in its bag, so what it does not eat goes back to that chest (it used to join a stack of the same food it already had and was kept).
 - **0.24.4** Its windows no longer fill the log with "The LiberationSans SDF Font Asset was not found": each text is given the game's font before it starts (it looked for TextMeshPro's default font, which the game doesn't have, every time a text was made). Nothing changes on screen.

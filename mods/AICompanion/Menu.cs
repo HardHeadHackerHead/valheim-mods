@@ -22,7 +22,7 @@ namespace AICompanion
 
     /// <summary>
     /// The companion's menu (J, or E on it), in the game's own look (GameUi.cs: the crafting panel's wood, its buttons and tabs, the
-    /// inventory's item cells and tooltips, the game's fonts), in seven tabs:
+    /// inventory's item cells and tooltips, the game's fonts), in seven tabs (an eighth, Companions, when more than one is allowed):
     ///   Status - what it is doing, its health, food and rest, effects and recent events;
     ///   Stats  - all its numbers: health, stamina, healing, carry weight, armour, block, weapon damage, resistances, record, every skill;
     ///   Orders - come with me or go home (and stay, guard, come here), errands, how it fights, its habits, sending it away;
@@ -38,7 +38,7 @@ namespace AICompanion
     /// </summary>
     public partial class Plugin
     {
-        private enum Tab { Status, Stats, Orders, Home, Gear, Looks, Journal }
+        private enum Tab { Status, Stats, Orders, Home, Gear, Looks, Journal, Companions }
 
         internal static bool MenuOpen;
         internal static float MenuClosedAt = -1f;   // (the E that closes it must not open it again at once: Container_Interact)
@@ -175,6 +175,7 @@ namespace AICompanion
         {
             _make = make;
             _sig.Length = 0;
+            if (_tab == Tab.Companions && MaxCompanions.Value <= 1) _tab = Tab.Status;
             Humanoid c = _shown;   // (Unity's null: a companion just remade or unloaded shows your companions instead)
             bool companion = c != null;
             Vector2 screen = GameUi.ScreenSize;
@@ -219,6 +220,7 @@ namespace AICompanion
                     case Tab.Gear: DrawGear(c); break;
                     case Tab.Looks: DrawLooks(c); break;
                     case Tab.Journal: DrawJournal(c); break;
+                    case Tab.Companions: DrawCompanions(); break;
                 }
             if (make)
             {
@@ -264,11 +266,29 @@ namespace AICompanion
                     float d = me != null ? Vector3.Distance(me.transform.position, here.transform.position) : 0f;
                     var buttons = new List<(string, bool, Action)>();
                     if (d > 15f) buttons.Add((T("aicompanion_menu_call"), false, () => { Humanoid h2 = here; _pending = () => { if (Home.Follow(h2)) Brain.TeleportBehind(h2, Player.m_localPlayer, "aicompanion_brain_was_called_to"); }; }));
-                    buttons.Add((T("aicompanion_menu_open"), true, () => { Humanoid h2 = here; _pending = () => OpenMenuFor(Player.m_localPlayer, h2); }));
+                    buttons.Add((T("aicompanion_menu_open"), true, () => { Humanoid h2 = here; _pending = () => { _tab = Tab.Status; OpenMenuFor(Player.m_localPlayer, h2); }; }));
                     HeadingRow(prof.Name, buttons.ToArray());
                     string doing = Companion.StatusOf(here);
                     string whereNow = d <= 15f ? T("aicompanion_menu_here_with_you") : Words.Show(Remote.Where(here.transform.position, me.transform.position));
                     Note(string.IsNullOrEmpty(doing) ? whereNow + "." : T("aicompanion_menu_where_doing", whereNow, Words.Show(doing)), GameUi.Good);
+                    // release it for good: pressed twice, and only with its gear taken out (Companion.Dismiss)
+                    long hid = prof.Id;
+                    bool armed = _forgetArmed == hid;
+                    if (armed) Note(T("aicompanion_menu_release_hint"), GameUi.Warn);
+                    WideBtn(armed ? T("aicompanion_menu_release_again", prof.Name) : T("aicompanion_menu_release", prof.Name), false, () =>
+                    {
+                        if (_forgetArmed != hid) { _forgetArmed = hid; return; }
+                        _pending = () =>
+                        {
+                            _forgetArmed = 0L;
+                            Humanoid h3 = Companion.All().FirstOrDefault(h => Companion.IdOf(h) == hid);
+                            if (h3 == null) return;
+                            bool wasShown = _shown == h3;
+                            if (!Companion.Dismiss(h3, out string why)) { _note = Words.Show(why); return; }
+                            _note = "";
+                            if (wasShown) { _shown = null; _tab = Tab.Status; }
+                        };
+                    }, 30f, armed ? GameUi.Warn : (Color?)null);
                 }
                 else if (prof.Dead)
                 {
@@ -454,12 +474,12 @@ namespace AICompanion
 
             // the tabs, and the braid under them
             _y += 4f;
-            var tabs = (Tab[])Enum.GetValues(typeof(Tab));
+            var tabs = ((Tab[])Enum.GetValues(typeof(Tab))).Where(t => t != Tab.Companions || MaxCompanions.Value > 1).ToArray();
             float tw = (_width - 6f * (tabs.Length - 1)) / tabs.Length;
             for (int i = 0; i < tabs.Length; i++)
             {
                 Tab t = tabs[i];
-                TabBtn(Named("aicompanion_menu_tab_", t), _left + i * (tw + 6f), _y, tw, 38f, _tab == t, () => _tab = t, 17f);
+                TabBtn(Named("aicompanion_menu_tab_", t), _left + i * (tw + 6f), _y, tw, 38f, _tab == t, () => _tab = t, tabs.Length > 7 ? 15f : 17f);
             }
             _y += 42f;
             if (_make) GameUi.Braid(_window, new Vector2(0f, -_y - 4f), _width);
