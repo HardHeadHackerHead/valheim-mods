@@ -48,7 +48,7 @@ ICON_URL = "https://raw.githubusercontent.com/HardHeadHackerHead/valheim-mods/ma
 THUNDERSTORE_TEAM = "Quads_Lab"  # our team on Thunderstore: each mod is its own package there
 REPO = "https://github.com/HardHeadHackerHead/valheim-mods"
 MANAGER = "https://github.com/HardHeadHackerHead/valheim-mod-manager"
-NOT_ON_THUNDERSTORE = {"RocketRoadster"}  # mods that are GitHub and F7 only (Claude Tools was, before it moved to its own repo, valheim-claude-tools; Jet Skis until 0.3.0)
+NOT_ON_THUNDERSTORE = {"RocketRoadster", "Skateboards"}  # mods that are GitHub and F7 only (Claude Tools was, before it moved to its own repo, valheim-claude-tools; Jet Skis until 0.3.0)
 PARTS = ["screenshots", "how-to-use", "other-mods", "multiplayer"]
 # the languages our mods ship (the game's names: every language with 2%+ of Valheim's players), as a player reads their own
 LANGUAGES = {"English": "English", "Russian": "Русский (Russian)", "German": "Deutsch (German)", "Chinese": "简体中文 (Chinese)",

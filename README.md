@@ -66,7 +66,7 @@ Every player installs the mods they want for themselves. A few need more than th
 | Mod | Who needs it |
 |---|---|
 | **AICompanion** | Everyone in the world, **the host too**: without it the game deletes saved companions. |
-| **Recycler, BountyBoard, SlotMachine, BirdTrap, LedgerChest, Quad's Cigars, SkalTavern, Ziplines, Arena, Jet Skis, Four Wheelers, Mountain Bikes, Rocket Roadster, Guns** (new build pieces and items; the Arena's host also picks where it stands) | Everyone, and **the host above all**: a game without the mod deletes the pieces when their area loads. Restart after installing or updating them. |
+| **Recycler, BountyBoard, SlotMachine, BirdTrap, LedgerChest, Quad's Cigars, SkalTavern, Ziplines, Arena, Jet Skis, Four Wheelers, Mountain Bikes, Rocket Roadster, Skateboards, Guns** (new build pieces and items; the Arena's host also picks where it stands) | Everyone, and **the host above all**: a game without the mod deletes the pieces when their area loads. Restart after installing or updating them. |
 | **PortalHub** | The host (it keeps the portal links), and everyone who wants the portal menu. |
 | **Blockscript** (scripts run on the server) | The server: the host, or the dedicated server. Players who also have it get items, healing and effects from scripts on their own game and can see (admins: edit) the server's scripts; players without it still see messages, weather and creatures. |
 | Everything else | Only the players who want it. |
@@ -473,6 +473,24 @@ Everyone in the world needs it. On the mod manager's list (F7), not on Thunderst
 
 </td>
 </tr>
+<tr>
+<td valign="top">
+
+### 🛹 Skateboards
+<img src="dist/Skateboards.cover.png" alt="Quad's Skateboards" width="100%">
+
+Skating played like the classic skateboarding games. Make a skateboard, **Attack** to drop it and hop on, push with **W**, hold and let go of
+**Jump** to ollie, then spin with **A** / **D**, flip with **Attack**, grab with **Block**, grind beams, wall tops and rails, and manual with
+**Crouch** to chain long combos. A score and balance meter on screen, Perfect landings, gaps, a special meter with three specials, a
+Skateboarding skill, and a skate park to build (Grind Rail, Skate Ledge, Kicker, Quarter Pipe). Everyone in the world needs it. On the mod
+manager's list (F7), not on Thunderstore yet.
+
+**[More: how it works, settings and screenshots →](mods/Skateboards/README.md)**
+
+</td>
+<td valign="top">
+</td>
+</tr>
 </table>
 
 ## ⌨️ Keys at a glance
@@ -523,6 +541,9 @@ Everyone in the world needs it. On the mod manager's list (F7), not on Thunderst
 | **E** on a roadster | Rocket Roadster | Get in and drive (**E** on its passenger side: ride along; **E** on its hood: paint it the next colour; **E** on one lying on its side: stand it up) |
 | **W** / **Shift**+**W** / **S** | Rocket Roadster | Go / boost on the rear thrusters / brake, then back up; **A** / **D** steer; **E** gets out once you are down |
 | **Space** | Rocket Roadster | Lift thrusters: tap to hop, hold to fly. In the air **A** / **D** roll and **W** / **S** flip; let go and it lands on its wheels |
+| **Attack** with a skateboard in hand | Skateboards | Drop it and hop on (**E** steps off) |
+| **W** / **Shift**+**W** / **S** | Skateboards | Push / push harder / brake; **A** / **D** carve; hold and let go of **Jump** to ollie; hold **Crouch** to manual |
+| **A** / **D**, **Attack**, **Block** in the air | Skateboards | Spin / flip trick / grab (the move key held picks which); land on a rail or ledge to grind (**A** / **D** balance) |
 | **F8** | PartyHud | Show or hide the party panel |
 
 Every key and setting is configurable in `BepInEx/config`.
