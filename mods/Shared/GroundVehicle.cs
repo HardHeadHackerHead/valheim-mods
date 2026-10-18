@@ -35,6 +35,7 @@ namespace DHack.Shared
         public float DustSize = 1f;
         public string HelpKey;                  // the controls, shown the first time you get on in a session
         public Func<bool> ShowHelp;
+        public bool PassengerBeside;            // the passenger sits beside the rider (a car), not behind them: no hug
     }
 
     /// <summary>
@@ -176,11 +177,40 @@ namespace DHack.Shared
         /// <summary>The vehicle this player has the controls of now, or null (for the gauge).</summary>
         internal static GroundVehicle Riding(Player p) => p != null ? p.GetDoodadController() as GroundVehicle : null;
 
+        // ---- for a vehicle that does more than drive (RocketRoadster's thrusters): what the rider asks for, and hooks into the steps.
+        // Each does nothing here, so FourWheelers and MountainBikes behave as they always did.
+        protected ZNetView NView => _nview;
+        protected bool Ridden => _validUser;                                 // the owner's game: someone holds the controls, in range
+        protected bool InputFresh => Time.time - _inputAt < 0.4f;
+        protected float ThrottleIn => _throttle;                             // W/S: -1 to 1
+        protected float SteerIn => _steerIn;                                 // A/D: -1 to 1
+        protected bool RunIn => _run;                                        // Shift
+        protected bool BlockIn => _brake;                                    // the block key
+        protected VehicleSound Sounds => _sound;
+        protected Vector3 GroundNormal { get; private set; } = Vector3.up;  // the owner's game: the ground under its wheels this step
+        /// <summary>First thing in Awake, before the wheels, seats and lights are looked up (a working vehicle only): a chance to rebuild its model.</summary>
+        protected virtual void PrepareModel() { }
+        /// <summary>Once, at the end of Awake (when it is a working vehicle, not a placement ghost).</summary>
+        protected virtual void Setup() { }
+        /// <summary>When it goes (OnDestroy).</summary>
+        protected virtual void Teardown() { }
+        /// <summary>The owner's game, every physics step, after the springs and before the drive: <paramref name="grounded"/> wheels touch the ground.</summary>
+        protected virtual void PhysicsStep(float dt, int grounded, bool ridden) { }
+        /// <summary>Every game, every frame, after the wheels and lights.</summary>
+        protected virtual void FrameTick(float dt) { }
+        /// <summary>It keeps itself level in the air (off for a vehicle that rolls on purpose).</summary>
+        protected virtual bool RightsItselfInAir => true;
+        /// <summary>Lying on its back with someone on it, they let go (off for one that can roll itself back over).</summary>
+        protected virtual bool LetsGoWhenFlipped => true;
+        /// <summary>Its top speed now (Shift+W), from the setting's.</summary>
+        protected virtual float TopSpeedNow(float top) => top;
+
         private void Awake()
         {
             _nview = GetComponent<ZNetView>();
             _body = GetComponent<Rigidbody>();
             if (Spec == null || _nview == null || _body == null || _nview.GetZDO() == null) { enabled = false; return; }   // (a placement ghost has none)
+            PrepareModel();
 
             _rpcRequest = Spec.Id + "_Request"; _rpcRelease = Spec.Id + "_Release"; _rpcResponse = Spec.Id + "_Response"; _rpcControls = Spec.Id + "_Controls";
             _userKey = Spec.Id + "_user"; _steerKey = Spec.Id + "_steer";
@@ -236,11 +266,13 @@ namespace DHack.Shared
             if (_mask < 0) _mask = LayerMask.GetMask("Default", "static_solid", "Default_small", "piece", "terrain");
             _lastPos = transform.position;
             All.Add(this);
+            Setup();
         }
 
         private void OnDestroy()
         {
             All.Remove(this);
+            try { Teardown(); } catch (Exception e) { Debug.LogWarning("[" + Spec?.Id + "] Teardown: " + e); }
             _sound?.Dispose();
             _dust?.Dispose();
             if (_nview != null && _nview.GetZDO() != null && _rpcRequest != null)
@@ -494,6 +526,8 @@ namespace DHack.Shared
                 else { _drop[i] = Spec.Travel; _contact[i] = false; }
             }
             _wheelsOnGround = grounded;
+            GroundNormal = grounded > 0 ? normal.normalized : Vector3.up;
+            PhysicsStep(dt, grounded, ridden);
 
             // holding the throttle but not moving at all for a moment (wedged on a ledge or a rock): a small hop up and forward gets it free
             _stuckFor = ridden && throttle > 0.1f && _body.linearVelocity.sqrMagnitude < 0.09f ? _stuckFor + dt : 0f;
@@ -505,7 +539,7 @@ namespace DHack.Shared
             }
 
             // rolled onto its back with someone on it: they let go (rather than being pinned under it)
-            _flippedFor = t.up.y < 0.1f && ridden ? _flippedFor + dt : 0f;
+            _flippedFor = t.up.y < 0.1f && ridden && LetsGoWhenFlipped ? _flippedFor + dt : 0f;
             if (_flippedFor > 0.6f && Player.m_localPlayer != null && GetUser() == Player.m_localPlayer.GetZDOID().UserID)
             {
                 _flippedFor = 0f;
@@ -514,6 +548,7 @@ namespace DHack.Shared
 
             Vector3 up = grounded > 0 ? normal.normalized : Vector3.up;
             // it rights itself (a bike is held up by it: parked, it stands)
+            if (grounded > 0 || RightsItselfInAir)
             {
                 Vector3 axis = t.forward;
                 float roll = Vector3.SignedAngle(Vector3.ProjectOnPlane(up, axis), t.up, axis) * Mathf.Deg2Rad;
@@ -538,7 +573,7 @@ namespace DHack.Shared
             if (ridden && Spec.RamDamage != null && along > 4f) Ram(along);
 
             // pedalling tires a rider out; an engine doesn't. Out of breath it drops to a walking pace.
-            float cruise = Spec.Cruise(), top = Spec.Top();
+            float cruise = Spec.Cruise(), top = TopSpeedNow(Spec.Top());
             if (Spec.Stamina != null && ridden && throttle > 0.1f && Player.m_localPlayer != null && GetUser() == Player.m_localPlayer.GetZDOID().UserID)
             {
                 float cost = Spec.Stamina() * (run ? 3f : 1f) * throttle * dt;
@@ -730,6 +765,7 @@ namespace DHack.Shared
             float cornering = Mathf.Abs(along * _yawRate);   // (sideways acceleration, m/s^2)
             float slip = Mathf.Clamp01((cornering - 0.5f * Spec.LateralAccel) / (0.5f * Spec.LateralAccel));
             _sound?.Tick(ridden, Mathf.Clamp01(Mathf.Abs(along) / Mathf.Max(1f, Spec.Top())), _nview.IsOwner() ? _wheelsOnGround > 0f : true, slip);
+            FrameTick(dt);
         }
 
         private void Glow(Renderer[] lenses, float strength, Color colour)

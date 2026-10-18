@@ -66,7 +66,7 @@ Every player installs the mods they want for themselves. A few need more than th
 | Mod | Who needs it |
 |---|---|
 | **AICompanion** | Everyone in the world, **the host too**: without it the game deletes saved companions. |
-| **Recycler, BountyBoard, SlotMachine, BirdTrap, LedgerChest, Quad's Cigars, SkalTavern, Ziplines, Arena, Jet Skis, Four Wheelers, Mountain Bikes, Guns** (new build pieces and items; the Arena's host also picks where it stands) | Everyone, and **the host above all**: a game without the mod deletes the pieces when their area loads. Restart after installing or updating them. |
+| **Recycler, BountyBoard, SlotMachine, BirdTrap, LedgerChest, Quad's Cigars, SkalTavern, Ziplines, Arena, Jet Skis, Four Wheelers, Mountain Bikes, Rocket Roadster, Guns** (new build pieces and items; the Arena's host also picks where it stands) | Everyone, and **the host above all**: a game without the mod deletes the pieces when their area loads. Restart after installing or updating them. |
 | **PortalHub** | The host (it keeps the portal links), and everyone who wants the portal menu. |
 | **Blockscript** (scripts run on the server) | The server: the host, or the dedicated server. Players who also have it get items, healing and effects from scripts on their own game and can see (admins: edit) the server's scripts; players without it still see messages, weather and creatures. |
 | Everything else | Only the players who want it. |
@@ -458,7 +458,20 @@ sees on the monitor. It also has a browser and a Blockscript program. Not releas
 **[Source: mods/Terminal](mods/Terminal)**
 
 </td>
-<td valign="top"></td>
+<td valign="top">
+
+### 🚀 Rocket Roadster
+<img src="dist/RocketRoadster.cover.png" alt="Rocket Roadster" width="100%">
+
+A flying sports car after the one revealed in October 2026: a low white wedge of a two-seater with cold-air thrusters, built with the hammer near a
+forge. Tap **Space** to hop over a wall, hold it to fly for a few seconds, and roll and flip it in the air with **A**, **D**, **W** and **S**:
+attitude jets on the fenders, in the wheel hubs and under the floor turn it, and land it on its wheels every time. **Shift** boosts on the rear
+thrusters. Scissor doors, a passenger seat, a level camera through every roll, trick callouts, paints, white cold-gas plumes and a thruster roar.
+Everyone in the world needs it. On the mod manager's list (F7), not on Thunderstore yet.
+
+**[More: how it works, settings and screenshots →](mods/RocketRoadster/README.md)**
+
+</td>
 </tr>
 </table>
 
@@ -507,6 +520,9 @@ sees on the monitor. It also has a browser and a Blockscript program. Not releas
 | **W** / **Shift**+**W** / **S** | Four Wheelers | Go / full speed / brake, then back up (let go to coast); **A** / **D** steer, **Jump** or **E** gets off |
 | **E** on a mountain bike | Mountain Bikes | Climb on (**E** on its frame in front of the saddle: paint it the next colour; **E** on one lying on its side: stand it up) |
 | **W** / **Shift**+**W** / **S** | Mountain Bikes | Pedal / sprint (both cost stamina; coasting and braking are free) / brake, then back up; **A** / **D** steer, **Jump** or **E** gets off |
+| **E** on a roadster | Rocket Roadster | Get in and drive (**E** on its passenger side: ride along; **E** on its hood: paint it the next colour; **E** on one lying on its side: stand it up) |
+| **W** / **Shift**+**W** / **S** | Rocket Roadster | Go / boost on the rear thrusters / brake, then back up; **A** / **D** steer; **E** gets out once you are down |
+| **Space** | Rocket Roadster | Lift thrusters: tap to hop, hold to fly. In the air **A** / **D** roll and **W** / **S** flip; let go and it lands on its wheels |
 | **F8** | PartyHud | Show or hide the party panel |
 
 Every key and setting is configurable in `BepInEx/config`.

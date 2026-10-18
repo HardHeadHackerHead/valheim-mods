@@ -1,0 +1,28 @@
+A flying sports car for Valheim: a low white wedge of a two-seater with a surtling-core motor and cold-air thrusters. Tap Space and it hops over a cart or a wall; hold it and it flies for a few seconds; in the air it barrel rolls and flips, and its attitude jets turn it wheels-down before it lands.
+
+Driving it
+- Build it with the hammer on dry land, near a forge: 20 Iron, 6 Surtling Cores, 6 Crystal and 10 Fine Wood.
+- Press E on the driver's side to get in (the scissor doors lift as you walk up).
+- Hold W to go, Shift+W to boost on the four rear thrusters, S to brake and back up, A and D to steer.
+- At speed its fans press it onto the road, so it holds steep ground.
+- Run into an enemy at speed and it takes blunt damage and is knocked away. Players and tamed animals are never hurt.
+- E gets you out once you are down. The hammer takes it apart again (not while someone is in it).
+
+Flying it
+- Space fires the lift thrusters under the floor: a tap hops it, holding it lifts it. They run on a tank of compressed air that fills again with the wheels on the ground.
+- In the air, A and D roll it (a barrel roll takes about a second) and W and S flip it. Let go and it turns the shortest way back to wheels down.
+- Attitude jets on the fenders, in the wheel hubs and under the floor puff white gas whichever way it is turning, so you can see them work.
+- Near the ground a landing guard takes over and turns it wheels-down in time: it always lands on its wheels.
+- The camera stays level through rolls and flips. Land a trick and it says what you pulled off.
+- Nobody can get out high in the air, and anyone who leaves it high up comes down without fall damage.
+
+Room for two
+- A passenger seat on the right (E on the passenger side). In the air the passenger stays put.
+
+The look and the sound
+- Folded white panels, a long bronze-tinted canopy narrowing between two rear fins, scissor doors, a white light bar across the nose and a red one across the tail, a black diffuser with four bronze nozzles, a tall rear wing, black six-spoke wheels with white inserts, and two white bucket seats with a yoke inside.
+- Headlights and tail lights at night while someone drives it. Paint it: E on the hood gives the next colour (white, black, red, silver, blue, bronze). Everyone sees it.
+- White cold-gas plumes and a cloud that rolls across the ground under the lift jets; a thruster roar, a "pssht" as the lift jets kick in, and the electric motor's whine rising with speed.
+- A gauge at the bottom right: speed, what it is doing (or its height in the air) and the air tank.
+
+Everyone in the world needs it installed, and the host above all.

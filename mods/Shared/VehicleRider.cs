@@ -278,7 +278,7 @@ namespace DHack.Shared
             Vector3 fwd = frame.forward, up = frame.up, right = frame.right;
             float w = b.W;
             Ride(b, v, up, out float steer, out float fast);
-            bool hug = rider != null && rider.Hips != null;
+            bool hug = rider != null && rider.Hips != null && !(GroundVehicle.Spec != null && GroundVehicle.Spec.PassengerBeside);   // (beside the rider, in a car: hands on the lap)
 
             Turn(b.Spine1, right, (hug ? 16f : 6f) * w);
             Turn(b.Spine2, right, (hug ? 14f : 6f) * w);
