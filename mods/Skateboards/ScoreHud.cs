@@ -16,7 +16,9 @@ namespace Skateboards
     {
         private const string Name = "SkateboardsScore";
         private static RectTransform _root, _meter, _needle, _vmeter, _vneedle, _special, _specialFill;
-        private static TMP_Text _tricks, _score, _pop, _session, _note;
+        private static TMP_Text _tricks, _score, _pop, _session, _note, _keys;
+        private static RectTransform _keysBox;
+        private static string _keysShown;
         private static UnityEngine.UI.Image _specialImage;
         private static string _tricksShown, _scoreShown, _sessionShown;
 
@@ -70,6 +72,21 @@ namespace Skateboards
             Color needle = Color.Lerp(GameUi.Good, GameUi.Warn, Mathf.Abs(b));
             if (grinding) { _needle.anchoredPosition = new Vector2(b * 150f, 0f); _needle.GetComponent<UnityEngine.UI.Image>().color = needle; }
             if (manual) { _vneedle.anchoredPosition = new Vector2(0f, b * 75f); _vneedle.GetComponent<UnityEngine.UI.Image>().color = needle; }
+
+            // the key guide: what the keys do now
+            bool guide = Plugin.ShowKeys.Value && Skate.Active && Skate.State != Ride.Bail;
+            if (_keysBox.gameObject.activeSelf != guide) _keysBox.gameObject.SetActive(guide);
+            if (guide)
+            {
+                string keys = T("skateboards_keys_" + Skate.State.ToString().ToLowerInvariant());
+                if (Tricks.SpecialOn && (Skate.State == Ride.Air || Skate.State == Ride.Roll)) keys += "\n" + T("skateboards_keys_special");
+                if (keys != _keysShown)
+                {
+                    _keys.text = keys;
+                    _keysShown = keys;
+                    _keysBox.sizeDelta = new Vector2(360f, _keys.preferredHeight + 16f);
+                }
+            }
 
             string session = T("skateboards_session", Tricks.Format(Tricks.Session), Tricks.Format(Tricks.Best(p)));
             if (session != _sessionShown) { _session.text = session; _sessionShown = session; }
@@ -129,6 +146,14 @@ namespace Skateboards
             GameUi.Plain(_vneedle, GameUi.Good);
             _meter.gameObject.SetActive(false);
             _vmeter.gameObject.SetActive(false);
+
+            // the key guide, bottom right on a dark backing
+            _keysBox = GameUi.Rect(_root, "Keys", new Vector2(1f, 0f), new Vector2(1f, 0f), new Vector2(-24f, 150f), new Vector2(360f, 100f));
+            GameUi.Plain(_keysBox, new Color(0f, 0f, 0f, 0.62f));
+            _keys = GameUi.Label(_keysBox, "", new Vector2(10f, -8f), new Vector2(340f, 200f), 17f, GameUi.Text, GameUi.Serif, TextAlignmentOptions.TopLeft);
+            _keys.lineSpacing = 4f;
+            _keysBox.gameObject.SetActive(false);
+            _keysShown = null;
 
             _session = GameUi.Label(_root, "", new Vector2(-30f, -250f), new Vector2(320f, 60f), 18f, GameUi.Dim, GameUi.Serif, TextAlignmentOptions.TopRight, new Vector2(1f, 1f));
             _session.rectTransform.pivot = new Vector2(1f, 1f);

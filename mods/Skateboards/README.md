@@ -7,7 +7,7 @@
 
 **Skateboarding in Valheim, played like the classic skateboarding games: push, ollie, flip, grab, grind and manual your way through long combos, with a score on screen, a special meter and a skate park you build yourself.**
 
-![version: 0.1.0](https://img.shields.io/badge/version-0.1.0-3b6e8f?style=flat-square)  ![multiplayer: everyone + host](https://img.shields.io/badge/multiplayer-everyone%20%2B%20host-7a5c2e?style=flat-square)  ![made with: Claude Code](https://img.shields.io/badge/made%20with-Claude%20Code-c26a3d?style=flat-square)
+![version: 0.1.1](https://img.shields.io/badge/version-0.1.1-3b6e8f?style=flat-square)  ![multiplayer: everyone + host](https://img.shields.io/badge/multiplayer-everyone%20%2B%20host-7a5c2e?style=flat-square)  ![made with: Claude Code](https://img.shields.io/badge/made%20with-Claude%20Code-c26a3d?style=flat-square)
 
 [Source code](https://github.com/HardHeadHackerHead/valheim-mods/tree/main/mods/Skateboards)  ·  [Report a bug](https://github.com/HardHeadHackerHead/valheim-mods/issues/new?template=bug.yml&title=%5BQuad%27s%20Skateboards%5D%20)  ·  [Discord](https://discord.gg/EwTjQxEZPy)
 
@@ -20,12 +20,13 @@
 ### Riding
 
 - Make a skateboard at the workbench (8 Wood, 4 Resin, 2 Leather Scraps, 2 Flint). Hold it in your hand and press Attack to drop it and hop on; E steps off.
-- W pushes (Shift pushes harder, both cost a little stamina), S brakes, A and D carve. Slopes and ramps speed you up; built floors and paths roll best, grass slowest. Roll back down a ramp and you ride fakie.
+- W pushes where the camera looks (turn the camera right round and you brake, spin round and go that way; Shift pushes harder, both cost a little stamina), S brakes, A and D carve (slow or stopped, they spin the board round on the spot). Slopes and ramps speed you up; built floors and paths roll best, grass slowest. Roll back down a ramp and you ride fakie.
 - Hold Jump to crouch and let go to ollie (held longer, higher).
+- A key guide at the bottom right shows what the keys do now.
 
 ### Tricks
 
-- In the air A and D spin, Attack is a flip trick and Block (held) a grab, picked by the move key you hold: Kickflip, Impossible, Pop Shove-It, Heelflip, Hardflip; Indy, Nosegrab, Tailgrab, Melon, Method. Attack twice for a double.
+- In the air A and D spin (let go and it settles on the nearest half turn, so you land straight), Attack is a flip trick and Block (held) a grab, picked by the move key you hold: Kickflip, Impossible, Pop Shove-It, Heelflip, Hardflip; Indy, Nosegrab, Tailgrab, Melon, Method. Attack twice for a double.
 - Land on a beam, a wall top, a fence, a rail or the edge of a raised floor to grind it (50-50, Nosegrind, 5-0, Boardslide, Crooked); A and D keep the balance needle in the middle. Hold Crouch on the ground to manual (W and S balance).
 - Crouch right after landing on a ramp: a revert, which keeps the combo going into a manual.
 - Tricks chain into a combo: points times the multiplier (each trick and each half turn of spin adds to it), banked when you roll away clean. Land straight for a Perfect, crooked for a Sloppy, sideways or mid-flip and you bail and lose it.
@@ -101,15 +102,17 @@ In `BepInEx/config/com.quad.skateboards.cfg`, made the first time the game runs 
 
 | Setting | Default | What it does |
 |---|---|---|
-| `OllieSpeed` | `6.5` | How fast an ollie pops you up (metres per second; about 1 m high, higher with the skill). [Synced with Server] |
+| `OlliePop` | `7.5` | How fast an ollie pops you up (metres per second; about 1.4 m high, higher held, and with the skill). [Synced with Server] |
 | `OllieChargePercent` | `35` | How much faster an ollie pops when Jump is held down a moment before letting go (percent). [Synced with Server] |
 | `SpinSpeed` | `420` | How fast A and D spin you in the air at Skateboarding skill 0 (degrees per second). [Synced with Server] |
 | `SpinSpeedAtSkill100` | `620` | The same at Skateboarding skill 100. [Synced with Server] |
-| `FlipSeconds` | `0.5` | How long a flip trick takes at Skateboarding skill 0 (seconds): land before it is done and you bail. [Synced with Server] |
-| `FlipSecondsAtSkill100` | `0.35` | The same at Skateboarding skill 100. [Synced with Server] |
-| `LandingAngle` | `40` | How far the board may point off the way you are going when you land (degrees, nose or tail first) before it is a bail. [Synced with Server] |
-| `BalanceWobble` | `1` | How hard grinds and manuals pull you off balance at Skateboarding skill 0 (1: normal, 0: never). [Synced with Server] |
-| `BalanceWobbleAtSkill100` | `0.55` | The same at Skateboarding skill 100. [Synced with Server] |
+| `FlipTime` | `0.4` | How long a flip trick takes at Skateboarding skill 0 (seconds). Land with less than a third of it left and it counts (Sloppy); before that you bail. [Synced with Server] |
+| `FlipTimeAtSkill100` | `0.3` | The same at Skateboarding skill 100. [Synced with Server] |
+| `SpinAssist` | `true` | Let go of A and D in the air and the spin settles on the nearest half turn by itself, so you land straight. Off: the board stays where you left it. [Synced with Server] |
+| `BailAngle` | `75` | How far the board may point off the way you are going when you land (degrees, nose or tail first) before it is a bail. [Synced with Server] |
+| `SloppyAngle` | `40` | From this far off (degrees) a landing is Sloppy: the air's tricks count three quarters. Within 12 degrees it is Perfect (half again). [Synced with Server] |
+| `BalanceDifficulty` | `0.6` | How hard grinds and manuals pull you off balance at Skateboarding skill 0 (1: normal, 0: never). [Synced with Server] |
+| `BalanceDifficultyAtSkill100` | `0.35` | The same at Skateboarding skill 100. [Synced with Server] |
 | `SafeDrop` | `8` | How far you can drop on the board without fall damage, landed or bailed (metres; the game's own falls hurt from 4). Further than that, the rest hurts as the game's falls do. [Synced with Server] |
 | `SkillGain` | `1` | How fast the Skateboarding skill rises (1 = like the game's skills). [Synced with Server] |
 
@@ -128,7 +131,9 @@ In `BepInEx/config/com.quad.skateboards.cfg`, made the first time the game runs 
 | Setting | Default | What it does |
 |---|---|---|
 | `Goofy` | `false` | Ride goofy (right foot forward) instead of regular (left foot forward). |
+| `CameraSteer` | `true` | Holding W, the board heads where the camera looks (turn the camera right round and it brakes, spins round and pushes off that way). A and D still carve. Off: only A and D steer. |
 | `CameraFollow` | `true` | The camera swings round behind you as you roll, a moment after you last moved the mouse. |
+| `ShowKeys` | `true` | A small guide to the keys at the bottom right while you skate, for what you can do now (on the ground, in the air, on a rail, in a manual). |
 | `ShowScore` | `true` | The tricks of your combo, its points and the balance meter on screen while you skate. |
 | `Hints` | `true` | A short hint the first time you do each thing in a session. |
 | `Sounds` | `true` | The board's sounds: wheels rolling, the pop of an ollie, landings, grinds (others hear yours too). |
@@ -176,6 +181,7 @@ helps me make new mods and keep improving the ones you already play. It's 100% o
 
 ## 📜 Recent changes
 
+- **0.1.1** Much easier to play. Holding W pushes where the camera looks: turn the camera and the board turns with it, turn it right round and it brakes, spins round and pushes off that way (A and D still carve). Pushing off tail first, the board pivots round under you first, so you never push facing backwards. Spin assist: let go of A and D in the air and the spin settles on the nearest half turn, so you land straight. Landings only bail past 75 degrees off (Sloppy from 40), a flip that is two thirds round when you land still counts, flips are quicker, ollies higher, and grinds and manuals steadier. Slow or stopped, A and D spin the board round on the spot (a kick-turn). A key guide at the bottom right shows what the keys do now (on the ground, in the air, on a rail, in a manual). The rider no longer shakes when standing still, a lone spin scores points, and the settings with new defaults have new names (OlliePop, FlipTime, BailAngle, SloppyAngle, BalanceDifficulty), so the easier values reach everyone.
 - **0.1.0** First release: a skateboard item (Attack to drop it and hop on, E to step off), pushing, carving, charged ollies, spins, five flip tricks with doubles, five grabs, grinds on rails, wall tops and ledges, manuals with balance meters, reverts, combos with multipliers and Perfect/Sloppy landings, gaps, a special meter with three specials, bails, a Skateboarding skill, and four skate park pieces (Grind Rail, Skate Ledge, Kicker, Quarter Pipe). Score HUD, sounds made in code, and other players see you skate. English only.
 
 <!-- GITHUB-ONLY -->[Every change](CHANGELOG.txt)<!-- END GITHUB-ONLY --><!-- THUNDERSTORE-ONLY: Every change is on the Changelog tab. -->

@@ -287,7 +287,11 @@ namespace Skateboards
         {
             dir.y = 0f;
             if (dir.sqrMagnitude < 0.04f) return;
-            p.transform.rotation = Quaternion.LookRotation(dir.normalized);
+            // through the body, as the game turns a character: setting the transform itself breaks the body's smoothing between steps,
+            // and the player is drawn a step off now and then (a shake)
+            Quaternion want = Quaternion.LookRotation(dir.normalized);
+            Rigidbody body = Body(p);
+            if (Quaternion.Angle(body.rotation, want) > 0.05f) body.rotation = want;
         }
 
         // The game's walking step has set the walking animation for a body standing still: standing it is, with the feet down (Look.cs
@@ -384,10 +388,36 @@ namespace Skateboards
             _speed += Vector3.Dot(g, _dir) * dt;
             float skill = Skill.Factor(p);
             bool pushing = false;
+            // steering with the camera: holding W, the board heads where the camera looks; turned right round, it brakes first, then
+            // spins round on the spot and pushes off that way
+            float lookSteer = 0f;
+            bool turningRound = false;
+            if (!manual && Plugin.CameraSteer.Value && Controls.Move.z > 0.3f && n.y > 0.7f)
+            {
+                Vector3 want = Vector3.ProjectOnPlane(LookYaw(p) * Vector3.forward, n);
+                if (want.sqrMagnitude > 0.01f)
+                {
+                    float angle = Vector3.SignedAngle(_dir, want.normalized, n);
+                    if (Mathf.Abs(angle) > 100f && _speed > 1.5f)
+                    {
+                        turningRound = true;
+                        _speed = Mathf.MoveTowards(_speed, 0f, Plugin.Brake.Value * dt);
+                    }
+                    else
+                    {
+                        float rate = TurnRateAt(_speed, false);
+                        float step = Mathf.Clamp(angle, -rate * dt, rate * dt);
+                        _dir = Quaternion.AngleAxis(step, n) * _dir;
+                        lookSteer = rate > 0f ? step / (rate * dt) : 0f;
+                    }
+                }
+            }
             if (!manual)
             {
-                if (Controls.Move.z > 0.3f && n.y > 0.7f)
+                if (Controls.Move.z > 0.3f && n.y > 0.7f && !turningRound)
                 {
+                    // pushing off tail first: the board pivots round under you first, so you always push facing ahead
+                    if (Fakie) { Fakie = false; Note("pivot to push"); }
                     float top = (Controls.Run ? Plugin.SprintSpeed.Value : Plugin.PushSpeed.Value) * (1f + Plugin.PushBonusAt100.Value / 100f * skill) * (Tricks.SpecialOn ? 1.15f : 1f);
                     float cost = Plugin.PushStamina.Value * (Controls.Run ? 2.5f : 1f) * dt;
                     if (_speed < top)
@@ -423,15 +453,15 @@ namespace Skateboards
             float steer = Controls.Move.x;
             if (Mathf.Abs(steer) > 0.1f)
             {
-                float rate = Plugin.TurnRate.Value;
-                if (_speed > 1f) rate = Mathf.Min(rate, 16f / _speed * Mathf.Rad2Deg);   // (a grip of about 1.6 g: wider circles when fast)
-                if (manual) rate *= 0.6f;
+                float rate = TurnRateAt(_speed, manual);
                 _dir = Quaternion.AngleAxis(steer * rate * dt, n) * _dir;
             }
-            Lean = Mathf.MoveTowards(Lean, steer * Mathf.Clamp01(_speed / 6f), dt * 4f);
+            float lean = Mathf.Clamp(steer + lookSteer, -1f, 1f);
+            Lean = Mathf.MoveTowards(Lean, lean * Mathf.Clamp01(_speed / 6f), dt * 4f);
 
             Vector3 v = _dir * _speed;
-            v -= n * (gap > 0.01f ? Mathf.Min(gap / dt, 4f) : 0.3f);   // stays on the surface over little bumps (a launch is a gap the pull can't close)
+            // stays on the surface over little bumps (a launch is a gap the pull can't close); standing still, nothing pushes into the ground
+            v -= n * (gap > 0.01f ? Mathf.Min(gap / dt, 4f) : _speed > 0.3f ? 0.15f : 0f);
             Drive(body, v, dt);
             Face(p, _dir);
             SafeFall(p);
@@ -476,6 +506,16 @@ namespace Skateboards
                 Look.Hint(p, "skateboards_hint_manual");
             }
             else if (Tricks.HasCombo && _onFor > 0.75f) Tricks.Bank(p);   // rolled away clean
+        }
+
+        /// <summary>How fast the board can turn at this speed (degrees per second).</summary>
+        private static float TurnRateAt(float speed, bool manual)
+        {
+            float rate = Plugin.TurnRate.Value;
+            if (speed > 1f) rate = Mathf.Min(rate, 16f / speed * Mathf.Rad2Deg);   // (a grip of about 1.6 g: wider circles when fast)
+            if (speed < 2.5f && !manual) rate = Mathf.Max(rate, 300f);              // (slow or stopped: a kick-turn, the board pivoting on its back wheels)
+            if (manual) rate *= 0.6f;
+            return rate;
         }
 
         private static void Ollie(Player p, Vector3 along, Vector3 n, float charge)
@@ -533,6 +573,7 @@ namespace Skateboards
             float skill = Skill.Factor(p);
             float rate = Mathf.Lerp(Plugin.SpinSpeed.Value, Plugin.SpinSpeedAt100.Value, skill);
             if (Mathf.Abs(Controls.Move.x) > 0.1f) Spin += Controls.Move.x * rate * dt;
+            else if (Plugin.SpinAssist.Value) Spin = Mathf.MoveTowards(Spin, Mathf.Round(Spin / 180f) * 180f, 420f * dt);   // (let go: it settles on the nearest half turn)
             if (_vert) AutoSpin = Mathf.MoveTowards(AutoSpin, 180f * _autoSign, 300f * dt);
 
             // landing: on what is under the body, or (coming down a vert air) on the ramp beside it
@@ -569,7 +610,8 @@ namespace Skateboards
             float turned = Spin;
             string bail = null;
             float off = 0f;   // how far the board points off the way it goes (nose or tail first)
-            if (Tricks.Flipping) bail = "skateboards_bail_flip";
+            bool lateFlip = Tricks.Flipping && Tricks.FlipLeft < 0.34f;   // (nearly round: it counts, sloppy)
+            if (Tricks.Flipping && !lateFlip) bail = "skateboards_bail_flip";
             if (along.magnitude > 1.5f)
             {
                 float angle = Vector3.Angle(nose, along);
@@ -593,7 +635,7 @@ namespace Skateboards
             _onFor = 0f;
             _landedAt = Time.time;
             _landedRamp = _vert || n.y < 0.9f;
-            Tricks.Landed(p, turned, _airFor, _vert, off, Plugin.LandAngle.Value);
+            Tricks.Landed(p, turned, _airFor, _vert, lateFlip ? Mathf.Max(off, Plugin.SloppyAngle.Value + 1f) : off);
             // from one ramp to another
             if (_takeoffN.y < 0.8f && n.y < 0.95f && _takeoffGround != null && hit.collider != null && hit.collider != _takeoffGround && _airFor > 0.4f
                 && hit.collider.GetComponentInParent<Piece>() != _takeoffGround.GetComponentInParent<Piece>())
@@ -779,6 +821,7 @@ namespace Skateboards
         {
             Quaternion now = LookYaw(p);
             if (Quaternion.Angle(now, _setYaw) > 0.05f) _mouseAt = Time.time;
+            if (Plugin.CameraSteer.Value && Controls.Move.z > 0.3f) { _setYaw = now; return; }   // (pushing with W, the camera steers the board: it doesn't swing itself)
             if (!Plugin.CameraFollow.Value || Time.time - _mouseAt < 1f || (State != Ride.Roll && State != Ride.Manual && State != Ride.Grind)) { _setYaw = now; return; }
             Vector3 dir = State == Ride.Grind ? _rail.Dir * _railSign : _dir;
             dir.y = 0f;

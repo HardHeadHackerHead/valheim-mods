@@ -74,6 +74,8 @@ namespace Skateboards
         private const string BestKey = Plugin.Guid + ".best";
 
         public static bool Flipping => FlipNow != Flip.None && Time.time - FlipStart < FlipLength;
+        /// <summary>How much of the flip going on is still to turn (0 to 1).</summary>
+        public static float FlipLeft => FlipNow == Flip.None ? 0f : Mathf.Clamp01(1f - (Time.time - FlipStart) / Mathf.Max(0.05f, FlipLength));
 
         /// <summary>How much harder balancing is now: manuals one after another with nothing to reset them, the same rail again.</summary>
         public static float BalanceHarder(bool sameRail) => 1f + 0.25f * Mathf.Max(0, _manualsInARow - 1) + (sameRail ? 0.3f : 0f);
@@ -263,7 +265,7 @@ namespace Skateboards
         /// Landed clean on the ground: the spin goes on the multiplier, the landing's quality on this air's tricks (angle: how far the board
         /// pointed off the way it went; limit: past it, a bail), and the gaps.
         /// </summary>
-        public static void Landed(Player p, float spin, float air, bool vert, float angle, float limit)
+        public static void Landed(Player p, float spin, float air, bool vert, float angle)
         {
             if (GrabNow != Grab.None) EndLive();
             FlipNow = Flip.None;
@@ -276,7 +278,7 @@ namespace Skateboards
                 for (int i = _airFrom; i < Combo.Count; i++) Combo[i].Points *= 1.5f;
                 Tell(T("skateboards_perfect"), GameUi.Good);
             }
-            else if (tricks && angle > limit * 0.66f)
+            else if (tricks && angle >= Plugin.SloppyAngle.Value)
             {
                 for (int i = _airFrom; i < Combo.Count; i++) Combo[i].Points *= 0.75f;
                 Tell(T("skateboards_sloppy"), GameUi.Warn);
@@ -307,7 +309,7 @@ namespace Skateboards
                 _airLast.Name = side + " " + deg + " " + _airLast.Name;
                 _airLast.Key += "_" + deg;
             }
-            else _airLast = Add("skateboards_spin_" + deg, side + " " + deg, 0f);
+            else _airLast = Add("skateboards_spin_" + deg, side + " " + deg, 50f * halves);   // (a spin on its own: a few points, and the multiplier)
             Fill(halves * 100f);
         }
 

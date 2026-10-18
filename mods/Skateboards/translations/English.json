@@ -5,7 +5,7 @@
   "skateboards_skill_description": "Pushing, popping and landing tricks on a skateboard. Pushes get you up to {push100}% faster, ollies pop higher, spins go from {spin0} to {spin100} degrees a second, flips are quicker and grinds and manuals steadier.",
   "skateboards_no_water": "Not in the water.",
   "skateboards_too_heavy": "Too heavy to skate: you carry too much.",
-  "skateboards_hint_start": "On the board! W pushes (Shift: harder), S brakes, A and D carve. Hold Jump and let go to ollie. E steps off.",
+  "skateboards_hint_start": "On the board! Hold W to push where the camera looks (Shift: harder), S brakes, A and D turn. Hold Jump and let go to ollie. E steps off.",
   "skateboards_hint_air": "In the air: A and D spin. Land with the board pointing the way you go (nose or tail first).",
   "skateboards_hint_tricks": "Tricks: Attack is a flip (twice for a double), hold Block for a grab; the move key you hold picks which one. Land straight for a Perfect.",
   "skateboards_hint_grind": "Grinding! Keep the needle in the middle with A and D. Jump to ollie off.",
@@ -60,5 +60,10 @@
   "skateboards_gap_transfer": "Transfer",
   "skateboards_gap_megaollie": "Mega Ollie",
   "skateboards_hint_special": "Special meter full: you go faster. Specials: A then W, then Attack (Ragnarök Flip); D then S, then Block (Valkyrie Air); D then S just before a rail (Bifröst Grind).",
-  "skateboards_hint_revert": "Revert! Crouch right after landing on a ramp keeps the combo going; hold it into a manual."
+  "skateboards_hint_revert": "Revert! Crouch right after landing on a ramp keeps the combo going; hold it into a manual.",
+  "skateboards_keys_roll": "<color=#FFD27F>W</color> push where the camera looks   <color=#FFD27F>S</color> brake\n<color=#FFD27F>A D</color> turn (slow: spin round)\n<color=#FFD27F>hold Jump</color>, let go: ollie\n<color=#FFD27F>hold Crouch</color>: manual   <color=#FFD27F>E</color>: step off",
+  "skateboards_keys_air": "<color=#FFD27F>A D</color> spin (let go: it lands straight)\n<color=#FFD27F>Attack</color> flip   <color=#FFD27F>hold Block</color> grab\nhold <color=#FFD27F>W S A D</color> as you press: a different trick\nland on a rail, wall top or edge: grind",
+  "skateboards_keys_grind": "<color=#FFD27F>A D</color> keep the needle in the middle\n<color=#FFD27F>Jump</color>: ollie off",
+  "skateboards_keys_manual": "<color=#FFD27F>W S</color> keep the needle in the middle\nlet go of <color=#FFD27F>Crouch</color>: roll on   <color=#FFD27F>Jump</color>: ollie",
+  "skateboards_keys_special": "<color=#FFD27F>SPECIAL</color>: tap A, W, then Attack · tap D, S, then Block"
 }

@@ -29,7 +29,7 @@ namespace Skateboards
     {
         public const string Guid = "com.quad.skateboards";
         public const string Name = "Skateboards";
-        public const string Version = "0.1.0";
+        public const string Version = "0.1.1";
 
         internal static Plugin Instance;
         internal static ManualLogSource Log;
@@ -37,7 +37,8 @@ namespace Skateboards
 
         // the server's
         internal static ConfigEntry<float> PushSpeed, SprintSpeed, TopSpeed, PushAccel, Brake, TurnRate, PushStamina, OllieSpeed, OllieCharge,
-            SpinSpeed, SpinSpeedAt100, FlipSeconds, FlipSecondsAt100, LandAngle, Wobble, WobbleAt100, SafeDrop, SkillGain, PushBonusAt100;
+            SpinSpeed, SpinSpeedAt100, FlipSeconds, FlipSecondsAt100, LandAngle, SloppyAngle, Wobble, WobbleAt100, SafeDrop, SkillGain, PushBonusAt100;
+        internal static ConfigEntry<bool> SpinAssist, ShowKeys, CameraSteer;
         internal static ConfigEntry<string> BoardCost, RailCost, LedgeCost, KickerCost, PipeCost;
         // each player's own
         internal static ConfigEntry<bool> Goofy, CameraFollow, Sounds, ShowScore, Hints;
@@ -61,15 +62,18 @@ namespace Skateboards
             TurnRate = Synced.Add(Config.Bind("1 - Riding", "TurnRate", 150f, new ConfigDescription("The fastest A and D carve (degrees per second), at low speed; faster, you turn on a wider circle. [Synced with Server]", new AcceptableValueRange<float>(30f, 360f))));
             PushStamina = Synced.Add(Config.Bind("1 - Riding", "PushStamina", 2f, new ConfigDescription("Stamina each second of pushing (a harder push with Shift costs two and a half times that). Rolling, carving and tricks are free. 0: pushing never tires you. [Synced with Server]", new AcceptableValueRange<float>(0f, 20f))));
             PushBonusAt100 = Synced.Add(Config.Bind("1 - Riding", "PushSpeedPercentAtSkill100", 20f, new ConfigDescription("How much faster pushing gets you at Skateboarding skill 100 (percent; less in between). [Synced with Server]", new AcceptableValueRange<float>(0f, 100f))));
-            OllieSpeed = Synced.Add(Config.Bind("2 - Tricks", "OllieSpeed", 6.5f, new ConfigDescription("How fast an ollie pops you up (metres per second; about 1 m high, higher with the skill). [Synced with Server]", new AcceptableValueRange<float>(2f, 20f))));
+            // (0.1.1 renamed the settings whose defaults it changed, so the easier ones reach configs saved by 0.1.0)
+            OllieSpeed = Synced.Add(Config.Bind("2 - Tricks", "OlliePop", 7.5f, new ConfigDescription("How fast an ollie pops you up (metres per second; about 1.4 m high, higher held, and with the skill). [Synced with Server]", new AcceptableValueRange<float>(2f, 20f))));
             OllieCharge = Synced.Add(Config.Bind("2 - Tricks", "OllieChargePercent", 35f, new ConfigDescription("How much faster an ollie pops when Jump is held down a moment before letting go (percent). [Synced with Server]", new AcceptableValueRange<float>(0f, 100f))));
             SpinSpeed = Synced.Add(Config.Bind("2 - Tricks", "SpinSpeed", 420f, new ConfigDescription("How fast A and D spin you in the air at Skateboarding skill 0 (degrees per second). [Synced with Server]", new AcceptableValueRange<float>(90f, 1440f))));
             SpinSpeedAt100 = Synced.Add(Config.Bind("2 - Tricks", "SpinSpeedAtSkill100", 620f, new ConfigDescription("The same at Skateboarding skill 100. [Synced with Server]", new AcceptableValueRange<float>(90f, 1440f))));
-            FlipSeconds = Synced.Add(Config.Bind("2 - Tricks", "FlipSeconds", 0.5f, new ConfigDescription("How long a flip trick takes at Skateboarding skill 0 (seconds): land before it is done and you bail. [Synced with Server]", new AcceptableValueRange<float>(0.15f, 2f))));
-            FlipSecondsAt100 = Synced.Add(Config.Bind("2 - Tricks", "FlipSecondsAtSkill100", 0.35f, new ConfigDescription("The same at Skateboarding skill 100. [Synced with Server]", new AcceptableValueRange<float>(0.15f, 2f))));
-            LandAngle = Synced.Add(Config.Bind("2 - Tricks", "LandingAngle", 40f, new ConfigDescription("How far the board may point off the way you are going when you land (degrees, nose or tail first) before it is a bail. [Synced with Server]", new AcceptableValueRange<float>(5f, 90f))));
-            Wobble = Synced.Add(Config.Bind("2 - Tricks", "BalanceWobble", 1f, new ConfigDescription("How hard grinds and manuals pull you off balance at Skateboarding skill 0 (1: normal, 0: never). [Synced with Server]", new AcceptableValueRange<float>(0f, 5f))));
-            WobbleAt100 = Synced.Add(Config.Bind("2 - Tricks", "BalanceWobbleAtSkill100", 0.55f, new ConfigDescription("The same at Skateboarding skill 100. [Synced with Server]", new AcceptableValueRange<float>(0f, 5f))));
+            FlipSeconds = Synced.Add(Config.Bind("2 - Tricks", "FlipTime", 0.4f, new ConfigDescription("How long a flip trick takes at Skateboarding skill 0 (seconds). Land with less than a third of it left and it counts (Sloppy); before that you bail. [Synced with Server]", new AcceptableValueRange<float>(0.15f, 2f))));
+            FlipSecondsAt100 = Synced.Add(Config.Bind("2 - Tricks", "FlipTimeAtSkill100", 0.3f, new ConfigDescription("The same at Skateboarding skill 100. [Synced with Server]", new AcceptableValueRange<float>(0.15f, 2f))));
+            SpinAssist = Synced.Add(Config.Bind("2 - Tricks", "SpinAssist", true, "Let go of A and D in the air and the spin settles on the nearest half turn by itself, so you land straight. Off: the board stays where you left it. [Synced with Server]"));
+            LandAngle = Synced.Add(Config.Bind("2 - Tricks", "BailAngle", 75f, new ConfigDescription("How far the board may point off the way you are going when you land (degrees, nose or tail first) before it is a bail. [Synced with Server]", new AcceptableValueRange<float>(10f, 89f))));
+            SloppyAngle = Synced.Add(Config.Bind("2 - Tricks", "SloppyAngle", 40f, new ConfigDescription("From this far off (degrees) a landing is Sloppy: the air's tricks count three quarters. Within 12 degrees it is Perfect (half again). [Synced with Server]", new AcceptableValueRange<float>(5f, 89f))));
+            Wobble = Synced.Add(Config.Bind("2 - Tricks", "BalanceDifficulty", 0.6f, new ConfigDescription("How hard grinds and manuals pull you off balance at Skateboarding skill 0 (1: normal, 0: never). [Synced with Server]", new AcceptableValueRange<float>(0f, 5f))));
+            WobbleAt100 = Synced.Add(Config.Bind("2 - Tricks", "BalanceDifficultyAtSkill100", 0.35f, new ConfigDescription("The same at Skateboarding skill 100. [Synced with Server]", new AcceptableValueRange<float>(0f, 5f))));
             SafeDrop = Synced.Add(Config.Bind("2 - Tricks", "SafeDrop", 8f, new ConfigDescription("How far you can drop on the board without fall damage, landed or bailed (metres; the game's own falls hurt from 4). Further than that, the rest hurts as the game's falls do. [Synced with Server]", new AcceptableValueRange<float>(0f, 100f))));
             SkillGain = Synced.Add(Config.Bind("2 - Tricks", "SkillGain", 1f, new ConfigDescription("How fast the Skateboarding skill rises (1 = like the game's skills). [Synced with Server]", new AcceptableValueRange<float>(0f, 10f))));
             BoardCost = Synced.Bind("3 - Making", "SkateboardCost", "Wood:8, Resin:4, LeatherScraps:2, Flint:2", "What a skateboard takes to make at the workbench. " + DHack.Shared.Costs.Help);
@@ -81,7 +85,9 @@ namespace Skateboards
             foreach (var cost in new[] { RailCost, LedgeCost, KickerCost, PipeCost }) cost.SettingChanged += (o, e) => Park.ApplyCosts();
 
             Goofy = Config.Bind("4 - Feel", "Goofy", false, "Ride goofy (right foot forward) instead of regular (left foot forward).");
+            CameraSteer = Config.Bind("4 - Feel", "CameraSteer", true, "Holding W, the board heads where the camera looks (turn the camera right round and it brakes, spins round and pushes off that way). A and D still carve. Off: only A and D steer.");
             CameraFollow = Config.Bind("4 - Feel", "CameraFollow", true, "The camera swings round behind you as you roll, a moment after you last moved the mouse.");
+            ShowKeys = Config.Bind("4 - Feel", "ShowKeys", true, "A small guide to the keys at the bottom right while you skate, for what you can do now (on the ground, in the air, on a rail, in a manual).");
             ShowScore = Config.Bind("4 - Feel", "ShowScore", true, "The tricks of your combo, its points and the balance meter on screen while you skate.");
             Hints = Config.Bind("4 - Feel", "Hints", true, "A short hint the first time you do each thing in a session.");
             Sounds = Config.Bind("4 - Feel", "Sounds", true, "The board's sounds: wheels rolling, the pop of an ollie, landings, grinds (others hear yours too).");

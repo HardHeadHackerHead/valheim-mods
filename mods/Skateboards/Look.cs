@@ -54,6 +54,11 @@ namespace Skateboards
             public bool FlipDouble;
             public Vector3 BailDir, BailChest;
             public Vector3 LastPos, Vel;
+            // the bones the pose changes, as the animation left them and as the pose left them (Fresh, Keep)
+            public Transform[] Touched;
+            public Quaternion[] Orig, Set;
+            public Vector3 HipsOrig, HipsSet;
+            public bool Saved;
             // a bail: the board on its own
             public GameObject Loose;
             public Vector3 LooseV, LooseSpin;
@@ -175,6 +180,41 @@ namespace Skateboards
             if (p != null) HandBoard(p, true);
             rig.Posed = false;
             rig.HasYaw = false;
+            rig.Saved = false;
+        }
+
+        /// <summary>
+        /// Before posing: the bones the animation didn't move since the last frame (it doesn't run every frame) go back to where the
+        /// animation had them, so the crouch and the twists, which are added to what is there, never stack up frame after frame (the
+        /// body shook, standing still). Then what the animation has now is kept, to go back to next time.
+        /// </summary>
+        private static void Fresh(Rig rig)
+        {
+            if (rig.Touched == null)
+            {
+                var list = new List<Transform> { rig.Spine, rig.Chest, rig.Neck, rig.Head };
+                foreach (Transform[] chain in rig.Chains) if (chain != null) list.AddRange(chain);
+                list.RemoveAll(t => t == null);
+                rig.Touched = list.ToArray();
+                rig.Orig = new Quaternion[rig.Touched.Length];
+                rig.Set = new Quaternion[rig.Touched.Length];
+            }
+            if (rig.Saved)
+            {
+                if ((rig.Hips.localPosition - rig.HipsSet).sqrMagnitude < 1e-12f) rig.Hips.localPosition = rig.HipsOrig;
+                for (int i = 0; i < rig.Touched.Length; i++)
+                    if (rig.Touched[i].localRotation == rig.Set[i]) rig.Touched[i].localRotation = rig.Orig[i];
+            }
+            rig.HipsOrig = rig.Hips.localPosition;
+            for (int i = 0; i < rig.Touched.Length; i++) rig.Orig[i] = rig.Touched[i].localRotation;
+        }
+
+        /// <summary>After posing: what the pose left, to know next frame whether the animation moved them since.</summary>
+        private static void Keep(Rig rig)
+        {
+            rig.HipsSet = rig.Hips.localPosition;
+            for (int i = 0; i < rig.Touched.Length; i++) rig.Set[i] = rig.Touched[i].localRotation;
+            rig.Saved = true;
         }
 
         private static void DropBoard(Rig rig)
@@ -202,6 +242,7 @@ namespace Skateboards
             if (dt > 0f) rig.Vel = Vector3.Lerp(rig.Vel, (body.position - rig.LastPos) / dt, 1f - Mathf.Exp(-10f * dt));
             rig.LastPos = body.position;
             HandBoard(p, false);
+            Fresh(rig);
 
             // what changed: sounds, the pop, the squash of a landing, a bail
             if (pose.State != rig.Last)
@@ -236,7 +277,7 @@ namespace Skateboards
             }
             rig.FlipDouble = pose.Double || (rig.FlipDouble && pose.Flip != Tricks.Flip.None);
 
-            if (pose.State == Ride.Bail) { Fall(p, rig); return; }
+            if (pose.State == Ride.Bail) { Fall(p, rig); Keep(rig); return; }
             if (rig.Board == null)
             {
                 rig.Board = Board.Model(p.gameObject.layer);
@@ -431,6 +472,7 @@ namespace Skateboards
             bool rolling = pose.State == Ride.Roll || pose.State == Ride.Manual;
             Sounds.Set(rig.Rolling, rolling ? Mathf.Clamp01(speed / 10f) * 0.65f : 0f, 0.7f + Mathf.Clamp01(speed / 15f) * 0.6f);
             Sounds.Set(rig.Grinding, pose.State == Ride.Grind ? 0.75f : 0f, 0.85f + Mathf.Clamp01(speed / 12f) * 0.4f);
+            Keep(rig);
         }
 
         /// <summary>A bone turned round the body's up by some degrees (after the animation), on top of what it has.</summary>

@@ -2,11 +2,12 @@ Skateboarding in Valheim, played like the classic skateboarding games: push, oll
 
 Riding
 - Make a skateboard at the workbench (8 Wood, 4 Resin, 2 Leather Scraps, 2 Flint). Hold it in your hand and press Attack to drop it and hop on; E steps off.
-- W pushes (Shift pushes harder, both cost a little stamina), S brakes, A and D carve. Slopes and ramps speed you up; built floors and paths roll best, grass slowest. Roll back down a ramp and you ride fakie.
+- W pushes where the camera looks (turn the camera right round and you brake, spin round and go that way; Shift pushes harder, both cost a little stamina), S brakes, A and D carve (slow or stopped, they spin the board round on the spot). Slopes and ramps speed you up; built floors and paths roll best, grass slowest. Roll back down a ramp and you ride fakie.
 - Hold Jump to crouch and let go to ollie (held longer, higher).
+- A key guide at the bottom right shows what the keys do now.
 
 Tricks
-- In the air A and D spin, Attack is a flip trick and Block (held) a grab, picked by the move key you hold: Kickflip, Impossible, Pop Shove-It, Heelflip, Hardflip; Indy, Nosegrab, Tailgrab, Melon, Method. Attack twice for a double.
+- In the air A and D spin (let go and it settles on the nearest half turn, so you land straight), Attack is a flip trick and Block (held) a grab, picked by the move key you hold: Kickflip, Impossible, Pop Shove-It, Heelflip, Hardflip; Indy, Nosegrab, Tailgrab, Melon, Method. Attack twice for a double.
 - Land on a beam, a wall top, a fence, a rail or the edge of a raised floor to grind it (50-50, Nosegrind, 5-0, Boardslide, Crooked); A and D keep the balance needle in the middle. Hold Crouch on the ground to manual (W and S balance).
 - Crouch right after landing on a ramp: a revert, which keeps the combo going into a manual.
 - Tricks chain into a combo: points times the multiplier (each trick and each half turn of spin adds to it), banked when you roll away clean. Land straight for a Perfect, crooked for a Sloppy, sideways or mid-flip and you bail and lose it.
