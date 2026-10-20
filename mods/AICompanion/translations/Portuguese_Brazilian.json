@@ -930,5 +930,13 @@
   "aicompanion_net_lost_fight_other": "{1}, companheiro de {0}, perdeu uma luta em casa enquanto ninguém estava lá: as coisas dele estão no túmulo (marcado no seu mapa)",
   "aicompanion_net_lost_fight": "{0} perdeu uma luta em casa enquanto ninguém estava lá: as coisas dele estão no túmulo (marcado no seu mapa)",
   "aicompanion_net_fallen_other": "{1}, companheiro de {0}, caiu (marcado no seu mapa)",
-  "aicompanion_server_missing": "O AI Companion não está instalado neste servidor, então nenhum companheiro pode se juntar a você aqui."
+  "aicompanion_server_missing": "O AI Companion não está instalado neste servidor, então nenhum companheiro pode se juntar a você aqui.",
+  "aicompanion_mmo_card": "Nível {0}",
+  "aicompanion_mmo_xp": "{0} / {1} de experiência",
+  "aicompanion_mmo_top": "Nível máximo",
+  "aicompanion_mmo_points": "{0} pontos: Força {1}, Intelecto {2}, Corpo {3}, Vigor {4}",
+  "aicompanion_mmo_bonus": "Pelo nível: +{0}% de dano físico, +{1}% de dano mágico, +{2} de vida, +{3} de vigor, {4}% menos de golpes físicos e {5}% menos de mágicos.",
+  "aicompanion_mmo_about": "Com EpicMMO System: ganha experiência como você, com o que mata, corta, minera, quebra e colhe, e as mortes dele contam para você também, como as de um animal domado. Os pontos vão para onde ele luta: Força com armas ou Intelecto com cajados (os mesmos pontos: ele usa um de cada vez), depois Corpo e Vigor. Ao cair, perde parte do caminho até o próximo nível.",
+  "aicompanion_mmo_reached": "Chegou ao nível {0}.",
+  "aicompanion_mmo_levelup_tell": "{0} chegou ao nível {1}!"
 }

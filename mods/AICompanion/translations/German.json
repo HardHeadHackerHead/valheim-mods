@@ -930,5 +930,13 @@
   "aicompanion_net_lost_fight_other": "{1}, Gefährte von {0}, hat zu Hause einen Kampf verloren, als niemand da war: Die Sachen liegen im Grab (auf deiner Karte markiert)",
   "aicompanion_net_lost_fight": "{0} hat zu Hause einen Kampf verloren, als niemand da war: Die Sachen liegen im Grab (auf deiner Karte markiert)",
   "aicompanion_net_fallen_other": "{1}, Gefährte von {0}, ist gefallen (auf deiner Karte markiert)",
-  "aicompanion_server_missing": "AI Companion ist auf diesem Server nicht installiert, daher kann sich dir hier kein Gefährte anschließen."
+  "aicompanion_server_missing": "AI Companion ist auf diesem Server nicht installiert, daher kann sich dir hier kein Gefährte anschließen.",
+  "aicompanion_mmo_card": "Stufe {0}",
+  "aicompanion_mmo_xp": "{0} / {1} Erfahrung",
+  "aicompanion_mmo_top": "Höchste Stufe",
+  "aicompanion_mmo_points": "{0} Punkte: Stärke {1}, Intellekt {2}, Körper {3}, Vitalität {4}",
+  "aicompanion_mmo_bonus": "Durch seine Stufe: +{0} % physischer Schaden, +{1} % magischer Schaden, +{2} Gesundheit, +{3} Ausdauer, {4} % weniger durch physische Treffer und {5} % weniger durch magische.",
+  "aicompanion_mmo_about": "Mit EpicMMO System: Er bekommt Erfahrung wie du, für das, was er tötet, fällt, abbaut, zerschlägt und pflückt, und seine Kills zählen auch für dich, wie die eines gezähmten Tiers. Seine Punkte gehen dahin, wo er kämpft: Stärke mit Waffen oder Intellekt mit Stäben (dieselben Punkte: er benutzt immer nur eins), dann Körper und Vitalität. Wenn er fällt, verliert er einen Teil seines Wegs zur nächsten Stufe.",
+  "aicompanion_mmo_reached": "Stufe {0} erreicht.",
+  "aicompanion_mmo_levelup_tell": "{0} hat Stufe {1} erreicht!"
 }

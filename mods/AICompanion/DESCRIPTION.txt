@@ -14,6 +14,7 @@ A viking companion, a follower NPC who plays like a player: comes on your advent
 - Its bag shows beside your inventory: drag items between you. Hotbar keys give it food, potions or gear.
 - Between jobs it acts like a person: sits by the fire or in a chair, gets out of the rain, takes a stroll, sits with you when you rest, waves when you come back, cheers after a big fight and answers your emotes.
 - A journal of its life, small talk that fits the moment, and chat messages about what it is up to.
-- Its menu: status, stats and every skill, orders, home, gear, looks and journal. Talk to it in chat: "Rádvar, follow me", "Rádvar go home".
+- Its menu: status, stats and every skill, orders, home, gear, looks and journal, and a Companions tab (when you can have more than one) to switch between your companions, release one or add another. Talk to it in chat: "Rádvar, follow me", "Rádvar go home".
+- With EpicMMO System it earns experience and levels from what it kills, chops, mines and picks, and its kills count for you too, as a tame's.
 - With PartyHud it shows in the party panel (face, health, food); it shows on the map, and where it fell is marked for everyone.
 - Multiplayer: it belongs to whoever summoned it. Everyone in the world needs the mod (the host too), or the game deletes saved companions.

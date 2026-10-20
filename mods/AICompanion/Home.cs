@@ -296,6 +296,7 @@ namespace AICompanion
             if (prof == null) return;
             prof.Dead = true;
             prof.Skills = Skill.AfterDeath(prof.Skills); // a player's death penalty: 5% off every skill
+            prof.MmoXp = EpicMmo.AfterDeath(prof.MmoXp); // (and with EpicMMO, part of its way to the next level)
             prof.DiedAt = ZNet.instance.GetTimeSeconds();
             prof.DiedPos = where;
             prof.HasGrave = grave;   // it goes back for its things when it wakes

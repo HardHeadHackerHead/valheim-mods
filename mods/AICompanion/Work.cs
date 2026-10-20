@@ -591,7 +591,9 @@ namespace AICompanion
                     var pickable = (Pickable)t.Target;
                     if (pickable.m_itemPrefab != null) st.Wanted.Add(pickable.m_itemPrefab.name);
                     st.WorkSpot = pickable.transform.position;
+                    bool ripe = !(Companion.Zdo(pickable)?.GetBool(ZDOVars.s_picked, false) ?? true);
                     pickable.Interact(me, false, false);
+                    if (ripe) EpicMmo.Worked(me, pickable, EpicMmo.Work.Pick);
                     Skip(st, pickable, null, 5f);
                     st.Task = null;
                     break;

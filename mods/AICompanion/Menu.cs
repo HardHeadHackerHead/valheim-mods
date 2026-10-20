@@ -617,6 +617,8 @@ namespace AICompanion
             Note(regen > 0f ? T(Rest.IsRested(c) ? "aicompanion_menu_heals_rested" : "aicompanion_menu_heals", regen.ToString("0.#")) : T("aicompanion_menu_heals_nothing"), regen > 0f ? GameUi.Text : GameUi.Warn);
             EndCard();
 
+            if (EpicMmo.On) DrawLevel(c);
+
             BeginCard(Loc("$hud_food"));
             if (!here) Note(T("aicompanion_menu_shows_elsewhere"), GameUi.Dim);
             else if (meals.Count == 0) Note(T("aicompanion_menu_nothing_eaten"), GameUi.Warn);
@@ -697,6 +699,20 @@ namespace AICompanion
                 _y += (skills.Count + 1) / 2 * rowH + 4f;
             }
             Note(T("aicompanion_menu_skills_legend"), GameUi.Dim);
+            EndCard();
+        }
+
+        /// <summary>Its EpicMMO level (with EpicMMO System installed): experience, points and what they give. Made again at each new level.</summary>
+        private void DrawLevel(Humanoid c)
+        {
+            EpicMmo.Bonus b = EpicMmo.Of(c);
+            BeginCard(T("aicompanion_mmo_card", b.Level));
+            LiveBar(() => { EpicMmo.LevelOf(EpicMmo.Xp(c), out long into, out long toGo); return toGo > 0L ? into / (float)toGo : 1f; },
+                    () => { EpicMmo.LevelOf(EpicMmo.Xp(c), out long into, out long toGo); return toGo > 0L ? T("aicompanion_mmo_xp", into, toGo) : T("aicompanion_mmo_top"); },
+                    GameUi.Gold);
+            Note(T("aicompanion_mmo_points", b.Points, b.Strength, b.Intellect, b.Body, b.Vigour), GameUi.Text);
+            Note(T("aicompanion_mmo_bonus", b.Physical.ToString("0.#"), b.Magic.ToString("0.#"), b.Health.ToString("0"), b.Stamina.ToString("0"), b.PhysicalArmor.ToString("0.#"), b.MagicArmor.ToString("0.#")), GameUi.Text);
+            Note(T("aicompanion_mmo_about"), GameUi.Dim);
             EndCard();
         }
 

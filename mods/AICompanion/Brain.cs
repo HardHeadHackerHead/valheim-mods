@@ -458,6 +458,7 @@ namespace AICompanion
             if (Companion.OrderOf(me) == Order.Gather && Time.time >= st.NextStamp) { st.NextStamp = Time.time + 30f; CatchUp.Stamp(me); }
             SaveStatus(st);
             Food.Tick(me, st);
+            EpicMmo.Tick(me);
             Activity.Tick(st);
             Following.Tick(st, master);
             Banter.Tick(st, master);

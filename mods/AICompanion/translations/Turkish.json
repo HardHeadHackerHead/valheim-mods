@@ -930,5 +930,13 @@
   "aicompanion_net_lost_fight_other": "{0} adlı oyuncunun yoldaşı {1}, evde kimse yokken bir dövüşü kaybetti: eşyaları mezarında (haritanda işaretli)",
   "aicompanion_net_lost_fight": "{0}, evde kimse yokken bir dövüşü kaybetti: eşyaları mezarında (haritanda işaretli)",
   "aicompanion_net_fallen_other": "{0} adlı oyuncunun yoldaşı {1} yere serildi (haritanda işaretli)",
-  "aicompanion_server_missing": "AI Companion bu sunucuda yüklü değil, bu yüzden burada sana hiçbir yoldaş katılamaz."
+  "aicompanion_server_missing": "AI Companion bu sunucuda yüklü değil, bu yüzden burada sana hiçbir yoldaş katılamaz.",
+  "aicompanion_mmo_card": "Seviye {0}",
+  "aicompanion_mmo_xp": "{0} / {1} deneyim",
+  "aicompanion_mmo_top": "En yüksek seviye",
+  "aicompanion_mmo_points": "{0} puan: Güç {1}, Zekâ {2}, Beden {3}, Dirilik {4}",
+  "aicompanion_mmo_bonus": "Seviyesinden: +%{0} fiziksel hasar, +%{1} büyü hasarı, +{2} sağlık, +{3} enerji, fiziksel darbelerden %{4} ve büyülü darbelerden %{5} daha az hasar.",
+  "aicompanion_mmo_about": "EpicMMO System ile: senin gibi öldürdüklerinden, kestiklerinden, kazdıklarından, kırdıklarından ve topladıklarından deneyim kazanır ve öldürdükleri, evcil bir hayvanınki gibi sana da sayılır. Puanları savaştığı yere gider: silahla Güç ya da asayla Zekâ (aynı puanlar: bir seferde birini kullanır), sonra Beden ve Dirilik. Yere serildiğinde bir sonraki seviyeye giden yolunun bir kısmını kaybeder.",
+  "aicompanion_mmo_reached": "{0}. seviyeye ulaştı.",
+  "aicompanion_mmo_levelup_tell": "{0} {1}. seviyeye ulaştı!"
 }

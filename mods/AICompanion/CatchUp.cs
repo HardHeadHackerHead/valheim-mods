@@ -90,6 +90,7 @@ namespace AICompanion
             z.Set(Grave.HasKey, any);
             z.Set(Grave.PosKey, at);
             z.Set(Skill.Key, Skill.AfterDeath(Skill.Text(me)));
+            EpicMmo.SetXp(me, EpicMmo.AfterDeath(EpicMmo.Xp(me)));
             Skill.Forget(me);
             Food.Clear(me);
             if (any) Net.AnnounceFall(me, at, true, lost: true); // (it is still standing: a marker only, no waking)
@@ -187,6 +188,7 @@ namespace AICompanion
                         }
                     }
                     Drops(got, go);
+                    EpicMmo.KilledAway(me, go);
                     Wear(me, 0.03f);
                     ItemDrop.ItemData weapon = me.GetCurrentWeapon();
                     if (weapon != null) Skill.Raise(me, weapon.m_shared.m_skillType, 3f);
@@ -237,29 +239,35 @@ namespace AICompanion
                         Add(got, p.m_itemPrefab, p.m_amount);
                         foreach (GameObject extra in p.m_extraDrops.GetDropList()) Add(got, extra, 1);
                         p.GetComponent<ZNetView>()?.InvokeRPC(ZNetView.Everybody, "RPC_SetPicked", true);
+                        EpicMmo.Worked(me, p, EpicMmo.Work.Pick, away: true);
                         budget -= 15f; picked++;
                         break;
                     case TreeLog log when (jobs & Job.Wood) != 0 && axe != null && axe.m_shared.m_toolTier >= log.m_minToolTier:
                         if (!Chop(me, axe, log.m_health, ref budget)) break;
+                        EpicMmo.Worked(me, log, EpicMmo.Work.Tree, _hits);
                         AddTable(got, log.m_dropWhenDestroyed); AddSubLogs(got, log.m_subLogPrefab, 3);
                         Remove(log.gameObject); felled++;
                         break;
                     case TreeBase tree when (jobs & Job.Wood) != 0 && axe != null && axe.m_shared.m_toolTier >= tree.m_minToolTier:
                         if (!Chop(me, axe, tree.m_health, ref budget)) break;
+                        EpicMmo.Worked(me, tree, EpicMmo.Work.Tree);
                         AddTable(got, tree.m_dropWhenDestroyed);
                         TreeLog fallen = tree.m_logPrefab != null ? tree.m_logPrefab.GetComponent<TreeLog>() : null;
                         if (fallen != null) { AddTable(got, fallen.m_dropWhenDestroyed); AddSubLogs(got, fallen.m_subLogPrefab, 3); budget -= 40f; }
+                        if (fallen != null) EpicMmo.WorkedAway(me, fallen.gameObject, EpicMmo.Work.Tree, Mathf.CeilToInt(fallen.m_health / _perHit));   // (its log, chopped up)
                         if (tree.m_stubPrefab != null) UnityEngine.Object.Instantiate(tree.m_stubPrefab, tree.transform.position, tree.transform.rotation); // the stump it leaves
                         Remove(tree.gameObject); felled++;
                         break;
                     case MineRock5 rock5 when pick != null && pick.m_shared.m_toolTier >= rock5.m_minToolTier && (jobs & (Work.IsOre(rock5.m_dropItems) ? Job.Ore : Job.Stone)) != 0:
                         int areas = (AccessTools.Field(typeof(MineRock5), "m_hitAreas").GetValue(rock5) as IList)?.Count ?? 4;
                         if (!Chop(me, pick, rock5.m_health * areas, ref budget)) break;
+                        EpicMmo.Worked(me, rock5, EpicMmo.Work.Mining, _hits);
                         for (int i = 0; i < areas; i++) AddTable(got, rock5.m_dropItems);
                         Remove(rock5.gameObject); mined++;
                         break;
                     case MineRock rock when pick != null && pick.m_shared.m_toolTier >= rock.m_minToolTier && (jobs & (Work.IsOre(rock.m_dropItems) ? Job.Ore : Job.Stone)) != 0:
                         if (!Chop(me, pick, rock.m_health, ref budget)) break;
+                        EpicMmo.Worked(me, rock, EpicMmo.Work.Mining, _hits);
                         AddTable(got, rock.m_dropItems);
                         Remove(rock.gameObject); mined++;
                         break;
@@ -271,6 +279,7 @@ namespace AICompanion
                         if (tool == null || tool.m_shared.m_toolTier < des.m_minToolTier) break;
                         if ((jobs & (wood ? Job.Wood : Work.IsOre(table) ? Job.Ore : Job.Stone)) == 0) break;
                         if (!Chop(me, tool, des.m_health, ref budget)) break;
+                        EpicMmo.Worked(me, des, EpicMmo.Work.Destructible);
                         AddTable(got, table);
                         Remove(des.gameObject);
                         if (wood) felled++; else mined++;
@@ -550,6 +559,7 @@ namespace AICompanion
                 GameObject go = ZNetScene.instance.GetPrefab(kinds[UnityEngine.Random.Range(0, kinds.Length)]);
                 if (go == null) continue;
                 Drops(got, go);
+                EpicMmo.KilledAway(me, go);
                 Wear(me, 0.01f);
                 if (weapon != null) Skill.Raise(me, weapon.m_shared.m_skillType, 2f);
                 budget -= 180f;
@@ -582,11 +592,15 @@ namespace AICompanion
             return yours != null ? Work.TakeFoodFrom(me, yours, 5) : null;
         }
 
+        private static int _hits;       // the swings the last Chop took, and the damage of each (EpicMMO pays for each hit on a log or rock)
+        private static float _perHit = 1f;
+
         /// <summary>The time and wear of working one tree or rock with this tool (as a player swings it); false when the tool would break.</summary>
         private static bool Chop(Humanoid me, ItemDrop.ItemData tool, float health, ref float budget)
         {
             float perHit = Mathf.Max(1f, (tool.m_shared.m_damages.m_chop + tool.m_shared.m_damages.m_pickaxe) * Mathf.Lerp(0.4f, 1f, Skill.Get(me, tool.m_shared.m_skillType) / 100f));
             int hits = Mathf.CeilToInt(health / perHit);
+            _hits = hits; _perHit = perHit;
             float wear = hits * tool.m_shared.m_useDurabilityDrain;
             if (tool.m_shared.m_useDurability && tool.m_durability - wear <= 0f) return false;
             if (tool.m_shared.m_useDurability) tool.m_durability -= wear;

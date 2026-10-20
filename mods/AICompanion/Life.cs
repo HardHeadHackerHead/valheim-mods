@@ -44,7 +44,7 @@ namespace AICompanion
 
         private static float Curve(Meal m) => Mathf.Pow(m.Fraction, 0.3f); // the game's: a food stays strong for most of its time
 
-        public static float MaxHealth(Humanoid c) => Plugin.BaseHealth.Value + Of(c).Meals.Sum(m => m.Item.m_shared.m_food * Curve(m));
+        public static float MaxHealth(Humanoid c) => Plugin.BaseHealth.Value + EpicMmo.Health(c) + Of(c).Meals.Sum(m => m.Item.m_shared.m_food * Curve(m));
 
         public static float MaxEitr(Humanoid c) => Of(c).Meals.Sum(m => m.Item.m_shared.m_foodEitr * Curve(m));
 
@@ -52,7 +52,7 @@ namespace AICompanion
         {
             ZNetView v = c.GetComponent<ZNetView>();
             if (v != null && v.IsValid() && !v.IsOwner()) return v.GetZDO().GetFloat(MaxStaminaKey, Plugin.BaseStamina.Value);
-            return c is Humanoid h ? Plugin.BaseStamina.Value + Of(h).Meals.Sum(m => m.Item.m_shared.m_foodStamina * Curve(m)) : Plugin.BaseStamina.Value;
+            return Plugin.BaseStamina.Value + EpicMmo.Stamina(c) + (c is Humanoid h ? Of(h).Meals.Sum(m => m.Item.m_shared.m_foodStamina * Curve(m)) : 0f);
         }
 
         /// <summary>Every frame on the game that runs it: burn, regenerate, eat.</summary>

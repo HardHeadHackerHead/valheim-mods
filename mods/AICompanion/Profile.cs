@@ -28,6 +28,7 @@ namespace AICompanion
         public int Hair, Beard;
         public float SkinT = 0.3f, HairT = 0.5f, HairL = 0.8f;
         public string Skills = "";
+        public long MmoXp;   // its EpicMMO experience (EpicMmo)
         public string Kept = "";  // the gear it wore when it fell, from before 0.22.0 (now it stays in its tombstone: Grave.WearAgain)
         public string JournalText = "", TallyText = "";
         public int Since = -1;   // the day it joined (Journal)
@@ -105,7 +106,7 @@ namespace AICompanion
                 Potions = z.GetBool(Keys.Potions, true), Protect = z.GetBool(Keys.Protect, true), UseJev = z.GetBool(Keys.UseJev, true),
                 Model = z.GetInt(ZDOVars.s_modelIndex, 0), Skin = z.GetVec3(ZDOVars.s_skinColor, Vector3.one), HairColor = z.GetVec3(ZDOVars.s_hairColor, Vector3.one),
                 Hair = z.GetInt(ZDOVars.s_hairItem, 0), Beard = z.GetInt(ZDOVars.s_beardItem, 0),
-                SkinT = Looks.SkinTone(c), HairT = Looks.HairTone(c), HairL = Looks.HairShade(c), Skills = Skill.Text(c),
+                SkinT = Looks.SkinTone(c), HairT = Looks.HairTone(c), HairL = Looks.HairShade(c), Skills = Skill.Text(c), MmoXp = EpicMmo.Xp(c),
                 HasBed = z.GetBool(Keys.HasBed, false), Bed = z.GetVec3(Keys.BedPos, Vector3.zero), LastSeen = c.transform.position,
                 HasGrave = z.GetBool(Grave.HasKey, false), DiedPos = z.GetVec3(Grave.PosKey, Vector3.zero), Loot = z.GetBool(AICompanion.Loot.Key, true), Friends = z.GetBool(Keys.Friends, false), Kept = z.GetString(Companion.KeptKey, ""), JournalText = book.JournalText, TallyText = book.TallyText, Since = z.GetInt(Journal.SinceKey, -1), Pantry = z.GetBool(Work.PantryKey, false), HomeSet = z.GetBool(Work.HomeSetKey, false), HomeSpot = z.GetVec3(Work.HomeSpotKey, Vector3.zero), MissionText = book.Missions, DutiesText = z.GetString(Duties.Key, ""), Frugal = z.GetBool(Food.FrugalKey, true), Ration = z.GetInt(Work.RationKey, 12), DutyDest = z.GetInt(Duties.DestKey, 0), Stow = z.GetBool(Work.StowKey, true), AutoHome = z.GetBool(Following.AutoHomeKey, true), Chatty = z.GetBool(Talk.ChattyKey, true), Armory = z.GetBool(AICompanion.Armory.Key, true), PickList = z.GetInt(AICompanion.Loot.ListKey, (int)AICompanion.Loot.Default),
             };
@@ -122,6 +123,7 @@ namespace AICompanion
             z.Set(Keys.Potions, Potions); z.Set(Keys.Protect, Protect); z.Set(Keys.UseJev, UseJev);
             z.Set(Keys.HasBed, HasBed); z.Set(Keys.BedPos, Bed);
             z.Set(Skill.Key, Skills ?? "");
+            if (MmoXp > 0L) z.Set(EpicMmo.XpKey, MmoXp);   // (only with EpicMMO experience: nothing new on its save without it)
             z.Set(Grave.HasKey, HasGrave); z.Set(Grave.PosKey, DiedPos);
             z.Set(AICompanion.Loot.Key, Loot); z.Set(Keys.Friends, Friends); z.Set(AICompanion.Loot.ListKey, PickList); z.Set(Work.PantryKey, Pantry); z.Set(Work.HomeSetKey, HomeSet); z.Set(Work.HomeSpotKey, HomeSpot); z.Set(Duties.Key, DutiesText ?? ""); z.Set(Food.FrugalKey, Frugal); z.Set(Work.RationKey, Ration); z.Set(Duties.DestKey, DutyDest); z.Set(Work.StowKey, Stow); z.Set(Journal.SinceKey, Since); z.Set(Following.AutoHomeKey, AutoHome); z.Set(Talk.ChattyKey, Chatty); z.Set(AICompanion.Armory.Key, Armory);
             VisEquipment vis = c.GetComponent<VisEquipment>();
@@ -145,7 +147,7 @@ namespace AICompanion
             ["order"] = Order, ["style"] = Style, ["retreat"] = Retreat, ["kills"] = Kills, ["jobs"] = Jobs, ["radius"] = Radius,
             ["potions"] = Potions, ["protect"] = Protect, ["jev"] = UseJev,
             ["model"] = Model, ["skin"] = V(Skin), ["haircolor"] = V(HairColor), ["hair"] = Hair, ["beard"] = Beard,
-            ["skint"] = SkinT, ["hairt"] = HairT, ["hairl"] = HairL, ["skills"] = Skills ?? "",
+            ["skint"] = SkinT, ["hairt"] = HairT, ["hairl"] = HairL, ["skills"] = Skills ?? "", ["mmoxp"] = MmoXp.ToString(CultureInfo.InvariantCulture),
             ["hasbed"] = HasBed, ["bed"] = V(Bed), ["seen"] = V(LastSeen),
             ["dead"] = Dead, ["diedat"] = DiedAt, ["diedpos"] = V(DiedPos), ["grave"] = HasGrave, ["loot"] = Loot, ["friends"] = Friends, ["pick"] = PickList, ["pantry"] = Pantry, ["homeset"] = HomeSet, ["homespot"] = V(HomeSpot), ["missions"] = MissionText ?? "", ["duties"] = DutiesText ?? "", ["frugal"] = Frugal, ["ration"] = Ration, ["dutydest"] = DutyDest, ["stow"] = Stow, ["autohome"] = AutoHome, ["kept"] = Kept ?? "", ["journal"] = JournalText ?? "", ["tally"] = TallyText ?? "", ["since"] = Since, ["chatty"] = Chatty, ["armory"] = Armory,
         };
@@ -159,6 +161,7 @@ namespace AICompanion
             Potions = (bool?)o["potions"] ?? true, Protect = (bool?)o["protect"] ?? true, UseJev = (bool?)o["jev"] ?? true,
             Model = (int?)o["model"] ?? 0, Skin = V(o["skin"]), HairColor = V(o["haircolor"]), Hair = (int?)o["hair"] ?? 0, Beard = (int?)o["beard"] ?? 0,
             SkinT = (float?)o["skint"] ?? 0.3f, HairT = (float?)o["hairt"] ?? 0.5f, HairL = (float?)o["hairl"] ?? 0.8f, Skills = (string)o["skills"] ?? "",
+            MmoXp = long.TryParse((string)o["mmoxp"] ?? "0", NumberStyles.Integer, CultureInfo.InvariantCulture, out long xp) ? xp : 0L,
             HasBed = (bool?)o["hasbed"] ?? false, Bed = V(o["bed"]), LastSeen = V(o["seen"]),
             Dead = (bool?)o["dead"] ?? false, DiedAt = (double?)o["diedat"] ?? 0, DiedPos = V(o["diedpos"]),
             HasGrave = (bool?)o["grave"] ?? false, Loot = (bool?)o["loot"] ?? true, Friends = (bool?)o["friends"] ?? false, Kept = (string)o["kept"] ?? "", JournalText = (string)o["journal"] ?? "", TallyText = (string)o["tally"] ?? "", Since = (int?)o["since"] ?? -1, Pantry = (bool?)o["pantry"] ?? false, HomeSet = (bool?)o["homeset"] ?? false, HomeSpot = V(o["homespot"]), MissionText = (string)o["missions"] ?? "", DutiesText = (string)o["duties"] ?? "", Frugal = (bool?)o["frugal"] ?? true, Ration = (int?)o["ration"] ?? 12, DutyDest = (int?)o["dutydest"] ?? 0, Stow = (bool?)o["stow"] ?? true, AutoHome = (bool?)o["autohome"] ?? true, Chatty = (bool?)o["chatty"] ?? true, Armory = (bool?)o["armory"] ?? true, PickList = (int?)o["pick"] ?? (int)AICompanion.Loot.Default,

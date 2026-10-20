@@ -930,5 +930,13 @@
   "aicompanion_net_lost_fight_other": "{1}, le compagnon de {0}, a perdu un combat à la maison en l'absence de tous : ses affaires sont dans sa tombe (indiquée sur votre carte)",
   "aicompanion_net_lost_fight": "{0} a perdu un combat à la maison en l'absence de tous : ses affaires sont dans sa tombe (indiquée sur votre carte)",
   "aicompanion_net_fallen_other": "{1}, le compagnon de {0}, a succombé (indiqué sur votre carte)",
-  "aicompanion_server_missing": "AI Companion n'est pas installé sur ce serveur : aucun compagnon ne peut vous rejoindre ici."
+  "aicompanion_server_missing": "AI Companion n'est pas installé sur ce serveur : aucun compagnon ne peut vous rejoindre ici.",
+  "aicompanion_mmo_card": "Niveau {0}",
+  "aicompanion_mmo_xp": "{0} / {1} d'expérience",
+  "aicompanion_mmo_top": "Niveau maximum",
+  "aicompanion_mmo_points": "{0} points : Force {1}, Intellect {2}, Corps {3}, Vigueur {4}",
+  "aicompanion_mmo_bonus": "Grâce à son niveau : +{0} % de dégâts physiques, +{1} % de dégâts magiques, +{2} de vie, +{3} d'endurance, {4} % de moins des coups physiques et {5} % de moins des coups magiques.",
+  "aicompanion_mmo_about": "Avec EpicMMO System : il gagne de l'expérience comme vous, pour ce qu'il tue, abat, mine, brise et cueille, et ses victimes comptent aussi pour vous, comme celles d'un animal apprivoisé. Ses points vont là où il se bat : la Force avec des armes ou l'Intellect avec des bâtons (les mêmes points : il n'en utilise qu'un à la fois), puis le Corps et la Vigueur. Quand il tombe, il perd une partie de son chemin vers le niveau suivant.",
+  "aicompanion_mmo_reached": "Niveau {0} atteint.",
+  "aicompanion_mmo_levelup_tell": "{0} a atteint le niveau {1} !"
 }

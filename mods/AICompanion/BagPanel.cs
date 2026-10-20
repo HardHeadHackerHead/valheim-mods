@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using HarmonyLib;
 using TMPro;
@@ -13,7 +14,12 @@ namespace AICompanion
     /// of yours, in a copy of the game's own chest panel and grid (so dragging, splitting stacks and tooltips are the game's), titled with its
     /// name and weight. Drag between the two as with a chest; right-click one of its items to take it. It is not "opened" like a chest, so
     /// the companion carries on meanwhile. Where it goes: right of your inventory (GearSlots' gear panel is on the left, QualityOfLife's
-    /// buttons and the chest panel below it, the crafting panel on the right); with no room there, under the crafting panel.
+    /// buttons and the chest panel below it, the crafting panel on the right), or right of ExtraSlots' equipment panel when that is there;
+    /// with no room there, under the crafting panel (or under ExtraSlots' panel).
+    ///
+    /// With a controller it is a panel of its own (LB/RB to it, as to a chest): the chest panel it is copied from brings the chest's
+    /// gamepad group, which the game never switched off for a copy, so its grid took every A press along with yours and dropped what you
+    /// picked up straight into its bag (0.24.7 and older). It has its own group now, in the game's list while it shows, off until you tab to it.
     /// </summary>
     internal static class BagPanel
     {
@@ -25,7 +31,12 @@ namespace AICompanion
         private static InventoryGrid _grid;
         private static TMP_Text _name, _weight;
         private static Humanoid _shown;
-        private static Vector2 _placedFor;
+        private static (Vector2 screen, Rect beside, bool crafting) _placedFor;
+        private static UIGroupHandler _group;   // its gamepad group (Join, Leave)
+        private static InventoryGui _gui;
+        private static readonly AccessTools.FieldRef<InventoryGui, int> ActiveGroup = AccessTools.FieldRefAccess<InventoryGui, int>("m_activeGroup");
+        private static readonly System.Reflection.MethodInfo SetActiveGroup = AccessTools.Method(typeof(InventoryGui), "SetActiveGroup", new[] { typeof(int), typeof(bool) });
+        public const string ExtraSlotsPanel = "ExtraSlotsEquipmentPanel";   // (shudnal's ExtraSlots: its equipment and quick slots, right of your inventory)
         private static bool _warned;
 
         public static void Tick(InventoryGui gui)
@@ -36,12 +47,15 @@ namespace AICompanion
                 if (c == null) { Hide(); return; }
                 if (_panel == null && !Build(gui)) return;
                 if (!_panel.gameObject.activeSelf) _panel.gameObject.SetActive(true);
-                if (_shown != c) { _shown = c; _placedFor = Vector2.zero; }
+                _gui = gui;
+                Join(gui);
+                if (_shown != c) { _shown = c; _placedFor = default; }
                 _grid.UpdateInventory(c.GetInventory(), null, DragItem(gui));
                 if (_name != null) _name.text = T("aicompanion_bagpanel_title", Companion.NameOf(c));
                 if (_weight != null) _weight.text = $"{Carry.Weight(c):0}/{Carry.Max(c):0}";
-                var size = new Vector2(Screen.width, Screen.height);
-                if (_placedFor != size) { Place(gui); _placedFor = size; }
+                // Placed again when the screen size changes, the crafting panel comes or goes, or ExtraSlots' panel moves (it can be dragged).
+                var now = (new Vector2(Screen.width, Screen.height), Beside(gui) ?? default, gui.m_crafting != null && gui.m_crafting.gameObject.activeInHierarchy);
+                if (_placedFor != now) { Place(gui); _placedFor = now; }
             }
             catch (Exception e)
             {
@@ -82,6 +96,16 @@ namespace AICompanion
             _grid.OnSetTouchSelection = Wire<Action<InventoryGrid>>(gui, "SetTouchSelection");
             _grid.CanDropDragOntoItem = Wire<Func<ItemDrop.ItemData, bool>>(gui, "CanDropDragOntoItem") ?? (item => true);
             _grid.m_onRightClick = TakeToYou;
+            // Its own gamepad group (the chest's, copied with it, or a new one), off until you tab to it: see the summary.
+            UIGroupHandler group = _grid.m_uiGroup;
+            if (group == null || !group.transform.IsChildOf(copy.transform))
+            {
+                group = copy.GetComponent<UIGroupHandler>() ?? copy.AddComponent<UIGroupHandler>();
+                group.m_groupPriority = source.m_uiGroup != null ? source.m_uiGroup.m_groupPriority : 0;
+                _grid.m_uiGroup = group;
+            }
+            group.SetActive(false);
+            _group = group;
             _name = Find(copy, gui.m_container, gui.m_containerName);
             _weight = Find(copy, gui.m_container, gui.m_containerWeight);
             // Room for its two gear rows (and the gap above them) under the bag: the chest panel is made for four rows.
@@ -117,7 +141,11 @@ namespace AICompanion
             if (!Companion.Take(_shown, p, item, out string why) && why != null) p.Message(MessageHud.MessageType.Center, Words.Show(why));
         }
 
-        /// <summary>Right of your inventory (top aligned, past its armour and weight readout), or under the crafting panel when that would overlap it.</summary>
+        /// <summary>
+        /// Right of your inventory (top aligned, past its armour and weight readout), or under the crafting panel when that would overlap it,
+        /// as always. With ExtraSlots' panel there (right of your inventory too), the first place that covers neither it nor the crafting
+        /// panel and stays on screen: right of it, under the crafting panel, under it.
+        /// </summary>
         private static void Place(InventoryGui gui)
         {
             var player = new Vector3[4];
@@ -126,20 +154,69 @@ namespace AICompanion
             _panel.GetWorldCorners(mine);
             float width = mine[2].x - mine[1].x, height = mine[1].y - mine[0].y;
             float gap = (player[2].x - player[1].x) * 0.13f;  // room for the armour and weight readout beside your inventory
-            Vector3 topLeft = new Vector3(player[2].x + gap, player[2].y, mine[1].z);
-            if (gui.m_crafting != null && gui.m_crafting.gameObject.activeInHierarchy)
+            Vector2 topLeft = new Vector2(player[2].x + gap, player[2].y);
+            Rect? craft = gui.m_crafting != null && gui.m_crafting.gameObject.activeInHierarchy ? WorldRect(gui.m_crafting) : (Rect?)null;
+            Vector2 underCraft = craft is Rect cr ? new Vector2(cr.xMin, cr.yMin - gap * 0.3f) : topLeft;
+            if (craft is Rect c && topLeft.x + width > c.xMin - gap * 0.3f && topLeft.y - height < c.yMax) topLeft = underCraft; // (the old rule)
+            if (Beside(gui) is Rect extra)
             {
-                var craft = new Vector3[4];
-                gui.m_crafting.GetWorldCorners(craft);
-                bool overlaps = topLeft.x + width > craft[0].x - gap * 0.3f && topLeft.y - height < craft[1].y;
-                if (overlaps) topLeft = new Vector3(craft[0].x, craft[0].y - gap * 0.3f, mine[1].z); // under the crafting panel
+                Canvas canvas = gui.GetComponentInParent<Canvas>();
+                Rect? screen = canvas != null ? WorldRect((RectTransform)canvas.rootCanvas.transform) : (Rect?)null;
+                var tries = new List<Vector2> { new Vector2(extra.xMax + gap * 0.3f, player[2].y) };
+                if (craft != null) tries.Add(underCraft);
+                tries.Add(new Vector2(extra.xMin, extra.yMin - gap * 0.3f));
+                topLeft = underCraft;
+                foreach (Vector2 at in tries)
+                {
+                    var box = new Rect(at.x, at.y - height, width, height);
+                    if (box.Overlaps(extra) || craft is Rect k && box.Overlaps(k)) continue;
+                    if (screen is Rect s && (box.xMin < s.xMin || box.xMax > s.xMax || box.yMin < s.yMin || box.yMax > s.yMax)) continue;
+                    topLeft = at;
+                    break;
+                }
             }
-            _panel.position += topLeft - mine[1];
+            _panel.position += new Vector3(topLeft.x, topLeft.y, mine[1].z) - mine[1];
+        }
+
+        /// <summary>ExtraSlots' equipment panel when it shows (it sits right of your inventory, where its bag would go), in world space.</summary>
+        private static Rect? Beside(InventoryGui gui)
+        {
+            Transform t = gui.m_player != null ? gui.m_player.Find(ExtraSlotsPanel) : null;
+            return t is RectTransform r && r.gameObject.activeInHierarchy ? WorldRect(r) : (Rect?)null;
+        }
+
+        private static Rect WorldRect(RectTransform r)
+        {
+            var c = new Vector3[4];
+            r.GetWorldCorners(c);
+            return Rect.MinMaxRect(c[0].x, c[0].y, c[2].x, c[2].y);
+        }
+
+        /// <summary>Its gamepad group into the game's list (LB/RB reach it) while it shows, off until you tab to it.</summary>
+        private static void Join(InventoryGui gui)
+        {
+            if (_group == null || Array.IndexOf(gui.m_uiGroups, _group) >= 0) return;
+            gui.m_uiGroups = gui.m_uiGroups.Concat(new[] { _group }).ToArray();
+            _group.SetActive(false);
+        }
+
+        /// <summary>Out of the list when it hides; if it was the one in use, back to your inventory (the game's group 1).</summary>
+        private static void Leave(InventoryGui gui)
+        {
+            if (gui == null || ReferenceEquals(_group, null)) return;
+            int i = Array.IndexOf(gui.m_uiGroups, _group);
+            if (i < 0) return;
+            int active = ActiveGroup(gui);
+            gui.m_uiGroups = gui.m_uiGroups.Where((g, n) => n != i).ToArray();
+            if (_group != null) _group.SetActive(false);
+            if (active == i) SetActiveGroup?.Invoke(gui, new object[] { 1, false });
+            else if (active > i) ActiveGroup(gui) = active - 1;   // (a group another mod put after it moved down one)
         }
 
         private static void Hide()
         {
             _shown = null;
+            Leave(_gui);
             if (_panel != null && _panel.gameObject.activeSelf) _panel.gameObject.SetActive(false);
         }
 
@@ -148,8 +225,9 @@ namespace AICompanion
 
         public static void Destroy()
         {
+            try { Leave(_gui); } catch { }   // (a reload: never leave a destroyed group in the game's list)
             if (_panel != null) UnityEngine.Object.Destroy(_panel.gameObject);
-            _panel = null; _grid = null; _name = _weight = null; _shown = null;
+            _panel = null; _grid = null; _name = _weight = null; _shown = null; _group = null; _gui = null;
         }
     }
 

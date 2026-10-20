@@ -7,7 +7,7 @@
 
 **A viking companion, a follower NPC who plays like a player: comes on your adventures, fights beside you, lives its own life at home, and gets better as it goes.**
 
-![version: 0.24.7](https://img.shields.io/badge/version-0.24.7-3b6e8f?style=flat-square)  ![multiplayer: everyone + host](https://img.shields.io/badge/multiplayer-everyone%20%2B%20host-7a5c2e?style=flat-square)  ![made with: Claude Code](https://img.shields.io/badge/made%20with-Claude%20Code-c26a3d?style=flat-square)
+![version: 0.25.0](https://img.shields.io/badge/version-0.25.0-3b6e8f?style=flat-square)  ![multiplayer: everyone + host](https://img.shields.io/badge/multiplayer-everyone%20%2B%20host-7a5c2e?style=flat-square)  ![made with: Claude Code](https://img.shields.io/badge/made%20with-Claude%20Code-c26a3d?style=flat-square)
 
 <!-- GITHUB-ONLY -->[Thunderstore](https://thunderstore.io/c/valheim/p/Quads_Lab/Quads_Companion/)  ·  <!-- END GITHUB-ONLY -->[Source code](https://github.com/HardHeadHackerHead/valheim-mods/tree/main/mods/AICompanion)  ·  [Report a bug](https://github.com/HardHeadHackerHead/valheim-mods/issues/new?template=bug.yml&title=%5BQuad%27s%20Companion%5D%20)  ·  [Discord](https://discord.gg/EwTjQxEZPy)
 
@@ -32,6 +32,7 @@
 - Between jobs it acts like a person: sits by the fire or in a chair, gets out of the rain, takes a stroll, sits with you when you rest, waves when you come back, cheers after a big fight and answers your emotes.
 - A journal of its life, small talk that fits the moment, and chat messages about what it is up to.
 - Its menu: status, stats and every skill, orders, home, gear, looks and journal, and a Companions tab (when you can have more than one) to switch between your companions, release one or add another. Talk to it in chat: "Rádvar, follow me", "Rádvar go home".
+- With EpicMMO System it earns experience and levels from what it kills, chops, mines and picks, and its kills count for you too, as a tame's.
 - With PartyHud it shows in the party panel (face, health, food); it shows on the map, and where it fell is marked for everyone.
 - Multiplayer: it belongs to whoever summoned it. Everyone in the world needs the mod (the host too), or the game deletes saved companions.
 
@@ -75,7 +76,7 @@
 | [Party HUD](https://thunderstore.io/c/valheim/p/Quads_Lab/Quads_Party_HUD/) | [Gear Slots](https://thunderstore.io/c/valheim/p/Quads_Lab/Quads_Gear_Slots/) | [Arena](https://thunderstore.io/c/valheim/p/Quads_Lab/Quads_Arena/) | [Bounty Board](https://thunderstore.io/c/valheim/p/Quads_Lab/Quads_Bounty_Board/) | [Dungeons](https://github.com/HardHeadHackerHead/valheim-mods/tree/main/mods/Dungeons) |
 
 <!-- HAND-WRITTEN: other-mods -->
-**Known clashes:** none known.
+**Known clashes:** none known. (Fixed in 0.25.0: with [ExtraSlots](https://thunderstore.io/c/valheim/p/shudnal/ExtraSlots/) its bag panel covered ExtraSlots' equipment panel; it now goes beside it.)
 
 **Better together**
 
@@ -83,6 +84,7 @@
 - With [Quad's Quality of Life](https://thunderstore.io/c/valheim/p/Quads_Lab/Quads_Quality_Of_Life/): what it brings home goes into the chests you assigned with K.
 - With [Quad's Party HUD](https://thunderstore.io/c/valheim/p/Quads_Lab/Quads_Party_HUD/): it shows under you in the party panel (face, health, what it's doing).
 - With [Quad's Skal Tavern](https://thunderstore.io/c/valheim/p/Quads_Lab/Quads_Skal_Tavern/): companions within 12 m count as drinking partners for a Skål!
+- With [EpicMMO System](https://thunderstore.io/c/valheim/p/WackyMole/WackyEpicMMOSystem/): companions earn experience and levels from what they kill, chop, mine and pick, on the server's EpicMMO curve, and their points go where they fight (Strength or Intellect, Body, Vigour); their kills count for you too, as a tame's, and keep their drops. `CompanionExp` in `com.quad.aicompanion.more.cfg` sets how much they earn (0: off).
 <!-- END HAND-WRITTEN: other-mods -->
 
 Found a clash with another mod? [Tell us](https://github.com/HardHeadHackerHead/valheim-mods/issues/new?template=bug.yml&title=%5BQuad%27s%20Companion%5D%20) which one and what happened.
@@ -96,7 +98,7 @@ It adds the companion (a new creature the world saves). Restart the game after u
 <!-- HAND-WRITTEN: multiplayer -->
 Each companion belongs to whoever summoned it. Everyone sees each companion's state, and where one fell is marked for everyone. It never touches a chest someone else has open.
 
-**The host decides:** how many companions, what they do while you're away, respawn time, base health and stamina, when they eat, starting skill. While you play on their world their values replace yours (your file isn't changed); a host without the mod leaves everyone their own.
+**The host decides:** how many companions, what they do while you're away, respawn time, base health and stamina, when they eat, starting skill, and (with EpicMMO) how much experience they earn. While you play on their world their values replace yours (your file isn't changed); a host without the mod leaves everyone their own.
 <!-- END HAND-WRITTEN: multiplayer -->
 
 ## 🌍 Languages
@@ -134,6 +136,12 @@ In `BepInEx/config/com.quad.aicompanion.cfg`, made the first time the game runs 
 | `BaseStamina` | `75` | Its stamina before food, as a player's (75). In multiplayer the server's value applies. |
 | `EatBelowPercent` | `10` | It eats a food it is already under again once its time left drops below this percent (the game allows it from 50). Lower saves food: a meal lasts 80% of its time instead of 50%, and its effect weakens a little towards the end. In multiplayer the server's value applies. |
 | `StartingSkill` | `0` | The skill level a new companion starts at (a new player: 0). In multiplayer the server's value applies. |
+
+**EpicMMO**
+
+| Setting | Default | What it does |
+|---|---|---|
+| `CompanionExp` | `1` | With EpicMMO System installed: the experience a companion earns from its kills and its work (chopping, mining, picking), as a multiple of what a player gets for them (EpicMMO's RateExp counts too). 0: companions don't level up, and their levels give nothing. Their kills count for their player as a tame's whatever this is (EpicMMO's "Tames give XP on Mob kill"). In multiplayer the server's value applies. |
 
 ## 🤖 Made with AI
 
@@ -177,9 +185,8 @@ helps me make new mods and keep improving the ones you already play. It's 100% o
 
 ## 📜 Recent changes
 
-- **0.24.7** A Companions tab in the companion's menu (when more than one companion is allowed): all your companions in one list, each with Open, Call and Release forever (press twice; its gear must be taken out first, and a released companion can't come back), and the summon panel to add another.
+- **0.25.0** With EpicMMO System (WackyMole): companions earn experience and levels. A companion earns experience as a player does there: from what it kills, at EpicMMO's own rates for each creature, and from its work (each tree it fells and each hit on a log, each hit on a rock or ore, a stump or the like once it breaks, each pick: EpicMMO's own values and switches for players); while you are away, for what it fights, hunts and gathers. All on EpicMMO's level curve, and its points go where it fights: Strength with weapons or Intellect with staffs (the same points, as it uses one at a time), then Body and Vigour, at the server's EpicMMO values per point (more damage, health, stamina and armour). Its menu shows its level, its experience and what its points give (Stats). When it falls it loses part of its way to the next level, as a player does there. Its kills now count for you too, as a tame's do (EpicMMO's "Tames give XP on Mob kill"), and keep their drops: with EpicMMO's defaults a creature a companion finished dropped nothing, and nobody got experience for it. New setting EpicMMO / CompanionExp (the server's in multiplayer): how much a companion earns, as a multiple of what a player gets (1); 0 switches companion levels off. What it earns is saved every 10 seconds (or at a new level), as its skills are, so a companion mining is not sending its save to every player with each hit. Without EpicMMO nothing changes. Also, with a controller: picking up an item in your inventory while a companion's bag showed beside it put the item straight into the companion's bag (its panel took every A press along with yours). Its bag is now a panel of its own, reached with LB/RB as a chest's is, and A only acts on the panel you are in. With ExtraSlots its bag no longer covers ExtraSlots' equipment panel: it goes right of it (or under the crafting panel, or under it, when there is no room), and follows when you drag that panel.
+- **0.24.7** A Companions tab in the companion's menu (when the server allows more than one companion): all your companions in one list, each with Open (to its menu), Call, and Release forever (press twice; its gear must be taken out first, and a released companion can't be brought back), and the summon panel to add another. It was only reachable when no companion was near you.
 - **0.24.6** Near a fallen companion's map marker, the check for its crate (every 2 seconds) no longer searches every container in the scene: it looks only at the saved objects around the marker. No more small hitch there in a big base.
-- **0.24.5** On a server without AI Companion, no companion can be summoned there, and a message says why: the server would delete the companion and the gear it carries. Settings: edits to the config file now apply while the game runs (a server owner no longer has to restart), and a server's admins can change the server's settings from their own game with Configuration Manager, where other players see them greyed out. Your config file always keeps your own values while you play on a server (saving it there could write the server's in). Players on an older version still get the server's settings. Food it borrows from your chest now goes into a slot of its own in its bag, so what it does not eat goes back to that chest (it used to join a stack of the same food it already had and was kept).
-- **0.24.4** Its windows no longer fill the log with "The LiberationSans SDF Font Asset was not found": each text is given the game's font before it starts (it looked for TextMeshPro's default font, which the game doesn't have, every time a text was made). Nothing changes on screen.
 
 <!-- GITHUB-ONLY -->[Every change](CHANGELOG.txt)<!-- END GITHUB-ONLY --><!-- THUNDERSTORE-ONLY: Every change is on the Changelog tab. -->

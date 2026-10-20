@@ -930,5 +930,13 @@
   "aicompanion_net_lost_fight_other": "Towarzysz gracza {0}, {1}, przegrał walkę w domu, gdy nikogo nie było: jego rzeczy są w jego grobie (zaznaczonym na twojej mapie)",
   "aicompanion_net_lost_fight": "{0} przegrał walkę w domu, gdy nikogo nie było: jego rzeczy są w jego grobie (zaznaczonym na twojej mapie)",
   "aicompanion_net_fallen_other": "Towarzysz gracza {0}, {1}, poległ (zaznaczono na twojej mapie)",
-  "aicompanion_server_missing": "AI Companion nie jest zainstalowany na tym serwerze, więc żaden towarzysz nie może tu do ciebie dołączyć."
+  "aicompanion_server_missing": "AI Companion nie jest zainstalowany na tym serwerze, więc żaden towarzysz nie może tu do ciebie dołączyć.",
+  "aicompanion_mmo_card": "Poziom {0}",
+  "aicompanion_mmo_xp": "{0} / {1} doświadczenia",
+  "aicompanion_mmo_top": "Najwyższy poziom",
+  "aicompanion_mmo_points": "{0} pkt: Siła {1}, Intelekt {2}, Ciało {3}, Wigor {4}",
+  "aicompanion_mmo_bonus": "Dzięki poziomowi: +{0}% obrażeń fizycznych, +{1}% obrażeń magicznych, +{2} życia, +{3} kondycji, o {4}% mniej od ciosów fizycznych i o {5}% mniej od magicznych.",
+  "aicompanion_mmo_about": "Z EpicMMO System: zdobywa doświadczenie tak jak ty, za to, co zabije, zetnie, wykopie, rozbije i zbierze, a jego zabójstwa liczą się też dla ciebie, jak oswojonego zwierzęcia. Jego punkty idą tam, gdzie walczy: Siła przy broni albo Intelekt przy kosturach (te same punkty: używa jednego naraz), potem Ciało i Wigor. Gdy polegnie, traci część drogi do następnego poziomu.",
+  "aicompanion_mmo_reached": "Osiągnął poziom {0}.",
+  "aicompanion_mmo_levelup_tell": "{0} osiągnął poziom {1}!"
 }

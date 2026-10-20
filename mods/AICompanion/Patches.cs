@@ -152,6 +152,7 @@ namespace AICompanion
             if (!(__instance is Humanoid h) || !Companion.Is(h)) return true;
             Character attacker = hit.GetAttacker();
             if (attacker != null && attacker.IsPlayer()) return false;
+            if (EpicMmo.On) EpicMmo.Resist(h, hit);   // (its EpicMMO level's Body and Vigour)
             float armor = Companion.Armor(h);
             if (armor > 0f) hit.ApplyArmor(armor);
             return true;
@@ -235,6 +236,7 @@ namespace AICompanion
                 BrainState ks = Brain.Get(killer as Humanoid);
                 if (ks != null) { ks.FightKills++; ks.Remember(Words.P("aicompanion_patches_killed", __instance.m_name)); }
                 Journal.Kill(killer as Humanoid, __instance);
+                EpicMmo.Killed(killer as Humanoid, __instance);
             }
             if (!(__instance is Humanoid h) || !Companion.Is(h)) return;
             BrainState st = Brain.Get(h);

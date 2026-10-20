@@ -930,5 +930,13 @@
   "aicompanion_net_lost_fight_other": "{0}的同伴{1}在无人时于家中战斗失利：物品在墓碑里（已在你的地图上标记）",
   "aicompanion_net_lost_fight": "{0}在无人时于家中战斗失利：物品在墓碑里（已在你的地图上标记）",
   "aicompanion_net_fallen_other": "{0}的同伴{1}倒下了（已在你的地图上标记）",
-  "aicompanion_server_missing": "此服务器未安装 AI Companion，因此这里没有同伴能加入你。"
+  "aicompanion_server_missing": "此服务器未安装 AI Companion，因此这里没有同伴能加入你。",
+  "aicompanion_mmo_card": "等级 {0}",
+  "aicompanion_mmo_xp": "{0} / {1} 经验",
+  "aicompanion_mmo_top": "最高等级",
+  "aicompanion_mmo_points": "{0} 点：力量 {1}，智力 {2}，体质 {3}，活力 {4}",
+  "aicompanion_mmo_bonus": "等级带来：物理伤害 +{0}%，魔法伤害 +{1}%，生命值 +{2}，耐力 +{3}，受到的物理伤害减少 {4}%，魔法伤害减少 {5}%。",
+  "aicompanion_mmo_about": "安装 EpicMMO System 后：它会像你一样获得经验，来自击杀、伐木、采矿、破坏和采集，它的击杀也会像驯服的动物那样为你计算经验。它的点数分配到它战斗所需之处：用武器时为力量，用法杖时为智力（同一批点数：它一次只用其一），其次是体质和活力。倒下时，它会失去一部分升到下一级的进度。",
+  "aicompanion_mmo_reached": "达到了 {0} 级。",
+  "aicompanion_mmo_levelup_tell": "{0} 达到了 {1} 级！"
 }
