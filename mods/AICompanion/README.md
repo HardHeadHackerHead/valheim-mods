@@ -5,9 +5,9 @@
 
 <img src="cover.png" alt="Quad's Companion" width="100%">
 
-**A viking companion, a follower NPC who plays like a player: comes on your adventures, fights beside you, lives its own life at home, and gets better as it goes.**
+**A viking companion, a follower NPC who plays like a player: comes on your adventures, fights beside you, lives its own life at home, and gets better as it goes. Levels up with EpicMMO.**
 
-![version: 0.25.0](https://img.shields.io/badge/version-0.25.0-3b6e8f?style=flat-square)  ![multiplayer: everyone + host](https://img.shields.io/badge/multiplayer-everyone%20%2B%20host-7a5c2e?style=flat-square)  ![made with: Claude Code](https://img.shields.io/badge/made%20with-Claude%20Code-c26a3d?style=flat-square)
+![version: 0.25.1](https://img.shields.io/badge/version-0.25.1-3b6e8f?style=flat-square)  ![multiplayer: everyone + host](https://img.shields.io/badge/multiplayer-everyone%20%2B%20host-7a5c2e?style=flat-square)  ![made with: Claude Code](https://img.shields.io/badge/made%20with-Claude%20Code-c26a3d?style=flat-square)
 
 <!-- GITHUB-ONLY -->[Thunderstore](https://thunderstore.io/c/valheim/p/Quads_Lab/Quads_Companion/)  ·  <!-- END GITHUB-ONLY -->[Source code](https://github.com/HardHeadHackerHead/valheim-mods/tree/main/mods/AICompanion)  ·  [Report a bug](https://github.com/HardHeadHackerHead/valheim-mods/issues/new?template=bug.yml&title=%5BQuad%27s%20Companion%5D%20)  ·  [Discord](https://discord.gg/EwTjQxEZPy)
 
@@ -16,6 +16,8 @@
 <!-- GITHUB-ONLY -->**Install:** with [r2modman](https://thunderstore.io/c/valheim/p/ebkr/r2modman/) or Thunderstore Mod Manager from [Thunderstore](https://thunderstore.io/c/valheim/p/Quads_Lab/Quads_Companion/), or press **F7** in the game with our [mod manager](https://github.com/HardHeadHackerHead/valheim-mod-manager).<!-- END GITHUB-ONLY -->
 
 ## ✨ Features
+
+A viking companion, a follower NPC who plays like a player: comes on your adventures, fights beside you, lives its own life at home, and gets better as it goes.
 
 - Press J to summon your companion or open its menu (E on it too). Hold J: your companions come with you, or go home.
 - Point and press H: at an enemy (they attack it), a tree, rock or plant (it works it, and the thing glows with a note above it while it does), your chest (it puts its things in), a cart (it pulls it), the ground (it waits there), the sky (it comes back).
@@ -76,7 +78,7 @@
 | [Party HUD](https://thunderstore.io/c/valheim/p/Quads_Lab/Quads_Party_HUD/) | [Gear Slots](https://thunderstore.io/c/valheim/p/Quads_Lab/Quads_Gear_Slots/) | [Arena](https://thunderstore.io/c/valheim/p/Quads_Lab/Quads_Arena/) | [Bounty Board](https://thunderstore.io/c/valheim/p/Quads_Lab/Quads_Bounty_Board/) | [Dungeons](https://github.com/HardHeadHackerHead/valheim-mods/tree/main/mods/Dungeons) |
 
 <!-- HAND-WRITTEN: other-mods -->
-**Known clashes:** none known. (Fixed in 0.25.0: with [ExtraSlots](https://thunderstore.io/c/valheim/p/shudnal/ExtraSlots/) its bag panel covered ExtraSlots' equipment panel; it now goes beside it.)
+**Known clashes:** none known. (Fixed in 0.25.1: [StarLevelSystem](https://thunderstore.io/c/valheim/p/MidnightMods/StarLevelSystem/)'s spawn multiplier copied companions, a bald "Companion" belonging to nobody, and it gave them star levels; it now leaves companions alone, as it does players. Fixed in 0.25.0: with [ExtraSlots](https://thunderstore.io/c/valheim/p/shudnal/ExtraSlots/) its bag panel covered ExtraSlots' equipment panel; it now goes beside it.)
 
 **Better together**
 
@@ -185,8 +187,8 @@ helps me make new mods and keep improving the ones you already play. It's 100% o
 
 ## 📜 Recent changes
 
+- **0.25.1** With StarLevelSystem (MidnightMods): a bald, nameless "Companion" that belonged to nobody ("someone's companion", no map or party marker) could turn up beside your companions. StarLevelSystem's spawn multiplier (1.1 in every biome by default) copied about one new creature in ten, a companion too, each time one was summoned, woke after a fall or was brought back from the menu, and the copy had nothing of it: no name, no player, no looks. StarLevelSystem now leaves companions as it leaves players: it never copies one, never deletes one (a spawn rate below 1, or a biome's "spawns disabled" list, would have removed a companion with all it carried), and gives them no star levels, modifiers (its Splitter made copies of one as it fell) or biome stats (half as much again from poison, by default). Stars or a bigger size it already gave a companion are taken back. Copies already in your world are removed when their area loads, and anything someone put in one's bag goes into a tombstone where it stood. Without StarLevelSystem nothing changes.
 - **0.25.0** With EpicMMO System (WackyMole): companions earn experience and levels. A companion earns experience as a player does there: from what it kills, at EpicMMO's own rates for each creature, and from its work (each tree it fells and each hit on a log, each hit on a rock or ore, a stump or the like once it breaks, each pick: EpicMMO's own values and switches for players); while you are away, for what it fights, hunts and gathers. All on EpicMMO's level curve, and its points go where it fights: Strength with weapons or Intellect with staffs (the same points, as it uses one at a time), then Body and Vigour, at the server's EpicMMO values per point (more damage, health, stamina and armour). Its menu shows its level, its experience and what its points give (Stats). When it falls it loses part of its way to the next level, as a player does there. Its kills now count for you too, as a tame's do (EpicMMO's "Tames give XP on Mob kill"), and keep their drops: with EpicMMO's defaults a creature a companion finished dropped nothing, and nobody got experience for it. New setting EpicMMO / CompanionExp (the server's in multiplayer): how much a companion earns, as a multiple of what a player gets (1); 0 switches companion levels off. What it earns is saved every 10 seconds (or at a new level), as its skills are, so a companion mining is not sending its save to every player with each hit. Without EpicMMO nothing changes. Also, with a controller: picking up an item in your inventory while a companion's bag showed beside it put the item straight into the companion's bag (its panel took every A press along with yours). Its bag is now a panel of its own, reached with LB/RB as a chest's is, and A only acts on the panel you are in. With ExtraSlots its bag no longer covers ExtraSlots' equipment panel: it goes right of it (or under the crafting panel, or under it, when there is no room), and follows when you drag that panel.
 - **0.24.7** A Companions tab in the companion's menu (when the server allows more than one companion): all your companions in one list, each with Open (to its menu), Call, and Release forever (press twice; its gear must be taken out first, and a released companion can't be brought back), and the summon panel to add another. It was only reachable when no companion was near you.
-- **0.24.6** Near a fallen companion's map marker, the check for its crate (every 2 seconds) no longer searches every container in the scene: it looks only at the saved objects around the marker. No more small hitch there in a big base.
 
 <!-- GITHUB-ONLY -->[Every change](CHANGELOG.txt)<!-- END GITHUB-ONLY --><!-- THUNDERSTORE-ONLY: Every change is on the Changelog tab. -->

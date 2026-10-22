@@ -16,7 +16,7 @@ namespace AICompanion
     [HarmonyPatch(typeof(ZNetScene), "Awake")]
     internal static class ZNetScene_Awake
     {
-        private static void Postfix(ZNetScene __instance) => Prefab.Register(__instance);
+        private static void Postfix(ZNetScene __instance) { Prefab.Register(__instance); StarLevels.Hook(); }
     }
 
     [HarmonyPatch(typeof(ObjectDB), "Awake")]

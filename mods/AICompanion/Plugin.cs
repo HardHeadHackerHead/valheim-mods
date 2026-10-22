@@ -21,7 +21,7 @@ namespace AICompanion
         public const string Guid = "com.quad.aicompanion";
         public const string OldGuid = "com.dhack.aicompanion"; // (its id until 2026-10: settings move over by themselves, see Shared/Migration.cs)
         public const string Name = "AICompanion";
-        public const string Version = "0.25.0";
+        public const string Version = "0.25.1";
 
         internal static Plugin Instance;
         internal static ConfigEntry<bool> ShowDecisions;
@@ -31,6 +31,7 @@ namespace AICompanion
         internal static ConfigEntry<int> MaxCompanions;
 
         private Harmony _harmony;
+        internal Harmony Harmony => _harmony;   // (patches on other mods' code, made once they are known: StarLevels)
         private ConfigFile _more;   // the settings changed in the menu (not listed in the mod manager)
 
         // The gameplay settings are the server's in multiplayer (how many companions, how strong, how fast they wake, life while away),
@@ -89,7 +90,7 @@ namespace AICompanion
 
             _harmony = new Harmony(Guid);
             _harmony.PatchAll();
-            if (ZNetScene.instance != null) Prefab.Register(ZNetScene.instance); // hot reload while in a world
+            if (ZNetScene.instance != null) { Prefab.Register(ZNetScene.instance); StarLevels.Hook(); } // hot reload while in a world
             Net.Start();
             Portraits.Start();
 

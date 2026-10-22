@@ -442,8 +442,10 @@ namespace AICompanion
         {
             ZNetView view = ai.GetComponent<ZNetView>();
             if (view == null || !view.IsValid() || !view.IsOwner()) return false;
-            TimeSinceHurt(ai) += dt;           // (no free healing: food heals it, as it heals a player)
             Humanoid body = ai.GetComponent<Humanoid>();
+            if (StarLevels.RemoveStray(body)) return true; // a copy another mod made of a companion: no player, no name
+            StarLevels.Exempt(body);           // (one from before 0.25.1: StarLevelSystem leaves it alone from now on)
+            TimeSinceHurt(ai) += dt;           // (no free healing: food heals it, as it heals a player)
             Stamina.Tick(body, dt);
             Tactics.Tick(Get(body)); // its roll's moment
             Eitr.Tick(body, dt);
