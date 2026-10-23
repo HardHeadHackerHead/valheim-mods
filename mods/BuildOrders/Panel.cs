@@ -92,7 +92,8 @@ namespace BuildOrders
                         if (placing) ShowAimCard(wanted);
                         else ShowBuildPrompt(wanted);
                     }
-                    if (placing && FetchAvailable) ShowFetchHint(wanted);
+                    // Not while a radial menu covers the middle of the screen (the game's, or another mod's that hides the build panel).
+                    if (placing && FetchAvailable && BuildPanelShowing) ShowFetchHint(wanted);
                 }
             }
             foreach (string name in _hudPieces.Keys.Where(k => !wanted.Contains(k)).ToList()) HideHud(name);
@@ -316,6 +317,8 @@ namespace BuildOrders
         /// "[Y] Fetch what one Wood wall needs from the chests" (or "another Wood wall's worth"), with a cell for each material a press takes
         /// (what you have in it, and how many a press brings under it).
         /// </summary>
+        private static bool BuildPanelShowing => !Hud.InRadial() && (Hud.instance == null || Hud.instance.m_buildHud == null || Hud.instance.m_buildHud.activeSelf);
+
         private void ShowFetchHint(HashSet<string> wanted)
         {
             List<FetchLine> lines = FetchLines.Where(l => l.Short).ToList();
