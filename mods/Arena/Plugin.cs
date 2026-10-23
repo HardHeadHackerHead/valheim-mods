@@ -22,7 +22,7 @@ namespace Arena
         public const string Guid = "com.quad.arena";
         public const string OldGuid = "com.dhack.arena"; // (its id until 2026-10: settings move over by themselves, see Shared/Migration.cs)
         public const string Name = "Arena";
-        public const string Version = "0.5.0";
+        public const string Version = "0.5.1";
 
         internal static Plugin Instance;
         internal static ManualLogSource Log;
@@ -30,7 +30,8 @@ namespace Arena
         internal static ConfigEntry<string> WaystoneCost;
         private static bool _tellNoServer;   // the server hasn't the mod: say so once the player is in the world
 
-        internal static ConfigEntry<float> Rewards, CrowdVolume, CrowdSize, EntryFee, MealFreshness, RingHunger;
+        internal static ConfigEntry<float> Rewards, CrowdVolume, CrowdSize, EntryFee, MealFreshness, RingHunger, FoeHealth, FoeDamage;
+        internal static ConfigEntry<bool> OwnSounds;
         internal static ConfigEntry<bool> RealDeath, Spectators, Announcer, Gifts, MapPin, AllTiers, RespawnAtArena;
         internal static ConfigEntry<KeyboardShortcut> YieldKey, ReadyKey;
 
@@ -47,6 +48,8 @@ namespace Arena
             Rewards = Synced.Add(Config.Bind("Arena", "RewardPercent", 100f, new ConfigDescription("How big the prizes are (percent)." + ServerSays, new AcceptableValueRange<float>(10f, 500f))));
             RealDeath = Synced.Add(Config.Bind("Arena", "DeathIsReal", true, "You can die in a contest. Your tombstone is carried just outside the ring for you to collect, and the purse and stake are lost. Off: beaten, you are carried out at a third of your health with half your purse. (Duels never kill.)" + ServerSays));
             EntryFee = Synced.Add(Config.Bind("Arena", "EntryFeePercent", 100f, new ConfigDescription("How much it costs to enter a contest (percent of the usual: 150 coins for the Long Road; today's trial 60, a Champion Bout 50 and the Endless Horde 40 in the Meadows, more in each land after). The first fight of a character is free." + ServerSays, new AcceptableValueRange<float>(0f, 500f))));
+            FoeHealth = Synced.Add(Config.Bind("Arena", "FoeHealthPercent", 100f, new ConfigDescription("How much health the arena's fighters have (percent of the usual), champions too, in every contest. 200 takes twice the beating." + ServerSays, new AcceptableValueRange<float>(25f, 1000f))));
+            FoeDamage = Synced.Add(Config.Bind("Arena", "FoeDamagePercent", 100f, new ConfigDescription("How hard the arena's fighters hit (percent of the usual), champions too, in every contest. On top of the game's own difficulty." + ServerSays, new AcceptableValueRange<float>(25f, 1000f))));
             RespawnAtArena = Synced.Add(Config.Bind("Arena", "RespawnAtArena", true, "Fall in a contest and you rise again in the arena's forecourt (not at your bed)." + ServerSays));
             MapPin = Config.Bind("Arena", "MapPin", true, "The Arena is marked on your map.");
             AllTiers = Synced.Add(Config.Bind("Arena", "AllTiers", false, "Every land's fighters can be chosen in a Champion Bout or the Endless Horde at once (normally each opens as you beat the boss before it). For trying them out: the arena still pays metals and trophies only from lands your world has reached, today's trial stays among them, and what the crowd throws from a land your world has not reached is only lent (it goes back after the fight)." + ServerSays));
@@ -58,6 +61,7 @@ namespace Arena
             Announcer = Config.Bind("Crowd", "Announcer", true, "The announcer's calls across the top of the screen.");
             YieldKey = Config.Bind("Arena", "YieldKey", new KeyboardShortcut(KeyCode.Backspace), "Press twice to leave a contest: before it begins you back out with your fee back; between rounds you walk out with your winnings; in a round you give up (at a lower rate).");
             ReadyKey = Config.Bind("Arena", "ReadyKey", KeyboardShortcut.Empty, "Press to end a break between rounds (or the arming) at once: the next round starts in 3 seconds. None by default: the challenge emote does it too, and Shift+E at the Armourer.");
+            OwnSounds = Config.Bind("Crowd", "OwnSounds", true, "Play your own crowd sounds from BepInEx/config/Arena/crowd (.ogg, .mp3 or .wav): a file named like one of the arena's (crowd_cheer...) replaces it, any other is a voice from the stands, heard now and then when the crowd cheers (see readme.txt there). Off: only the arena's own.");
             CrowdVolume = Config.Bind("Crowd", "Volume", 0.5f, new ConfigDescription("How loud the crowd is.", new AcceptableValueRange<float>(0f, 1f)));
             WaystoneCost = Synced.Bind("Building", "WaystoneCost", Things.WaystoneDefault, "What an Arena Waystone costs to build with the hammer (at a workbench). " + DHack.Shared.Costs.Help);
             WaystoneCost.SettingChanged += (s, e) => Things.ApplyCost();

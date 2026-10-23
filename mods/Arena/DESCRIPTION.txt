@@ -18,6 +18,6 @@ What is in it
 - Duels: challenge another player at the Arena Master's desk, both put up a wager and walk into the ring, each taken to their own end of it; after a countdown PvP comes on for the fight (and goes back as it was after). The first to drop to a fifth of their health loses (nobody dies in a duel); the winner takes the pot less a tenth.
 - In the ring the bar at the top shows the crowd, the round and a row of what you would walk out with now (coins, spoils, trophies), a gold "+" rising from whatever grows, what a win would add, and a champion's own health bar. Between rounds it says what comes next, how to start it now (the challenge emote) and how to leave (the yield key twice).
 - Your titles (Pit Rat to Legend of the Arena), wins and records are kept on your character, and the Arena Master's History shows your last fights, how they ended and what they paid, beside this week's Long Road, today's paid wins and the Arena's Blessing.
-Settings: prizes, entry fees, real death, the map marker, the crowd (how full, gifts, announcer, volume), the yield key.
+Settings: prizes, entry fees, the fighters' health and damage (make it as brutal as you like), real death, the map marker, the crowd (how full, gifts, announcer, volume, your own recorded cheers and shouts), the yield key.
 Everyone in the world needs it installed (the waystone is a building piece, and everyone needs the arena to see it). Restart after installing.
 Crowd sounds from OpenGameArt: "Free Crowd Cheering Sounds" by Gregor Quendel (CC-BY 4.0) and "Crowd Shouting" by StarNinjas (CC0).

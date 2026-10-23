@@ -13,6 +13,9 @@ namespace Arena
     /// StarNinjas, CC0, both from OpenGameArt; carried in the mod) for the murmur of the stands, its cheers, roars and chants, with the game's
     /// own sounds on top: vikings yelling "yeah!" and laughing (Haldor's voice, many at once and each a little different), and the great bell
     /// that starts each round. Everything plays through the game's sound effects volume.
+    ///
+    /// A player's own sounds (OwnSounds) come from BepInEx/config/Arena/crowd: a file named like one of the recordings replaces it, and any
+    /// other is a voice from the stands ("Keep going, brother!"), heard now and then as the crowd cheers. Each player hears their own.
     /// </summary>
     internal static class Sound
     {
@@ -26,8 +29,12 @@ namespace Arena
         private static AudioClip[] _yea, _laugh;
         private static AudioClip _bell;
         private static bool _loading, _tried;
+        private static readonly string[] Recordings = { "crowd_ambience", "crowd_cheer", "crowd_cheer_short", "crowd_soft", "crowd_chant", "crowd_shout" };
+        private static readonly List<AudioClip> Own = new List<AudioClip>();   // the player's own voices from the stands
+        private static int _lastOwn = -1;
+        private static float _ownUntil, _nextOwn;
 
-        internal static bool Ready => Clips.Count > 0;
+        internal static bool Ready => !_loading && Clips.Count > 0;
 
         // ---- loading ------------------------------------------------------------------------------------------------------
 
@@ -43,7 +50,7 @@ namespace Arena
         {
             string dir = Path.Combine(BepInEx.Paths.CachePath, "Arena");
             Directory.CreateDirectory(dir);
-            foreach (string name in new[] { "crowd_ambience", "crowd_cheer", "crowd_cheer_short", "crowd_soft", "crowd_chant", "crowd_shout" })
+            foreach (string name in Recordings)
             {
                 string path = Path.Combine(dir, name + ".ogg");
                 using (Stream s = typeof(Sound).Assembly.GetManifestResourceStream("Sounds." + name + ".ogg"))
@@ -60,9 +67,61 @@ namespace Arena
                     Clips[name] = clip;
                 }
             }
+            if (Plugin.OwnSounds.Value) yield return LoadOwn();
             _loading = false;
-            Plugin.Log.LogInfo($"Arena sounds loaded: {Clips.Count}");
+            Plugin.Log.LogInfo($"Arena sounds loaded: {Clips.Count}" + (Own.Count > 0 ? $", and {Own.Count} voices of your own" : ""));
         }
+
+        private static readonly Dictionary<string, AudioType> Kinds = new Dictionary<string, AudioType>
+        {
+            { ".ogg", AudioType.OGGVORBIS }, { ".mp3", AudioType.MPEG }, { ".wav", AudioType.WAV },
+        };
+
+        /// <summary>The player's own sounds, from BepInEx/config/Arena/crowd (made, with a readme, the first time).</summary>
+        private static IEnumerator LoadOwn()
+        {
+            string dir = Path.Combine(BepInEx.Paths.ConfigPath, "Arena", "crowd");
+            string[] files;
+            try
+            {
+                Directory.CreateDirectory(dir);
+                string readme = Path.Combine(dir, "readme.txt");
+                if (!File.Exists(readme)) File.WriteAllText(readme, OwnReadme);
+                files = Directory.GetFiles(dir).Where(f => Kinds.ContainsKey(Path.GetExtension(f).ToLowerInvariant())).OrderBy(f => f).ToArray();
+            }
+            catch (System.Exception e) { Plugin.Log.LogWarning("Could not read your own crowd sounds: " + e.Message); yield break; }
+            foreach (string path in files)
+            {
+                string name = Path.GetFileNameWithoutExtension(path).ToLowerInvariant();
+                using (UnityWebRequest req = UnityWebRequestMultimedia.GetAudioClip("file:///" + path.Replace('\\', '/'), Kinds[Path.GetExtension(path).ToLowerInvariant()]))
+                {
+                    yield return req.SendWebRequest();
+                    AudioClip clip = req.result == UnityWebRequest.Result.Success ? DownloadHandlerAudioClip.GetContent(req) : null;
+                    if (clip == null || clip.length <= 0f) { Plugin.Log.LogWarning($"Could not load your crowd sound {Path.GetFileName(path)}: {req.error ?? "not a sound the game can play"}"); continue; }
+                    clip.name = "Arena_own_" + name;
+                    if (Recordings.Contains(name))
+                    {
+                        if (Clips.TryGetValue(name, out AudioClip old) && old != null) Object.Destroy(old);
+                        Clips[name] = clip;
+                        Plugin.Log.LogInfo($"Your {Path.GetFileName(path)} replaces the arena's {name}");
+                    }
+                    else Own.Add(clip);
+                }
+            }
+        }
+
+        private const string OwnReadme =
+            "Your own crowd for Quad's Arena. Put sound files here (.ogg, .mp3 or .wav) and restart the game; only you hear them.\r\n\r\n" +
+            "Voices: any file with a name of your own (keep_going_brother.mp3, cheer1.ogg...) is a voice from the stands, heard now and then\r\n" +
+            "when the crowd cheers or roars, more often the more they love you. Short shouts (1 to 4 seconds) work best.\r\n\r\n" +
+            "Replacing the arena's own: a file named like one of them takes its place:\r\n" +
+            "  crowd_ambience     the murmur of the stands (loops all fight long)\r\n" +
+            "  crowd_chant        the chant when the crowd is wild (loops)\r\n" +
+            "  crowd_cheer        a big roar (a champion falls, a round is won)\r\n" +
+            "  crowd_cheer_short  a quick cheer (a kill, an emote they like)\r\n" +
+            "  crowd_soft         applause, and (lower) the booing\r\n" +
+            "  crowd_shout        shouting under the big roar\r\n\r\n" +
+            "Volume: Crowd, Volume in com.quad.arena.cfg. To hear only the arena's own again, set Crowd, OwnSounds to false.\r\n";
 
         /// <summary>The game's own sounds and its effects volume, found once the world's prefabs are there.</summary>
         private static void FindGameSounds()
@@ -102,8 +161,8 @@ namespace Arena
         {
             if (_root != null) Object.Destroy(_root);
             _root = null; Voices.Clear(); _ambience = _chant = null;
-            foreach (AudioClip c in Clips.Values) if (c != null) Object.Destroy(c);
-            Clips.Clear();
+            foreach (AudioClip c in Clips.Values.Concat(Own)) if (c != null) Object.Destroy(c);
+            Clips.Clear(); Own.Clear(); _lastOwn = -1;
         }
 
         // ---- every frame: the stands' murmur rises and falls with the crowd ----------------------------------------------------
@@ -116,6 +175,12 @@ namespace Arena
             float vol = Plugin.CrowdVolume.Value;
             Fade(_ambience, open ? vol * (0.25f + 0.5f * excitement) : 0f);
             Fade(_chant, open && excitement > 0.75f ? vol * 0.6f * (excitement - 0.75f) * 4f : 0f);
+            if (open && Own.Count > 0 && Time.time > _nextOwn)
+            {
+                // between the cheers, one of the player's own voices now and then while the crowd is with them
+                _nextOwn = Time.time + Random.Range(10f, 22f);
+                if (excitement > 0.4f) OwnVoice(excitement);
+            }
             for (int i = Voices.Count - 1; i >= 0; i--)
             {
                 Voice v = Voices[i];
@@ -160,12 +225,24 @@ namespace Arena
             for (int i = 0; i < count; i++) Play(Any(_yea), volume * Random.Range(0.6f, 1f), 2f, 0.4f, Random.Range(0f, 0.6f), Random.Range(0.82f, 1.18f), 0f);
         }
 
+        /// <summary>Sometimes (chance 0..1) one of the player's own voices, whole, never the same twice running nor over another.</summary>
+        private static void OwnVoice(float chance)
+        {
+            if (Own.Count == 0 || Time.time < _ownUntil || Random.value >= chance) return;
+            int i = Random.Range(0, Own.Count);
+            if (Own.Count > 1 && i == _lastOwn) i = (i + 1 + Random.Range(0, Own.Count - 1)) % Own.Count;
+            _lastOwn = i;
+            float delay = Random.Range(0.2f, 0.9f);
+            _ownUntil = Time.time + delay + Own[i].length + 1.5f;
+            Play(Own[i], 1f, Own[i].length, 0.3f, delay, 1f, 0f);
+        }
+
         // ---- what the crowd does ---------------------------------------------------------------------------------------------
 
-        internal static void Cheer() { Play(Clip("crowd_cheer_short"), 0.9f, 3.5f, 1.2f); Yells(3, 0.5f); }
-        internal static void Roar() { Play(Clip("crowd_cheer"), 1f, 6f, 2f); Play(Clip("crowd_shout"), 0.55f, 5f, 2f); Yells(6, 0.6f); }
-        internal static void Applause() => Play(Clip("crowd_soft"), 0.8f, 4.5f, 1.5f);
-        internal static void Chant() => Play(Clip("crowd_chant"), 0.9f, 7f, 2f);
+        internal static void Cheer() { Play(Clip("crowd_cheer_short"), 0.9f, 3.5f, 1.2f); Yells(3, 0.5f); OwnVoice(0.35f); }
+        internal static void Roar() { Play(Clip("crowd_cheer"), 1f, 6f, 2f); Play(Clip("crowd_shout"), 0.55f, 5f, 2f); Yells(6, 0.6f); OwnVoice(0.8f); }
+        internal static void Applause() { Play(Clip("crowd_soft"), 0.8f, 4.5f, 1.5f); OwnVoice(0.25f); }
+        internal static void Chant() { Play(Clip("crowd_chant"), 0.9f, 7f, 2f); OwnVoice(0.5f); }
 
         internal static void Boo()
         {

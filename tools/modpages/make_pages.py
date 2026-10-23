@@ -53,7 +53,7 @@ PARTS = ["screenshots", "how-to-use", "other-mods", "multiplayer"]
 # the languages our mods ship (the game's names: every language with 2%+ of Valheim's players), as a player reads their own
 LANGUAGES = {"English": "English", "Russian": "Русский (Russian)", "German": "Deutsch (German)", "Chinese": "简体中文 (Chinese)",
              "Portuguese_Brazilian": "Português do Brasil (Portuguese)", "Spanish": "Español (Spanish)", "French": "Français (French)",
-             "Polish": "Polski (Polish)", "Turkish": "Türkçe (Turkish)"}
+             "Polish": "Polski (Polish)", "Turkish": "Türkçe (Turkish)", "Vietnamese": "Tiếng Việt (Vietnamese)"}
 GH_ONLY, GH_END = "<!-- GITHUB-ONLY -->", "<!-- END GITHUB-ONLY -->"
 COMMITTED = "--committed" in sys.argv
 

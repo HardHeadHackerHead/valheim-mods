@@ -39,6 +39,42 @@ namespace Arena
         }
     }
 
+    /// <summary>
+    /// FoeHealthPercent: an arena fighter's health is the game's for its level times the share kept on its ZDO. The game works its health out
+    /// again when its level is set and when another game takes it over unhurt, so this follows each time.
+    /// </summary>
+    [HarmonyPatch(typeof(Character), "SetupMaxHealth")]
+    internal static class Character_SetupMaxHealth_Arena
+    {
+        private static void Postfix(Character __instance)
+        {
+            if (__instance.IsPlayer()) return;
+            ZNetView nv = __instance.GetComponent<ZNetView>();
+            if (nv == null || !nv.IsValid()) return;
+            float share = nv.GetZDO().GetFloat(Contest.FoeHealthKey, 1f);
+            if (share > 0f && !Mathf.Approximately(share, 1f)) __instance.SetMaxHealth(__instance.GetMaxHealth() * share);
+        }
+    }
+
+    /// <summary>
+    /// FoeDamagePercent: a hit on a player from an arena fighter is scaled, on the hit player's game (where the damage is taken). The whole
+    /// hit, untyped damage too (docs/modding-pitfalls.md).
+    /// </summary>
+    [HarmonyPatch(typeof(Character), "RPC_Damage")]
+    internal static class Character_RPC_Damage_Arena
+    {
+        private static void Prefix(Character __instance, HitData hit)
+        {
+            if (hit == null || !__instance.IsPlayer()) return;
+            float scale = Plugin.FoeDamage.Value / 100f;
+            if (Mathf.Approximately(scale, 1f)) return;
+            Character by = hit.GetAttacker();
+            if (by == null || by.IsPlayer()) return;
+            ZNetView nv = by.GetComponent<ZNetView>();
+            if (nv != null && nv.IsValid() && nv.GetZDO().GetBool("dh_arena")) hit.m_damage.Modify(scale);
+        }
+    }
+
     /// <summary>Blocks and parries in a contest please the crowd.</summary>
     [HarmonyPatch(typeof(Humanoid), "BlockAttack")]
     internal static class Humanoid_BlockAttack_Crowd

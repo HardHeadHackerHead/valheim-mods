@@ -7,7 +7,7 @@
 
 **The Arena: a stone colosseum in your world where you fight waves of monsters and champions for the crowd, for gold and for glory, or duel your friends (PvP), like the arena in the first Fable.**
 
-![version: 0.5.0](https://img.shields.io/badge/version-0.5.0-3b6e8f?style=flat-square)  ![multiplayer: everyone + host](https://img.shields.io/badge/multiplayer-everyone%20%2B%20host-7a5c2e?style=flat-square)  ![made with: Claude Code](https://img.shields.io/badge/made%20with-Claude%20Code-c26a3d?style=flat-square)
+![version: 0.5.1](https://img.shields.io/badge/version-0.5.1-3b6e8f?style=flat-square)  ![multiplayer: everyone + host](https://img.shields.io/badge/multiplayer-everyone%20%2B%20host-7a5c2e?style=flat-square)  ![made with: Claude Code](https://img.shields.io/badge/made%20with-Claude%20Code-c26a3d?style=flat-square)
 
 <!-- GITHUB-ONLY -->[Thunderstore](https://thunderstore.io/c/valheim/p/Quads_Lab/Quads_Arena/)  ·  <!-- END GITHUB-ONLY -->[Source code](https://github.com/HardHeadHackerHead/valheim-mods/tree/main/mods/Arena)  ·  [Report a bug](https://github.com/HardHeadHackerHead/valheim-mods/issues/new?template=bug.yml&title=%5BQuad%27s%20Arena%5D%20)  ·  [Discord](https://discord.gg/EwTjQxEZPy)
 
@@ -100,12 +100,12 @@ Found a clash with another mod? [Tell us](https://github.com/HardHeadHackerHead/
 <!-- HAND-WRITTEN: multiplayer -->
 The host's game picks where the Arena stands and saves it with the world: **on a dedicated server, the server needs the mod** or no Arena is ever placed. Each game draws the colosseum itself, so players without the mod see no Arena. A fight is shared with the players nearby (announcer, crowd, gates), so watchers see the same fight. Duels need the mod on both players' games.
 
-**The host decides:** rewards, entry fee, whether death is real, respawning at the Arena, tiers, gifts, leftover meals and hunger in the ring. While you play on their world their values replace yours (your file isn't changed); a host without the mod leaves everyone their own.
+**The host decides:** rewards, entry fee, the fighters' health and damage, whether death is real, respawning at the Arena, tiers, gifts, leftover meals and hunger in the ring. While you play on their world their values replace yours (your file isn't changed); a host without the mod leaves everyone their own.
 <!-- END HAND-WRITTEN: multiplayer -->
 
 ## 🌍 Languages
 
-**English, Русский (Russian), Deutsch (German), 简体中文 (Chinese), Português do Brasil (Portuguese), Español (Spanish), Français (French), Polski (Polish), Türkçe (Turkish).** It follows the game's own language setting.
+**English, Русский (Russian), Deutsch (German), 简体中文 (Chinese), Português do Brasil (Portuguese), Español (Spanish), Français (French), Polski (Polish), Türkçe (Turkish), Tiếng Việt (Vietnamese).** It follows the game's own language setting.
 
 The translations were made with AI, so a few words may be off. To correct one, or to add your language, put a file in `BepInEx/config/translations/com.quad.arena/` named after the game's name for the language (`German.json`, `Italian.json`, `Japanese.json`...) with only the lines you change, copied from [English.json](https://github.com/HardHeadHackerHead/valheim-mods/blob/main/mods/Arena/translations/English.json) (it wins over the built-in one). Or [tell us](https://github.com/HardHeadHackerHead/valheim-mods/issues/new?template=bug.yml&title=%5BQuad%27s%20Arena%5D%20Translation%3A%20) the better words and we'll put them in for everyone.
 
@@ -120,6 +120,8 @@ In `BepInEx/config/com.quad.arena.cfg`, made the first time the game runs with t
 | `RewardPercent` | `100` | How big the prizes are (percent). In multiplayer the server's value applies. |
 | `DeathIsReal` | `true` | You can die in a contest. Your tombstone is carried just outside the ring for you to collect, and the purse and stake are lost. Off: beaten, you are carried out at a third of your health with half your purse. (Duels never kill.) In multiplayer the server's value applies. |
 | `EntryFeePercent` | `100` | How much it costs to enter a contest (percent of the usual: 150 coins for the Long Road; today's trial 60, a Champion Bout 50 and the Endless Horde 40 in the Meadows, more in each land after). The first fight of a character is free. In multiplayer the server's value applies. |
+| `FoeHealthPercent` | `100` | How much health the arena's fighters have (percent of the usual), champions too, in every contest. 200 takes twice the beating. In multiplayer the server's value applies. |
+| `FoeDamagePercent` | `100` | How hard the arena's fighters hit (percent of the usual), champions too, in every contest. On top of the game's own difficulty. In multiplayer the server's value applies. |
 | `RespawnAtArena` | `true` | Fall in a contest and you rise again in the arena's forecourt (not at your bed). In multiplayer the server's value applies. |
 | `MapPin` | `true` | The Arena is marked on your map. |
 | `AllTiers` | `false` | Every land's fighters can be chosen in a Champion Bout or the Endless Horde at once (normally each opens as you beat the boss before it). For trying them out: the arena still pays metals and trophies only from lands your world has reached, today's trial stays among them, and what the crowd throws from a land your world has not reached is only lent (it goes back after the fight). In multiplayer the server's value applies. |
@@ -142,6 +144,7 @@ In `BepInEx/config/com.quad.arena.cfg`, made the first time the game runs with t
 | `Spectators` | `true` | A crowd fills the stands during a fight. |
 | `FullHouse` | `30` | How full the stands are during a fight (percent of the seats). Fewer is lighter on the frame rate. |
 | `Announcer` | `true` | The announcer's calls across the top of the screen. |
+| `OwnSounds` | `true` | Play your own crowd sounds from BepInEx/config/Arena/crowd (.ogg, .mp3 or .wav): a file named like one of the arena's (crowd_cheer...) replaces it, any other is a voice from the stands, heard now and then when the crowd cheers (see readme.txt there). Off: only the arena's own. |
 | `Volume` | `0.5` | How loud the crowd is. |
 
 ## 🤖 Made with AI
@@ -186,8 +189,8 @@ helps me make new mods and keep improving the ones you already play. It's 100% o
 
 ## 📜 Recent changes
 
+- **0.5.1** Make the arena as brutal as you like: two new settings, FoeHealthPercent and FoeDamagePercent (Arena section, 25 to 1000, default 100), set how much health the arena's fighters have and how hard they hit, champions too, in every contest; in multiplayer the server's values apply. Your own crowd: put sound files (.ogg, .mp3 or .wav) in BepInEx/config/Arena/crowd and the stands shout them now and then when they cheer, more often the more they love you (record "Keep going, brother!" in your own language); a file named like one of the arena's sounds (crowd_cheer, crowd_ambience...) replaces it. Only you hear your own sounds; a readme.txt in that folder lists the names, and Crowd, OwnSounds turns them off. New language: Vietnamese (Tiếng Việt), with thanks to the player who translated its first lines.
 - **0.5.0** A big update. Prizes: what you win waits with the Arena Master, on his Prize tab (only yours, take what you like); fewer coins, and instead each land's spoils (its metal, hides and rarer things, only from lands your world has reached): the Long Road pays a land's spoils in full the first time you beat it each week, Today's Trial on its first win of the day, a Champion Bout and every fifth wave of the Endless Horde for three paid wins a day; and the Long Road sends you out with the Arena's Blessing, stronger the further you got. Fairer fights: on the Long Road never more than two fighters out at once, smaller rounds, no flyers or elites among them, champions no stronger than their land's own big creatures, gear that keeps pace (a free upgrade after every round, cheaper upgrades, better pieces put on as you take them), kinder food; the Endless Horde climbs instead of hitting walls; players watching no longer make the fight harder. A new HUD: a panel at the top with the round, the crowd, the foes, a champion's health and your winnings as they grow, and between rounds the clock, what comes next and the keys to start now (the challenge emote) or leave. The Arena Master's window has your History, this week's record and the Blessing. Smoother: the arena's fires make no smoke and cast no shadows, the crowd's capes hang still, no more searches of everything loaded. Also: the crowd's gifts land by the wall and are cleared after the fight, the bars along the stands follow the wall, backing out before the first round gives your fee back, and the Hall of Champions scores the run, not its coins (details: docs/arena-0.5.0-notes.md on GitHub).
 - **0.4.5** Smoother near the arena in a big world: every few seconds it searched everything the game had loaded for trees to clear and chests left behind, which could freeze the game for up to a tenth of a second with a big build nearby; now it looks only at what stands near the arena. Nothing else changes.
-- **0.4.4** For other mods: a small read-only Arena.Api (docs/arena-api.md) says whether a contest is on and who is fighting, where the arena and its stands are, and how the last contest ended, on every player's game. A fighter's game now tells everyone what kind of contest it is and how it ended, so update together to see each other's fights through it. Nothing changes in the game itself.
 
 <!-- GITHUB-ONLY -->[Every change](CHANGELOG.txt)<!-- END GITHUB-ONLY --><!-- THUNDERSTORE-ONLY: Every change is on the Changelog tab. -->

@@ -545,6 +545,9 @@ namespace Arena
 
         // ---- the fighters --------------------------------------------------------------------------------------------------------
 
+        /// <summary>On a fighter's ZDO: how many times its usual health it has (the server's FoeHealthPercent when it came out).</summary>
+        internal const string FoeHealthKey = "dh_arena_hp";
+
         private static readonly System.Reflection.MethodInfo SetTarget = HarmonyLib.AccessTools.Method(typeof(MonsterAI), "SetTarget", new[] { typeof(Character) });
 
         private static void Spawn(Item item, Player player)
@@ -568,6 +571,10 @@ namespace Arena
             var foe = new Foe { Go = go, Char = go.GetComponent<Character>(), Champion = item.Champion, Prefab = item.Prefab, LastPos = at, Level = item.Level };
             if (foe.Char != null)
             {
+                // the server's FoeHealthPercent, kept on the fighter so its health stays scaled on whichever game holds it (Patches: Character_SetupMaxHealth_Arena)
+                ZNetView nv = go.GetComponent<ZNetView>();
+                float hp = Plugin.FoeHealth.Value / 100f;
+                if (nv != null && nv.IsValid() && !Mathf.Approximately(hp, 1f)) nv.GetZDO().Set(FoeHealthKey, hp);
                 foe.Char.SetLevel(item.Level);
                 if (!string.IsNullOrEmpty(item.Name)) foe.Char.m_name = Words.Show(item.Name);
             }
