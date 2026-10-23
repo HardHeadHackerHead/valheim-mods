@@ -22,7 +22,7 @@ namespace Arena
         public const string Guid = "com.quad.arena";
         public const string OldGuid = "com.dhack.arena"; // (its id until 2026-10: settings move over by themselves, see Shared/Migration.cs)
         public const string Name = "Arena";
-        public const string Version = "0.5.1";
+        public const string Version = "0.5.2";
 
         internal static Plugin Instance;
         internal static ManualLogSource Log;
@@ -31,6 +31,7 @@ namespace Arena
         private static bool _tellNoServer;   // the server hasn't the mod: say so once the player is in the world
 
         internal static ConfigEntry<float> Rewards, CrowdVolume, CrowdSize, EntryFee, MealFreshness, RingHunger, FoeHealth, FoeDamage;
+        internal static ConfigEntry<int> MaxStake, MaxWager;
         internal static ConfigEntry<bool> OwnSounds;
         internal static ConfigEntry<bool> RealDeath, Spectators, Announcer, Gifts, MapPin, AllTiers, RespawnAtArena;
         internal static ConfigEntry<KeyboardShortcut> YieldKey, ReadyKey;
@@ -50,6 +51,8 @@ namespace Arena
             EntryFee = Synced.Add(Config.Bind("Arena", "EntryFeePercent", 100f, new ConfigDescription("How much it costs to enter a contest (percent of the usual: 150 coins for the Long Road; today's trial 60, a Champion Bout 50 and the Endless Horde 40 in the Meadows, more in each land after). The first fight of a character is free." + ServerSays, new AcceptableValueRange<float>(0f, 500f))));
             FoeHealth = Synced.Add(Config.Bind("Arena", "FoeHealthPercent", 100f, new ConfigDescription("How much health the arena's fighters have (percent of the usual), champions too, in every contest. 200 takes twice the beating." + ServerSays, new AcceptableValueRange<float>(25f, 1000f))));
             FoeDamage = Synced.Add(Config.Bind("Arena", "FoeDamagePercent", 100f, new ConfigDescription("How hard the arena's fighters hit (percent of the usual), champions too, in every contest. On top of the game's own difficulty." + ServerSays, new AcceptableValueRange<float>(25f, 1000f))));
+            MaxStake = Synced.Add(Config.Bind("Arena", "MaxStake", 500, new ConfigDescription("The most a player may stake on themselves in a Champion Bout or today's trial (coins; a win pays it double, so a high limit pays out more). The Arena Master's slider goes from nothing up to this, or what you carry. 0: no stakes." + ServerSays, new AcceptableValueRange<int>(0, 100000))));
+            MaxWager = Synced.Add(Config.Bind("Arena", "MaxWager", 1000, new ConfigDescription("The most each player may wager on a duel (coins; the winner takes both less a tenth, so nothing new is made). The slider goes up to this, or what you carry. 0: no wagers." + ServerSays, new AcceptableValueRange<int>(0, 100000))));
             RespawnAtArena = Synced.Add(Config.Bind("Arena", "RespawnAtArena", true, "Fall in a contest and you rise again in the arena's forecourt (not at your bed)." + ServerSays));
             MapPin = Config.Bind("Arena", "MapPin", true, "The Arena is marked on your map.");
             AllTiers = Synced.Add(Config.Bind("Arena", "AllTiers", false, "Every land's fighters can be chosen in a Champion Bout or the Endless Horde at once (normally each opens as you beat the boss before it). For trying them out: the arena still pays metals and trophies only from lands your world has reached, today's trial stays among them, and what the crowd throws from a land your world has not reached is only lent (it goes back after the fight)." + ServerSays));

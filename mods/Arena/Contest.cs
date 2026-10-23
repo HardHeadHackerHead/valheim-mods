@@ -190,6 +190,7 @@ namespace Arena
             tier = Mathf.Clamp(tier, 0, Roster.TierNames.Length - 1);
             if (Roster.Pool(tier).Count == 0) return T("arena_no_one");
             if (kind == KindOf.Endless || kind == KindOf.Road) stake = 0;
+            stake = Mathf.Clamp(stake, 0, Plugin.MaxStake.Value);   // (the server's limit)
             bool lent = kind == KindOf.Road || kind == KindOf.Trial;
             if (lent && Kit.Stowed(player)) return T("arena_still_held");
             Inventory inv = player.GetInventory();

@@ -139,6 +139,41 @@ namespace Arena
             return trough;
         }
 
+        /// <summary>
+        /// A slider over whole steps 0..steps: a sunken trough, a gold fill and a handle. change hears each new step while it is dragged (the
+        /// window is not built again for it, so the drag goes on).
+        /// </summary>
+        internal static Slider Slider(Transform parent, Vector2 pos, Vector2 size, int steps, int value, Action<int> change)
+        {
+            RectTransform r = Rect(parent, "Slider", new Vector2(0f, 1f), new Vector2(0f, 1f), pos, size);
+            RectTransform trough = Rect(r, "Trough", Vector2.zero, Vector2.zero, Vector2.zero, Vector2.zero);
+            trough.anchorMin = new Vector2(0f, 0.3f); trough.anchorMax = new Vector2(1f, 0.7f); trough.offsetMin = trough.offsetMax = Vector2.zero;
+            Image back = trough.gameObject.AddComponent<Image>();
+            if (_sunken != null) Copy(_sunken, back); else back.color = new Color(0f, 0f, 0f, 0.6f);
+            RectTransform fillArea = Rect(trough, "Fill Area", Vector2.zero, Vector2.zero, Vector2.zero, Vector2.zero);
+            fillArea.anchorMin = Vector2.zero; fillArea.anchorMax = Vector2.one; fillArea.offsetMin = new Vector2(2f, 2f); fillArea.offsetMax = new Vector2(-2f, -2f);
+            RectTransform fill = Rect(fillArea, "Fill", Vector2.zero, Vector2.zero, Vector2.zero, Vector2.zero);
+            fill.anchorMin = Vector2.zero; fill.anchorMax = new Vector2(0f, 1f); fill.offsetMin = fill.offsetMax = Vector2.zero;
+            Image fillImg = fill.gameObject.AddComponent<Image>();
+            fillImg.color = new Color(0.85f, 0.62f, 0.2f, 0.9f); fillImg.raycastTarget = false;
+            RectTransform slide = Rect(r, "Handle Slide Area", Vector2.zero, Vector2.zero, Vector2.zero, Vector2.zero);
+            slide.anchorMin = Vector2.zero; slide.anchorMax = Vector2.one; slide.offsetMin = new Vector2(8f, 0f); slide.offsetMax = new Vector2(-8f, 0f);
+            RectTransform handle = Rect(slide, "Handle", Vector2.zero, new Vector2(0.5f, 0.5f), Vector2.zero, new Vector2(16f, 0f));
+            handle.anchorMin = new Vector2(0f, 0f); handle.anchorMax = new Vector2(0f, 1f);
+            Image knob = handle.gameObject.AddComponent<Image>();
+            Image like = _button != null ? _button.GetComponent<Image>() : null;
+            if (like != null) Copy(like, knob);
+            knob.color = _bright;
+            var s = r.gameObject.AddComponent<Slider>();
+            s.direction = UnityEngine.UI.Slider.Direction.LeftToRight;
+            s.fillRect = fill; s.handleRect = handle; s.targetGraphic = knob;
+            s.wholeNumbers = true; s.minValue = 0f; s.maxValue = Mathf.Max(1, steps);
+            s.SetValueWithoutNotify(Mathf.Clamp(value, 0, steps));
+            s.interactable = steps > 0;
+            s.onValueChanged.AddListener(v => change(Mathf.RoundToInt(v)));
+            return s;
+        }
+
         internal static void SetBar(RectTransform bar, float value, Color? colour = null)
         {
             if (bar == null || bar.childCount == 0) return;

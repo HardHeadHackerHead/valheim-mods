@@ -28,8 +28,6 @@ namespace Arena
         private static string _message = "";
         private static Vector3 _openedAt;
         private static float _nextRefresh;
-        private static readonly int[] Stakes = { 0, 10, 50, 100, 250, 500 };
-        private static readonly int[] Wagers = { 0, 10, 50, 100, 250 };
 
         private const float W = 760f, Pad = 34f;
 
@@ -137,6 +135,24 @@ namespace Arena
             return y - height - 8f;
         }
 
+        /// <summary>
+        /// A bet from nothing up to most (the server's limit, or what you can pay): a slider in round steps (finer for small sums), its top
+        /// step most itself (all in), with the sum beside it. Dragging only changes the sum shown, never builds the window again.
+        /// </summary>
+        private static float Bet(Transform w, float y, int most, int value, System.Action<int> set)
+        {
+            most = Mathf.Max(0, most);
+            int step = most <= 200 ? 5 : most <= 1000 ? 10 : most <= 5000 ? 50 : most <= 20000 ? 100 : 500;
+            int steps = Mathf.CeilToInt(most / (float)step);
+            int At(int i) => Mathf.Min(i * step, most);
+            string Say(int v) => v <= 0 ? T("arena_none") : Gold(T("arena_coins", v));
+            const float label = 150f;
+            TMP_Text shown = Ui.Fit(Ui.Label(w, Say(value), new Vector2(W - Pad - label, y - 6f), new Vector2(label, 26f), 18f, Ui.Text, Ui.Serif, TextAlignmentOptions.TopRight));
+            int now = value >= most ? steps : Mathf.RoundToInt(value / (float)step);
+            Ui.Slider(w, new Vector2(Pad, y), new Vector2(W - 2 * Pad - label - 12f, 34f), steps, now, i => { int v = At(i); set(v); shown.text = Say(v); });
+            return y - 34f - 8f;
+        }
+
         // ---- the contests --------------------------------------------------------------------------------------------------------
 
         private static void Contests(Transform w, float y)
@@ -190,8 +206,8 @@ namespace Arena
             if (staking)
             {
                 y = Heading(w, T("arena_head_stake") + "  " + Hint(T("arena_head_stake_hint", coins)), y);
-                if (_stake > coins - fee) _stake = 0;
-                y = Choices(w, y, Stakes, s => s == 0 ? T("arena_none") : s.ToString(), s => s == _stake, s => _stake = s, s => s <= coins - fee);
+                _stake = Mathf.Clamp(_stake, 0, Mathf.Max(0, Mathf.Min(Plugin.MaxStake.Value, coins - fee)));
+                y = Bet(w, y, Mathf.Min(Plugin.MaxStake.Value, coins - fee), _stake, v => _stake = v);
             }
 
             float mult = Rules.MultiplierOf(fists, noFood, hard, timed) * 1.15f * Plugin.Rewards.Value / 100f;
@@ -246,9 +262,9 @@ namespace Arena
             if (Duel.Active) { Line(w, T("arena_duel_on"), y, Ui.Good); return; }
 
             int coins = me != null ? me.GetInventory().CountItems("$item_coins") : 0;
-            if (_wager > coins) _wager = 0;
+            _wager = Mathf.Clamp(_wager, 0, Mathf.Max(0, Mathf.Min(Plugin.MaxWager.Value, coins)));
             y = Heading(w, T("arena_head_wager") + "  " + Hint(T("arena_head_wager_hint", coins)), y);
-            y = Choices(w, y, Wagers, v => v == 0 ? T("arena_none") : v.ToString(), v => v == _wager, v => _wager = v, v => v <= coins);
+            y = Bet(w, y, Mathf.Min(Plugin.MaxWager.Value, coins), _wager, v => _wager = v);
 
             y = Heading(w, T("arena_head_at_arena"), y);
             var others = Player.GetAllPlayers().Where(p => p != null && p != me && Travel.Distance(p.transform.position) < 90f).ToList();

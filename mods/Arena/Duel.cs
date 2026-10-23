@@ -100,6 +100,7 @@ namespace Arena
             if (me == null || other == null) return T("arena_not_now");
             if (Active || Contest.Active) return T("arena_already_fighting");
             if (Net.RemoteFight) return T("arena_busy_wait_ring", Net.BusyText);
+            wager = Mathf.Clamp(wager, 0, Plugin.MaxWager.Value);   // (the server's limit)
             if (me.GetInventory().CountItems("$item_coins") < wager) return T("arena_no_coins_wager");
             _outTo = other.GetOwner(); _outWager = wager; _outAt = at; _outUntil = Time.unscaledTime + 30f;
             var pkg = new ZPackage();

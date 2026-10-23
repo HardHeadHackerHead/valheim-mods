@@ -153,36 +153,52 @@ namespace Arena
         internal static readonly AccessTools.FieldRef<ZNetScene, Dictionary<ZDO, ZNetView>> Instances =
             AccessTools.FieldRefAccess<ZNetScene, Dictionary<ZDO, ZNetView>>("m_instances");
         private static readonly List<GameObject> _doomed = new List<GameObject>();
+        private static readonly List<Collider> _colliders = new List<Collider>();
+        private static HashSet<int> _grown;   // the prefabs the world generator scatters (trees, rocks, bushes...), by name hash
         private static int _lastLoaded = -1;
+        private static float _nextFull;
+        internal static int LastCleared;
+
+        /// <summary>The world generator's vegetation prefabs: anything of these standing on the arena's ground goes, whatever it is made of.</summary>
+        private static HashSet<int> Grown()
+        {
+            if (_grown != null || ZoneSystem.instance == null) return _grown;
+            _grown = new HashSet<int>(ZoneSystem.instance.m_vegetation.Where(v => v != null && v.m_prefab != null).Select(v => v.m_prefab.name.GetStableHashCode()));
+            return _grown;
+        }
 
         /// <summary>
-        /// Takes away the trees, rocks, bushes and anything else the world grew inside the footprint. Walks the game's own list of loaded
-        /// objects and looks only at those standing near the arena (six scene-wide searches every 4 s cost 60-75 ms in a big build).
+        /// Takes away the trees, rocks, bushes and anything else the world grew on the footprint. A tree goes when its trunk stands on it (the
+        /// trees around the arena stay, whatever their crowns lean over); a rock when any of it lies on it (a boulder half under the wall).
+        /// Walks the game's own list of loaded objects and looks only at those standing near the arena (six scene-wide searches every 4 s
+        /// cost 60-75 ms in a big build); again when more has loaded, and every 15 s whatever (the count alone can miss a swap).
         /// </summary>
         private static void Clear()
         {
             ZNetScene scene = ZNetScene.instance;
             if (scene == null) return;
-            // (nothing new loaded since the last time: nothing new can have grown there)
             int loaded = Instances(scene).Count;
-            if (loaded == _lastLoaded) return;
+            if (loaded == _lastLoaded && Time.time < _nextFull) return;
             _lastLoaded = loaded;
+            _nextFull = Time.time + 15f;
             float reach = Mathf.Max(Layout.Footprint, Mathf.Abs(Layout.CourtZ0), Mathf.Abs(Layout.CourtZ1), Mathf.Abs(Layout.CourtX0), Mathf.Abs(Layout.CourtX1)) + 3f;
-            float reach2 = reach * reach;
+            float far = reach + 15f, far2 = far * far;   // (a big rock's middle can stand well outside while its body lies across the wall)
             Vector3 o = Site.Origin;
+            HashSet<int> grown = Grown();
             _doomed.Clear();
             foreach (ZNetView view in Instances(scene).Values)
             {
                 if (view == null) continue;
                 Vector3 at = view.transform.position;
                 float dx = at.x - o.x, dz = at.z - o.z;
-                if (dx * dx + dz * dz > reach2) continue;
+                if (dx * dx + dz * dz > far2 || !view.IsValid()) continue;
                 GameObject go = view.gameObject;
-                if (go.GetComponent<TreeBase>() == null && go.GetComponent<TreeLog>() == null && go.GetComponent<MineRock>() == null
-                    && go.GetComponent<MineRock5>() == null && go.GetComponent<Destructible>() == null && go.GetComponent<Pickable>() == null) continue;
+                bool tree = go.GetComponent<TreeBase>() != null || go.GetComponent<TreeLog>() != null;
+                bool natural = tree || (grown != null && grown.Contains(view.GetZDO().GetPrefab()))
+                    || go.GetComponent<MineRock>() != null || go.GetComponent<MineRock5>() != null || go.GetComponent<Destructible>() != null || go.GetComponent<Pickable>() != null;
+                if (!natural) continue;
                 if (go.GetComponent<Piece>() != null || go.GetComponent<WearNTear>() != null || go.GetComponent<Character>() != null || go.GetComponent<ItemDrop>() != null) continue;
-                if (!Layout.InFootprint(Site.Local(at), 1.5f) || !view.IsValid()) continue;
-                _doomed.Add(go);
+                if (Layout.InFootprint(Site.Local(at), 1.5f) || (!tree && Overlaps(go))) _doomed.Add(go);
             }
             foreach (GameObject go in _doomed)   // (destroying changes the list being walked: gather first)
             {
@@ -191,8 +207,35 @@ namespace Arena
                 if (!view.IsOwner()) view.ClaimOwnership();
                 ZNetScene.instance.Destroy(go);
             }
-            if (_doomed.Count > 0) Plugin.Log.LogInfo($"Cleared {_doomed.Count} trees, rocks and plants from the arena's ground");
+            if (_doomed.Count > 0)
+            {
+                LastCleared += _doomed.Count;
+                Plugin.Log.LogInfo($"Cleared {_doomed.Count} trees, rocks and plants from the arena's ground");
+            }
             _doomed.Clear();
+        }
+
+        /// <summary>Whether any of a rock's solid body (its colliders' boxes, at their corners and middle) lies on the footprint.</summary>
+        private static bool Overlaps(GameObject go)
+        {
+            go.GetComponentsInChildren(false, _colliders);
+            try
+            {
+                foreach (Collider c in _colliders)
+                {
+                    if (c == null || !c.enabled || c.isTrigger) continue;
+                    Bounds b = c.bounds;
+                    // a 3 x 3 grid over the box seen from above: its corners, the middles of its sides and its middle
+                    for (int i = 0; i < 3; i++)
+                        for (int j = 0; j < 3; j++)
+                        {
+                            var p = new Vector3(Mathf.Lerp(b.min.x, b.max.x, i * 0.5f), Site.Origin.y, Mathf.Lerp(b.min.z, b.max.z, j * 0.5f));
+                            if (Layout.InFootprint(Site.Local(p), 0f)) return true;
+                        }
+                }
+                return false;
+            }
+            finally { _colliders.Clear(); }
         }
 
         /// <summary>For testing: shape the ground again.</summary>
