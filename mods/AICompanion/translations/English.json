@@ -130,6 +130,7 @@
   "aicompanion_menu_fights_within_about": "Of it or you (all your companions). Living at home it also fights anything that comes into its home.",
   "aicompanion_menu_check_potions": "Drinks healing potions when hurt",
   "aicompanion_menu_check_protect": "Protects you first (goes for what attacks you)",
+  "aicompanion_menu_check_flee_strong": "Runs from enemies too strong for it (off: stands and fights)",
   "aicompanion_menu_habits": "Habits",
   "aicompanion_menu_check_loot": "Picks things up off the ground (what, in the Gear tab)",
   "aicompanion_menu_check_autohome": "Comes along when you head out, and lives at home again when you're back (with a bed)",

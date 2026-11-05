@@ -130,6 +130,7 @@
   "aicompanion_menu_fights_within_about": "De lui ou de vous (pour tous vos compagnons). Quand il vit à la maison, il combat aussi tout ce qui y pénètre.",
   "aicompanion_menu_check_potions": "Boit des potions de soin quand il est blessé",
   "aicompanion_menu_check_protect": "Vous protège d'abord (s'en prend à ce qui vous attaque)",
+  "aicompanion_menu_check_flee_strong": "Fuit les ennemis trop forts pour lui (désactivé : tient bon et se bat)",
   "aicompanion_menu_habits": "Habitudes",
   "aicompanion_menu_check_loot": "Ramasse des objets au sol (lesquels : onglet Équipement)",
   "aicompanion_menu_check_autohome": "Vous suit quand vous partez, et revit à la maison à votre retour (s'il a un lit)",

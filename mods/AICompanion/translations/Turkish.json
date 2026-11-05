@@ -130,6 +130,7 @@
   "aicompanion_menu_fights_within_about": "Ona ya da sana (tüm yoldaşların için). Evde yaşarken evine giren her şeyle de savaşır.",
   "aicompanion_menu_check_potions": "Yaralanınca şifa şarabı içer",
   "aicompanion_menu_check_protect": "Önce seni korur (sana saldıranın üstüne gider)",
+  "aicompanion_menu_check_flee_strong": "Kendisi için fazla güçlü düşmanlardan kaçar (kapalı: yerinde durup savaşır)",
   "aicompanion_menu_habits": "Alışkanlıklar",
   "aicompanion_menu_check_loot": "Yerdeki eşyaları toplar (neleri, Teçhizat sekmesinde)",
   "aicompanion_menu_check_autohome": "Yola çıktığında seninle gelir, döndüğünde yeniden evde yaşar (yatağı varsa)",

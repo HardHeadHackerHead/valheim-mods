@@ -130,6 +130,7 @@
   "aicompanion_menu_fights_within_about": "Um ihn oder dich (gilt für alle deine Gefährten). Lebt er zu Hause, bekämpft er auch alles, was in sein Zuhause eindringt.",
   "aicompanion_menu_check_potions": "Trinkt Heiltränke, wenn er verletzt ist",
   "aicompanion_menu_check_protect": "Schützt zuerst dich (greift an, was dich angreift)",
+  "aicompanion_menu_check_flee_strong": "Flieht vor Gegnern, die zu stark für ihn sind (aus: bleibt und kämpft)",
   "aicompanion_menu_habits": "Gewohnheiten",
   "aicompanion_menu_check_loot": "Hebt Dinge vom Boden auf (was genau: Reiter Ausrüstung)",
   "aicompanion_menu_check_autohome": "Kommt mit, wenn du aufbrichst, und lebt wieder zu Hause, wenn du zurück bist (mit einem Bett)",

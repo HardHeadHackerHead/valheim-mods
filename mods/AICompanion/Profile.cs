@@ -20,7 +20,7 @@ namespace AICompanion
         public int Order, Style = 1, Retreat = 30, Kills, Jobs, Radius = 30, Model;
         public int Ration = 12, DutyDest;
         public bool Frugal = true;
-        public bool Potions = true, Protect = true, UseJev = true, Loot = true, Friends, Pantry, Chatty = true, Stow = true, AutoHome = true, HomeSet, Armory = true;
+        public bool Potions = true, Protect = true, UseJev = true, FleeStrong = true, Loot = true, Friends, Pantry, Chatty = true, Stow = true, AutoHome = true, HomeSet, Armory = true;
         public Vector3 HomeSpot;
         public string MissionText = "", DutiesText = "";
         public int PickList = (int)AICompanion.Loot.Default;
@@ -103,7 +103,7 @@ namespace AICompanion
                 Id = Companion.IdOf(c), World = WorldId, Name = Companion.NameOf(c),
                 Order = z.GetInt(Keys.Order, 0), Style = z.GetInt(Keys.Style, 1), Retreat = z.GetInt(Keys.Retreat, 30), Kills = z.GetInt(Keys.Kills, 0),
                 Jobs = z.GetInt(Keys.Jobs, 0), Radius = z.GetInt(Keys.Radius, 30),
-                Potions = z.GetBool(Keys.Potions, true), Protect = z.GetBool(Keys.Protect, true), UseJev = z.GetBool(Keys.UseJev, true),
+                Potions = z.GetBool(Keys.Potions, true), Protect = z.GetBool(Keys.Protect, true), UseJev = z.GetBool(Keys.UseJev, true), FleeStrong = z.GetBool(Keys.FleeStrong, true),
                 Model = z.GetInt(ZDOVars.s_modelIndex, 0), Skin = z.GetVec3(ZDOVars.s_skinColor, Vector3.one), HairColor = z.GetVec3(ZDOVars.s_hairColor, Vector3.one),
                 Hair = z.GetInt(ZDOVars.s_hairItem, 0), Beard = z.GetInt(ZDOVars.s_beardItem, 0),
                 SkinT = Looks.SkinTone(c), HairT = Looks.HairTone(c), HairL = Looks.HairShade(c), Skills = Skill.Text(c), MmoXp = EpicMmo.Xp(c),
@@ -120,7 +120,7 @@ namespace AICompanion
             z.Set(Keys.Name, Name);
             z.Set(Keys.Order, Order); z.Set(Keys.Style, Style); z.Set(Keys.Retreat, Retreat); z.Set(Keys.Kills, Kills);
             z.Set(Keys.Jobs, Jobs); z.Set(Keys.Radius, Radius);
-            z.Set(Keys.Potions, Potions); z.Set(Keys.Protect, Protect); z.Set(Keys.UseJev, UseJev);
+            z.Set(Keys.Potions, Potions); z.Set(Keys.Protect, Protect); z.Set(Keys.UseJev, UseJev); z.Set(Keys.FleeStrong, FleeStrong);
             z.Set(Keys.HasBed, HasBed); z.Set(Keys.BedPos, Bed);
             z.Set(Skill.Key, Skills ?? "");
             if (MmoXp > 0L) z.Set(EpicMmo.XpKey, MmoXp);   // (only with EpicMMO experience: nothing new on its save without it)
@@ -145,7 +145,7 @@ namespace AICompanion
         {
             ["id"] = Id.ToString(CultureInfo.InvariantCulture), ["world"] = World.ToString(CultureInfo.InvariantCulture), ["name"] = Name,
             ["order"] = Order, ["style"] = Style, ["retreat"] = Retreat, ["kills"] = Kills, ["jobs"] = Jobs, ["radius"] = Radius,
-            ["potions"] = Potions, ["protect"] = Protect, ["jev"] = UseJev,
+            ["potions"] = Potions, ["protect"] = Protect, ["jev"] = UseJev, ["fleestrong"] = FleeStrong,
             ["model"] = Model, ["skin"] = V(Skin), ["haircolor"] = V(HairColor), ["hair"] = Hair, ["beard"] = Beard,
             ["skint"] = SkinT, ["hairt"] = HairT, ["hairl"] = HairL, ["skills"] = Skills ?? "", ["mmoxp"] = MmoXp.ToString(CultureInfo.InvariantCulture),
             ["hasbed"] = HasBed, ["bed"] = V(Bed), ["seen"] = V(LastSeen),
@@ -158,7 +158,7 @@ namespace AICompanion
             Name = (string)o["name"] ?? "Rádvar",
             Order = (int?)o["order"] ?? 0, Style = (int?)o["style"] ?? 1, Retreat = (int?)o["retreat"] ?? 30, Kills = (int?)o["kills"] ?? 0,
             Jobs = (int?)o["jobs"] ?? 0, Radius = (int?)o["radius"] ?? 30,
-            Potions = (bool?)o["potions"] ?? true, Protect = (bool?)o["protect"] ?? true, UseJev = (bool?)o["jev"] ?? true,
+            Potions = (bool?)o["potions"] ?? true, Protect = (bool?)o["protect"] ?? true, UseJev = (bool?)o["jev"] ?? true, FleeStrong = (bool?)o["fleestrong"] ?? true,
             Model = (int?)o["model"] ?? 0, Skin = V(o["skin"]), HairColor = V(o["haircolor"]), Hair = (int?)o["hair"] ?? 0, Beard = (int?)o["beard"] ?? 0,
             SkinT = (float?)o["skint"] ?? 0.3f, HairT = (float?)o["hairt"] ?? 0.5f, HairL = (float?)o["hairl"] ?? 0.8f, Skills = (string)o["skills"] ?? "",
             MmoXp = long.TryParse((string)o["mmoxp"] ?? "0", NumberStyles.Integer, CultureInfo.InvariantCulture, out long xp) ? xp : 0L,

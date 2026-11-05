@@ -130,6 +130,7 @@
   "aicompanion_menu_fights_within_about": "以其或你为中心（对你的所有同伴生效）。在家生活时，也会与闯入家园的任何东西战斗。",
   "aicompanion_menu_check_potions": "受伤时喝治疗蜜酒",
   "aicompanion_menu_check_protect": "优先保护你（攻击袭击你的敌人）",
+  "aicompanion_menu_check_flee_strong": "遇到太强的敌人时逃跑（关闭：坚守并战斗）",
   "aicompanion_menu_habits": "习惯",
   "aicompanion_menu_check_loot": "从地上捡东西（捡什么在装备页设置）",
   "aicompanion_menu_check_autohome": "你出门时跟着走，你回来时再回家生活（需要有床）",

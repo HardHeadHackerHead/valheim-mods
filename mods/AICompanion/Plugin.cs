@@ -21,7 +21,7 @@ namespace AICompanion
         public const string Guid = "com.quad.aicompanion";
         public const string OldGuid = "com.dhack.aicompanion"; // (its id until 2026-10: settings move over by themselves, see Shared/Migration.cs)
         public const string Name = "AICompanion";
-        public const string Version = "0.25.1";
+        public const string Version = "0.25.2";
 
         internal static Plugin Instance;
         internal static ConfigEntry<bool> ShowDecisions;
@@ -80,8 +80,8 @@ namespace AICompanion
             _more.Bind("Companion", "EngageRange", 20f, ""); _more.Remove(new ConfigDefinition("Companion", "EngageRange")); // (0.6.0's 20 m: too eager)
             ShowDecisions = More("Companion", "ShowDecisions", true, "Show what it decides in a fight above its head. In the menu: Brain.");
             RespawnSeconds = More("Companion", "RespawnSeconds", 30f, "Seconds after falling before it wakes in its bed (or beside you).", new AcceptableValueRange<float>(5f, 600f), true);
-            BaseHealth = More("Companion", "BaseHealth", 25f, "Its health before food, as a player's (25).", new AcceptableValueRange<float>(5f, 500f), true);
-            BaseStamina = More("Companion", "BaseStamina", 75f, "Its stamina before food, as a player's (75).", new AcceptableValueRange<float>(10f, 500f), true);
+            BaseHealth = More("Companion", "BaseHealth", 25f, "Its health before food, as a player's (25).", new AcceptableValueRange<float>(5f, 5000f), true);
+            BaseStamina = More("Companion", "BaseStamina", 75f, "Its stamina before food, as a player's (75).", new AcceptableValueRange<float>(10f, 5000f), true);
             EatBelow = More("Companion", "EatBelowPercent", 10f, "It eats a food it is already under again once its time left drops below this percent (the game allows it from 50). Lower saves food: a meal lasts 80% of its time instead of 50%, and its effect weakens a little towards the end.", new AcceptableValueRange<float>(1f, 50f), true);
             StartingSkill = More("Companion", "StartingSkill", 0f, "The skill level a new companion starts at (a new player: 0).", new AcceptableValueRange<float>(0f, 100f), true);
             MmoExp = More("EpicMMO", "CompanionExp", 1f, "With EpicMMO System installed: the experience a companion earns from its kills and its work (chopping, mining, picking), as a multiple of what a player gets for them (EpicMMO's RateExp counts too). 0: companions don't level up, and their levels give nothing. Their kills count for their player as a tame's whatever this is (EpicMMO's \"Tames give XP on Mob kill\").", new AcceptableValueRange<float>(0f, 10f), true);

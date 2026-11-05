@@ -18,7 +18,7 @@ namespace AICompanion
     {
         public const string Master = "dhc_master", MasterName = "dhc_mastername", Name = "dhc_name", Order = "dhc_order", Post = "dhc_post",
             Style = "dhc_style", Retreat = "dhc_retreat", Potions = "dhc_potions", Protect = "dhc_protect", UseJev = "dhc_usejev", Status = "dhc_status", Id = "dhc_id", Kills = "dhc_kills",
-            Jobs = "dhc_jobs", Radius = "dhc_radius", HasBed = "dhc_hasbed", BedPos = "dhc_bedpos", Friends = "dhc_friends";
+            Jobs = "dhc_jobs", Radius = "dhc_radius", HasBed = "dhc_hasbed", BedPos = "dhc_bedpos", Friends = "dhc_friends", FleeStrong = "dhc_fleestrong";
     }
 
     internal static class Companion
@@ -66,6 +66,8 @@ namespace AICompanion
         public static int RetreatOf(Component c) => Zdo(c)?.GetInt(Keys.Retreat, 30) ?? 30;
         public static bool Potions(Component c) => Zdo(c)?.GetBool(Keys.Potions, true) ?? true;
         public static bool Protect(Component c) => Zdo(c)?.GetBool(Keys.Protect, true) ?? true;
+        /// <summary>Whether it gets clear of something too strong for it (a bear against a stone axe), or stands and fights.</summary>
+        public static bool FleeStrong(Component c) => Zdo(c)?.GetBool(Keys.FleeStrong, true) ?? true;
         public static string StatusOf(Component c) => Brain.LiveStatus(c as Humanoid) ?? Zdo(c)?.GetString(Keys.Status, "") ?? "";
 
         /// <summary>The player it serves, if that player is in the world right now.</summary>

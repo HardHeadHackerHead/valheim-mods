@@ -853,9 +853,9 @@ namespace AICompanion
             if (health < retreat * 0.5f) { d.Action = Tactic.Flee; d.Note = P("aicompanion_brain_note_nearly_dead"); return d; }
             if (health < retreat) { d.Action = Tactic.Retreat; d.Note = P("aicompanion_brain_note_hurt"); return d; }
             // Something clearly too strong for it (a bear against a stone axe): it gets clear, to its home or to you. With a bow, fed and rested,
-            // it may shoot from a distance instead.
+            // it may shoot from a distance instead. Unless you told it to stand its ground (the menu: How it fights).
             bool careful = Tactics.Careful(st);
-            Character danger = st.Enemies.FirstOrDefault(e => e != null && Vector3.Distance(e.transform.position, me.transform.position) < 20f && Tactics.TooStrong(me, e));
+            Character danger = !Companion.FleeStrong(me) ? null : st.Enemies.FirstOrDefault(e => e != null && Vector3.Distance(e.transform.position, me.transform.position) < 20f && Tactics.TooStrong(me, e));
             if (danger != null && (careful || Companion.BestRanged(me) == null || Vector3.Distance(danger.transform.position, me.transform.position) < 5f))
             {
                 string what = danger.m_name;

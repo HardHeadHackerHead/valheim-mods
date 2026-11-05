@@ -130,6 +130,7 @@
   "aicompanion_menu_fights_within_about": "De él o de ti (todos tus compañeros). Cuando vive en casa, también lucha contra todo lo que entre en su hogar.",
   "aicompanion_menu_check_potions": "Bebe pociones curativas cuando está herido",
   "aicompanion_menu_check_protect": "Te protege primero (va a por lo que te ataca)",
+  "aicompanion_menu_check_flee_strong": "Huye de enemigos demasiado fuertes para él (desactivado: aguanta y lucha)",
   "aicompanion_menu_habits": "Costumbres",
   "aicompanion_menu_check_loot": "Recoge cosas del suelo (cuáles, en la pestaña Equipo)",
   "aicompanion_menu_check_autohome": "Viene contigo cuando sales y vuelve a vivir en casa cuando regresas (si tiene cama)",

@@ -783,6 +783,8 @@ namespace AICompanion
             bool potions = Companion.Potions(c), protect = Companion.Protect(c);
             Check(T("aicompanion_menu_check_potions"), potions, () => _pending = () => Change(z => z.Set(Keys.Potions, !potions)));
             Check(T("aicompanion_menu_check_protect"), protect, () => _pending = () => Change(z => z.Set(Keys.Protect, !protect)));
+            bool fleeStrong = Companion.FleeStrong(c);
+            Check(T("aicompanion_menu_check_flee_strong"), fleeStrong, () => _pending = () => Change(z => z.Set(Keys.FleeStrong, !fleeStrong)));
             EndCard();
 
             BeginCard(T("aicompanion_menu_habits"));

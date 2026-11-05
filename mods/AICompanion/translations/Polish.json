@@ -130,6 +130,7 @@
   "aicompanion_menu_fights_within_about": "Od niego lub od ciebie (dotyczy wszystkich twoich towarzyszy). Gdy mieszka w domu, walczy też ze wszystkim, co wtargnie do jego domu.",
   "aicompanion_menu_check_potions": "Pije eliksiry leczące, gdy jest ranny",
   "aicompanion_menu_check_protect": "Najpierw chroni ciebie (atakuje to, co atakuje ciebie)",
+  "aicompanion_menu_check_flee_strong": "Ucieka przed wrogami zbyt silnymi dla niego (wyłączone: zostaje i walczy)",
   "aicompanion_menu_habits": "Nawyki",
   "aicompanion_menu_check_loot": "Podnosi rzeczy z ziemi (co dokładnie: karta Sprzęt)",
   "aicompanion_menu_check_autohome": "Idzie z tobą, gdy wyruszasz, i znów mieszka w domu, gdy wrócisz (jeśli ma łóżko)",
