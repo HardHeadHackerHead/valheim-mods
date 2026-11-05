@@ -12,7 +12,7 @@ websiteUrl = "https://github.com/HardHeadHackerHead/valheim-mods/tree/main/mods/
 containsNsfwContent = false
 
 [package.dependencies]
-denikson-BepInExPack_Valheim = "5.4.2351"
+denikson-BepInExPack_Valheim = "5.4.2360"
 
 [build]
 icon = "./thunderstore/icon.png"
