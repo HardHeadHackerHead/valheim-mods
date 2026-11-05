@@ -7,7 +7,7 @@
 
 **Four wheeler (ATV, quad bike) for a rider and a passenger: a fast all-terrain vehicle driven by a surtling core. Springs, headlights, tail lights, rack storage, paint colours, engine sound and dust. Built with the hammer.**
 
-![version: 0.1.1](https://img.shields.io/badge/version-0.1.1-3b6e8f?style=flat-square)  ![multiplayer: everyone + host](https://img.shields.io/badge/multiplayer-everyone%20%2B%20host-7a5c2e?style=flat-square)  ![made with: Claude Code](https://img.shields.io/badge/made%20with-Claude%20Code-c26a3d?style=flat-square)
+![version: 0.1.2](https://img.shields.io/badge/version-0.1.2-3b6e8f?style=flat-square)  ![multiplayer: everyone + host](https://img.shields.io/badge/multiplayer-everyone%20%2B%20host-7a5c2e?style=flat-square)  ![made with: Claude Code](https://img.shields.io/badge/made%20with-Claude%20Code-c26a3d?style=flat-square)
 
 <!-- GITHUB-ONLY -->[Thunderstore](https://thunderstore.io/c/valheim/p/Quads_Lab/Quads_Four_Wheelers/)  ·  <!-- END GITHUB-ONLY -->[Source code](https://github.com/HardHeadHackerHead/valheim-mods/tree/main/mods/FourWheelers)  ·  [Report a bug](https://github.com/HardHeadHackerHead/valheim-mods/issues/new?template=bug.yml&title=%5BQuad%27s%20Four%20Wheelers%5D%20)  ·  [Discord](https://discord.gg/EwTjQxEZPy)
 
@@ -177,6 +177,7 @@ helps me make new mods and keep improving the ones you already play. It's 100% o
 
 ## 📜 Recent changes
 
+- **0.1.2** It holds on a slope now: parked or stopped it stays put instead of sliding down or creeping sideways, and it climbs ramps and hills at its full speed (up to about 40 degrees; steeper than that it still slides). Letting go of W at speed it still rolls on downhill. Thanks to the player on Discord who reported it.
 - **0.1.1** You ride it properly now: leaning over the bars with both hands on the grips (they follow the bars as they turn) and your boots on the floorboards, your head turning where you steer and bobbing over rough ground; a passenger behind holds on round your waist (or rests their hands on the seat when you are alone). Everyone sees it. Plus: the front wheel can no longer get swallowed by a steep slope (the wheels' ground check starts above the suspension and rolls over a rise), a stuck rider gets a small hop free, E on one on its side stands it up, an engine that climbs through four gears, tyre squeal in hard corners and a thump and dust burst on landing, a sculpted new model, and a smaller test-command surface (atv).
 - **0.1.0** First release: a four wheeler built with the hammer on dry land. W go, Shift+W full speed, S brake and reverse, A and D steer, E on the seat to climb on, Jump or E to get off. Springs on each wheel, a turning circle that opens up with speed (it holds its line, it doesn't slide), a passenger seat, a rack that holds 8 stacks, headlights and tail lights at night, a gauge at the bottom right, an engine sound, tyre sound and dust coloured to the ground, paint (E on the hood), and E on a flipped one stands it back on its wheels. In your language: Russian, German, Chinese, Portuguese, Spanish, French, Polish and Turkish (translated by AI; corrections welcome).
 

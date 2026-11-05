@@ -27,6 +27,7 @@ namespace DHack.Shared
         public Vector3 RamCenter, RamSize;      // the box in front of it that hits (in its own space)
         public float MinRadius = 4f;            // its tightest turning circle (metres); wider at speed
         public float LateralAccel = 14f;        // the most sideways acceleration the tyres hold (m/s^2): the turn rate falls as speed rises
+        public float SlopeHold;                 // the steepest slope (degrees) its tyres hold on: it stands still there, doesn't creep sideways, and climbs at its speed (0: off, gravity has its way)
         public bool LeansWithTurn;              // the body tips into turns (a bike)
         public bool Engine;                     // an engine sound (a pedal bike has only the rolling of its tyres)
         public Func<float> EngineVolume;
@@ -586,6 +587,7 @@ namespace DHack.Shared
             if (!ridden) { target = 0f; rate = 12f; }                                             // parked: held where it stands
             else if (throttle > 0.1f) { target = (run ? top : cruise) * throttle; rate = along < target ? Spec.Accel() : Spec.Accel() * 1.5f; }
             else if (throttle < -0.1f || brake) { target = along > 1f ? 0f : -Spec.Reverse() * Mathf.Max(0.3f, -throttle); rate = along > 0f ? Spec.Accel() * 2f : Spec.Accel() * 0.6f; }
+            else if (Spec.SlopeHold > 0f && Mathf.Abs(along) < 1.5f) { target = 0f; rate = 12f; }   // nothing held, nearly stopped: it stops (no creeping)
             else { target = 0f; rate = Spec.Coast(); }
             float newAlong = Mathf.MoveTowards(along, target, rate * dt * share);
             float cap = Mathf.Max(Mathf.Abs(along), Mathf.Abs(target));
@@ -610,6 +612,22 @@ namespace DHack.Shared
             // (otherwise every turn makes a sideways slide that the grip then has to take out, and it drifts through every corner)
             float newSide = side * Mathf.Exp(-Spec.Grip() * dt * share * (ridden ? 1f : 4f));
             Vector3 newV = v + forward * (newAlong - along) + right * (newSide - side);
+
+            // The tyres hold against the slope (the springs only push along its normal, so without this gravity's pull down the slope is
+            // all that's left: parked or idle it slid downhill and sideways, and climbing it ate most of the acceleration). Sideways they
+            // always hold; along, when driving, braking, parked or stopped, but not when coasting at speed (it rolls downhill then).
+            // Steeper than SlopeHold it slides as before.
+            if (Spec.SlopeHold > 0f)
+            {
+                Vector3 pull = Vector3.ProjectOnPlane(Physics.gravity, up);
+                float limit = -Physics.gravity.y * Mathf.Sin(Spec.SlopeHold * Mathf.Deg2Rad);
+                if (pull.magnitude <= limit)
+                {
+                    bool coasting = ridden && Mathf.Abs(throttle) <= 0.1f && !brake && Mathf.Abs(along) >= 1.5f;
+                    float holdAlong = coasting ? 0f : 1f;
+                    newV -= (right * Vector3.Dot(pull, right) + forward * (Vector3.Dot(pull, forward) * holdAlong)) * (dt * share);
+                }
+            }
             _body.linearVelocity = Quaternion.AngleAxis(yawNew * Mathf.Rad2Deg * dt, up) * newV;
             if (Mathf.Abs(_steer - _steerWritten) > 0.02f && Time.time - _steerWrittenAt > 0.15f)
             {

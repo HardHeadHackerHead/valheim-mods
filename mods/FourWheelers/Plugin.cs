@@ -23,7 +23,7 @@ namespace FourWheelers
     {
         public const string Guid = "com.quad.fourwheelers";
         public const string Name = "FourWheelers";
-        public const string Version = "0.1.1";
+        public const string Version = "0.1.2";
 
         internal static Plugin Instance;
         internal static ManualLogSource Log;
@@ -77,7 +77,7 @@ namespace FourWheelers
                 Stamina = null,
                 Upright = 1.2f,
                 RamDamage = () => RamDamage.Value, RamCenter = new Vector3(0f, 0.65f, 0.95f), RamSize = new Vector3(1.6f, 1.1f, 1.3f),
-                MinRadius = 3.6f, LateralAccel = 15f, Engine = true, EngineVolume = () => EngineVolume.Value,
+                MinRadius = 3.6f, LateralAccel = 15f, SlopeHold = 40f, Engine = true, EngineVolume = () => EngineVolume.Value,
                 Pose = new System.Collections.Generic.Dictionary<string, float> { { "lean", 22f }, { "head", 14f }, { "kneeOut", 0.55f }, { "steerLean", 6f } }, Command = "atv",
                 RideKey = "$fourwheelers_ride", TooFarKey = "$fourwheelers_too_far", TooHeavyKey = "$fourwheelers_too_heavy", PassengerKey = "$fourwheelers_passenger",
                 HelpKey = "$fourwheelers_help", ShowHelp = () => Help.Value,
