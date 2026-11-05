@@ -10,7 +10,7 @@
   "recycler_presses_near": "Pressen in der Nähe: {0} von 2",
   "recycler_your_gear": "Deine Ausrüstung",
   "recycler_nothing": "Nichts in deinem Inventar kann recycelt werden.",
-  "recycler_nothing_hint": "Waffen, Rüstungen und Werkzeuge, die du herstellen könntest, schon. Mit L gesperrte Gegenstände bleiben außen vor.",
+  "recycler_nothing_hint": "Waffen, Rüstungen und Werkzeuge, die du herstellen könntest, schon. Mit L gesperrte Gegenstände, solche in der Schnellleiste, in Plätzen anderer Mods oder als Favorit markierte bleiben außen vor (siehe Einstellungen).",
   "recycler_pick": "Wähle links ein Ausrüstungsteil, um zu sehen, was es zurückgibt.",
   "recycler_pick_hint": "Eine Recycler-Presse innerhalb von 8 m erhöht den Anteil; bis zu zwei zählen.",
   "recycler_quality": "Qualität {0}",

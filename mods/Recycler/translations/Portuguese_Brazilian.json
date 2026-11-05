@@ -10,7 +10,7 @@
   "recycler_presses_near": "Prensas por perto: {0} de 2",
   "recycler_your_gear": "Seu equipamento",
   "recycler_nothing": "Nada no seu inventário pode ser reciclado.",
-  "recycler_nothing_hint": "Armas, armaduras e ferramentas que você poderia fabricar podem. Itens travados com L ficam de fora.",
+  "recycler_nothing_hint": "Armas, armaduras e ferramentas que você poderia fabricar podem. Itens travados com L, na barra de atalhos, em espaços de outros mods ou marcados como favoritos ficam de fora (veja as configurações).",
   "recycler_pick": "Escolha um equipamento à esquerda para ver o que ele devolve.",
   "recycler_pick_hint": "Uma Prensa de Reciclagem a até 8 m aumenta a parte; contam até duas.",
   "recycler_quality": "Qualidade {0}",

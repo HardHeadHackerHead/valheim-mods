@@ -76,7 +76,7 @@ namespace Recycler
             Rows.Clear();
             if (player == null) return;
             foreach (ItemDrop.ItemData item in player.GetInventory().GetAllItems())
-                if (Calc.Listed(item)) Rows.Add(item);
+                if (Calc.Listed(item) && !KeptOut.Item(player, item)) Rows.Add(item);
             Rows.Sort((a, b) => string.Compare(Localization.instance.Localize(a.m_shared.m_name), Localization.instance.Localize(b.m_shared.m_name),
                 System.StringComparison.OrdinalIgnoreCase));
             if (!Rows.Contains(_selected)) _selected = null;

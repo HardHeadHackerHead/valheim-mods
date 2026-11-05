@@ -10,7 +10,7 @@
   "recycler_presses_near": "Presses nearby: {0} of 2",
   "recycler_your_gear": "Your gear",
   "recycler_nothing": "Nothing in your inventory can be recycled.",
-  "recycler_nothing_hint": "Weapons, armor and tools you could craft can be. Items locked with L are kept out.",
+  "recycler_nothing_hint": "Weapons, armor and tools you could craft can be. Items locked with L, on your hotbar, in other mods' slots or marked favourite are kept out (see the settings).",
   "recycler_pick": "Pick a piece of gear on the left to see what it gives back.",
   "recycler_pick_hint": "A Recycler Press within 8 m raises the share; up to two count.",
   "recycler_quality": "Quality {0}",

@@ -10,7 +10,7 @@
   "recycler_presses_near": "Yakındaki presler: {0}/2",
   "recycler_your_gear": "Teçhizatın",
   "recycler_nothing": "Envanterinde geri dönüştürülebilecek bir şey yok.",
-  "recycler_nothing_hint": "Üretebileceğin silahlar, zırhlar ve aletler dönüştürülebilir. L ile kilitlenen eşyalar dışarıda kalır.",
+  "recycler_nothing_hint": "Üretebileceğin silahlar, zırhlar ve aletler dönüştürülebilir. L ile kilitlenen, kısayol çubuğundaki, diğer modların yuvalarındaki veya favori olarak işaretlenen eşyalar dışarıda kalır (ayarlara bak).",
   "recycler_pick": "Neyi geri verdiğini görmek için soldan bir teçhizat seç.",
   "recycler_pick_hint": "8 m içindeki bir Geri Dönüşüm Presi payı artırır; en fazla ikisi sayılır.",
   "recycler_quality": "Kalite {0}",

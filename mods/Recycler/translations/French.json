@@ -10,7 +10,7 @@
   "recycler_presses_near": "Presses à proximité : {0} sur 2",
   "recycler_your_gear": "Votre équipement",
   "recycler_nothing": "Rien dans votre inventaire ne peut être recyclé.",
-  "recycler_nothing_hint": "Les armes, armures et outils que vous pourriez fabriquer le peuvent. Les objets verrouillés avec L sont exclus.",
+  "recycler_nothing_hint": "Les armes, armures et outils que vous pourriez fabriquer le peuvent. Les objets verrouillés avec L, dans la barre rapide, dans les emplacements d'autres mods ou marqués favoris sont exclus (voir les réglages).",
   "recycler_pick": "Choisissez une pièce d'équipement à gauche pour voir ce qu'elle rend.",
   "recycler_pick_hint": "Une presse de recyclage à moins de 8 m augmente la part ; jusqu'à deux comptent.",
   "recycler_quality": "Qualité {0}",

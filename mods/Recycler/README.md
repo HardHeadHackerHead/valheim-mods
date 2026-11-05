@@ -7,7 +7,7 @@
 
 **Build a Recycler and turn old weapons, armor and tools back into a share of their materials: recycle, salvage, scrap and dismantle the gear you've outgrown. Presses built nearby raise the refund from 50% to 70%.**
 
-![version: 1.3.3](https://img.shields.io/badge/version-1.3.3-3b6e8f?style=flat-square)  ![multiplayer: everyone + host](https://img.shields.io/badge/multiplayer-everyone%20%2B%20host-7a5c2e?style=flat-square)  ![made with: Claude Code](https://img.shields.io/badge/made%20with-Claude%20Code-c26a3d?style=flat-square)
+![version: 1.3.4](https://img.shields.io/badge/version-1.3.4-3b6e8f?style=flat-square)  ![multiplayer: everyone + host](https://img.shields.io/badge/multiplayer-everyone%20%2B%20host-7a5c2e?style=flat-square)  ![made with: Claude Code](https://img.shields.io/badge/made%20with-Claude%20Code-c26a3d?style=flat-square)
 
 <!-- GITHUB-ONLY -->[Thunderstore](https://thunderstore.io/c/valheim/p/Quads_Lab/Quads_Recycler/)  ·  <!-- END GITHUB-ONLY -->[Source code](https://github.com/HardHeadHackerHead/valheim-mods/tree/main/mods/Recycler)  ·  [Report a bug](https://github.com/HardHeadHackerHead/valheim-mods/issues/new?template=bug.yml&title=%5BQuad%27s%20Recycler%5D%20)  ·  [Discord](https://discord.gg/EwTjQxEZPy)
 
@@ -23,7 +23,7 @@ Build a Recycler and turn old weapons, armor and tools back into a share of thei
 
 - Look at the Recycler and press E: pick a weapon, armor piece or tool from your inventory, see what it would return, and recycle it.
 - You get about half of the materials back (50% by default; leftovers are a chance of one more). Recycler Presses built within 8 m raise this to 60% and then 70%.
-- The gear must be one you could craft, and the crafting station it was made at (and its level) must be nearby. Equipped or upgraded gear asks for a second click. Items locked with L are skipped.
+- The gear must be one you could craft, and the crafting station it was made at (and its level) must be nearby. Equipped or upgraded gear asks for a second click. Items locked with L are skipped, and so (by default) are items on your hotbar, in other mods' slots (ExtraSlots, AzuExtendedPlayerInventory and the like) or marked favourite, so precious gear isn't recycled by mistake.
 - The Recycler needs only bronze-tier materials (fine wood, bronze and stone), so you can build it as soon as you have bronze. Each Press costs iron, bronze and stone, so the better refunds come with iron. Restart the game after installing or updating it.
 
 ## 📸 Screenshots
@@ -157,8 +157,8 @@ helps me make new mods and keep improving the ones you already play. It's 100% o
 
 ## 📜 Recent changes
 
+- **1.3.4** Items on your hotbar, in other mods' own slots and favourite items are no longer offered for recycling, so precious gear can't be recycled by mistake (a player asked for it). Slots: ExtraSlots, AzuExtendedPlayerInventory, Equipment and Quick Slots, Extended Player Inventory, ComfyQuickSlots, BetterArchery's quiver and Quad's Gear Slots. Favourites: those marked in AzuExtendedPlayerInventory or Quick Stack Store, and Quad's Quality of Life's quick set. Each can be switched off in the new "Kept out" settings (SkipHotbar, SkipDedicatedSlots, SkipFavorites); they're your own, not the server's. To recycle something on your hotbar, move it into your bag.
 - **1.3.3** On a server without Recycler, the Recycler and the Recycler Press are gone from the hammer, and a message says why: the server would delete them if built there. Server owners can change what they cost ("Building", RecyclerCost and PressCost; defaults as before: 10 fine wood, 8 bronze and 10 stone; 15 iron, 10 bronze and 10 stone); in multiplayer the server's cost applies, and a cost with a mistake in it keeps the last good one. Settings: edits to the config file now apply while the game runs (a server owner no longer has to restart), and a server's admins can change the server's settings from their own game with Configuration Manager, where other players see them greyed out. Your config file always keeps your own values while you play on a server (saving it there could write the server's in). Players on an older version still get the server's settings. They're no longer counted as storage in the game's own building records (they were copied from a chest). The Recycler and the Press snap by the corners of their base now (to floor corners, wall ends and each other); hold the alt-place key (Shift) to place them freely. The build menu says what share the Recycler gives back, and with one or two Presses, from the settings (the server's in multiplayer).
 - **1.3.2** Its windows no longer fill the log with "The LiberationSans SDF Font Asset was not found": each text is given the game's font before it starts (it looked for TextMeshPro's default font, which the game doesn't have, every time a text was made). Nothing changes on screen.
-- **1.3.1** Its build piece now also clears destroyed pieces left in the hammer's list by other mods when it registers: after a mod is reloaded at the main menu, a leftover one made every change to your bag throw an error half-way (crafting gave the item without taking the cost) until the game was restarted.
 
 <!-- GITHUB-ONLY -->[Every change](CHANGELOG.txt)<!-- END GITHUB-ONLY --><!-- THUNDERSTORE-ONLY: Every change is on the Changelog tab. -->

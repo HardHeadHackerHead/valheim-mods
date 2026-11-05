@@ -10,7 +10,7 @@
   "recycler_presses_near": "附近的压机：{0}/2",
   "recycler_your_gear": "你的装备",
   "recycler_nothing": "你的物品栏中没有可回收的东西。",
-  "recycler_nothing_hint": "你能制作的武器、护甲和工具都可以回收。用 L 锁定的物品不会列出。",
+  "recycler_nothing_hint": "你能制作的武器、护甲和工具都可以回收。用 L 锁定的、快捷栏上的、其他模组专用栏位中的或标为收藏的物品不会列出（见设置）。",
   "recycler_pick": "在左侧选择一件装备，查看它能返还什么。",
   "recycler_pick_hint": "8 米内的回收压机可提高返还比例；最多计算两台。",
   "recycler_quality": "品质 {0}",

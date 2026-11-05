@@ -22,13 +22,13 @@ namespace Recycler
         public const string Guid = "com.quad.recycler";
         public const string OldGuid = "com.dhack.recycler"; // (its id until 2026-10: settings move over by themselves, see Shared/Migration.cs)
         public const string Name = "Recycler";
-        public const string Version = "1.3.3";
+        public const string Version = "1.3.4";
         public const string RecyclerPrefab = "piece_recycler";
         public const string PressPrefab = "piece_recycler_press";
 
         internal static ConfigEntry<int> BasePercent, Press1Bonus, Press2Bonus;
         
-        internal static ConfigEntry<bool> ChanceRounding, RequireStation, ConfirmValuable, AllowWeapons, AllowArmor, AllowTools, ShowMessages;
+        internal static ConfigEntry<bool> ChanceRounding, RequireStation, ConfirmValuable, AllowWeapons, AllowArmor, AllowTools, ShowMessages, SkipHotbar, SkipSlots, SkipFavorites;
         internal static ConfigEntry<string> RecyclerCost, PressCost;
         internal static BepInEx.Logging.ManualLogSource Log;
         private static bool _tellNoServer;   // the server hasn't the mod: say so once the player is in the world
@@ -67,6 +67,10 @@ namespace Recycler
             AllowWeapons = Synced.Add(Config.Bind("Rules", "AllowWeapons", true, "Weapons, bows and ammo launchers." + server));
             AllowArmor = Synced.Add(Config.Bind("Rules", "AllowArmor", true, "Armor, capes and shields." + server));
             AllowTools = Synced.Add(Config.Bind("Rules", "AllowTools", true, "Tools and torches." + server));
+            // what's kept out of the list is each player's own choice (it's their hotbar and their favourites)
+            SkipHotbar = Config.Bind("Kept out", "SkipHotbar", true, "Leave items on your hotbar (the top row, keys 1-8) out of the Recycler's list.");
+            SkipSlots = Config.Bind("Kept out", "SkipDedicatedSlots", true, "Leave items in other mods' own slots (equipment, quick and quiver slots of ExtraSlots, AzuExtendedPlayerInventory, Equipment and Quick Slots, Quad's Gear Slots...) out of the list.");
+            SkipFavorites = Config.Bind("Kept out", "SkipFavorites", true, "Leave favourite items (marked in AzuExtendedPlayerInventory or Quick Stack Store, or in Quad's Quality of Life's quick set) out of the list.");
             ShowMessages = Config.Bind("General", "ShowMessages", true, "Show a short message in the top-left when something is recycled.");
             RecyclerCost = Synced.Bind("Building", "RecyclerCost", DefaultRecyclerCost, "What a Recycler costs to build with the hammer. " + DHack.Shared.Costs.Help);
             PressCost = Synced.Bind("Building", "PressCost", DefaultPressCost, "What a Recycler Press costs to build with the hammer. " + DHack.Shared.Costs.Help);

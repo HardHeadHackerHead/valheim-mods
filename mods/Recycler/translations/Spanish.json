@@ -10,7 +10,7 @@
   "recycler_presses_near": "Prensas cerca: {0} de 2",
   "recycler_your_gear": "Tu equipo",
   "recycler_nothing": "No hay nada en tu inventario que se pueda reciclar.",
-  "recycler_nothing_hint": "Se pueden reciclar las armas, armaduras y herramientas que podrías fabricar. Los objetos bloqueados con L quedan fuera.",
+  "recycler_nothing_hint": "Se pueden reciclar las armas, armaduras y herramientas que podrías fabricar. Los objetos bloqueados con L, en la barra rápida, en ranuras de otros mods o marcados como favoritos quedan fuera (mira los ajustes).",
   "recycler_pick": "Elige una pieza de equipo a la izquierda para ver lo que devuelve.",
   "recycler_pick_hint": "Una prensa de reciclaje a menos de 8 m aumenta la parte; cuentan hasta dos.",
   "recycler_quality": "Calidad {0}",

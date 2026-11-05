@@ -8,6 +8,7 @@ namespace Recycler
     internal static class Calc
     {
         internal const string KeepTag = "DHack.QuickStack.Keep"; // set by QualityOfLife's item lock (L)
+        internal const string QuickTag = "DHack.QuickSwap";      // QualityOfLife's quick set
 
         internal class Entry { public ItemDrop Res; public double Expected; public int Min, Max; }
 

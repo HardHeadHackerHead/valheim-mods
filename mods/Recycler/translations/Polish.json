@@ -10,7 +10,7 @@
   "recycler_presses_near": "Prasy w pobliżu: {0} z 2",
   "recycler_your_gear": "Twój ekwipunek",
   "recycler_nothing": "Nic w twoim ekwipunku nie nadaje się do przetworzenia.",
-  "recycler_nothing_hint": "Można przetwarzać broń, pancerze i narzędzia, które mógłbyś wytworzyć. Przedmioty zablokowane klawiszem L są pomijane.",
+  "recycler_nothing_hint": "Można przetwarzać broń, pancerze i narzędzia, które mógłbyś wytworzyć. Przedmioty zablokowane klawiszem L, na pasku szybkiego dostępu, w slotach innych modów lub oznaczone jako ulubione są pomijane (zobacz ustawienia).",
   "recycler_pick": "Wybierz przedmiot po lewej, aby zobaczyć, co zwróci.",
   "recycler_pick_hint": "Prasa recyklera w promieniu 8 m zwiększa część; liczą się maksymalnie dwie.",
   "recycler_quality": "Jakość {0}",
