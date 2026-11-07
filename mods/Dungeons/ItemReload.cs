@@ -16,7 +16,7 @@ namespace Dungeons
     ///   2. Items already in bags, chests and on the ground hold the old copy's prefab (m_dropPrefab) and its shared data. Nothing breaks
     ///      (the old prefab stays alive, and items are saved by name), but they show the old copy's name, weight and icon until reloaded.
     ///      Repoint gives the ones this game has loaded the new copy's.
-    /// Claude Tools' template (templates/ItemReload.cs in the valheim-claude-tools repo), as it is there: keep the two the same.
+    /// Claude Tools' template (templates/ItemReload.cs in the unity-claude-tools repo), as it is there: keep the two the same.
     /// Here: BuildRewards.cs registers through Replace, HotReload.Settle calls Repoint, Builder.UnregisterItems leaves them on a reload.
     /// In a mod: register your items only through Replace (from ZNetScene.Awake, ObjectDB.Awake and ObjectDB.CopyOtherDB postfixes, and
     /// the plugin's Awake for a reload in a world); after registering in Awake, call Repoint; on unload, do nothing to your items when

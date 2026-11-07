@@ -17,7 +17,7 @@ Who builds what (a file has one owner):
 | **Editor** | `Editor/*` (not `GameUi.cs`), `Words.cs` | section 7 and 8 |
 
 Rules for everyone: build with `-p:DeployToGame=false` (never deploy or restart the game; the lead does that), keep the pitfalls in
-`E:\valheim-claude-tools\docs\modding-pitfalls.md` (no ZDOID saved, items never lost, names start with the mod's), no library types in the
+`E:\unity-claude-tools\docs\modding-pitfalls.md` (no ZDOID saved, items never lost, names start with the mod's), no library types in the
 plugin shell (`mods/Blockscript/Plugin.cs`), and keep `tests/Scripts.Blocks.Tests` green.
 
 ## 1. The language: waiting, signals, time

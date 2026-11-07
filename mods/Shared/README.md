@@ -28,4 +28,4 @@ Two ways in:
 
 Before adding a file: is it needed by more than one mod, small, and tested in a real mod? Say at its top why it exists, which mods use
 it and how it gets in. Code other mod makers would want goes to Claude Tools' `templates/` too (with namespace `YourMod`), in
-https://github.com/HardHeadHackerHead/valheim-claude-tools.
+https://github.com/HardHeadHackerHead/unity-claude-tools.

@@ -233,11 +233,11 @@ Odin's Fortune: build a slot machine, put coins in, pull the lever and watch thr
 <td valign="top">
 
 ### 🤖 Claude Tools
-<img src="https://raw.githubusercontent.com/HardHeadHackerHead/valheim-claude-tools/main/mods/ClaudeTools/cover.png" alt="Claude Tools" width="100%">
+<img src="https://raw.githubusercontent.com/HardHeadHackerHead/unity-claude-tools/main/mods/ClaudeTools/cover.png" alt="Claude Tools" width="100%">
 
 Everything you need to make Valheim mods with an AI assistant like [Claude Code](https://claude.com/claude-code), and an assistant that can see your game: pictures from any angle, your status, inventory, chests and mods, a pre-release check, clash reports, safe reloading, skills and templates. Our other mods add their own commands to it (BuildOrders: place, check and photograph blueprints). No network port; off until you switch requests on.
 
-**It has its own repo now: [valheim-claude-tools →](https://github.com/HardHeadHackerHead/valheim-claude-tools)** (install it from the F7 mod manager, where it is an approved source)
+**It has its own repo now: [unity-claude-tools →](https://github.com/HardHeadHackerHead/unity-claude-tools)** (install it from the F7 mod manager, where it is an approved source)
 
 </td>
 <td valign="top">
@@ -520,7 +520,7 @@ manager's list (F7), not on Thunderstore yet.
 | **F11** | BuildOrders | Plans window: place blueprints with a preview, move or remove placed plans, build settings |
 | Hammer → **Bridge** | BuildOrders | Click where a bridge starts, walk across, click where it ends: a wooden bridge to build, posts down to the riverbed |
 | Wheel / **R** / **PgUp** **PgDn** / click | BuildOrders | While placing a blueprint: turn it / turn 90° / raise or lower it / place it (right-click or Esc cancels); the ground under it is levelled when placed |
-| **F12** / **Ctrl+F12** | [Claude Tools](https://github.com/HardHeadHackerHead/valheim-claude-tools) | Save a screenshot / survey the ground around where you look, for the AI assistant |
+| **F12** / **Ctrl+F12** | [Claude Tools](https://github.com/HardHeadHackerHead/unity-claude-tools) | Save a screenshot / survey the ground around where you look, for the AI assistant |
 | Sprint + **Jump** at a wall | Parkour | At an angle: run along it / straight on: run up it (and grab the top) |
 | **Jump** on a wall or a ledge | Parkour | Kick off it toward where you look (looking at a ledge: pull up) |
 | **A** / **D** on a ledge | Parkour | Shimmy along the edge; let go of **W** and press it again (or **Jump**) to pull up; **Crouch** to drop |
@@ -554,7 +554,7 @@ BuildOrders can place whole structures from **blueprint** files, and the repo sh
 material and cost of every building piece, the game's structural-support rules, a stability checker and a worked example. The first time you
 play with BuildOrders it writes all of that, with a `CLAUDE.md` guide, into `BepInEx/blueprints`. Start [Claude Code](https://claude.com/claude-code)
 in that folder, ask for a fort, a house or a bridge, then open the Plans window (**F11**) in game, pick it and put its green preview where you want it. You still build every piece with real materials.
-It can check that a design will stand and draw previews with the game's real shapes. With the **[Claude Tools](https://github.com/HardHeadHackerHead/valheim-claude-tools)** mod (and its requests switched on) it can also look at your world, place the blueprint where you are looking, check it and photograph it from every side.
+It can check that a design will stand and draw previews with the game's real shapes. With the **[Claude Tools](https://github.com/HardHeadHackerHead/unity-claude-tools)** mod (and its requests switched on) it can also look at your world, place the blueprint where you are looking, check it and photograph it from every side.
 Details are in [`tools/blueprints`](tools/blueprints).
 
 ## 🛡️ Playing fair
@@ -607,7 +607,7 @@ after it finishes, or restart if the installer reports a mod that requires it
 - A mod that cannot be reloaded in game gets a `RESTART_REQUIRED.txt` explaining why.
 - Set `VALHEIM_DIR` for a custom game library; you do not need to edit shared build settings.
 - Mods with hand-made 3D looks (Bounty Board, Slot Machine, Bird Trap) are described as simple shapes in `tools/modelkit`, which draws previews and writes the C# for them; see its README.
-- Before writing or changing a mod, read [the modding pitfalls](https://github.com/HardHeadHackerHead/valheim-claude-tools/blob/main/docs/modding-pitfalls.md) in the toolkit (valheim-claude-tools): bugs that cost players their items and buildings, and how to avoid them.
+- Before writing or changing a mod, read [the modding pitfalls](https://github.com/HardHeadHackerHead/unity-claude-tools/blob/main/docs/modding-pitfalls.md) in the toolkit (unity-claude-tools): bugs that cost players their items and buildings, and how to avoid them.
 - Release: `.\publish.ps1`, then `git add -A; git commit; git push`.
 
 ## 🧱 Make your own mod repo

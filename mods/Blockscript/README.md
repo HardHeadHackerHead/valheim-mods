@@ -167,7 +167,7 @@ on("kill", e => {
 
 ### Claude Tools
 
-If you also have [Claude Tools](https://github.com/HardHeadHackerHead/valheim-claude-tools), it gains a `blockscript` command: `blockscript list`, `run NAME`, `stop NAME`, `log NAME [error|limit|warn|did|mine] [grep=text]`, `trace NAME on|off`, `stats NAME`, `panel page library|blocks|code|log NAME`, `server`, `collab`. Nothing in the mod needs it.
+If you also have [Claude Tools](https://github.com/HardHeadHackerHead/unity-claude-tools), it gains a `blockscript` command: `blockscript list`, `run NAME`, `stop NAME`, `log NAME [error|limit|warn|did|mine] [grep=text]`, `trace NAME on|off`, `stats NAME`, `panel page library|blocks|code|log NAME`, `server`, `collab`. Nothing in the mod needs it.
 
 ### Status and known limits
 
