@@ -200,8 +200,10 @@ namespace AICompanion
             Stage = "hunting";
             // 3. Hunting: when hungry, or when its goal needs hides and the like (and it has something to hunt with).
             bool hungry = !me.GetInventory().GetAllItems().Any(Food.IsFood);
-            st.Goal = fellTo == null ? Goals.Pick(me, center, radius, st) : null;
+            st.Goal = fellTo == null && Work.GearGoals(me) ? Goals.Pick(me, center, radius, st) : null;
+            bool selfGathers = Work.SelfGathers(me); // (off: what you ticked or its duties, and food; nothing for its goal)
             Job goalJobs = Goals.JobsFor(st.Goal, out HashSet<string> goalPrey);
+            if (!selfGathers) { goalJobs = Job.None; goalPrey.Clear(); }
             var hunted = new Dictionary<string, int>();
             if (fellTo == null && (Companion.BestRanged(me) != null || Companion.BestMelee(me) != null) && (hungry || goalPrey.Count > 0 || Duties.Open(me, Duty.Food)))
                 Hunt(me, got, hunted, goalPrey, ref budget, seconds);
@@ -210,7 +212,7 @@ namespace AICompanion
             // 4. Gathering, at a player's pace, on what is really there: what its goal needs first, food first when hungry.
             Job jobs = Work.JobsOf(me);
             if (Duties.Configured(me)) jobs = Duties.OpenJobs(me) | (goalJobs & ~(Job.Loot | Job.Hunt)); // its home duties still short of their stockpile, then its goal
-            else if (jobs == Job.None) jobs = Work.AutoJobs(me) | (goalJobs & ~(Job.Loot | Job.Hunt));
+            else if (jobs == Job.None) jobs = selfGathers ? Work.AutoJobs(me) | (goalJobs & ~(Job.Loot | Job.Hunt)) : hungry ? Job.Forage | Job.Cook : Job.None;
             ItemDrop.ItemData axe = Work.Axe(me), pick = Work.Pickaxe(me);
             var seen = new HashSet<GameObject>();
             var targets = new List<Component>();
@@ -248,7 +250,7 @@ namespace AICompanion
                         AddTable(got, log.m_dropWhenDestroyed); AddSubLogs(got, log.m_subLogPrefab, 3);
                         Remove(log.gameObject); felled++;
                         break;
-                    case TreeBase tree when (jobs & Job.Wood) != 0 && axe != null && axe.m_shared.m_toolTier >= tree.m_minToolTier:
+                    case TreeBase tree when (jobs & Job.Wood) != 0 && axe != null && axe.m_shared.m_toolTier >= tree.m_minToolTier && !Work.NearBuildings(tree.transform.position): // (as at home: it would fall on what you built)
                         if (!Chop(me, axe, tree.m_health, ref budget)) break;
                         EpicMmo.Worked(me, tree, EpicMmo.Work.Tree);
                         AddTable(got, tree.m_dropWhenDestroyed);
@@ -339,7 +341,7 @@ namespace AICompanion
             Stage = "trip";
             // 4b. What its goal still needs and nothing near home has: a trip further out, through the saved world (it is not loaded): flint on
             //     a shore 300 m off, and the like.
-            string trip = fellTo == null ? AwayTrip(me, center, radius, got, ref budget) : null;
+            string trip = fellTo == null && selfGathers && st.Goal != null ? AwayTrip(me, center, radius, got, ref budget) : null;
             if (trip == null && fellTo == null && planGoal != null && planGoal.Raw.Count > 0)
                 trip = AwayTrip(me, center, radius, got, ref budget, Remaining(planGoal, got)); // (what the plan still lacks after what it gathered near home)
             if (trip != null) Journal.Trip(me, P("aicompanion_catchup_trip_journal", trip));
@@ -370,7 +372,7 @@ namespace AICompanion
             Stage = "crafting";
             // 6. Making and upgrading gear: what is ready, and its goal's in-between materials (bronze), as long as there is material.
             var made = new List<string>();
-            for (int round = 0; round < 12 && fellTo == null; round++)
+            for (int round = 0; round < 12 && fellTo == null && Work.GearGoals(me); round++)
             {
                 string done = null;
                 var up = Upgrades.Find(me, center, radius);

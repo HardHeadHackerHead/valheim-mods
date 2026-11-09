@@ -863,7 +863,10 @@ namespace AICompanion
             Goal goal = st.Goal;
             List<Mission> missions = Missions.All(c);
             Mission current = missions.LastOrDefault(m => m.Status == "active");
-            if (!c.GetComponent<ZNetView>().IsOwner()) Note(T("aicompanion_menu_shows_elsewhere"), GameUi.Dim);
+            bool gearGoals = Work.GearGoals(c);
+            Check(T("aicompanion_menu_check_gear_goals"), gearGoals, () => _pending = () => Change(cz => { cz.Set(Work.GearGoalsKey, !gearGoals); if (!gearGoals) st.NextUpgradeLook = 0f; }));
+            if (!gearGoals) Note(T("aicompanion_menu_gear_goals_off"), GameUi.Dim);
+            else if (!c.GetComponent<ZNetView>().IsOwner()) Note(T("aicompanion_menu_shows_elsewhere"), GameUi.Dim);
             else if (goal == null) Note(T(living ? "aicompanion_menu_no_mission" : "aicompanion_menu_mission_at_home"), GameUi.Dim);
             else
             {
@@ -976,8 +979,11 @@ namespace AICompanion
             Job jobs = Work.JobsOf(c);
             BeginCard(T(duties.Any(x => x.On && x.Duty != Duty.Build) ? "aicompanion_menu_other_jobs" : "aicompanion_menu_jobs"));
             Job auto = Work.AutoJobs(c);
+            bool selfGathers = Work.SelfGathers(c);
+            Check(T("aicompanion_menu_check_self_gather"), selfGathers, () => _pending = () => Change(cz => cz.Set(Work.SelfGatherKey, !selfGathers)));
             Note(jobs == Job.None
-                ? (auto == Job.None && goal == null ? T("aicompanion_menu_jobs_auto_nothing") : T("aicompanion_menu_jobs_auto", JobNames(auto | Goals.JobsFor(goal, out _))))
+                ? (!selfGathers ? T("aicompanion_menu_jobs_auto_off")
+                   : auto == Job.None && goal == null ? T("aicompanion_menu_jobs_auto_nothing") : T("aicompanion_menu_jobs_auto", JobNames(auto | Goals.JobsFor(goal, out _))))
                 : T("aicompanion_menu_jobs_chosen"), GameUi.Text);
             foreach (Job job in new[] { Job.Wood, Job.Stone, Job.Ore, Job.Forage, Job.Hunt, Job.Cook, Job.Loot })
             {

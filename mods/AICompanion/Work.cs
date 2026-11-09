@@ -116,6 +116,11 @@ namespace AICompanion
         public static bool UsesPantry(Component c) => Companion.Zdo(c)?.GetBool(PantryKey, false) ?? false;
         /// <summary>Its own chests full (or none), it may put what it gathers into its player's chests at home (Home tab; on). It never takes from them.</summary>
         public static bool Stows(Component c) => Companion.Zdo(c)?.GetBool(StowKey, true) ?? true;
+        public const string SelfGatherKey = "dhc_selfgather", GearGoalsKey = "dhc_geargoals";
+        /// <summary>With no jobs ticked it gathers on its own (wood, stone, ore, and what its gear goal needs); off, only what you tick or its duties (food when hungry).</summary>
+        public static bool SelfGathers(Component c) => Companion.Zdo(c)?.GetBool(SelfGatherKey, true) ?? true;
+        /// <summary>It works toward better gear: upgrades, new gear and their in-between materials at the stations near home (Missions).</summary>
+        public static bool GearGoals(Component c) => Companion.Zdo(c)?.GetBool(GearGoalsKey, true) ?? true;
 
         private static Func<Inventory, Vector3, float, Func<ItemDrop.ItemData, bool>, int> QolStack =>
             AppDomain.CurrentDomain.GetData("DHack.QoL.StackInventory") as Func<Inventory, Vector3, float, Func<ItemDrop.ItemData, bool>, int>;
@@ -223,7 +228,8 @@ namespace AICompanion
                 jobs = st.Duty != null ? st.Duty.Jobs : Job.None;
                 if (st.Hungry) jobs |= Job.Forage | Job.Hunt | Job.Cook;
             }
-            else if (jobs == Job.None) jobs = AutoJobs(me); // living at home: it decides for itself what to do with what it has
+            else if (jobs == Job.None) jobs = SelfGathers(me) ? AutoJobs(me) // living at home: it decides for itself what to do with what it has
+                                            : st.Hungry ? Job.Forage | Job.Hunt | Job.Cook : Job.None; // (told not to: only its food)
             Vector3 center = Center(me);
             float radius = RadiusOf(me);
             if (TravelHome(st, center, radius, moveTo)) return;
@@ -1076,7 +1082,8 @@ namespace AICompanion
 
             // 2. Better gear: an upgrade at its workbench (or forge...) when it has the materials, in its bag or its chests; else what it is
             //    working toward (Goals), and the in-between materials for it it can make now.
-            if (Time.time >= st.NextUpgradeLook)
+            if (!GearGoals(me)) st.Goal = null;
+            else if (Time.time >= st.NextUpgradeLook)
             {
                 st.NextUpgradeLook = Time.time + 30f;
                 var up = Upgrades.Find(me, center, radius);
@@ -1097,7 +1104,8 @@ namespace AICompanion
             Goal goal = Aim(st);                                // the plan's shortfall while it builds, else its gear goal
             bool planning = goal != null && goal == st.PlanGoal;
             Job goalJobs = Goals.JobsFor(goal, out HashSet<string> goalPrey);
-            if ((!Directed(st) || planning)) jobs |= goalJobs & ~Job.Loot;
+            bool forGoalToo = planning || !Directed(st) && SelfGathers(me); // (told not to gather on its own: its goal only from what it has)
+            if (forGoalToo) jobs |= goalJobs & ~Job.Loot;
 
             // Its own meals: raw food it carries goes on a cooking station near home.
             if ((jobs & Job.Cook) != 0)
@@ -1185,7 +1193,7 @@ namespace AICompanion
             }
             // Nothing near home for its goal: a trip for it, as far as the world is loaded around you (about 170 m from home), when it is fit.
             bool searched = false;
-            if (goal != null && goal.Raw.Count > 0 && !goalSeen && (!Directed(st) || planning) && !st.Weak && !st.Hungry && me.GetHealthPercentage() > 0.6f
+            if (goal != null && goal.Raw.Count > 0 && !goalSeen && forGoalToo && !st.Weak && !st.Hungry && me.GetHealthPercentage() > 0.6f
                 && (Time.time >= st.NextTripLook || Time.time < st.TripUntil))
             {
                 st.NextTripLook = Time.time + 20f;
@@ -1207,7 +1215,7 @@ namespace AICompanion
                 }
                 if (Time.time < st.TripUntil) { st.TripUntil = 0f; st.Remember(P("aicompanion_work_trip_back")); } // done (or nothing more out there): home
             }
-            if (searched && goal != null && goal.Raw.Count > 0 && !goalSeen && (!Directed(st) || planning) && !goalPrey.Any())
+            if (searched && goal != null && goal.Raw.Count > 0 && !goalSeen && forGoalToo && !goalPrey.Any())
             {
                 // Nothing near home drops what its goal needs: those things count as "ask for them" for ten minutes, so it picks a goal it can do.
                 Talk.Tell(me, P("aicompanion_work_cant_find", Goals.Or(goal.Things()), goal.What), "far:" + goal.What, 30f);
@@ -1247,8 +1255,8 @@ namespace AICompanion
         }
 
         /// <summary>A standing tree this near something you built would fall on it: left standing (unless you point at it).</summary>
-        private static bool NearBuildings(Vector3 at) =>
-            Physics.OverlapSphere(at, 10f, LayerMask.GetMask("piece", "piece_nonsolid")).Any(col => col.GetComponentInParent<Piece>() is Piece p && p.IsPlacedByPlayer());
+        internal static bool NearBuildings(Vector3 at) =>
+            Physics.OverlapSphere(at, 15f, LayerMask.GetMask("piece", "piece_nonsolid")).Any(col => col.GetComponentInParent<Piece>() is Piece p && p.IsPlacedByPlayer());
 
         /// <summary>The tree it chopped came down: a few steps aside (uphill if it can), out of the way of the falling trunk.</summary>
         private static void BeginClear(BrainState st, Vector3 tree)
